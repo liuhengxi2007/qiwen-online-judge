@@ -1,5 +1,6 @@
 package routes
 
+import auth.PasswordHasher
 import cats.effect.IO
 import database.DatabaseSession
 import io.circe.syntax.*
@@ -24,7 +25,7 @@ object AuthRouter:
           AuthUserTable.findByUsername(connection, loginRequest.username)
         )
         response <- user match
-          case Some(foundUser) if foundUser.password == loginRequest.password =>
+          case Some(foundUser) if PasswordHasher.verifyPassword(loginRequest.password, foundUser.passwordHash) =>
             Ok(
               LoginResponse(
                 displayName = foundUser.displayName,
