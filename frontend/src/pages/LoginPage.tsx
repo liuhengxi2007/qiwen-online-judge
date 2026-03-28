@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,7 @@ export function LoginPage() {
           username: data.username,
         }),
       )
-      navigate('/dashboard')
+      navigate('/')
     } catch {
       setErrorMessage('Unable to reach the server. Please start the backend service.')
     } finally {
@@ -78,17 +78,13 @@ export function LoginPage() {
       <section className="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-14 sm:px-8 lg:px-12">
         <div className="grid w-full items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/70 bg-white/80 px-4 py-2 text-sm text-stone-700 shadow-[0_12px_30px_rgba(120,53,15,0.08)] backdrop-blur">
-              <ShieldCheck className="size-4 text-orange-700" />
-              Secure Access Portal
-            </div>
             <div className="max-w-xl space-y-4">
               <h1 className="font-['Georgia'] text-4xl leading-tight font-semibold tracking-tight text-stone-900 sm:text-5xl">
-                A focused login website
+                Qiwen Online Judge
               </h1>
               <p className="text-base leading-8 text-stone-600 sm:text-lg">
-                Built from the existing frontend and backend templates with one clear goal:
-                authenticate a user and land them in a signed-in view.
+                Sign in to manage the judge platform, review submissions, and access the
+                administrator workspace.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -105,9 +101,9 @@ export function LoginPage() {
 
           <Card className="border-white/80 bg-white/82 py-0 shadow-[0_30px_80px_rgba(120,53,15,0.12)] backdrop-blur-xl">
             <CardHeader className="gap-3 border-b border-stone-200/80 px-7 py-7 sm:px-8">
-              <CardTitle className="text-2xl text-stone-950">Sign in</CardTitle>
+              <CardTitle className="text-2xl text-stone-950">Sign in to Qiwen Online Judge</CardTitle>
               <CardDescription className="text-sm text-stone-500">
-                Submit your credentials to the real backend login endpoint.
+                Submit your administrator credentials to the live backend service.
               </CardDescription>
             </CardHeader>
 
@@ -165,6 +161,13 @@ export function LoginPage() {
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign in'}
                 </Button>
+
+                <p className="text-center text-sm text-stone-500">
+                  Need an account?{' '}
+                  <Link to="/register" className="font-medium text-stone-900 underline underline-offset-4">
+                    Register
+                  </Link>
+                </p>
               </form>
             </CardContent>
           </Card>

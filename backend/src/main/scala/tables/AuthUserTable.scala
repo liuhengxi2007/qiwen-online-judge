@@ -3,7 +3,7 @@ package tables
 import auth.PasswordHasher
 import cats.effect.IO
 import cats.syntax.all.*
-import objects.AuthUser
+import objects.{AuthUser, AuthUserListItem}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, PreparedStatement, ResultSet}
@@ -15,6 +15,7 @@ object AuthUserTable:
   private val seedAdminUser = AuthUser(
     username = "admin",
     displayName = "Admin User",
+    email = "admin@example.com",
     passwordHash = PasswordHasher.hashPassword("password123")
   )
 
@@ -23,6 +24,7 @@ object AuthUserTable:
       |create table if not exists auth_users (
       |  username varchar(120) primary key,
       |  display_name varchar(120) not null,
+      |  email varchar(255) not null,
       |  password_hash varchar(255) not null
       |);
       |""".stripMargin
@@ -37,6 +39,12 @@ object AuthUserTable:
       |    where table_schema = 'public'
       |      and table_name = 'auth_users'
       |      and column_name = 'email'
+      |  ) and not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'username'
       |  ) then
       |    alter table auth_users rename column email to username;
       |  end if;
@@ -61,11 +69,47 @@ object AuthUserTable:
 
   val seedAdminSql: String =
     """
-      |insert into auth_users (username, display_name, password_hash)
-      |values (?, ?, ?)
+      |insert into auth_users (username, display_name, email, password_hash)
+      |values (?, ?, ?, ?)
       |on conflict (username) do update
       |set display_name = excluded.display_name,
+      |    email = excluded.email,
       |    password_hash = excluded.password_hash
+      |""".stripMargin
+
+  val addEmailColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'email'
+      |  ) then
+      |    alter table auth_users add column email varchar(255);
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val backfillEmailSql: String =
+    """
+      |update auth_users
+      |set email = username || '@example.com'
+      |where email is null or btrim(email) = ''
+      |""".stripMargin
+
+  val setEmailNotNullSql: String =
+    """
+      |alter table auth_users
+      |alter column email set not null
+      |""".stripMargin
+
+  val createCaseInsensitiveUsernameIndexSql: String =
+    """
+      |create unique index if not exists auth_users_username_lower_uidx
+      |on auth_users (lower(username))
       |""".stripMargin
 
   val migrateSeedAdminUsernameSql: String =
@@ -88,9 +132,16 @@ object AuthUserTable:
 
   val findByUsernameSql: String =
     """
-      |select username, display_name, password_hash
+      |select username, display_name, email, password_hash
       |from auth_users
-      |where username = ?
+      |where lower(username) = lower(?)
+      |""".stripMargin
+
+  val listUsersSql: String =
+    """
+      |select username, display_name, email
+      |from auth_users
+      |order by lower(username) asc
       |""".stripMargin
 
   def initialize(connection: Connection): IO[Unit] =
@@ -101,6 +152,10 @@ object AuthUserTable:
           statement.execute(migrateEmailColumnSql)
           statement.execute(migratePasswordColumnSql)
           statement.execute(initTableSql)
+          statement.execute(addEmailColumnSql)
+          statement.executeUpdate(backfillEmailSql)
+          statement.execute(setEmailNotNullSql)
+          statement.execute(createCaseInsensitiveUsernameIndexSql)
           statement.executeUpdate(migrateSeedAdminUsernameSql)
           statement.executeUpdate(deleteLegacySeedAdminSql)
         finally statement.close()
@@ -122,13 +177,64 @@ object AuthUserTable:
       finally statement.close()
     }
 
+  def insert(
+    connection: Connection,
+    username: String,
+    displayName: String,
+    email: String,
+    password: String
+  ): IO[AuthUser] =
+    IO.blocking {
+      val statement = connection.prepareStatement(
+        """
+          |insert into auth_users (username, display_name, email, password_hash)
+          |values (?, ?, ?, ?)
+          |returning username, display_name, email, password_hash
+          |""".stripMargin
+      )
+      try
+        statement.setString(1, username.trim)
+        statement.setString(2, displayName.trim)
+        statement.setString(3, email.trim)
+        statement.setString(4, PasswordHasher.hashPassword(password))
+
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then readAuthUser(resultSet)
+          else throw new IllegalStateException("Insert succeeded but returned no user")
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listUsers(connection: Connection): IO[List[AuthUserListItem]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listUsersSql)
+      try
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ =>
+              AuthUserListItem(
+                username = resultSet.getString("username"),
+                displayName = resultSet.getString("display_name"),
+                email = resultSet.getString("email")
+              )
+            )
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   private def seedAdmin(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(seedAdminSql)
       try
         statement.setString(1, seedAdminUser.username)
         statement.setString(2, seedAdminUser.displayName)
-        statement.setString(3, seedAdminUser.passwordHash)
+        statement.setString(3, seedAdminUser.email)
+        statement.setString(4, seedAdminUser.passwordHash)
         statement.executeUpdate()
       finally statement.close()
     }.flatTap(_ =>
@@ -141,6 +247,7 @@ object AuthUserTable:
         val statement = connection.prepareStatement(
           """
             |select username, display_name, password_hash
+            |     , email
             |from auth_users
             |where password_hash not like 'pbkdf2-sha256$%'
             |""".stripMargin
@@ -183,5 +290,6 @@ object AuthUserTable:
     AuthUser(
       username = resultSet.getString("username"),
       displayName = resultSet.getString("display_name"),
+      email = resultSet.getString("email"),
       passwordHash = resultSet.getString("password_hash")
     )
