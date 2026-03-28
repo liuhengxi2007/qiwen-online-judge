@@ -1,0 +1,175 @@
+import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+type LoginSuccessResponse = {
+  displayName: string
+  email: string
+}
+
+type LoginErrorResponse = {
+  message: string
+}
+
+export function LoginPage() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('admin@example.com')
+  const [password, setPassword] = useState('password123')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Please enter both email and password.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as LoginErrorResponse | null
+        setErrorMessage(errorData?.message ?? 'Login failed. Please try again.')
+        return
+      }
+
+      const data = (await response.json()) as LoginSuccessResponse
+      window.localStorage.setItem(
+        'auth_user',
+        JSON.stringify({
+          displayName: data.displayName,
+          email: data.email,
+        }),
+      )
+      navigate('/dashboard')
+    } catch {
+      setErrorMessage('Unable to reach the server. Please start the backend service.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(237,127,16,0.16),transparent_28%),linear-gradient(180deg,#fff8f1_0%,#f3ede2_45%,#ebe4d8_100%)]">
+      <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.74),transparent_40%,rgba(50,32,18,0.06)_100%)]" />
+      <div className="absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(147,197,253,0.32),transparent_65%)] blur-2xl" />
+      <div className="absolute bottom-0 left-[-5%] h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.18),transparent_65%)] blur-3xl" />
+
+      <section className="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-14 sm:px-8 lg:px-12">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/70 bg-white/80 px-4 py-2 text-sm text-stone-700 shadow-[0_12px_30px_rgba(120,53,15,0.08)] backdrop-blur">
+              <ShieldCheck className="size-4 text-orange-700" />
+              Secure Access Portal
+            </div>
+            <div className="max-w-xl space-y-4">
+              <h1 className="font-['Georgia'] text-4xl leading-tight font-semibold tracking-tight text-stone-900 sm:text-5xl">
+                A focused login website
+              </h1>
+              <p className="text-base leading-8 text-stone-600 sm:text-lg">
+                Built from the existing frontend and backend templates with one clear goal:
+                authenticate a user and land them in a signed-in view.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-white/75 bg-white/75 p-5 shadow-[0_20px_45px_rgba(120,53,15,0.08)] backdrop-blur">
+                <p className="text-sm font-medium text-stone-500">Demo account</p>
+                <p className="mt-2 text-lg font-semibold text-stone-900">admin@example.com</p>
+              </div>
+              <div className="rounded-3xl border border-white/75 bg-stone-950 p-5 text-stone-50 shadow-[0_20px_45px_rgba(28,25,23,0.24)]">
+                <p className="text-sm font-medium text-stone-300">Demo password</p>
+                <p className="mt-2 text-lg font-semibold">password123</p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="border-white/80 bg-white/82 py-0 shadow-[0_30px_80px_rgba(120,53,15,0.12)] backdrop-blur-xl">
+            <CardHeader className="gap-3 border-b border-stone-200/80 px-7 py-7 sm:px-8">
+              <CardTitle className="text-2xl text-stone-950">Sign in</CardTitle>
+              <CardDescription className="text-sm text-stone-500">
+                Submit your credentials to the real backend login endpoint.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="px-7 py-7 sm:px-8">
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-stone-700">
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="username"
+                      value={email}
+                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
+                      placeholder="name@example.com"
+                      onChange={(event) => setEmail(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-stone-700">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <LockKeyhole className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
+                      placeholder="Enter your password"
+                      onChange={(event) => setPassword(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="min-h-14">
+                  {errorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                </div>
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isSubmitting}
+                  className="h-12 w-full rounded-2xl bg-stone-950 text-base text-white hover:bg-stone-800"
+                >
+                  {isSubmitting ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </main>
+  )
+}
