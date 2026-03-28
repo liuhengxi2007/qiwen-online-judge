@@ -1,8 +1,8 @@
 package objects
 
-final case class AuthUser(
+final case class AuthSeedUser(
   username: Username,
   displayName: DisplayName,
   email: EmailAddress,
-  passwordHash: PasswordHash
+  password: PlaintextPassword
 )

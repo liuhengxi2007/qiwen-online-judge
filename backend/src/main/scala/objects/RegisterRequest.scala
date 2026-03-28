@@ -4,10 +4,10 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class RegisterRequest(
-  username: String,
-  displayName: String,
-  email: String,
-  password: String
+  username: Username,
+  displayName: DisplayName,
+  email: EmailAddress,
+  password: PlaintextPassword
 )
 
 object RegisterRequest:

@@ -1,5 +1,8 @@
 package auth
 
+import cats.effect.IO
+import objects.{PasswordHash, PlaintextPassword}
+
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.SecretKeyFactory
@@ -14,24 +17,39 @@ object PasswordHasher:
   private val saltLengthBytes = 16
   private val hashPrefix = "pbkdf2-sha256"
 
-  def hashPassword(password: String): String =
-    val salt = new Array[Byte](saltLengthBytes)
-    random.nextBytes(salt)
-    val hash = pbkdf2(password, salt, iterations, keyLength)
-    s"${hashPrefix}$$${iterations}$$${encode(salt)}$$${encode(hash)}"
+  def hashPassword(password: PlaintextPassword): IO[PasswordHash] =
+    for
+      salt <- generateSalt
+      hash <- pbkdf2(password, salt, iterations, keyLength)
+    yield PasswordHash(s"${hashPrefix}$$${iterations}$$${encode(salt)}$$${encode(hash)}")
 
-  def verifyPassword(password: String, encodedHash: String): Boolean =
+  def verifyPassword(password: PlaintextPassword, encodedHash: PasswordHash): IO[Boolean] =
     parseHash(encodedHash) match
       case Some(parsedHash) =>
-        val derivedHash = pbkdf2(password, parsedHash.salt, parsedHash.iterations, keyLength)
-        java.security.MessageDigest.isEqual(derivedHash, parsedHash.hash)
+        pbkdf2(password, parsedHash.salt, parsedHash.iterations, keyLength).map(derivedHash =>
+          java.security.MessageDigest.isEqual(derivedHash, parsedHash.hash)
+        )
       case None =>
-        false
+        IO.pure(false)
 
-  private def pbkdf2(password: String, salt: Array[Byte], iterations: Int, keyLength: Int): Array[Byte] =
-    val spec = PBEKeySpec(password.toCharArray, salt, iterations, keyLength)
-    try SecretKeyFactory.getInstance(algorithm).generateSecret(spec).getEncoded
-    finally spec.clearPassword()
+  private def generateSalt: IO[Array[Byte]] =
+    IO.delay {
+      val salt = new Array[Byte](saltLengthBytes)
+      random.nextBytes(salt)
+      salt
+    }
+
+  private def pbkdf2(
+    password: PlaintextPassword,
+    salt: Array[Byte],
+    iterations: Int,
+    keyLength: Int
+  ): IO[Array[Byte]] =
+    IO.blocking {
+      val spec = PBEKeySpec(password.value.toCharArray, salt, iterations, keyLength)
+      try SecretKeyFactory.getInstance(algorithm).generateSecret(spec).getEncoded
+      finally spec.clearPassword()
+    }
 
   private def encode(bytes: Array[Byte]): String =
     Base64.getEncoder.encodeToString(bytes)
@@ -39,8 +57,8 @@ object PasswordHasher:
   private def decode(value: String): Array[Byte] =
     Base64.getDecoder.decode(value)
 
-  private def parseHash(encodedHash: String): Option[ParsedHash] =
-    encodedHash.split("\\$", -1).toList match
+  private def parseHash(encodedHash: PasswordHash): Option[ParsedHash] =
+    encodedHash.value.split("\\$", -1).toList match
       case prefix :: iterationValue :: saltValue :: hashValue :: Nil if prefix == hashPrefix =>
         iterationValue.toIntOption.map(iteration =>
           ParsedHash(iteration, decode(saltValue), decode(hashValue))

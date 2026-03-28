@@ -1,11 +1,13 @@
 package auth
 
+import objects.Username
+
 object UsernameRules:
 
   private val usernamePattern = "^[A-Za-z0-9_-]+$".r
 
-  def validate(username: String): Option[String] =
-    val normalized = username.trim
+  def validate(username: Username): Option[String] =
+    val normalized = username.value.trim
 
     if normalized.length < 3 || normalized.length > 32 then
       Some("Username must be between 3 and 32 characters.")

@@ -3,7 +3,16 @@ package tables
 import auth.PasswordHasher
 import cats.effect.IO
 import cats.syntax.all.*
-import objects.{AuthUser, AuthUserListItem}
+import objects.{
+  AuthSeedUser,
+  AuthUser,
+  AuthUserListItem,
+  DisplayName,
+  EmailAddress,
+  PasswordHash,
+  PlaintextPassword,
+  Username
+}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, PreparedStatement, ResultSet}
@@ -12,11 +21,11 @@ object AuthUserTable:
 
   private val logger = Slf4jLogger.getLogger[IO]
 
-  private val seedAdminUser = AuthUser(
-    username = "admin",
-    displayName = "Admin User",
-    email = "admin@example.com",
-    passwordHash = PasswordHasher.hashPassword("password123")
+  private val seedAdminUser = AuthSeedUser(
+    username = Username("admin"),
+    displayName = DisplayName("Admin User"),
+    email = EmailAddress("admin@example.com"),
+    password = PlaintextPassword("password123")
   )
 
   val initTableSql: String =
@@ -164,11 +173,11 @@ object AuthUserTable:
       _ <- seedAdmin(connection)
     yield ()
 
-  def findByUsername(connection: Connection, username: String): IO[Option[AuthUser]] =
+  def findByUsername(connection: Connection, username: Username): IO[Option[AuthUser]] =
     IO.blocking {
       val statement = connection.prepareStatement(findByUsernameSql)
       try
-        statement.setString(1, username.trim)
+        statement.setString(1, username.value.trim)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then Some(readAuthUser(resultSet))
@@ -179,32 +188,35 @@ object AuthUserTable:
 
   def insert(
     connection: Connection,
-    username: String,
-    displayName: String,
-    email: String,
-    password: String
+    username: Username,
+    displayName: DisplayName,
+    email: EmailAddress,
+    password: PlaintextPassword
   ): IO[AuthUser] =
-    IO.blocking {
-      val statement = connection.prepareStatement(
-        """
-          |insert into auth_users (username, display_name, email, password_hash)
-          |values (?, ?, ?, ?)
-          |returning username, display_name, email, password_hash
-          |""".stripMargin
-      )
-      try
-        statement.setString(1, username.trim)
-        statement.setString(2, displayName.trim)
-        statement.setString(3, email.trim)
-        statement.setString(4, PasswordHasher.hashPassword(password))
-
-        val resultSet = statement.executeQuery()
+    for
+      passwordHash <- PasswordHasher.hashPassword(password)
+      user <- IO.blocking {
+        val statement = connection.prepareStatement(
+          """
+            |insert into auth_users (username, display_name, email, password_hash)
+            |values (?, ?, ?, ?)
+            |returning username, display_name, email, password_hash
+            |""".stripMargin
+        )
         try
-          if resultSet.next() then readAuthUser(resultSet)
-          else throw new IllegalStateException("Insert succeeded but returned no user")
-        finally resultSet.close()
-      finally statement.close()
-    }
+          statement.setString(1, username.value.trim)
+          statement.setString(2, displayName.value.trim)
+          statement.setString(3, email.value.trim)
+          statement.setString(4, passwordHash.value)
+
+          val resultSet = statement.executeQuery()
+          try
+            if resultSet.next() then readAuthUser(resultSet)
+            else throw new IllegalStateException("Insert succeeded but returned no user")
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield user
 
   def listUsers(connection: Connection): IO[List[AuthUserListItem]] =
     IO.blocking {
@@ -217,9 +229,9 @@ object AuthUserTable:
             .takeWhile(identity)
             .map(_ =>
               AuthUserListItem(
-                username = resultSet.getString("username"),
-                displayName = resultSet.getString("display_name"),
-                email = resultSet.getString("email")
+                username = Username(resultSet.getString("username")),
+                displayName = DisplayName(resultSet.getString("display_name")),
+                email = EmailAddress(resultSet.getString("email"))
               )
             )
             .toList
@@ -228,18 +240,20 @@ object AuthUserTable:
     }
 
   private def seedAdmin(connection: Connection): IO[Unit] =
-    IO.blocking {
-      val statement = connection.prepareStatement(seedAdminSql)
-      try
-        statement.setString(1, seedAdminUser.username)
-        statement.setString(2, seedAdminUser.displayName)
-        statement.setString(3, seedAdminUser.email)
-        statement.setString(4, seedAdminUser.passwordHash)
-        statement.executeUpdate()
-      finally statement.close()
-    }.flatTap(_ =>
-      logger.info(s"Ensured seeded auth user exists, username=${seedAdminUser.username}")
-    ).void
+    for
+      passwordHash <- PasswordHasher.hashPassword(seedAdminUser.password)
+      _ <- IO.blocking {
+        val statement = connection.prepareStatement(seedAdminSql)
+        try
+          statement.setString(1, seedAdminUser.username.value)
+          statement.setString(2, seedAdminUser.displayName.value)
+          statement.setString(3, seedAdminUser.email.value)
+          statement.setString(4, passwordHash.value)
+          statement.executeUpdate()
+        finally statement.close()
+      }
+      _ <- logger.info(s"Ensured seeded auth user exists, username=${seedAdminUser.username.value}")
+    yield ()
 
   private def migratePlaintextPasswords(connection: Connection): IO[Unit] =
     for
@@ -264,21 +278,23 @@ object AuthUserTable:
         finally statement.close()
       }
       _ <- usersNeedingMigration.traverse_ { user =>
-        val hashedPassword = PasswordHasher.hashPassword(user.passwordHash)
-        IO.blocking {
-          val statement = connection.prepareStatement(
-            """
-              |update auth_users
-              |set password_hash = ?
-              |where username = ?
-              |""".stripMargin
-          )
-          try
-            statement.setString(1, hashedPassword)
-            statement.setString(2, user.username)
-            statement.executeUpdate()
-          finally statement.close()
-        }
+        for
+          hashedPassword <- PasswordHasher.hashPassword(PlaintextPassword(user.passwordHash.value))
+          _ <- IO.blocking {
+            val statement = connection.prepareStatement(
+              """
+                |update auth_users
+                |set password_hash = ?
+                |where username = ?
+                |""".stripMargin
+            )
+            try
+              statement.setString(1, hashedPassword.value)
+              statement.setString(2, user.username.value)
+              statement.executeUpdate()
+            finally statement.close()
+          }
+        yield ()
       }
       _ <-
         if usersNeedingMigration.nonEmpty then
@@ -288,8 +304,8 @@ object AuthUserTable:
 
   private def readAuthUser(resultSet: ResultSet): AuthUser =
     AuthUser(
-      username = resultSet.getString("username"),
-      displayName = resultSet.getString("display_name"),
-      email = resultSet.getString("email"),
-      passwordHash = resultSet.getString("password_hash")
+      username = Username(resultSet.getString("username")),
+      displayName = DisplayName(resultSet.getString("display_name")),
+      email = EmailAddress(resultSet.getString("email")),
+      passwordHash = PasswordHash(resultSet.getString("password_hash"))
     )

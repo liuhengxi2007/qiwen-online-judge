@@ -35,26 +35,31 @@ object AuthRouter:
     case request @ POST -> Root / "api" / "auth" / "login" =>
       for
         loginRequest <- request.as[LoginRequest]
-        _ <- logger.info(s"AuthRouter received login request for ${loginRequest.username}")
+        _ <- logger.info(s"AuthRouter received login request for ${loginRequest.username.value}")
         user <- DatabaseSession.withTransactionConnection(connection =>
           AuthUserTable.findByUsername(connection, loginRequest.username)
         )
         response <- user match
-          case Some(foundUser) if PasswordHasher.verifyPassword(loginRequest.password, foundUser.passwordHash) =>
-            Ok(
-              LoginResponse(
-                displayName = foundUser.displayName,
-                username = foundUser.username,
-                message = "Login successful"
-              ).asJson
-            )
-          case _ => invalidCredentialsResponse
+          case Some(foundUser) =>
+            PasswordHasher.verifyPassword(loginRequest.password, foundUser.passwordHash).flatMap {
+              case true =>
+                Ok(
+                  LoginResponse(
+                    displayName = foundUser.displayName,
+                    username = foundUser.username,
+                    message = "Login successful"
+                  ).asJson
+                )
+              case false =>
+                invalidCredentialsResponse
+            }
+          case None => invalidCredentialsResponse
       yield response
 
     case request @ POST -> Root / "api" / "auth" / "register" =>
       for
         registerRequest <- request.as[RegisterRequest]
-        _ <- logger.info(s"AuthRouter received register request for ${registerRequest.username}")
+        _ <- logger.info(s"AuthRouter received register request for ${registerRequest.username.value}")
         response <- UsernameRules.validate(registerRequest.username) match
           case Some(validationError) =>
             BadRequest(ErrorResponse(validationError).asJson)

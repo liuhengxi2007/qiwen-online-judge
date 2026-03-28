@@ -4,9 +4,9 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class AuthUserListItem(
-  username: String,
-  displayName: String,
-  email: String
+  username: Username,
+  displayName: DisplayName,
+  email: EmailAddress
 )
 
 object AuthUserListItem:
