@@ -1,10 +1,13 @@
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
+import database.DatabaseSession
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.{CORS, Logger}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import routes.ApiRouter
+import tables.AuthUserTable
+import tables.NoteTable
 
 object Main extends IOApp.Simple:
 
@@ -23,8 +26,23 @@ object Main extends IOApp.Simple:
       .withHttpApp(httpApp)
       .build
 
+  private val applicationResource: cats.effect.Resource[IO, Server] =
+    for
+      _ <- DatabaseSession.initialize
+      _ <- cats.effect.Resource.eval {
+        DatabaseSession.withTransactionConnection { connection =>
+          for
+            _ <- logger.info("Initializing database schema")
+            _ <- AuthUserTable.initialize(connection)
+            _ <- NoteTable.initialize(connection)
+          yield ()
+        }
+      }
+      server <- serverResource
+    yield server
+
   override def run: IO[Unit] =
     for
       _ <- logger.info("Starting backend-sample on http://0.0.0.0:8080")
-      _ <- serverResource.useForever
+      _ <- applicationResource.useForever
     yield ()

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 type AuthUser = {
   displayName: string
-  email: string
+  username: string
 }
 
 const readAuthUser = (): AuthUser | null => {
@@ -73,8 +73,8 @@ export function DashboardPage() {
               <p className="mt-2 text-lg font-semibold text-slate-900">{user.displayName}</p>
             </div>
             <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Email</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{user.email}</p>
+              <p className="text-sm text-slate-500">Username</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{user.username}</p>
             </div>
           </CardContent>
         </Card>

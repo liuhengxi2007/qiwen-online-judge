@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 
 type LoginSuccessResponse = {
   displayName: string
-  email: string
+  username: string
 }
 
 type LoginErrorResponse = {
@@ -19,7 +19,7 @@ type LoginErrorResponse = {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@example.com')
+  const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('password123')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,8 +27,8 @@ export function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please enter both email and password.')
+    if (!username.trim() || !password.trim()) {
+      setErrorMessage('Please enter both username and password.')
       return
     }
 
@@ -42,7 +42,7 @@ export function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.trim(),
+          username: username.trim(),
           password: password.trim(),
         }),
       })
@@ -58,7 +58,7 @@ export function LoginPage() {
         'auth_user',
         JSON.stringify({
           displayName: data.displayName,
-          email: data.email,
+          username: data.username,
         }),
       )
       navigate('/dashboard')
@@ -94,7 +94,7 @@ export function LoginPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-3xl border border-white/75 bg-white/75 p-5 shadow-[0_20px_45px_rgba(120,53,15,0.08)] backdrop-blur">
                 <p className="text-sm font-medium text-stone-500">Demo account</p>
-                <p className="mt-2 text-lg font-semibold text-stone-900">admin@example.com</p>
+                <p className="mt-2 text-lg font-semibold text-stone-900">admin</p>
               </div>
               <div className="rounded-3xl border border-white/75 bg-stone-950 p-5 text-stone-50 shadow-[0_20px_45px_rgba(28,25,23,0.24)]">
                 <p className="text-sm font-medium text-stone-300">Demo password</p>
@@ -114,19 +114,19 @@ export function LoginPage() {
             <CardContent className="px-7 py-7 sm:px-8">
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-stone-700">
-                    Email
+                  <Label htmlFor="username" className="text-stone-700">
+                    Username
                   </Label>
                   <div className="relative">
                     <UserRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
                     <Input
-                      id="email"
-                      type="email"
+                      id="username"
+                      type="text"
                       autoComplete="username"
-                      value={email}
+                      value={username}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
-                      placeholder="name@example.com"
-                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="Enter your username"
+                      onChange={(event) => setUsername(event.target.value)}
                     />
                   </div>
                 </div>
