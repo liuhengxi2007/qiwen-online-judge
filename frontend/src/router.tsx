@@ -1,17 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
+import { hasAuthSession } from '@/domain/auth'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 
-const isAuthenticated = () => window.localStorage.getItem('auth_user') !== null
-
 function RootRedirect() {
-  return isAuthenticated() ? <DashboardPage /> : <Navigate replace to="/login" />
+  return hasAuthSession() ? <DashboardPage /> : <Navigate replace to="/login" />
 }
 
 function GuestOnlyRoute() {
-  return isAuthenticated() ? <Navigate replace to="/" /> : <LoginPage />
+  return hasAuthSession() ? <Navigate replace to="/" /> : <LoginPage />
 }
 
 export const router = createBrowserRouter([
@@ -25,7 +24,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/register',
-    element: isAuthenticated() ? <Navigate replace to="/" /> : <RegisterPage />,
+    element: hasAuthSession() ? <Navigate replace to="/" /> : <RegisterPage />,
   },
   {
     path: '*',

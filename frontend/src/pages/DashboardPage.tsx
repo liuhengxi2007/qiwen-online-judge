@@ -1,39 +1,23 @@
-import { Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-
-type AuthUser = {
-  displayName: string
-  username: string
-}
-
-type AuthUserListItem = {
-  username: string
-  displayName: string
-  email: string
-}
-
-const readAuthUser = (): AuthUser | null => {
-  const raw = window.localStorage.getItem('auth_user')
-  if (!raw) {
-    return null
-  }
-
-  try {
-    return JSON.parse(raw) as AuthUser
-  } catch {
-    window.localStorage.removeItem('auth_user')
-    return null
-  }
-}
+import {
+  clearAuthSession,
+  displayNameValue,
+  emailAddressValue,
+  isAdminSession,
+  readAuthSession,
+  usernameValue,
+  type AuthUserListItem,
+} from '@/domain/auth'
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const user = readAuthUser()
+  const user = readAuthSession()
   const [users, setUsers] = useState<AuthUserListItem[]>([])
   const [userListError, setUserListError] = useState('')
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
@@ -43,7 +27,7 @@ export function DashboardPage() {
   }
 
   useEffect(() => {
-    if (user.username.toLowerCase() !== 'admin') {
+    if (!isAdminSession(user)) {
       return
     }
 
@@ -90,7 +74,7 @@ export function DashboardPage() {
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
             <h1 className="mt-2 font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              Welcome back, {user.displayName}
+              Welcome back, {displayNameValue(user.displayName)}
             </h1>
           </div>
           <Button
@@ -98,7 +82,7 @@ export function DashboardPage() {
             variant="outline"
             className="rounded-full border-slate-300 bg-white"
             onClick={() => {
-              window.localStorage.removeItem('auth_user')
+              clearAuthSession()
               navigate('/login')
             }}
           >
@@ -124,16 +108,18 @@ export function DashboardPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Display name</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{user.displayName}</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {displayNameValue(user.displayName)}
+              </p>
             </div>
             <div className="rounded-2xl bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Username</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{user.username}</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{usernameValue(user.username)}</p>
             </div>
           </CardContent>
         </Card>
 
-        {user.username.toLowerCase() === 'admin' ? (
+        {isAdminSession(user) ? (
           <Card className="mt-8 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <CardTitle className="text-xl text-slate-950">User Management</CardTitle>
@@ -156,10 +142,12 @@ export function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {users.map((listedUser) => (
-                      <TableRow key={listedUser.username}>
-                        <TableCell className="font-medium text-slate-900">{listedUser.username}</TableCell>
-                        <TableCell>{listedUser.displayName}</TableCell>
-                        <TableCell>{listedUser.email}</TableCell>
+                      <TableRow key={usernameValue(listedUser.username)}>
+                        <TableCell className="font-medium text-slate-900">
+                          {usernameValue(listedUser.username)}
+                        </TableCell>
+                        <TableCell>{displayNameValue(listedUser.displayName)}</TableCell>
+                        <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

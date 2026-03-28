@@ -7,48 +7,61 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-type RegisterSuccessResponse = {
-  displayName: string
-  username: string
-  message: string
-}
-
-type RegisterErrorResponse = {
-  message: string
-}
-
-const usernamePattern = /^[A-Za-z0-9_-]+$/
+import {
+  createDisplayName,
+  createEmailAddress,
+  createPlaintextPassword,
+  createUsername,
+  normalizeDisplayName,
+  normalizeEmailAddress,
+  normalizePlaintextPassword,
+  normalizeUsername,
+  persistAuthSession,
+  plaintextPasswordValue,
+  toAuthSession,
+  validateUsername,
+  type ErrorResponse,
+  type RegisterRequest,
+  type RegisterResponse,
+} from '@/domain/auth'
 
 export function RegisterPage() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [username, setUsername] = useState(createUsername(''))
+  const [displayName, setDisplayName] = useState(createDisplayName(''))
+  const [email, setEmail] = useState(createEmailAddress(''))
+  const [password, setPassword] = useState(createPlaintextPassword(''))
+  const [confirmPassword, setConfirmPassword] = useState(createPlaintextPassword(''))
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!username.trim() || !displayName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+    const normalizedUsername = normalizeUsername(username)
+    const normalizedDisplayName = normalizeDisplayName(displayName)
+    const normalizedEmail = normalizeEmailAddress(email)
+    const normalizedPassword = normalizePlaintextPassword(password)
+    const normalizedConfirmPassword = normalizePlaintextPassword(confirmPassword)
+
+    if (
+      !normalizedUsername ||
+      !normalizedDisplayName ||
+      !normalizedEmail ||
+      !plaintextPasswordValue(normalizedPassword) ||
+      !plaintextPasswordValue(normalizedConfirmPassword)
+    ) {
       setErrorMessage('Please complete all fields.')
       return
     }
 
-    if (username.trim().length < 3 || username.trim().length > 32) {
-      setErrorMessage('Username must be between 3 and 32 characters.')
+    const usernameValidationError = validateUsername(normalizedUsername)
+    if (usernameValidationError) {
+      setErrorMessage(usernameValidationError)
       return
     }
 
-    if (!usernamePattern.test(username.trim())) {
-      setErrorMessage('Username may contain only letters, numbers, underscores, and hyphens.')
-      return
-    }
-
-    if (password !== confirmPassword) {
+    if (normalizedPassword !== normalizedConfirmPassword) {
       setErrorMessage('Passwords do not match.')
       return
     }
@@ -63,27 +76,21 @@ export function RegisterPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: username.trim(),
-          displayName: displayName.trim(),
-          email: email.trim(),
-          password: password.trim(),
-        }),
+          username: normalizedUsername,
+          displayName: normalizedDisplayName,
+          email: normalizedEmail,
+          password: normalizedPassword,
+        } satisfies RegisterRequest),
       })
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as RegisterErrorResponse | null
+        const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
         setErrorMessage(errorData?.message ?? 'Registration failed. Please try again.')
         return
       }
 
-      const data = (await response.json()) as RegisterSuccessResponse
-      window.localStorage.setItem(
-        'auth_user',
-        JSON.stringify({
-          displayName: data.displayName,
-          username: data.username,
-        }),
-      )
+      const data = (await response.json()) as RegisterResponse
+      persistAuthSession(toAuthSession(data))
       navigate('/')
     } catch {
       setErrorMessage('Unable to reach the server. Please start the backend service.')
@@ -135,7 +142,7 @@ export function RegisterPage() {
                       value={username}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter a unique username"
-                      onChange={(event) => setUsername(event.target.value)}
+                      onChange={(event) => setUsername(createUsername(event.target.value))}
                     />
                   </div>
                 </div>
@@ -152,7 +159,7 @@ export function RegisterPage() {
                       value={displayName}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter the display name"
-                      onChange={(event) => setDisplayName(event.target.value)}
+                      onChange={(event) => setDisplayName(createDisplayName(event.target.value))}
                     />
                   </div>
                 </div>
@@ -170,7 +177,7 @@ export function RegisterPage() {
                       value={email}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter your email"
-                      onChange={(event) => setEmail(event.target.value)}
+                      onChange={(event) => setEmail(createEmailAddress(event.target.value))}
                     />
                   </div>
                 </div>
@@ -185,11 +192,11 @@ export function RegisterPage() {
                       <Input
                         id="register-password"
                         type="password"
-                        autoComplete="new-password"
-                        value={password}
+                      autoComplete="new-password"
+                      value={password}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                         placeholder="Enter a password"
-                        onChange={(event) => setPassword(event.target.value)}
+                      onChange={(event) => setPassword(createPlaintextPassword(event.target.value))}
                       />
                     </div>
                   </div>
@@ -203,11 +210,11 @@ export function RegisterPage() {
                       <Input
                         id="register-password-repeat"
                         type="password"
-                        autoComplete="new-password"
-                        value={confirmPassword}
+                      autoComplete="new-password"
+                      value={confirmPassword}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                         placeholder="Repeat the password"
-                        onChange={(event) => setConfirmPassword(event.target.value)}
+                      onChange={(event) => setConfirmPassword(createPlaintextPassword(event.target.value))}
                       />
                     </div>
                   </div>

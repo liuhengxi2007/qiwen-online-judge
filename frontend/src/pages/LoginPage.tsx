@@ -7,27 +7,34 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-type LoginSuccessResponse = {
-  displayName: string
-  username: string
-}
-
-type LoginErrorResponse = {
-  message: string
-}
+import {
+  createPlaintextPassword,
+  createUsername,
+  normalizePlaintextPassword,
+  normalizeUsername,
+  persistAuthSession,
+  plaintextPasswordValue,
+  toAuthSession,
+  usernameValue,
+  type ErrorResponse,
+  type LoginRequest,
+  type LoginResponse,
+} from '@/domain/auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('password123')
+  const [username, setUsername] = useState(createUsername('admin'))
+  const [password, setPassword] = useState(createPlaintextPassword('password123'))
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!username.trim() || !password.trim()) {
+    const normalizedUsername = normalizeUsername(username)
+    const normalizedPassword = normalizePlaintextPassword(password)
+
+    if (!usernameValue(normalizedUsername) || !plaintextPasswordValue(normalizedPassword)) {
       setErrorMessage('Please enter both username and password.')
       return
     }
@@ -42,25 +49,19 @@ export function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: username.trim(),
-          password: password.trim(),
-        }),
+          username: normalizedUsername,
+          password: normalizedPassword,
+        } satisfies LoginRequest),
       })
 
       if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as LoginErrorResponse | null
+        const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
         setErrorMessage(errorData?.message ?? 'Login failed. Please try again.')
         return
       }
 
-      const data = (await response.json()) as LoginSuccessResponse
-      window.localStorage.setItem(
-        'auth_user',
-        JSON.stringify({
-          displayName: data.displayName,
-          username: data.username,
-        }),
-      )
+      const data = (await response.json()) as LoginResponse
+      persistAuthSession(toAuthSession(data))
       navigate('/')
     } catch {
       setErrorMessage('Unable to reach the server. Please start the backend service.')
@@ -122,7 +123,7 @@ export function LoginPage() {
                       value={username}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
                       placeholder="Enter your username"
-                      onChange={(event) => setUsername(event.target.value)}
+                      onChange={(event) => setUsername(createUsername(event.target.value))}
                     />
                   </div>
                 </div>
@@ -140,7 +141,7 @@ export function LoginPage() {
                       value={password}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
                       placeholder="Enter your password"
-                      onChange={(event) => setPassword(event.target.value)}
+                      onChange={(event) => setPassword(createPlaintextPassword(event.target.value))}
                     />
                   </div>
                 </div>
