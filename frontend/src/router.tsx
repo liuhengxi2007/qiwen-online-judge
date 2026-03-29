@@ -1,11 +1,11 @@
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
-import { DashboardPage } from '@/pages/DashboardPage'
-import { LoginPage } from '@/pages/LoginPage'
-import { SiteManagePage } from '@/pages/SiteManagePage'
-import { UserSettingsPage } from '@/pages/UserSettingsPage'
-import { useAuthStore } from '@/stores/use-auth-store'
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
+import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
+import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
+import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 
 function RootRedirect() {
   const session = useAuthStore((state) => state.session)
