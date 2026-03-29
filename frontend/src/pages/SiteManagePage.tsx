@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, LogOut, Settings2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -12,99 +11,26 @@ import {
   emailAddressValue,
   usernameValue,
   type AuthUserListItem,
-  type SiteManagerSession,
-  type UpdateUserPermissionsRequest,
 } from '@/domain/auth'
+import { useSiteManageModel } from '@/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/hooks/use-session-guard'
-import { AuthClientError, listUsers, updateUserPermissions } from '@/lib/auth-client'
 
 export function SiteManagePage() {
-  const navigate = useNavigate()
   const { session: user, siteManagerSession, signOut } = useSessionGuard({ requireSiteManager: true })
-  const [users, setUsers] = useState<AuthUserListItem[]>([])
-  const [userListError, setUserListError] = useState('')
-  const [statusMessage, setStatusMessage] = useState('')
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-  const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
+  const {
+    users,
+    userListError,
+    statusMessage,
+    isLoadingUsers,
+    updatingUsername,
+    savePermissions,
+  } = useSiteManageModel(Boolean(siteManagerSession))
 
   if (!user) {
     return <Navigate replace to="/login" />
   }
 
   const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username).toLowerCase() === 'admin'
-
-  useEffect(() => {
-    if (!siteManagerSession) {
-      navigate('/')
-      return
-    }
-
-    let isCancelled = false
-
-    const loadUsers = async () => {
-      setIsLoadingUsers(true)
-      setUserListError('')
-      setStatusMessage('')
-
-      try {
-        const data = await listUsers()
-
-        if (!isCancelled) {
-          setUsers(data)
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          if (error instanceof AuthClientError && error.kind === 'forbidden') {
-            navigate('/?notice=site-manage-denied', { replace: true })
-          } else {
-            setUserListError('Unable to load the user list.')
-          }
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoadingUsers(false)
-        }
-      }
-    }
-
-    void loadUsers()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [navigate, siteManagerSession])
-
-  const updatePermissions = async (
-    actor: SiteManagerSession,
-    listedUser: AuthUserListItem,
-    nextPermissions: UpdateUserPermissionsRequest,
-  ) => {
-    void actor
-    const targetUsername = usernameValue(listedUser.username)
-    setUpdatingUsername(targetUsername)
-    setUserListError('')
-    setStatusMessage('')
-
-    try {
-      const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
-
-      setUsers((currentUsers) =>
-        currentUsers.map((currentUser) =>
-          usernameValue(currentUser.username) === usernameValue(updatedUser.username) ? updatedUser : currentUser,
-        ),
-      )
-      setStatusMessage(`Permissions updated for ${usernameValue(updatedUser.username)}.`)
-    } catch (error) {
-      if (error instanceof AuthClientError && error.kind === 'forbidden') {
-        navigate('/?notice=site-manage-denied', { replace: true })
-      } else {
-        setUserListError('Unable to update user permissions.')
-      }
-    } finally {
-      setUpdatingUsername(null)
-    }
-  }
-
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#f4efe5_100%)] px-6 py-12 sm:px-8">
       <section className="mx-auto max-w-6xl">
@@ -213,7 +139,7 @@ export function SiteManagePage() {
                           aria-label="Site manager"
                           onCheckedChange={(checked) => {
                             if (siteManagerSession) {
-                              void updatePermissions(siteManagerSession, listedUser, {
+                              void savePermissions(listedUser, {
                                 siteManager: checked === true,
                                 problemManager: listedUser.problemManager,
                               })
@@ -230,7 +156,7 @@ export function SiteManagePage() {
                           aria-label="Problem manager"
                           onCheckedChange={(checked) => {
                             if (siteManagerSession) {
-                              void updatePermissions(siteManagerSession, listedUser, {
+                              void savePermissions(listedUser, {
                                 siteManager: listedUser.siteManager,
                                 problemManager: checked === true,
                               })

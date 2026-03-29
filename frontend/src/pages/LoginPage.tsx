@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import type { FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -7,23 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  parsePlaintextPassword,
-  parseUsername,
-  toAuthSession,
-  type LoginRequest,
-} from '@/domain/auth'
-import { login } from '@/lib/auth-client'
-import { useAuthStore } from '@/stores/use-auth-store'
+import { useLoginModel } from '@/hooks/use-login-model'
 
 export function LoginPage() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const setSession = useAuthStore((state) => state.setSession)
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('password123')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { username, password, errorMessage, isSubmitting, setUsername, setPassword, submit } = useLoginModel()
 
   const notice = searchParams.get('notice')
   const noticeMessage =
@@ -35,35 +23,7 @@ export function LoginPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    const usernameResult = parseUsername(username)
-    if (!usernameResult.ok) {
-      setErrorMessage(usernameResult.error)
-      return
-    }
-
-    const passwordResult = parsePlaintextPassword(password)
-    if (!passwordResult.ok) {
-      setErrorMessage(passwordResult.error)
-      return
-    }
-
-    setIsSubmitting(true)
-    setErrorMessage('')
-
-    try {
-      const data = await login({
-        username: usernameResult.value,
-        password: passwordResult.value,
-      } satisfies LoginRequest)
-      setSession(toAuthSession(data))
-      navigate('/')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to reach the server. Please start the backend service.'
-      setErrorMessage(message)
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submit()
   }
 
   return (

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, LockKeyhole, LogOut, Settings, ShieldCheck } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -9,40 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  asSiteManagerSession,
   displayNameValue,
-  emailAddressValue,
-  parseDisplayName,
-  parseEmailAddress,
-  parsePlaintextPassword,
-  toAuthSession,
   usernameValue,
-  type SessionResponse,
-  type UpdateManagedUserSettingsRequest,
-  type UpdateOwnSettingsRequest,
 } from '@/domain/auth'
 import { useSessionGuard } from '@/hooks/use-session-guard'
-import {
-  AuthClientError,
-  getUserSettings,
-  updateManagedUserSettings,
-  updateOwnUserSettings,
-} from '@/lib/auth-client'
+import { useUserSettingsModel } from '@/hooks/use-user-settings-model'
 
 export function UserSettingsPage() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, setSession: setViewer, signOut } = useSessionGuard()
-  const [editedUser, setEditedUser] = useState<SessionResponse | null>(null)
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmNewPassword, setConfirmNewPassword] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'route-corrected'
@@ -53,182 +28,29 @@ export function UserSettingsPage() {
     return <Navigate replace to="/login" />
   }
 
-  const viewerUsername = usernameValue(viewer.username)
-  const siteManagerViewer = asSiteManagerSession(viewer)
-  const targetUsername = routeUsername?.trim() || viewerUsername
-  const isEditingOwnSettings = targetUsername.toLowerCase() === viewerUsername.toLowerCase()
-  const canManageTarget = isEditingOwnSettings || Boolean(siteManagerViewer)
-  const displayedUser = isEditingOwnSettings ? viewer : editedUser
-
-  useEffect(() => {
-    if (!routeUsername && !siteManagerViewer) {
-      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
-      return
-    }
-
-    if (routeUsername && !siteManagerViewer && routeUsername.toLowerCase() !== viewerUsername.toLowerCase()) {
-      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
-      return
-    }
-
-    if (routeUsername && !canManageTarget) {
-      navigate('/?notice=site-manage-denied', { replace: true })
-    }
-  }, [canManageTarget, navigate, routeUsername, siteManagerViewer, viewerUsername])
-
-  useEffect(() => {
-    let isCancelled = false
-
-    const loadTargetSettings = async () => {
-      if (!canManageTarget) {
-        return
-      }
-
-      setEditedUser(isEditingOwnSettings ? viewer : null)
-      setDisplayName('')
-      setEmail('')
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmNewPassword('')
-      setErrorMessage('')
-      setSuccessMessage('')
-
-      try {
-        const session = await getUserSettings(targetUsername)
-
-        if (!isCancelled) {
-          setEditedUser(session)
-          setDisplayName(displayNameValue(session.displayName))
-          setEmail(emailAddressValue(session.email))
-          setErrorMessage('')
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          if (error instanceof AuthClientError && error.kind === 'forbidden') {
-            navigate('/?notice=site-manage-denied', { replace: true })
-          } else if (error instanceof AuthClientError && error.kind === 'not-found') {
-            setErrorMessage('User not found.')
-            setSuccessMessage('')
-          } else {
-            setErrorMessage('Unable to load settings.')
-            setSuccessMessage('')
-          }
-        }
-      }
-    }
-
-    void loadTargetSettings()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [canManageTarget, navigate, targetUsername])
-
-  const handleSubmit = async () => {
-    if (!displayedUser) {
-      setErrorMessage('Unable to load settings.')
-      setSuccessMessage('')
-      return
-    }
-
-    const displayNameResult = parseDisplayName(displayName)
-    if (!displayNameResult.ok) {
-      setErrorMessage(displayNameResult.error)
-      setSuccessMessage('')
-      return
-    }
-
-    const emailResult = parseEmailAddress(email)
-    if (!emailResult.ok) {
-      setErrorMessage(emailResult.error)
-      setSuccessMessage('')
-      return
-    }
-
-    const currentPasswordResult =
-      isEditingOwnSettings || currentPassword.trim()
-        ? parsePlaintextPassword(currentPassword)
-        : null
-
-    if (isEditingOwnSettings && (!currentPasswordResult || !currentPasswordResult.ok)) {
-      setErrorMessage(currentPasswordResult?.error ?? 'Password is required.')
-      setSuccessMessage('')
-      return
-    }
-
-    const newPasswordResult = newPassword.trim() ? parsePlaintextPassword(newPassword) : null
-    if (newPasswordResult && !newPasswordResult.ok) {
-      setErrorMessage(newPasswordResult.error)
-      setSuccessMessage('')
-      return
-    }
-
-    const confirmNewPasswordResult = confirmNewPassword.trim() ? parsePlaintextPassword(confirmNewPassword) : null
-    if (confirmNewPasswordResult && !confirmNewPasswordResult.ok) {
-      setErrorMessage(confirmNewPasswordResult.error)
-      setSuccessMessage('')
-      return
-    }
-
-    if (newPasswordResult || confirmNewPasswordResult) {
-      if (!newPasswordResult || !confirmNewPasswordResult || newPasswordResult.value !== confirmNewPasswordResult.value) {
-        setErrorMessage('New passwords do not match.')
-        setSuccessMessage('')
-        return
-      }
-    }
-
-    const currentPasswordValue =
-      currentPasswordResult && currentPasswordResult.ok ? currentPasswordResult.value : null
-
-    setIsSubmitting(true)
-    setErrorMessage('')
-    setSuccessMessage('')
-
-    try {
-      const updatedSession = isEditingOwnSettings
-        ? await updateOwnUserSettings(
-            targetUsername,
-            {
-              displayName: displayNameResult.value,
-              email: emailResult.value,
-              currentPassword: currentPasswordValue!,
-              newPassword: newPasswordResult ? newPasswordResult.value : null,
-            } satisfies UpdateOwnSettingsRequest,
-          )
-        : await updateManagedUserSettings(
-            targetUsername,
-            {
-              displayName: displayNameResult.value,
-              email: emailResult.value,
-              newPassword: newPasswordResult ? newPasswordResult.value : null,
-            } satisfies UpdateManagedUserSettingsRequest,
-          )
-
-      setEditedUser(updatedSession)
-      if (isEditingOwnSettings) {
-        setViewer(toAuthSession(updatedSession))
-      }
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmNewPassword('')
-      setSuccessMessage(
-        isEditingOwnSettings
-          ? 'Settings updated successfully.'
-          : `Settings updated for ${usernameValue(updatedSession.username)}.`,
-      )
-    } catch (error) {
-      if (error instanceof AuthClientError && error.kind === 'forbidden') {
-        navigate('/?notice=site-manage-denied', { replace: true })
-      } else if (error instanceof AuthClientError && error.kind === 'unauthorized') {
-        setErrorMessage(error.message || (isEditingOwnSettings ? 'Current password is incorrect.' : 'Unable to update settings.'))
-      } else {
-        setErrorMessage('Unable to update settings.')
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const {
+    displayedUser,
+    displayName,
+    email,
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+    errorMessage,
+    successMessage,
+    isSubmitting,
+    isEditingOwnSettings,
+    targetUsername,
+    setDisplayName,
+    setEmail,
+    setCurrentPassword,
+    setNewPassword,
+    setConfirmNewPassword,
+    submit,
+  } = useUserSettingsModel({
+    viewer,
+    routeUsername,
+    setViewer,
+  })
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">
@@ -387,7 +209,7 @@ export function UserSettingsPage() {
                 disabled={isSubmitting || !displayedUser}
                 className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                 onClick={() => {
-                  void handleSubmit()
+                  void submit()
                 }}
               >
                 {isSubmitting ? 'Saving settings...' : 'Save settings'}

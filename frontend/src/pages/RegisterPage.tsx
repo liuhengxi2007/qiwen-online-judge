@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { AtSign, IdCard, LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -7,84 +7,28 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  parseDisplayName,
-  parseEmailAddress,
-  parsePlaintextPassword,
-  parseUsername,
-  toAuthSession,
-  type RegisterRequest,
-} from '@/domain/auth'
-import { register } from '@/lib/auth-client'
-import { useAuthStore } from '@/stores/use-auth-store'
+import { useRegisterModel } from '@/hooks/use-register-model'
 
 export function RegisterPage() {
-  const navigate = useNavigate()
-  const setSession = useAuthStore((state) => state.setSession)
-  const [username, setUsername] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const {
+    username,
+    displayName,
+    email,
+    password,
+    confirmPassword,
+    errorMessage,
+    isSubmitting,
+    setUsername,
+    setDisplayName,
+    setEmail,
+    setPassword,
+    setConfirmPassword,
+    submit,
+  } = useRegisterModel()
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    const usernameResult = parseUsername(username)
-    if (!usernameResult.ok) {
-      setErrorMessage(usernameResult.error)
-      return
-    }
-
-    const displayNameResult = parseDisplayName(displayName)
-    if (!displayNameResult.ok) {
-      setErrorMessage(displayNameResult.error)
-      return
-    }
-
-    const emailResult = parseEmailAddress(email)
-    if (!emailResult.ok) {
-      setErrorMessage(emailResult.error)
-      return
-    }
-
-    const passwordResult = parsePlaintextPassword(password)
-    if (!passwordResult.ok) {
-      setErrorMessage(passwordResult.error)
-      return
-    }
-
-    const confirmPasswordResult = parsePlaintextPassword(confirmPassword)
-    if (!confirmPasswordResult.ok) {
-      setErrorMessage(confirmPasswordResult.error)
-      return
-    }
-
-    if (passwordResult.value !== confirmPasswordResult.value) {
-      setErrorMessage('Passwords do not match.')
-      return
-    }
-
-    setIsSubmitting(true)
-    setErrorMessage('')
-
-    try {
-      const data = await register({
-        username: usernameResult.value,
-        displayName: displayNameResult.value,
-        email: emailResult.value,
-        password: passwordResult.value,
-      } satisfies RegisterRequest)
-      setSession(toAuthSession(data))
-      navigate('/')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to reach the server. Please start the backend service.'
-      setErrorMessage(message)
-    } finally {
-      setIsSubmitting(false)
-    }
+    await submit()
   }
 
   return (
