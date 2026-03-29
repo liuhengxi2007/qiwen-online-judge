@@ -60,7 +60,7 @@ export type UpdateUserPermissionsRequest = {
 export type UpdateOwnSettingsRequest = {
   displayName: DisplayName
   email: EmailAddress
-  currentPassword: PlaintextPassword
+  currentPassword: PlaintextPassword | null
   newPassword: PlaintextPassword | null
 }
 

@@ -302,9 +302,9 @@ object AuthUserTable:
       finally statement.close()
     }
 
-  def updateOwnSettings(
+  def updateSettings(
     connection: Connection,
-    actor: AuthUser,
+    username: Username,
     displayName: DisplayName,
     email: EmailAddress,
     passwordHash: PasswordHash
@@ -315,7 +315,7 @@ object AuthUserTable:
         statement.setString(1, displayName.value.trim)
         statement.setString(2, email.value.trim)
         statement.setString(3, passwordHash.value)
-        statement.setString(4, actor.username.value.trim)
+        statement.setString(4, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try

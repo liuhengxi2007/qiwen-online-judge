@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -23,10 +23,19 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [username, setUsername] = useState(createUsername('admin'))
   const [password, setPassword] = useState(createPlaintextPassword('password123'))
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const notice = searchParams.get('notice')
+  const noticeMessage =
+    notice === 'session-expired'
+      ? 'Your session expired. Sign in again to continue.'
+      : notice === 'signed-out'
+        ? 'You have been signed out.'
+        : null
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -148,6 +157,11 @@ export function LoginPage() {
                 </div>
 
                 <div className="min-h-14">
+                  {noticeMessage ? (
+                    <Alert className="mb-3 rounded-2xl border-sky-200 bg-sky-50/95">
+                      <AlertDescription className="text-sky-700">{noticeMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
                   {errorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
                       <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>

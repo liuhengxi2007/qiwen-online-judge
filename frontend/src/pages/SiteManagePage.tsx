@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, LogOut, Settings2 } from 'lucide-react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -25,6 +26,7 @@ export function SiteManagePage() {
   const [user, setUser] = useState(readAuthSession())
   const [users, setUsers] = useState<AuthUserListItem[]>([])
   const [userListError, setUserListError] = useState('')
+  const [statusMessage, setStatusMessage] = useState('')
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
   const siteManagerUser = user ? asSiteManagerSession(user) : null
@@ -48,7 +50,7 @@ export function SiteManagePage() {
           if (!isCancelled) {
             clearAuthSession()
             setUser(null)
-            navigate('/login')
+            navigate('/login?notice=session-expired')
           }
           return
         }
@@ -64,14 +66,14 @@ export function SiteManagePage() {
           setUser(session)
 
           if (!asSiteManagerSession(session)) {
-            navigate('/')
+            navigate('/?notice=site-manage-denied', { replace: true })
           }
         }
       } catch {
         if (!isCancelled) {
           clearAuthSession()
           setUser(null)
-          navigate('/login')
+          navigate('/login?notice=session-expired')
         }
       }
     }
@@ -94,6 +96,7 @@ export function SiteManagePage() {
     const loadUsers = async () => {
       setIsLoadingUsers(true)
       setUserListError('')
+      setStatusMessage('')
 
       try {
         const response = await fetch('/api/auth/users', {
@@ -104,14 +107,14 @@ export function SiteManagePage() {
           if (!isCancelled) {
             clearAuthSession()
             setUser(null)
-            navigate('/login')
+            navigate('/login?notice=session-expired')
           }
           return
         }
 
         if (response.status === 403) {
           if (!isCancelled) {
-            navigate('/')
+            navigate('/?notice=site-manage-denied', { replace: true })
           }
           return
         }
@@ -152,6 +155,7 @@ export function SiteManagePage() {
     const targetUsername = usernameValue(listedUser.username)
     setUpdatingUsername(targetUsername)
     setUserListError('')
+    setStatusMessage('')
 
     try {
       const response = await fetch(`/api/auth/users/${encodeURIComponent(targetUsername)}/permissions`, {
@@ -166,12 +170,12 @@ export function SiteManagePage() {
       if (response.status === 401) {
         clearAuthSession()
         setUser(null)
-        navigate('/login')
+        navigate('/login?notice=session-expired')
         return
       }
 
       if (response.status === 403) {
-        navigate('/')
+        navigate('/?notice=site-manage-denied', { replace: true })
         return
       }
 
@@ -186,6 +190,7 @@ export function SiteManagePage() {
           usernameValue(currentUser.username) === usernameValue(updatedUser.username) ? updatedUser : currentUser,
         ),
       )
+      setStatusMessage(`Permissions updated for ${usernameValue(updatedUser.username)}.`)
     } catch {
       setUserListError('Unable to update user permissions.')
     } finally {
@@ -250,9 +255,28 @@ export function SiteManagePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {userListError ? <p className="text-sm text-rose-600">{userListError}</p> : null}
+            {statusMessage ? (
+              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                <AlertDescription className="text-emerald-700">{statusMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {userListError ? (
+              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                <AlertDescription className="text-rose-700">{userListError}</AlertDescription>
+              </Alert>
+            ) : null}
             {isLoadingUsers ? (
               <p className="text-sm text-stone-500">Loading users...</p>
+            ) : users.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center">
+                <p className="text-base font-medium text-stone-900">No users are available yet.</p>
+                <p className="mt-2 text-sm leading-7 text-stone-600">
+                  This management flow is still valid: the empty state is explicit, and you can return to the dashboard.
+                </p>
+                <Button asChild variant="outline" className="mt-5 rounded-full border-stone-300 bg-white">
+                  <Link to="/">Back to Dashboard</Link>
+                </Button>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -260,6 +284,7 @@ export function SiteManagePage() {
                     <TableHead>Username</TableHead>
                     <TableHead>Display name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Settings</TableHead>
                     <TableHead>Site manager</TableHead>
                     <TableHead>Problem manager</TableHead>
                   </TableRow>
@@ -272,6 +297,13 @@ export function SiteManagePage() {
                       </TableCell>
                       <TableCell>{displayNameValue(listedUser.displayName)}</TableCell>
                       <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
+                      <TableCell>
+                        <Button asChild variant="outline" size="sm" className="rounded-full border-stone-300 bg-white">
+                          <Link to={`/user/${usernameValue(listedUser.username)}/settings`}>
+                            Open settings
+                          </Link>
+                        </Button>
+                      </TableCell>
                       <TableCell>
                         <Checkbox
                           checked={listedUser.siteManager}

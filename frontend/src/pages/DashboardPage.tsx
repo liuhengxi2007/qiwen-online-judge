@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -16,8 +17,16 @@ import {
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [user, setUser] = useState(readAuthSession())
   const siteManagerUser = user ? asSiteManagerSession(user) : null
+  const notice = searchParams.get('notice')
+  const noticeMessage =
+    notice === 'site-manage-denied'
+      ? 'Site management is available only to accounts with the site manager permission.'
+      : notice === 'settings-route-corrected'
+        ? 'The settings route was corrected to match your signed-in username.'
+        : null
 
   if (!user) {
     return <Navigate replace to="/login" />
@@ -36,7 +45,7 @@ export function DashboardPage() {
           if (!isCancelled) {
             clearAuthSession()
             setUser(null)
-            navigate('/login')
+            navigate('/login?notice=session-expired')
           }
           return
         }
@@ -55,7 +64,7 @@ export function DashboardPage() {
         if (!isCancelled) {
           clearAuthSession()
           setUser(null)
-          navigate('/login')
+          navigate('/login?notice=session-expired')
         }
       }
     }
@@ -96,6 +105,12 @@ export function DashboardPage() {
             Sign out
           </Button>
         </div>
+
+        {noticeMessage ? (
+          <Alert className="mb-8 rounded-3xl border-sky-200 bg-sky-50 text-sky-800">
+            <AlertDescription>{noticeMessage}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
@@ -165,7 +180,7 @@ export function DashboardPage() {
               <p className="text-sm leading-7 text-slate-600">
                 Open your dedicated settings page under the username-scoped route.
               </p>
-              <Button asChild className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
+              <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
                 <Link to={`/user/${usernameValue(user.username)}/settings`}>Open User Settings</Link>
               </Button>
             </CardContent>
@@ -190,7 +205,7 @@ export function DashboardPage() {
                 <p className="text-sm leading-7 text-slate-600">
                   User management has moved out of the dashboard into its own route.
                 </p>
-                <Button asChild className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
+                <Button asChild className="rounded-2xl bg-amber-500 text-stone-950 hover:bg-amber-400">
                   <Link to="/site-manage">Open Site Management</Link>
                 </Button>
               </CardContent>

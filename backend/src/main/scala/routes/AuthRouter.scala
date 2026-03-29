@@ -98,18 +98,19 @@ object AuthRouter:
           case None => forbiddenResponse
       }
 
+    def userSettingsResponse(user: AuthUser): SessionResponse =
+      SessionResponse(
+        displayName = user.displayName,
+        username = user.username,
+        email = user.email,
+        siteManager = user.siteManager,
+        problemManager = user.problemManager
+      )
+
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "auth" / "session" =>
         withAuthenticatedUser(request) { user =>
-          Ok(
-            SessionResponse(
-              displayName = user.displayName,
-              username = user.username,
-              email = user.email,
-              siteManager = user.siteManager,
-              problemManager = user.problemManager
-            ).asJson
-          )
+          Ok(userSettingsResponse(user).asJson)
         }
 
       case request @ POST -> Root / "api" / "auth" / "logout" =>
@@ -128,6 +129,22 @@ object AuthRouter:
             )
             response <- Ok(users.asJson)
           yield response
+        }
+
+      case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
+        withAuthenticatedUser(request) { authenticatedActor =>
+          val canAccessTarget =
+            targetUsername.equalsIgnoreCase(authenticatedActor.username.value) || authenticatedActor.siteManager
+
+          if !canAccessTarget then
+            forbiddenResponse
+          else
+            databaseSession.withTransactionConnection(connection =>
+              AuthUserTable.findByUsername(connection, Username(targetUsername))
+            ).flatMap {
+              case Some(targetUser) => Ok(userSettingsResponse(targetUser).asJson)
+              case None => NotFound(ErrorResponse("User not found.").asJson)
+            }
         }
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "permissions" =>
@@ -164,43 +181,55 @@ object AuthRouter:
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
         withAuthenticatedUser(request) { authenticatedActor =>
-          if !targetUsername.equalsIgnoreCase(authenticatedActor.username.value) then
+          val isOwnSettings = targetUsername.equalsIgnoreCase(authenticatedActor.username.value)
+          val isSiteManagerEditingAnother = authenticatedActor.siteManager && !isOwnSettings
+
+          if !isOwnSettings && !isSiteManagerEditingAnother then
             forbiddenResponse
           else
             for
               updateRequest <- request.as[UpdateOwnSettingsRequest]
-              passwordMatches <- PasswordHasher.verifyPassword(updateRequest.currentPassword, authenticatedActor.passwordHash)
+              targetUser <- databaseSession.withTransactionConnection(connection =>
+                AuthUserTable.findByUsername(connection, Username(targetUsername))
+              )
               response <-
-                if !passwordMatches then
-                  invalidCurrentPasswordResponse
-                else
-                  for
-                    nextPasswordHash <- updateRequest.newPassword match
-                      case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
-                      case None => IO.pure(authenticatedActor.passwordHash)
-                    updatedUser <- databaseSession.withTransactionConnection(connection =>
-                      AuthUserTable.updateOwnSettings(
-                        connection,
-                        authenticatedActor,
-                        displayName = updateRequest.displayName,
-                        email = updateRequest.email,
-                        passwordHash = nextPasswordHash
-                      )
-                    )
-                    result <- updatedUser match
-                      case Some(user) =>
-                        Ok(
-                          SessionResponse(
-                            displayName = user.displayName,
-                            username = user.username,
-                            email = user.email,
-                            siteManager = user.siteManager,
-                            problemManager = user.problemManager
-                          ).asJson
-                        )
-                      case None =>
-                        NotFound(ErrorResponse("User not found.").asJson)
-                  yield result
+                targetUser match
+                  case None =>
+                    NotFound(ErrorResponse("User not found.").asJson)
+                  case Some(foundTargetUser) =>
+                    for
+                      passwordMatches <- if isOwnSettings then
+                        updateRequest.currentPassword match
+                          case Some(currentPassword) =>
+                            PasswordHasher.verifyPassword(currentPassword, authenticatedActor.passwordHash)
+                          case None =>
+                            IO.pure(false)
+                      else
+                        IO.pure(true)
+                      result <-
+                        if !passwordMatches then
+                          invalidCurrentPasswordResponse
+                        else
+                          for
+                            nextPasswordHash <- updateRequest.newPassword match
+                              case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
+                              case None => IO.pure(foundTargetUser.passwordHash)
+                            updatedUser <- databaseSession.withTransactionConnection(connection =>
+                              AuthUserTable.updateSettings(
+                                connection,
+                                foundTargetUser.username,
+                                displayName = updateRequest.displayName,
+                                email = updateRequest.email,
+                                passwordHash = nextPasswordHash
+                              )
+                            )
+                            updatedResponse <- updatedUser match
+                              case Some(user) =>
+                                Ok(userSettingsResponse(user).asJson)
+                              case None =>
+                                NotFound(ErrorResponse("User not found.").asJson)
+                          yield updatedResponse
+                    yield result
             yield response
         }
 

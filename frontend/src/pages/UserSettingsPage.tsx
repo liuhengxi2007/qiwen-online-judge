@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, LockKeyhole, LogOut, Settings, ShieldCheck } from 'lucide-react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  asSiteManagerSession,
   clearAuthSession,
   createDisplayName,
   createEmailAddress,
@@ -29,8 +31,10 @@ import {
 
 export function UserSettingsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
-  const [user, setUser] = useState(readAuthSession())
+  const [viewer, setViewer] = useState(readAuthSession())
+  const [editedUser, setEditedUser] = useState<SessionResponse | null>(null)
   const [displayName, setDisplayName] = useState(createDisplayName(''))
   const [email, setEmail] = useState(createEmailAddress(''))
   const [currentPassword, setCurrentPassword] = useState(createPlaintextPassword(''))
@@ -39,10 +43,22 @@ export function UserSettingsPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const notice = searchParams.get('notice')
+  const noticeMessage =
+    notice === 'route-corrected'
+      ? 'The route was corrected to match your signed-in username.'
+      : null
 
-  if (!user) {
+  if (!viewer) {
     return <Navigate replace to="/login" />
   }
+
+  const viewerUsername = usernameValue(viewer.username)
+  const siteManagerViewer = asSiteManagerSession(viewer)
+  const targetUsername = routeUsername?.trim() || viewerUsername
+  const isEditingOwnSettings = targetUsername.toLowerCase() === viewerUsername.toLowerCase()
+  const canManageTarget = isEditingOwnSettings || Boolean(siteManagerViewer)
+  const displayedUser = editedUser ?? viewer
 
   useEffect(() => {
     let isCancelled = false
@@ -56,8 +72,8 @@ export function UserSettingsPage() {
         if (response.status === 401) {
           if (!isCancelled) {
             clearAuthSession()
-            setUser(null)
-            navigate('/login')
+            setViewer(null)
+            navigate('/login?notice=session-expired')
           }
           return
         }
@@ -70,15 +86,13 @@ export function UserSettingsPage() {
 
         if (!isCancelled) {
           persistAuthSession(session)
-          setUser(session)
-          setDisplayName(session.displayName)
-          setEmail(session.email)
+          setViewer(session)
         }
       } catch {
         if (!isCancelled) {
           clearAuthSession()
-          setUser(null)
-          navigate('/login')
+          setViewer(null)
+          navigate('/login?notice=session-expired')
         }
       }
     }
@@ -90,26 +104,85 @@ export function UserSettingsPage() {
     }
   }, [navigate])
 
-  const canonicalUsername = usernameValue(user.username)
-
   useEffect(() => {
-    setDisplayName(user.displayName)
-  }, [user.displayName])
-
-  useEffect(() => {
-    setEmail(user.email)
-  }, [user.email])
-
-  useEffect(() => {
-    if (!routeUsername) {
-      navigate(`/user/${canonicalUsername}/settings`, { replace: true })
+    if (!routeUsername && !siteManagerViewer) {
+      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
       return
     }
 
-    if (routeUsername.toLowerCase() !== canonicalUsername.toLowerCase()) {
-      navigate(`/user/${canonicalUsername}/settings`, { replace: true })
+    if (routeUsername && !siteManagerViewer && routeUsername.toLowerCase() !== viewerUsername.toLowerCase()) {
+      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
+      return
     }
-  }, [canonicalUsername, navigate, routeUsername])
+
+    if (routeUsername && !canManageTarget) {
+      navigate('/?notice=site-manage-denied', { replace: true })
+    }
+  }, [canManageTarget, navigate, routeUsername, siteManagerViewer, viewerUsername])
+
+  useEffect(() => {
+    let isCancelled = false
+
+    const loadTargetSettings = async () => {
+      if (!canManageTarget) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/auth/users/${encodeURIComponent(targetUsername)}/settings`, {
+          credentials: 'same-origin',
+        })
+
+        if (response.status === 401) {
+          if (!isCancelled) {
+            clearAuthSession()
+            setViewer(null)
+            navigate('/login?notice=session-expired')
+          }
+          return
+        }
+
+        if (response.status === 403) {
+          if (!isCancelled) {
+            navigate('/?notice=site-manage-denied', { replace: true })
+          }
+          return
+        }
+
+        if (response.status === 404) {
+          if (!isCancelled) {
+            setErrorMessage('User not found.')
+            setSuccessMessage('')
+          }
+          return
+        }
+
+        if (!response.ok) {
+          throw new Error('Unable to load settings.')
+        }
+
+        const session = (await response.json()) as SessionResponse
+
+        if (!isCancelled) {
+          setEditedUser(session)
+          setDisplayName(session.displayName)
+          setEmail(session.email)
+          setErrorMessage('')
+        }
+      } catch {
+        if (!isCancelled) {
+          setErrorMessage('Unable to load settings.')
+          setSuccessMessage('')
+        }
+      }
+    }
+
+    void loadTargetSettings()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [canManageTarget, navigate, targetUsername])
 
   const handleSubmit = async () => {
     const normalizedDisplayName = normalizeDisplayName(displayName)
@@ -124,7 +197,7 @@ export function UserSettingsPage() {
       return
     }
 
-    if (!plaintextPasswordValue(normalizedCurrentPassword)) {
+    if (isEditingOwnSettings && !plaintextPasswordValue(normalizedCurrentPassword)) {
       setErrorMessage('Please enter your current password to confirm changes.')
       setSuccessMessage('')
       return
@@ -146,7 +219,7 @@ export function UserSettingsPage() {
     setSuccessMessage('')
 
     try {
-      const response = await fetch(`/api/auth/users/${encodeURIComponent(canonicalUsername)}/settings`, {
+      const response = await fetch(`/api/auth/users/${encodeURIComponent(targetUsername)}/settings`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {
@@ -155,7 +228,7 @@ export function UserSettingsPage() {
         body: JSON.stringify({
           displayName: normalizedDisplayName,
           email: normalizedEmail,
-          currentPassword: normalizedCurrentPassword,
+          currentPassword: isEditingOwnSettings ? normalizedCurrentPassword : null,
           newPassword: plaintextPasswordValue(normalizedNewPassword) ? normalizedNewPassword : null,
         } satisfies UpdateOwnSettingsRequest),
       })
@@ -164,17 +237,17 @@ export function UserSettingsPage() {
         const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
         if (errorData?.message === 'Authentication required.') {
           clearAuthSession()
-          setUser(null)
-          navigate('/login')
+          setViewer(null)
+          navigate('/login?notice=session-expired')
           return
         }
 
-        setErrorMessage(errorData?.message ?? 'Current password is incorrect.')
+        setErrorMessage(errorData?.message ?? (isEditingOwnSettings ? 'Current password is incorrect.' : 'Unable to update settings.'))
         return
       }
 
       if (response.status === 403) {
-        navigate(`/user/${canonicalUsername}/settings`, { replace: true })
+        navigate('/?notice=site-manage-denied', { replace: true })
         return
       }
 
@@ -185,12 +258,19 @@ export function UserSettingsPage() {
       }
 
       const updatedSession = (await response.json()) as SessionResponse
-      persistAuthSession(toAuthSession(updatedSession))
-      setUser(updatedSession)
+      setEditedUser(updatedSession)
+      if (isEditingOwnSettings) {
+        persistAuthSession(toAuthSession(updatedSession))
+        setViewer(updatedSession)
+      }
       setCurrentPassword(createPlaintextPassword(''))
       setNewPassword(createPlaintextPassword(''))
       setConfirmNewPassword(createPlaintextPassword(''))
-      setSuccessMessage('Settings updated successfully.')
+      setSuccessMessage(
+        isEditingOwnSettings
+          ? 'Settings updated successfully.'
+          : `Settings updated for ${usernameValue(updatedSession.username)}.`,
+      )
     } catch {
       setErrorMessage('Unable to update settings.')
     } finally {
@@ -208,7 +288,9 @@ export function UserSettingsPage() {
               User Settings
             </h1>
             <p className="text-sm text-slate-600">
-              Manage settings for {displayNameValue(user.displayName)} ({canonicalUsername}).
+              {isEditingOwnSettings
+                ? `Manage settings for ${displayNameValue(displayedUser.displayName)} (${usernameValue(displayedUser.username)}).`
+                : `Site manager editing ${displayNameValue(displayedUser.displayName)} (${usernameValue(displayedUser.username)}).`}
             </p>
           </div>
 
@@ -229,8 +311,8 @@ export function UserSettingsPage() {
                   credentials: 'same-origin',
                 }).finally(() => {
                   clearAuthSession()
-                  setUser(null)
-                  navigate('/login')
+                  setViewer(null)
+                  navigate('/login?notice=signed-out')
                 })
               }}
             >
@@ -256,14 +338,21 @@ export function UserSettingsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
+              {noticeMessage ? (
+                <Alert className="rounded-2xl border-sky-200 bg-sky-50/95">
+                  <AlertDescription className="text-sky-700">{noticeMessage}</AlertDescription>
+                </Alert>
+              ) : null}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl bg-slate-50 p-5">
                   <p className="text-sm text-slate-500">Username</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{canonicalUsername}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{usernameValue(displayedUser.username)}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-5">
                   <p className="text-sm text-slate-500">Current route</p>
-                  <p className="mt-2 text-sm font-medium text-slate-900">/user/{canonicalUsername}/settings</p>
+                  <p className="mt-2 text-sm font-medium text-slate-900">
+                    /user/{usernameValue(displayedUser.username)}/settings
+                  </p>
                 </div>
               </div>
 
@@ -306,24 +395,38 @@ export function UserSettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="mb-3 flex items-center gap-2 text-slate-800">
-                  <LockKeyhole className="size-4" />
-                  <p className="font-medium">Confirm with current password</p>
+              {isEditingOwnSettings ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="mb-3 flex items-center gap-2 text-slate-800">
+                    <LockKeyhole className="size-4" />
+                    <p className="font-medium">Confirm with current password</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="settings-current-password">Current password</Label>
+                    <Input
+                      id="settings-current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(createPlaintextPassword(event.target.value))}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="settings-current-password">Current password</Label>
-                  <Input
-                    id="settings-current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(event) => setCurrentPassword(createPlaintextPassword(event.target.value))}
-                  />
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+                  As a site manager, you can update this user's profile directly. A current password is not required.
                 </div>
-              </div>
+              )}
 
-              {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
-              {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
+              {errorMessage ? (
+                <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                  <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+              {successMessage ? (
+                <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                  <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
+                </Alert>
+              ) : null}
 
               <Button
                 type="button"
@@ -358,14 +461,14 @@ export function UserSettingsPage() {
                   <p className="font-medium text-slate-900">Site manager</p>
                   <p className="text-sm text-slate-500">Access to site-level management pages.</p>
                 </div>
-                <Checkbox checked={user.siteManager} disabled aria-label="Site manager permission" />
+                <Checkbox checked={displayedUser.siteManager} disabled aria-label="Site manager permission" />
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4">
                 <div>
                   <p className="font-medium text-slate-900">Problem manager</p>
                   <p className="text-sm text-slate-500">Reserved for future problem administration tools.</p>
                 </div>
-                <Checkbox checked={user.problemManager} disabled aria-label="Problem manager permission" />
+                <Checkbox checked={displayedUser.problemManager} disabled aria-label="Problem manager permission" />
               </div>
             </CardContent>
           </Card>
