@@ -14,22 +14,17 @@ type SavePermissionsResult =
 export function useUserPermissionsMutation() {
   const replaceUser = useUserDirectoryStore((state) => state.replaceUser)
   const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [statusMessage, setStatusMessage] = useState('')
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
   const savePermissions = useCallback(
     async (targetUsername: string, nextPermissions: UpdateUserPermissionsRequest): Promise<SavePermissionsResult> => {
       setUpdatingUsername(targetUsername)
-      setErrorMessage('')
-      setStatusMessage('')
       setNavigationIntent(null)
 
       try {
         const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
         replaceUser(updatedUser)
         setUpdatingUsername(null)
-        setStatusMessage(`Permissions updated for ${targetUsername}.`)
         return { kind: 'updated', user: updatedUser }
       } catch (error) {
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
@@ -40,7 +35,6 @@ export function useUserPermissionsMutation() {
 
         const message = 'Unable to update user permissions.'
         setUpdatingUsername(null)
-        setErrorMessage(message)
         return { kind: 'failed', message }
       }
     },
@@ -49,8 +43,6 @@ export function useUserPermissionsMutation() {
 
   return {
     updatingUsername,
-    errorMessage,
-    statusMessage,
     navigationIntent,
     savePermissions,
   }

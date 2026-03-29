@@ -11,10 +11,12 @@ import {
   displayNameValue,
   usernameValue,
 } from '@/domain/auth'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useSessionGuard } from '@/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/hooks/use-user-settings-model'
 
 export function UserSettingsPage() {
+  usePageTitle('Qiwen Online Judge - User Settings')
   const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, setSession: setViewer, signOut, navigationIntent: guardNavigationIntent } =

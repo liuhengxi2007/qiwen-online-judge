@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLoginModel } from '@/hooks/use-login-model'
+import { usePageTitle } from '@/hooks/use-page-title'
 
 export function LoginPage() {
+  usePageTitle('Qiwen Online Judge - Sign In')
   const [searchParams] = useSearchParams()
   const { username, password, errorMessage, isSubmitting, navigationIntent, setUsername, setPassword, submit } =
     useLoginModel()
@@ -48,16 +50,6 @@ export function LoginPage() {
                 Sign in to manage the judge platform, review submissions, and access the
                 administrator workspace.
               </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl border border-white/75 bg-white/75 p-5 shadow-[0_20px_45px_rgba(120,53,15,0.08)] backdrop-blur">
-                <p className="text-sm font-medium text-stone-500">Demo account</p>
-                <p className="mt-2 text-lg font-semibold text-stone-900">admin</p>
-              </div>
-              <div className="rounded-3xl border border-white/75 bg-stone-950 p-5 text-stone-50 shadow-[0_20px_45px_rgba(28,25,23,0.24)]">
-                <p className="text-sm font-medium text-stone-300">Demo password</p>
-                <p className="mt-2 text-lg font-semibold">password123</p>
-              </div>
             </div>
           </div>
 

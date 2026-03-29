@@ -16,8 +16,8 @@ type LoginAction =
   | { type: 'validation_cleared' }
 
 const initialState: LoginState = {
-  username: 'admin',
-  password: 'password123',
+  username: '',
+  password: '',
   errorMessage: '',
 }
 

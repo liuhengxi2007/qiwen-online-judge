@@ -5,9 +5,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/domain/auth'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useSessionGuard } from '@/hooks/use-session-guard'
 
 export function DashboardPage() {
+  usePageTitle('Qiwen Online Judge')
   const [searchParams] = useSearchParams()
   const { session: user, siteManagerSession, signOut, navigationIntent } = useSessionGuard()
   const notice = searchParams.get('notice')

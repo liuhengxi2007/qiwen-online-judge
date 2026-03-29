@@ -34,15 +34,11 @@ type SubmitSettingsResult =
 export function useUserSettingsMutation() {
   const setEditedUser = useUserSettingsQueryStore((state) => state.setEditedUser)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
   const submitSettings = useCallback(
     async (params: SubmitSettingsParams): Promise<SubmitSettingsResult> => {
       setIsSubmitting(true)
-      setErrorMessage('')
-      setSuccessMessage('')
       setNavigationIntent(null)
 
       try {
@@ -62,7 +58,6 @@ export function useUserSettingsMutation() {
             : `Settings updated for ${updatedUser.username}.`
 
         setIsSubmitting(false)
-        setSuccessMessage(message)
         return { kind: 'updated', user: updatedUser, message }
       } catch (error) {
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
@@ -76,13 +71,11 @@ export function useUserSettingsMutation() {
             error.message ||
             (params.kind === 'own' ? 'Current password is incorrect.' : 'Unable to update settings.')
           setIsSubmitting(false)
-          setErrorMessage(message)
           return { kind: 'unauthorized', message }
         }
 
         const message = 'Unable to update settings.'
         setIsSubmitting(false)
-        setErrorMessage(message)
         return { kind: 'failed', message }
       }
     },
@@ -91,8 +84,6 @@ export function useUserSettingsMutation() {
 
   return {
     isSubmitting,
-    errorMessage,
-    successMessage,
     navigationIntent,
     submitSettings,
   }

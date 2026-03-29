@@ -12,10 +12,12 @@ import {
   usernameValue,
   type AuthUserListItem,
 } from '@/domain/auth'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useSiteManageModel } from '@/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/hooks/use-session-guard'
 
 export function SiteManagePage() {
+  usePageTitle('Qiwen Online Judge - Site Management')
   const { session: user, siteManagerSession, signOut, navigationIntent: guardNavigationIntent } =
     useSessionGuard({ requireSiteManager: true })
   const {
