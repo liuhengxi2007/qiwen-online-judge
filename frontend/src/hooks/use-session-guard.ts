@@ -1,8 +1,13 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
 
 import { asSiteManagerSession } from '@/domain/auth'
 import { AuthClientError, getSession, logout as logoutRequest } from '@/lib/auth-client'
+import type { NavigationIntent } from '@/lib/navigation-intent'
+import {
+  toSessionExpiredRedirect,
+  toSignedOutRedirect,
+  toSiteManageDeniedRedirect,
+} from '@/lib/route-policy'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 type UseSessionGuardOptions = {
@@ -10,10 +15,10 @@ type UseSessionGuardOptions = {
 }
 
 export function useSessionGuard(options: UseSessionGuardOptions = {}) {
-  const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const setSession = useAuthStore((state) => state.setSession)
   const clearSession = useAuthStore((state) => state.clearSession)
+  const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
   const siteManagerSession = session ? asSiteManagerSession(session) : null
 
   useEffect(() => {
@@ -30,7 +35,7 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
         setSession(nextSession)
 
         if (options.requireSiteManager && !asSiteManagerSession(nextSession)) {
-          navigate('/?notice=site-manage-denied', { replace: true })
+          setNavigationIntent(toSiteManageDeniedRedirect())
         }
       } catch (error) {
         if (isCancelled) {
@@ -39,12 +44,12 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
 
         if (error instanceof AuthClientError && error.kind === 'unauthorized') {
           clearSession()
-          navigate('/login?notice=session-expired')
+          setNavigationIntent(toSessionExpiredRedirect())
           return
         }
 
         clearSession()
-        navigate('/login?notice=session-expired')
+        setNavigationIntent(toSessionExpiredRedirect())
       }
     }
 
@@ -53,18 +58,19 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
     return () => {
       isCancelled = true
     }
-  }, [navigate, options.requireSiteManager])
+  }, [clearSession, options.requireSiteManager, setSession])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await logoutRequest()
     clearSession()
-    navigate('/login?notice=signed-out')
-  }
+    setNavigationIntent(toSignedOutRedirect())
+  }, [clearSession])
 
   return {
     session,
     setSession,
     siteManagerSession,
     signOut,
+    navigationIntent,
   }
 }

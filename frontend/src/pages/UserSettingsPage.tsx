@@ -17,12 +17,17 @@ import { useUserSettingsModel } from '@/hooks/use-user-settings-model'
 export function UserSettingsPage() {
   const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
-  const { session: viewer, setSession: setViewer, signOut } = useSessionGuard()
+  const { session: viewer, setSession: setViewer, signOut, navigationIntent: guardNavigationIntent } =
+    useSessionGuard()
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'route-corrected'
       ? 'The route was corrected to match your signed-in username.'
       : null
+
+  if (guardNavigationIntent) {
+    return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
+  }
 
   if (!viewer) {
     return <Navigate replace to="/login" />
@@ -40,6 +45,7 @@ export function UserSettingsPage() {
     isSubmitting,
     isEditingOwnSettings,
     targetUsername,
+    navigationIntent: modelNavigationIntent,
     setDisplayName,
     setEmail,
     setCurrentPassword,
@@ -51,6 +57,10 @@ export function UserSettingsPage() {
     routeUsername,
     setViewer,
   })
+
+  if (modelNavigationIntent) {
+    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
+  }
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">

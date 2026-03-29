@@ -1,0 +1,57 @@
+import { useCallback, useState } from 'react'
+
+import { type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/domain/auth'
+import { AuthClientError, updateUserPermissions } from '@/lib/auth-client'
+import type { NavigationIntent } from '@/lib/navigation-intent'
+import { toSiteManageDeniedRedirect } from '@/lib/route-policy'
+import { useUserDirectoryStore } from '@/stores/use-user-directory-store'
+
+type SavePermissionsResult =
+  | { kind: 'updated'; user: AuthUserListItem }
+  | { kind: 'forbidden' }
+  | { kind: 'failed'; message: string }
+
+export function useUserPermissionsMutation() {
+  const replaceUser = useUserDirectoryStore((state) => state.replaceUser)
+  const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [statusMessage, setStatusMessage] = useState('')
+  const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
+
+  const savePermissions = useCallback(
+    async (targetUsername: string, nextPermissions: UpdateUserPermissionsRequest): Promise<SavePermissionsResult> => {
+      setUpdatingUsername(targetUsername)
+      setErrorMessage('')
+      setStatusMessage('')
+      setNavigationIntent(null)
+
+      try {
+        const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
+        replaceUser(updatedUser)
+        setUpdatingUsername(null)
+        setStatusMessage(`Permissions updated for ${targetUsername}.`)
+        return { kind: 'updated', user: updatedUser }
+      } catch (error) {
+        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+          setUpdatingUsername(null)
+          setNavigationIntent(toSiteManageDeniedRedirect())
+          return { kind: 'forbidden' }
+        }
+
+        const message = 'Unable to update user permissions.'
+        setUpdatingUsername(null)
+        setErrorMessage(message)
+        return { kind: 'failed', message }
+      }
+    },
+    [replaceUser],
+  )
+
+  return {
+    updatingUsername,
+    errorMessage,
+    statusMessage,
+    navigationIntent,
+    savePermissions,
+  }
+}

@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { AtSign, IdCard, LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -18,6 +18,7 @@ export function RegisterPage() {
     confirmPassword,
     errorMessage,
     isSubmitting,
+    navigationIntent,
     setUsername,
     setDisplayName,
     setEmail,
@@ -29,6 +30,10 @@ export function RegisterPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     await submit()
+  }
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
   }
 
   return (

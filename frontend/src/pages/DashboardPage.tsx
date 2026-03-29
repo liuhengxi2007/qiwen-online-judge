@@ -9,7 +9,7 @@ import { useSessionGuard } from '@/hooks/use-session-guard'
 
 export function DashboardPage() {
   const [searchParams] = useSearchParams()
-  const { session: user, siteManagerSession, signOut } = useSessionGuard()
+  const { session: user, siteManagerSession, signOut, navigationIntent } = useSessionGuard()
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'site-manage-denied'
@@ -17,6 +17,10 @@ export function DashboardPage() {
       : notice === 'settings-route-corrected'
         ? 'The settings route was corrected to match your signed-in username.'
         : null
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
+  }
 
   if (!user) {
     return <Navigate replace to="/login" />

@@ -16,15 +16,25 @@ import { useSiteManageModel } from '@/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/hooks/use-session-guard'
 
 export function SiteManagePage() {
-  const { session: user, siteManagerSession, signOut } = useSessionGuard({ requireSiteManager: true })
+  const { session: user, siteManagerSession, signOut, navigationIntent: guardNavigationIntent } =
+    useSessionGuard({ requireSiteManager: true })
   const {
     users,
     userListError,
     statusMessage,
     isLoadingUsers,
     updatingUsername,
+    navigationIntent: modelNavigationIntent,
     savePermissions,
   } = useSiteManageModel(Boolean(siteManagerSession))
+
+  if (guardNavigationIntent) {
+    return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
+  }
+
+  if (modelNavigationIntent) {
+    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
+  }
 
   if (!user) {
     return <Navigate replace to="/login" />
@@ -134,7 +144,7 @@ export function SiteManagePage() {
                         <Checkbox
                           checked={listedUser.siteManager}
                           disabled={
-                            updatingUsername === usernameValue(listedUser.username) || isProtectedAdmin(listedUser)
+                            updatingUsername !== null || isProtectedAdmin(listedUser)
                           }
                           aria-label="Site manager"
                           onCheckedChange={(checked) => {
@@ -151,7 +161,7 @@ export function SiteManagePage() {
                         <Checkbox
                           checked={listedUser.problemManager}
                           disabled={
-                            updatingUsername === usernameValue(listedUser.username) || isProtectedAdmin(listedUser)
+                            updatingUsername !== null || isProtectedAdmin(listedUser)
                           }
                           aria-label="Problem manager"
                           onCheckedChange={(checked) => {

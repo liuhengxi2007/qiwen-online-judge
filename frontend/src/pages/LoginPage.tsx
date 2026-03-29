@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { LockKeyhole, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,7 +11,8 @@ import { useLoginModel } from '@/hooks/use-login-model'
 
 export function LoginPage() {
   const [searchParams] = useSearchParams()
-  const { username, password, errorMessage, isSubmitting, setUsername, setPassword, submit } = useLoginModel()
+  const { username, password, errorMessage, isSubmitting, navigationIntent, setUsername, setPassword, submit } =
+    useLoginModel()
 
   const notice = searchParams.get('notice')
   const noticeMessage =
@@ -24,6 +25,10 @@ export function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     await submit()
+  }
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
   }
 
   return (

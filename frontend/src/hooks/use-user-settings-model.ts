@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useReducer } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import {
   displayNameValue,
@@ -7,18 +6,18 @@ import {
   parseDisplayName,
   parseEmailAddress,
   parsePlaintextPassword,
-  toAuthSession,
   usernameValue,
   type SessionResponse,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
 } from '@/domain/auth'
+import { useUserSettingsQuery } from '@/hooks/use-user-settings-query'
+import { useUserSettingsMutation } from '@/hooks/use-user-settings-mutation'
+import type { NavigationIntent } from '@/lib/navigation-intent'
 import {
-  AuthClientError,
-  getUserSettings,
-  updateManagedUserSettings,
-  updateOwnUserSettings,
-} from '@/lib/auth-client'
+  resolveUserSettingsRoutePolicy,
+  toSiteManageDeniedRedirect,
+} from '@/lib/route-policy'
 
 type UserSettingsState = {
   editedUser: SessionResponse | null
@@ -30,12 +29,13 @@ type UserSettingsState = {
   errorMessage: string
   successMessage: string
   isSubmitting: boolean
+  navigationIntent: NavigationIntent | null
 }
 
 type UserSettingsAction =
-  | { type: 'load_started'; editedUser: SessionResponse | null }
-  | { type: 'load_succeeded'; user: SessionResponse }
-  | { type: 'load_failed'; message: string }
+  | { type: 'target_changed'; editedUser: SessionResponse | null }
+  | { type: 'query_synced'; user: SessionResponse }
+  | { type: 'query_failed'; message: string }
   | { type: 'set_display_name'; value: string }
   | { type: 'set_email'; value: string }
   | { type: 'set_current_password'; value: string }
@@ -44,6 +44,7 @@ type UserSettingsAction =
   | { type: 'submit_started' }
   | { type: 'submit_succeeded'; user: SessionResponse; message: string }
   | { type: 'submit_failed'; message: string }
+  | { type: 'redirect_requested'; intent: NavigationIntent }
 
 const initialState: UserSettingsState = {
   editedUser: null,
@@ -55,11 +56,12 @@ const initialState: UserSettingsState = {
   errorMessage: '',
   successMessage: '',
   isSubmitting: false,
+  navigationIntent: null,
 }
 
 function userSettingsReducer(state: UserSettingsState, action: UserSettingsAction): UserSettingsState {
   switch (action.type) {
-    case 'load_started':
+    case 'target_changed':
       return {
         ...state,
         editedUser: action.editedUser,
@@ -71,8 +73,9 @@ function userSettingsReducer(state: UserSettingsState, action: UserSettingsActio
         errorMessage: '',
         successMessage: '',
         isSubmitting: false,
+        navigationIntent: null,
       }
-    case 'load_succeeded':
+    case 'query_synced':
       return {
         ...state,
         editedUser: action.user,
@@ -80,7 +83,7 @@ function userSettingsReducer(state: UserSettingsState, action: UserSettingsActio
         email: emailAddressValue(action.user.email),
         errorMessage: '',
       }
-    case 'load_failed':
+    case 'query_failed':
       return {
         ...state,
         errorMessage: action.message,
@@ -122,6 +125,11 @@ function userSettingsReducer(state: UserSettingsState, action: UserSettingsActio
         isSubmitting: false,
         errorMessage: action.message,
       }
+    case 'redirect_requested':
+      return {
+        ...state,
+        navigationIntent: action.intent,
+      }
   }
 }
 
@@ -132,76 +140,51 @@ type UseUserSettingsModelArgs = {
 }
 
 export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUserSettingsModelArgs) {
-  const navigate = useNavigate()
   const [state, dispatch] = useReducer(userSettingsReducer, initialState)
+  const mutation = useUserSettingsMutation()
 
   const viewerUsername = usernameValue(viewer.username)
   const siteManagerViewer = viewer.siteManager
-  const targetUsername = routeUsername?.trim() || viewerUsername
-  const isEditingOwnSettings = targetUsername.toLowerCase() === viewerUsername.toLowerCase()
-  const canManageTarget = isEditingOwnSettings || siteManagerViewer
+  const routePolicy = resolveUserSettingsRoutePolicy({
+    viewerUsername,
+    routeUsername,
+    siteManagerViewer,
+  })
+  const targetUsername = routePolicy.targetUsername
+  const isEditingOwnSettings = routePolicy.isEditingOwnSettings
+  const canManageTarget = routePolicy.canManageTarget
+  const query = useUserSettingsQuery({
+    canLoadTarget: canManageTarget,
+    targetUsername,
+  })
   const displayedUser = isEditingOwnSettings ? viewer : state.editedUser
 
   useEffect(() => {
-    if (!routeUsername && !siteManagerViewer) {
-      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
-      return
+    if (routePolicy.navigationIntent) {
+      dispatch({
+        type: 'redirect_requested',
+        intent: routePolicy.navigationIntent,
+      })
     }
-
-    if (routeUsername && !siteManagerViewer && routeUsername.toLowerCase() !== viewerUsername.toLowerCase()) {
-      navigate(`/user/${viewerUsername}/settings?notice=route-corrected`, { replace: true })
-      return
-    }
-
-    if (routeUsername && !canManageTarget) {
-      navigate('/?notice=site-manage-denied', { replace: true })
-    }
-  }, [canManageTarget, navigate, routeUsername, siteManagerViewer, viewerUsername])
+  }, [routePolicy.navigationIntent])
 
   useEffect(() => {
-    let isCancelled = false
+    dispatch({
+      type: 'target_changed',
+      editedUser: isEditingOwnSettings ? viewer : null,
+    })
+  }, [isEditingOwnSettings, targetUsername])
 
-    const load = async () => {
-      if (!canManageTarget) {
-        return
-      }
-
-      dispatch({
-        type: 'load_started',
-        editedUser: isEditingOwnSettings ? viewer : null,
-      })
-
-      try {
-        const user = await getUserSettings(targetUsername)
-
-        if (!isCancelled) {
-          dispatch({ type: 'load_succeeded', user })
-        }
-      } catch (error) {
-        if (isCancelled) {
-          return
-        }
-
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          navigate('/?notice=site-manage-denied', { replace: true })
-          return
-        }
-
-        if (error instanceof AuthClientError && error.kind === 'not-found') {
-          dispatch({ type: 'load_failed', message: 'User not found.' })
-          return
-        }
-
-        dispatch({ type: 'load_failed', message: 'Unable to load settings.' })
-      }
+  useEffect(() => {
+    if (query.editedUser) {
+      dispatch({ type: 'query_synced', user: query.editedUser })
+      return
     }
 
-    void load()
-
-    return () => {
-      isCancelled = true
+    if (query.settingsLoadError) {
+      dispatch({ type: 'query_failed', message: query.settingsLoadError })
     }
-  }, [canManageTarget, isEditingOwnSettings, navigate, targetUsername, viewer])
+  }, [query.editedUser, query.settingsLoadError])
 
   const submit = useCallback(async () => {
     if (!displayedUser) {
@@ -261,60 +244,59 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
     dispatch({ type: 'submit_started' })
 
-    try {
-      const updatedUser = isEditingOwnSettings
-        ? await updateOwnUserSettings(
+    const result = await mutation.submitSettings(
+      isEditingOwnSettings
+        ? {
+            kind: 'own',
             targetUsername,
-            {
+            request: {
               displayName: displayNameResult.value,
               email: emailResult.value,
               currentPassword: currentPasswordValue!,
               newPassword: newPasswordResult ? newPasswordResult.value : null,
             } satisfies UpdateOwnSettingsRequest,
-          )
-        : await updateManagedUserSettings(
+            setViewer,
+          }
+        : {
+            kind: 'managed',
             targetUsername,
-            {
+            request: {
               displayName: displayNameResult.value,
               email: emailResult.value,
               newPassword: newPasswordResult ? newPasswordResult.value : null,
             } satisfies UpdateManagedUserSettingsRequest,
-          )
+            setViewer,
+          },
+    )
 
-      if (isEditingOwnSettings) {
-        setViewer(toAuthSession(updatedUser))
-      }
-
-      dispatch({
-        type: 'submit_succeeded',
-        user: updatedUser,
-        message: isEditingOwnSettings
-          ? 'Settings updated successfully.'
-          : `Settings updated for ${usernameValue(updatedUser.username)}.`,
-      })
-    } catch (error) {
-      if (error instanceof AuthClientError && error.kind === 'forbidden') {
-        navigate('/?notice=site-manage-denied', { replace: true })
-        return
-      }
-
-      if (error instanceof AuthClientError && error.kind === 'unauthorized') {
+      switch (result.kind) {
+        case 'updated':
         dispatch({
-          type: 'submit_failed',
-          message: error.message || (isEditingOwnSettings ? 'Current password is incorrect.' : 'Unable to update settings.'),
+          type: 'submit_succeeded',
+          user: result.user,
+          message: result.message,
         })
         return
-      }
-
-      dispatch({ type: 'submit_failed', message: 'Unable to update settings.' })
+        case 'forbidden':
+        dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
+        return
+      case 'unauthorized':
+        dispatch({ type: 'submit_failed', message: result.message })
+        return
+      case 'failed':
+        dispatch({ type: 'submit_failed', message: result.message })
+        return
     }
-  }, [displayedUser, isEditingOwnSettings, navigate, setViewer, state, targetUsername])
+  }, [displayedUser, isEditingOwnSettings, mutation, setViewer, state, targetUsername])
 
   return {
     ...state,
     displayedUser,
     isEditingOwnSettings,
     targetUsername,
+    isSubmitting: state.isSubmitting || mutation.isSubmitting,
+    isLoadingSettings: query.isLoadingSettings,
+    navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
     setDisplayName: (value: string) => dispatch({ type: 'set_display_name', value }),
     setEmail: (value: string) => dispatch({ type: 'set_email', value }),
     setCurrentPassword: (value: string) => dispatch({ type: 'set_current_password', value }),

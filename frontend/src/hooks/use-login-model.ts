@@ -1,29 +1,24 @@
 import { useCallback, useReducer } from 'react'
-import { useNavigate } from 'react-router-dom'
 
-import { parsePlaintextPassword, parseUsername, toAuthSession, type LoginRequest } from '@/domain/auth'
-import { login } from '@/lib/auth-client'
-import { useAuthStore } from '@/stores/use-auth-store'
+import { parsePlaintextPassword, parseUsername, type LoginRequest } from '@/domain/auth'
+import { useLoginMutation } from '@/hooks/use-login-mutation'
 
 type LoginState = {
   username: string
   password: string
   errorMessage: string
-  isSubmitting: boolean
 }
 
 type LoginAction =
   | { type: 'set_username'; value: string }
   | { type: 'set_password'; value: string }
-  | { type: 'submit_started' }
-  | { type: 'submit_failed'; message: string }
-  | { type: 'submit_succeeded' }
+  | { type: 'validation_failed'; message: string }
+  | { type: 'validation_cleared' }
 
 const initialState: LoginState = {
   username: 'admin',
   password: 'password123',
   errorMessage: '',
-  isSubmitting: false,
 }
 
 function loginReducer(state: LoginState, action: LoginAction): LoginState {
@@ -32,57 +27,44 @@ function loginReducer(state: LoginState, action: LoginAction): LoginState {
       return { ...state, username: action.value }
     case 'set_password':
       return { ...state, password: action.value }
-    case 'submit_started':
-      return { ...state, isSubmitting: true, errorMessage: '' }
-    case 'submit_failed':
-      return { ...state, isSubmitting: false, errorMessage: action.message }
-    case 'submit_succeeded':
-      return { ...state, isSubmitting: false, errorMessage: '' }
+    case 'validation_failed':
+      return { ...state, errorMessage: action.message }
+    case 'validation_cleared':
+      return { ...state, errorMessage: '' }
   }
 }
 
 export function useLoginModel() {
-  const navigate = useNavigate()
-  const setSession = useAuthStore((state) => state.setSession)
   const [state, dispatch] = useReducer(loginReducer, initialState)
+  const mutation = useLoginMutation()
 
   const submit = useCallback(async () => {
     const usernameResult = parseUsername(state.username)
     if (!usernameResult.ok) {
-      dispatch({ type: 'submit_failed', message: usernameResult.error })
+      dispatch({ type: 'validation_failed', message: usernameResult.error })
       return
     }
 
     const passwordResult = parsePlaintextPassword(state.password)
     if (!passwordResult.ok) {
-      dispatch({ type: 'submit_failed', message: passwordResult.error })
+      dispatch({ type: 'validation_failed', message: passwordResult.error })
       return
     }
 
-    dispatch({ type: 'submit_started' })
+    dispatch({ type: 'validation_cleared' })
 
-    try {
-      const data = await login({
-        username: usernameResult.value,
-        password: passwordResult.value,
-      } satisfies LoginRequest)
-
-      setSession(toAuthSession(data))
-      dispatch({ type: 'submit_succeeded' })
-      navigate('/')
-    } catch (error) {
-      dispatch({
-        type: 'submit_failed',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Unable to reach the server. Please start the backend service.',
-      })
-    }
-  }, [navigate, setSession, state.password, state.username])
+    await mutation.submitLogin({
+      username: usernameResult.value,
+      password: passwordResult.value,
+    } satisfies LoginRequest)
+  }, [mutation, state.password, state.username])
 
   return {
-    ...state,
+    username: state.username,
+    password: state.password,
+    errorMessage: state.errorMessage || mutation.errorMessage,
+    isSubmitting: mutation.isSubmitting,
+    navigationIntent: mutation.navigationIntent,
     setUsername: (value: string) => dispatch({ type: 'set_username', value }),
     setPassword: (value: string) => dispatch({ type: 'set_password', value }),
     submit,

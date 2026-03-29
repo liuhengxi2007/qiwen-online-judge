@@ -1,148 +1,100 @@
-import { useCallback, useEffect, useReducer } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useReducer } from 'react'
 
 import { usernameValue, type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/domain/auth'
-import { AuthClientError, listUsers, updateUserPermissions } from '@/lib/auth-client'
+import { useSiteManageQuery } from '@/hooks/use-site-manage-query'
+import { useUserPermissionsMutation } from '@/hooks/use-user-permissions-mutation'
+import type { NavigationIntent } from '@/lib/navigation-intent'
 
 type SiteManageState = {
-  users: AuthUserListItem[]
-  userListError: string
   statusMessage: string
-  isLoadingUsers: boolean
+  actionErrorMessage: string
   updatingUsername: string | null
+  navigationIntent: NavigationIntent | null
 }
 
 type SiteManageAction =
-  | { type: 'load_started' }
-  | { type: 'load_succeeded'; users: AuthUserListItem[] }
-  | { type: 'load_failed'; message: string }
   | { type: 'update_started'; username: string }
   | { type: 'update_succeeded'; user: AuthUserListItem }
   | { type: 'update_failed'; message: string }
+  | { type: 'redirect_requested'; intent: NavigationIntent }
 
 const initialState: SiteManageState = {
-  users: [],
-  userListError: '',
   statusMessage: '',
-  isLoadingUsers: false,
+  actionErrorMessage: '',
   updatingUsername: null,
-}
-
-function replaceUser(users: AuthUserListItem[], updatedUser: AuthUserListItem): AuthUserListItem[] {
-  return users.map((currentUser) =>
-    usernameValue(currentUser.username) === usernameValue(updatedUser.username) ? updatedUser : currentUser,
-  )
+  navigationIntent: null,
 }
 
 function siteManageReducer(state: SiteManageState, action: SiteManageAction): SiteManageState {
   switch (action.type) {
-    case 'load_started':
-      return {
-        ...state,
-        isLoadingUsers: true,
-        userListError: '',
-        statusMessage: '',
-      }
-    case 'load_succeeded':
-      return {
-        ...state,
-        users: action.users,
-        isLoadingUsers: false,
-        userListError: '',
-      }
-    case 'load_failed':
-      return {
-        ...state,
-        isLoadingUsers: false,
-        userListError: action.message,
-      }
     case 'update_started':
       return {
         ...state,
         updatingUsername: action.username,
-        userListError: '',
         statusMessage: '',
+        actionErrorMessage: '',
       }
     case 'update_succeeded':
       return {
         ...state,
-        users: replaceUser(state.users, action.user),
         updatingUsername: null,
         statusMessage: `Permissions updated for ${usernameValue(action.user.username)}.`,
+        actionErrorMessage: '',
       }
     case 'update_failed':
       return {
         ...state,
         updatingUsername: null,
-        userListError: action.message,
+        statusMessage: '',
+        actionErrorMessage: action.message,
+      }
+    case 'redirect_requested':
+      return {
+        ...state,
+        navigationIntent: action.intent,
       }
   }
 }
 
 export function useSiteManageModel(siteManagerEnabled: boolean) {
-  const navigate = useNavigate()
+  const query = useSiteManageQuery(siteManagerEnabled)
   const [state, dispatch] = useReducer(siteManageReducer, initialState)
-
-  useEffect(() => {
-    if (!siteManagerEnabled) {
-      navigate('/')
-      return
-    }
-
-    let isCancelled = false
-
-    const load = async () => {
-      dispatch({ type: 'load_started' })
-
-      try {
-        const users = await listUsers()
-
-        if (!isCancelled) {
-          dispatch({ type: 'load_succeeded', users })
-        }
-      } catch (error) {
-        if (isCancelled) {
-          return
-        }
-
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          navigate('/?notice=site-manage-denied', { replace: true })
-          return
-        }
-
-        dispatch({ type: 'load_failed', message: 'Unable to load the user list.' })
-      }
-    }
-
-    void load()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [navigate, siteManagerEnabled])
+  const mutation = useUserPermissionsMutation()
+  const currentUpdatingUsername = state.updatingUsername ?? mutation.updatingUsername
 
   const savePermissions = useCallback(
     async (listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) => {
+      if (currentUpdatingUsername) {
+        return
+      }
+
       const targetUsername = usernameValue(listedUser.username)
       dispatch({ type: 'update_started', username: targetUsername })
 
-      try {
-        const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
-        dispatch({ type: 'update_succeeded', user: updatedUser })
-      } catch (error) {
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          navigate('/?notice=site-manage-denied', { replace: true })
-          return
-        }
+      const result = await mutation.savePermissions(targetUsername, nextPermissions)
 
-        dispatch({ type: 'update_failed', message: 'Unable to update user permissions.' })
+      switch (result.kind) {
+        case 'updated':
+          dispatch({ type: 'update_succeeded', user: result.user })
+          return
+        case 'forbidden':
+          dispatch({ type: 'redirect_requested', intent: { to: '/?notice=site-manage-denied', replace: true } })
+          return
+        case 'failed':
+          dispatch({ type: 'update_failed', message: result.message })
+          return
       }
     },
-    [navigate],
+    [currentUpdatingUsername, mutation],
   )
 
   return {
-    ...state,
+    users: query.users,
+    userListError: state.actionErrorMessage || query.userListError,
+    isLoadingUsers: query.isLoadingUsers,
+    statusMessage: state.statusMessage,
+    updatingUsername: currentUpdatingUsername,
+    navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
     savePermissions,
   }
 }

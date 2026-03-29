@@ -1,6 +1,6 @@
 package routes
 
-import auth.{PasswordHasher, SessionStore, UsernameRules}
+import auth.{AuthUserCommands, PasswordHasher, SessionStore, UsernameRules}
 import cats.effect.IO
 import database.DatabaseSession
 import io.circe.syntax.*
@@ -16,8 +16,6 @@ object AuthRouter:
 
   private val logger = Slf4jLogger.getLogger[IO]
   private val sessionCookieName = "qiwen_session"
-  private val protectedAdminUsername = "admin"
-
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     def invalidCredentialsResponse: IO[Response[IO]] =
       IO.pure(
@@ -133,119 +131,95 @@ object AuthRouter:
 
       case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
         withAuthenticatedUser(request) { authenticatedActor =>
-          val canAccessTarget =
-            targetUsername.equalsIgnoreCase(authenticatedActor.username.value) || authenticatedActor.siteManager
-
-          if !canAccessTarget then
-            forbiddenResponse
-          else
-            databaseSession.withTransactionConnection(connection =>
-              AuthUserTable.findByUsername(connection, Username(targetUsername))
-            ).flatMap {
-              case Some(targetUser) => Ok(userSettingsResponse(targetUser).asJson)
-              case None => NotFound(ErrorResponse("User not found.").asJson)
-            }
+          AuthUserCommands.getUserSettings(
+            databaseSession,
+            authenticatedActor,
+            Username(targetUsername)
+          ).flatMap {
+            case AuthUserCommands.GetUserSettingsResult.Forbidden =>
+              forbiddenResponse
+            case AuthUserCommands.GetUserSettingsResult.NotFound =>
+              NotFound(ErrorResponse("User not found.").asJson)
+            case AuthUserCommands.GetUserSettingsResult.Found(targetUser) =>
+              Ok(userSettingsResponse(targetUser).asJson)
+          }
         }
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "permissions" =>
-        withSiteManager(request) { siteManagerActor =>
-          if targetUsername.equalsIgnoreCase(protectedAdminUsername) then
-            protectedAdminResponse
-          else
-            for
-              permissionsRequest <- request.as[UpdateUserPermissionsRequest]
-              updatedUser <- databaseSession.withTransactionConnection(connection =>
-                AuthUserTable.updatePermissions(
-                  connection,
-                  siteManagerActor,
-                  Username(targetUsername),
-                  siteManager = permissionsRequest.siteManager,
-                  problemManager = permissionsRequest.problemManager
+        withAuthenticatedUser(request) { authenticatedActor =>
+          for
+            permissionsRequest <- request.as[UpdateUserPermissionsRequest]
+            response <- AuthUserCommands.updateUserPermissions(
+              databaseSession,
+              authenticatedActor,
+              Username(targetUsername),
+              permissionsRequest
+            ).flatMap {
+              case AuthUserCommands.UpdateUserPermissionsResult.Forbidden =>
+                forbiddenResponse
+              case AuthUserCommands.UpdateUserPermissionsResult.ProtectedAdmin =>
+                protectedAdminResponse
+              case AuthUserCommands.UpdateUserPermissionsResult.NotFound =>
+                NotFound(ErrorResponse("User not found.").asJson)
+              case AuthUserCommands.UpdateUserPermissionsResult.Updated(user) =>
+                Ok(
+                  AuthUserListItem(
+                    username = user.username,
+                    displayName = user.displayName,
+                    email = user.email,
+                    siteManager = user.siteManager,
+                    problemManager = user.problemManager
+                  ).asJson
                 )
-              )
-              response <- updatedUser match
-                case Some(user) =>
-                  Ok(
-                    AuthUserListItem(
-                      username = user.username,
-                      displayName = user.displayName,
-                      email = user.email,
-                      siteManager = user.siteManager,
-                      problemManager = user.problemManager
-                    ).asJson
-                  )
-                case None =>
-                  NotFound(ErrorResponse("User not found.").asJson)
-            yield response
+            }
+          yield response
         }
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
         withAuthenticatedUser(request) { authenticatedActor =>
           val isOwnSettings = targetUsername.equalsIgnoreCase(authenticatedActor.username.value)
-          val isSiteManagerEditingAnother = authenticatedActor.siteManager && !isOwnSettings
+          val target = Username(targetUsername)
 
-          if !isOwnSettings && !isSiteManagerEditingAnother then
-            forbiddenResponse
-          else
+          if isOwnSettings then
             for
-              targetUser <- databaseSession.withTransactionConnection(connection =>
-                AuthUserTable.findByUsername(connection, Username(targetUsername))
-              )
-              response <-
-                targetUser match
-                  case None =>
-                    NotFound(ErrorResponse("User not found.").asJson)
-                  case Some(foundTargetUser) =>
-                    if isOwnSettings then
-                      for
-                        updateRequest <- request.as[UpdateOwnSettingsRequest]
-                        passwordMatches <- PasswordHasher.verifyPassword(updateRequest.currentPassword, authenticatedActor.passwordHash)
-                        result <-
-                          if !passwordMatches then
-                            invalidCurrentPasswordResponse
-                          else
-                            for
-                              nextPasswordHash <- updateRequest.newPassword match
-                                case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
-                                case None => IO.pure(foundTargetUser.passwordHash)
-                              updatedUser <- databaseSession.withTransactionConnection(connection =>
-                                AuthUserTable.updateSettings(
-                                  connection,
-                                  foundTargetUser.username,
-                                  displayName = updateRequest.displayName,
-                                  email = updateRequest.email,
-                                  passwordHash = nextPasswordHash
-                                )
-                              )
-                              updatedResponse <- updatedUser match
-                                case Some(user) =>
-                                  Ok(userSettingsResponse(user).asJson)
-                                case None =>
-                                  NotFound(ErrorResponse("User not found.").asJson)
-                            yield updatedResponse
-                      yield result
-                    else
-                      for
-                        updateRequest <- request.as[UpdateManagedUserSettingsRequest]
-                        nextPasswordHash <- updateRequest.newPassword match
-                          case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
-                          case None => IO.pure(foundTargetUser.passwordHash)
-                        updatedUser <- databaseSession.withTransactionConnection(connection =>
-                          AuthUserTable.updateSettings(
-                            connection,
-                            foundTargetUser.username,
-                            displayName = updateRequest.displayName,
-                            email = updateRequest.email,
-                            passwordHash = nextPasswordHash
-                          )
-                        )
-                        updatedResponse <- updatedUser match
-                          case Some(user) =>
-                            Ok(userSettingsResponse(user).asJson)
-                          case None =>
-                            NotFound(ErrorResponse("User not found.").asJson)
-                      yield updatedResponse
+              updateRequest <- request.as[UpdateOwnSettingsRequest]
+              response <- AuthUserCommands.updateUserSettings(
+                databaseSession,
+                target,
+                AuthUserCommands.UpdateUserSettingsCommand.UpdateOwn(authenticatedActor, updateRequest)
+              ).flatMap {
+                case AuthUserCommands.UpdateUserSettingsResult.Forbidden =>
+                  forbiddenResponse
+                case AuthUserCommands.UpdateUserSettingsResult.InvalidCurrentPassword =>
+                  invalidCurrentPasswordResponse
+                case AuthUserCommands.UpdateUserSettingsResult.NotFound =>
+                  NotFound(ErrorResponse("User not found.").asJson)
+                case AuthUserCommands.UpdateUserSettingsResult.Updated(user) =>
+                  Ok(userSettingsResponse(user).asJson)
+              }
             yield response
+          else
+            SiteManagerUser.from(authenticatedActor) match
+              case None =>
+                forbiddenResponse
+              case Some(siteManagerActor) =>
+                for
+                  updateRequest <- request.as[UpdateManagedUserSettingsRequest]
+                  response <- AuthUserCommands.updateUserSettings(
+                    databaseSession,
+                    target,
+                    AuthUserCommands.UpdateUserSettingsCommand.UpdateManaged(siteManagerActor, updateRequest)
+                  ).flatMap {
+                    case AuthUserCommands.UpdateUserSettingsResult.Forbidden =>
+                      forbiddenResponse
+                    case AuthUserCommands.UpdateUserSettingsResult.InvalidCurrentPassword =>
+                      invalidCurrentPasswordResponse
+                    case AuthUserCommands.UpdateUserSettingsResult.NotFound =>
+                      NotFound(ErrorResponse("User not found.").asJson)
+                    case AuthUserCommands.UpdateUserSettingsResult.Updated(user) =>
+                      Ok(userSettingsResponse(user).asJson)
+                  }
+                yield response
         }
 
       case request @ POST -> Root / "api" / "auth" / "login" =>
