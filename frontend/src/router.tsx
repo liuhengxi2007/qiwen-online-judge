@@ -1,18 +1,25 @@
+import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
-import { readAuthSession } from '@/lib/auth-storage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { LoginPage } from '@/pages/LoginPage'
-import { RegisterPage } from '@/pages/RegisterPage'
 import { SiteManagePage } from '@/pages/SiteManagePage'
 import { UserSettingsPage } from '@/pages/UserSettingsPage'
+import { useAuthStore } from '@/stores/use-auth-store'
 
 function RootRedirect() {
-  return readAuthSession() ? <DashboardPage /> : <Navigate replace to="/login" />
+  const session = useAuthStore((state) => state.session)
+  return session ? <DashboardPage /> : <Navigate replace to="/login" />
 }
 
 function GuestOnlyRoute() {
-  return readAuthSession() ? <Navigate replace to="/" /> : <LoginPage />
+  const session = useAuthStore((state) => state.session)
+  return session ? <Navigate replace to="/" /> : <LoginPage />
+}
+
+function AuthenticatedRoute({ element }: { element: ReactElement }) {
+  const session = useAuthStore((state) => state.session)
+  return session ? element : <Navigate replace to="/login" />
 }
 
 export const router = createBrowserRouter([
@@ -26,15 +33,15 @@ export const router = createBrowserRouter([
   },
   {
     path: '/register',
-    element: readAuthSession() ? <Navigate replace to="/" /> : <RegisterPage />,
+    element: <GuestOnlyRoute />,
   },
   {
     path: '/site-manage',
-    element: readAuthSession() ? <SiteManagePage /> : <Navigate replace to="/login" />,
+    element: <AuthenticatedRoute element={<SiteManagePage />} />,
   },
   {
     path: '/user/:username/settings',
-    element: readAuthSession() ? <UserSettingsPage /> : <Navigate replace to="/login" />,
+    element: <AuthenticatedRoute element={<UserSettingsPage />} />,
   },
   {
     path: '*',

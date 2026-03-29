@@ -117,19 +117,11 @@ export function UserSettingsPage() {
                   <AlertDescription className="text-slate-700">Loading the selected user settings.</AlertDescription>
                 </Alert>
               ) : null}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-sm text-slate-500">Username</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
-                    {displayedUser ? usernameValue(displayedUser.username) : targetUsername}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-sm text-slate-500">Current route</p>
-                  <p className="mt-2 text-sm font-medium text-slate-900">
-                    /user/{displayedUser ? usernameValue(displayedUser.username) : targetUsername}/settings
-                  </p>
-                </div>
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-sm text-slate-500">Username</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {displayedUser ? usernameValue(displayedUser.username) : targetUsername}
+                </p>
               </div>
 
               <div className="space-y-2">
