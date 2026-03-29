@@ -4,5 +4,7 @@ final case class AuthUser(
   username: Username,
   displayName: DisplayName,
   email: EmailAddress,
-  passwordHash: PasswordHash
+  passwordHash: PasswordHash,
+  siteManager: Boolean,
+  problemManager: Boolean
 )

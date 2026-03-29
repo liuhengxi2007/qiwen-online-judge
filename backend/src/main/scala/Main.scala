@@ -1,3 +1,4 @@
+import auth.SessionStore
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
@@ -13,12 +14,7 @@ object Main extends IOApp.Simple:
 
   private val logger = Slf4jLogger.getLogger[IO]
 
-  private val httpApp =
-    CORS.policy.withAllowOriginAll(
-      Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp)
-    )
-
-  private val serverResource: cats.effect.Resource[IO, Server] =
+  private def serverResource(httpApp: org.http4s.HttpApp[IO]): cats.effect.Resource[IO, Server] =
     EmberServerBuilder
       .default[IO]
       .withHost(host"0.0.0.0")
@@ -28,9 +24,10 @@ object Main extends IOApp.Simple:
 
   private val applicationResource: cats.effect.Resource[IO, Server] =
     for
-      _ <- DatabaseSession.initialize
+      databaseSession <- DatabaseSession.resource
+      sessionStore <- cats.effect.Resource.eval(SessionStore.create)
       _ <- cats.effect.Resource.eval {
-        DatabaseSession.withTransactionConnection { connection =>
+        databaseSession.withTransactionConnection { connection =>
           for
             _ <- logger.info("Initializing database schema")
             _ <- AuthUserTable.initialize(connection)
@@ -38,7 +35,10 @@ object Main extends IOApp.Simple:
           yield ()
         }
       }
-      server <- serverResource
+      httpApp = CORS.policy.withAllowOriginAll(
+        Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp(databaseSession, sessionStore))
+      )
+      server <- serverResource(httpApp)
     yield server
 
   override def run: IO[Unit] =

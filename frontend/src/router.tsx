@@ -4,6 +4,8 @@ import { hasAuthSession } from '@/domain/auth'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { SiteManagePage } from '@/pages/SiteManagePage'
+import { UserSettingsPage } from '@/pages/UserSettingsPage'
 
 function RootRedirect() {
   return hasAuthSession() ? <DashboardPage /> : <Navigate replace to="/login" />
@@ -25,6 +27,14 @@ export const router = createBrowserRouter([
   {
     path: '/register',
     element: hasAuthSession() ? <Navigate replace to="/" /> : <RegisterPage />,
+  },
+  {
+    path: '/site-manage',
+    element: hasAuthSession() ? <SiteManagePage /> : <Navigate replace to="/login" />,
+  },
+  {
+    path: '/user/:username/settings',
+    element: hasAuthSession() ? <UserSettingsPage /> : <Navigate replace to="/login" />,
   },
   {
     path: '*',

@@ -2,7 +2,6 @@ package tables
 
 import auth.PasswordHasher
 import cats.effect.IO
-import cats.syntax.all.*
 import objects.{
   AuthSeedUser,
   AuthUser,
@@ -11,6 +10,7 @@ import objects.{
   EmailAddress,
   PasswordHash,
   PlaintextPassword,
+  SiteManagerUser,
   Username
 }
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -25,7 +25,9 @@ object AuthUserTable:
     username = Username("admin"),
     displayName = DisplayName("Admin User"),
     email = EmailAddress("admin@example.com"),
-    password = PlaintextPassword("password123")
+    password = PlaintextPassword("password123"),
+    siteManager = true,
+    problemManager = true
   )
 
   val initTableSql: String =
@@ -34,7 +36,9 @@ object AuthUserTable:
       |  username varchar(120) primary key,
       |  display_name varchar(120) not null,
       |  email varchar(255) not null,
-      |  password_hash varchar(255) not null
+      |  password_hash varchar(255) not null,
+      |  site_manager boolean not null default false,
+      |  problem_manager boolean not null default false
       |);
       |""".stripMargin
 
@@ -78,12 +82,14 @@ object AuthUserTable:
 
   val seedAdminSql: String =
     """
-      |insert into auth_users (username, display_name, email, password_hash)
-      |values (?, ?, ?, ?)
+      |insert into auth_users (username, display_name, email, password_hash, site_manager, problem_manager)
+      |values (?, ?, ?, ?, ?, ?)
       |on conflict (username) do update
       |set display_name = excluded.display_name,
       |    email = excluded.email,
-      |    password_hash = excluded.password_hash
+      |    password_hash = excluded.password_hash,
+      |    site_manager = excluded.site_manager,
+      |    problem_manager = excluded.problem_manager
       |""".stripMargin
 
   val addEmailColumnSql: String =
@@ -121,36 +127,66 @@ object AuthUserTable:
       |on auth_users (lower(username))
       |""".stripMargin
 
-  val migrateSeedAdminUsernameSql: String =
+  val addSiteManagerColumnSql: String =
     """
-      |update auth_users
-      |set username = 'admin'
-      |where username = 'admin@example.com'
-      |  and not exists (
+      |do $$
+      |begin
+      |  if not exists (
       |    select 1
-      |    from auth_users existing_user
-      |    where existing_user.username = 'admin'
-      |  )
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'site_manager'
+      |  ) then
+      |    alter table auth_users add column site_manager boolean not null default false;
+      |  end if;
+      |end $$;
       |""".stripMargin
 
-  val deleteLegacySeedAdminSql: String =
+  val addProblemManagerColumnSql: String =
     """
-      |delete from auth_users
-      |where username = 'admin@example.com'
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'problem_manager'
+      |  ) then
+      |    alter table auth_users add column problem_manager boolean not null default false;
+      |  end if;
+      |end $$;
       |""".stripMargin
 
   val findByUsernameSql: String =
     """
-      |select username, display_name, email, password_hash
+      |select username, display_name, email, password_hash, site_manager, problem_manager
       |from auth_users
       |where lower(username) = lower(?)
       |""".stripMargin
 
   val listUsersSql: String =
     """
-      |select username, display_name, email
+      |select username, display_name, email, site_manager, problem_manager
       |from auth_users
       |order by lower(username) asc
+      |""".stripMargin
+
+  val updatePermissionsSql: String =
+    """
+      |update auth_users
+      |set site_manager = ?, problem_manager = ?
+      |where lower(username) = lower(?)
+      |returning username, display_name, email, password_hash, site_manager, problem_manager
+      |""".stripMargin
+
+  val updateOwnSettingsSql: String =
+    """
+      |update auth_users
+      |set display_name = ?, email = ?, password_hash = ?
+      |where lower(username) = lower(?)
+      |returning username, display_name, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
   def initialize(connection: Connection): IO[Unit] =
@@ -162,14 +198,13 @@ object AuthUserTable:
           statement.execute(migratePasswordColumnSql)
           statement.execute(initTableSql)
           statement.execute(addEmailColumnSql)
+          statement.execute(addSiteManagerColumnSql)
+          statement.execute(addProblemManagerColumnSql)
           statement.executeUpdate(backfillEmailSql)
           statement.execute(setEmailNotNullSql)
           statement.execute(createCaseInsensitiveUsernameIndexSql)
-          statement.executeUpdate(migrateSeedAdminUsernameSql)
-          statement.executeUpdate(deleteLegacySeedAdminSql)
         finally statement.close()
       }
-      _ <- migratePlaintextPasswords(connection)
       _ <- seedAdmin(connection)
     yield ()
 
@@ -198,9 +233,9 @@ object AuthUserTable:
       user <- IO.blocking {
         val statement = connection.prepareStatement(
           """
-            |insert into auth_users (username, display_name, email, password_hash)
-            |values (?, ?, ?, ?)
-            |returning username, display_name, email, password_hash
+            |insert into auth_users (username, display_name, email, password_hash, site_manager, problem_manager)
+            |values (?, ?, ?, ?, ?, ?)
+            |returning username, display_name, email, password_hash, site_manager, problem_manager
             |""".stripMargin
         )
         try
@@ -208,6 +243,8 @@ object AuthUserTable:
           statement.setString(2, displayName.value.trim)
           statement.setString(3, email.value.trim)
           statement.setString(4, passwordHash.value)
+          statement.setBoolean(5, false)
+          statement.setBoolean(6, false)
 
           val resultSet = statement.executeQuery()
           try
@@ -218,8 +255,9 @@ object AuthUserTable:
       }
     yield user
 
-  def listUsers(connection: Connection): IO[List[AuthUserListItem]] =
+  def listUsers(connection: Connection, actor: SiteManagerUser): IO[List[AuthUserListItem]] =
     IO.blocking {
+      val _ = actor
       val statement = connection.prepareStatement(listUsersSql)
       try
         val resultSet = statement.executeQuery()
@@ -231,10 +269,58 @@ object AuthUserTable:
               AuthUserListItem(
                 username = Username(resultSet.getString("username")),
                 displayName = DisplayName(resultSet.getString("display_name")),
-                email = EmailAddress(resultSet.getString("email"))
+                email = EmailAddress(resultSet.getString("email")),
+                siteManager = resultSet.getBoolean("site_manager"),
+                problemManager = resultSet.getBoolean("problem_manager")
               )
             )
             .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def updatePermissions(
+    connection: Connection,
+    actor: SiteManagerUser,
+    username: Username,
+    siteManager: Boolean,
+    problemManager: Boolean
+  ): IO[Option[AuthUser]] =
+    IO.blocking {
+      val _ = actor
+      val statement = connection.prepareStatement(updatePermissionsSql)
+      try
+        statement.setBoolean(1, siteManager)
+        statement.setBoolean(2, problemManager)
+        statement.setString(3, username.value.trim)
+
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(readAuthUser(resultSet))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def updateOwnSettings(
+    connection: Connection,
+    actor: AuthUser,
+    displayName: DisplayName,
+    email: EmailAddress,
+    passwordHash: PasswordHash
+  ): IO[Option[AuthUser]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateOwnSettingsSql)
+      try
+        statement.setString(1, displayName.value.trim)
+        statement.setString(2, email.value.trim)
+        statement.setString(3, passwordHash.value)
+        statement.setString(4, actor.username.value.trim)
+
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(readAuthUser(resultSet))
+          else None
         finally resultSet.close()
       finally statement.close()
     }
@@ -249,57 +335,12 @@ object AuthUserTable:
           statement.setString(2, seedAdminUser.displayName.value)
           statement.setString(3, seedAdminUser.email.value)
           statement.setString(4, passwordHash.value)
+          statement.setBoolean(5, seedAdminUser.siteManager)
+          statement.setBoolean(6, seedAdminUser.problemManager)
           statement.executeUpdate()
         finally statement.close()
       }
       _ <- logger.info(s"Ensured seeded auth user exists, username=${seedAdminUser.username.value}")
-    yield ()
-
-  private def migratePlaintextPasswords(connection: Connection): IO[Unit] =
-    for
-      usersNeedingMigration <- IO.blocking {
-        val statement = connection.prepareStatement(
-          """
-            |select username, display_name, password_hash
-            |     , email
-            |from auth_users
-            |where password_hash not like 'pbkdf2-sha256$%'
-            |""".stripMargin
-        )
-        try
-          val resultSet = statement.executeQuery()
-          try
-            Iterator
-              .continually(resultSet.next())
-              .takeWhile(identity)
-              .map(_ => readAuthUser(resultSet))
-              .toList
-          finally resultSet.close()
-        finally statement.close()
-      }
-      _ <- usersNeedingMigration.traverse_ { user =>
-        for
-          hashedPassword <- PasswordHasher.hashPassword(PlaintextPassword(user.passwordHash.value))
-          _ <- IO.blocking {
-            val statement = connection.prepareStatement(
-              """
-                |update auth_users
-                |set password_hash = ?
-                |where username = ?
-                |""".stripMargin
-            )
-            try
-              statement.setString(1, hashedPassword.value)
-              statement.setString(2, user.username.value)
-              statement.executeUpdate()
-            finally statement.close()
-          }
-        yield ()
-      }
-      _ <-
-        if usersNeedingMigration.nonEmpty then
-          logger.info(s"Migrated plaintext passwords to password hashes, count=${usersNeedingMigration.size}")
-        else IO.unit
     yield ()
 
   private def readAuthUser(resultSet: ResultSet): AuthUser =
@@ -307,5 +348,7 @@ object AuthUserTable:
       username = Username(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
-      passwordHash = PasswordHash(resultSet.getString("password_hash"))
+      passwordHash = PasswordHash(resultSet.getString("password_hash")),
+      siteManager = resultSet.getBoolean("site_manager"),
+      problemManager = resultSet.getBoolean("problem_manager")
     )

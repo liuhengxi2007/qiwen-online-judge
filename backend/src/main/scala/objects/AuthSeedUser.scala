@@ -4,5 +4,7 @@ final case class AuthSeedUser(
   username: Username,
   displayName: DisplayName,
   email: EmailAddress,
-  password: PlaintextPassword
+  password: PlaintextPassword,
+  siteManager: Boolean,
+  problemManager: Boolean
 )
