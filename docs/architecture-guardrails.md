@@ -1,0 +1,181 @@
+# Architecture Guardrails
+
+The repository is organized around business domains first, with technical layers kept inside each domain.
+
+## Frontend
+
+- `src/features/auth`
+  - Authentication, session state, registration, and user settings
+- `src/features/site-management`
+  - Site-level user management and permission updates
+- `src/features/dashboard`
+  - Signed-in landing page and top-level entry points
+- `src/shared`
+  - Cross-feature hooks and routing helpers
+- `src/shared/api`
+  - Reusable HTTP request helpers and shared client error handling
+- `src/shared/domain`
+  - Shared frontend domain primitives such as pagination and lifecycle types
+- `src/components/ui`
+  - Shared presentational UI primitives
+
+### Shared Is Not a Junk Drawer
+
+`shared` exists only for code that is genuinely cross-domain and stable.
+
+Put code in `shared` only if:
+
+- it is already used by at least two domains, or
+- it is a thin platform primitive that clearly belongs below business domains
+
+Do not put code in `shared` when:
+
+- it is only used by one domain right now
+- it contains business rules for a specific domain
+- it is a "maybe reusable later" abstraction
+- it exists only to avoid choosing an owning domain
+
+Preferred rule:
+
+- keep code inside its domain first
+- duplicate small code once if ownership is still clearer
+- extract to `shared` only after the second real consumer appears
+
+Good examples for `shared`:
+
+- HTTP client primitives
+- pagination types
+- generic routing helpers
+- presentational UI primitives
+
+Bad examples for `shared`:
+
+- `shared/problemset-form`
+- `shared/contest-policy`
+- `shared/submission-status-mapper`
+
+If ownership is ambiguous, default to the business domain that would be most damaged if the code changed.
+
+### Type Safety Rules
+
+Do not model domain objects with raw primitive types when a domain type exists.
+
+Prefer:
+
+- `Username` over `String`
+- `ProblemId` over `Long`
+- `ContestSlug` over `String`
+- `SubmissionCode` over `String`
+
+Rules:
+
+- domain inputs and outputs should use domain types, not unlabelled primitives
+- parsing and validation should happen at the boundary, then convert into typed values
+- invalid states should be made unrepresentable where practical
+- avoid "stringly typed" status, role, and visibility fields
+- if a value has business meaning, give it a named type
+
+Allowed use of primitives:
+
+- transport and framework boundaries before parsing
+- generic UI state with no domain meaning
+- small local implementation details that do not cross module boundaries
+
+Preferred pattern:
+
+- raw request payload enters at the boundary
+- boundary parser validates and converts to domain types
+- application/domain code only works with typed values
+
+Bad examples:
+
+- `def updateUser(username: String, role: String)`
+- `type Problem = { id: number; status: string }`
+
+Better examples:
+
+- `def updateUser(username: Username, role: UserRole)`
+- `type Problem = { id: ProblemId; status: ResourceStatus }`
+
+### Functional Core, Imperative Shell
+
+Push side effects to the boundary.
+
+Rules:
+
+- keep parsing, validation, policy, and state transition logic pure when possible
+- isolate IO, HTTP, database, time, randomness, and storage access at the edge
+- domain functions should return data, decisions, or errors, not perform effects directly unless they are boundary services
+- compose pure functions in the core, then execute effects in routers, clients, stores, or infrastructure adapters
+
+Preferred layering:
+
+- boundary layer: HTTP handlers, database adapters, browser storage, fetch, clocks
+- application layer: orchestration of use cases
+- domain layer: pure rules, typed data, state transitions
+
+Good examples:
+
+- validate a `CreateProblemSetRequest` into typed input before touching the database
+- compute permission decisions with pure policy functions
+- build next submission status from current status with a pure transition function
+
+Bad examples:
+
+- route handlers mixing JSON parsing, permission rules, SQL, and response formatting in one block
+- stores or hooks hiding domain rules together with network side effects
+- domain objects depending directly on framework APIs
+
+When forced to choose, prefer:
+
+- one more small pure function
+- one more explicit typed value
+
+over:
+
+- one more shared mutable state path
+- one more untyped string flag
+- one more helper that mixes business logic and IO
+
+## Backend
+
+- `src/main/scala/domains/auth`
+  - Auth commands, HTTP routes, models, and persistence for accounts and sessions
+- `src/main/scala/domains/system/health`
+  - Health endpoint and response model
+- `src/main/scala/domains/system/planner`
+  - Planner/demo APIs, models, and persistence
+- `src/main/scala/domains/shared`
+  - Shared models used across domains, including pagination and lifecycle primitives
+- `src/main/scala/database`
+  - Shared database bootstrap and connection management
+
+### Backend Shared Rules
+
+`domains/shared` should stay smaller than any real business domain.
+
+Allow only:
+
+- generic transport models
+- lifecycle and pagination primitives
+- small utility types with no business ownership
+
+Do not move commands, policies, SQL, or domain workflows into `shared`.
+
+## Next Domain Additions
+
+Future OJ modules should follow the same layout:
+
+- `domains/problemset`
+- `domains/problem`
+- `domains/submission`
+- `domains/contest`
+- `domains/usergroup`
+- `domains/hack`
+
+Each domain should own its:
+
+- `application`
+- `http`
+- `model`
+- `table`
