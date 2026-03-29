@@ -8,24 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  createPlaintextPassword,
-  createUsername,
-  normalizePlaintextPassword,
-  normalizeUsername,
-  persistAuthSession,
-  plaintextPasswordValue,
+  parsePlaintextPassword,
+  parseUsername,
   toAuthSession,
-  usernameValue,
-  type ErrorResponse,
   type LoginRequest,
-  type LoginResponse,
 } from '@/domain/auth'
+import { login } from '@/lib/auth-client'
+import { useAuthStore } from '@/stores/use-auth-store'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [username, setUsername] = useState(createUsername('admin'))
-  const [password, setPassword] = useState(createPlaintextPassword('password123'))
+  const setSession = useAuthStore((state) => state.setSession)
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('password123')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -40,11 +36,15 @@ export function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const normalizedUsername = normalizeUsername(username)
-    const normalizedPassword = normalizePlaintextPassword(password)
+    const usernameResult = parseUsername(username)
+    if (!usernameResult.ok) {
+      setErrorMessage(usernameResult.error)
+      return
+    }
 
-    if (!usernameValue(normalizedUsername) || !plaintextPasswordValue(normalizedPassword)) {
-      setErrorMessage('Please enter both username and password.')
+    const passwordResult = parsePlaintextPassword(password)
+    if (!passwordResult.ok) {
+      setErrorMessage(passwordResult.error)
       return
     }
 
@@ -52,29 +52,15 @@ export function LoginPage() {
     setErrorMessage('')
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: normalizedUsername,
-          password: normalizedPassword,
-        } satisfies LoginRequest),
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
-        setErrorMessage(errorData?.message ?? 'Login failed. Please try again.')
-        return
-      }
-
-      const data = (await response.json()) as LoginResponse
-      persistAuthSession(toAuthSession(data))
+      const data = await login({
+        username: usernameResult.value,
+        password: passwordResult.value,
+      } satisfies LoginRequest)
+      setSession(toAuthSession(data))
       navigate('/')
-    } catch {
-      setErrorMessage('Unable to reach the server. Please start the backend service.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the server. Please start the backend service.'
+      setErrorMessage(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -133,7 +119,7 @@ export function LoginPage() {
                       value={username}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
                       placeholder="Enter your username"
-                      onChange={(event) => setUsername(createUsername(event.target.value))}
+                      onChange={(event) => setUsername(event.target.value)}
                     />
                   </div>
                 </div>
@@ -151,7 +137,7 @@ export function LoginPage() {
                       value={password}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
                       placeholder="Enter your password"
-                      onChange={(event) => setPassword(createPlaintextPassword(event.target.value))}
+                      onChange={(event) => setPassword(event.target.value)}
                     />
                   </div>
                 </div>

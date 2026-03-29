@@ -4,7 +4,7 @@ import auth.{PasswordHasher, SessionStore, UsernameRules}
 import cats.effect.IO
 import database.DatabaseSession
 import io.circe.syntax.*
-import objects.{AuthUser, AuthUserListItem, ErrorResponse, LoginRequest, LoginResponse, RegisterRequest, SessionResponse, SiteManagerUser, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
+import objects.{AuthUser, AuthUserListItem, ErrorResponse, LoginRequest, LoginResponse, RegisterRequest, SessionResponse, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
 import org.http4s.{HttpRoutes, Request, Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.circe.CirceEntityEncoder.*
@@ -188,7 +188,6 @@ object AuthRouter:
             forbiddenResponse
           else
             for
-              updateRequest <- request.as[UpdateOwnSettingsRequest]
               targetUser <- databaseSession.withTransactionConnection(connection =>
                 AuthUserTable.findByUsername(connection, Username(targetUsername))
               )
@@ -197,39 +196,55 @@ object AuthRouter:
                   case None =>
                     NotFound(ErrorResponse("User not found.").asJson)
                   case Some(foundTargetUser) =>
-                    for
-                      passwordMatches <- if isOwnSettings then
-                        updateRequest.currentPassword match
-                          case Some(currentPassword) =>
-                            PasswordHasher.verifyPassword(currentPassword, authenticatedActor.passwordHash)
-                          case None =>
-                            IO.pure(false)
-                      else
-                        IO.pure(true)
-                      result <-
-                        if !passwordMatches then
-                          invalidCurrentPasswordResponse
-                        else
-                          for
-                            nextPasswordHash <- updateRequest.newPassword match
-                              case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
-                              case None => IO.pure(foundTargetUser.passwordHash)
-                            updatedUser <- databaseSession.withTransactionConnection(connection =>
-                              AuthUserTable.updateSettings(
-                                connection,
-                                foundTargetUser.username,
-                                displayName = updateRequest.displayName,
-                                email = updateRequest.email,
-                                passwordHash = nextPasswordHash
+                    if isOwnSettings then
+                      for
+                        updateRequest <- request.as[UpdateOwnSettingsRequest]
+                        passwordMatches <- PasswordHasher.verifyPassword(updateRequest.currentPassword, authenticatedActor.passwordHash)
+                        result <-
+                          if !passwordMatches then
+                            invalidCurrentPasswordResponse
+                          else
+                            for
+                              nextPasswordHash <- updateRequest.newPassword match
+                                case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
+                                case None => IO.pure(foundTargetUser.passwordHash)
+                              updatedUser <- databaseSession.withTransactionConnection(connection =>
+                                AuthUserTable.updateSettings(
+                                  connection,
+                                  foundTargetUser.username,
+                                  displayName = updateRequest.displayName,
+                                  email = updateRequest.email,
+                                  passwordHash = nextPasswordHash
+                                )
                               )
-                            )
-                            updatedResponse <- updatedUser match
-                              case Some(user) =>
-                                Ok(userSettingsResponse(user).asJson)
-                              case None =>
-                                NotFound(ErrorResponse("User not found.").asJson)
-                          yield updatedResponse
-                    yield result
+                              updatedResponse <- updatedUser match
+                                case Some(user) =>
+                                  Ok(userSettingsResponse(user).asJson)
+                                case None =>
+                                  NotFound(ErrorResponse("User not found.").asJson)
+                            yield updatedResponse
+                      yield result
+                    else
+                      for
+                        updateRequest <- request.as[UpdateManagedUserSettingsRequest]
+                        nextPasswordHash <- updateRequest.newPassword match
+                          case Some(newPassword) => PasswordHasher.hashPassword(newPassword)
+                          case None => IO.pure(foundTargetUser.passwordHash)
+                        updatedUser <- databaseSession.withTransactionConnection(connection =>
+                          AuthUserTable.updateSettings(
+                            connection,
+                            foundTargetUser.username,
+                            displayName = updateRequest.displayName,
+                            email = updateRequest.email,
+                            passwordHash = nextPasswordHash
+                          )
+                        )
+                        updatedResponse <- updatedUser match
+                          case Some(user) =>
+                            Ok(userSettingsResponse(user).asJson)
+                          case None =>
+                            NotFound(ErrorResponse("User not found.").asJson)
+                      yield updatedResponse
             yield response
         }
 

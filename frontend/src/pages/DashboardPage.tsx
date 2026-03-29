@@ -1,25 +1,15 @@
-import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  asSiteManagerSession,
-  clearAuthSession,
-  displayNameValue,
-  persistAuthSession,
-  readAuthSession,
-  usernameValue,
-  type SessionResponse,
-} from '@/domain/auth'
+import { displayNameValue, usernameValue } from '@/domain/auth'
+import { useSessionGuard } from '@/hooks/use-session-guard'
 
 export function DashboardPage() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [user, setUser] = useState(readAuthSession())
-  const siteManagerUser = user ? asSiteManagerSession(user) : null
+  const { session: user, siteManagerSession, signOut } = useSessionGuard()
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'site-manage-denied'
@@ -31,50 +21,6 @@ export function DashboardPage() {
   if (!user) {
     return <Navigate replace to="/login" />
   }
-
-  useEffect(() => {
-    let isCancelled = false
-
-    const syncSession = async () => {
-      try {
-        const response = await fetch('/api/auth/session', {
-          credentials: 'same-origin',
-        })
-
-        if (response.status === 401) {
-          if (!isCancelled) {
-            clearAuthSession()
-            setUser(null)
-            navigate('/login?notice=session-expired')
-          }
-          return
-        }
-
-        if (!response.ok) {
-          throw new Error('Unable to refresh session.')
-        }
-
-        const session = (await response.json()) as SessionResponse
-
-        if (!isCancelled) {
-          persistAuthSession(session)
-          setUser(session)
-        }
-      } catch {
-        if (!isCancelled) {
-          clearAuthSession()
-          setUser(null)
-          navigate('/login?notice=session-expired')
-        }
-      }
-    }
-
-    void syncSession()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [navigate])
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] px-6 py-12 sm:px-8">
@@ -91,14 +37,7 @@ export function DashboardPage() {
             variant="outline"
             className="rounded-full border-slate-300 bg-white"
             onClick={() => {
-              void fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'same-origin',
-              }).finally(() => {
-                clearAuthSession()
-                setUser(null)
-                navigate('/login')
-              })
+              void signOut()
             }}
           >
             <LogOut className="size-4" />
@@ -186,7 +125,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          {siteManagerUser ? (
+          {siteManagerSession ? (
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">

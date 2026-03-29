@@ -8,28 +8,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
-  asSiteManagerSession,
-  clearAuthSession,
   displayNameValue,
   emailAddressValue,
-  persistAuthSession,
-  readAuthSession,
   usernameValue,
   type AuthUserListItem,
-  type SessionResponse,
   type SiteManagerSession,
   type UpdateUserPermissionsRequest,
 } from '@/domain/auth'
+import { useSessionGuard } from '@/hooks/use-session-guard'
+import { AuthClientError, listUsers, updateUserPermissions } from '@/lib/auth-client'
 
 export function SiteManagePage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(readAuthSession())
+  const { session: user, siteManagerSession, signOut } = useSessionGuard({ requireSiteManager: true })
   const [users, setUsers] = useState<AuthUserListItem[]>([])
   const [userListError, setUserListError] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
-  const siteManagerUser = user ? asSiteManagerSession(user) : null
 
   if (!user) {
     return <Navigate replace to="/login" />
@@ -38,55 +34,7 @@ export function SiteManagePage() {
   const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username).toLowerCase() === 'admin'
 
   useEffect(() => {
-    let isCancelled = false
-
-    const syncSession = async () => {
-      try {
-        const response = await fetch('/api/auth/session', {
-          credentials: 'same-origin',
-        })
-
-        if (response.status === 401) {
-          if (!isCancelled) {
-            clearAuthSession()
-            setUser(null)
-            navigate('/login?notice=session-expired')
-          }
-          return
-        }
-
-        if (!response.ok) {
-          throw new Error('Unable to refresh session.')
-        }
-
-        const session = (await response.json()) as SessionResponse
-
-        if (!isCancelled) {
-          persistAuthSession(session)
-          setUser(session)
-
-          if (!asSiteManagerSession(session)) {
-            navigate('/?notice=site-manage-denied', { replace: true })
-          }
-        }
-      } catch {
-        if (!isCancelled) {
-          clearAuthSession()
-          setUser(null)
-          navigate('/login?notice=session-expired')
-        }
-      }
-    }
-
-    void syncSession()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [navigate])
-
-  useEffect(() => {
-    if (!siteManagerUser) {
+    if (!siteManagerSession) {
       navigate('/')
       return
     }
@@ -99,38 +47,18 @@ export function SiteManagePage() {
       setStatusMessage('')
 
       try {
-        const response = await fetch('/api/auth/users', {
-          credentials: 'same-origin',
-        })
-
-        if (response.status === 401) {
-          if (!isCancelled) {
-            clearAuthSession()
-            setUser(null)
-            navigate('/login?notice=session-expired')
-          }
-          return
-        }
-
-        if (response.status === 403) {
-          if (!isCancelled) {
-            navigate('/?notice=site-manage-denied', { replace: true })
-          }
-          return
-        }
-
-        if (!response.ok) {
-          throw new Error('Unable to load users.')
-        }
-
-        const data = (await response.json()) as AuthUserListItem[]
+        const data = await listUsers()
 
         if (!isCancelled) {
           setUsers(data)
         }
-      } catch {
+      } catch (error) {
         if (!isCancelled) {
-          setUserListError('Unable to load the user list.')
+          if (error instanceof AuthClientError && error.kind === 'forbidden') {
+            navigate('/?notice=site-manage-denied', { replace: true })
+          } else {
+            setUserListError('Unable to load the user list.')
+          }
         }
       } finally {
         if (!isCancelled) {
@@ -144,7 +72,7 @@ export function SiteManagePage() {
     return () => {
       isCancelled = true
     }
-  }, [navigate, siteManagerUser, user])
+  }, [navigate, siteManagerSession])
 
   const updatePermissions = async (
     actor: SiteManagerSession,
@@ -158,32 +86,7 @@ export function SiteManagePage() {
     setStatusMessage('')
 
     try {
-      const response = await fetch(`/api/auth/users/${encodeURIComponent(targetUsername)}/permissions`, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(nextPermissions),
-      })
-
-      if (response.status === 401) {
-        clearAuthSession()
-        setUser(null)
-        navigate('/login?notice=session-expired')
-        return
-      }
-
-      if (response.status === 403) {
-        navigate('/?notice=site-manage-denied', { replace: true })
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error('Unable to update permissions.')
-      }
-
-      const updatedUser = (await response.json()) as AuthUserListItem
+      const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
 
       setUsers((currentUsers) =>
         currentUsers.map((currentUser) =>
@@ -191,8 +94,12 @@ export function SiteManagePage() {
         ),
       )
       setStatusMessage(`Permissions updated for ${usernameValue(updatedUser.username)}.`)
-    } catch {
-      setUserListError('Unable to update user permissions.')
+    } catch (error) {
+      if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        navigate('/?notice=site-manage-denied', { replace: true })
+      } else {
+        setUserListError('Unable to update user permissions.')
+      }
     } finally {
       setUpdatingUsername(null)
     }
@@ -224,14 +131,7 @@ export function SiteManagePage() {
               variant="outline"
               className="rounded-full border-stone-300 bg-white"
               onClick={() => {
-                void fetch('/api/auth/logout', {
-                  method: 'POST',
-                  credentials: 'same-origin',
-                }).finally(() => {
-                  clearAuthSession()
-                  setUser(null)
-                  navigate('/login')
-                })
+                void signOut()
               }}
             >
               <LogOut className="size-4" />
@@ -312,8 +212,8 @@ export function SiteManagePage() {
                           }
                           aria-label="Site manager"
                           onCheckedChange={(checked) => {
-                            if (siteManagerUser) {
-                              void updatePermissions(siteManagerUser, listedUser, {
+                            if (siteManagerSession) {
+                              void updatePermissions(siteManagerSession, listedUser, {
                                 siteManager: checked === true,
                                 problemManager: listedUser.problemManager,
                               })
@@ -329,8 +229,8 @@ export function SiteManagePage() {
                           }
                           aria-label="Problem manager"
                           onCheckedChange={(checked) => {
-                            if (siteManagerUser) {
-                              void updatePermissions(siteManagerUser, listedUser, {
+                            if (siteManagerSession) {
+                              void updatePermissions(siteManagerSession, listedUser, {
                                 siteManager: listedUser.siteManager,
                                 problemManager: checked === true,
                               })

@@ -8,60 +8,61 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  createDisplayName,
-  createEmailAddress,
-  createPlaintextPassword,
-  createUsername,
-  normalizeDisplayName,
-  normalizeEmailAddress,
-  normalizePlaintextPassword,
-  normalizeUsername,
-  persistAuthSession,
-  plaintextPasswordValue,
+  parseDisplayName,
+  parseEmailAddress,
+  parsePlaintextPassword,
+  parseUsername,
   toAuthSession,
-  validateUsername,
-  type ErrorResponse,
   type RegisterRequest,
-  type RegisterResponse,
 } from '@/domain/auth'
+import { register } from '@/lib/auth-client'
+import { useAuthStore } from '@/stores/use-auth-store'
 
 export function RegisterPage() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState(createUsername(''))
-  const [displayName, setDisplayName] = useState(createDisplayName(''))
-  const [email, setEmail] = useState(createEmailAddress(''))
-  const [password, setPassword] = useState(createPlaintextPassword(''))
-  const [confirmPassword, setConfirmPassword] = useState(createPlaintextPassword(''))
+  const setSession = useAuthStore((state) => state.setSession)
+  const [username, setUsername] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const normalizedUsername = normalizeUsername(username)
-    const normalizedDisplayName = normalizeDisplayName(displayName)
-    const normalizedEmail = normalizeEmailAddress(email)
-    const normalizedPassword = normalizePlaintextPassword(password)
-    const normalizedConfirmPassword = normalizePlaintextPassword(confirmPassword)
-
-    if (
-      !normalizedUsername ||
-      !normalizedDisplayName ||
-      !normalizedEmail ||
-      !plaintextPasswordValue(normalizedPassword) ||
-      !plaintextPasswordValue(normalizedConfirmPassword)
-    ) {
-      setErrorMessage('Please complete all fields.')
+    const usernameResult = parseUsername(username)
+    if (!usernameResult.ok) {
+      setErrorMessage(usernameResult.error)
       return
     }
 
-    const usernameValidationError = validateUsername(normalizedUsername)
-    if (usernameValidationError) {
-      setErrorMessage(usernameValidationError)
+    const displayNameResult = parseDisplayName(displayName)
+    if (!displayNameResult.ok) {
+      setErrorMessage(displayNameResult.error)
       return
     }
 
-    if (normalizedPassword !== normalizedConfirmPassword) {
+    const emailResult = parseEmailAddress(email)
+    if (!emailResult.ok) {
+      setErrorMessage(emailResult.error)
+      return
+    }
+
+    const passwordResult = parsePlaintextPassword(password)
+    if (!passwordResult.ok) {
+      setErrorMessage(passwordResult.error)
+      return
+    }
+
+    const confirmPasswordResult = parsePlaintextPassword(confirmPassword)
+    if (!confirmPasswordResult.ok) {
+      setErrorMessage(confirmPasswordResult.error)
+      return
+    }
+
+    if (passwordResult.value !== confirmPasswordResult.value) {
       setErrorMessage('Passwords do not match.')
       return
     }
@@ -70,31 +71,17 @@ export function RegisterPage() {
     setErrorMessage('')
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: normalizedUsername,
-          displayName: normalizedDisplayName,
-          email: normalizedEmail,
-          password: normalizedPassword,
-        } satisfies RegisterRequest),
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
-        setErrorMessage(errorData?.message ?? 'Registration failed. Please try again.')
-        return
-      }
-
-      const data = (await response.json()) as RegisterResponse
-      persistAuthSession(toAuthSession(data))
+      const data = await register({
+        username: usernameResult.value,
+        displayName: displayNameResult.value,
+        email: emailResult.value,
+        password: passwordResult.value,
+      } satisfies RegisterRequest)
+      setSession(toAuthSession(data))
       navigate('/')
-    } catch {
-      setErrorMessage('Unable to reach the server. Please start the backend service.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the server. Please start the backend service.'
+      setErrorMessage(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -143,7 +130,7 @@ export function RegisterPage() {
                       value={username}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter a unique username"
-                      onChange={(event) => setUsername(createUsername(event.target.value))}
+                      onChange={(event) => setUsername(event.target.value)}
                     />
                   </div>
                 </div>
@@ -160,7 +147,7 @@ export function RegisterPage() {
                       value={displayName}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter the display name"
-                      onChange={(event) => setDisplayName(createDisplayName(event.target.value))}
+                      onChange={(event) => setDisplayName(event.target.value)}
                     />
                   </div>
                 </div>
@@ -178,7 +165,7 @@ export function RegisterPage() {
                       value={email}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter your email"
-                      onChange={(event) => setEmail(createEmailAddress(event.target.value))}
+                      onChange={(event) => setEmail(event.target.value)}
                     />
                   </div>
                 </div>
@@ -197,7 +184,7 @@ export function RegisterPage() {
                       value={password}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                         placeholder="Enter a password"
-                      onChange={(event) => setPassword(createPlaintextPassword(event.target.value))}
+                      onChange={(event) => setPassword(event.target.value)}
                       />
                     </div>
                   </div>
@@ -215,7 +202,7 @@ export function RegisterPage() {
                       value={confirmPassword}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                         placeholder="Repeat the password"
-                      onChange={(event) => setConfirmPassword(createPlaintextPassword(event.target.value))}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
                       />
                     </div>
                   </div>

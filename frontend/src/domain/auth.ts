@@ -1,4 +1,7 @@
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
+type ParseSuccess<T> = { ok: true; value: T }
+type ParseFailure = { ok: false; error: string }
+type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
 export type Username = Brand<string, 'Username'>
 export type DisplayName = Brand<string, 'DisplayName'>
@@ -60,25 +63,32 @@ export type UpdateUserPermissionsRequest = {
 export type UpdateOwnSettingsRequest = {
   displayName: DisplayName
   email: EmailAddress
-  currentPassword: PlaintextPassword | null
+  currentPassword: PlaintextPassword
   newPassword: PlaintextPassword | null
 }
 
-const authUserStorageKey = 'auth_user'
+export type UpdateManagedUserSettingsRequest = {
+  displayName: DisplayName
+  email: EmailAddress
+  newPassword: PlaintextPassword | null
+}
+
 const usernamePattern = /^[A-Za-z0-9_-]+$/
-export function createUsername(value: string): Username {
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function createUsername(value: string): Username {
   return value as Username
 }
 
-export function createDisplayName(value: string): DisplayName {
+function createDisplayName(value: string): DisplayName {
   return value as DisplayName
 }
 
-export function createEmailAddress(value: string): EmailAddress {
+function createEmailAddress(value: string): EmailAddress {
   return value as EmailAddress
 }
 
-export function createPlaintextPassword(value: string): PlaintextPassword {
+function createPlaintextPassword(value: string): PlaintextPassword {
   return value as PlaintextPassword
 }
 
@@ -98,34 +108,56 @@ export function plaintextPasswordValue(password: PlaintextPassword): string {
   return password
 }
 
-export function normalizeUsername(rawUsername: string): Username {
-  return createUsername(rawUsername.trim())
-}
+export function parseUsername(rawUsername: string): ParseResult<Username> {
+  const normalized = rawUsername.trim()
 
-export function normalizeDisplayName(rawDisplayName: string): DisplayName {
-  return createDisplayName(rawDisplayName.trim())
-}
-
-export function normalizeEmailAddress(rawEmailAddress: string): EmailAddress {
-  return createEmailAddress(rawEmailAddress.trim())
-}
-
-export function normalizePlaintextPassword(rawPassword: string): PlaintextPassword {
-  return createPlaintextPassword(rawPassword.trim())
-}
-
-export function validateUsername(username: Username): string | null {
-  const normalized = usernameValue(username)
+  if (!normalized) {
+    return { ok: false, error: 'Username is required.' }
+  }
 
   if (normalized.length < 3 || normalized.length > 32) {
-    return 'Username must be between 3 and 32 characters.'
+    return { ok: false, error: 'Username must be between 3 and 32 characters.' }
   }
 
   if (!usernamePattern.test(normalized)) {
-    return 'Username may contain only letters, numbers, underscores, and hyphens.'
+    return { ok: false, error: 'Username may contain only letters, numbers, underscores, and hyphens.' }
   }
 
-  return null
+  return { ok: true, value: createUsername(normalized) }
+}
+
+export function parseDisplayName(rawDisplayName: string): ParseResult<DisplayName> {
+  const normalized = rawDisplayName.trim()
+
+  if (!normalized) {
+    return { ok: false, error: 'Display name is required.' }
+  }
+
+  return { ok: true, value: createDisplayName(normalized) }
+}
+
+export function parseEmailAddress(rawEmailAddress: string): ParseResult<EmailAddress> {
+  const normalized = rawEmailAddress.trim()
+
+  if (!normalized) {
+    return { ok: false, error: 'Email is required.' }
+  }
+
+  if (!emailPattern.test(normalized)) {
+    return { ok: false, error: 'Please enter a valid email address.' }
+  }
+
+  return { ok: true, value: createEmailAddress(normalized) }
+}
+
+export function parsePlaintextPassword(rawPassword: string): ParseResult<PlaintextPassword> {
+  const normalized = rawPassword.trim()
+
+  if (!normalized) {
+    return { ok: false, error: 'Password is required.' }
+  }
+
+  return { ok: true, value: createPlaintextPassword(normalized) }
 }
 
 export function toAuthSession(
@@ -138,57 +170,6 @@ export function toAuthSession(
     siteManager: response.siteManager,
     problemManager: response.problemManager,
   }
-}
-
-export function persistAuthSession(session: AuthSession): void {
-  window.localStorage.setItem(authUserStorageKey, JSON.stringify(session))
-}
-
-export function clearAuthSession(): void {
-  window.localStorage.removeItem(authUserStorageKey)
-}
-
-export function readAuthSession(): AuthSession | null {
-  const rawSession = window.localStorage.getItem(authUserStorageKey)
-  if (!rawSession) {
-    return null
-  }
-
-  try {
-    const parsed = JSON.parse(rawSession) as {
-      displayName?: unknown
-      username?: unknown
-      email?: unknown
-      siteManager?: unknown
-      problemManager?: unknown
-    }
-
-    if (
-      typeof parsed.displayName !== 'string' ||
-      typeof parsed.username !== 'string' ||
-      typeof parsed.email !== 'string' ||
-      typeof parsed.siteManager !== 'boolean' ||
-      typeof parsed.problemManager !== 'boolean'
-    ) {
-      clearAuthSession()
-      return null
-    }
-
-    return {
-      displayName: createDisplayName(parsed.displayName),
-      username: createUsername(parsed.username),
-      email: createEmailAddress(parsed.email),
-      siteManager: parsed.siteManager,
-      problemManager: parsed.problemManager,
-    }
-  } catch {
-    clearAuthSession()
-    return null
-  }
-}
-
-export function hasAuthSession(): boolean {
-  return readAuthSession() !== null
 }
 
 export function asSiteManagerSession(session: AuthSession): SiteManagerSession | null {
