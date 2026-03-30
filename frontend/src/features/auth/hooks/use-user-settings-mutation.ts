@@ -8,9 +8,14 @@ import {
   type UpdateOwnSettingsRequest,
   type Username,
 } from '@/features/auth/domain/auth'
-import { AuthClientError, updateManagedUserSettings, updateOwnUserSettings } from '@/features/auth/api/auth-client'
+import {
+  AuthClientError,
+  logout,
+  updateManagedUserSettings,
+  updateOwnUserSettings,
+} from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
-import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useUserSettingsQueryStore } from '@/features/auth/stores/use-user-settings-query-store'
 
 type SubmitSettingsParams =
@@ -29,6 +34,7 @@ type SubmitSettingsParams =
 
 type SubmitSettingsResult =
   | { kind: 'updated'; user: SessionResponse; message: string }
+  | { kind: 'updated_and_signed_out' }
   | { kind: 'forbidden' }
   | { kind: 'unauthorized'; message: string }
   | { kind: 'failed'; message: string }
@@ -49,11 +55,22 @@ export function useUserSettingsMutation() {
             ? await updateOwnUserSettings(params.targetUsername, params.request)
             : await updateManagedUserSettings(params.targetUsername, params.request)
 
-        if (params.kind === 'own') {
+        const shouldSignOutAfterUpdate = params.kind === 'own' && params.request.newPassword !== null
+
+        if (params.kind === 'own' && !shouldSignOutAfterUpdate) {
           params.setViewer(toAuthSession(updatedUser))
         }
 
         setEditedUser(params.targetUsername, updatedUser)
+
+        if (shouldSignOutAfterUpdate) {
+          await logout()
+          params.setViewer(null)
+          setNavigationIntent(toPasswordChangedRedirect())
+          setIsSubmitting(false)
+          return { kind: 'updated_and_signed_out' }
+        }
+
         const message =
           params.kind === 'own'
             ? 'Settings updated successfully.'

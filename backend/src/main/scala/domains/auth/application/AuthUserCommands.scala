@@ -28,7 +28,7 @@ object AuthUserCommands:
     case Forbidden
     case InvalidCurrentPassword
     case NotFound
-    case Updated(user: AuthUser)
+    case Updated(user: AuthUser, passwordChanged: Boolean)
 
   def getUserSettings(
     databaseSession: DatabaseSession,
@@ -89,7 +89,13 @@ object AuthUserCommands:
             case UpdateUserSettingsCommand.UpdateOwn(actor, request) =>
               updateOwnSettings(databaseSession, actor, targetUser, request)
             case UpdateUserSettingsCommand.UpdateManaged(_, request) =>
-              updateSettingsRecord(databaseSession, targetUser, request.displayName, request.email, request.newPassword)
+              updateSettingsRecord(
+                databaseSession,
+                targetUser,
+                request.displayName,
+                request.email,
+                request.newPassword
+              )
       }
 
   private def updateOwnSettings(
@@ -112,6 +118,7 @@ object AuthUserCommands:
     email: domains.auth.model.EmailAddress,
     newPassword: Option[domains.auth.model.PlaintextPassword]
   ): IO[UpdateUserSettingsResult] =
+    val passwordChanged = newPassword.nonEmpty
     for
       nextPasswordHash <- newPassword match
         case Some(password) => PasswordHasher.hashPassword(password)
@@ -126,7 +133,7 @@ object AuthUserCommands:
         )
       )
     yield updatedUser match
-      case Some(user) => UpdateUserSettingsResult.Updated(user)
+      case Some(user) => UpdateUserSettingsResult.Updated(user, passwordChanged)
       case None => UpdateUserSettingsResult.NotFound
 
   private def canAccessTarget(actor: AuthUser, targetUsername: Username): Boolean =

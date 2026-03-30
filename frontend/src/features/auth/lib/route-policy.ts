@@ -20,6 +20,10 @@ export function toSignedOutRedirect(): NavigationIntent {
   return { to: '/login?notice=signed-out' }
 }
 
+export function toPasswordChangedRedirect(): NavigationIntent {
+  return { to: '/login?notice=password-changed', replace: true }
+}
+
 export function toSiteManageDeniedRedirect(): NavigationIntent {
   return { to: '/?notice=site-manage-denied', replace: true }
 }

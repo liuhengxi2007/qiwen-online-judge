@@ -224,22 +224,24 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
       switch (result.kind) {
         case 'updated':
-        dispatch({
-          type: 'submit_succeeded',
-          user: result.user,
-          message: result.message,
-        })
-        return
+          dispatch({
+            type: 'submit_succeeded',
+            user: result.user,
+            message: result.message,
+          })
+          return
+        case 'updated_and_signed_out':
+          return
         case 'forbidden':
-        dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
-        return
-      case 'unauthorized':
-        dispatch({ type: 'submit_failed', message: result.message })
-        return
-      case 'failed':
-        dispatch({ type: 'submit_failed', message: result.message })
-        return
-    }
+          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
+          return
+        case 'unauthorized':
+          dispatch({ type: 'submit_failed', message: result.message })
+          return
+        case 'failed':
+          dispatch({ type: 'submit_failed', message: result.message })
+          return
+      }
   }, [displayedUser, isEditingOwnSettings, mutation, setViewer, state, targetUsername])
 
   return {

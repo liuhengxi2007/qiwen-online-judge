@@ -144,14 +144,16 @@ final class AuthHttpHandlers(
   ): IO[Response[IO]] =
     for
       updateRequest <- request.as[UpdateOwnSettingsRequest]
-      response <- AuthUserCommands
+      result <- AuthUserCommands
         .updateUserSettings(
           databaseSession,
           targetUsername,
           AuthUserCommands.UpdateUserSettingsCommand.UpdateOwn(authenticatedActor, updateRequest)
         )
-        .flatMap(AuthHttpResponses.mapUpdateUserSettingsResult)
-    yield response
+      _ <- revokePasswordChangedSessions(targetUsername, result)
+      response <- AuthHttpResponses.mapUpdateUserSettingsResult(result)
+      finalResponse <- clearCurrentSessionCookieIfNeeded(response, result)
+    yield finalResponse
 
   private def updateManagedUserSettings(
     request: Request[IO],
@@ -160,14 +162,35 @@ final class AuthHttpHandlers(
   ): IO[Response[IO]] =
     for
       updateRequest <- request.as[UpdateManagedUserSettingsRequest]
-      response <- AuthUserCommands
+      result <- AuthUserCommands
         .updateUserSettings(
           databaseSession,
           targetUsername,
           AuthUserCommands.UpdateUserSettingsCommand.UpdateManaged(siteManagerActor, updateRequest)
         )
-        .flatMap(AuthHttpResponses.mapUpdateUserSettingsResult)
+      _ <- revokePasswordChangedSessions(targetUsername, result)
+      response <- AuthHttpResponses.mapUpdateUserSettingsResult(result)
     yield response
+
+  private def revokePasswordChangedSessions(
+    targetUsername: Username,
+    result: AuthUserCommands.UpdateUserSettingsResult
+  ): IO[Unit] =
+    result match
+      case AuthUserCommands.UpdateUserSettingsResult.Updated(_, true) =>
+        sessionStore.deleteSessionsForUsername(targetUsername)
+      case _ =>
+        IO.unit
+
+  private def clearCurrentSessionCookieIfNeeded(
+    response: Response[IO],
+    result: AuthUserCommands.UpdateUserSettingsResult
+  ): IO[Response[IO]] =
+    result match
+      case AuthUserCommands.UpdateUserSettingsResult.Updated(_, true) =>
+        IO.pure(response.addCookie(AuthHttpResponses.clearedSessionCookie))
+      case _ =>
+        IO.pure(response)
 
   private def loginCreatedUser(createdUser: AuthUser): IO[Response[IO]] =
     sessionStore.createSession(createdUser.username).flatMap { sessionToken =>

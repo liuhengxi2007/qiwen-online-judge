@@ -119,7 +119,7 @@ object AuthHttpResponses:
         invalidCurrentPasswordResponse
       case AuthUserCommands.UpdateUserSettingsResult.NotFound =>
         userNotFoundResponse
-      case AuthUserCommands.UpdateUserSettingsResult.Updated(user) =>
+      case AuthUserCommands.UpdateUserSettingsResult.Updated(user, _) =>
         Ok(toSessionResponse(user).asJson)
 
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =

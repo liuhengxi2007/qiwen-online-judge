@@ -25,6 +25,9 @@ final class SessionStore private (
   def deleteSession(token: String): IO[Unit] =
     sessionsRef.update(_ - token)
 
+  def deleteSessionsForUsername(username: Username): IO[Unit] =
+    sessionsRef.update(_.filterNot((_, sessionUsername) => sessionUsername.value.equalsIgnoreCase(username.value)))
+
   private def nextToken: IO[String] =
     IO.delay {
       val tokenBytes = new Array[Byte](tokenLengthBytes)

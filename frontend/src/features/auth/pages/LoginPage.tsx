@@ -22,6 +22,8 @@ export function LoginPage() {
       ? 'Your session expired. Sign in again to continue.'
       : notice === 'signed-out'
         ? 'You have been signed out.'
+        : notice === 'password-changed'
+          ? 'Your password was changed. Sign in again with the new password.'
         : null
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
