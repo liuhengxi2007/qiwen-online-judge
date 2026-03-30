@@ -1,7 +1,7 @@
-package api
+package domains.system.planner.api
 
 import cats.effect.IO
-import objects.{EchoRequest, EchoResponse}
+import domains.system.planner.model.{EchoRequest, EchoResponse}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 object EchoPlanner extends PlainApiPlan[EchoRequest, EchoResponse]:

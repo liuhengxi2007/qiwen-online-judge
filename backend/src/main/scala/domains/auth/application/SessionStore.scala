@@ -1,7 +1,7 @@
-package auth
+package domains.auth.application
 
 import cats.effect.{IO, Ref}
-import objects.Username
+import domains.auth.model.Username
 
 import java.security.SecureRandom
 import java.util.Base64

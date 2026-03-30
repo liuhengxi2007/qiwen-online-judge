@@ -1,4 +1,4 @@
-package api
+package domains.system.planner.api
 
 import cats.effect.IO
 import io.circe.{Decoder, Encoder}

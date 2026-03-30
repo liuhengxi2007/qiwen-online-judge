@@ -1,7 +1,7 @@
-package tables
+package domains.system.planner.table
 
 import cats.effect.IO
-import objects.{DemoNote, NoteBody, NoteId, NoteStatus, NoteTitle, SaveDemoNoteRequest}
+import domains.system.planner.model.{DemoNote, NoteBody, NoteId, NoteStatus, NoteTitle, SaveDemoNoteRequest}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}

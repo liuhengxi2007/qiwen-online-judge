@@ -8,7 +8,9 @@ import type {
   UpdateManagedUserSettingsRequest,
   UpdateOwnSettingsRequest,
   UpdateUserPermissionsRequest,
+  Username,
 } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/auth/domain/auth'
 import { postJson, requestJson } from '@/shared/api/http-client'
 
 export { HttpClientError as AuthClientError } from '@/shared/api/http-client'
@@ -37,26 +39,26 @@ export function listUsers(): Promise<AuthUserListItem[]> {
 }
 
 export function updateUserPermissions(
-  username: string,
+  username: Username,
   request: UpdateUserPermissionsRequest,
 ): Promise<AuthUserListItem> {
-  return postJson<AuthUserListItem>(`/api/auth/users/${encodeURIComponent(username)}/permissions`, request)
+  return postJson<AuthUserListItem>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/permissions`, request)
 }
 
-export function getUserSettings(username: string): Promise<SessionResponse> {
-  return requestJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(username)}/settings`)
+export function getUserSettings(username: Username): Promise<SessionResponse> {
+  return requestJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`)
 }
 
 export function updateOwnUserSettings(
-  username: string,
+  username: Username,
   request: UpdateOwnSettingsRequest,
 ): Promise<SessionResponse> {
-  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(username)}/settings`, request)
+  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`, request)
 }
 
 export function updateManagedUserSettings(
-  username: string,
+  username: Username,
   request: UpdateManagedUserSettingsRequest,
 ): Promise<SessionResponse> {
-  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(username)}/settings`, request)
+  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`, request)
 }

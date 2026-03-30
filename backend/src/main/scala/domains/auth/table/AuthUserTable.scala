@@ -1,8 +1,8 @@
-package tables
+package domains.auth.table
 
-import auth.PasswordHasher
+import domains.auth.application.PasswordHasher
 import cats.effect.IO
-import objects.{
+import domains.auth.model.{
   AuthSeedUser,
   AuthUser,
   AuthUserListItem,

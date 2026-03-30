@@ -1,4 +1,4 @@
-package objects
+package domains.system.health
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

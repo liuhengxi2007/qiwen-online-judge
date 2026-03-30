@@ -1,4 +1,4 @@
-import auth.SessionStore
+import domains.auth.application.SessionStore
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
@@ -6,9 +6,9 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.{CORS, Logger}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import routes.ApiRouter
-import tables.AuthUserTable
-import tables.NoteTable
+import domains.system.http.ApiRouter
+import domains.auth.table.AuthUserTable
+import domains.system.planner.table.NoteTable
 
 object Main extends IOApp.Simple:
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { SessionResponse } from '@/features/auth/domain/auth'
+import { sameUsername, type SessionResponse, type Username } from '@/features/auth/domain/auth'
 import { AuthClientError, getUserSettings } from '@/features/auth/api/auth-client'
 
 type UserSettingsLoadResult =
@@ -11,13 +11,13 @@ type UserSettingsLoadResult =
   | { kind: 'stale' }
 
 type UserSettingsQueryStore = {
-  activeTargetUsername: string | null
+  activeTargetUsername: Username | null
   editedUser: SessionResponse | null
   isLoadingSettings: boolean
   settingsLoadError: string
   requestId: number
-  loadUserSettings: (username: string) => Promise<UserSettingsLoadResult>
-  setEditedUser: (username: string, editedUser: SessionResponse) => void
+  loadUserSettings: (username: Username) => Promise<UserSettingsLoadResult>
+  setEditedUser: (username: Username, editedUser: SessionResponse) => void
   reset: () => void
 }
 
@@ -88,7 +88,7 @@ export const useUserSettingsQueryStore = create<UserSettingsQueryStore>()((set, 
   },
   setEditedUser: (username, editedUser) =>
     set((state) =>
-      state.activeTargetUsername === username
+      state.activeTargetUsername && sameUsername(state.activeTargetUsername, username)
         ? {
             editedUser,
             settingsLoadError: '',

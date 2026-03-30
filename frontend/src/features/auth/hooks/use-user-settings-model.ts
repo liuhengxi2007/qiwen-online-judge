@@ -3,14 +3,10 @@ import { useCallback, useEffect, useReducer } from 'react'
 import {
   displayNameValue,
   emailAddressValue,
-  parseDisplayName,
-  parseEmailAddress,
-  parsePlaintextPassword,
-  usernameValue,
+  parseUsername,
   type SessionResponse,
-  type UpdateManagedUserSettingsRequest,
-  type UpdateOwnSettingsRequest,
 } from '@/features/auth/domain/auth'
+import { validateUserSettingsDraft } from '@/features/auth/domain/user-settings-form'
 import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-query'
 import { useUserSettingsMutation } from '@/features/auth/hooks/use-user-settings-mutation'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
@@ -143,11 +139,12 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
   const [state, dispatch] = useReducer(userSettingsReducer, initialState)
   const mutation = useUserSettingsMutation()
 
-  const viewerUsername = usernameValue(viewer.username)
+  const parsedRouteUsername = routeUsername ? parseUsername(routeUsername) : null
   const siteManagerViewer = viewer.siteManager
   const routePolicy = resolveUserSettingsRoutePolicy({
-    viewerUsername,
-    routeUsername,
+    viewerUsername: viewer.username,
+    routeUsername: parsedRouteUsername?.ok ? parsedRouteUsername.value : null,
+    hasRouteUsername: Boolean(routeUsername),
     siteManagerViewer,
   })
   const targetUsername = routePolicy.targetUsername
@@ -192,79 +189,35 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
       return
     }
 
-    const displayNameResult = parseDisplayName(state.displayName)
-    if (!displayNameResult.ok) {
-      dispatch({ type: 'submit_failed', message: displayNameResult.error })
+    const validation = validateUserSettingsDraft(
+      {
+        displayName: state.displayName,
+        email: state.email,
+        currentPassword: state.currentPassword,
+        newPassword: state.newPassword,
+        confirmNewPassword: state.confirmNewPassword,
+      },
+      isEditingOwnSettings,
+    )
+    if (!validation.ok) {
+      dispatch({ type: 'submit_failed', message: validation.message })
       return
     }
-
-    const emailResult = parseEmailAddress(state.email)
-    if (!emailResult.ok) {
-      dispatch({ type: 'submit_failed', message: emailResult.error })
-      return
-    }
-
-    const currentPasswordResult =
-      isEditingOwnSettings || state.currentPassword.trim()
-        ? parsePlaintextPassword(state.currentPassword)
-        : null
-
-    if (isEditingOwnSettings && (!currentPasswordResult || !currentPasswordResult.ok)) {
-      dispatch({ type: 'submit_failed', message: currentPasswordResult?.error ?? 'Password is required.' })
-      return
-    }
-
-    const newPasswordResult = state.newPassword.trim() ? parsePlaintextPassword(state.newPassword) : null
-    if (newPasswordResult && !newPasswordResult.ok) {
-      dispatch({ type: 'submit_failed', message: newPasswordResult.error })
-      return
-    }
-
-    const confirmNewPasswordResult = state.confirmNewPassword.trim()
-      ? parsePlaintextPassword(state.confirmNewPassword)
-      : null
-    if (confirmNewPasswordResult && !confirmNewPasswordResult.ok) {
-      dispatch({ type: 'submit_failed', message: confirmNewPasswordResult.error })
-      return
-    }
-
-    if (newPasswordResult || confirmNewPasswordResult) {
-      if (
-        !newPasswordResult ||
-        !confirmNewPasswordResult ||
-        newPasswordResult.value !== confirmNewPasswordResult.value
-      ) {
-        dispatch({ type: 'submit_failed', message: 'New passwords do not match.' })
-        return
-      }
-    }
-
-    const currentPasswordValue =
-      currentPasswordResult && currentPasswordResult.ok ? currentPasswordResult.value : null
 
     dispatch({ type: 'submit_started' })
 
     const result = await mutation.submitSettings(
-      isEditingOwnSettings
+      validation.submission.kind === 'own'
         ? {
             kind: 'own',
             targetUsername,
-            request: {
-              displayName: displayNameResult.value,
-              email: emailResult.value,
-              currentPassword: currentPasswordValue!,
-              newPassword: newPasswordResult ? newPasswordResult.value : null,
-            } satisfies UpdateOwnSettingsRequest,
+            request: validation.submission.request,
             setViewer,
           }
         : {
             kind: 'managed',
             targetUsername,
-            request: {
-              displayName: displayNameResult.value,
-              email: emailResult.value,
-              newPassword: newPasswordResult ? newPasswordResult.value : null,
-            } satisfies UpdateManagedUserSettingsRequest,
+            request: validation.submission.request,
             setViewer,
           },
     )

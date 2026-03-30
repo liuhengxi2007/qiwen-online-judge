@@ -1,6 +1,6 @@
-package auth
+package domains.auth.application
 
-import objects.Username
+import domains.auth.model.Username
 
 object UsernameRules:
 

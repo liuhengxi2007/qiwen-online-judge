@@ -1,11 +1,11 @@
-package routes
+package domains.system.planner.http
 
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
+import domains.shared.model.ErrorResponse
 import io.circe.Json
 import io.circe.syntax.*
-import objects.ErrorResponse
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.circe.CirceEntityEncoder.*

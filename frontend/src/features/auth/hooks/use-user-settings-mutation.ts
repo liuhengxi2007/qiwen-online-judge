@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react'
 
 import {
   toAuthSession,
+  usernameValue,
   type SessionResponse,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
+  type Username,
 } from '@/features/auth/domain/auth'
 import { AuthClientError, updateManagedUserSettings, updateOwnUserSettings } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
@@ -14,13 +16,13 @@ import { useUserSettingsQueryStore } from '@/features/auth/stores/use-user-setti
 type SubmitSettingsParams =
   | {
       kind: 'own'
-      targetUsername: string
+      targetUsername: Username
       request: UpdateOwnSettingsRequest
       setViewer: (session: SessionResponse | null) => void
     }
   | {
       kind: 'managed'
-      targetUsername: string
+      targetUsername: Username
       request: UpdateManagedUserSettingsRequest
       setViewer: (session: SessionResponse | null) => void
     }
@@ -55,7 +57,7 @@ export function useUserSettingsMutation() {
         const message =
           params.kind === 'own'
             ? 'Settings updated successfully.'
-            : `Settings updated for ${updatedUser.username}.`
+            : `Settings updated for ${usernameValue(updatedUser.username)}.`
 
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }

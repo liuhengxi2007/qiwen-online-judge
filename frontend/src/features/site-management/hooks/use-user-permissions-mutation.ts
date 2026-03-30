@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/features/auth/domain/auth'
+import { type AuthUserListItem, type UpdateUserPermissionsRequest, type Username } from '@/features/auth/domain/auth'
 import { AuthClientError, updateUserPermissions } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
@@ -13,11 +13,11 @@ type SavePermissionsResult =
 
 export function useUserPermissionsMutation() {
   const replaceUser = useUserDirectoryStore((state) => state.replaceUser)
-  const [updatingUsername, setUpdatingUsername] = useState<string | null>(null)
+  const [updatingUsername, setUpdatingUsername] = useState<Username | null>(null)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
   const savePermissions = useCallback(
-    async (targetUsername: string, nextPermissions: UpdateUserPermissionsRequest): Promise<SavePermissionsResult> => {
+    async (targetUsername: Username, nextPermissions: UpdateUserPermissionsRequest): Promise<SavePermissionsResult> => {
       setUpdatingUsername(targetUsername)
       setNavigationIntent(null)
 

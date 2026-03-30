@@ -1,7 +1,6 @@
-package routes
+package domains.system.health
 
 import cats.effect.IO
-import objects.HealthResponse
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*

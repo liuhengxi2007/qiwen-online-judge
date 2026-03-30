@@ -1,4 +1,4 @@
-package objects
+package domains.auth.model
 
 import io.circe.{Decoder, Encoder}
 

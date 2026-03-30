@@ -1,6 +1,6 @@
-package routes
+package domains.system.planner.http
 
-import api.{EchoPlanner, SaveDemoNotePlanner}
+import domains.system.planner.api.{EchoPlanner, SaveDemoNotePlanner}
 
 object PlannerDefinitions:
 

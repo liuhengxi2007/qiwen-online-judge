@@ -96,6 +96,10 @@ export function usernameValue(username: Username): string {
   return username
 }
 
+export function sameUsername(left: Username, right: Username): boolean {
+  return left.toLowerCase() === right.toLowerCase()
+}
+
 export function displayNameValue(displayName: DisplayName): string {
   return displayName
 }

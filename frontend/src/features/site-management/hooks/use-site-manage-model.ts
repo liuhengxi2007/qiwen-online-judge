@@ -68,10 +68,9 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
         return
       }
 
-      const targetUsername = usernameValue(listedUser.username)
-      dispatch({ type: 'update_started', username: targetUsername })
+      dispatch({ type: 'update_started', username: usernameValue(listedUser.username) })
 
-      const result = await mutation.savePermissions(targetUsername, nextPermissions)
+      const result = await mutation.savePermissions(listedUser.username, nextPermissions)
 
       switch (result.kind) {
         case 'updated':

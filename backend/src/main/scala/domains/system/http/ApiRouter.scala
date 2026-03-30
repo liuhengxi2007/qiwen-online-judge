@@ -1,6 +1,6 @@
-package routes
+package domains.system.http
 
-import auth.SessionStore
+import domains.auth.application.SessionStore
 import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
@@ -12,6 +12,6 @@ object ApiRouter:
 
   def httpApp(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
-      HealthRouter.routes <+> AuthRouter.routes(databaseSession, sessionStore) <+> PlannerRouter.routes(databaseSession)
+      domains.system.health.HealthRouter.routes <+> domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+> domains.system.planner.http.PlannerRouter.routes(databaseSession)
 
     allRoutes.orNotFound

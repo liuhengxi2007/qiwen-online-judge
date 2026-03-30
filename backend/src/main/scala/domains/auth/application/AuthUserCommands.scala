@@ -1,9 +1,9 @@
-package auth
+package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import objects.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
-import tables.AuthUserTable
+import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
+import domains.auth.table.AuthUserTable
 
 object AuthUserCommands:
 
@@ -108,9 +108,9 @@ object AuthUserCommands:
   private def updateSettingsRecord(
     databaseSession: DatabaseSession,
     targetUser: AuthUser,
-    displayName: objects.DisplayName,
-    email: objects.EmailAddress,
-    newPassword: Option[objects.PlaintextPassword]
+    displayName: domains.auth.model.DisplayName,
+    email: domains.auth.model.EmailAddress,
+    newPassword: Option[domains.auth.model.PlaintextPassword]
   ): IO[UpdateUserSettingsResult] =
     for
       nextPasswordHash <- newPassword match

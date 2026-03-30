@@ -1,6 +1,6 @@
-package routes
+package domains.system.planner.http
 
-import api.{ConnectionApiPlan, PlainApiPlan}
+import domains.system.planner.api.{ConnectionApiPlan, PlainApiPlan}
 import io.circe.{Decoder, Encoder}
 
 object PlannerRegistry:

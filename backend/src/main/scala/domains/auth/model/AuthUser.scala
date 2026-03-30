@@ -1,4 +1,4 @@
-package objects
+package domains.auth.model
 
 final case class AuthUser(
   username: Username,

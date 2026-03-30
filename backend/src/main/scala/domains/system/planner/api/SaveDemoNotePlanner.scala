@@ -1,8 +1,8 @@
-package api
+package domains.system.planner.api
 
 import cats.effect.IO
-import objects.{DemoNote, SaveDemoNoteRequest}
-import tables.NoteTable
+import domains.system.planner.model.{DemoNote, SaveDemoNoteRequest}
+import domains.system.planner.table.NoteTable
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.Connection

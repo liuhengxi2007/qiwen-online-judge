@@ -1,8 +1,14 @@
+import {
+  sameUsername,
+  usernameValue,
+  type Username,
+} from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type UserSettingsRoutePolicyArgs = {
-  viewerUsername: string
-  routeUsername: string | undefined
+  viewerUsername: Username
+  routeUsername: Username | null
+  hasRouteUsername: boolean
   siteManagerViewer: boolean
 }
 
@@ -18,9 +24,9 @@ export function toSiteManageDeniedRedirect(): NavigationIntent {
   return { to: '/?notice=site-manage-denied', replace: true }
 }
 
-export function toCorrectedUserSettingsRedirect(viewerUsername: string): NavigationIntent {
+export function toCorrectedUserSettingsRedirect(viewerUsername: Username): NavigationIntent {
   return {
-    to: `/user/${viewerUsername}/settings?notice=route-corrected`,
+    to: `/user/${usernameValue(viewerUsername)}/settings?notice=route-corrected`,
     replace: true,
   }
 }
@@ -28,18 +34,19 @@ export function toCorrectedUserSettingsRedirect(viewerUsername: string): Navigat
 export function resolveUserSettingsRoutePolicy({
   viewerUsername,
   routeUsername,
+  hasRouteUsername,
   siteManagerViewer,
 }: UserSettingsRoutePolicyArgs): {
   navigationIntent: NavigationIntent | null
-  targetUsername: string
+  targetUsername: Username
   isEditingOwnSettings: boolean
   canManageTarget: boolean
 } {
-  const normalizedRouteUsername = routeUsername?.trim() || viewerUsername
-  const isEditingOwnSettings = normalizedRouteUsername.toLowerCase() === viewerUsername.toLowerCase()
+  const normalizedRouteUsername = routeUsername ?? viewerUsername
+  const isEditingOwnSettings = sameUsername(normalizedRouteUsername, viewerUsername)
   const canManageTarget = isEditingOwnSettings || siteManagerViewer
 
-  if (!routeUsername && !siteManagerViewer) {
+  if ((hasRouteUsername && !routeUsername) || (!hasRouteUsername && !siteManagerViewer)) {
     return {
       navigationIntent: toCorrectedUserSettingsRedirect(viewerUsername),
       targetUsername: normalizedRouteUsername,
@@ -48,7 +55,7 @@ export function resolveUserSettingsRoutePolicy({
     }
   }
 
-  if (routeUsername && !siteManagerViewer && routeUsername.toLowerCase() !== viewerUsername.toLowerCase()) {
+  if (routeUsername && !siteManagerViewer && !sameUsername(routeUsername, viewerUsername)) {
     return {
       navigationIntent: toCorrectedUserSettingsRedirect(viewerUsername),
       targetUsername: normalizedRouteUsername,
@@ -57,7 +64,7 @@ export function resolveUserSettingsRoutePolicy({
     }
   }
 
-  if (routeUsername && !canManageTarget) {
+  if (hasRouteUsername && !canManageTarget) {
     return {
       navigationIntent: toSiteManageDeniedRedirect(),
       targetUsername: normalizedRouteUsername,
