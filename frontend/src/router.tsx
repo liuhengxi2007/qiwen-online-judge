@@ -2,7 +2,13 @@ import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
+import { CreateProblemPage } from '@/features/problem/pages/CreateProblemPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { ProblemDetailPage } from '@/features/problem/pages/ProblemDetailPage'
+import { ProblemPage } from '@/features/problem/pages/ProblemPage'
+import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
+import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
+import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
 import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
@@ -38,6 +44,30 @@ export const router = createBrowserRouter([
   {
     path: '/site-manage',
     element: <AuthenticatedRoute element={<SiteManagePage />} />,
+  },
+  {
+    path: '/problems',
+    element: <AuthenticatedRoute element={<ProblemPage />} />,
+  },
+  {
+    path: '/problems/new',
+    element: <AuthenticatedRoute element={<CreateProblemPage />} />,
+  },
+  {
+    path: '/problems/:slug',
+    element: <AuthenticatedRoute element={<ProblemDetailPage />} />,
+  },
+  {
+    path: '/problem-sets',
+    element: <AuthenticatedRoute element={<ProblemSetPage />} />,
+  },
+  {
+    path: '/problem-sets/new',
+    element: <AuthenticatedRoute element={<CreateProblemSetPage />} />,
+  },
+  {
+    path: '/problem-sets/:slug',
+    element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
   },
   {
     path: '/user/:username/settings',

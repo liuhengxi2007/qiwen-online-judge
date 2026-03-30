@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
+import { BookCopy, FileText, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -127,6 +127,54 @@ export function DashboardPage() {
               </p>
               <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
                 <Link to={`/user/${usernameValue(user.username)}/settings`}>Open User Settings</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                  <BookCopy className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">Problem Sets</CardTitle>
+                  <CardDescription>
+                    Manage draft problem sets and typed metadata in the new domain module.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-7 text-slate-600">
+                The problemset module is now wired end-to-end with backend persistence and a dedicated frontend route.
+              </p>
+              <Button asChild className="rounded-2xl bg-rose-600 text-rose-50 hover:bg-rose-700">
+                <Link to="/problem-sets">Open Problem Sets</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                  <FileText className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">Problems</CardTitle>
+                  <CardDescription>
+                    Manage draft problems with typed metadata and plain-text statements.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-7 text-slate-600">
+                The first problem domain supports creation, listing, and whitespace-preserving statement display.
+              </p>
+              <Button asChild className="rounded-2xl bg-emerald-600 text-emerald-50 hover:bg-emerald-700">
+                <Link to="/problems">Open Problems</Link>
               </Button>
             </CardContent>
           </Card>

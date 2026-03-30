@@ -8,6 +8,8 @@ import org.http4s.server.middleware.{CORS, Logger}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
+import domains.problem.table.ProblemTable
+import domains.problemset.table.ProblemSetTable
 import domains.system.planner.table.NoteTable
 
 object Main extends IOApp.Simple:
@@ -31,6 +33,8 @@ object Main extends IOApp.Simple:
           for
             _ <- logger.info("Initializing database schema")
             _ <- AuthUserTable.initialize(connection)
+            _ <- ProblemTable.initialize(connection)
+            _ <- ProblemSetTable.initialize(connection)
             _ <- NoteTable.initialize(connection)
           yield ()
         }

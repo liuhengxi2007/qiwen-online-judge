@@ -12,6 +12,10 @@ object ApiRouter:
 
   def httpApp(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
-      domains.system.health.HealthRouter.routes <+> domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+> domains.system.planner.http.PlannerRouter.routes(databaseSession)
+      domains.system.health.HealthRouter.routes <+>
+        domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+>
+        domains.problem.http.ProblemRouter.routes(databaseSession, sessionStore) <+>
+        domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
+        domains.system.planner.http.PlannerRouter.routes(databaseSession)
 
     allRoutes.orNotFound
