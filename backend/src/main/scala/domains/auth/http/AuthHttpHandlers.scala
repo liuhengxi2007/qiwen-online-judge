@@ -8,7 +8,8 @@ import domains.auth.table.AuthUserTable
 import io.circe.syntax.*
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.io.Http4sDsl
+import org.http4s.circe.CirceEntityEncoder.*
+import org.http4s.dsl.Http4sDsl
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 final class AuthHttpHandlers(

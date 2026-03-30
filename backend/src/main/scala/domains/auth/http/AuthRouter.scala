@@ -5,12 +5,13 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.model.Username
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 
 object AuthRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = Http4sDsl[IO]
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
     val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
     val handlers = new AuthHttpHandlers(databaseSession, sessionStore, sessionSupport)
 

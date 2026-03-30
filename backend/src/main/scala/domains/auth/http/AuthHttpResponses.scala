@@ -6,7 +6,8 @@ import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, SessionRes
 import domains.shared.model.ErrorResponse
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
-import org.http4s.dsl.io.Http4sDsl
+import org.http4s.circe.CirceEntityEncoder.*
+import org.http4s.dsl.Http4sDsl
 
 object AuthHttpResponses:
 
