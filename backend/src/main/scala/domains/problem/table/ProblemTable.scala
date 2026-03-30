@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemId, ProblemListItem, ProblemListResponse, ProblemSlug, ProblemStatementText, ProblemTitle}
+import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemId, ProblemListItem, ProblemListResponse, ProblemSlug, ProblemStatementText, ProblemTitle, UpdateProblemRequest}
 import domains.shared.model.PageResponse
 import domains.shared.model.{ResourceStatus, ResourceVisibility}
 
@@ -52,6 +52,19 @@ object ProblemTable:
       |insert into problems (id, slug, title, statement_text, visibility, status, owner_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
       |returning id, slug, title, statement_text, visibility, status, owner_username, created_at, updated_at
+      |""".stripMargin
+
+  val updateSql: String =
+    """
+      |update problems
+      |set title = ?, statement_text = ?, visibility = ?, updated_at = ?
+      |where id = ?
+      |""".stripMargin
+
+  val deleteSql: String =
+    """
+      |delete from problems
+      |where id = ?
       |""".stripMargin
 
   def initialize(connection: Connection): IO[Unit] =
@@ -118,6 +131,31 @@ object ProblemTable:
           if resultSet.next() then readProblemDetail(resultSet)
           else throw new IllegalStateException("Insert succeeded but returned no problem")
         finally resultSet.close()
+      finally statement.close()
+    }
+
+  def update(connection: Connection, problemId: ProblemId, request: UpdateProblemRequest): IO[Unit] =
+    IO.blocking {
+      val now = Instant.now()
+      val statement = connection.prepareStatement(updateSql)
+      try
+        statement.setString(1, request.title.value)
+        statement.setString(2, request.statement.value)
+        statement.setString(3, ResourceVisibility.toDatabase(request.visibility))
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setObject(5, problemId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def delete(connection: Connection, problemId: ProblemId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteSql)
+      try
+        statement.setObject(1, problemId.value)
+        statement.executeUpdate()
+        ()
       finally statement.close()
     }
 

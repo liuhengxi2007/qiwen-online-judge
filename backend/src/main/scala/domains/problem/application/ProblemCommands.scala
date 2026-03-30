@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemListResponse}
+import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemListResponse, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
 import domains.shared.model.PageRequest
 
@@ -18,6 +18,17 @@ object ProblemCommands:
   enum GetProblemResult:
     case NotFound
     case Found(problem: ProblemDetail)
+
+  enum UpdateProblemResult:
+    case Forbidden
+    case ValidationFailed(message: String)
+    case ProblemNotFound
+    case Updated(problem: ProblemDetail)
+
+  enum DeleteProblemResult:
+    case Forbidden
+    case ProblemNotFound
+    case Deleted
 
   def listProblems(
     databaseSession: DatabaseSession,
@@ -67,3 +78,53 @@ object ProblemCommands:
         case None => GetProblemResult.NotFound
       }
     }
+
+  def updateProblem(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    request: UpdateProblemRequest
+  ): IO[UpdateProblemResult] =
+    if !ProblemPolicy.canEdit(actor) then
+      IO.pure(UpdateProblemResult.Forbidden)
+    else
+      ProblemValidation.validateUpdate(request) match
+        case Left(message) =>
+          IO.pure(UpdateProblemResult.ValidationFailed(message))
+        case Right(validRequest) =>
+          databaseSession.withTransactionConnection { connection =>
+            for
+              maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+              result <- maybeProblem match
+                case None =>
+                  IO.pure(UpdateProblemResult.ProblemNotFound)
+                case Some(problem) =>
+                  ProblemTable
+                    .update(connection, problem.id, validRequest)
+                    .flatMap(_ =>
+                      ProblemTable.findBySlug(connection, problem.slug).map {
+                        case Some(updatedProblem) => UpdateProblemResult.Updated(updatedProblem)
+                        case None => throw new IllegalStateException("Problem disappeared after update")
+                      }
+                    )
+            yield result
+          }
+
+  def deleteProblem(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug
+  ): IO[DeleteProblemResult] =
+    if !ProblemPolicy.canDelete(actor) then
+      IO.pure(DeleteProblemResult.Forbidden)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        for
+          maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+          result <- maybeProblem match
+            case None =>
+              IO.pure(DeleteProblemResult.ProblemNotFound)
+            case Some(problem) =>
+              ProblemTable.delete(connection, problem.id).as(DeleteProblemResult.Deleted)
+        yield result
+      }

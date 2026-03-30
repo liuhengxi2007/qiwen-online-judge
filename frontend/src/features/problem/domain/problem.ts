@@ -42,6 +42,12 @@ export type CreateProblemRequest = {
   visibility: ResourceVisibility
 }
 
+export type UpdateProblemRequest = {
+  title: ProblemTitle
+  statement: ProblemStatementText
+  visibility: ResourceVisibility
+}
+
 export type ProblemListResponse = PageResponse<ProblemSummary>
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/

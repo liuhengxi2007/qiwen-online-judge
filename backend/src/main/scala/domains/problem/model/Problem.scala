@@ -47,6 +47,16 @@ object CreateProblemRequest:
   given Encoder[CreateProblemRequest] = deriveEncoder[CreateProblemRequest]
   given Decoder[CreateProblemRequest] = deriveDecoder[CreateProblemRequest]
 
+final case class UpdateProblemRequest(
+  title: ProblemTitle,
+  statement: ProblemStatementText,
+  visibility: ResourceVisibility
+)
+
+object UpdateProblemRequest:
+  given Encoder[UpdateProblemRequest] = deriveEncoder[UpdateProblemRequest]
+  given Decoder[UpdateProblemRequest] = deriveDecoder[UpdateProblemRequest]
+
 final case class ProblemListItem(
   id: ProblemId,
   slug: ProblemSlug,

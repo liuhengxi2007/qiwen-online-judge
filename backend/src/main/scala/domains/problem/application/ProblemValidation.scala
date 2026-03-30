@@ -1,6 +1,6 @@
 package domains.problem.application
 
-import domains.problem.model.{CreateProblemRequest, ProblemSlug, ProblemStatementText, ProblemTitle}
+import domains.problem.model.{CreateProblemRequest, ProblemSlug, ProblemStatementText, ProblemTitle, UpdateProblemRequest}
 
 object ProblemValidation:
 
@@ -13,6 +13,15 @@ object ProblemValidation:
       statement <- validateStatement(request.statement)
     yield request.copy(
       slug = slug,
+      title = title,
+      statement = statement
+    )
+
+  def validateUpdate(request: UpdateProblemRequest): Either[String, UpdateProblemRequest] =
+    for
+      title <- validateTitle(request.title)
+      statement <- validateStatement(request.statement)
+    yield request.copy(
       title = title,
       statement = statement
     )

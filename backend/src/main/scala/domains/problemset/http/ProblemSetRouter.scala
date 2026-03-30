@@ -5,7 +5,8 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problemset.application.ProblemSetCommands
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetSlug}
+import domains.problem.model.ProblemSlug
+import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetSlug, UpdateProblemSetRequest}
 import domains.shared.model.PageRequest
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
@@ -51,5 +52,29 @@ object ProblemSetRouter:
               .addProblemToProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), addRequest)
               .flatMap(ProblemSetHttpResponses.mapAddProblemResult)
           yield response
+        }
+
+      case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          for
+            updateRequest <- request.as[UpdateProblemSetRequest]
+            response <- ProblemSetCommands
+              .updateProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), updateRequest)
+              .flatMap(ProblemSetHttpResponses.mapUpdateResult)
+          yield response
+        }
+
+      case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "delete" =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          ProblemSetCommands
+            .deleteProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug))
+            .flatMap(ProblemSetHttpResponses.mapDeleteResult)
+        }
+
+      case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" / linkedProblemSlug / "remove" =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          ProblemSetCommands
+            .removeProblemFromProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), ProblemSlug(linkedProblemSlug))
+            .flatMap(ProblemSetHttpResponses.mapRemoveProblemResult)
         }
     }

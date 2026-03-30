@@ -1,7 +1,7 @@
 package domains.problemset.application
 
 import domains.problem.model.ProblemSlug
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetDescription, ProblemSetSlug, ProblemSetTitle, UpdateProblemSetRequest}
 
 object ProblemSetValidation:
 
@@ -20,6 +20,15 @@ object ProblemSetValidation:
 
   def validateAddProblem(request: AddProblemToProblemSetRequest): Either[String, AddProblemToProblemSetRequest] =
     validateProblemSlug(request.problemSlug).map(validSlug => request.copy(problemSlug = validSlug))
+
+  def validateUpdate(request: UpdateProblemSetRequest): Either[String, UpdateProblemSetRequest] =
+    for
+      title <- validateTitle(request.title)
+      description <- validateDescription(request.description)
+    yield request.copy(
+      title = title,
+      description = description
+    )
 
   private def validateSlug(slug: ProblemSetSlug): Either[String, ProblemSetSlug] =
     val normalized = slug.value.trim

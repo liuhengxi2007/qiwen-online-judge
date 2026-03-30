@@ -1,116 +1,110 @@
-import { useCallback, useEffect, useReducer } from 'react'
+import { useState } from 'react'
 
-import { HttpClientError } from '@/shared/api/http-client'
-import { addProblemToProblemSet, getProblemSet } from '@/features/problemset/api/problemset-client'
-import { validateProblemSetLinkDraft } from '@/features/problemset/domain/problemset-link-form'
-import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
-
-type ProblemSetDetailPageState = {
-  problemSet: ProblemSetDetail | null
-  isLoading: boolean
-  activeLink: boolean
-  linkProblemSlug: string
-  errorMessage: string
-  successMessage: string
-}
-
-type ProblemSetDetailPageAction =
-  | { type: 'load_started' }
-  | { type: 'load_succeeded'; problemSet: ProblemSetDetail }
-  | { type: 'load_failed'; message: string }
-  | { type: 'set_link_problem_slug'; value: string }
-  | { type: 'link_started' }
-  | { type: 'link_succeeded'; problemSet: ProblemSetDetail }
-  | { type: 'link_failed'; message: string }
-
-const initialState: ProblemSetDetailPageState = {
-  problemSet: null,
-  isLoading: true,
-  activeLink: false,
-  linkProblemSlug: '',
-  errorMessage: '',
-  successMessage: '',
-}
-
-function reducer(state: ProblemSetDetailPageState, action: ProblemSetDetailPageAction): ProblemSetDetailPageState {
-  switch (action.type) {
-    case 'load_started':
-      return { ...state, isLoading: true, errorMessage: '', successMessage: '' }
-    case 'load_succeeded':
-      return { ...state, problemSet: action.problemSet, isLoading: false, errorMessage: '', successMessage: '' }
-    case 'load_failed':
-      return { ...state, problemSet: null, isLoading: false, errorMessage: action.message, successMessage: '' }
-    case 'set_link_problem_slug':
-      return { ...state, linkProblemSlug: action.value }
-    case 'link_started':
-      return { ...state, activeLink: true, errorMessage: '', successMessage: '' }
-    case 'link_succeeded':
-      return {
-        ...state,
-        activeLink: false,
-        problemSet: action.problemSet,
-        linkProblemSlug: '',
-        errorMessage: '',
-        successMessage: 'Problem linked to problem set.',
-      }
-    case 'link_failed':
-      return { ...state, activeLink: false, errorMessage: action.message, successMessage: '' }
-  }
-}
+import type { ProblemSlug } from '@/features/problem/domain/problem'
+import type { ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { useProblemSetDeleteAction } from '@/features/problemset/hooks/use-problemset-delete-action'
+import { useProblemSetDetailQuery } from '@/features/problemset/hooks/use-problemset-detail-query'
+import { useProblemSetEditorState } from '@/features/problemset/hooks/use-problemset-editor-state'
+import { useProblemSetLinkProblemAction } from '@/features/problemset/hooks/use-problemset-link-problem-action'
+import { useProblemSetRemoveProblemAction } from '@/features/problemset/hooks/use-problemset-remove-problem-action'
+import { useProblemSetUpdateAction } from '@/features/problemset/hooks/use-problemset-update-action'
 
 export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, canManageProblems: boolean) {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const detailQuery = useProblemSetDetailQuery(problemSetSlug)
+  const editor = useProblemSetEditorState(detailQuery.problemSet)
+  const updateAction = useProblemSetUpdateAction(problemSetSlug)
+  const deleteAction = useProblemSetDeleteAction(problemSetSlug)
+  const linkAction = useProblemSetLinkProblemAction(problemSetSlug)
+  const removeAction = useProblemSetRemoveProblemAction(problemSetSlug)
+  const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
+    errorMessage: '',
+    successMessage: '',
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    dispatch({ type: 'load_started' })
-    void getProblemSet(problemSetSlug)
-      .then((problemSet) => {
-        if (cancelled) {
-          return
-        }
-        dispatch({ type: 'load_succeeded', problemSet })
-      })
-      .catch(() => {
-        if (cancelled) {
-          return
-        }
-        dispatch({ type: 'load_failed', message: 'Unable to load problem set details.' })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [problemSetSlug])
-
-  const attachProblem = useCallback(async () => {
+  async function save() {
     if (!canManageProblems) {
-      dispatch({ type: 'link_failed', message: 'Problem manager permission required.' })
+      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
       return
     }
 
-    const validation = validateProblemSetLinkDraft({
-      problemSlug: state.linkProblemSlug,
+    const result = await updateAction.save({
+      title: editor.title,
+      description: editor.description,
+      visibility: editor.visibility,
     })
-    if (!validation.ok) {
-      dispatch({ type: 'link_failed', message: validation.message })
+
+    if (result.ok) {
+      setMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setMessageState({ errorMessage: result.message, successMessage: '' })
+    }
+  }
+
+  async function attachProblem() {
+    if (!canManageProblems) {
+      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
       return
     }
 
-    dispatch({ type: 'link_started' })
-
-    try {
-      const updatedProblemSet = await addProblemToProblemSet(problemSetSlug, validation.request)
-      dispatch({ type: 'link_succeeded', problemSet: updatedProblemSet })
-    } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to link problem to problem set.'
-      dispatch({ type: 'link_failed', message })
+    const result = await linkAction.attachProblem(editor.linkProblemSlug)
+    if (result.ok) {
+      editor.clearLinkedProblemSlug()
+      setMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setMessageState({ errorMessage: result.message, successMessage: '' })
     }
-  }, [canManageProblems, problemSetSlug, state.linkProblemSlug])
+  }
+
+  async function removeProblem(problemSlug: ProblemSlug) {
+    if (!canManageProblems) {
+      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      return
+    }
+
+    const result = await removeAction.removeProblem(problemSlug)
+    if (result.ok) {
+      setMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setMessageState({ errorMessage: result.message, successMessage: '' })
+    }
+  }
+
+  async function deleteCurrentProblemSet() {
+    if (!canManageProblems) {
+      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      return false
+    }
+
+    const result = await deleteAction.deleteCurrentProblemSet()
+    if (result.ok) {
+      setMessageState({ errorMessage: '', successMessage: result.message })
+      return true
+    }
+
+    setMessageState({ errorMessage: result.message, successMessage: '' })
+    return false
+  }
 
   return {
-    ...state,
-    setLinkProblemSlug: (value: string) => dispatch({ type: 'set_link_problem_slug', value }),
+    problemSet: detailQuery.problemSet,
+    isLoading: detailQuery.isLoading,
+    activeLink: linkAction.activeLink,
+    isSaving: updateAction.isSaving,
+    isDeleting: deleteAction.isDeleting,
+    activeRemovingProblemSlug: removeAction.activeRemovingProblemSlug,
+    title: editor.title,
+    description: editor.description,
+    visibility: editor.visibility,
+    linkProblemSlug: editor.linkProblemSlug,
+    errorMessage: detailQuery.errorMessage || messageState.errorMessage,
+    successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
+    setTitle: editor.setTitle,
+    setDescription: editor.setDescription,
+    setVisibility: editor.setVisibility,
+    setLinkProblemSlug: editor.setLinkProblemSlug,
+    save,
+    removeProblem,
+    deleteCurrentProblemSet,
     attachProblem,
   }
 }

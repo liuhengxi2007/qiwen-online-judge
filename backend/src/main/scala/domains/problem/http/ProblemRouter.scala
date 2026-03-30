@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemSlug}
+import domains.problem.model.{CreateProblemRequest, ProblemSlug, UpdateProblemRequest}
 import domains.shared.model.PageRequest
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
@@ -41,5 +41,22 @@ object ProblemRouter:
           ProblemCommands
             .getProblemBySlug(databaseSession, actor, ProblemSlug(problemSlug))
             .flatMap(ProblemHttpResponses.mapGetResult)
+        }
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          for
+            updateRequest <- request.as[UpdateProblemRequest]
+            response <- ProblemCommands
+              .updateProblem(databaseSession, actor, ProblemSlug(problemSlug), updateRequest)
+              .flatMap(ProblemHttpResponses.mapUpdateResult)
+          yield response
+        }
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "delete" =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          ProblemCommands
+            .deleteProblem(databaseSession, actor, ProblemSlug(problemSlug))
+            .flatMap(ProblemHttpResponses.mapDeleteResult)
         }
     }

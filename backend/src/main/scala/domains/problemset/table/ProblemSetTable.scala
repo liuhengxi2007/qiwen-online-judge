@@ -3,7 +3,7 @@ package domains.problemset.table
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{CreateProblemSetRequest, ProblemSetDescription, ProblemSetDetail, ProblemSetId, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle}
+import domains.problemset.model.{CreateProblemSetRequest, ProblemSetDescription, ProblemSetDetail, ProblemSetId, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle, UpdateProblemSetRequest}
 import domains.shared.model.{PageResponse, ResourceStatus, ResourceVisibility}
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -94,9 +94,46 @@ object ProblemSetTable:
       |values (?, ?, ?)
       |""".stripMargin
 
+  val updateSql: String =
+    """
+      |update problem_sets
+      |set title = ?, description = ?, visibility = ?, updated_at = ?
+      |where id = ?
+      |""".stripMargin
+
+  val deleteSql: String =
+    """
+      |delete from problem_sets
+      |where id = ?
+      |""".stripMargin
+
+  val findRelationPositionSql: String =
+    """
+      |select position
+      |from problem_set_problems
+      |where problem_set_id = ? and problem_id = ?
+      |""".stripMargin
+
+  val deleteRelationSql: String =
+    """
+      |delete from problem_set_problems
+      |where problem_set_id = ? and problem_id = ?
+      |""".stripMargin
+
+  val compactPositionsSql: String =
+    """
+      |update problem_set_problems
+      |set position = position - 1
+      |where problem_set_id = ? and position > ?
+      |""".stripMargin
+
   enum AddProblemTableResult:
     case AlreadyLinked
     case Linked
+
+  enum RemoveProblemTableResult:
+    case NotLinked
+    case Removed
 
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
@@ -209,6 +246,64 @@ object ProblemSetTable:
           finally nextPositionStatement.close()
         }
     yield result
+
+  def update(connection: Connection, problemSetId: ProblemSetId, request: UpdateProblemSetRequest): IO[Unit] =
+    IO.blocking {
+      val now = Instant.now()
+      val statement = connection.prepareStatement(updateSql)
+      try
+        statement.setString(1, request.title.value)
+        statement.setString(2, request.description.value)
+        statement.setString(3, ResourceVisibility.toDatabase(request.visibility))
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setObject(5, problemSetId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def delete(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteSql)
+      try
+        statement.setObject(1, problemSetId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def removeProblem(connection: Connection, problemSetId: ProblemSetId, problemId: ProblemId): IO[RemoveProblemTableResult] =
+    IO.blocking {
+      val positionStatement = connection.prepareStatement(findRelationPositionSql)
+      try
+        positionStatement.setObject(1, problemSetId.value)
+        positionStatement.setObject(2, problemId.value)
+        val resultSet = positionStatement.executeQuery()
+        val maybePosition =
+          try if resultSet.next() then Some(resultSet.getInt("position")) else None
+          finally resultSet.close()
+
+        maybePosition match
+          case None =>
+            RemoveProblemTableResult.NotLinked
+          case Some(position) =>
+            val deleteStatement = connection.prepareStatement(deleteRelationSql)
+            try
+              deleteStatement.setObject(1, problemSetId.value)
+              deleteStatement.setObject(2, problemId.value)
+              deleteStatement.executeUpdate()
+            finally deleteStatement.close()
+
+            val compactStatement = connection.prepareStatement(compactPositionsSql)
+            try
+              compactStatement.setObject(1, problemSetId.value)
+              compactStatement.setInt(2, position)
+              compactStatement.executeUpdate()
+            finally compactStatement.close()
+
+            RemoveProblemTableResult.Removed
+      finally positionStatement.close()
+    }
 
   private def readProblemSetSummary(resultSet: ResultSet): ProblemSetSummary =
     ProblemSetSummary(

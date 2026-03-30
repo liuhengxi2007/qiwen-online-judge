@@ -44,3 +44,36 @@ object ProblemSetHttpResponses:
         errorResponse(Status.NotFound, "Problem set not found.")
       case ProblemSetCommands.GetProblemSetResult.Found(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+
+  def mapUpdateResult(result: ProblemSetCommands.UpdateProblemSetResult): IO[Response[IO]] =
+    result match
+      case ProblemSetCommands.UpdateProblemSetResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Problem manager permission required.")
+      case ProblemSetCommands.UpdateProblemSetResult.ValidationFailed(message) =>
+        errorResponse(Status.BadRequest, message)
+      case ProblemSetCommands.UpdateProblemSetResult.ProblemSetNotFound =>
+        errorResponse(Status.NotFound, "Problem set not found.")
+      case ProblemSetCommands.UpdateProblemSetResult.Updated(problemSet) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+
+  def mapDeleteResult(result: ProblemSetCommands.DeleteProblemSetResult): IO[Response[IO]] =
+    result match
+      case ProblemSetCommands.DeleteProblemSetResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Problem manager permission required.")
+      case ProblemSetCommands.DeleteProblemSetResult.ProblemSetNotFound =>
+        errorResponse(Status.NotFound, "Problem set not found.")
+      case ProblemSetCommands.DeleteProblemSetResult.Deleted =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(domains.shared.model.SuccessResponse("Problem set deleted.").asJson))
+
+  def mapRemoveProblemResult(result: ProblemSetCommands.RemoveProblemResult): IO[Response[IO]] =
+    result match
+      case ProblemSetCommands.RemoveProblemResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Problem manager permission required.")
+      case ProblemSetCommands.RemoveProblemResult.ProblemSetNotFound =>
+        errorResponse(Status.NotFound, "Problem set not found.")
+      case ProblemSetCommands.RemoveProblemResult.ProblemNotFound =>
+        errorResponse(Status.NotFound, "Problem not found.")
+      case ProblemSetCommands.RemoveProblemResult.ProblemNotLinked =>
+        errorResponse(Status.NotFound, "Problem is not linked to this problem set.")
+      case ProblemSetCommands.RemoveProblemResult.Removed(problemSet) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))

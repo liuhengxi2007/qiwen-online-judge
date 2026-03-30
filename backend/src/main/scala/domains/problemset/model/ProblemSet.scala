@@ -55,6 +55,16 @@ object AddProblemToProblemSetRequest:
   given Encoder[AddProblemToProblemSetRequest] = deriveEncoder[AddProblemToProblemSetRequest]
   given Decoder[AddProblemToProblemSetRequest] = deriveDecoder[AddProblemToProblemSetRequest]
 
+final case class UpdateProblemSetRequest(
+  title: ProblemSetTitle,
+  description: ProblemSetDescription,
+  visibility: ResourceVisibility
+)
+
+object UpdateProblemSetRequest:
+  given Encoder[UpdateProblemSetRequest] = deriveEncoder[UpdateProblemSetRequest]
+  given Decoder[UpdateProblemSetRequest] = deriveDecoder[UpdateProblemSetRequest]
+
 final case class ProblemSetProblemSummary(
   id: domains.problem.model.ProblemId,
   slug: domains.problem.model.ProblemSlug,

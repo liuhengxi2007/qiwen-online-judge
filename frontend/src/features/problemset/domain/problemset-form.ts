@@ -4,6 +4,7 @@ import {
   parseProblemSetSlug,
   parseProblemSetTitle,
   type CreateProblemSetRequest,
+  type UpdateProblemSetRequest,
 } from '@/features/problemset/domain/problemset'
 
 export type ProblemSetDraft = {
@@ -35,6 +36,35 @@ export function validateProblemSetDraft(
     ok: true,
     request: {
       slug: slugResult.value,
+      title: titleResult.value,
+      description: descriptionResult.value,
+      visibility: draft.visibility,
+    },
+  }
+}
+
+export type UpdateProblemSetDraft = {
+  title: string
+  description: string
+  visibility: ResourceVisibility
+}
+
+export function validateProblemSetUpdateDraft(
+  draft: UpdateProblemSetDraft,
+): { ok: true; request: UpdateProblemSetRequest } | { ok: false; message: string } {
+  const titleResult = parseProblemSetTitle(draft.title)
+  if (!titleResult.ok) {
+    return { ok: false, message: titleResult.error }
+  }
+
+  const descriptionResult = parseProblemSetDescription(draft.description)
+  if (!descriptionResult.ok) {
+    return { ok: false, message: descriptionResult.error }
+  }
+
+  return {
+    ok: true,
+    request: {
       title: titleResult.value,
       description: descriptionResult.value,
       visibility: draft.visibility,

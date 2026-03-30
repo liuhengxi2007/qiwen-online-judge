@@ -53,6 +53,12 @@ export type CreateProblemSetRequest = {
   visibility: ResourceVisibility
 }
 
+export type UpdateProblemSetRequest = {
+  title: ProblemSetTitle
+  description: ProblemSetDescription
+  visibility: ResourceVisibility
+}
+
 export type AddProblemToProblemSetRequest = {
   problemSlug: ProblemSlug
 }

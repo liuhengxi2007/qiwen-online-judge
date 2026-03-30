@@ -1,60 +1,60 @@
-import { useEffect, useReducer } from 'react'
+import { useState } from 'react'
 
-import { getProblem } from '@/features/problem/api/problem-client'
-import type { ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
-
-type ProblemDetailPageState = {
-  problem: ProblemDetail | null
-  isLoading: boolean
-  errorMessage: string
-}
-
-type ProblemDetailPageAction =
-  | { type: 'load_started' }
-  | { type: 'load_succeeded'; problem: ProblemDetail }
-  | { type: 'load_failed'; message: string }
-
-const initialState: ProblemDetailPageState = {
-  problem: null,
-  isLoading: true,
-  errorMessage: '',
-}
-
-function reducer(state: ProblemDetailPageState, action: ProblemDetailPageAction): ProblemDetailPageState {
-  switch (action.type) {
-    case 'load_started':
-      return { ...state, isLoading: true, errorMessage: '' }
-    case 'load_succeeded':
-      return { problem: action.problem, isLoading: false, errorMessage: '' }
-    case 'load_failed':
-      return { ...state, problem: null, isLoading: false, errorMessage: action.message }
-  }
-}
+import type { ProblemSlug } from '@/features/problem/domain/problem'
+import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-delete-action'
+import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
+import { useProblemEditorState } from '@/features/problem/hooks/use-problem-editor-state'
+import { useProblemUpdateAction } from '@/features/problem/hooks/use-problem-update-action'
 
 export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const detailQuery = useProblemDetailQuery(problemSlug)
+  const editor = useProblemEditorState(detailQuery.problem)
+  const updateAction = useProblemUpdateAction(problemSlug)
+  const deleteAction = useProblemDeleteAction(problemSlug)
+  const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
+    errorMessage: '',
+    successMessage: '',
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    dispatch({ type: 'load_started' })
-    void getProblem(problemSlug)
-      .then((problem) => {
-        if (cancelled) {
-          return
-        }
-        dispatch({ type: 'load_succeeded', problem })
-      })
-      .catch(() => {
-        if (cancelled) {
-          return
-        }
-        dispatch({ type: 'load_failed', message: 'Unable to load problem details.' })
-      })
+  async function save() {
+    const result = await updateAction.save({
+      title: editor.title,
+      statement: editor.statement,
+      visibility: editor.visibility,
+    })
 
-    return () => {
-      cancelled = true
+    if (result.ok) {
+      setMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setMessageState({ errorMessage: result.message, successMessage: '' })
     }
-  }, [problemSlug])
+  }
 
-  return state
+  async function deleteCurrentProblem() {
+    const result = await deleteAction.deleteCurrentProblem()
+    if (result.ok) {
+      setMessageState({ errorMessage: '', successMessage: result.message })
+      return true
+    }
+
+    setMessageState({ errorMessage: result.message, successMessage: '' })
+    return false
+  }
+
+  return {
+    problem: detailQuery.problem,
+    isLoading: detailQuery.isLoading,
+    isSaving: updateAction.isSaving,
+    isDeleting: deleteAction.isDeleting,
+    title: editor.title,
+    statement: editor.statement,
+    visibility: editor.visibility,
+    errorMessage: detailQuery.errorMessage || messageState.errorMessage,
+    successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
+    setTitle: editor.setTitle,
+    setStatement: editor.setStatement,
+    setVisibility: editor.setVisibility,
+    save,
+    deleteCurrentProblem,
+  }
 }
