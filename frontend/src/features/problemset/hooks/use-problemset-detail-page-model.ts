@@ -34,6 +34,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     })
 
     if (result.ok) {
+      detailQuery.replaceProblemSet(result.problemSet)
       setMessageState({ errorMessage: '', successMessage: result.message })
     } else {
       setMessageState({ errorMessage: result.message, successMessage: '' })
@@ -48,6 +49,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
     const result = await linkAction.attachProblem(editor.linkProblemSlug)
     if (result.ok) {
+      detailQuery.replaceProblemSet(result.problemSet)
       editor.clearLinkedProblemSlug()
       setMessageState({ errorMessage: '', successMessage: result.message })
     } else {
@@ -63,6 +65,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
     const result = await removeAction.removeProblem(problemSlug)
     if (result.ok) {
+      detailQuery.replaceProblemSet(result.problemSet)
       setMessageState({ errorMessage: '', successMessage: result.message })
     } else {
       setMessageState({ errorMessage: result.message, successMessage: '' })

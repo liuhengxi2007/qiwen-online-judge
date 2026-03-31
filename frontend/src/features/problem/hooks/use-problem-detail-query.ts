@@ -12,6 +12,7 @@ type ProblemDetailQueryState = {
 type ProblemDetailQueryAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; problem: ProblemDetail }
+  | { type: 'replace'; problem: ProblemDetail }
   | { type: 'load_failed'; message: string }
 
 const initialState: ProblemDetailQueryState = {
@@ -25,6 +26,8 @@ function reducer(state: ProblemDetailQueryState, action: ProblemDetailQueryActio
     case 'load_started':
       return { ...state, isLoading: true, errorMessage: '' }
     case 'load_succeeded':
+      return { problem: action.problem, isLoading: false, errorMessage: '' }
+    case 'replace':
       return { problem: action.problem, isLoading: false, errorMessage: '' }
     case 'load_failed':
       return { problem: null, isLoading: false, errorMessage: action.message }
@@ -56,5 +59,12 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug) {
     }
   }, [problemSlug])
 
-  return state
+  function replaceProblem(problem: ProblemDetail) {
+    dispatch({ type: 'replace', problem })
+  }
+
+  return {
+    ...state,
+    replaceProblem,
+  }
 }

@@ -24,6 +24,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     })
 
     if (result.ok) {
+      detailQuery.replaceProblem(result.problem)
       setMessageState({ errorMessage: '', successMessage: result.message })
     } else {
       setMessageState({ errorMessage: result.message, successMessage: '' })

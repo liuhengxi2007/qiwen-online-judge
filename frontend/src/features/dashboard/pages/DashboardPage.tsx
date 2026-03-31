@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { BookCopy, FileText, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
+import { BookCopy, FileText, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -86,27 +86,6 @@ export function DashboardPage() {
         </Card>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                  <LayoutDashboard className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">Workspace</CardTitle>
-                  <CardDescription>
-                    Core judge console access for your signed-in account.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-7 text-slate-600">
-                Your account is authenticated and ready to use the current console features.
-              </p>
-            </CardContent>
-          </Card>
-
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">
