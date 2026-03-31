@@ -155,6 +155,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     targetUsername,
   })
   const displayedUser = isEditingOwnSettings ? viewer : state.editedUser
+  const submitSettings = mutation.submitSettings
 
   useEffect(() => {
     if (routePolicy.navigationIntent) {
@@ -206,7 +207,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
     dispatch({ type: 'submit_started' })
 
-    const result = await mutation.submitSettings(
+    const result = await submitSettings(
       validation.submission.kind === 'own'
         ? {
             kind: 'own',
@@ -242,7 +243,18 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
           dispatch({ type: 'submit_failed', message: result.message })
           return
       }
-  }, [displayedUser, isEditingOwnSettings, mutation, setViewer, state, targetUsername])
+  }, [
+    displayedUser,
+    isEditingOwnSettings,
+    setViewer,
+    state.confirmNewPassword,
+    state.currentPassword,
+    state.displayName,
+    state.email,
+    state.newPassword,
+    submitSettings,
+    targetUsername,
+  ])
 
   return {
     ...state,

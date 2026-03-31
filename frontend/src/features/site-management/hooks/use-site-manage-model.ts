@@ -61,6 +61,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
   const [state, dispatch] = useReducer(siteManageReducer, initialState)
   const mutation = useUserPermissionsMutation()
   const currentUpdatingUsername = state.updatingUsername ?? mutation.updatingUsername
+  const saveUserPermissions = mutation.savePermissions
 
   const savePermissions = useCallback(
     async (listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) => {
@@ -70,7 +71,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
 
       dispatch({ type: 'update_started', username: usernameValue(listedUser.username) })
 
-      const result = await mutation.savePermissions(listedUser.username, nextPermissions)
+      const result = await saveUserPermissions(listedUser.username, nextPermissions)
 
       switch (result.kind) {
         case 'updated':
@@ -84,7 +85,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
           return
       }
     },
-    [currentUpdatingUsername, mutation],
+    [currentUpdatingUsername, saveUserPermissions],
   )
 
   return {

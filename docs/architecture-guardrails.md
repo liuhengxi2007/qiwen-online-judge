@@ -137,6 +137,30 @@ over:
 - one more untyped string flag
 - one more helper that mixes business logic and IO
 
+### Hook Dependency Discipline
+
+React hook dependency arrays must be precise.
+
+Rules:
+
+- include values that are actually read inside the hook body
+- do not depend on whole objects when only a few fields or methods are used
+- do not depend on `state` wholesale when only selected fields are read
+- do not add dependencies just to silence uncertainty; refactor to stable values first
+- if a dependency changes every render because of object identity, extract the specific stable function or field that is actually needed
+
+Prefer:
+
+- `mutation.submitSettings` over `mutation`
+- `state.displayName` and `state.email` over `state`
+- scalar flags over wrapper option objects
+
+Avoid:
+
+- callbacks that depend on entire reducer state objects
+- effects that depend on freshly created wrapper objects
+- broad dependency arrays that cause needless recomputation or callback churn
+
 ## Backend
 
 - `src/main/scala/domains/auth`
