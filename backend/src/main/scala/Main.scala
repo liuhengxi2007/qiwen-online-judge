@@ -8,6 +8,7 @@ import org.http4s.server.middleware.{CORS, Logger}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
+import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
 import domains.system.planner.table.NoteTable
@@ -27,12 +28,13 @@ object Main extends IOApp.Simple:
   private val applicationResource: cats.effect.Resource[IO, Server] =
     for
       databaseSession <- DatabaseSession.resource
-      sessionStore <- cats.effect.Resource.eval(SessionStore.create)
+      sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession))
       _ <- cats.effect.Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for
             _ <- logger.info("Initializing database schema")
             _ <- AuthUserTable.initialize(connection)
+            _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
             _ <- NoteTable.initialize(connection)

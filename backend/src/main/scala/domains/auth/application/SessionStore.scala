@@ -1,13 +1,16 @@
 package domains.auth.application
 
-import cats.effect.{IO, Ref}
+import cats.effect.IO
+import database.DatabaseSession
 import domains.auth.model.Username
+import domains.auth.table.SessionTable
 
 import java.security.SecureRandom
 import java.util.Base64
 
 final class SessionStore private (
-  sessionsRef: Ref[IO, Map[String, Username]],
+  databaseSession: DatabaseSession,
+  sessionConfig: SessionConfig,
   random: SecureRandom
 ):
 
@@ -16,17 +19,26 @@ final class SessionStore private (
   def createSession(username: Username): IO[String] =
     for
       token <- nextToken
-      _ <- sessionsRef.update(_.updated(token, username))
+      expiresAt = java.time.Instant.now().plus(sessionConfig.ttl)
+      _ <- databaseSession.withTransactionConnection(connection =>
+        SessionTable.deleteExpired(connection) *> SessionTable.insert(connection, token, username, expiresAt)
+      )
     yield token
 
   def lookupUsername(token: String): IO[Option[Username]] =
-    sessionsRef.get.map(_.get(token))
+    databaseSession.withTransactionConnection(connection =>
+      SessionTable.deleteExpired(connection) *> SessionTable.findUsernameByToken(connection, token)
+    )
 
   def deleteSession(token: String): IO[Unit] =
-    sessionsRef.update(_ - token)
+    databaseSession.withTransactionConnection(connection =>
+      SessionTable.deleteByToken(connection, token)
+    )
 
   def deleteSessionsForUsername(username: Username): IO[Unit] =
-    sessionsRef.update(_.filterNot((_, sessionUsername) => sessionUsername.value.equalsIgnoreCase(username.value)))
+    databaseSession.withTransactionConnection(connection =>
+      SessionTable.deleteByUsername(connection, username)
+    )
 
   private def nextToken: IO[String] =
     IO.delay {
@@ -37,7 +49,5 @@ final class SessionStore private (
 
 object SessionStore:
 
-  def create: IO[SessionStore] =
-    Ref
-      .of[IO, Map[String, Username]](Map.empty)
-      .map(ref => new SessionStore(ref, SecureRandom()))
+  def create(databaseSession: DatabaseSession): IO[SessionStore] =
+    IO.pure(new SessionStore(databaseSession, SessionConfig.default, SecureRandom()))
