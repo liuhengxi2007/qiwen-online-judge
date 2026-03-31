@@ -11,9 +11,9 @@ object SessionConfig:
 
   val default: SessionConfig =
     SessionConfig(
-      ttl = Duration.ofMinutes(sys.env.get("AUTH_SESSION_TTL_MINUTES").flatMap(_.toLongOption).getOrElse(1L)),
+      ttl = Duration.ofDays(sys.env.get("AUTH_SESSION_TTL_DAYS").flatMap(_.toLongOption).getOrElse(3L)),
       activeExtensionThreshold =
-        Duration.ofMinutes(
-          sys.env.get("AUTH_SESSION_ACTIVE_EXTENSION_MINUTES").flatMap(_.toLongOption).getOrElse(1L)
+        Duration.ofHours(
+          sys.env.get("AUTH_SESSION_ACTIVE_EXTENSION_HOURS").flatMap(_.toLongOption).getOrElse(3L)
         )
     )

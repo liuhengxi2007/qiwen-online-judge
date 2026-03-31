@@ -11,7 +11,6 @@ import domains.auth.table.AuthUserTable
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
-import domains.system.planner.table.NoteTable
 
 object Main extends IOApp.Simple:
 
@@ -37,7 +36,6 @@ object Main extends IOApp.Simple:
             _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
-            _ <- NoteTable.initialize(connection)
           yield ()
         }
       }

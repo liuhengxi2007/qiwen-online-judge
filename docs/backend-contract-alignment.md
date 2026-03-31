@@ -178,3 +178,7 @@ Later, this can evolve into:
 - generated schema checks
 - contract snapshot tests
 - response decoding tests against contract fixtures
+
+Current lightweight check:
+
+- `node scripts/check-contract-alignment.mjs`

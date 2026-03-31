@@ -167,8 +167,6 @@ Avoid:
   - Auth commands, HTTP routes, models, and persistence for accounts and sessions
 - `src/main/scala/domains/system/health`
   - Health endpoint and response model
-- `src/main/scala/domains/system/planner`
-  - Planner/demo APIs, models, and persistence
 - `src/main/scala/domains/shared`
   - Shared models used across domains, including pagination and lifecycle primitives
 - `src/main/scala/database`
@@ -178,6 +176,8 @@ See also:
 
 - `docs/contracts-scope.md`
 - `docs/backend-contract-alignment.md`
+- `docs/contract-checks.md`
+- `docs/planner-patterns.md`
 
 ### Backend Shared Rules
 

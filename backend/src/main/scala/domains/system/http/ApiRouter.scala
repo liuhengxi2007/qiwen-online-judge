@@ -15,7 +15,6 @@ object ApiRouter:
       domains.system.health.HealthRouter.routes <+>
         domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+>
         domains.problem.http.ProblemRouter.routes(databaseSession, sessionStore) <+>
-        domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
-        domains.system.planner.http.PlannerRouter.routes(databaseSession)
+        domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore)
 
     allRoutes.orNotFound
