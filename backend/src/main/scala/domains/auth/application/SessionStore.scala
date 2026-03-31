@@ -27,7 +27,8 @@ final class SessionStore private (
 
   def lookupUsername(token: String): IO[Option[Username]] =
     databaseSession.withTransactionConnection(connection =>
-      SessionTable.deleteExpired(connection) *> SessionTable.findUsernameByToken(connection, token)
+      SessionTable.deleteExpired(connection) *>
+        SessionTable.touchAndFindUsernameByToken(connection, token, sessionConfig.activeExtensionThreshold)
     )
 
   def deleteSession(token: String): IO[Unit] =

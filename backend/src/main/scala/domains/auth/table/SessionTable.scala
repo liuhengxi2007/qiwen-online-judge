@@ -15,8 +15,25 @@ object SessionTable:
       |  token varchar(255) primary key,
       |  username varchar(120) not null references auth_users(username) on delete cascade,
       |  created_at timestamp not null,
+      |  last_active_at timestamp not null,
       |  expires_at timestamp not null
       |);
+      |""".stripMargin
+
+  val addLastActiveAtColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_sessions'
+      |      and column_name = 'last_active_at'
+      |  ) then
+      |    alter table auth_sessions add column last_active_at timestamp;
+      |  end if;
+      |end $$;
       |""".stripMargin
 
   val addExpiresAtColumnSql: String =
@@ -33,6 +50,12 @@ object SessionTable:
       |    alter table auth_sessions add column expires_at timestamp;
       |  end if;
       |end $$;
+      |""".stripMargin
+
+  val setLastActiveAtNotNullSql: String =
+    """
+      |alter table auth_sessions
+      |alter column last_active_at set not null
       |""".stripMargin
 
   val setExpiresAtNotNullSql: String =
@@ -55,16 +78,23 @@ object SessionTable:
 
   val insertSql: String =
     """
-      |insert into auth_sessions (token, username, created_at, expires_at)
-      |values (?, ?, ?, ?)
+      |insert into auth_sessions (token, username, created_at, last_active_at, expires_at)
+      |values (?, ?, ?, ?, ?)
       |""".stripMargin
 
-  val findUsernameByTokenSql: String =
+  val findSessionByTokenSql: String =
     """
-      |select username
+      |select username, expires_at, last_active_at
       |from auth_sessions
       |where token = ?
       |  and expires_at > ?
+      |""".stripMargin
+
+  val touchSessionSql: String =
+    """
+      |update auth_sessions
+      |set last_active_at = ?, expires_at = ?
+      |where token = ?
       |""".stripMargin
 
   val deleteByTokenSql: String =
@@ -91,12 +121,18 @@ object SessionTable:
         val statement = connection.createStatement()
         try
           statement.execute(initTableSql)
+          statement.execute(addLastActiveAtColumnSql)
           statement.execute(addExpiresAtColumnSql)
           statement.execute(createUsernameIndexSql)
           statement.execute(createExpiresAtIndexSql)
         finally statement.close()
       }
-      _ <- backfillExpiresAt(connection, sessionTtl)
+      _ <- backfillSessionTimestamps(connection, sessionTtl)
+      _ <- IO.blocking {
+        val statement = connection.createStatement()
+        try statement.execute(setLastActiveAtNotNullSql)
+        finally statement.close()
+      }
       _ <- IO.blocking {
         val statement = connection.createStatement()
         try statement.execute(setExpiresAtNotNullSql)
@@ -112,21 +148,38 @@ object SessionTable:
         statement.setString(1, token)
         statement.setString(2, username.value)
         statement.setTimestamp(3, Timestamp.from(now))
-        statement.setTimestamp(4, Timestamp.from(expiresAt))
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setTimestamp(5, Timestamp.from(expiresAt))
         statement.executeUpdate()
         ()
       finally statement.close()
     }
 
-  def findUsernameByToken(connection: Connection, token: String): IO[Option[Username]] =
+  def touchAndFindUsernameByToken(
+    connection: Connection,
+    token: String,
+    activeExtensionThreshold: Duration
+  ): IO[Option[Username]] =
     IO.blocking {
-      val statement = connection.prepareStatement(findUsernameByTokenSql)
+      val now = Instant.now()
+      val statement = connection.prepareStatement(findSessionByTokenSql)
       try
         statement.setString(1, token)
-        statement.setTimestamp(2, Timestamp.from(Instant.now()))
+        statement.setTimestamp(2, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then Some(Username(resultSet.getString("username")))
+          if resultSet.next() then
+            val username = Username(resultSet.getString("username"))
+            val currentExpiresAt = resultSet.getTimestamp("expires_at").toInstant
+            val nextExpiresAt = maxInstant(currentExpiresAt, now.plus(activeExtensionThreshold))
+            val touchStatement = connection.prepareStatement(touchSessionSql)
+            try
+              touchStatement.setTimestamp(1, Timestamp.from(now))
+              touchStatement.setTimestamp(2, Timestamp.from(nextExpiresAt))
+              touchStatement.setString(3, token)
+              touchStatement.executeUpdate()
+            finally touchStatement.close()
+            Some(username)
           else None
         finally resultSet.close()
       finally statement.close()
@@ -142,13 +195,13 @@ object SessionTable:
       finally statement.close()
     }
 
-  private def backfillExpiresAt(connection: Connection, sessionTtl: Duration): IO[Unit] =
+  private def backfillSessionTimestamps(connection: Connection, sessionTtl: Duration): IO[Unit] =
     IO.blocking {
       val selectStatement = connection.prepareStatement(
         """
-          |select token, created_at
+          |select token, created_at, last_active_at, expires_at
           |from auth_sessions
-          |where expires_at is null
+          |where last_active_at is null or expires_at is null
           |""".stripMargin
       )
       try
@@ -161,7 +214,9 @@ object SessionTable:
               .map(_ =>
                 (
                   resultSet.getString("token"),
-                  resultSet.getTimestamp("created_at").toInstant.plus(sessionTtl),
+                  Option(resultSet.getTimestamp("created_at")).map(_.toInstant).getOrElse(Instant.now()),
+                  Option(resultSet.getTimestamp("last_active_at")).map(_.toInstant),
+                  Option(resultSet.getTimestamp("expires_at")).map(_.toInstant),
                 )
               )
               .toList
@@ -170,14 +225,17 @@ object SessionTable:
         val updateStatement = connection.prepareStatement(
           """
             |update auth_sessions
-            |set expires_at = ?
+            |set last_active_at = ?, expires_at = ?
             |where token = ?
             |""".stripMargin
         )
         try
-          rows.foreach { (token, expiresAt) =>
-            updateStatement.setTimestamp(1, Timestamp.from(expiresAt))
-            updateStatement.setString(2, token)
+          rows.foreach { (token, createdAt, maybeLastActiveAt, maybeExpiresAt) =>
+            val lastActiveAt = maybeLastActiveAt.getOrElse(createdAt)
+            val expiresAt = maybeExpiresAt.getOrElse(createdAt.plus(sessionTtl))
+            updateStatement.setTimestamp(1, Timestamp.from(lastActiveAt))
+            updateStatement.setTimestamp(2, Timestamp.from(expiresAt))
+            updateStatement.setString(3, token)
             updateStatement.addBatch()
           }
           if rows.nonEmpty then
@@ -186,6 +244,9 @@ object SessionTable:
         finally updateStatement.close()
       finally selectStatement.close()
     }
+
+  private def maxInstant(left: Instant, right: Instant): Instant =
+    if left.isAfter(right) then left else right
 
   def deleteByToken(connection: Connection, token: String): IO[Unit] =
     IO.blocking {
