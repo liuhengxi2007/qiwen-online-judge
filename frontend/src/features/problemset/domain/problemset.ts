@@ -1,5 +1,23 @@
+import type {
+  CreateProblemSetRequest as CreateProblemSetRequestContract,
+  LinkProblemRequest as LinkProblemRequestContract,
+  ProblemSetDetail as ProblemSetDetailContract,
+  ProblemSetListResponse as ProblemSetListResponseContract,
+  ProblemSetProblemSummary as ProblemSetProblemSummaryContract,
+  ProblemSetSummary as ProblemSetSummaryContract,
+  UpdateProblemSetRequest as UpdateProblemSetRequestContract,
+} from '@contracts/problemset'
 import type { Username } from '@/features/auth/domain/auth'
-import type { ProblemId, ProblemSlug, ProblemTitle } from '@/features/problem/domain/problem'
+import { parseUsername } from '@/features/auth/domain/auth'
+import {
+  parseProblemId,
+  parseProblemSlug,
+  parseProblemTitle,
+  problemSlugValue,
+  type ProblemId,
+  type ProblemSlug,
+  type ProblemTitle,
+} from '@/features/problem/domain/problem'
 import type { PageResponse } from '@/shared/domain/pagination'
 import type { ResourceStatus, ResourceVisibility } from '@/shared/domain/resource-lifecycle'
 
@@ -67,6 +85,10 @@ export type ProblemSetListResponse = PageResponse<ProblemSetSummary>
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+function createProblemSetId(value: string): ProblemSetId {
+  return value as ProblemSetId
+}
+
 function createProblemSetSlug(value: string): ProblemSetSlug {
   return value as ProblemSetSlug
 }
@@ -83,6 +105,14 @@ function createProblemSetProblemPosition(value: number): ProblemSetProblemPositi
   return value as ProblemSetProblemPosition
 }
 
+function requireParsed<T>(result: ParseResult<T>, label: string): T {
+  if (!result.ok) {
+    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
+  }
+
+  return result.value
+}
+
 export function problemSetSlugValue(slug: ProblemSetSlug): string {
   return slug
 }
@@ -97,6 +127,14 @@ export function problemSetDescriptionValue(description: ProblemSetDescription): 
 
 export function problemSetProblemPositionValue(position: ProblemSetProblemPosition): number {
   return position
+}
+
+export function parseProblemSetId(rawId: string): ParseResult<ProblemSetId> {
+  const normalized = rawId.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Problem set id is required.' }
+  }
+  return { ok: true, value: createProblemSetId(normalized) }
 }
 
 export function parseProblemSetSlug(rawSlug: string): ParseResult<ProblemSetSlug> {
@@ -137,4 +175,90 @@ export function parseProblemSetProblemPosition(rawPosition: number): ParseResult
     return { ok: false, error: 'Problem set problem position must be a positive integer.' }
   }
   return { ok: true, value: createProblemSetProblemPosition(rawPosition) }
+}
+
+export function fromProblemSetProblemSummaryContract(
+  problem: ProblemSetProblemSummaryContract,
+): ProblemSetProblemSummary {
+  return {
+    id: requireParsed(parseProblemId(problem.id), 'problem set problem id'),
+    slug: requireParsed(parseProblemSlug(problem.slug), 'problem set problem slug'),
+    title: requireParsed(parseProblemTitle(problem.title), 'problem set problem title'),
+    position: requireParsed(parseProblemSetProblemPosition(problem.position), 'problem set problem position'),
+  }
+}
+
+export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContract): ProblemSetSummary {
+  return {
+    id: requireParsed(parseProblemSetId(problemSet.id), 'problem set summary id'),
+    slug: requireParsed(parseProblemSetSlug(problemSet.slug), 'problem set summary slug'),
+    title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set summary title'),
+    description: requireParsed(
+      parseProblemSetDescription(problemSet.description),
+      'problem set summary description',
+    ),
+    visibility: problemSet.visibility,
+    status: problemSet.status as ResourceStatus,
+    ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set summary owner username'),
+    createdAt: problemSet.createdAt,
+    updatedAt: problemSet.updatedAt,
+  }
+}
+
+export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContract): ProblemSetDetail {
+  return {
+    id: requireParsed(parseProblemSetId(problemSet.id), 'problem set detail id'),
+    slug: requireParsed(parseProblemSetSlug(problemSet.slug), 'problem set detail slug'),
+    title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set detail title'),
+    description: requireParsed(
+      parseProblemSetDescription(problemSet.description),
+      'problem set detail description',
+    ),
+    problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
+    visibility: problemSet.visibility,
+    status: problemSet.status as ResourceStatus,
+    ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set detail owner username'),
+    createdAt: problemSet.createdAt,
+    updatedAt: problemSet.updatedAt,
+  }
+}
+
+export function fromProblemSetListResponseContract(
+  response: ProblemSetListResponseContract,
+): ProblemSetListResponse {
+  return {
+    items: response.items.map(fromProblemSetSummaryContract),
+    page: response.page,
+    pageSize: response.pageSize,
+    totalItems: response.totalItems,
+  }
+}
+
+export function toCreateProblemSetRequestContract(
+  request: CreateProblemSetRequest,
+): CreateProblemSetRequestContract {
+  return {
+    slug: problemSetSlugValue(request.slug),
+    title: problemSetTitleValue(request.title),
+    description: problemSetDescriptionValue(request.description),
+    visibility: request.visibility,
+  }
+}
+
+export function toUpdateProblemSetRequestContract(
+  request: UpdateProblemSetRequest,
+): UpdateProblemSetRequestContract {
+  return {
+    title: problemSetTitleValue(request.title),
+    description: problemSetDescriptionValue(request.description),
+    visibility: request.visibility,
+  }
+}
+
+export function toLinkProblemRequestContract(
+  request: AddProblemToProblemSetRequest,
+): LinkProblemRequestContract {
+  return {
+    problemSlug: problemSlugValue(request.problemSlug),
+  }
 }

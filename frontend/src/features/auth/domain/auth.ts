@@ -1,3 +1,16 @@
+import type {
+  AuthUserListItem as AuthUserListItemContract,
+  LoginRequest as LoginRequestContract,
+  LoginResponse as LoginResponseContract,
+  RegisterRequest as RegisterRequestContract,
+  RegisterResponse as RegisterResponseContract,
+  SessionResponse as SessionResponseContract,
+  UpdateManagedUserSettingsRequest as UpdateManagedUserSettingsRequestContract,
+  UpdateOwnSettingsRequest as UpdateOwnSettingsRequestContract,
+  UpdateUserPermissionsRequest as UpdateUserPermissionsRequestContract,
+} from '@contracts/auth'
+import type { ErrorResponse as ErrorResponseContract } from '@contracts/shared'
+
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
@@ -51,9 +64,7 @@ export type AuthUserListItem = {
   problemManager: boolean
 }
 
-export type ErrorResponse = {
-  message: string
-}
+export type ErrorResponse = ErrorResponseContract
 
 export type UpdateUserPermissionsRequest = {
   siteManager: boolean
@@ -90,6 +101,14 @@ function createEmailAddress(value: string): EmailAddress {
 
 function createPlaintextPassword(value: string): PlaintextPassword {
   return value as PlaintextPassword
+}
+
+function requireParsed<T>(result: ParseResult<T>, label: string): T {
+  if (!result.ok) {
+    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
+  }
+
+  return result.value
 }
 
 export function usernameValue(username: Username): string {
@@ -182,4 +201,82 @@ export function asSiteManagerSession(session: AuthSession): SiteManagerSession |
 
 export function asProblemManagerSession(session: AuthSession): ProblemManagerSession | null {
   return session.problemManager ? (session as ProblemManagerSession) : null
+}
+
+export function toLoginRequestContract(request: LoginRequest): LoginRequestContract {
+  return {
+    username: usernameValue(request.username),
+    password: plaintextPasswordValue(request.password),
+  }
+}
+
+export function fromLoginResponseContract(response: LoginResponseContract): LoginResponse {
+  return {
+    displayName: requireParsed(parseDisplayName(response.displayName), 'login response display name'),
+    username: requireParsed(parseUsername(response.username), 'login response username'),
+    email: requireParsed(parseEmailAddress(response.email), 'login response email'),
+    siteManager: response.siteManager,
+    problemManager: response.problemManager,
+    message: response.message,
+  }
+}
+
+export function toRegisterRequestContract(request: RegisterRequest): RegisterRequestContract {
+  return {
+    username: usernameValue(request.username),
+    displayName: displayNameValue(request.displayName),
+    email: emailAddressValue(request.email),
+    password: plaintextPasswordValue(request.password),
+  }
+}
+
+export function fromRegisterResponseContract(response: RegisterResponseContract): RegisterResponse {
+  return fromLoginResponseContract(response)
+}
+
+export function fromSessionResponseContract(response: SessionResponseContract): SessionResponse {
+  return {
+    displayName: requireParsed(parseDisplayName(response.displayName), 'session response display name'),
+    username: requireParsed(parseUsername(response.username), 'session response username'),
+    email: requireParsed(parseEmailAddress(response.email), 'session response email'),
+    siteManager: response.siteManager,
+    problemManager: response.problemManager,
+  }
+}
+
+export function fromAuthUserListItemContract(response: AuthUserListItemContract): AuthUserListItem {
+  return {
+    username: requireParsed(parseUsername(response.username), 'auth user username'),
+    displayName: requireParsed(parseDisplayName(response.displayName), 'auth user display name'),
+    email: requireParsed(parseEmailAddress(response.email), 'auth user email'),
+    siteManager: response.siteManager,
+    problemManager: response.problemManager,
+  }
+}
+
+export function toUpdateUserPermissionsRequestContract(
+  request: UpdateUserPermissionsRequest,
+): UpdateUserPermissionsRequestContract {
+  return request
+}
+
+export function toUpdateOwnSettingsRequestContract(
+  request: UpdateOwnSettingsRequest,
+): UpdateOwnSettingsRequestContract {
+  return {
+    displayName: displayNameValue(request.displayName),
+    email: emailAddressValue(request.email),
+    currentPassword: plaintextPasswordValue(request.currentPassword),
+    newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
+  }
+}
+
+export function toUpdateManagedUserSettingsRequestContract(
+  request: UpdateManagedUserSettingsRequest,
+): UpdateManagedUserSettingsRequestContract {
+  return {
+    displayName: displayNameValue(request.displayName),
+    email: emailAddressValue(request.email),
+    newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
+  }
 }

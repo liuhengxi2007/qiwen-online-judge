@@ -1,4 +1,10 @@
 import type {
+  AuthUserListItem as AuthUserListItemContract,
+  LoginResponse as LoginResponseContract,
+  RegisterResponse as RegisterResponseContract,
+  SessionResponse as SessionResponseContract,
+} from '@contracts/auth'
+import type {
   AuthUserListItem,
   LoginRequest,
   LoginResponse,
@@ -10,13 +16,25 @@ import type {
   UpdateUserPermissionsRequest,
   Username,
 } from '@/features/auth/domain/auth'
-import { usernameValue } from '@/features/auth/domain/auth'
+import {
+  fromAuthUserListItemContract,
+  fromLoginResponseContract,
+  fromRegisterResponseContract,
+  fromSessionResponseContract,
+  toLoginRequestContract,
+  toRegisterRequestContract,
+  toUpdateManagedUserSettingsRequestContract,
+  toUpdateOwnSettingsRequestContract,
+  toUpdateUserPermissionsRequestContract,
+  usernameValue,
+} from '@/features/auth/domain/auth'
 import { postJson, requestJson } from '@/shared/api/http-client'
 
 export { HttpClientError as AuthClientError } from '@/shared/api/http-client'
 
-export function getSession(): Promise<SessionResponse> {
-  return requestJson<SessionResponse>('/api/auth/session')
+export async function getSession(): Promise<SessionResponse> {
+  const response = await requestJson<SessionResponseContract>('/api/auth/session')
+  return fromSessionResponseContract(response)
 }
 
 export async function logout(): Promise<void> {
@@ -26,39 +44,78 @@ export async function logout(): Promise<void> {
   }).catch(() => undefined)
 }
 
-export function login(request: LoginRequest): Promise<LoginResponse> {
-  return postJson<LoginResponse>('/api/auth/login', request)
+export async function login(request: LoginRequest): Promise<LoginResponse> {
+  const response = await postJson<LoginResponseContract>('/api/auth/login', toLoginRequestContract(request))
+  return fromLoginResponseContract(response)
 }
 
-export function register(request: RegisterRequest): Promise<RegisterResponse> {
-  return postJson<RegisterResponse>('/api/auth/register', request)
+export async function register(request: RegisterRequest): Promise<RegisterResponse> {
+  const response = await postJson<RegisterResponseContract>('/api/auth/register', toRegisterRequestContract(request))
+  return fromRegisterResponseContract(response)
 }
 
-export function listUsers(): Promise<AuthUserListItem[]> {
-  return requestJson<AuthUserListItem[]>('/api/auth/users')
+export async function listUsers(): Promise<AuthUserListItem[]> {
+  const response = await requestJson<AuthUserListItemContract[]>('/api/auth/users')
+  return response.map(fromAuthUserListItemContract)
 }
 
 export function updateUserPermissions(
   username: Username,
   request: UpdateUserPermissionsRequest,
 ): Promise<AuthUserListItem> {
-  return postJson<AuthUserListItem>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/permissions`, request)
+  return updateUserPermissionsInternal(username, request)
 }
 
-export function getUserSettings(username: Username): Promise<SessionResponse> {
-  return requestJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`)
+async function updateUserPermissionsInternal(
+  username: Username,
+  request: UpdateUserPermissionsRequest,
+): Promise<AuthUserListItem> {
+  const response = await postJson<AuthUserListItemContract>(
+    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/permissions`,
+    toUpdateUserPermissionsRequestContract(request),
+  )
+  return fromAuthUserListItemContract(response)
+}
+
+export async function getUserSettings(username: Username): Promise<SessionResponse> {
+  const response = await requestJson<SessionResponseContract>(
+    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+  )
+  return fromSessionResponseContract(response)
 }
 
 export function updateOwnUserSettings(
   username: Username,
   request: UpdateOwnSettingsRequest,
 ): Promise<SessionResponse> {
-  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`, request)
+  return updateOwnUserSettingsInternal(username, request)
+}
+
+async function updateOwnUserSettingsInternal(
+  username: Username,
+  request: UpdateOwnSettingsRequest,
+): Promise<SessionResponse> {
+  const response = await postJson<SessionResponseContract>(
+    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    toUpdateOwnSettingsRequestContract(request),
+  )
+  return fromSessionResponseContract(response)
 }
 
 export function updateManagedUserSettings(
   username: Username,
   request: UpdateManagedUserSettingsRequest,
 ): Promise<SessionResponse> {
-  return postJson<SessionResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`, request)
+  return updateManagedUserSettingsInternal(username, request)
+}
+
+async function updateManagedUserSettingsInternal(
+  username: Username,
+  request: UpdateManagedUserSettingsRequest,
+): Promise<SessionResponse> {
+  const response = await postJson<SessionResponseContract>(
+    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    toUpdateManagedUserSettingsRequestContract(request),
+  )
+  return fromSessionResponseContract(response)
 }

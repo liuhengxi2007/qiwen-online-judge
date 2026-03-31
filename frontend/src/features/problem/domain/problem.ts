@@ -1,4 +1,12 @@
+import type {
+  CreateProblemRequest as CreateProblemRequestContract,
+  ProblemDetail as ProblemDetailContract,
+  ProblemListResponse as ProblemListResponseContract,
+  ProblemSummary as ProblemSummaryContract,
+  UpdateProblemRequest as UpdateProblemRequestContract,
+} from '@contracts/problem'
 import type { Username } from '@/features/auth/domain/auth'
+import { parseUsername } from '@/features/auth/domain/auth'
 import type { PageResponse } from '@/shared/domain/pagination'
 import type { ResourceStatus, ResourceVisibility } from '@/shared/domain/resource-lifecycle'
 
@@ -52,6 +60,10 @@ export type ProblemListResponse = PageResponse<ProblemSummary>
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+function createProblemId(value: string): ProblemId {
+  return value as ProblemId
+}
+
 function createProblemSlug(value: string): ProblemSlug {
   return value as ProblemSlug
 }
@@ -62,6 +74,18 @@ function createProblemTitle(value: string): ProblemTitle {
 
 function createProblemStatementText(value: string): ProblemStatementText {
   return value as ProblemStatementText
+}
+
+function requireParsed<T>(result: ParseResult<T>, label: string): T {
+  if (!result.ok) {
+    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
+  }
+
+  return result.value
+}
+
+export function problemIdValue(problemId: ProblemId): string {
+  return problemId
 }
 
 export function problemSlugValue(slug: ProblemSlug): string {
@@ -90,6 +114,14 @@ export function parseProblemSlug(rawSlug: string): ParseResult<ProblemSlug> {
   return { ok: true, value: createProblemSlug(normalized) }
 }
 
+export function parseProblemId(rawId: string): ParseResult<ProblemId> {
+  const normalized = rawId.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Problem id is required.' }
+  }
+  return { ok: true, value: createProblemId(normalized) }
+}
+
 export function parseProblemTitle(rawTitle: string): ParseResult<ProblemTitle> {
   const normalized = rawTitle.trim()
   if (!normalized) {
@@ -110,4 +142,57 @@ export function parseProblemStatementText(rawStatement: string): ParseResult<Pro
     return { ok: false, error: 'Problem statement must be at most 20000 characters.' }
   }
   return { ok: true, value: createProblemStatementText(normalized) }
+}
+
+export function fromProblemSummaryContract(problem: ProblemSummaryContract): ProblemSummary {
+  return {
+    id: requireParsed(parseProblemId(problem.id), 'problem summary id'),
+    slug: requireParsed(parseProblemSlug(problem.slug), 'problem summary slug'),
+    title: requireParsed(parseProblemTitle(problem.title), 'problem summary title'),
+    visibility: problem.visibility,
+    status: problem.status as ResourceStatus,
+    ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem summary owner username'),
+    createdAt: problem.createdAt,
+    updatedAt: problem.updatedAt,
+  }
+}
+
+export function fromProblemDetailContract(problem: ProblemDetailContract): ProblemDetail {
+  return {
+    id: requireParsed(parseProblemId(problem.id), 'problem detail id'),
+    slug: requireParsed(parseProblemSlug(problem.slug), 'problem detail slug'),
+    title: requireParsed(parseProblemTitle(problem.title), 'problem detail title'),
+    statement: requireParsed(parseProblemStatementText(problem.statement), 'problem detail statement'),
+    visibility: problem.visibility,
+    status: problem.status as ResourceStatus,
+    ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem detail owner username'),
+    createdAt: problem.createdAt,
+    updatedAt: problem.updatedAt,
+  }
+}
+
+export function fromProblemListResponseContract(response: ProblemListResponseContract): ProblemListResponse {
+  return {
+    items: response.items.map(fromProblemSummaryContract),
+    page: response.page,
+    pageSize: response.pageSize,
+    totalItems: response.totalItems,
+  }
+}
+
+export function toCreateProblemRequestContract(request: CreateProblemRequest): CreateProblemRequestContract {
+  return {
+    slug: problemSlugValue(request.slug),
+    title: problemTitleValue(request.title),
+    statement: problemStatementTextValue(request.statement),
+    visibility: request.visibility,
+  }
+}
+
+export function toUpdateProblemRequestContract(request: UpdateProblemRequest): UpdateProblemRequestContract {
+  return {
+    title: problemTitleValue(request.title),
+    statement: problemStatementTextValue(request.statement),
+    visibility: request.visibility,
+  }
 }

@@ -1,6 +1,11 @@
-export type ResourceVisibility = 'private' | 'group' | 'public'
+import type {
+  ResourceStatus as ContractResourceStatus,
+  ResourceVisibility as ContractResourceVisibility,
+} from '@contracts/shared'
 
-export type ResourceStatus = 'draft' | 'published' | 'archived'
+export type ResourceVisibility = ContractResourceVisibility
+
+export type ResourceStatus = ContractResourceStatus
 
 export type AuditFields = {
   createdAt: string

@@ -174,6 +174,11 @@ Avoid:
 - `src/main/scala/database`
   - Shared database bootstrap and connection management
 
+See also:
+
+- `docs/contracts-scope.md`
+- `docs/backend-contract-alignment.md`
+
 ### Backend Shared Rules
 
 `domains/shared` should stay smaller than any real business domain.
