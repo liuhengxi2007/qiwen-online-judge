@@ -5,6 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.Username
 import domains.auth.table.SessionTable
 
+import java.sql.Connection
 import java.security.SecureRandom
 import java.util.Base64
 
@@ -19,11 +20,13 @@ final class SessionStore private (
   def createSession(username: Username): IO[String] =
     for
       token <- nextToken
-      expiresAt = java.time.Instant.now().plus(sessionConfig.ttl)
       _ <- databaseSession.withTransactionConnection(connection =>
-        SessionTable.deleteExpired(connection) *> SessionTable.insert(connection, token, username, expiresAt)
+        createSessionInConnection(connection, username, Some(token)).void
       )
     yield token
+
+  def createSessionInConnection(connection: Connection, username: Username): IO[String] =
+    createSessionInConnection(connection, username, None)
 
   def lookupUsername(token: String): IO[Option[Username]] =
     databaseSession.withTransactionConnection(connection =>
@@ -47,6 +50,27 @@ final class SessionStore private (
       random.nextBytes(tokenBytes)
       Base64.getUrlEncoder.withoutPadding().encodeToString(tokenBytes)
     }
+
+  private def createSessionInConnection(
+    connection: Connection,
+    username: Username,
+    existingToken: Option[String]
+  ): IO[String] =
+    for
+      token <- existingToken match
+        case Some(token) => IO.pure(token)
+        case None => nextToken
+      expiresAt = java.time.Instant.now().plus(sessionConfig.ttl)
+      _ <- insertSession(connection, token, username, expiresAt)
+    yield token
+
+  private def insertSession(
+    connection: Connection,
+    token: String,
+    username: Username,
+    expiresAt: java.time.Instant
+  ): IO[Unit] =
+    SessionTable.deleteExpired(connection) *> SessionTable.insert(connection, token, username, expiresAt)
 
 object SessionStore:
 

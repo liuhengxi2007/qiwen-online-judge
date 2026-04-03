@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { CreateProblemPage } from '@/features/problem/pages/CreateProblemPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ProblemDetailPage } from '@/features/problem/pages/ProblemDetailPage'
 import { ProblemPage } from '@/features/problem/pages/ProblemPage'
 import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
@@ -21,9 +22,9 @@ function RootRedirect() {
   return session ? <DashboardPage /> : <Navigate replace to="/login" />
 }
 
-function GuestOnlyRoute() {
+function GuestOnlyRoute({ element }: { element: ReactElement }) {
   const session = useAuthStore((state) => state.session)
-  return session ? <Navigate replace to="/" /> : <LoginPage />
+  return session ? <Navigate replace to="/" /> : element
 }
 
 function AuthenticatedRoute({ element }: { element: ReactElement }) {
@@ -38,11 +39,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <GuestOnlyRoute />,
+    element: <GuestOnlyRoute element={<LoginPage />} />,
   },
   {
     path: '/register',
-    element: <GuestOnlyRoute />,
+    element: <GuestOnlyRoute element={<RegisterPage />} />,
   },
   {
     path: '/site-manage',

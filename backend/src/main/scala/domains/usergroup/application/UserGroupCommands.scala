@@ -207,6 +207,8 @@ object UserGroupCommands:
         UserGroupTable.addMember(connection, managedGroup.value.id, request).flatMap {
           case UserGroupTable.AddMemberTableResult.AlreadyExists =>
             IO.pure(AddUserGroupMemberResult.MemberAlreadyExists)
+          case UserGroupTable.AddMemberTableResult.UserNotFound =>
+            IO.pure(AddUserGroupMemberResult.UserNotFound)
           case UserGroupTable.AddMemberTableResult.Added =>
             UserGroupTable.findBySlug(connection, managedGroup.value.slug).map {
               case Some(updatedGroup) => AddUserGroupMemberResult.Added(updatedGroup)

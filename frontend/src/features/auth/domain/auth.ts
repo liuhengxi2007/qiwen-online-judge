@@ -156,6 +156,10 @@ export function parseDisplayName(rawDisplayName: string): ParseResult<DisplayNam
     return { ok: false, error: 'Display name is required.' }
   }
 
+  if (normalized.length > 120) {
+    return { ok: false, error: 'Display name must be at most 120 characters.' }
+  }
+
   return { ok: true, value: createDisplayName(normalized) }
 }
 
@@ -164,6 +168,10 @@ export function parseEmailAddress(rawEmailAddress: string): ParseResult<EmailAdd
 
   if (!normalized) {
     return { ok: false, error: 'Email is required.' }
+  }
+
+  if (normalized.length > 255) {
+    return { ok: false, error: 'Email must be at most 255 characters.' }
   }
 
   if (!emailPattern.test(normalized)) {

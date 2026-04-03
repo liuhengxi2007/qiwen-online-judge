@@ -5,7 +5,7 @@ import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
 import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMemberRecord, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummaryView}
 
-import java.sql.{Connection, ResultSet, Timestamp}
+import java.sql.{Connection, ResultSet, SQLException, Timestamp}
 import java.time.Instant
 
 object UserGroupTable:
@@ -150,6 +150,7 @@ object UserGroupTable:
   enum AddMemberTableResult:
     case AlreadyExists
     case Added
+    case UserNotFound
 
   enum UpdateMemberRoleTableResult:
     case MemberNotFound
@@ -295,6 +296,11 @@ object UserGroupTable:
             statement.setTimestamp(4, Timestamp.from(Instant.now()))
             statement.executeUpdate()
             AddMemberTableResult.Added
+          catch
+            case exception: SQLException if exception.getSQLState == "23503" =>
+              AddMemberTableResult.UserNotFound
+            case exception: SQLException if exception.getSQLState == "23505" =>
+              AddMemberTableResult.AlreadyExists
           finally statement.close()
         }
     yield result

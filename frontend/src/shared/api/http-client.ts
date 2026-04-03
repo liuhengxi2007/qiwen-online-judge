@@ -14,8 +14,20 @@ export class HttpClientError extends Error {
 }
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  const errorData = (await response.json().catch(() => null)) as ErrorResponse | null
-  return errorData?.message ?? fallback
+  const jsonResponse = response.clone()
+  const textResponse = response.clone()
+  const errorData = (await jsonResponse.json().catch(() => null)) as ErrorResponse | null
+
+  if (errorData?.message) {
+    return errorData.message
+  }
+
+  const text = (await textResponse.text().catch(() => '')).trim()
+  if (text) {
+    return text
+  }
+
+  return `${fallback} (HTTP ${response.status})`
 }
 
 export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {

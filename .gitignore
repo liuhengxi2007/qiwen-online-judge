@@ -5,3 +5,4 @@ backend/project/target
 backend/.idea/
 backend/project/.sbt-boot/
 backend/project/.sbt-global/
+.codex

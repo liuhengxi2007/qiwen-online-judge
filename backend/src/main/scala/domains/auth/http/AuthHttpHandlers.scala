@@ -3,7 +3,7 @@ package domains.auth.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.{AuthUserCommands, PasswordHasher, SessionStore, UsernameRules}
-import domains.auth.model.{AuthUser, LoginRequest, RegisterRequest, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
+import domains.auth.model.{AuthUser, DisplayName, EmailAddress, LoginRequest, RegisterRequest, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
 import domains.auth.table.AuthUserTable
 import io.circe.syntax.*
 import org.http4s.{Request, Response}
@@ -124,18 +124,41 @@ final class AuthHttpHandlers(
                 case Some(_) =>
                   AuthHttpResponses.usernameConflictResponse
                 case None =>
-                  AuthUserTable
-                    .insert(
-                      connection,
-                      username = registerRequest.username,
-                      displayName = registerRequest.displayName,
-                      email = registerRequest.email,
-                      password = registerRequest.password
-                    )
-                    .flatMap(createdUser => loginCreatedUser(createdUser))
+                  validateRegisterRequest(registerRequest) match
+                    case Some(validationError) =>
+                      AuthHttpResponses.validationErrorResponse(validationError)
+                    case None =>
+                      AuthUserTable
+                        .insert(
+                          connection,
+                          username = registerRequest.username,
+                          displayName = registerRequest.displayName,
+                          email = registerRequest.email,
+                          password = registerRequest.password
+                        )
+                        .flatMap(createdUser => loginCreatedUser(connection, createdUser))
             yield result
           }
     yield response
+
+  private def validateRegisterRequest(request: RegisterRequest): Option[String] =
+    validateDisplayName(request.displayName).orElse(validateEmail(request.email))
+
+  private def validateDisplayName(displayName: DisplayName): Option[String] =
+    val normalized = displayName.value.trim
+
+    if normalized.isEmpty then Some("Display name is required.")
+    else if normalized.length > 120 then Some("Display name must be at most 120 characters.")
+    else None
+
+  private def validateEmail(email: EmailAddress): Option[String] =
+    val normalized = email.value.trim
+    val emailPattern = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$".r
+
+    if normalized.isEmpty then Some("Email is required.")
+    else if normalized.length > 255 then Some("Email must be at most 255 characters.")
+    else if emailPattern.matches(normalized) then None
+    else Some("Please enter a valid email address.")
 
   private def updateOwnUserSettings(
     request: Request[IO],
@@ -192,8 +215,8 @@ final class AuthHttpHandlers(
       case _ =>
         IO.pure(response)
 
-  private def loginCreatedUser(createdUser: AuthUser): IO[Response[IO]] =
-    sessionStore.createSession(createdUser.username).flatMap { sessionToken =>
+  private def loginCreatedUser(connection: java.sql.Connection, createdUser: AuthUser): IO[Response[IO]] =
+    sessionStore.createSessionInConnection(connection, createdUser.username).flatMap { sessionToken =>
       Created(AuthHttpResponses.toLoginResponse(createdUser, "Registration successful").asJson)
         .map(_.addCookie(AuthHttpResponses.sessionCookie(sessionToken)))
     }
