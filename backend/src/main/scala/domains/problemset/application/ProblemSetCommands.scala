@@ -4,9 +4,9 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.table.ProblemTable
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetDetail, ProblemSetListResponse, ProblemSetSummary, UpdateProblemSetRequest}
+import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummaryView, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.model.PageRequest
+import domains.shared.model.{PageRequest, PageResponse}
 
 object ProblemSetCommands:
 
@@ -14,7 +14,7 @@ object ProblemSetCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case SlugAlreadyExists
-    case Created(problemSet: ProblemSetDetail)
+    case Created(problemSet: ProblemSet)
 
   enum AddProblemResult:
     case Forbidden
@@ -22,17 +22,17 @@ object ProblemSetCommands:
     case ProblemSetNotFound
     case ProblemNotFound
     case ProblemAlreadyLinked
-    case Linked(problemSet: ProblemSetDetail)
+    case Linked(problemSet: ProblemSet)
 
   enum GetProblemSetResult:
     case NotFound
-    case Found(problemSet: ProblemSetDetail)
+    case Found(problemSet: ProblemSet)
 
   enum UpdateProblemSetResult:
     case Forbidden
     case ValidationFailed(message: String)
     case ProblemSetNotFound
-    case Updated(problemSet: ProblemSetDetail)
+    case Updated(problemSet: ProblemSet)
 
   enum DeleteProblemSetResult:
     case Forbidden
@@ -44,13 +44,13 @@ object ProblemSetCommands:
     case ProblemSetNotFound
     case ProblemNotFound
     case ProblemNotLinked
-    case Removed(problemSet: ProblemSetDetail)
+    case Removed(problemSet: ProblemSet)
 
   def listProblemSets(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     pageRequest: PageRequest
-  ): IO[ProblemSetListResponse] =
+  ): IO[PageResponse[ProblemSetSummaryView]] =
     val _ = actor
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>

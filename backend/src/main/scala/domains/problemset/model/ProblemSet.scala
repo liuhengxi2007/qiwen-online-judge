@@ -36,6 +36,38 @@ object ProblemSetDescription:
   given Encoder[ProblemSetDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemSetDescription] = Decoder.decodeString.map(ProblemSetDescription(_))
 
+final case class ProblemSetProblem(
+  id: domains.problem.model.ProblemId,
+  slug: domains.problem.model.ProblemSlug,
+  title: domains.problem.model.ProblemTitle,
+  position: Int
+)
+
+final case class ProblemSetSummaryView(
+  id: ProblemSetId,
+  slug: ProblemSetSlug,
+  title: ProblemSetTitle,
+  description: ProblemSetDescription,
+  visibility: ResourceVisibility,
+  status: ResourceStatus,
+  ownerUsername: domains.auth.model.Username,
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
+final case class ProblemSet(
+  id: ProblemSetId,
+  slug: ProblemSetSlug,
+  title: ProblemSetTitle,
+  description: ProblemSetDescription,
+  problems: List[ProblemSetProblem],
+  visibility: ResourceVisibility,
+  status: ResourceStatus,
+  ownerUsername: domains.auth.model.Username,
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
 final case class CreateProblemSetRequest(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,

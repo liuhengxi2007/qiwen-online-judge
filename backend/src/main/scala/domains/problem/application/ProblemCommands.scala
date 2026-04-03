@@ -3,9 +3,9 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemListResponse, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, Problem, ProblemSummary, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
-import domains.shared.model.PageRequest
+import domains.shared.model.{PageRequest, PageResponse}
 
 object ProblemCommands:
 
@@ -13,17 +13,17 @@ object ProblemCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case SlugAlreadyExists
-    case Created(problem: ProblemDetail)
+    case Created(problem: Problem)
 
   enum GetProblemResult:
     case NotFound
-    case Found(problem: ProblemDetail)
+    case Found(problem: Problem)
 
   enum UpdateProblemResult:
     case Forbidden
     case ValidationFailed(message: String)
     case ProblemNotFound
-    case Updated(problem: ProblemDetail)
+    case Updated(problem: Problem)
 
   enum DeleteProblemResult:
     case Forbidden
@@ -34,7 +34,7 @@ object ProblemCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     pageRequest: PageRequest
-  ): IO[ProblemListResponse] =
+  ): IO[PageResponse[ProblemSummary]] =
     val _ = actor
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>

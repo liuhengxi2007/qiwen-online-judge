@@ -2,12 +2,51 @@ package domains.problemset.http
 
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
-import domains.shared.model.ErrorResponse
+import domains.problemset.model.{ProblemSet, ProblemSetDetail, ProblemSetProblem, ProblemSetProblemSummary, ProblemSetSummary, ProblemSetSummaryView}
+import domains.shared.model.{ErrorResponse, PageResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
 
 object ProblemSetHttpResponses:
+
+  def toProblemSetListResponse(response: PageResponse[ProblemSetSummaryView]): PageResponse[ProblemSetSummary] =
+    response.copy(items = response.items.map(toProblemSetSummary))
+
+  def toProblemSetSummary(problemSet: ProblemSetSummaryView): ProblemSetSummary =
+    ProblemSetSummary(
+      id = problemSet.id,
+      slug = problemSet.slug,
+      title = problemSet.title,
+      description = problemSet.description,
+      visibility = problemSet.visibility,
+      status = problemSet.status,
+      ownerUsername = problemSet.ownerUsername,
+      createdAt = problemSet.createdAt,
+      updatedAt = problemSet.updatedAt
+    )
+
+  def toProblemSetProblemSummary(problem: ProblemSetProblem): ProblemSetProblemSummary =
+    ProblemSetProblemSummary(
+      id = problem.id,
+      slug = problem.slug,
+      title = problem.title,
+      position = problem.position
+    )
+
+  def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =
+    ProblemSetDetail(
+      id = problemSet.id,
+      slug = problemSet.slug,
+      title = problemSet.title,
+      description = problemSet.description,
+      problems = problemSet.problems.map(toProblemSetProblemSummary),
+      visibility = problemSet.visibility,
+      status = problemSet.status,
+      ownerUsername = problemSet.ownerUsername,
+      createdAt = problemSet.createdAt,
+      updatedAt = problemSet.updatedAt
+    )
 
   def mapCreateResult(result: ProblemSetCommands.CreateProblemSetResult): IO[Response[IO]] =
     result match
@@ -18,7 +57,7 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.CreateProblemSetResult.SlugAlreadyExists =>
         errorResponse(Status.Conflict, "Problem set slug already exists.")
       case ProblemSetCommands.CreateProblemSetResult.Created(problemSet) =>
-        IO.pure(Response[IO](status = Status.Created).withEntity(problemSet.asJson))
+        IO.pure(Response[IO](status = Status.Created).withEntity(toProblemSetDetail(problemSet).asJson))
 
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))
@@ -36,14 +75,14 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.AddProblemResult.ProblemAlreadyLinked =>
         errorResponse(Status.Conflict, "Problem is already linked to this problem set.")
       case ProblemSetCommands.AddProblemResult.Linked(problemSet) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
   def mapGetResult(result: ProblemSetCommands.GetProblemSetResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.GetProblemSetResult.NotFound =>
         errorResponse(Status.NotFound, "Problem set not found.")
       case ProblemSetCommands.GetProblemSetResult.Found(problemSet) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
   def mapUpdateResult(result: ProblemSetCommands.UpdateProblemSetResult): IO[Response[IO]] =
     result match
@@ -54,7 +93,7 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.UpdateProblemSetResult.ProblemSetNotFound =>
         errorResponse(Status.NotFound, "Problem set not found.")
       case ProblemSetCommands.UpdateProblemSetResult.Updated(problemSet) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
   def mapDeleteResult(result: ProblemSetCommands.DeleteProblemSetResult): IO[Response[IO]] =
     result match
@@ -76,4 +115,4 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.RemoveProblemResult.ProblemNotLinked =>
         errorResponse(Status.NotFound, "Problem is not linked to this problem set.")
       case ProblemSetCommands.RemoveProblemResult.Removed(problemSet) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(problemSet.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))

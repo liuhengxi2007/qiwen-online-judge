@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, ProblemDetail, ProblemId, ProblemListItem, ProblemListResponse, ProblemSlug, ProblemStatementText, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, Problem, ProblemId, ProblemSlug, ProblemStatementText, ProblemSummary, ProblemTitle, UpdateProblemRequest}
 import domains.shared.model.PageResponse
 import domains.shared.model.{ResourceStatus, ResourceVisibility}
 
@@ -74,7 +74,7 @@ object ProblemTable:
       finally statement.close()
     }
 
-  def list(connection: Connection, page: Int, pageSize: Int): IO[ProblemListResponse] =
+  def list(connection: Connection, page: Int, pageSize: Int): IO[PageResponse[ProblemSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
@@ -101,7 +101,7 @@ object ProblemTable:
       }
     yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
 
-  def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
+  def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[Problem]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSql)
       try
@@ -112,7 +112,7 @@ object ProblemTable:
       finally statement.close()
     }
 
-  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemRequest): IO[ProblemDetail] =
+  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemRequest): IO[Problem] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
@@ -159,8 +159,8 @@ object ProblemTable:
       finally statement.close()
     }
 
-  private def readProblemListItem(resultSet: ResultSet): ProblemListItem =
-    ProblemListItem(
+  private def readProblemListItem(resultSet: ResultSet): ProblemSummary =
+    ProblemSummary(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSlug(resultSet.getString("slug")),
       title = ProblemTitle(resultSet.getString("title")),
@@ -171,8 +171,8 @@ object ProblemTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readProblemDetail(resultSet: ResultSet): ProblemDetail =
-    ProblemDetail(
+  private def readProblemDetail(resultSet: ResultSet): Problem =
+    Problem(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSlug(resultSet.getString("slug")),
       title = ProblemTitle(resultSet.getString("title")),

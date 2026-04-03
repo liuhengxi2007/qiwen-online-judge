@@ -36,6 +36,29 @@ object ProblemStatementText:
   given Encoder[ProblemStatementText] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemStatementText] = Decoder.decodeString.map(ProblemStatementText(_))
 
+final case class ProblemSummary(
+  id: ProblemId,
+  slug: ProblemSlug,
+  title: ProblemTitle,
+  visibility: ResourceVisibility,
+  status: ResourceStatus,
+  ownerUsername: domains.auth.model.Username,
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
+final case class Problem(
+  id: ProblemId,
+  slug: ProblemSlug,
+  title: ProblemTitle,
+  statement: ProblemStatementText,
+  visibility: ResourceVisibility,
+  status: ResourceStatus,
+  ownerUsername: domains.auth.model.Username,
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
 final case class CreateProblemRequest(
   slug: ProblemSlug,
   title: ProblemTitle,

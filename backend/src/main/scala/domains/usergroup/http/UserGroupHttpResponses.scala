@@ -1,13 +1,48 @@
 package domains.usergroup.http
 
 import cats.effect.IO
-import domains.shared.model.{ErrorResponse, SuccessResponse}
+import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
 import domains.usergroup.application.UserGroupCommands
+import domains.usergroup.model.{UserGroup, UserGroupDetail, UserGroupMember, UserGroupMemberRecord, UserGroupSummary, UserGroupSummaryView}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
 
 object UserGroupHttpResponses:
+
+  def toUserGroupListResponse(response: PageResponse[UserGroupSummaryView]): PageResponse[UserGroupSummary] =
+    response.copy(items = response.items.map(toUserGroupSummary))
+
+  def toUserGroupSummary(group: UserGroupSummaryView): UserGroupSummary =
+    UserGroupSummary(
+      id = group.id,
+      slug = group.slug,
+      name = group.name,
+      description = group.description,
+      ownerUsername = group.ownerUsername,
+      createdAt = group.createdAt,
+      updatedAt = group.updatedAt
+    )
+
+  def toUserGroupMember(member: UserGroupMemberRecord): UserGroupMember =
+    UserGroupMember(
+      username = member.username,
+      displayName = member.displayName,
+      role = member.role,
+      joinedAt = member.joinedAt
+    )
+
+  def toUserGroupDetail(group: UserGroup): UserGroupDetail =
+    UserGroupDetail(
+      id = group.id,
+      slug = group.slug,
+      name = group.name,
+      description = group.description,
+      ownerUsername = group.ownerUsername,
+      members = group.members.map(toUserGroupMember),
+      createdAt = group.createdAt,
+      updatedAt = group.updatedAt
+    )
 
   def mapCreateResult(result: UserGroupCommands.CreateUserGroupResult): IO[Response[IO]] =
     result match
@@ -18,7 +53,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.CreateUserGroupResult.SlugAlreadyExists =>
         errorResponse(Status.Conflict, "User group slug already exists.")
       case UserGroupCommands.CreateUserGroupResult.Created(group) =>
-        IO.pure(Response[IO](status = Status.Created).withEntity(group.asJson))
+        IO.pure(Response[IO](status = Status.Created).withEntity(toUserGroupDetail(group).asJson))
 
   def mapGetResult(result: UserGroupCommands.GetUserGroupResult): IO[Response[IO]] =
     result match
@@ -27,7 +62,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.GetUserGroupResult.Forbidden =>
         errorResponse(Status.Forbidden, "You do not have access to this user group.")
       case UserGroupCommands.GetUserGroupResult.Found(group) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   def mapUpdateResult(result: UserGroupCommands.UpdateUserGroupResult): IO[Response[IO]] =
     result match
@@ -38,7 +73,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.UpdateUserGroupResult.NotFound =>
         errorResponse(Status.NotFound, "User group not found.")
       case UserGroupCommands.UpdateUserGroupResult.Updated(group) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   def mapDeleteResult(result: UserGroupCommands.DeleteUserGroupResult): IO[Response[IO]] =
     result match
@@ -62,7 +97,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.AddUserGroupMemberResult.MemberAlreadyExists =>
         errorResponse(Status.Conflict, "User is already a member of this group.")
       case UserGroupCommands.AddUserGroupMemberResult.Added(group) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   def mapUpdateMemberRoleResult(result: UserGroupCommands.UpdateUserGroupMemberRoleResult): IO[Response[IO]] =
     result match
@@ -79,7 +114,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.OwnershipTransferRequired =>
         errorResponse(Status.BadRequest, "Ownership transfer is required.")
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.Updated(group) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))

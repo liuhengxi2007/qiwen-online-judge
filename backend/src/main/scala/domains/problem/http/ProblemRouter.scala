@@ -23,7 +23,7 @@ object ProblemRouter:
         sessionSupport.withAuthenticatedUser(request) { actor =>
           ProblemCommands
             .listProblems(databaseSession, actor, PageRequest())
-            .flatMap(response => Ok(response.asJson))
+            .flatMap(response => Ok(ProblemHttpResponses.toProblemListResponse(response).asJson))
         }
 
       case request @ POST -> Root / "api" / "problems" =>

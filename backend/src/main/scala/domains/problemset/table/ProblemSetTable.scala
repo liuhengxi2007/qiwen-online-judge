@@ -3,7 +3,7 @@ package domains.problemset.table
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{CreateProblemSetRequest, ProblemSetDescription, ProblemSetDetail, ProblemSetId, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle, UpdateProblemSetRequest}
+import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblem, ProblemSetSlug, ProblemSetSummaryView, ProblemSetTitle, UpdateProblemSetRequest}
 import domains.shared.model.{PageResponse, ResourceStatus, ResourceVisibility}
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -144,7 +144,7 @@ object ProblemSetTable:
       finally statement.close()
     }
 
-  def list(connection: Connection, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
+  def list(connection: Connection, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummaryView]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
@@ -171,7 +171,7 @@ object ProblemSetTable:
       }
     yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
 
-  def findBySlug(connection: Connection, slug: ProblemSetSlug): IO[Option[ProblemSetDetail]] =
+  def findBySlug(connection: Connection, slug: ProblemSetSlug): IO[Option[ProblemSet]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSql)
       try
@@ -187,7 +187,7 @@ object ProblemSetTable:
         IO.pure(None)
     }
 
-  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemSetRequest): IO[ProblemSetDetail] =
+  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
@@ -305,8 +305,8 @@ object ProblemSetTable:
       finally positionStatement.close()
     }
 
-  private def readProblemSetSummary(resultSet: ResultSet): ProblemSetSummary =
-    ProblemSetSummary(
+  private def readProblemSetSummary(resultSet: ResultSet): ProblemSetSummaryView =
+    ProblemSetSummaryView(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSetSlug(resultSet.getString("slug")),
       title = ProblemSetTitle(resultSet.getString("title")),
@@ -318,8 +318,8 @@ object ProblemSetTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readProblemSetDetailBase(resultSet: ResultSet): ProblemSetDetail =
-    ProblemSetDetail(
+  private def readProblemSetDetailBase(resultSet: ResultSet): ProblemSet =
+    ProblemSet(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSetSlug(resultSet.getString("slug")),
       title = ProblemSetTitle(resultSet.getString("title")),
@@ -332,7 +332,7 @@ object ProblemSetTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def listProblemsForSet(connection: Connection, problemSetId: ProblemSetId): IO[List[domains.problemset.model.ProblemSetProblemSummary]] =
+  private def listProblemsForSet(connection: Connection, problemSetId: ProblemSetId): IO[List[ProblemSetProblem]] =
     IO.blocking {
       val statement = connection.prepareStatement(listProblemsForSetSql)
       try
@@ -343,7 +343,7 @@ object ProblemSetTable:
             .continually(resultSet.next())
             .takeWhile(identity)
             .map { _ =>
-              domains.problemset.model.ProblemSetProblemSummary(
+              ProblemSetProblem(
                 id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
                 slug = ProblemSlug(resultSet.getString("slug")),
                 title = ProblemTitle(resultSet.getString("title")),

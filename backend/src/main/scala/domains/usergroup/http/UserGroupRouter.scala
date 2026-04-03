@@ -24,7 +24,7 @@ object UserGroupRouter:
         sessionSupport.withAuthenticatedUser(request) { actor =>
           UserGroupCommands
             .listUserGroups(databaseSession, actor, PageRequest())
-            .flatMap(response => Ok(response.asJson))
+            .flatMap(response => Ok(UserGroupHttpResponses.toUserGroupListResponse(response).asJson))
         }
 
       case request @ GET -> Root / "api" / "user-groups" / groupSlug =>

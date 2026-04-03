@@ -3,7 +3,7 @@ package domains.usergroup.table
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
-import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupDetail, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
+import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMemberRecord, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummaryView}
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -164,7 +164,7 @@ object UserGroupTable:
       finally statement.close()
     }
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
+  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummaryView]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countVisibleSql)
@@ -192,7 +192,7 @@ object UserGroupTable:
       }
     yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
 
-  def findBySlug(connection: Connection, slug: UserGroupSlug): IO[Option[UserGroupDetail]] =
+  def findBySlug(connection: Connection, slug: UserGroupSlug): IO[Option[UserGroup]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSql)
       try
@@ -206,7 +206,7 @@ object UserGroupTable:
       case None => IO.pure(None)
     }
 
-  def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroupDetail] =
+  def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroup] =
     IO.blocking {
       val now = Instant.now()
       val groupId = UserGroupId.random()
@@ -343,7 +343,7 @@ object UserGroupTable:
         }
     }
 
-  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
+  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMemberRecord]] =
     IO.blocking {
       val statement = connection.prepareStatement(listMembersSql)
       try
@@ -354,8 +354,8 @@ object UserGroupTable:
       finally statement.close()
     }
 
-  private def readSummary(resultSet: ResultSet): UserGroupSummary =
-    UserGroupSummary(
+  private def readSummary(resultSet: ResultSet): UserGroupSummaryView =
+    UserGroupSummaryView(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = UserGroupSlug(resultSet.getString("slug")),
       name = UserGroupName(resultSet.getString("name")),
@@ -365,8 +365,8 @@ object UserGroupTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readDetailBase(resultSet: ResultSet): UserGroupDetail =
-    UserGroupDetail(
+  private def readDetailBase(resultSet: ResultSet): UserGroup =
+    UserGroup(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = UserGroupSlug(resultSet.getString("slug")),
       name = UserGroupName(resultSet.getString("name")),
@@ -377,8 +377,8 @@ object UserGroupTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readMember(resultSet: ResultSet): UserGroupMember =
-    UserGroupMember(
+  private def readMember(resultSet: ResultSet): UserGroupMemberRecord =
+    UserGroupMemberRecord(
       username = Username(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       role = UserGroupRole.fromDatabaseUnsafe(resultSet.getString("role")),

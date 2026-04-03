@@ -1,7 +1,7 @@
 package domains.usergroup.application
 
 import domains.auth.model.{AuthUser, Username}
-import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroupDetail, UserGroupRole}
+import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroup, UserGroupRole}
 
 object UserGroupPolicy:
 
@@ -13,34 +13,34 @@ object UserGroupPolicy:
     val _ = actor
     true
 
-  def canView(actor: AuthUser, group: UserGroupDetail): Boolean =
+  def canView(actor: AuthUser, group: UserGroup): Boolean =
     actor.siteManager || isMember(actor.username, group)
 
-  def canEdit(actor: AuthUser, group: UserGroupDetail): Boolean =
+  def canEdit(actor: AuthUser, group: UserGroup): Boolean =
     actor.siteManager || hasManagementRole(actor.username, group)
 
-  def canManageMembers(actor: AuthUser, group: UserGroupDetail): Boolean =
+  def canManageMembers(actor: AuthUser, group: UserGroup): Boolean =
     actor.siteManager || hasManagementRole(actor.username, group)
 
-  def canDelete(actor: AuthUser, group: UserGroupDetail): Boolean =
+  def canDelete(actor: AuthUser, group: UserGroup): Boolean =
     actor.siteManager || hasOwnerRole(actor.username, group)
 
-  def requireManaged(actor: AuthUser, group: UserGroupDetail): Option[ManagedUserGroup] =
+  def requireManaged(actor: AuthUser, group: UserGroup): Option[ManagedUserGroup] =
     Option.when(canEdit(actor, group))(ManagedUserGroup(group))
 
-  def requireOwned(actor: AuthUser, group: UserGroupDetail): Option[OwnedUserGroup] =
+  def requireOwned(actor: AuthUser, group: UserGroup): Option[OwnedUserGroup] =
     Option.when(canDelete(actor, group))(OwnedUserGroup(group))
 
-  private def isMember(username: Username, group: UserGroupDetail): Boolean =
+  private def isMember(username: Username, group: UserGroup): Boolean =
     group.members.exists(_.username.value.equalsIgnoreCase(username.value))
 
-  private def hasManagementRole(username: Username, group: UserGroupDetail): Boolean =
+  private def hasManagementRole(username: Username, group: UserGroup): Boolean =
     group.members.exists { member =>
       member.username.value.equalsIgnoreCase(username.value) &&
       (member.role == UserGroupRole.Owner || member.role == UserGroupRole.Manager)
     }
 
-  private def hasOwnerRole(username: Username, group: UserGroupDetail): Boolean =
+  private def hasOwnerRole(username: Username, group: UserGroup): Boolean =
     group.members.exists { member =>
       member.username.value.equalsIgnoreCase(username.value) && member.role == UserGroupRole.Owner
     }

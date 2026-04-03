@@ -37,6 +37,34 @@ object UserGroupDescription:
   given Encoder[UserGroupDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupDescription] = Decoder.decodeString.map(UserGroupDescription(_))
 
+final case class UserGroupMemberRecord(
+  username: Username,
+  displayName: DisplayName,
+  role: UserGroupRole,
+  joinedAt: Instant
+)
+
+final case class UserGroupSummaryView(
+  id: UserGroupId,
+  slug: UserGroupSlug,
+  name: UserGroupName,
+  description: UserGroupDescription,
+  ownerUsername: Username,
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
+final case class UserGroup(
+  id: UserGroupId,
+  slug: UserGroupSlug,
+  name: UserGroupName,
+  description: UserGroupDescription,
+  ownerUsername: Username,
+  members: List[UserGroupMemberRecord],
+  createdAt: Instant,
+  updatedAt: Instant
+)
+
 enum UserGroupRole:
   case Owner
   case Manager
@@ -176,7 +204,7 @@ object UserGroupDetail:
   given Encoder[UserGroupDetail] = deriveEncoder[UserGroupDetail]
   given Decoder[UserGroupDetail] = deriveDecoder[UserGroupDetail]
 
-final case class ManagedUserGroup(value: UserGroupDetail)
-final case class OwnedUserGroup(value: UserGroupDetail)
+final case class ManagedUserGroup(value: UserGroup)
+final case class OwnedUserGroup(value: UserGroup)
 
 type UserGroupListResponse = PageResponse[UserGroupSummary]

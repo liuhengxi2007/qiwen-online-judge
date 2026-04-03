@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupDetail, UserGroupListResponse, UserGroupSlug, UserGroupRole}
+import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroup, UserGroupSlug, UserGroupRole, UserGroupSummaryView}
 import domains.usergroup.table.UserGroupTable
 
 object UserGroupCommands:
@@ -13,18 +13,18 @@ object UserGroupCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case SlugAlreadyExists
-    case Created(group: UserGroupDetail)
+    case Created(group: UserGroup)
 
   enum GetUserGroupResult:
     case NotFound
     case Forbidden
-    case Found(group: UserGroupDetail)
+    case Found(group: UserGroup)
 
   enum UpdateUserGroupResult:
     case Forbidden
     case ValidationFailed(message: String)
     case NotFound
-    case Updated(group: UserGroupDetail)
+    case Updated(group: UserGroup)
 
   enum DeleteUserGroupResult:
     case Forbidden
@@ -37,7 +37,7 @@ object UserGroupCommands:
     case UserGroupNotFound
     case UserNotFound
     case MemberAlreadyExists
-    case Added(group: UserGroupDetail)
+    case Added(group: UserGroup)
 
   enum UpdateUserGroupMemberRoleResult:
     case Forbidden
@@ -46,13 +46,13 @@ object UserGroupCommands:
     case MemberNotFound
     case CannotModifyOwnerRole
     case OwnershipTransferRequired
-    case Updated(group: UserGroupDetail)
+    case Updated(group: UserGroup)
 
   def listUserGroups(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     pageRequest: PageRequest
-  ): IO[UserGroupListResponse] =
+  ): IO[PageResponse[UserGroupSummaryView]] =
     val normalizedPageRequest = pageRequest.normalized
     if !UserGroupPolicy.canList(actor) then
       IO.pure(PageResponse(items = Nil, page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize, totalItems = 0L))

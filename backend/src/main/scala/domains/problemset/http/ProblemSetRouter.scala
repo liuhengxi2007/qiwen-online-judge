@@ -24,7 +24,7 @@ object ProblemSetRouter:
         sessionSupport.withAuthenticatedUser(request) { actor =>
           ProblemSetCommands
             .listProblemSets(databaseSession, actor, PageRequest())
-            .flatMap(response => Ok(response.asJson))
+            .flatMap(response => Ok(ProblemSetHttpResponses.toProblemSetListResponse(response).asJson))
         }
 
       case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
