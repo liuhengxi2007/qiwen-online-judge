@@ -10,6 +10,9 @@ import org.http4s.circe.CirceEntityEncoder.*
 
 object ProblemSetHttpResponses:
 
+  def validationErrorResponse(message: String): IO[Response[IO]] =
+    errorResponse(Status.BadRequest, message)
+
   def toProblemSetListResponse(response: PageResponse[ProblemSetSummaryView]): PageResponse[ProblemSetSummary] =
     response.copy(items = response.items.map(toProblemSetSummary))
 

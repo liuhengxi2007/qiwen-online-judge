@@ -10,6 +10,9 @@ import org.http4s.circe.CirceEntityEncoder.*
 
 object UserGroupHttpResponses:
 
+  def validationErrorResponse(message: String): IO[Response[IO]] =
+    errorResponse(Status.BadRequest, message)
+
   def toUserGroupListResponse(response: PageResponse[UserGroupSummaryView]): PageResponse[UserGroupSummary] =
     response.copy(items = response.items.map(toUserGroupSummary))
 

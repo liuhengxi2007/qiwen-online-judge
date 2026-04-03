@@ -429,9 +429,9 @@ object UserGroupTable:
   private def readSummary(resultSet: ResultSet): UserGroupSummaryView =
     UserGroupSummaryView(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = UserGroupSlug(resultSet.getString("slug")),
-      name = UserGroupName(resultSet.getString("name")),
-      description = UserGroupDescription(resultSet.getString("description")),
+      slug = UserGroupSlug.unsafe(resultSet.getString("slug")),
+      name = UserGroupName.unsafe(resultSet.getString("name")),
+      description = UserGroupDescription.unsafe(resultSet.getString("description")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -440,9 +440,9 @@ object UserGroupTable:
   private def readDetailBase(resultSet: ResultSet): UserGroup =
     UserGroup(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = UserGroupSlug(resultSet.getString("slug")),
-      name = UserGroupName(resultSet.getString("name")),
-      description = UserGroupDescription(resultSet.getString("description")),
+      slug = UserGroupSlug.unsafe(resultSet.getString("slug")),
+      name = UserGroupName.unsafe(resultSet.getString("name")),
+      description = UserGroupDescription.unsafe(resultSet.getString("description")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       members = Nil,
       createdAt = resultSet.getTimestamp("created_at").toInstant,

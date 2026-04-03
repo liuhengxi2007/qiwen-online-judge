@@ -28,11 +28,15 @@ object ProblemSetRouter:
         }
 
       case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          ProblemSetCommands
-            .getProblemSetBySlug(databaseSession, actor, ProblemSetSlug(problemSetSlug))
-            .flatMap(ProblemSetHttpResponses.mapGetResult)
-        }
+        ProblemSetSlug.parse(problemSetSlug) match
+          case Left(message) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSetSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemSetCommands
+                .getProblemSetBySlug(databaseSession, actor, parsedProblemSetSlug)
+                .flatMap(ProblemSetHttpResponses.mapGetResult)
+            }
 
       case request @ POST -> Root / "api" / "problem-sets" =>
         sessionSupport.withAuthenticatedUser(request) { actor =>
@@ -45,36 +49,54 @@ object ProblemSetRouter:
         }
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            addRequest <- request.as[AddProblemToProblemSetRequest]
-            response <- ProblemSetCommands
-              .addProblemToProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), addRequest)
-              .flatMap(ProblemSetHttpResponses.mapAddProblemResult)
-          yield response
-        }
+        ProblemSetSlug.parse(problemSetSlug) match
+          case Left(message) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSetSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                addRequest <- request.as[AddProblemToProblemSetRequest]
+                response <- ProblemSetCommands
+                  .addProblemToProblemSet(databaseSession, actor, parsedProblemSetSlug, addRequest)
+                  .flatMap(ProblemSetHttpResponses.mapAddProblemResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            updateRequest <- request.as[UpdateProblemSetRequest]
-            response <- ProblemSetCommands
-              .updateProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), updateRequest)
-              .flatMap(ProblemSetHttpResponses.mapUpdateResult)
-          yield response
-        }
+        ProblemSetSlug.parse(problemSetSlug) match
+          case Left(message) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSetSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                updateRequest <- request.as[UpdateProblemSetRequest]
+                response <- ProblemSetCommands
+                  .updateProblemSet(databaseSession, actor, parsedProblemSetSlug, updateRequest)
+                  .flatMap(ProblemSetHttpResponses.mapUpdateResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "delete" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          ProblemSetCommands
-            .deleteProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug))
-            .flatMap(ProblemSetHttpResponses.mapDeleteResult)
-        }
+        ProblemSetSlug.parse(problemSetSlug) match
+          case Left(message) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSetSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemSetCommands
+                .deleteProblemSet(databaseSession, actor, parsedProblemSetSlug)
+                .flatMap(ProblemSetHttpResponses.mapDeleteResult)
+            }
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" / linkedProblemSlug / "remove" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          ProblemSetCommands
-            .removeProblemFromProblemSet(databaseSession, actor, ProblemSetSlug(problemSetSlug), ProblemSlug(linkedProblemSlug))
-            .flatMap(ProblemSetHttpResponses.mapRemoveProblemResult)
-        }
+        (ProblemSetSlug.parse(problemSetSlug), ProblemSlug.parse(linkedProblemSlug)) match
+          case (Left(message), _) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            ProblemSetHttpResponses.validationErrorResponse(message)
+          case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemSetCommands
+                .removeProblemFromProblemSet(databaseSession, actor, parsedProblemSetSlug, parsedProblemSlug)
+                .flatMap(ProblemSetHttpResponses.mapRemoveProblemResult)
+            }
     }

@@ -178,6 +178,7 @@ See also:
 - `docs/backend-contract-alignment.md`
 - `docs/contract-checks.md`
 - `docs/planner-patterns.md`
+- `docs/resource-lifecycle-matrix.md`
 
 ### Backend Shared Rules
 

@@ -28,11 +28,15 @@ object UserGroupRouter:
         }
 
       case request @ GET -> Root / "api" / "user-groups" / groupSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          UserGroupCommands
-            .getUserGroupBySlug(databaseSession, actor, UserGroupSlug(groupSlug))
-            .flatMap(UserGroupHttpResponses.mapGetResult)
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              UserGroupCommands
+                .getUserGroupBySlug(databaseSession, actor, parsedGroupSlug)
+                .flatMap(UserGroupHttpResponses.mapGetResult)
+            }
 
       case request @ POST -> Root / "api" / "user-groups" =>
         sessionSupport.withAuthenticatedUser(request) { actor =>
@@ -45,57 +49,77 @@ object UserGroupRouter:
         }
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            updateRequest <- request.as[UpdateUserGroupRequest]
-            response <- UserGroupCommands
-              .updateUserGroup(databaseSession, actor, UserGroupSlug(groupSlug), updateRequest)
-              .flatMap(UserGroupHttpResponses.mapUpdateResult)
-          yield response
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                updateRequest <- request.as[UpdateUserGroupRequest]
+                response <- UserGroupCommands
+                  .updateUserGroup(databaseSession, actor, parsedGroupSlug, updateRequest)
+                  .flatMap(UserGroupHttpResponses.mapUpdateResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "delete" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          UserGroupCommands
-            .deleteUserGroup(databaseSession, actor, UserGroupSlug(groupSlug))
-            .flatMap(UserGroupHttpResponses.mapDeleteResult)
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              UserGroupCommands
+                .deleteUserGroup(databaseSession, actor, parsedGroupSlug)
+                .flatMap(UserGroupHttpResponses.mapDeleteResult)
+            }
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            addMemberRequest <- request.as[AddUserGroupMemberRequest]
-            response <- UserGroupCommands
-              .addUserGroupMember(databaseSession, actor, UserGroupSlug(groupSlug), addMemberRequest)
-              .flatMap(UserGroupHttpResponses.mapAddMemberResult)
-          yield response
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                addMemberRequest <- request.as[AddUserGroupMemberRequest]
+                response <- UserGroupCommands
+                  .addUserGroupMember(databaseSession, actor, parsedGroupSlug, addMemberRequest)
+                  .flatMap(UserGroupHttpResponses.mapAddMemberResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "role" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
-            response <- UserGroupCommands
-              .updateUserGroupMemberRole(
-                databaseSession,
-                actor,
-                UserGroupSlug(groupSlug),
-                Username.canonical(memberUsername),
-                updateRoleRequest
-              )
-              .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
-          yield response
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
+                response <- UserGroupCommands
+                  .updateUserGroupMemberRole(
+                    databaseSession,
+                    actor,
+                    parsedGroupSlug,
+                    Username.canonical(memberUsername),
+                    updateRoleRequest
+                  )
+                  .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "remove" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          UserGroupCommands
-            .removeUserGroupMember(
-              databaseSession,
-              actor,
-              UserGroupSlug(groupSlug),
-              Username.canonical(memberUsername)
-            )
-            .flatMap(UserGroupHttpResponses.mapRemoveMemberResult)
-        }
+        UserGroupSlug.parse(groupSlug) match
+          case Left(message) =>
+            UserGroupHttpResponses.validationErrorResponse(message)
+          case Right(parsedGroupSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              UserGroupCommands
+                .removeUserGroupMember(
+                  databaseSession,
+                  actor,
+                  parsedGroupSlug,
+                  Username.canonical(memberUsername)
+                )
+                .flatMap(UserGroupHttpResponses.mapRemoveMemberResult)
+            }
     }

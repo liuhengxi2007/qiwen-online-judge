@@ -37,26 +37,38 @@ object ProblemRouter:
         }
 
       case request @ GET -> Root / "api" / "problems" / problemSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          ProblemCommands
-            .getProblemBySlug(databaseSession, actor, ProblemSlug(problemSlug))
-            .flatMap(ProblemHttpResponses.mapGetResult)
-        }
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemCommands
+                .getProblemBySlug(databaseSession, actor, parsedProblemSlug)
+                .flatMap(ProblemHttpResponses.mapGetResult)
+            }
 
       case request @ POST -> Root / "api" / "problems" / problemSlug =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          for
-            updateRequest <- request.as[UpdateProblemRequest]
-            response <- ProblemCommands
-              .updateProblem(databaseSession, actor, ProblemSlug(problemSlug), updateRequest)
-              .flatMap(ProblemHttpResponses.mapUpdateResult)
-          yield response
-        }
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                updateRequest <- request.as[UpdateProblemRequest]
+                response <- ProblemCommands
+                  .updateProblem(databaseSession, actor, parsedProblemSlug, updateRequest)
+                  .flatMap(ProblemHttpResponses.mapUpdateResult)
+              yield response
+            }
 
       case request @ POST -> Root / "api" / "problems" / problemSlug / "delete" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
-          ProblemCommands
-            .deleteProblem(databaseSession, actor, ProblemSlug(problemSlug))
-            .flatMap(ProblemHttpResponses.mapDeleteResult)
-        }
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemCommands
+                .deleteProblem(databaseSession, actor, parsedProblemSlug)
+                .flatMap(ProblemHttpResponses.mapDeleteResult)
+            }
     }

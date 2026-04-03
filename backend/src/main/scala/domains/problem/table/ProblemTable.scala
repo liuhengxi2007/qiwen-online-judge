@@ -162,8 +162,8 @@ object ProblemTable:
   private def readProblemListItem(resultSet: ResultSet): ProblemSummary =
     ProblemSummary(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSlug(resultSet.getString("slug")),
-      title = ProblemTitle(resultSet.getString("title")),
+      slug = ProblemSlug.unsafe(resultSet.getString("slug")),
+      title = ProblemTitle.unsafe(resultSet.getString("title")),
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
@@ -174,9 +174,9 @@ object ProblemTable:
   private def readProblemDetail(resultSet: ResultSet): Problem =
     Problem(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSlug(resultSet.getString("slug")),
-      title = ProblemTitle(resultSet.getString("title")),
-      statement = ProblemStatementText(resultSet.getString("statement_text")),
+      slug = ProblemSlug.unsafe(resultSet.getString("slug")),
+      title = ProblemTitle.unsafe(resultSet.getString("title")),
+      statement = ProblemStatementText.unsafe(resultSet.getString("statement_text")),
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),

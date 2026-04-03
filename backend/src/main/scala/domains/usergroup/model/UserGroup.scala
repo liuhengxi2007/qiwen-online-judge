@@ -22,20 +22,49 @@ object UserGroupId:
 final case class UserGroupSlug(value: String)
 
 object UserGroupSlug:
+  private val slugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$".r
+
+  def parse(raw: String): Either[String, UserGroupSlug] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("User group slug is required.")
+    else if normalized.length < 3 || normalized.length > 64 then Left("User group slug must be between 3 and 64 characters.")
+    else if !slugPattern.matches(normalized) then Left("User group slug may contain only lowercase letters, numbers, and hyphens.")
+    else Right(UserGroupSlug(normalized))
+
+  def unsafe(raw: String): UserGroupSlug =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group slug: $message"), identity)
+
   given Encoder[UserGroupSlug] = Encoder.encodeString.contramap(_.value)
-  given Decoder[UserGroupSlug] = Decoder.decodeString.map(UserGroupSlug(_))
+  given Decoder[UserGroupSlug] = Decoder.decodeString.emap(parse)
 
 final case class UserGroupName(value: String)
 
 object UserGroupName:
+  def parse(raw: String): Either[String, UserGroupName] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("User group name is required.")
+    else if normalized.length > 120 then Left("User group name must be at most 120 characters.")
+    else Right(UserGroupName(normalized))
+
+  def unsafe(raw: String): UserGroupName =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group name: $message"), identity)
+
   given Encoder[UserGroupName] = Encoder.encodeString.contramap(_.value)
-  given Decoder[UserGroupName] = Decoder.decodeString.map(UserGroupName(_))
+  given Decoder[UserGroupName] = Decoder.decodeString.emap(parse)
 
 final case class UserGroupDescription(value: String)
 
 object UserGroupDescription:
+  def parse(raw: String): Either[String, UserGroupDescription] =
+    val normalized = raw.trim
+    if normalized.length > 2000 then Left("User group description must be at most 2000 characters.")
+    else Right(UserGroupDescription(normalized))
+
+  def unsafe(raw: String): UserGroupDescription =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group description: $message"), identity)
+
   given Encoder[UserGroupDescription] = Encoder.encodeString.contramap(_.value)
-  given Decoder[UserGroupDescription] = Decoder.decodeString.map(UserGroupDescription(_))
+  given Decoder[UserGroupDescription] = Decoder.decodeString.emap(parse)
 
 final case class UserGroupMemberRecord(
   username: Username,

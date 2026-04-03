@@ -6,8 +6,6 @@ import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupReques
 
 object UserGroupValidation:
 
-  private val slugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$".r
-
   def validateCreate(request: CreateUserGroupRequest): Either[String, CreateUserGroupRequest] =
     for
       slug <- validateSlug(request.slug)
@@ -28,22 +26,13 @@ object UserGroupValidation:
     Right(request)
 
   private def validateSlug(slug: UserGroupSlug): Either[String, UserGroupSlug] =
-    val normalized = slug.value.trim
-    if normalized.isEmpty then Left("User group slug is required.")
-    else if normalized.length < 3 || normalized.length > 64 then Left("User group slug must be between 3 and 64 characters.")
-    else if !slugPattern.matches(normalized) then Left("User group slug may contain only lowercase letters, numbers, and hyphens.")
-    else Right(UserGroupSlug(normalized))
+    UserGroupSlug.parse(slug.value)
 
   private def validateName(name: UserGroupName): Either[String, UserGroupName] =
-    val normalized = name.value.trim
-    if normalized.isEmpty then Left("User group name is required.")
-    else if normalized.length > 120 then Left("User group name must be at most 120 characters.")
-    else Right(UserGroupName(normalized))
+    UserGroupName.parse(name.value)
 
   private def validateDescription(description: UserGroupDescription): Either[String, UserGroupDescription] =
-    val normalized = description.value.trim
-    if normalized.length > 2000 then Left("User group description must be at most 2000 characters.")
-    else Right(UserGroupDescription(normalized))
+    UserGroupDescription.parse(description.value)
 
   private def validateUsername(username: Username): Either[String, Username] =
     UsernameRules.validate(username) match

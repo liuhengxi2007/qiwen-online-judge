@@ -308,9 +308,9 @@ object ProblemSetTable:
   private def readProblemSetSummary(resultSet: ResultSet): ProblemSetSummaryView =
     ProblemSetSummaryView(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSetSlug(resultSet.getString("slug")),
-      title = ProblemSetTitle(resultSet.getString("title")),
-      description = ProblemSetDescription(resultSet.getString("description")),
+      slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
+      title = ProblemSetTitle.unsafe(resultSet.getString("title")),
+      description = ProblemSetDescription.unsafe(resultSet.getString("description")),
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
@@ -321,9 +321,9 @@ object ProblemSetTable:
   private def readProblemSetDetailBase(resultSet: ResultSet): ProblemSet =
     ProblemSet(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSetSlug(resultSet.getString("slug")),
-      title = ProblemSetTitle(resultSet.getString("title")),
-      description = ProblemSetDescription(resultSet.getString("description")),
+      slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
+      title = ProblemSetTitle.unsafe(resultSet.getString("title")),
+      description = ProblemSetDescription.unsafe(resultSet.getString("description")),
       problems = Nil,
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
@@ -345,8 +345,8 @@ object ProblemSetTable:
             .map { _ =>
               ProblemSetProblem(
                 id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-                slug = ProblemSlug(resultSet.getString("slug")),
-                title = ProblemTitle(resultSet.getString("title")),
+                slug = ProblemSlug.unsafe(resultSet.getString("slug")),
+                title = ProblemTitle.unsafe(resultSet.getString("title")),
                 position = resultSet.getInt("position")
               )
             }

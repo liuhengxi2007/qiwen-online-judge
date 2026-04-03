@@ -21,20 +21,50 @@ object ProblemId:
 final case class ProblemSlug(value: String)
 
 object ProblemSlug:
+  private val slugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$".r
+
+  def parse(raw: String): Either[String, ProblemSlug] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("Problem slug is required.")
+    else if normalized.length < 3 || normalized.length > 64 then Left("Problem slug must be between 3 and 64 characters.")
+    else if !slugPattern.matches(normalized) then Left("Problem slug may contain only lowercase letters, numbers, and hyphens.")
+    else Right(ProblemSlug(normalized))
+
+  def unsafe(raw: String): ProblemSlug =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem slug: $message"), identity)
+
   given Encoder[ProblemSlug] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ProblemSlug] = Decoder.decodeString.map(ProblemSlug(_))
+  given Decoder[ProblemSlug] = Decoder.decodeString.emap(parse)
 
 final case class ProblemTitle(value: String)
 
 object ProblemTitle:
+  def parse(raw: String): Either[String, ProblemTitle] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("Problem title is required.")
+    else if normalized.length > 120 then Left("Problem title must be at most 120 characters.")
+    else Right(ProblemTitle(normalized))
+
+  def unsafe(raw: String): ProblemTitle =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem title: $message"), identity)
+
   given Encoder[ProblemTitle] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ProblemTitle] = Decoder.decodeString.map(ProblemTitle(_))
+  given Decoder[ProblemTitle] = Decoder.decodeString.emap(parse)
 
 final case class ProblemStatementText(value: String)
 
 object ProblemStatementText:
+  def parse(raw: String): Either[String, ProblemStatementText] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("Problem statement is required.")
+    else if normalized.length > 20000 then Left("Problem statement must be at most 20000 characters.")
+    else Right(ProblemStatementText(normalized))
+
+  def unsafe(raw: String): ProblemStatementText =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem statement: $message"), identity)
+
   given Encoder[ProblemStatementText] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ProblemStatementText] = Decoder.decodeString.map(ProblemStatementText(_))
+  given Decoder[ProblemStatementText] = Decoder.decodeString.emap(parse)
 
 final case class ProblemSummary(
   id: ProblemId,
