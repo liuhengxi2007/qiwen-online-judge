@@ -18,6 +18,7 @@ import {
   problemTitleValue,
 } from '@/features/problem/domain/problem'
 import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDetailPage() {
@@ -193,26 +194,29 @@ export function ProblemDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                    disabled={model.isDeleting}
-                    onClick={() => {
-                      const confirmed = window.confirm('Delete this problem? This action cannot be undone.')
-                      if (!confirmed) {
-                        return
-                      }
-
+                  <ConfirmActionDialog
+                    title="Delete problem?"
+                    description="Delete this problem and remove all current problem set links to it. This action cannot be undone."
+                    confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem'}
+                    destructive
+                    onConfirm={() => {
                       void model.deleteCurrentProblem().then((deleted) => {
                         if (deleted) {
                           void navigate('/problems')
                         }
                       })
                     }}
-                  >
-                    {model.isDeleting ? 'Deleting...' : 'Delete problem'}
-                  </Button>
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                        disabled={model.isDeleting}
+                      >
+                        {model.isDeleting ? 'Deleting...' : 'Delete problem'}
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             ) : null}

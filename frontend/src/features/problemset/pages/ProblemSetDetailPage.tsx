@@ -19,6 +19,7 @@ import {
   problemSetTitleValue,
 } from '@/features/problemset/domain/problemset'
 import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-problemset-detail-page-model'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetDetailPage() {
@@ -272,26 +273,29 @@ export function ProblemSetDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                    disabled={model.isDeleting}
-                    onClick={() => {
-                      const confirmed = window.confirm('Delete this problem set? This action cannot be undone.')
-                      if (!confirmed) {
-                        return
-                      }
-
+                  <ConfirmActionDialog
+                    title="Delete problem set?"
+                    description="Delete this problem set and all of its current problem links. This action cannot be undone."
+                    confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem set'}
+                    destructive
+                    onConfirm={() => {
                       void model.deleteCurrentProblemSet().then((deleted) => {
                         if (deleted) {
                           void navigate('/problem-sets')
                         }
                       })
                     }}
-                  >
-                    {model.isDeleting ? 'Deleting...' : 'Delete problem set'}
-                  </Button>
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                        disabled={model.isDeleting}
+                      >
+                        {model.isDeleting ? 'Deleting...' : 'Delete problem set'}
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             ) : null}

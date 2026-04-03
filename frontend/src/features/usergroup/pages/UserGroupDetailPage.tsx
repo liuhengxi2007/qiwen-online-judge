@@ -1,17 +1,7 @@
+import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +19,7 @@ import {
   userGroupSlugValue,
 } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function UserGroupDetailPage() {
@@ -51,6 +42,11 @@ export function UserGroupDetailPage() {
   }
 
   const model = useUserGroupDetailPageModel(slugResult.value, user.username, user.siteManager)
+  const [ownershipTargetUsername, setOwnershipTargetUsername] = useState<string | null>(null)
+  const ownershipTargetMember =
+    ownershipTargetUsername === null
+      ? null
+      : (model.userGroup?.members.find((member) => member.username === ownershipTargetUsername) ?? null)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eff4fb_100%)] px-6 py-12 sm:px-8">
@@ -199,12 +195,8 @@ export function UserGroupDetailPage() {
                             }
 
                             if (value === 'owner') {
-                              const confirmed = window.confirm(
-                                `Transfer ownership to ${usernameValue(member.username)} and demote the current owner to manager?`,
-                              )
-                              if (!confirmed) {
-                                return
-                              }
+                              setOwnershipTargetUsername(member.username)
+                              return
                             }
 
                             void model.updateMemberRole(member.username, value)
@@ -250,8 +242,15 @@ export function UserGroupDetailPage() {
                         </RadioGroup>
 
                         {member.role !== 'owner' ? (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                          <ConfirmActionDialog
+                            title="Remove member?"
+                            description={`Remove ${usernameValue(member.username)} from this user group.`}
+                            confirmLabel="Remove member"
+                            destructive
+                            onConfirm={() => {
+                              void model.removeMember(member.username)
+                            }}
+                            trigger={
                               <Button
                                 type="button"
                                 variant="outline"
@@ -266,27 +265,8 @@ export function UserGroupDetailPage() {
                               >
                                 <Trash2 className="size-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remove member?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Remove {usernameValue(member.username)} from this user group.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-rose-600 text-white hover:bg-rose-700"
-                                  onClick={() => {
-                                    void model.removeMember(member.username)
-                                  }}
-                                >
-                                  Remove member
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                            }
+                          />
                         ) : null}
                       </div>
                     </div>
@@ -359,32 +339,59 @@ export function UserGroupDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                    disabled={model.isDeleting}
-                    onClick={() => {
-                      const confirmed = window.confirm('Delete this user group? This action cannot be undone.')
-                      if (!confirmed) {
-                        return
-                      }
-
+                  <ConfirmActionDialog
+                    title="Delete user group?"
+                    description="Delete this user group and all of its membership records. This action cannot be undone."
+                    confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete user group'}
+                    destructive
+                    onConfirm={() => {
                       void model.deleteCurrentUserGroup().then((deleted) => {
                         if (deleted) {
                           void navigate('/user-groups')
                         }
                       })
                     }}
-                  >
-                    {model.isDeleting ? 'Deleting...' : 'Delete user group'}
-                  </Button>
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                        disabled={model.isDeleting}
+                      >
+                        {model.isDeleting ? 'Deleting...' : 'Delete user group'}
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             ) : null}
           </div>
         ) : null}
       </section>
+      <ConfirmActionDialog
+        open={ownershipTargetMember !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOwnershipTargetUsername(null)
+          }
+        }}
+        title="Transfer ownership?"
+        description={
+          ownershipTargetMember
+            ? `Transfer ownership to ${usernameValue(ownershipTargetMember.username)} and demote the current owner to manager.`
+            : ''
+        }
+        confirmLabel="Transfer ownership"
+        onConfirm={() => {
+          if (!ownershipTargetMember) {
+            return
+          }
+
+          void model.updateMemberRole(ownershipTargetMember.username, 'owner').then(() => {
+            setOwnershipTargetUsername(null)
+          })
+        }}
+      />
     </main>
   )
 }

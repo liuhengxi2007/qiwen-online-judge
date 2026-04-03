@@ -1,17 +1,6 @@
 import { Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, LogOut, Settings2, Trash2 } from 'lucide-react'
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +12,7 @@ import {
   usernameValue,
   type AuthUserListItem,
 } from '@/features/auth/domain/auth'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
@@ -191,8 +181,15 @@ export function SiteManagePage() {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        <ConfirmActionDialog
+                          title="Delete user?"
+                          description={`Delete ${usernameValue(listedUser.username)} from the site. This user must not own any problems, problem sets, or user groups before deletion.`}
+                          confirmLabel="Delete user"
+                          destructive
+                          onConfirm={() => {
+                            void deleteUser(listedUser)
+                          }}
+                          trigger={
                             <Button
                               type="button"
                               variant="outline"
@@ -205,28 +202,8 @@ export function SiteManagePage() {
                             >
                               <Trash2 className="size-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete user?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Delete {usernameValue(listedUser.username)} from the site. This does not cascade owned
-                                resources.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-rose-600 text-white hover:bg-rose-700"
-                                onClick={() => {
-                                  void deleteUser(listedUser)
-                                }}
-                              >
-                                Delete user
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
