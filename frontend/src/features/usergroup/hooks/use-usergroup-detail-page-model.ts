@@ -6,6 +6,7 @@ import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-user
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from '@/features/usergroup/hooks/use-usergroup-detail-query'
 import { useUserGroupEditorState } from '@/features/usergroup/hooks/use-usergroup-editor-state'
+import { useUserGroupRemoveMemberAction } from '@/features/usergroup/hooks/use-usergroup-remove-member-action'
 import { useUserGroupUpdateMemberRoleAction } from '@/features/usergroup/hooks/use-usergroup-update-member-role-action'
 import { useUserGroupUpdateAction } from '@/features/usergroup/hooks/use-usergroup-update-action'
 
@@ -16,6 +17,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
   const deleteAction = useUserGroupDeleteAction(userGroupSlug)
   const addMemberAction = useUserGroupAddMemberAction(userGroupSlug)
   const updateMemberRoleAction = useUserGroupUpdateMemberRoleAction(userGroupSlug)
+  const removeMemberAction = useUserGroupRemoveMemberAction(userGroupSlug)
   const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
     errorMessage: '',
     successMessage: '',
@@ -100,6 +102,23 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     return false
   }
 
+  async function removeMember(targetUsername: Username) {
+    if (!permissions.canManage) {
+      setMessageState({ errorMessage: 'Owner, manager, or site manager permission required.', successMessage: '' })
+      return false
+    }
+
+    const result = await removeMemberAction.removeMember(targetUsername)
+    if (result.ok) {
+      detailQuery.replaceUserGroup(result.userGroup)
+      setMessageState({ errorMessage: '', successMessage: result.message })
+      return true
+    }
+
+    setMessageState({ errorMessage: result.message, successMessage: '' })
+    return false
+  }
+
   return {
     userGroup: detailQuery.userGroup,
     isLoading: detailQuery.isLoading,
@@ -107,6 +126,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     isDeleting: deleteAction.isDeleting,
     isAddingMember: addMemberAction.isAddingMember,
     activeUpdatingUsername: updateMemberRoleAction.activeUpdatingUsername,
+    activeRemovingUsername: removeMemberAction.activeRemovingUsername,
     canManage: permissions.canManage,
     canManageMemberRoles: permissions.canManageMemberRoles,
     canDelete: permissions.canDelete,
@@ -123,6 +143,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     save,
     addMember,
     updateMemberRole,
+    removeMember,
     deleteCurrentUserGroup,
   }
 }

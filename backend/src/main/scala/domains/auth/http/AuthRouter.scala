@@ -34,6 +34,9 @@ object AuthRouter:
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
         handlers.updateUserSettings(request, Username.canonical(targetUsername))
 
+      case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "delete" =>
+        handlers.deleteUser(request, Username.canonical(targetUsername))
+
       case request @ POST -> Root / "api" / "auth" / "login" =>
         handlers.login(request)
 

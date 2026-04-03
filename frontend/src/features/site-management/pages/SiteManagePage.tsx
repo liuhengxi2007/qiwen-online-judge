@@ -1,6 +1,17 @@
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, LogOut, Settings2 } from 'lucide-react'
+import { ArrowLeft, LogOut, Settings2, Trash2 } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,8 +37,10 @@ export function SiteManagePage() {
     statusMessage,
     isLoadingUsers,
     updatingUsername,
+    deletingUsername,
     navigationIntent: modelNavigationIntent,
     savePermissions,
+    deleteUser,
   } = useSiteManageModel(Boolean(siteManagerSession))
 
   if (guardNavigationIntent) {
@@ -125,6 +138,7 @@ export function SiteManagePage() {
                     <TableHead>Settings</TableHead>
                     <TableHead>Site manager</TableHead>
                     <TableHead>Problem manager</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -146,7 +160,7 @@ export function SiteManagePage() {
                         <Checkbox
                           checked={listedUser.siteManager}
                           disabled={
-                            updatingUsername !== null || isProtectedAdmin(listedUser)
+                            updatingUsername !== null || deletingUsername !== null || isProtectedAdmin(listedUser)
                           }
                           aria-label="Site manager"
                           onCheckedChange={(checked) => {
@@ -163,7 +177,7 @@ export function SiteManagePage() {
                         <Checkbox
                           checked={listedUser.problemManager}
                           disabled={
-                            updatingUsername !== null || isProtectedAdmin(listedUser)
+                            updatingUsername !== null || deletingUsername !== null || isProtectedAdmin(listedUser)
                           }
                           aria-label="Problem manager"
                           onCheckedChange={(checked) => {
@@ -175,6 +189,44 @@ export function SiteManagePage() {
                             }
                           }}
                         />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                              aria-label={`Delete ${usernameValue(listedUser.username)}`}
+                              disabled={
+                                updatingUsername !== null || deletingUsername !== null || isProtectedAdmin(listedUser)
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete user?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Delete {usernameValue(listedUser.username)} from the site. This does not cascade owned
+                                resources.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-rose-600 text-white hover:bg-rose-700"
+                                onClick={() => {
+                                  void deleteUser(listedUser)
+                                }}
+                              >
+                                Delete user
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}

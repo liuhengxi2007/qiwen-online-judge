@@ -29,6 +29,7 @@ import {
   usernameValue,
 } from '@/features/auth/domain/auth'
 import { postJson, requestJson } from '@/shared/api/http-client'
+import type { SuccessResponse } from '@contracts/shared'
 
 export { HttpClientError as AuthClientError } from '@/shared/api/http-client'
 
@@ -82,6 +83,10 @@ export async function getUserSettings(username: Username): Promise<SessionRespon
     `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
   )
   return fromSessionResponseContract(response)
+}
+
+export function deleteUser(username: Username): Promise<SuccessResponse> {
+  return postJson<SuccessResponse>(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/delete`, {})
 }
 
 export function updateOwnUserSettings(

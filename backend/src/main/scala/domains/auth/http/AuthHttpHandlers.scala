@@ -87,6 +87,13 @@ final class AuthHttpHandlers(
             updateManagedUserSettings(request, siteManagerActor, targetUsername)
     }
 
+  def deleteUser(request: Request[IO], targetUsername: Username): IO[Response[IO]] =
+    sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
+      AuthUserCommands
+        .deleteUser(databaseSession, authenticatedActor, targetUsername)
+        .flatMap(AuthHttpResponses.mapDeleteUserResult)
+    }
+
   def login(request: Request[IO]): IO[Response[IO]] =
     for
       loginRequest <- request.as[LoginRequest]

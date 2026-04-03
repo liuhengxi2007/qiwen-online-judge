@@ -1,6 +1,17 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -169,69 +180,115 @@ export function UserGroupDetailPage() {
                         <p className="text-sm font-medium text-slate-900">{displayNameValue(member.displayName)}</p>
                         <p className="font-mono text-xs text-slate-500">{usernameValue(member.username)}</p>
                       </div>
-                      <RadioGroup
-                        value={member.role}
-                        disabled={
-                          !model.canManageMemberRoles ||
-                          member.role === 'owner' ||
-                          model.activeUpdatingUsername === member.username
-                        }
-                        onValueChange={(value) => {
-                          if (value !== 'owner' && value !== 'manager' && value !== 'member') {
-                            return
+                      <div className="flex flex-col items-stretch gap-3 sm:items-end">
+                        <RadioGroup
+                          value={member.role}
+                          disabled={
+                            !model.canManageMemberRoles ||
+                            member.role === 'owner' ||
+                            model.activeUpdatingUsername === member.username ||
+                            model.activeRemovingUsername === member.username
                           }
-
-                          if (value === member.role) {
-                            return
-                          }
-
-                          if (value === 'owner') {
-                            const confirmed = window.confirm(
-                              `Transfer ownership to ${usernameValue(member.username)} and demote the current owner to manager?`,
-                            )
-                            if (!confirmed) {
+                          onValueChange={(value) => {
+                            if (value !== 'owner' && value !== 'manager' && value !== 'member') {
                               return
                             }
-                          }
 
-                          void model.updateMemberRole(member.username, value)
-                        }}
-                        className="grid gap-2 sm:grid-cols-3"
-                      >
-                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                          <RadioGroupItem
-                            value="owner"
-                            disabled={
-                              !model.canManageMemberRoles ||
-                              member.role === 'owner' ||
-                              model.activeUpdatingUsername === member.username
+                            if (value === member.role) {
+                              return
                             }
-                          />
-                          <span>Owner</span>
-                        </label>
-                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                          <RadioGroupItem
-                            value="manager"
-                            disabled={
-                              !model.canManageMemberRoles ||
-                              member.role === 'owner' ||
-                              model.activeUpdatingUsername === member.username
+
+                            if (value === 'owner') {
+                              const confirmed = window.confirm(
+                                `Transfer ownership to ${usernameValue(member.username)} and demote the current owner to manager?`,
+                              )
+                              if (!confirmed) {
+                                return
+                              }
                             }
-                          />
-                          <span>Manager</span>
-                        </label>
-                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                          <RadioGroupItem
-                            value="member"
-                            disabled={
-                              !model.canManageMemberRoles ||
-                              member.role === 'owner' ||
-                              model.activeUpdatingUsername === member.username
-                            }
-                          />
-                          <span>Member</span>
-                        </label>
-                      </RadioGroup>
+
+                            void model.updateMemberRole(member.username, value)
+                          }}
+                          className="grid gap-2 sm:grid-cols-3"
+                        >
+                          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                            <RadioGroupItem
+                              value="owner"
+                              disabled={
+                                !model.canManageMemberRoles ||
+                                member.role === 'owner' ||
+                                model.activeUpdatingUsername === member.username ||
+                                model.activeRemovingUsername === member.username
+                              }
+                            />
+                            <span>Owner</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                            <RadioGroupItem
+                              value="manager"
+                              disabled={
+                                !model.canManageMemberRoles ||
+                                member.role === 'owner' ||
+                                model.activeUpdatingUsername === member.username ||
+                                model.activeRemovingUsername === member.username
+                              }
+                            />
+                            <span>Manager</span>
+                          </label>
+                          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                            <RadioGroupItem
+                              value="member"
+                              disabled={
+                                !model.canManageMemberRoles ||
+                                member.role === 'owner' ||
+                                model.activeUpdatingUsername === member.username ||
+                                model.activeRemovingUsername === member.username
+                              }
+                            />
+                            <span>Member</span>
+                          </label>
+                        </RadioGroup>
+
+                        {member.role !== 'owner' ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                                aria-label={`Remove ${usernameValue(member.username)} from the group`}
+                                disabled={
+                                  !model.canManage ||
+                                  model.activeUpdatingUsername !== null ||
+                                  model.activeRemovingUsername !== null
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove member?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Remove {usernameValue(member.username)} from this user group.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-rose-600 text-white hover:bg-rose-700"
+                                  onClick={() => {
+                                    void model.removeMember(member.username)
+                                  }}
+                                >
+                                  Remove member
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 ))}

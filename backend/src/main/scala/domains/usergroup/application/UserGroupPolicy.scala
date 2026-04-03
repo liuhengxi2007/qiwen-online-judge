@@ -25,6 +25,16 @@ object UserGroupPolicy:
   def canDelete(actor: AuthUser, group: UserGroup): Boolean =
     actor.siteManager || hasOwnerRole(actor.username, group)
 
+  def canRemoveMember(actor: AuthUser, group: UserGroup, targetUsername: Username, targetRole: UserGroupRole): Boolean =
+    if actor.siteManager then true
+    else
+      membershipRole(actor.username, group) match
+        case None => false
+        case Some(UserGroupRole.Owner) => targetRole != UserGroupRole.Owner
+        case Some(UserGroupRole.Manager) =>
+          targetRole == UserGroupRole.Member && targetUsername.value != actor.username.value
+        case Some(UserGroupRole.Member) => false
+
   def requireManaged(actor: AuthUser, group: UserGroup): Option[ManagedUserGroup] =
     Option.when(canEdit(actor, group))(ManagedUserGroup(group))
 
@@ -44,3 +54,6 @@ object UserGroupPolicy:
     group.members.exists { member =>
       member.username.value == username.value && member.role == UserGroupRole.Owner
     }
+
+  private def membershipRole(username: Username, group: UserGroup): Option[UserGroupRole] =
+    group.members.find(_.username.value == username.value).map(_.role)

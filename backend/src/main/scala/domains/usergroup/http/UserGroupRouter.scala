@@ -86,4 +86,16 @@ object UserGroupRouter:
               .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
           yield response
         }
+
+      case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "remove" =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          UserGroupCommands
+            .removeUserGroupMember(
+              databaseSession,
+              actor,
+              UserGroupSlug(groupSlug),
+              Username.canonical(memberUsername)
+            )
+            .flatMap(UserGroupHttpResponses.mapRemoveMemberResult)
+        }
     }

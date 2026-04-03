@@ -14,6 +14,7 @@ type UserDirectoryStore = {
   userListError: string
   loadUsers: () => Promise<UserDirectoryLoadResult>
   replaceUser: (updatedUser: AuthUserListItem) => void
+  removeUser: (username: AuthUserListItem['username']) => void
   reset: () => void
 }
 
@@ -59,6 +60,10 @@ export const useUserDirectoryStore = create<UserDirectoryStore>()((set) => ({
       users: state.users.map((currentUser) =>
         currentUser.username === updatedUser.username ? updatedUser : currentUser,
       ),
+    })),
+  removeUser: (username) =>
+    set((state) => ({
+      users: state.users.filter((currentUser) => currentUser.username !== username),
     })),
   reset: () =>
     set({

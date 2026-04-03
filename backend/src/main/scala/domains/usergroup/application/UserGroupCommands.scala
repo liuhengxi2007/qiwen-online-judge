@@ -49,6 +49,13 @@ object UserGroupCommands:
     case OwnershipTransferRequired
     case Updated(group: UserGroup)
 
+  enum RemoveUserGroupMemberResult:
+    case Forbidden
+    case UserGroupNotFound
+    case MemberNotFound
+    case CannotRemoveOwner
+    case Removed(group: UserGroup)
+
   def listUserGroups(
     databaseSession: DatabaseSession,
     actor: AuthUser,
@@ -185,6 +192,23 @@ object UserGroupCommands:
           yield result
         }
 
+  def removeUserGroupMember(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    slug: UserGroupSlug,
+    targetUsername: Username
+  ): IO[RemoveUserGroupMemberResult] =
+    databaseSession.withTransactionConnection { connection =>
+      for
+        maybeGroup <- UserGroupTable.findBySlug(connection, slug)
+        result <- maybeGroup match
+          case None =>
+            IO.pure(RemoveUserGroupMemberResult.UserGroupNotFound)
+          case Some(group) =>
+            removeMemberFromGroup(connection, actor, group, targetUsername)
+      yield result
+    }
+
   private def updateManagedUserGroup(
     connection: java.sql.Connection,
     managedGroup: ManagedUserGroup,
@@ -261,3 +285,27 @@ object UserGroupCommands:
                 case None => throw new IllegalStateException("User group disappeared after member role update")
               }
           }
+
+  private def removeMemberFromGroup(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    group: UserGroup,
+    targetUsername: Username
+  ): IO[RemoveUserGroupMemberResult] =
+    group.members.find(_.username.value == targetUsername.value) match
+      case None =>
+        IO.pure(RemoveUserGroupMemberResult.MemberNotFound)
+      case Some(targetMember) if targetMember.role == UserGroupRole.Owner =>
+        IO.pure(RemoveUserGroupMemberResult.CannotRemoveOwner)
+      case Some(targetMember) if !UserGroupPolicy.canRemoveMember(actor, group, targetMember.username, targetMember.role) =>
+        IO.pure(RemoveUserGroupMemberResult.Forbidden)
+      case Some(targetMember) =>
+        UserGroupTable.removeMember(connection, group.id, targetMember.username).flatMap {
+          case UserGroupTable.RemoveMemberTableResult.MemberNotFound =>
+            IO.pure(RemoveUserGroupMemberResult.MemberNotFound)
+          case UserGroupTable.RemoveMemberTableResult.Removed =>
+            UserGroupTable.findBySlug(connection, group.slug).map {
+              case Some(updatedGroup) => RemoveUserGroupMemberResult.Removed(updatedGroup)
+              case None => throw new IllegalStateException("User group disappeared after member removal")
+            }
+        }

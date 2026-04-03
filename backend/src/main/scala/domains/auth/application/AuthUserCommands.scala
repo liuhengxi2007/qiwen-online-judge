@@ -30,6 +30,14 @@ object AuthUserCommands:
     case NotFound
     case Updated(user: AuthUser, passwordChanged: Boolean)
 
+  enum DeleteUserResult:
+    case Forbidden
+    case ProtectedAdmin
+    case CannotDeleteSelf
+    case NotFound
+    case HasOwnedResources
+    case Deleted
+
   def getUserSettings(
     databaseSession: DatabaseSession,
     actor: AuthUser,
@@ -135,6 +143,27 @@ object AuthUserCommands:
     yield updatedUser match
       case Some(user) => UpdateUserSettingsResult.Updated(user, passwordChanged)
       case None => UpdateUserSettingsResult.NotFound
+
+  def deleteUser(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    targetUsername: Username
+  ): IO[DeleteUserResult] =
+    SiteManagerUser.from(actor) match
+      case None =>
+        IO.pure(DeleteUserResult.Forbidden)
+      case Some(_) if targetUsername.value == protectedAdminUsername =>
+        IO.pure(DeleteUserResult.ProtectedAdmin)
+      case Some(_) if targetUsername.value == actor.username.value =>
+        IO.pure(DeleteUserResult.CannotDeleteSelf)
+      case Some(_) =>
+        databaseSession.withTransactionConnection(connection =>
+          AuthUserTable.delete(connection, targetUsername)
+        ).map {
+          case AuthUserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
+          case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
+          case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
+        }
 
   private def canAccessTarget(actor: AuthUser, targetUsername: Username): Boolean =
     targetUsername.value == actor.username.value || actor.siteManager

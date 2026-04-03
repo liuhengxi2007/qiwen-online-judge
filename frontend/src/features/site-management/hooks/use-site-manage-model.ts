@@ -2,6 +2,7 @@ import { useCallback, useReducer } from 'react'
 
 import { usernameValue, type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/features/auth/domain/auth'
 import { useSiteManageQuery } from '@/features/site-management/hooks/use-site-manage-query'
+import { useUserDeleteMutation } from '@/features/site-management/hooks/use-user-delete-mutation'
 import { useUserPermissionsMutation } from '@/features/site-management/hooks/use-user-permissions-mutation'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
@@ -15,6 +16,8 @@ type SiteManageState = {
 type SiteManageAction =
   | { type: 'update_started'; username: string }
   | { type: 'update_succeeded'; user: AuthUserListItem }
+  | { type: 'delete_started'; username: string }
+  | { type: 'delete_succeeded'; username: string; message: string }
   | { type: 'update_failed'; message: string }
   | { type: 'redirect_requested'; intent: NavigationIntent }
 
@@ -41,6 +44,20 @@ function siteManageReducer(state: SiteManageState, action: SiteManageAction): Si
         statusMessage: `Permissions updated for ${usernameValue(action.user.username)}.`,
         actionErrorMessage: '',
       }
+    case 'delete_started':
+      return {
+        ...state,
+        updatingUsername: action.username,
+        statusMessage: '',
+        actionErrorMessage: '',
+      }
+    case 'delete_succeeded':
+      return {
+        ...state,
+        updatingUsername: null,
+        statusMessage: action.message,
+        actionErrorMessage: '',
+      }
     case 'update_failed':
       return {
         ...state,
@@ -60,8 +77,11 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
   const query = useSiteManageQuery(siteManagerEnabled)
   const [state, dispatch] = useReducer(siteManageReducer, initialState)
   const mutation = useUserPermissionsMutation()
+  const deleteMutation = useUserDeleteMutation()
   const currentUpdatingUsername = state.updatingUsername ?? mutation.updatingUsername
+  const currentDeletingUsername = deleteMutation.deletingUsername
   const saveUserPermissions = mutation.savePermissions
+  const deleteTargetUser = deleteMutation.deleteTargetUser
 
   const savePermissions = useCallback(
     async (listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) => {
@@ -88,13 +108,40 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
     [currentUpdatingUsername, saveUserPermissions],
   )
 
+  const deleteUser = useCallback(
+    async (listedUser: AuthUserListItem) => {
+      if (currentUpdatingUsername || currentDeletingUsername) {
+        return
+      }
+
+      const username = usernameValue(listedUser.username)
+      dispatch({ type: 'delete_started', username })
+
+      const result = await deleteTargetUser(listedUser.username)
+
+      switch (result.kind) {
+        case 'deleted':
+          dispatch({ type: 'delete_succeeded', username, message: result.message })
+          return
+        case 'forbidden':
+          dispatch({ type: 'redirect_requested', intent: { to: '/?notice=site-manage-denied', replace: true } })
+          return
+        case 'failed':
+          dispatch({ type: 'update_failed', message: result.message })
+      }
+    },
+    [currentDeletingUsername, currentUpdatingUsername, deleteTargetUser],
+  )
+
   return {
     users: query.users,
     userListError: state.actionErrorMessage || query.userListError,
     isLoadingUsers: query.isLoadingUsers,
     statusMessage: state.statusMessage,
     updatingUsername: currentUpdatingUsername,
-    navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
+    deletingUsername: currentDeletingUsername,
+    navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent ?? deleteMutation.navigationIntent,
     savePermissions,
+    deleteUser,
   }
 }

@@ -3,7 +3,7 @@ package domains.auth.http
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
 import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, SessionResponse}
-import domains.shared.model.ErrorResponse
+import domains.shared.model.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -28,8 +28,17 @@ object AuthHttpResponses:
   def protectedAdminResponse: IO[Response[IO]] =
     errorResponse(Status.Forbidden, "The admin account permissions cannot be modified.")
 
+  def protectedAdminDeletionResponse: IO[Response[IO]] =
+    errorResponse(Status.Forbidden, "The admin account cannot be deleted.")
+
+  def selfDeletionResponse: IO[Response[IO]] =
+    errorResponse(Status.BadRequest, "You cannot delete your own account.")
+
   def userNotFoundResponse: IO[Response[IO]] =
     errorResponse(Status.NotFound, "User not found.")
+
+  def userOwnsResourcesResponse: IO[Response[IO]] =
+    errorResponse(Status.Conflict, "User owns existing resources and cannot be deleted.")
 
   def usernameConflictResponse: IO[Response[IO]] =
     errorResponse(Status.Conflict, "Username already exists, including case-only variations.")
@@ -121,6 +130,22 @@ object AuthHttpResponses:
         userNotFoundResponse
       case AuthUserCommands.UpdateUserSettingsResult.Updated(user, _) =>
         Ok(toSessionResponse(user).asJson)
+
+  def mapDeleteUserResult(result: AuthUserCommands.DeleteUserResult)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
+    import dsl.*
+    result match
+      case AuthUserCommands.DeleteUserResult.Forbidden =>
+        forbiddenResponse
+      case AuthUserCommands.DeleteUserResult.ProtectedAdmin =>
+        protectedAdminDeletionResponse
+      case AuthUserCommands.DeleteUserResult.CannotDeleteSelf =>
+        selfDeletionResponse
+      case AuthUserCommands.DeleteUserResult.NotFound =>
+        userNotFoundResponse
+      case AuthUserCommands.DeleteUserResult.HasOwnedResources =>
+        userOwnsResourcesResponse
+      case AuthUserCommands.DeleteUserResult.Deleted =>
+        Ok(SuccessResponse("User deleted.").asJson)
 
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(

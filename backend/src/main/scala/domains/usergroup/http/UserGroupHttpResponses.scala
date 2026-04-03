@@ -116,5 +116,18 @@ object UserGroupHttpResponses:
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.Updated(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
+  def mapRemoveMemberResult(result: UserGroupCommands.RemoveUserGroupMemberResult): IO[Response[IO]] =
+    result match
+      case UserGroupCommands.RemoveUserGroupMemberResult.Forbidden =>
+        errorResponse(Status.Forbidden, "You do not have permission to remove this member.")
+      case UserGroupCommands.RemoveUserGroupMemberResult.UserGroupNotFound =>
+        errorResponse(Status.NotFound, "User group not found.")
+      case UserGroupCommands.RemoveUserGroupMemberResult.MemberNotFound =>
+        errorResponse(Status.NotFound, "Group member not found.")
+      case UserGroupCommands.RemoveUserGroupMemberResult.CannotRemoveOwner =>
+        errorResponse(Status.BadRequest, "The owner cannot be removed from the group.")
+      case UserGroupCommands.RemoveUserGroupMemberResult.Removed(group) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
+
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))

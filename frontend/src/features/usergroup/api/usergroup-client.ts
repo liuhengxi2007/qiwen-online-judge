@@ -76,3 +76,11 @@ export async function updateUserGroupMemberRole(
   )
   return fromUserGroupDetailContract(response)
 }
+
+export async function removeUserGroupMember(userGroupSlug: UserGroupSlug, targetUsername: Username): Promise<UserGroupDetail> {
+  const response = await postJson<UserGroupDetailContract>(
+    `/api/user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/remove`,
+    {},
+  )
+  return fromUserGroupDetailContract(response)
+}

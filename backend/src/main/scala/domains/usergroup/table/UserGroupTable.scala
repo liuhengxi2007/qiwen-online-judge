@@ -17,10 +17,46 @@ object UserGroupTable:
       |  slug varchar(64) not null unique,
       |  name varchar(120) not null,
       |  description text not null,
+      |  visibility varchar(32) not null default 'private' check (visibility in ('private', 'group', 'public')),
       |  owner_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
+      |""".stripMargin
+
+  val addVisibilityColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'user_groups'
+      |      and column_name = 'visibility'
+      |  ) then
+      |    alter table user_groups add column visibility varchar(32);
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val backfillVisibilitySql: String =
+    """
+      |update user_groups
+      |set visibility = 'private'
+      |where visibility is null or btrim(visibility) = ''
+      |""".stripMargin
+
+  val setVisibilityNotNullSql: String =
+    """
+      |alter table user_groups
+      |alter column visibility set not null
+      |""".stripMargin
+
+  val setVisibilityDefaultSql: String =
+    """
+      |alter table user_groups
+      |alter column visibility set default 'private'
       |""".stripMargin
 
   val initMembershipTableSql: String =
@@ -74,8 +110,8 @@ object UserGroupTable:
 
   val insertSql: String =
     """
-      |insert into user_groups (id, slug, name, description, owner_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?)
+      |insert into user_groups (id, slug, name, description, visibility, owner_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?)
       |returning id, slug, name, description, owner_username, created_at, updated_at
       |""".stripMargin
 
@@ -140,6 +176,12 @@ object UserGroupTable:
       |where user_group_id = ? and username = ?
       |""".stripMargin
 
+  val deleteMemberSql: String =
+    """
+      |delete from user_group_memberships
+      |where user_group_id = ? and username = ?
+      |""".stripMargin
+
   val updateOwnerUsernameSql: String =
     """
       |update user_groups
@@ -156,11 +198,19 @@ object UserGroupTable:
     case MemberNotFound
     case Updated
 
+  enum RemoveMemberTableResult:
+    case MemberNotFound
+    case Removed
+
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()
       try
         statement.execute(initTableSql)
+        statement.execute(addVisibilityColumnSql)
+        statement.executeUpdate(backfillVisibilitySql)
+        statement.execute(setVisibilityDefaultSql)
+        statement.execute(setVisibilityNotNullSql)
         statement.execute(initMembershipTableSql)
       finally statement.close()
     }
@@ -217,9 +267,10 @@ object UserGroupTable:
         statement.setString(2, request.slug.value)
         statement.setString(3, request.name.value)
         statement.setString(4, request.description.value)
-        statement.setString(5, ownerUsername.value)
-        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setString(5, "private")
+        statement.setString(6, ownerUsername.value)
         statement.setTimestamp(7, Timestamp.from(now))
+        statement.setTimestamp(8, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -347,6 +398,21 @@ object UserGroupTable:
               finally statement.close()
             }
         }
+    }
+
+  def removeMember(
+    connection: Connection,
+    groupId: UserGroupId,
+    targetUsername: Username
+  ): IO[RemoveMemberTableResult] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteMemberSql)
+      try
+        statement.setObject(1, groupId.value)
+        statement.setString(2, targetUsername.value)
+        val deletedRows = statement.executeUpdate()
+        if deletedRows == 0 then RemoveMemberTableResult.MemberNotFound else RemoveMemberTableResult.Removed
+      finally statement.close()
     }
 
   private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMemberRecord]] =

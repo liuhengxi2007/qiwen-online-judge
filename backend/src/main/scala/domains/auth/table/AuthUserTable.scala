@@ -15,7 +15,7 @@ import domains.auth.model.{
 }
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import java.sql.{Connection, PreparedStatement, ResultSet}
+import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 
 object AuthUserTable:
 
@@ -189,6 +189,17 @@ object AuthUserTable:
       |returning username, display_name, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
+  val deleteSql: String =
+    """
+      |delete from auth_users
+      |where username = ?
+      |""".stripMargin
+
+  enum DeleteUserTableResult:
+    case NotFound
+    case Deleted
+    case HasOwnedResources
+
   def initialize(connection: Connection): IO[Unit] =
     for
       _ <- IO.blocking {
@@ -276,6 +287,21 @@ object AuthUserTable:
             )
             .toList
         finally resultSet.close()
+      finally statement.close()
+    }
+
+  def delete(connection: Connection, username: Username): IO[DeleteUserTableResult] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteSql)
+      try
+        statement.setString(1, username.value)
+        try
+          val deletedRows = statement.executeUpdate()
+          if deletedRows == 0 then DeleteUserTableResult.NotFound
+          else DeleteUserTableResult.Deleted
+        catch
+          case exception: SQLException if exception.getSQLState == "23503" =>
+            DeleteUserTableResult.HasOwnedResources
       finally statement.close()
     }
 
