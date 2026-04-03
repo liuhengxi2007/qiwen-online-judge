@@ -2,11 +2,11 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
@@ -169,7 +169,69 @@ export function UserGroupDetailPage() {
                         <p className="text-sm font-medium text-slate-900">{displayNameValue(member.displayName)}</p>
                         <p className="font-mono text-xs text-slate-500">{usernameValue(member.username)}</p>
                       </div>
-                      <Badge variant="outline">{member.role}</Badge>
+                      <RadioGroup
+                        value={member.role}
+                        disabled={
+                          !model.canManageMemberRoles ||
+                          member.role === 'owner' ||
+                          model.activeUpdatingUsername === member.username
+                        }
+                        onValueChange={(value) => {
+                          if (value !== 'owner' && value !== 'manager' && value !== 'member') {
+                            return
+                          }
+
+                          if (value === member.role) {
+                            return
+                          }
+
+                          if (value === 'owner') {
+                            const confirmed = window.confirm(
+                              `Transfer ownership to ${usernameValue(member.username)} and demote the current owner to manager?`,
+                            )
+                            if (!confirmed) {
+                              return
+                            }
+                          }
+
+                          void model.updateMemberRole(member.username, value)
+                        }}
+                        className="grid gap-2 sm:grid-cols-3"
+                      >
+                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                          <RadioGroupItem
+                            value="owner"
+                            disabled={
+                              !model.canManageMemberRoles ||
+                              member.role === 'owner' ||
+                              model.activeUpdatingUsername === member.username
+                            }
+                          />
+                          <span>Owner</span>
+                        </label>
+                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                          <RadioGroupItem
+                            value="manager"
+                            disabled={
+                              !model.canManageMemberRoles ||
+                              member.role === 'owner' ||
+                              model.activeUpdatingUsername === member.username
+                            }
+                          />
+                          <span>Manager</span>
+                        </label>
+                        <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                          <RadioGroupItem
+                            value="member"
+                            disabled={
+                              !model.canManageMemberRoles ||
+                              member.role === 'owner' ||
+                              model.activeUpdatingUsername === member.username
+                            }
+                          />
+                          <span>Member</span>
+                        </label>
+                      </RadioGroup>
                     </div>
                   </div>
                 ))}
@@ -201,14 +263,13 @@ export function UserGroupDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Role</Label>
-                    <Select value={model.memberRole} onValueChange={(value) => model.setMemberRole(value as 'owner' | 'manager' | 'member')}>
+                    <Select value={model.memberRole} onValueChange={(value) => model.setMemberRole(value as 'manager' | 'member')}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

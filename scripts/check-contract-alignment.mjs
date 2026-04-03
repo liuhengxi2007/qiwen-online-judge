@@ -213,10 +213,18 @@ function run() {
     errors,
   )
 
+  assertSameFields(
+    'usergroup.AddUserGroupMemberRole',
+    extractTsUnionLiterals(contractUserGroup, 'AddUserGroupMemberRole'),
+    extractScalaStringCases(userGroupModel, 'AddUserGroupMemberRole'),
+    errors,
+  )
+
   const userGroupMappings = [
     ['CreateUserGroupRequest', 'CreateUserGroupRequest'],
     ['UpdateUserGroupRequest', 'UpdateUserGroupRequest'],
     ['AddUserGroupMemberRequest', 'AddUserGroupMemberRequest'],
+    ['UpdateUserGroupMemberRoleRequest', 'UpdateUserGroupMemberRoleRequest'],
     ['UserGroupMember', 'UserGroupMember'],
     ['UserGroupSummary', 'UserGroupSummary'],
     ['UserGroupDetail', 'UserGroupDetail'],

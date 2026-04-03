@@ -64,6 +64,27 @@ object UserGroupRole:
     fromDatabase(value).toRight(s"Unknown user group role: $value")
   }
 
+enum AddUserGroupMemberRole:
+  case Manager
+  case Member
+
+object AddUserGroupMemberRole:
+  def fromDatabase(value: String): Option[AddUserGroupMemberRole] =
+    value match
+      case "manager" => Some(AddUserGroupMemberRole.Manager)
+      case "member" => Some(AddUserGroupMemberRole.Member)
+      case _ => None
+
+  def toDatabase(value: AddUserGroupMemberRole): String =
+    value match
+      case AddUserGroupMemberRole.Manager => "manager"
+      case AddUserGroupMemberRole.Member => "member"
+
+  given Encoder[AddUserGroupMemberRole] = Encoder.encodeString.contramap(toDatabase)
+  given Decoder[AddUserGroupMemberRole] = Decoder.decodeString.emap { value =>
+    fromDatabase(value).toRight(s"Unknown add-user-group-member role: $value")
+  }
+
 final case class CreateUserGroupRequest(
   slug: UserGroupSlug,
   name: UserGroupName,
@@ -85,12 +106,20 @@ object UpdateUserGroupRequest:
 
 final case class AddUserGroupMemberRequest(
   username: Username,
-  role: UserGroupRole
+  role: AddUserGroupMemberRole
 )
 
 object AddUserGroupMemberRequest:
   given Encoder[AddUserGroupMemberRequest] = deriveEncoder[AddUserGroupMemberRequest]
   given Decoder[AddUserGroupMemberRequest] = deriveDecoder[AddUserGroupMemberRequest]
+
+final case class UpdateUserGroupMemberRoleRequest(
+  role: UserGroupRole
+)
+
+object UpdateUserGroupMemberRoleRequest:
+  given Encoder[UpdateUserGroupMemberRoleRequest] = deriveEncoder[UpdateUserGroupMemberRoleRequest]
+  given Decoder[UpdateUserGroupMemberRoleRequest] = deriveDecoder[UpdateUserGroupMemberRoleRequest]
 
 final case class UserGroupMember(
   username: Username,
@@ -148,5 +177,6 @@ object UserGroupDetail:
   given Decoder[UserGroupDetail] = deriveDecoder[UserGroupDetail]
 
 final case class ManagedUserGroup(value: UserGroupDetail)
+final case class OwnedUserGroup(value: UserGroupDetail)
 
 type UserGroupListResponse = PageResponse[UserGroupSummary]

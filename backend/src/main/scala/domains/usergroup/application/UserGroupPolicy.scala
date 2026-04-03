@@ -1,7 +1,7 @@
 package domains.usergroup.application
 
 import domains.auth.model.{AuthUser, Username}
-import domains.usergroup.model.{ManagedUserGroup, UserGroupDetail, UserGroupRole}
+import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroupDetail, UserGroupRole}
 
 object UserGroupPolicy:
 
@@ -27,6 +27,9 @@ object UserGroupPolicy:
 
   def requireManaged(actor: AuthUser, group: UserGroupDetail): Option[ManagedUserGroup] =
     Option.when(canEdit(actor, group))(ManagedUserGroup(group))
+
+  def requireOwned(actor: AuthUser, group: UserGroupDetail): Option[OwnedUserGroup] =
+    Option.when(canDelete(actor, group))(OwnedUserGroup(group))
 
   private def isMember(username: Username, group: UserGroupDetail): Boolean =
     group.members.exists(_.username.value.equalsIgnoreCase(username.value))

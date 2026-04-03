@@ -64,10 +64,12 @@ These types should become shared contracts.
 - `CreateUserGroupRequest`
 - `UpdateUserGroupRequest`
 - `AddUserGroupMemberRequest`
+- `UpdateUserGroupMemberRoleRequest`
 - `UserGroupMember`
 - `UserGroupSummary`
 - `UserGroupDetail`
 - `UserGroupRole`
+- `AddUserGroupMemberRole`
 
 ## Frontend-Only Types
 

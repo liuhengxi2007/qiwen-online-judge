@@ -39,7 +39,7 @@ export function UserGroupPage() {
             <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
               <Link to="/">
                 <ArrowLeft className="size-4" />
-                Return
+                Back to Dashboard
               </Link>
             </Button>
             <Button

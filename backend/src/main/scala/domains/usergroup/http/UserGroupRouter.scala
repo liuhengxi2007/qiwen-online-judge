@@ -6,7 +6,8 @@ import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.shared.model.PageRequest
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupSlug}
+import domains.auth.model.Username
+import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupSlug}
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -67,6 +68,16 @@ object UserGroupRouter:
             response <- UserGroupCommands
               .addUserGroupMember(databaseSession, actor, UserGroupSlug(groupSlug), addMemberRequest)
               .flatMap(UserGroupHttpResponses.mapAddMemberResult)
+          yield response
+        }
+
+      case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "role" =>
+        sessionSupport.withAuthenticatedUser(request) { actor =>
+          for
+            updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
+            response <- UserGroupCommands
+              .updateUserGroupMemberRole(databaseSession, actor, UserGroupSlug(groupSlug), Username(memberUsername), updateRoleRequest)
+              .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
           yield response
         }
     }

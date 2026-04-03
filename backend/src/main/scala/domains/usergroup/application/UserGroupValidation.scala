@@ -2,7 +2,7 @@ package domains.usergroup.application
 
 import domains.auth.application.UsernameRules
 import domains.auth.model.Username
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupName, UserGroupSlug}
+import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupName, UserGroupSlug}
 
 object UserGroupValidation:
 
@@ -23,6 +23,9 @@ object UserGroupValidation:
 
   def validateAddMember(request: AddUserGroupMemberRequest): Either[String, AddUserGroupMemberRequest] =
     validateUsername(request.username).map(validUsername => request.copy(username = validUsername))
+
+  def validateUpdateMemberRole(request: UpdateUserGroupMemberRoleRequest): Either[String, UpdateUserGroupMemberRoleRequest] =
+    Right(request)
 
   private def validateSlug(slug: UserGroupSlug): Either[String, UserGroupSlug] =
     val normalized = slug.value.trim

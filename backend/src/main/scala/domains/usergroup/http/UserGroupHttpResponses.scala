@@ -64,5 +64,22 @@ object UserGroupHttpResponses:
       case UserGroupCommands.AddUserGroupMemberResult.Added(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
 
+  def mapUpdateMemberRoleResult(result: UserGroupCommands.UpdateUserGroupMemberRoleResult): IO[Response[IO]] =
+    result match
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Owner or site manager permission required.")
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.ValidationFailed(message) =>
+        errorResponse(Status.BadRequest, message)
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.UserGroupNotFound =>
+        errorResponse(Status.NotFound, "User group not found.")
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.MemberNotFound =>
+        errorResponse(Status.NotFound, "Group member not found.")
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole =>
+        errorResponse(Status.BadRequest, "The current owner cannot be modified directly. Transfer ownership instead.")
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.OwnershipTransferRequired =>
+        errorResponse(Status.BadRequest, "Ownership transfer is required.")
+      case UserGroupCommands.UpdateUserGroupMemberRoleResult.Updated(group) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(group.asJson))
+
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))

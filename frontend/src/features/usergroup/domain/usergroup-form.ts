@@ -1,12 +1,12 @@
 import { parseUsername, type Username } from '@/features/auth/domain/auth'
 import {
+  parseAddUserGroupMemberRole,
   parseUserGroupDescription,
   parseUserGroupName,
-  parseUserGroupRole,
   parseUserGroupSlug,
+  type AddUserGroupMemberRole,
   type CreateUserGroupRequest,
   type UpdateUserGroupRequest,
-  type UserGroupRole,
 } from '@/features/usergroup/domain/usergroup'
 
 export type UserGroupDraft = {
@@ -73,13 +73,13 @@ export function validateUserGroupUpdateDraft(
 export function validateAddUserGroupMemberDraft(
   username: string,
   role: string,
-): { ok: true; request: { username: Username; role: UserGroupRole } } | { ok: false; message: string } {
+): { ok: true; request: { username: Username; role: AddUserGroupMemberRole } } | { ok: false; message: string } {
   const usernameResult = parseUsername(username)
   if (!usernameResult.ok) {
     return { ok: false, message: usernameResult.error }
   }
 
-  const roleResult = parseUserGroupRole(role)
+  const roleResult = parseAddUserGroupMemberRole(role)
   if (!roleResult.ok) {
     return { ok: false, message: roleResult.error }
   }

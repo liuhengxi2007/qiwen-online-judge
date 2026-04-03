@@ -7,6 +7,7 @@ import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-user
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from '@/features/usergroup/hooks/use-usergroup-detail-query'
 import { useUserGroupEditorState } from '@/features/usergroup/hooks/use-usergroup-editor-state'
+import { useUserGroupUpdateMemberRoleAction } from '@/features/usergroup/hooks/use-usergroup-update-member-role-action'
 import { useUserGroupUpdateAction } from '@/features/usergroup/hooks/use-usergroup-update-action'
 
 export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewerUsername: Username, isSiteManager: boolean) {
@@ -15,6 +16,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
   const updateAction = useUserGroupUpdateAction(userGroupSlug)
   const deleteAction = useUserGroupDeleteAction(userGroupSlug)
   const addMemberAction = useUserGroupAddMemberAction(userGroupSlug)
+  const updateMemberRoleAction = useUserGroupUpdateMemberRoleAction(userGroupSlug)
   const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
     errorMessage: '',
     successMessage: '',
@@ -25,9 +27,10 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     const currentMembership = memberships.find((member) => sameUsername(member.username, viewerUsername))
     const role = currentMembership?.role ?? null
     const canManage = isSiteManager || role === 'owner' || role === 'manager'
+    const canManageMemberRoles = isSiteManager || role === 'owner'
     const canDelete = isSiteManager || role === 'owner'
 
-    return { canManage, canDelete }
+    return { canManage, canManageMemberRoles, canDelete }
   }, [detailQuery.userGroup?.members, isSiteManager, viewerUsername])
 
   async function save() {
@@ -81,13 +84,32 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     return false
   }
 
+  async function updateMemberRole(targetUsername: Username, role: 'owner' | 'manager' | 'member') {
+    if (!permissions.canManageMemberRoles) {
+      setMessageState({ errorMessage: 'Owner or site manager permission required.', successMessage: '' })
+      return false
+    }
+
+    const result = await updateMemberRoleAction.updateRole(targetUsername, role)
+    if (result.ok) {
+      detailQuery.replaceUserGroup(result.userGroup)
+      setMessageState({ errorMessage: '', successMessage: result.message })
+      return true
+    }
+
+    setMessageState({ errorMessage: result.message, successMessage: '' })
+    return false
+  }
+
   return {
     userGroup: detailQuery.userGroup,
     isLoading: detailQuery.isLoading,
     isSaving: updateAction.isSaving,
     isDeleting: deleteAction.isDeleting,
     isAddingMember: addMemberAction.isAddingMember,
+    activeUpdatingUsername: updateMemberRoleAction.activeUpdatingUsername,
     canManage: permissions.canManage,
+    canManageMemberRoles: permissions.canManageMemberRoles,
     canDelete: permissions.canDelete,
     name: editor.name,
     description: editor.description,
@@ -101,6 +123,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     setMemberRole: editor.setMemberRole,
     save,
     addMember,
+    updateMemberRole,
     deleteCurrentUserGroup,
   }
 }

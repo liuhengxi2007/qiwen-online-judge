@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 
-import type { UserGroupDetail, UserGroupRole } from '@/features/usergroup/domain/usergroup'
+import type { AddUserGroupMemberRole, UserGroupDetail } from '@/features/usergroup/domain/usergroup'
 import { userGroupDescriptionValue, userGroupNameValue } from '@/features/usergroup/domain/usergroup'
 
 export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [memberUsername, setMemberUsername] = useState('')
-  const [memberRole, setMemberRole] = useState<UserGroupRole>('member')
+  const [memberRole, setMemberRole] = useState<AddUserGroupMemberRole>('member')
 
   useEffect(() => {
     if (!userGroup) {

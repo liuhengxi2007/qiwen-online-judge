@@ -3,7 +3,7 @@ package domains.usergroup.table
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupDetail, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
+import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupDetail, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -133,9 +133,27 @@ object UserGroupTable:
       |values (?, ?, ?, ?)
       |""".stripMargin
 
+  val updateMemberRoleSql: String =
+    """
+      |update user_group_memberships
+      |set role = ?
+      |where user_group_id = ? and lower(username) = lower(?)
+      |""".stripMargin
+
+  val updateOwnerUsernameSql: String =
+    """
+      |update user_groups
+      |set owner_username = ?, updated_at = ?
+      |where id = ?
+      |""".stripMargin
+
   enum AddMemberTableResult:
     case AlreadyExists
     case Added
+
+  enum UpdateMemberRoleTableResult:
+    case MemberNotFound
+    case Updated
 
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
@@ -273,13 +291,57 @@ object UserGroupTable:
           try
             statement.setObject(1, groupId.value)
             statement.setString(2, request.username.value)
-            statement.setString(3, UserGroupRole.toDatabase(request.role))
+            statement.setString(3, AddUserGroupMemberRole.toDatabase(request.role))
             statement.setTimestamp(4, Timestamp.from(Instant.now()))
             statement.executeUpdate()
             AddMemberTableResult.Added
           finally statement.close()
         }
     yield result
+
+  def updateMemberRole(
+    connection: Connection,
+    groupId: UserGroupId,
+    targetUsername: Username,
+    role: UserGroupRole
+  ): IO[UpdateMemberRoleTableResult] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateMemberRoleSql)
+      try
+        statement.setString(1, UserGroupRole.toDatabase(role))
+        statement.setObject(2, groupId.value)
+        statement.setString(3, targetUsername.value)
+        val updatedRows = statement.executeUpdate()
+        if updatedRows == 0 then UpdateMemberRoleTableResult.MemberNotFound else UpdateMemberRoleTableResult.Updated
+      finally statement.close()
+    }
+
+  def transferOwnership(
+    connection: Connection,
+    groupId: UserGroupId,
+    currentOwnerUsername: Username,
+    newOwnerUsername: Username
+  ): IO[UpdateMemberRoleTableResult] =
+    updateMemberRole(connection, groupId, currentOwnerUsername, UserGroupRole.Manager).flatMap {
+      case UpdateMemberRoleTableResult.MemberNotFound =>
+        IO.pure(UpdateMemberRoleTableResult.MemberNotFound)
+      case UpdateMemberRoleTableResult.Updated =>
+        updateMemberRole(connection, groupId, newOwnerUsername, UserGroupRole.Owner).flatMap {
+          case UpdateMemberRoleTableResult.MemberNotFound =>
+            IO.pure(UpdateMemberRoleTableResult.MemberNotFound)
+          case UpdateMemberRoleTableResult.Updated =>
+            IO.blocking {
+              val statement = connection.prepareStatement(updateOwnerUsernameSql)
+              try
+                statement.setString(1, newOwnerUsername.value)
+                statement.setTimestamp(2, Timestamp.from(Instant.now()))
+                statement.setObject(3, groupId.value)
+                statement.executeUpdate()
+                UpdateMemberRoleTableResult.Updated
+              finally statement.close()
+            }
+        }
+    }
 
   private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
     IO.blocking {

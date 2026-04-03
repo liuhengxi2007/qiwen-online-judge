@@ -1,6 +1,8 @@
 import type {
   AddUserGroupMemberRequest as AddUserGroupMemberRequestContract,
+  AddUserGroupMemberRole as AddUserGroupMemberRoleContract,
   CreateUserGroupRequest as CreateUserGroupRequestContract,
+  UpdateUserGroupMemberRoleRequest as UpdateUserGroupMemberRoleRequestContract,
   UpdateUserGroupRequest as UpdateUserGroupRequestContract,
   UserGroupDetail as UserGroupDetailContract,
   UserGroupListResponse as UserGroupListResponseContract,
@@ -22,6 +24,7 @@ export type UserGroupSlug = Brand<string, 'UserGroupSlug'>
 export type UserGroupName = Brand<string, 'UserGroupName'>
 export type UserGroupDescription = Brand<string, 'UserGroupDescription'>
 export type UserGroupRole = UserGroupRoleContract
+export type AddUserGroupMemberRole = AddUserGroupMemberRoleContract
 
 export type UserGroupMember = {
   username: Username
@@ -64,6 +67,10 @@ export type UpdateUserGroupRequest = {
 
 export type AddUserGroupMemberRequest = {
   username: Username
+  role: AddUserGroupMemberRole
+}
+
+export type UpdateUserGroupMemberRoleRequest = {
   role: UserGroupRole
 }
 
@@ -160,6 +167,14 @@ export function parseUserGroupRole(rawRole: string): ParseResult<UserGroupRole> 
   return { ok: false, error: 'Unknown user group role.' }
 }
 
+export function parseAddUserGroupMemberRole(rawRole: string): ParseResult<AddUserGroupMemberRole> {
+  if (rawRole === 'manager' || rawRole === 'member') {
+    return { ok: true, value: rawRole }
+  }
+
+  return { ok: false, error: 'New members may only be added as member or manager.' }
+}
+
 export function fromUserGroupMemberContract(member: UserGroupMemberContract): UserGroupMember {
   return {
     username: requireParsed(parseUsername(member.username), 'user group member username'),
@@ -225,4 +240,10 @@ export function toAddUserGroupMemberRequestContract(
     username: request.username,
     role: request.role,
   }
+}
+
+export function toUpdateUserGroupMemberRoleRequestContract(
+  request: UpdateUserGroupMemberRoleRequest,
+): UpdateUserGroupMemberRoleRequestContract {
+  return request
 }

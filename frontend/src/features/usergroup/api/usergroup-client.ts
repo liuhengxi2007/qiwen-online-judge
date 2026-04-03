@@ -6,6 +6,7 @@ import type { SuccessResponse } from '@contracts/shared'
 import type {
   AddUserGroupMemberRequest,
   CreateUserGroupRequest,
+  UpdateUserGroupMemberRoleRequest,
   UpdateUserGroupRequest,
   UserGroupDetail,
   UserGroupListResponse,
@@ -16,9 +17,11 @@ import {
   fromUserGroupListResponseContract,
   toAddUserGroupMemberRequestContract,
   toCreateUserGroupRequestContract,
+  toUpdateUserGroupMemberRoleRequestContract,
   toUpdateUserGroupRequestContract,
   userGroupSlugValue,
 } from '@/features/usergroup/domain/usergroup'
+import { usernameValue, type Username } from '@/features/auth/domain/auth'
 import { postJson, requestJson } from '@/shared/api/http-client'
 
 export async function listUserGroups(): Promise<UserGroupListResponse> {
@@ -58,6 +61,18 @@ export async function addUserGroupMember(
   const response = await postJson<UserGroupDetailContract>(
     `/api/user-groups/${userGroupSlugValue(userGroupSlug)}/members`,
     toAddUserGroupMemberRequestContract(request),
+  )
+  return fromUserGroupDetailContract(response)
+}
+
+export async function updateUserGroupMemberRole(
+  userGroupSlug: UserGroupSlug,
+  targetUsername: Username,
+  request: UpdateUserGroupMemberRoleRequest,
+): Promise<UserGroupDetail> {
+  const response = await postJson<UserGroupDetailContract>(
+    `/api/user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/role`,
+    toUpdateUserGroupMemberRoleRequestContract(request),
   )
   return fromUserGroupDetailContract(response)
 }

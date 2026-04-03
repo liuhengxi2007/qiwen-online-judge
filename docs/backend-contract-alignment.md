@@ -95,10 +95,12 @@ These backend HTTP-facing models must stay aligned with `contracts/`.
 - `CreateUserGroupRequest`
 - `UpdateUserGroupRequest`
 - `AddUserGroupMemberRequest`
+- `UpdateUserGroupMemberRoleRequest`
 - `UserGroupMember`
 - `UserGroupSummary`
 - `UserGroupDetail`
 - `UserGroupRole`
+- `AddUserGroupMemberRole`
 
 ## What Must Stay Backend-Local
 

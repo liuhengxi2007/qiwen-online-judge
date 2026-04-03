@@ -1,6 +1,7 @@
 import type { PageResponse } from './shared'
 
 export type UserGroupRole = 'owner' | 'manager' | 'member'
+export type AddUserGroupMemberRole = 'manager' | 'member'
 
 export type UserGroupMember = {
   username: string
@@ -43,6 +44,10 @@ export type UpdateUserGroupRequest = {
 
 export type AddUserGroupMemberRequest = {
   username: string
+  role: AddUserGroupMemberRole
+}
+
+export type UpdateUserGroupMemberRoleRequest = {
   role: UserGroupRole
 }
 
