@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { BookCopy, FileText, LogOut, Settings, ShieldCheck, Users } from 'lucide-react'
+import { BookCopy, FileText, LogOut, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -154,6 +154,30 @@ export function DashboardPage() {
               </p>
               <Button asChild className="rounded-2xl bg-emerald-600 text-emerald-50 hover:bg-emerald-700">
                 <Link to="/problems">Open Problems</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                  <UsersRound className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
+                  <CardDescription>
+                    Organize collaborative groups before wiring them into resource-level permissions.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-7 text-slate-600">
+                The usergroup module now manages group metadata and memberships in a dedicated domain.
+              </p>
+              <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
+                <Link to="/user-groups">Open User Groups</Link>
               </Button>
             </CardContent>
           </Card>

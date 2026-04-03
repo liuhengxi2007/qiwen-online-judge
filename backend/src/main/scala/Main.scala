@@ -11,6 +11,7 @@ import domains.auth.table.AuthUserTable
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
+import domains.usergroup.table.UserGroupTable
 
 object Main extends IOApp.Simple:
 
@@ -36,6 +37,7 @@ object Main extends IOApp.Simple:
             _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
+            _ <- UserGroupTable.initialize(connection)
           yield ()
         }
       }

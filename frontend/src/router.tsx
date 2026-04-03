@@ -11,6 +11,9 @@ import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDeta
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
 import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
+import { CreateUserGroupPage } from '@/features/usergroup/pages/CreateUserGroupPage'
+import { UserGroupDetailPage } from '@/features/usergroup/pages/UserGroupDetailPage'
+import { UserGroupPage } from '@/features/usergroup/pages/UserGroupPage'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 
 function RootRedirect() {
@@ -68,6 +71,18 @@ export const router = createBrowserRouter([
   {
     path: '/problem-sets/:slug',
     element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
+  },
+  {
+    path: '/user-groups',
+    element: <AuthenticatedRoute element={<UserGroupPage />} />,
+  },
+  {
+    path: '/user-groups/new',
+    element: <AuthenticatedRoute element={<CreateUserGroupPage />} />,
+  },
+  {
+    path: '/user-groups/:slug',
+    element: <AuthenticatedRoute element={<UserGroupDetailPage />} />,
   },
   {
     path: '/user/:username/settings',

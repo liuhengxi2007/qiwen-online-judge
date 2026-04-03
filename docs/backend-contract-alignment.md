@@ -90,6 +90,16 @@ These backend HTTP-facing models must stay aligned with `contracts/`.
 - `ProblemSetDetail`
 - `ProblemSetProblemSummary`
 
+### User Group
+
+- `CreateUserGroupRequest`
+- `UpdateUserGroupRequest`
+- `AddUserGroupMemberRequest`
+- `UserGroupMember`
+- `UserGroupSummary`
+- `UserGroupDetail`
+- `UserGroupRole`
+
 ## What Must Stay Backend-Local
 
 Do not force these into `contracts/`.
@@ -134,6 +144,7 @@ Good places:
 - `domains/auth/http/*`
 - `domains/problem/http/*`
 - `domains/problemset/http/*`
+- `domains/usergroup/http/*`
 
 Bad places:
 

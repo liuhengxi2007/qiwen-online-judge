@@ -94,6 +94,7 @@ function run() {
   const contractAuth = read('contracts/auth.ts')
   const contractProblem = read('contracts/problem.ts')
   const contractProblemSet = read('contracts/problemset.ts')
+  const contractUserGroup = read('contracts/usergroup.ts')
 
   const backendSharedError = read('backend/src/main/scala/domains/shared/model/ErrorResponse.scala')
   const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
@@ -113,6 +114,7 @@ function run() {
 
   const problemModel = read('backend/src/main/scala/domains/problem/model/Problem.scala')
   const problemSetModel = read('backend/src/main/scala/domains/problemset/model/ProblemSet.scala')
+  const userGroupModel = read('backend/src/main/scala/domains/usergroup/model/UserGroup.scala')
 
   assertSameFields(
     'shared.ErrorResponse',
@@ -200,6 +202,31 @@ function run() {
       `problemset.${contractType}`,
       extractTsObjectTypeFields(contractProblemSet, contractType),
       extractScalaCaseClassFields(problemSetModel, scalaType),
+      errors,
+    )
+  }
+
+  assertSameFields(
+    'usergroup.UserGroupRole',
+    extractTsUnionLiterals(contractUserGroup, 'UserGroupRole'),
+    extractScalaStringCases(userGroupModel, 'UserGroupRole'),
+    errors,
+  )
+
+  const userGroupMappings = [
+    ['CreateUserGroupRequest', 'CreateUserGroupRequest'],
+    ['UpdateUserGroupRequest', 'UpdateUserGroupRequest'],
+    ['AddUserGroupMemberRequest', 'AddUserGroupMemberRequest'],
+    ['UserGroupMember', 'UserGroupMember'],
+    ['UserGroupSummary', 'UserGroupSummary'],
+    ['UserGroupDetail', 'UserGroupDetail'],
+  ]
+
+  for (const [contractType, scalaType] of userGroupMappings) {
+    assertSameFields(
+      `usergroup.${contractType}`,
+      extractTsObjectTypeFields(contractUserGroup, contractType),
+      extractScalaCaseClassFields(userGroupModel, scalaType),
       errors,
     )
   }

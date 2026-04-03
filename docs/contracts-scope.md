@@ -59,6 +59,16 @@ These types should become shared contracts.
 - `ProblemSetSummary`
 - `ProblemSetDetail`
 
+### User Group
+
+- `CreateUserGroupRequest`
+- `UpdateUserGroupRequest`
+- `AddUserGroupMemberRequest`
+- `UserGroupMember`
+- `UserGroupSummary`
+- `UserGroupDetail`
+- `UserGroupRole`
+
 ## Frontend-Only Types
 
 These types must remain local to the frontend.

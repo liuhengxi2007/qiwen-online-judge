@@ -1,0 +1,324 @@
+package domains.usergroup.table
+
+import cats.effect.IO
+import domains.auth.model.{AuthUser, DisplayName, Username}
+import domains.shared.model.PageResponse
+import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupDetail, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
+
+import java.sql.{Connection, ResultSet, Timestamp}
+import java.time.Instant
+
+object UserGroupTable:
+
+  val initTableSql: String =
+    """
+      |create table if not exists user_groups (
+      |  id uuid primary key,
+      |  slug varchar(64) not null unique,
+      |  name varchar(120) not null,
+      |  description text not null,
+      |  owner_username varchar(120) not null references auth_users(username),
+      |  created_at timestamp not null,
+      |  updated_at timestamp not null
+      |);
+      |""".stripMargin
+
+  val initMembershipTableSql: String =
+    """
+      |create table if not exists user_group_memberships (
+      |  user_group_id uuid not null references user_groups(id) on delete cascade,
+      |  username varchar(120) not null references auth_users(username) on delete cascade,
+      |  role varchar(32) not null check (role in ('owner', 'manager', 'member')),
+      |  joined_at timestamp not null,
+      |  primary key (user_group_id, username)
+      |);
+      |create index if not exists idx_user_group_memberships_username on user_group_memberships(username);
+      |""".stripMargin
+
+  val countVisibleSql: String =
+    """
+      |select count(*) as total_items
+      |from user_groups ug
+      |where
+      |  ? = true
+      |  or lower(ug.owner_username) = lower(?)
+      |  or exists (
+      |    select 1
+      |    from user_group_memberships ugm
+      |    where ugm.user_group_id = ug.id and lower(ugm.username) = lower(?)
+      |  )
+      |""".stripMargin
+
+  val listVisibleSql: String =
+    """
+      |select ug.id, ug.slug, ug.name, ug.description, ug.owner_username, ug.created_at, ug.updated_at
+      |from user_groups ug
+      |where
+      |  ? = true
+      |  or lower(ug.owner_username) = lower(?)
+      |  or exists (
+      |    select 1
+      |    from user_group_memberships ugm
+      |    where ugm.user_group_id = ug.id and lower(ugm.username) = lower(?)
+      |  )
+      |order by ug.updated_at desc, ug.slug asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val findBySlugSql: String =
+    """
+      |select id, slug, name, description, owner_username, created_at, updated_at
+      |from user_groups
+      |where lower(slug) = lower(?)
+      |""".stripMargin
+
+  val insertSql: String =
+    """
+      |insert into user_groups (id, slug, name, description, owner_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?)
+      |returning id, slug, name, description, owner_username, created_at, updated_at
+      |""".stripMargin
+
+  val insertOwnerMembershipSql: String =
+    """
+      |insert into user_group_memberships (user_group_id, username, role, joined_at)
+      |values (?, ?, 'owner', ?)
+      |""".stripMargin
+
+  val listMembersSql: String =
+    """
+      |select ugm.username, au.display_name, ugm.role, ugm.joined_at
+      |from user_group_memberships ugm
+      |join auth_users au on au.username = ugm.username
+      |where ugm.user_group_id = ?
+      |order by
+      |  case ugm.role
+      |    when 'owner' then 1
+      |    when 'manager' then 2
+      |    else 3
+      |  end asc,
+      |  lower(ugm.username) asc
+      |""".stripMargin
+
+  val updateSql: String =
+    """
+      |update user_groups
+      |set name = ?, description = ?, updated_at = ?
+      |where id = ?
+      |""".stripMargin
+
+  val deleteSql: String =
+    """
+      |delete from user_groups
+      |where id = ?
+      |""".stripMargin
+
+  val userExistsSql: String =
+    """
+      |select 1
+      |from auth_users
+      |where lower(username) = lower(?)
+      |""".stripMargin
+
+  val membershipExistsSql: String =
+    """
+      |select 1
+      |from user_group_memberships
+      |where user_group_id = ? and lower(username) = lower(?)
+      |""".stripMargin
+
+  val addMemberSql: String =
+    """
+      |insert into user_group_memberships (user_group_id, username, role, joined_at)
+      |values (?, ?, ?, ?)
+      |""".stripMargin
+
+  enum AddMemberTableResult:
+    case AlreadyExists
+    case Added
+
+  def initialize(connection: Connection): IO[Unit] =
+    IO.blocking {
+      val statement = connection.createStatement()
+      try
+        statement.execute(initTableSql)
+        statement.execute(initMembershipTableSql)
+      finally statement.close()
+    }
+
+  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
+    for
+      totalItems <- IO.blocking {
+        val statement = connection.prepareStatement(countVisibleSql)
+        try
+          statement.setBoolean(1, actor.siteManager)
+          statement.setString(2, actor.username.value)
+          statement.setString(3, actor.username.value)
+          val resultSet = statement.executeQuery()
+          try if resultSet.next() then resultSet.getLong("total_items") else 0L
+          finally resultSet.close()
+        finally statement.close()
+      }
+      items <- IO.blocking {
+        val statement = connection.prepareStatement(listVisibleSql)
+        try
+          statement.setBoolean(1, actor.siteManager)
+          statement.setString(2, actor.username.value)
+          statement.setString(3, actor.username.value)
+          statement.setInt(4, pageSize)
+          statement.setInt(5, (page - 1) * pageSize)
+          val resultSet = statement.executeQuery()
+          try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readSummary(resultSet)).toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
+
+  def findBySlug(connection: Connection, slug: UserGroupSlug): IO[Option[UserGroupDetail]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(findBySlugSql)
+      try
+        statement.setString(1, slug.value)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then Some(readDetailBase(resultSet)) else None
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap {
+      case Some(group) => listMembers(connection, group.id).map(members => Some(group.copy(members = members)))
+      case None => IO.pure(None)
+    }
+
+  def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroupDetail] =
+    IO.blocking {
+      val now = Instant.now()
+      val groupId = UserGroupId.random()
+      val statement = connection.prepareStatement(insertSql)
+      try
+        statement.setObject(1, groupId.value)
+        statement.setString(2, request.slug.value)
+        statement.setString(3, request.name.value)
+        statement.setString(4, request.description.value)
+        statement.setString(5, ownerUsername.value)
+        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setTimestamp(7, Timestamp.from(now))
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then
+            val ownerMembershipStatement = connection.prepareStatement(insertOwnerMembershipSql)
+            try
+              ownerMembershipStatement.setObject(1, groupId.value)
+              ownerMembershipStatement.setString(2, ownerUsername.value)
+              ownerMembershipStatement.setTimestamp(3, Timestamp.from(now))
+              ownerMembershipStatement.executeUpdate()
+            finally ownerMembershipStatement.close()
+            readDetailBase(resultSet)
+          else throw new IllegalStateException("Insert succeeded but returned no user group")
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap { group =>
+      listMembers(connection, group.id).map(members => group.copy(members = members))
+    }
+
+  def update(connection: Connection, groupId: UserGroupId, request: UpdateUserGroupRequest): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateSql)
+      try
+        statement.setString(1, request.name.value)
+        statement.setString(2, request.description.value)
+        statement.setTimestamp(3, Timestamp.from(Instant.now()))
+        statement.setObject(4, groupId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def delete(connection: Connection, groupId: UserGroupId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteSql)
+      try
+        statement.setObject(1, groupId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def userExists(connection: Connection, username: Username): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(userExistsSql)
+      try
+        statement.setString(1, username.value)
+        val resultSet = statement.executeQuery()
+        try resultSet.next()
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def addMember(connection: Connection, groupId: UserGroupId, request: AddUserGroupMemberRequest): IO[AddMemberTableResult] =
+    for
+      membershipExists <- IO.blocking {
+        val statement = connection.prepareStatement(membershipExistsSql)
+        try
+          statement.setObject(1, groupId.value)
+          statement.setString(2, request.username.value)
+          val resultSet = statement.executeQuery()
+          try resultSet.next()
+          finally resultSet.close()
+        finally statement.close()
+      }
+      result <- if membershipExists then
+        IO.pure(AddMemberTableResult.AlreadyExists)
+      else
+        IO.blocking {
+          val statement = connection.prepareStatement(addMemberSql)
+          try
+            statement.setObject(1, groupId.value)
+            statement.setString(2, request.username.value)
+            statement.setString(3, UserGroupRole.toDatabase(request.role))
+            statement.setTimestamp(4, Timestamp.from(Instant.now()))
+            statement.executeUpdate()
+            AddMemberTableResult.Added
+          finally statement.close()
+        }
+    yield result
+
+  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listMembersSql)
+      try
+        statement.setObject(1, groupId.value)
+        val resultSet = statement.executeQuery()
+        try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readMember(resultSet)).toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private def readSummary(resultSet: ResultSet): UserGroupSummary =
+    UserGroupSummary(
+      id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
+      slug = UserGroupSlug(resultSet.getString("slug")),
+      name = UserGroupName(resultSet.getString("name")),
+      description = UserGroupDescription(resultSet.getString("description")),
+      ownerUsername = Username(resultSet.getString("owner_username")),
+      createdAt = resultSet.getTimestamp("created_at").toInstant,
+      updatedAt = resultSet.getTimestamp("updated_at").toInstant
+    )
+
+  private def readDetailBase(resultSet: ResultSet): UserGroupDetail =
+    UserGroupDetail(
+      id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
+      slug = UserGroupSlug(resultSet.getString("slug")),
+      name = UserGroupName(resultSet.getString("name")),
+      description = UserGroupDescription(resultSet.getString("description")),
+      ownerUsername = Username(resultSet.getString("owner_username")),
+      members = Nil,
+      createdAt = resultSet.getTimestamp("created_at").toInstant,
+      updatedAt = resultSet.getTimestamp("updated_at").toInstant
+    )
+
+  private def readMember(resultSet: ResultSet): UserGroupMember =
+    UserGroupMember(
+      username = Username(resultSet.getString("username")),
+      displayName = DisplayName(resultSet.getString("display_name")),
+      role = UserGroupRole.fromDatabaseUnsafe(resultSet.getString("role")),
+      joinedAt = resultSet.getTimestamp("joined_at").toInstant
+    )

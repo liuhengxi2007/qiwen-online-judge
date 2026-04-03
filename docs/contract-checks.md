@@ -13,6 +13,7 @@ Current checks cover:
 - auth transport models
 - problem transport models
 - problemset transport models
+- usergroup transport models
 
 The check is intentionally structural:
 
