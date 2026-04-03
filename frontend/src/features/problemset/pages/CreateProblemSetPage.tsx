@@ -100,7 +100,7 @@ export function CreateProblemSetPage() {
                 id="problem-set-slug"
                 value={model.slug}
                 placeholder="graph-theory-ladder"
-                onChange={(event) => model.setSlug(event.target.value)}
+                onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
 

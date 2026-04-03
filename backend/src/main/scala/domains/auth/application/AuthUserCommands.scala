@@ -55,7 +55,7 @@ object AuthUserCommands:
       case None =>
         IO.pure(UpdateUserPermissionsResult.Forbidden)
       case Some(siteManagerActor) =>
-        if targetUsername.value.equalsIgnoreCase(protectedAdminUsername) then
+        if targetUsername.value == protectedAdminUsername then
           IO.pure(UpdateUserPermissionsResult.ProtectedAdmin)
         else
           databaseSession.withTransactionConnection(connection =>
@@ -137,11 +137,11 @@ object AuthUserCommands:
       case None => UpdateUserSettingsResult.NotFound
 
   private def canAccessTarget(actor: AuthUser, targetUsername: Username): Boolean =
-    targetUsername.value.equalsIgnoreCase(actor.username.value) || actor.siteManager
+    targetUsername.value == actor.username.value || actor.siteManager
 
   private def commandCanAccessTarget(command: UpdateUserSettingsCommand, targetUsername: Username): Boolean =
     command match
       case UpdateUserSettingsCommand.UpdateOwn(actor, _) =>
-        targetUsername.value.equalsIgnoreCase(actor.username.value)
+        targetUsername.value == actor.username.value
       case UpdateUserSettingsCommand.UpdateManaged(actor, _) =>
-        actor.authUser.siteManager && !targetUsername.value.equalsIgnoreCase(actor.authUser.username.value)
+        actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value

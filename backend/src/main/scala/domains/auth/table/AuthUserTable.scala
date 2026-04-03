@@ -22,7 +22,7 @@ object AuthUserTable:
   private val logger = Slf4jLogger.getLogger[IO]
 
   private val seedAdminUser = AuthSeedUser(
-    username = Username("admin"),
+    username = Username.canonical("admin"),
     displayName = DisplayName("Admin User"),
     email = EmailAddress("admin@example.com"),
     password = PlaintextPassword("password123"),
@@ -123,8 +123,8 @@ object AuthUserTable:
 
   val createCaseInsensitiveUsernameIndexSql: String =
     """
-      |create unique index if not exists auth_users_username_lower_uidx
-      |on auth_users (lower(username))
+      |create index if not exists auth_users_username_idx
+      |on auth_users (username)
       |""".stripMargin
 
   val addSiteManagerColumnSql: String =
@@ -163,21 +163,21 @@ object AuthUserTable:
     """
       |select username, display_name, email, password_hash, site_manager, problem_manager
       |from auth_users
-      |where lower(username) = lower(?)
+      |where username = ?
       |""".stripMargin
 
   val listUsersSql: String =
     """
       |select username, display_name, email, site_manager, problem_manager
       |from auth_users
-      |order by lower(username) asc
+      |order by username asc
       |""".stripMargin
 
   val updatePermissionsSql: String =
     """
       |update auth_users
       |set site_manager = ?, problem_manager = ?
-      |where lower(username) = lower(?)
+      |where username = ?
       |returning username, display_name, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
@@ -185,7 +185,7 @@ object AuthUserTable:
     """
       |update auth_users
       |set display_name = ?, email = ?, password_hash = ?
-      |where lower(username) = lower(?)
+      |where username = ?
       |returning username, display_name, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
@@ -267,7 +267,7 @@ object AuthUserTable:
             .takeWhile(identity)
             .map(_ =>
               AuthUserListItem(
-                username = Username(resultSet.getString("username")),
+                username = Username.canonical(resultSet.getString("username")),
                 displayName = DisplayName(resultSet.getString("display_name")),
                 email = EmailAddress(resultSet.getString("email")),
                 siteManager = resultSet.getBoolean("site_manager"),
@@ -345,7 +345,7 @@ object AuthUserTable:
 
   private def readAuthUser(resultSet: ResultSet): AuthUser =
     AuthUser(
-      username = Username(resultSet.getString("username")),
+      username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),

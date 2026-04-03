@@ -76,7 +76,13 @@ object UserGroupRouter:
           for
             updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
             response <- UserGroupCommands
-              .updateUserGroupMemberRole(databaseSession, actor, UserGroupSlug(groupSlug), Username(memberUsername), updateRoleRequest)
+              .updateUserGroupMemberRole(
+                databaseSession,
+                actor,
+                UserGroupSlug(groupSlug),
+                Username.canonical(memberUsername),
+                updateRoleRequest
+              )
               .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
           yield response
         }

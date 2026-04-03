@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { sameUsername, type Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useUserSettingsQueryStore } from '@/features/auth/stores/use-user-settings-query-store'
@@ -45,7 +45,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
   }, [canLoadTarget, loadUserSettings, reset, targetUsername])
 
   return {
-    editedUser: activeTargetUsername && sameUsername(activeTargetUsername, targetUsername) ? editedUser : null,
+    editedUser: activeTargetUsername === targetUsername ? editedUser : null,
     isLoadingSettings,
     settingsLoadError,
     navigationIntent,

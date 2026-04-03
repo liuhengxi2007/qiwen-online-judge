@@ -32,15 +32,15 @@ object UserGroupPolicy:
     Option.when(canDelete(actor, group))(OwnedUserGroup(group))
 
   private def isMember(username: Username, group: UserGroup): Boolean =
-    group.members.exists(_.username.value.equalsIgnoreCase(username.value))
+    group.members.exists(_.username.value == username.value)
 
   private def hasManagementRole(username: Username, group: UserGroup): Boolean =
     group.members.exists { member =>
-      member.username.value.equalsIgnoreCase(username.value) &&
+      member.username.value == username.value &&
       (member.role == UserGroupRole.Owner || member.role == UserGroupRole.Manager)
     }
 
   private def hasOwnerRole(username: Username, group: UserGroup): Boolean =
     group.members.exists { member =>
-      member.username.value.equalsIgnoreCase(username.value) && member.role == UserGroupRole.Owner
+      member.username.value == username.value && member.role == UserGroupRole.Owner
     }

@@ -84,7 +84,7 @@ export type UpdateManagedUserSettingsRequest = {
   newPassword: PlaintextPassword | null
 }
 
-const usernamePattern = /^[A-Za-z0-9_-]+$/
+const usernamePattern = /^[a-z0-9_-]+$/
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function createUsername(value: string): Username {
@@ -115,10 +115,6 @@ export function usernameValue(username: Username): string {
   return username
 }
 
-export function sameUsername(left: Username, right: Username): boolean {
-  return left.toLowerCase() === right.toLowerCase()
-}
-
 export function displayNameValue(displayName: DisplayName): string {
   return displayName
 }
@@ -132,7 +128,7 @@ export function plaintextPasswordValue(password: PlaintextPassword): string {
 }
 
 export function parseUsername(rawUsername: string): ParseResult<Username> {
-  const normalized = rawUsername.trim()
+  const normalized = rawUsername.trim().toLowerCase()
 
   if (!normalized) {
     return { ok: false, error: 'Username is required.' }
@@ -143,7 +139,7 @@ export function parseUsername(rawUsername: string): ParseResult<Username> {
   }
 
   if (!usernamePattern.test(normalized)) {
-    return { ok: false, error: 'Username may contain only letters, numbers, underscores, and hyphens.' }
+    return { ok: false, error: 'Username may contain only lowercase letters, numbers, underscores, and hyphens.' }
   }
 
   return { ok: true, value: createUsername(normalized) }

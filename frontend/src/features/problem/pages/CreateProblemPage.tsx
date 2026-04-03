@@ -100,7 +100,7 @@ export function CreateProblemPage() {
                 id="problem-slug"
                 value={model.slug}
                 placeholder="two-sum-intro"
-                onChange={(event) => model.setSlug(event.target.value)}
+                onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
 

@@ -78,7 +78,7 @@ export function LoginPage() {
                       value={username}
                       className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
                       placeholder="Enter your username"
-                      onChange={(event) => setUsername(event.target.value)}
+                      onChange={(event) => setUsername(event.target.value.toLowerCase())}
                     />
                   </div>
                 </div>

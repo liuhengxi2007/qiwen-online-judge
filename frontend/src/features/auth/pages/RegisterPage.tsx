@@ -81,7 +81,7 @@ export function RegisterPage() {
                       value={username}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
                       placeholder="Enter a unique username"
-                      onChange={(event) => setUsername(event.target.value)}
+                      onChange={(event) => setUsername(event.target.value.toLowerCase())}
                     />
                   </div>
                 </div>

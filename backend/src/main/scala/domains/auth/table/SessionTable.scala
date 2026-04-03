@@ -67,7 +67,7 @@ object SessionTable:
   val createUsernameIndexSql: String =
     """
       |create index if not exists auth_sessions_username_idx
-      |on auth_sessions (lower(username))
+      |on auth_sessions (username)
       |""".stripMargin
 
   val createExpiresAtIndexSql: String =
@@ -106,7 +106,7 @@ object SessionTable:
   val deleteByUsernameSql: String =
     """
       |delete from auth_sessions
-      |where lower(username) = lower(?)
+      |where username = ?
       |""".stripMargin
 
   val deleteExpiredSql: String =
@@ -169,7 +169,7 @@ object SessionTable:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
-            val username = Username(resultSet.getString("username"))
+            val username = Username.canonical(resultSet.getString("username"))
             val currentExpiresAt = resultSet.getTimestamp("expires_at").toInstant
             val nextExpiresAt = maxInstant(currentExpiresAt, now.plus(activeExtensionThreshold))
             val touchStatement = connection.prepareStatement(touchSessionSql)

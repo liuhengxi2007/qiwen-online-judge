@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 
 import type { Username } from '@/features/auth/domain/auth'
-import { sameUsername } from '@/features/auth/domain/auth'
 import type { UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-usergroup-add-member-action'
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
@@ -24,7 +23,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
 
   const permissions = useMemo(() => {
     const memberships = detailQuery.userGroup?.members ?? []
-    const currentMembership = memberships.find((member) => sameUsername(member.username, viewerUsername))
+    const currentMembership = memberships.find((member) => member.username === viewerUsername)
     const role = currentMembership?.role ?? null
     const canManage = isSiteManager || role === 'owner' || role === 'manager'
     const canManageMemberRoles = isSiteManager || role === 'owner'

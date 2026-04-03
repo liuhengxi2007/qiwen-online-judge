@@ -48,4 +48,4 @@ object UserGroupValidation:
   private def validateUsername(username: Username): Either[String, Username] =
     UsernameRules.validate(username) match
       case Some(message) => Left(message)
-      case None => Right(Username(username.value.trim))
+      case None => Right(Username.canonical(username.value))

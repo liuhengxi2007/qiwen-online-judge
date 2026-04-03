@@ -26,13 +26,13 @@ object AuthRouter:
         handlers.listUsers(request)
 
       case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
-        handlers.getUserSettings(request, Username(targetUsername))
+        handlers.getUserSettings(request, Username.canonical(targetUsername))
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "permissions" =>
-        handlers.updateUserPermissions(request, Username(targetUsername))
+        handlers.updateUserPermissions(request, Username.canonical(targetUsername))
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
-        handlers.updateUserSettings(request, Username(targetUsername))
+        handlers.updateUserSettings(request, Username.canonical(targetUsername))
 
       case request @ POST -> Root / "api" / "auth" / "login" =>
         handlers.login(request)

@@ -55,7 +55,7 @@ object ProblemSetTable:
     """
       |select id, slug, title, description, visibility, status, owner_username, created_at, updated_at
       |from problem_sets
-      |where lower(slug) = lower(?)
+      |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
@@ -313,7 +313,7 @@ object ProblemSetTable:
       description = ProblemSetDescription(resultSet.getString("description")),
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
-      ownerUsername = Username(resultSet.getString("owner_username")),
+      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -327,7 +327,7 @@ object ProblemSetTable:
       problems = Nil,
       visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
-      ownerUsername = Username(resultSet.getString("owner_username")),
+      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )

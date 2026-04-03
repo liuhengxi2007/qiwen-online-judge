@@ -75,7 +75,7 @@ final class AuthHttpHandlers(
     targetUsername: Username
   ): IO[Response[IO]] =
     sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
-      val isOwnSettings = targetUsername.value.equalsIgnoreCase(authenticatedActor.username.value)
+      val isOwnSettings = targetUsername.value == authenticatedActor.username.value
 
       if isOwnSettings then
         updateOwnUserSettings(request, authenticatedActor, targetUsername)

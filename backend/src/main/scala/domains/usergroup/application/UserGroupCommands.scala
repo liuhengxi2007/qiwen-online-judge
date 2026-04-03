@@ -3,6 +3,7 @@ package domains.usergroup.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
+import domains.auth.table.AuthUserTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroup, UserGroupSlug, UserGroupRole, UserGroupSummaryView}
 import domains.usergroup.table.UserGroupTable
@@ -201,10 +202,10 @@ object UserGroupCommands:
     managedGroup: ManagedUserGroup,
     request: AddUserGroupMemberRequest
   ): IO[AddUserGroupMemberResult] =
-    UserGroupTable.userExists(connection, request.username).flatMap {
-      case false => IO.pure(AddUserGroupMemberResult.UserNotFound)
-      case true =>
-        UserGroupTable.addMember(connection, managedGroup.value.id, request).flatMap {
+    AuthUserTable.findByUsername(connection, request.username).flatMap {
+      case None => IO.pure(AddUserGroupMemberResult.UserNotFound)
+      case Some(targetUser) =>
+        UserGroupTable.addMember(connection, managedGroup.value.id, request.copy(username = targetUser.username)).flatMap {
           case UserGroupTable.AddMemberTableResult.AlreadyExists =>
             IO.pure(AddUserGroupMemberResult.MemberAlreadyExists)
           case UserGroupTable.AddMemberTableResult.UserNotFound =>
@@ -230,16 +231,18 @@ object UserGroupCommands:
     request: UpdateUserGroupMemberRoleRequest
   ): IO[UpdateUserGroupMemberRoleResult] =
     val currentOwnerUsername = ownedGroup.value.ownerUsername
-    val targetMembership = ownedGroup.value.members.find(_.username.value.equalsIgnoreCase(targetUsername.value))
+    val targetMembership = ownedGroup.value.members.find(_.username.value == targetUsername.value)
 
     targetMembership match
       case None =>
         IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
       case Some(targetMember) =>
+        val canonicalTargetUsername = targetMember.username
+
         if targetMember.role == UserGroupRole.Owner && request.role != UserGroupRole.Owner then
           IO.pure(UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole)
         else if request.role == UserGroupRole.Owner then
-          UserGroupTable.transferOwnership(connection, ownedGroup.value.id, currentOwnerUsername, targetUsername).flatMap {
+          UserGroupTable.transferOwnership(connection, ownedGroup.value.id, currentOwnerUsername, canonicalTargetUsername).flatMap {
             case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
               IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
             case UserGroupTable.UpdateMemberRoleTableResult.Updated =>
@@ -249,7 +252,7 @@ object UserGroupCommands:
               }
           }
         else
-          UserGroupTable.updateMemberRole(connection, ownedGroup.value.id, targetUsername, request.role).flatMap {
+          UserGroupTable.updateMemberRole(connection, ownedGroup.value.id, canonicalTargetUsername, request.role).flatMap {
             case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
               IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
             case UserGroupTable.UpdateMemberRoleTableResult.Updated =>

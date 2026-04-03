@@ -42,7 +42,7 @@ export function SiteManagePage() {
     return <Navigate replace to="/login" />
   }
 
-  const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username).toLowerCase() === 'admin'
+  const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username) === 'admin'
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#f4efe5_100%)] px-6 py-12 sm:px-8">
       <section className="mx-auto max-w-6xl">

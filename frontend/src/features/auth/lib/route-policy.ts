@@ -1,8 +1,4 @@
-import {
-  sameUsername,
-  usernameValue,
-  type Username,
-} from '@/features/auth/domain/auth'
+import { usernameValue, type Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type UserSettingsRoutePolicyArgs = {
@@ -47,7 +43,7 @@ export function resolveUserSettingsRoutePolicy({
   canManageTarget: boolean
 } {
   const normalizedRouteUsername = routeUsername ?? viewerUsername
-  const isEditingOwnSettings = sameUsername(normalizedRouteUsername, viewerUsername)
+  const isEditingOwnSettings = normalizedRouteUsername === viewerUsername
   const canManageTarget = isEditingOwnSettings || siteManagerViewer
 
   if ((hasRouteUsername && !routeUsername) || (!hasRouteUsername && !siteManagerViewer)) {
@@ -59,7 +55,7 @@ export function resolveUserSettingsRoutePolicy({
     }
   }
 
-  if (routeUsername && !siteManagerViewer && !sameUsername(routeUsername, viewerUsername)) {
+  if (routeUsername && !siteManagerViewer && routeUsername !== viewerUsername) {
     return {
       navigationIntent: toCorrectedUserSettingsRedirect(viewerUsername),
       targetUsername: normalizedRouteUsername,

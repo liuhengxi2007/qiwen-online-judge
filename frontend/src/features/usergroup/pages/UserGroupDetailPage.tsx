@@ -258,7 +258,7 @@ export function UserGroupDetailPage() {
                       id="member-username"
                       value={model.memberUsername}
                       placeholder="alice"
-                      onChange={(event) => model.setMemberUsername(event.target.value)}
+                      onChange={(event) => model.setMemberUsername(event.target.value.toLowerCase())}
                     />
                   </div>
                   <div className="space-y-2">

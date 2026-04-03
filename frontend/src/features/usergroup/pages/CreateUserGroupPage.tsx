@@ -88,7 +88,7 @@ export function CreateUserGroupPage() {
                 id="user-group-slug"
                 value={model.slug}
                 placeholder="round123-testers"
-                onChange={(event) => model.setSlug(event.target.value)}
+                onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
 

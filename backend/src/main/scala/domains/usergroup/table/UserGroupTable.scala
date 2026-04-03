@@ -69,7 +69,7 @@ object UserGroupTable:
     """
       |select id, slug, name, description, owner_username, created_at, updated_at
       |from user_groups
-      |where lower(slug) = lower(?)
+      |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
@@ -117,14 +117,14 @@ object UserGroupTable:
     """
       |select 1
       |from auth_users
-      |where lower(username) = lower(?)
+      |where username = ?
       |""".stripMargin
 
   val membershipExistsSql: String =
     """
       |select 1
       |from user_group_memberships
-      |where user_group_id = ? and lower(username) = lower(?)
+      |where user_group_id = ? and username = ?
       |""".stripMargin
 
   val addMemberSql: String =
@@ -137,7 +137,7 @@ object UserGroupTable:
     """
       |update user_group_memberships
       |set role = ?
-      |where user_group_id = ? and lower(username) = lower(?)
+      |where user_group_id = ? and username = ?
       |""".stripMargin
 
   val updateOwnerUsernameSql: String =
@@ -366,7 +366,7 @@ object UserGroupTable:
       slug = UserGroupSlug(resultSet.getString("slug")),
       name = UserGroupName(resultSet.getString("name")),
       description = UserGroupDescription(resultSet.getString("description")),
-      ownerUsername = Username(resultSet.getString("owner_username")),
+      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -377,7 +377,7 @@ object UserGroupTable:
       slug = UserGroupSlug(resultSet.getString("slug")),
       name = UserGroupName(resultSet.getString("name")),
       description = UserGroupDescription(resultSet.getString("description")),
-      ownerUsername = Username(resultSet.getString("owner_username")),
+      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       members = Nil,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -385,7 +385,7 @@ object UserGroupTable:
 
   private def readMember(resultSet: ResultSet): UserGroupMemberRecord =
     UserGroupMemberRecord(
-      username = Username(resultSet.getString("username")),
+      username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       role = UserGroupRole.fromDatabaseUnsafe(resultSet.getString("role")),
       joinedAt = resultSet.getTimestamp("joined_at").toInstant
