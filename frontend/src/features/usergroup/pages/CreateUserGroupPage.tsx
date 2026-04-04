@@ -71,17 +71,6 @@ export function CreateUserGroupPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {model.errorMessage ? (
-              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-            {model.successMessage ? (
-              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-
             <div className="space-y-2">
               <Label htmlFor="user-group-slug">Slug</Label>
               <Input
@@ -112,6 +101,16 @@ export function CreateUserGroupPage() {
               />
             </div>
 
+            {model.errorMessage ? (
+              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {model.successMessage ? (
+              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+              </Alert>
+            ) : null}
             <Button
               type="button"
               disabled={model.isSubmitting}

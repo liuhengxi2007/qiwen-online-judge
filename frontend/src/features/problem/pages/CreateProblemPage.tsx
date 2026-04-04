@@ -83,17 +83,6 @@ export function CreateProblemPage() {
                 </AlertDescription>
               </Alert>
             ) : null}
-            {model.errorMessage ? (
-              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-            {model.successMessage ? (
-              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-
             <div className="space-y-2">
               <Label htmlFor="problem-slug">Slug</Label>
               <Input
@@ -134,6 +123,16 @@ export function CreateProblemPage() {
               onGrantedGroupsInputChange={model.setGrantedGroupsInput}
             />
 
+            {model.errorMessage ? (
+              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {model.successMessage ? (
+              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+              </Alert>
+            ) : null}
             <Button
               type="button"
               disabled={model.isSubmitting || !canCreate}

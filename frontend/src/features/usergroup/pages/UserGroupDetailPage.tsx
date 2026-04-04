@@ -81,15 +81,9 @@ export function UserGroupDetailPage() {
           </div>
         </div>
 
-        {model.errorMessage ? (
+        {!model.isLoading && !model.userGroup && model.errorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {model.successMessage ? (
-          <Alert className="mb-6 rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -152,6 +146,16 @@ export function UserGroupDetailPage() {
                   >
                     {model.isSaving ? 'Saving changes...' : 'Save changes'}
                   </Button>
+                  {model.errorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.successMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
                 </CardContent>
               </Card>
             ) : null}

@@ -78,15 +78,9 @@ export function ProblemSetDetailPage() {
           </div>
         </div>
 
-        {model.errorMessage ? (
+        {!model.isLoading && !model.problemSet && model.errorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {model.successMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -166,6 +160,16 @@ export function ProblemSetDetailPage() {
                   >
                     {model.isSaving ? 'Saving changes...' : 'Save changes'}
                   </Button>
+                  {model.errorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.successMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
                 </CardContent>
               </Card>
             ) : null}

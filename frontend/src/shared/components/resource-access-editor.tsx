@@ -46,6 +46,7 @@ export function ResourceAccessEditor({
           value={grantedGroupsInput}
           placeholder={'round-123-testers\ngraph-team'}
           className="min-h-24"
+          spellCheck={false}
           onChange={(event) => onGrantedGroupsInputChange(event.target.value.toLowerCase())}
         />
         <p className="text-xs text-slate-500">Use commas or new lines. Group slugs must already exist.</p>
@@ -58,6 +59,7 @@ export function ResourceAccessEditor({
           value={grantedUsersInput}
           placeholder={'alice\nbob'}
           className="min-h-24"
+          spellCheck={false}
           onChange={(event) => onGrantedUsersInputChange(event.target.value.toLowerCase())}
         />
         <p className="text-xs text-slate-500">Use commas or new lines. Usernames must already exist.</p>
