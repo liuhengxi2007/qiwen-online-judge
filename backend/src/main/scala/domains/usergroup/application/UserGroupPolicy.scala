@@ -32,7 +32,7 @@ object UserGroupPolicy:
         case None => false
         case Some(UserGroupRole.Owner) => targetRole != UserGroupRole.Owner
         case Some(UserGroupRole.Manager) =>
-          targetRole == UserGroupRole.Member && targetUsername.value != actor.username.value
+          targetRole == UserGroupRole.Member
         case Some(UserGroupRole.Member) => false
 
   def requireManaged(actor: AuthUser, group: UserGroup): Option[ManagedUserGroup] =

@@ -1,3 +1,4 @@
+import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, LogOut, PencilLine, ScrollText, Trash2 } from 'lucide-react'
 
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
@@ -18,6 +20,7 @@ import {
 } from '@/features/problem/domain/problem'
 import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -43,6 +46,8 @@ export function ProblemDetailPage() {
 
   const model = useProblemDetailPageModel(slugResult.value)
   const canManageProblem = user.siteManager || user.problemManager
+  const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
+  const deferredStatement = useDeferredValue(model.statement)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
@@ -109,9 +114,9 @@ export function ProblemDetailPage() {
                   <Badge variant="outline">{model.problem.status}</Badge>
                 </div>
                 <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem.accessPolicy)}</p>
-                <pre className="whitespace-pre-wrap break-words rounded-3xl bg-slate-50 px-6 py-6 font-['Georgia'] text-sm leading-7 text-slate-700">
-                  {problemStatementTextValue(model.problem.statement)}
-                </pre>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                  <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
+                </div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
                   Owner {usernameValue(model.problem.ownerUsername)}
                 </p>
@@ -127,7 +132,9 @@ export function ProblemDetailPage() {
                     </div>
                     <div>
                       <CardTitle className="text-xl text-slate-950">Edit Problem</CardTitle>
-                      <CardDescription>Update the problem title, plain-text statement, and access policy.</CardDescription>
+                      <CardDescription>
+                        Update the problem title, restricted Markdown statement, and access policy.
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -141,13 +148,41 @@ export function ProblemDetailPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="problem-statement">Plain-text statement</Label>
-                    <Textarea
-                      id="problem-statement"
-                      className="min-h-64"
-                      value={model.statement}
-                      onChange={(event) => model.setStatement(event.target.value)}
-                    />
+                    <Label htmlFor="problem-statement">Statement</Label>
+                    <Tabs value={statementTab} onValueChange={(value) => setStatementTab(value as 'write' | 'preview')}>
+                      <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
+                        <TabsTrigger value="write" className="rounded-xl">
+                          Write
+                        </TabsTrigger>
+                        <TabsTrigger value="preview" className="rounded-xl">
+                          Preview
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="write" className="mt-3">
+                        <Textarea
+                          id="problem-statement"
+                          className="min-h-64"
+                          value={model.statement}
+                          onChange={(event) => model.setStatement(event.target.value)}
+                        />
+                      </TabsContent>
+                      <TabsContent value="preview" className="mt-3">
+                        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                          {deferredStatement.trim() ? (
+                            <MarkdownDocument content={deferredStatement} />
+                          ) : (
+                            <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    <p className="text-xs text-slate-500">
+                      Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
+                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
+                      or
+                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
+                      Raw HTML is ignored.
+                    </p>
                   </div>
                   <ResourceAccessEditor
                     accessPolicy={model.accessPolicy}

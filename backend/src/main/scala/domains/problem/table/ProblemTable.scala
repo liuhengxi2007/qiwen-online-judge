@@ -141,15 +141,15 @@ object ProblemTable:
 
   val insertSql: String =
     """
-      |insert into problems (id, slug, title, statement_text, base_access, status, owner_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |insert into problems (id, slug, title, statement_text, visibility, base_access, status, owner_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       |returning id, slug, title, statement_text, base_access, status, owner_username, created_at, updated_at
       |""".stripMargin
 
   val updateSql: String =
     """
       |update problems
-      |set title = ?, statement_text = ?, base_access = ?, updated_at = ?
+      |set title = ?, statement_text = ?, visibility = ?, base_access = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -230,11 +230,12 @@ object ProblemTable:
         statement.setString(2, request.slug.value)
         statement.setString(3, request.title.value)
         statement.setString(4, request.statement.value)
-        statement.setString(5, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(6, ResourceStatus.toDatabase(ResourceStatus.Draft))
-        statement.setString(7, ownerUsername.value)
-        statement.setTimestamp(8, Timestamp.from(now))
+        statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
+        statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
+        statement.setString(7, ResourceStatus.toDatabase(ResourceStatus.Draft))
+        statement.setString(8, ownerUsername.value)
         statement.setTimestamp(9, Timestamp.from(now))
+        statement.setTimestamp(10, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
@@ -256,9 +257,10 @@ object ProblemTable:
       try
         statement.setString(1, request.title.value)
         statement.setString(2, request.statement.value)
-        statement.setString(3, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setTimestamp(4, Timestamp.from(now))
-        statement.setObject(5, problemId.value)
+        statement.setString(3, toLegacyVisibility(request.accessPolicy.baseAccess))
+        statement.setString(4, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
+        statement.setTimestamp(5, Timestamp.from(now))
+        statement.setObject(6, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -329,3 +331,8 @@ object ProblemTable:
 
   private def toResourceId(problemId: ProblemId): ResourceId =
     ResourceId(problemId.value)
+
+  private def toLegacyVisibility(baseAccess: BaseAccess): String =
+    baseAccess match
+      case BaseAccess.Public => "public"
+      case BaseAccess.OwnerOnly => "private"

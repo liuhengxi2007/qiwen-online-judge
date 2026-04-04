@@ -146,14 +146,14 @@ export function UserGroupDetailPage() {
                   >
                     {model.isSaving ? 'Saving changes...' : 'Save changes'}
                   </Button>
-                  {model.errorMessage ? (
+                  {model.saveErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+                      <AlertDescription className="text-rose-700">{model.saveErrorMessage}</AlertDescription>
                     </Alert>
                   ) : null}
-                  {model.successMessage ? (
+                  {model.saveSuccessMessage ? (
                     <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+                      <AlertDescription className="text-emerald-700">{model.saveSuccessMessage}</AlertDescription>
                     </Alert>
                   ) : null}
                 </CardContent>
@@ -262,7 +262,7 @@ export function UserGroupDetailPage() {
                                 className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                                 aria-label={`Remove ${usernameValue(member.username)} from the group`}
                                 disabled={
-                                  !model.canManage ||
+                                  !model.canRemoveMember(member.username, member.role) ||
                                   model.activeUpdatingUsername !== null ||
                                   model.activeRemovingUsername !== null
                                 }
@@ -325,6 +325,16 @@ export function UserGroupDetailPage() {
                   >
                     {model.isAddingMember ? 'Adding member...' : 'Add member'}
                   </Button>
+                  {model.addMemberErrorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.addMemberErrorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.addMemberSuccessMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.addMemberSuccessMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
                 </CardContent>
               </Card>
             ) : null}

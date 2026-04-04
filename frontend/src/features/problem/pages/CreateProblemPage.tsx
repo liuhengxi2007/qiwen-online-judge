@@ -1,3 +1,4 @@
+import { useDeferredValue, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, FilePlus2, LogOut } from 'lucide-react'
 
@@ -6,10 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemPageModel } from '@/features/problem/hooks/use-create-problem-page-model'
+import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -27,6 +30,8 @@ export function CreateProblemPage() {
 
   const canCreate = user.siteManager || user.problemManager
   const model = useCreateProblemPageModel(canCreate)
+  const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
+  const deferredStatement = useDeferredValue(model.statement)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
@@ -70,7 +75,7 @@ export function CreateProblemPage() {
               <div>
                 <CardTitle className="text-xl text-slate-950">Problem Metadata</CardTitle>
                 <CardDescription>
-                  This form creates a draft problem with a plain-text statement only.
+                  This form creates a draft problem with restricted Markdown and LaTeX support.
                 </CardDescription>
               </div>
             </div>
@@ -104,14 +109,44 @@ export function CreateProblemPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="problem-statement">Plain-text statement</Label>
-              <Textarea
-                id="problem-statement"
-                value={model.statement}
-                placeholder={'Given an integer array and a target value,\nfind two indices whose values sum to the target.'}
-                className="min-h-64"
-                onChange={(event) => model.setStatement(event.target.value)}
-              />
+              <Label htmlFor="problem-statement">Statement</Label>
+              <Tabs value={statementTab} onValueChange={(value) => setStatementTab(value as 'write' | 'preview')}>
+                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
+                  <TabsTrigger value="write" className="rounded-xl">
+                    Write
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="rounded-xl">
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="write" className="mt-3">
+                  <Textarea
+                    id="problem-statement"
+                    value={model.statement}
+                    placeholder={
+                      '# Two Sum\n\nGiven an integer array and a target value, find two indices whose values sum to the target.\n\n$$a^2 + b^2 = c^2$$'
+                    }
+                    className="min-h-64"
+                    onChange={(event) => model.setStatement(event.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="preview" className="mt-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                    {deferredStatement.trim() ? (
+                      <MarkdownDocument content={deferredStatement} />
+                    ) : (
+                      <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              <p className="text-xs text-slate-500">
+                Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
+                or
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
+                Raw HTML is ignored.
+              </p>
             </div>
 
             <ResourceAccessEditor

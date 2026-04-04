@@ -18,9 +18,20 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
   const addMemberAction = useUserGroupAddMemberAction(userGroupSlug)
   const updateMemberRoleAction = useUserGroupUpdateMemberRoleAction(userGroupSlug)
   const removeMemberAction = useUserGroupRemoveMemberAction(userGroupSlug)
-  const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
-    errorMessage: '',
-    successMessage: '',
+  const [messageState, setMessageState] = useState<{
+    generalErrorMessage: string
+    generalSuccessMessage: string
+    saveErrorMessage: string
+    saveSuccessMessage: string
+    addMemberErrorMessage: string
+    addMemberSuccessMessage: string
+  }>({
+    generalErrorMessage: '',
+    generalSuccessMessage: '',
+    saveErrorMessage: '',
+    saveSuccessMessage: '',
+    addMemberErrorMessage: '',
+    addMemberSuccessMessage: '',
   })
 
   const permissions = useMemo(() => {
@@ -34,9 +45,35 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     return { canManage, canManageMemberRoles, canDelete }
   }, [detailQuery.userGroup?.members, isSiteManager, viewerUsername])
 
+  function canRemoveMember(targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
+    if (isSiteManager) {
+      return targetRole !== 'owner'
+    }
+
+    const memberships = detailQuery.userGroup?.members ?? []
+    const currentMembership = memberships.find((member) => member.username === viewerUsername)
+    if (!currentMembership) {
+      return false
+    }
+
+    if (currentMembership.role === 'owner') {
+      return targetRole !== 'owner'
+    }
+
+    if (currentMembership.role === 'manager') {
+      return targetRole === 'member'
+    }
+
+    return false
+  }
+
   async function save() {
     if (!permissions.canManage) {
-      setMessageState({ errorMessage: 'Owner, manager, or site manager permission required.', successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        saveErrorMessage: 'Owner, manager, or site manager permission required.',
+        saveSuccessMessage: '',
+      }))
       return
     }
 
@@ -47,15 +84,27 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
 
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setMessageState((current) => ({
+        ...current,
+        saveErrorMessage: '',
+        saveSuccessMessage: result.message,
+      }))
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        saveErrorMessage: result.message,
+        saveSuccessMessage: '',
+      }))
     }
   }
 
   async function addMember() {
     if (!permissions.canManage) {
-      setMessageState({ errorMessage: 'Owner, manager, or site manager permission required.', successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        addMemberErrorMessage: 'Owner, manager, or site manager permission required.',
+        addMemberSuccessMessage: '',
+      }))
       return
     }
 
@@ -63,59 +112,103 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
       editor.clearMemberDraft()
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setMessageState((current) => ({
+        ...current,
+        addMemberErrorMessage: '',
+        addMemberSuccessMessage: result.message,
+      }))
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        addMemberErrorMessage: result.message,
+        addMemberSuccessMessage: '',
+      }))
     }
   }
 
   async function deleteCurrentUserGroup() {
     if (!permissions.canDelete) {
-      setMessageState({ errorMessage: 'Owner or site manager permission required.', successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: 'Owner or site manager permission required.',
+        generalSuccessMessage: '',
+      }))
       return false
     }
 
     const result = await deleteAction.deleteCurrentUserGroup()
     if (result.ok) {
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: '',
+        generalSuccessMessage: result.message,
+      }))
       return true
     }
 
-    setMessageState({ errorMessage: result.message, successMessage: '' })
+    setMessageState((current) => ({
+      ...current,
+      generalErrorMessage: result.message,
+      generalSuccessMessage: '',
+    }))
     return false
   }
 
   async function updateMemberRole(targetUsername: Username, role: 'owner' | 'manager' | 'member') {
     if (!permissions.canManageMemberRoles) {
-      setMessageState({ errorMessage: 'Owner or site manager permission required.', successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: 'Owner or site manager permission required.',
+        generalSuccessMessage: '',
+      }))
       return false
     }
 
     const result = await updateMemberRoleAction.updateRole(targetUsername, role)
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: '',
+        generalSuccessMessage: result.message,
+      }))
       return true
     }
 
-    setMessageState({ errorMessage: result.message, successMessage: '' })
+    setMessageState((current) => ({
+      ...current,
+      generalErrorMessage: result.message,
+      generalSuccessMessage: '',
+    }))
     return false
   }
 
   async function removeMember(targetUsername: Username) {
     if (!permissions.canManage) {
-      setMessageState({ errorMessage: 'Owner, manager, or site manager permission required.', successMessage: '' })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: 'Owner, manager, or site manager permission required.',
+        generalSuccessMessage: '',
+      }))
       return false
     }
 
     const result = await removeMemberAction.removeMember(targetUsername)
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setMessageState((current) => ({
+        ...current,
+        generalErrorMessage: '',
+        generalSuccessMessage: result.message,
+      }))
       return true
     }
 
-    setMessageState({ errorMessage: result.message, successMessage: '' })
+    setMessageState((current) => ({
+      ...current,
+      generalErrorMessage: result.message,
+      generalSuccessMessage: '',
+    }))
     return false
   }
 
@@ -134,8 +227,12 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     description: editor.description,
     memberUsername: editor.memberUsername,
     memberRole: editor.memberRole,
-    errorMessage: detailQuery.errorMessage || messageState.errorMessage,
-    successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
+    errorMessage: detailQuery.errorMessage || messageState.generalErrorMessage,
+    successMessage: detailQuery.errorMessage ? '' : messageState.generalSuccessMessage,
+    saveErrorMessage: messageState.saveErrorMessage,
+    saveSuccessMessage: messageState.saveSuccessMessage,
+    addMemberErrorMessage: messageState.addMemberErrorMessage,
+    addMemberSuccessMessage: messageState.addMemberSuccessMessage,
     setName: editor.setName,
     setDescription: editor.setDescription,
     setMemberUsername: editor.setMemberUsername,
@@ -145,5 +242,6 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     updateMemberRole,
     removeMember,
     deleteCurrentUserGroup,
+    canRemoveMember,
   }
 }

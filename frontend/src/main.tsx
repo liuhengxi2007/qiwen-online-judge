@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import { router } from '@/router'
 
+import 'katex/dist/katex.min.css'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
