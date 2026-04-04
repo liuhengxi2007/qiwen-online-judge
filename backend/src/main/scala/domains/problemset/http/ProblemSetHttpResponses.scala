@@ -22,7 +22,7 @@ object ProblemSetHttpResponses:
       slug = problemSet.slug,
       title = problemSet.title,
       description = problemSet.description,
-      visibility = problemSet.visibility,
+      accessPolicy = problemSet.accessPolicy,
       status = problemSet.status,
       ownerUsername = problemSet.ownerUsername,
       createdAt = problemSet.createdAt,
@@ -44,7 +44,7 @@ object ProblemSetHttpResponses:
       title = problemSet.title,
       description = problemSet.description,
       problems = problemSet.problems.map(toProblemSetProblemSummary),
-      visibility = problemSet.visibility,
+      accessPolicy = problemSet.accessPolicy,
       status = problemSet.status,
       ownerUsername = problemSet.ownerUsername,
       createdAt = problemSet.createdAt,
@@ -59,6 +59,8 @@ object ProblemSetHttpResponses:
         errorResponse(Status.BadRequest, message)
       case ProblemSetCommands.CreateProblemSetResult.SlugAlreadyExists =>
         errorResponse(Status.Conflict, "Problem set slug already exists.")
+      case ProblemSetCommands.CreateProblemSetResult.SlugConflictsWithProblem =>
+        errorResponse(Status.Conflict, "Problem set slug conflicts with an existing problem slug.")
       case ProblemSetCommands.CreateProblemSetResult.Created(problemSet) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toProblemSetDetail(problemSet).asJson))
 
@@ -84,6 +86,8 @@ object ProblemSetHttpResponses:
     result match
       case ProblemSetCommands.GetProblemSetResult.NotFound =>
         errorResponse(Status.NotFound, "Problem set not found.")
+      case ProblemSetCommands.GetProblemSetResult.Forbidden =>
+        errorResponse(Status.Forbidden, "You do not have access to this problem set.")
       case ProblemSetCommands.GetProblemSetResult.Found(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 

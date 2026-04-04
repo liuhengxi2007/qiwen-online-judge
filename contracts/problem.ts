@@ -1,10 +1,10 @@
-import type { PageResponse, ResourceStatus, ResourceVisibility } from './shared'
+import type { PageResponse, ResourceAccessPolicy, ResourceStatus } from './shared'
 
 export type ProblemSummary = {
   id: string
   slug: string
   title: string
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: string
   createdAt: string
@@ -16,7 +16,7 @@ export type ProblemDetail = {
   slug: string
   title: string
   statement: string
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: string
   createdAt: string
@@ -27,13 +27,13 @@ export type CreateProblemRequest = {
   slug: string
   title: string
   statement: string
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type UpdateProblemRequest = {
   title: string
   statement: string
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type ProblemListResponse = PageResponse<ProblemSummary>

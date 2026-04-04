@@ -8,7 +8,7 @@ import type {
 import type { Username } from '@/features/auth/domain/auth'
 import { parseUsername } from '@/features/auth/domain/auth'
 import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceStatus, ResourceVisibility } from '@/shared/domain/resource-lifecycle'
+import type { ResourceAccessPolicy, ResourceStatus } from '@/shared/domain/resource-lifecycle'
 
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
@@ -24,7 +24,7 @@ export type ProblemSummary = {
   id: ProblemId
   slug: ProblemSlug
   title: ProblemTitle
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
   createdAt: string
@@ -36,7 +36,7 @@ export type ProblemDetail = {
   slug: ProblemSlug
   title: ProblemTitle
   statement: ProblemStatementText
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
   createdAt: string
@@ -47,13 +47,13 @@ export type CreateProblemRequest = {
   slug: ProblemSlug
   title: ProblemTitle
   statement: ProblemStatementText
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type UpdateProblemRequest = {
   title: ProblemTitle
   statement: ProblemStatementText
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type ProblemListResponse = PageResponse<ProblemSummary>
@@ -149,7 +149,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     id: requireParsed(parseProblemId(problem.id), 'problem summary id'),
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem summary slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem summary title'),
-    visibility: problem.visibility,
+    accessPolicy: problem.accessPolicy,
     status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem summary owner username'),
     createdAt: problem.createdAt,
@@ -163,7 +163,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem detail slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem detail title'),
     statement: requireParsed(parseProblemStatementText(problem.statement), 'problem detail statement'),
-    visibility: problem.visibility,
+    accessPolicy: problem.accessPolicy,
     status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem detail owner username'),
     createdAt: problem.createdAt,
@@ -185,7 +185,7 @@ export function toCreateProblemRequestContract(request: CreateProblemRequest): C
     slug: problemSlugValue(request.slug),
     title: problemTitleValue(request.title),
     statement: problemStatementTextValue(request.statement),
-    visibility: request.visibility,
+    accessPolicy: request.accessPolicy,
   }
 }
 
@@ -193,6 +193,6 @@ export function toUpdateProblemRequestContract(request: UpdateProblemRequest): U
   return {
     title: problemTitleValue(request.title),
     statement: problemStatementTextValue(request.statement),
-    visibility: request.visibility,
+    accessPolicy: request.accessPolicy,
   }
 }

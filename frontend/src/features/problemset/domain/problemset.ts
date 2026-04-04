@@ -19,7 +19,7 @@ import {
   type ProblemTitle,
 } from '@/features/problem/domain/problem'
 import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceStatus, ResourceVisibility } from '@/shared/domain/resource-lifecycle'
+import type { ResourceAccessPolicy, ResourceStatus } from '@/shared/domain/resource-lifecycle'
 
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
@@ -44,7 +44,7 @@ export type ProblemSetSummary = {
   slug: ProblemSetSlug
   title: ProblemSetTitle
   description: ProblemSetDescription
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
   createdAt: string
@@ -57,7 +57,7 @@ export type ProblemSetDetail = {
   title: ProblemSetTitle
   description: ProblemSetDescription
   problems: ProblemSetProblemSummary[]
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
   createdAt: string
@@ -68,13 +68,13 @@ export type CreateProblemSetRequest = {
   slug: ProblemSetSlug
   title: ProblemSetTitle
   description: ProblemSetDescription
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type UpdateProblemSetRequest = {
   title: ProblemSetTitle
   description: ProblemSetDescription
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 }
 
 export type AddProblemToProblemSetRequest = {
@@ -197,7 +197,7 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
       parseProblemSetDescription(problemSet.description),
       'problem set summary description',
     ),
-    visibility: problemSet.visibility,
+    accessPolicy: problemSet.accessPolicy,
     status: problemSet.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set summary owner username'),
     createdAt: problemSet.createdAt,
@@ -215,7 +215,7 @@ export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContrac
       'problem set detail description',
     ),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
-    visibility: problemSet.visibility,
+    accessPolicy: problemSet.accessPolicy,
     status: problemSet.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set detail owner username'),
     createdAt: problemSet.createdAt,
@@ -241,7 +241,7 @@ export function toCreateProblemSetRequestContract(
     slug: problemSetSlugValue(request.slug),
     title: problemSetTitleValue(request.title),
     description: problemSetDescriptionValue(request.description),
-    visibility: request.visibility,
+    accessPolicy: request.accessPolicy,
   }
 }
 
@@ -251,7 +251,7 @@ export function toUpdateProblemSetRequestContract(
   return {
     title: problemSetTitleValue(request.title),
     description: problemSetDescriptionValue(request.description),
-    visibility: request.visibility,
+    accessPolicy: request.accessPolicy,
   }
 }
 

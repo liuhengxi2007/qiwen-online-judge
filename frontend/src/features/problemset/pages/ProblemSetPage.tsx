@@ -13,6 +13,7 @@ import {
   problemSetTitleValue,
 } from '@/features/problemset/domain/problemset'
 import { useProblemSetPageModel } from '@/features/problemset/hooks/use-problemset-page-model'
+import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetPage() {
@@ -111,7 +112,7 @@ export function ProblemSetPage() {
                       <Link className="text-lg font-semibold text-slate-950 hover:underline" to={`/problem-sets/${problemSetSlugValue(problemSet.slug)}`}>
                         {problemSetTitleValue(problemSet.title)}
                       </Link>
-                      <Badge variant="secondary">{problemSet.visibility}</Badge>
+                      <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy)}</Badge>
                       <Badge variant="outline">{problemSet.status}</Badge>
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSetSlugValue(problemSet.slug)}</p>

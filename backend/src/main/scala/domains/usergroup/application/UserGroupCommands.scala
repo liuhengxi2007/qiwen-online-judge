@@ -14,6 +14,7 @@ object UserGroupCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case SlugAlreadyExists
+    case SlugConflictsWithUsername
     case Created(group: UserGroup)
 
   enum GetUserGroupResult:
@@ -84,9 +85,13 @@ object UserGroupCommands:
           databaseSession.withTransactionConnection { connection =>
             for
               existing <- UserGroupTable.findBySlug(connection, validRequest.slug)
+              conflictingUser <- AuthUserTable.findByUsername(connection, Username.canonical(validRequest.slug.value))
               result <- existing match
                 case Some(_) => IO.pure(CreateUserGroupResult.SlugAlreadyExists)
-                case None => UserGroupTable.insert(connection, actor.username, validRequest).map(CreateUserGroupResult.Created(_))
+                case None if conflictingUser.nonEmpty =>
+                  IO.pure(CreateUserGroupResult.SlugConflictsWithUsername)
+                case None =>
+                  UserGroupTable.insert(connection, actor.username, validRequest).map(CreateUserGroupResult.Created(_))
             yield result
           }
 

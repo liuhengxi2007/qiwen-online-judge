@@ -3,10 +3,13 @@ package domains.problemset.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
+import domains.auth.table.AuthUserTable
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummaryView, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
+import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
+import domains.usergroup.table.UserGroupTable
 
 object ProblemSetCommands:
 
@@ -14,6 +17,7 @@ object ProblemSetCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case SlugAlreadyExists
+    case SlugConflictsWithProblem
     case Created(problemSet: ProblemSet)
 
   enum AddProblemResult:
@@ -26,6 +30,7 @@ object ProblemSetCommands:
 
   enum GetProblemSetResult:
     case NotFound
+    case Forbidden
     case Found(problemSet: ProblemSet)
 
   enum UpdateProblemSetResult:
@@ -51,10 +56,9 @@ object ProblemSetCommands:
     actor: AuthUser,
     pageRequest: PageRequest
   ): IO[PageResponse[ProblemSetSummaryView]] =
-    val _ = actor
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>
-      ProblemSetTable.list(connection, normalizedPageRequest.page, normalizedPageRequest.pageSize)
+      ProblemSetTable.listVisibleTo(connection, actor, normalizedPageRequest.page, normalizedPageRequest.pageSize)
     }
 
   def createProblemSet(
@@ -72,12 +76,18 @@ object ProblemSetCommands:
           databaseSession.withTransactionConnection { connection =>
             for
               existing <- ProblemSetTable.findBySlug(connection, validRequest.slug)
+              conflictingProblem <- ProblemTable.findBySlug(connection, domains.problem.model.ProblemSlug.unsafe(validRequest.slug.value))
+              accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
               result <- existing match
                 case Some(_) =>
                   IO.pure(CreateProblemSetResult.SlugAlreadyExists)
+                case None if conflictingProblem.nonEmpty =>
+                  IO.pure(CreateProblemSetResult.SlugConflictsWithProblem)
+                case None if accessPolicyValidation.nonEmpty =>
+                  IO.pure(CreateProblemSetResult.ValidationFailed(accessPolicyValidation.get))
                 case None =>
                   ProblemSetTable
-                    .insert(connection, actor.username, validRequest)
+                    .insert(connection, actor.username, sanitizePolicy(actor.username, validRequest))
                     .map(problemSet => CreateProblemSetResult.Created(problemSet))
             yield result
           }
@@ -87,11 +97,15 @@ object ProblemSetCommands:
     actor: AuthUser,
     slug: domains.problemset.model.ProblemSetSlug
   ): IO[GetProblemSetResult] =
-    val _ = actor
     databaseSession.withTransactionConnection { connection =>
-      ProblemSetTable.findBySlug(connection, slug).map {
-        case Some(problemSet) => GetProblemSetResult.Found(problemSet)
-        case None => GetProblemSetResult.NotFound
+      ProblemSetTable.findBySlug(connection, slug).flatMap {
+        case Some(problemSet) =>
+          canViewProblemSet(connection, actor, problemSet).map {
+            case true => GetProblemSetResult.Found(problemSet)
+            case false => GetProblemSetResult.Forbidden
+          }
+        case None =>
+          IO.pure(GetProblemSetResult.NotFound)
       }
     }
 
@@ -154,12 +168,15 @@ object ProblemSetCommands:
           databaseSession.withTransactionConnection { connection =>
             for
               maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
+              accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
               result <- maybeProblemSet match
                 case None =>
                   IO.pure(UpdateProblemSetResult.ProblemSetNotFound)
+                case Some(_) if accessPolicyValidation.nonEmpty =>
+                  IO.pure(UpdateProblemSetResult.ValidationFailed(accessPolicyValidation.get))
                 case Some(problemSet) =>
                   ProblemSetTable
-                    .update(connection, problemSet.id, validRequest)
+                    .update(connection, problemSet.id, sanitizePolicy(problemSet.ownerUsername, validRequest))
                     .flatMap(_ =>
                       ProblemSetTable.findBySlug(connection, problemSet.slug).map {
                         case Some(updatedProblemSet) => UpdateProblemSetResult.Updated(updatedProblemSet)
@@ -187,6 +204,80 @@ object ProblemSetCommands:
               ProblemSetTable.delete(connection, problemSet.id).as(DeleteProblemSetResult.Deleted)
         yield result
       }
+
+  private def canViewProblemSet(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSet: ProblemSet
+  ): IO[Boolean] =
+    if problemSet.ownerUsername.value == actor.username.value || ProblemSetPolicy.hasGlobalViewOverride(actor) then
+      IO.pure(true)
+    else if problemSet.accessPolicy.baseAccess == BaseAccess.Public then
+      IO.pure(true)
+    else
+      for
+        hasDirectGrant <- ResourceViewerGrantTable.hasDirectUserGrant(
+          connection,
+          ResourceKind.ProblemSet,
+          ResourceId(problemSet.id.value),
+          actor.username
+        )
+        hasGroupGrant <- if hasDirectGrant then IO.pure(false)
+        else
+          ResourceViewerGrantTable.hasAnyGrantedUserGroup(
+            connection,
+            ResourceKind.ProblemSet,
+            ResourceId(problemSet.id.value),
+            actor.username
+          )
+      yield hasDirectGrant || hasGroupGrant
+
+  private def validateAccessPolicySubjects(
+    connection: java.sql.Connection,
+    policy: ResourceAccessPolicy
+  ): IO[Option[String]] =
+    policy.viewerGrants.foldLeft(IO.pure(Option.empty[String])) { (accIO, subject) =>
+      accIO.flatMap {
+        case some @ Some(_) => IO.pure(some)
+        case None =>
+          subject match
+            case AccessSubject.User(username) =>
+              AuthUserTable.findByUsername(connection, username).map {
+                case Some(_) => None
+                case None => Some(s"Granted user not found: ${username.value}.")
+              }
+            case AccessSubject.UserGroup(slug) =>
+              UserGroupTable.findBySlug(connection, slug).map {
+                case Some(_) => None
+                case None => Some(s"Granted user group not found: ${slug.value}.")
+              }
+      }
+    }
+
+  private def sanitizePolicy(
+    ownerUsername: domains.auth.model.Username,
+    request: CreateProblemSetRequest
+  ): CreateProblemSetRequest =
+    request.copy(accessPolicy = sanitizePolicy(ownerUsername, request.accessPolicy))
+
+  private def sanitizePolicy(
+    ownerUsername: domains.auth.model.Username,
+    request: UpdateProblemSetRequest
+  ): UpdateProblemSetRequest =
+    request.copy(accessPolicy = sanitizePolicy(ownerUsername, request.accessPolicy))
+
+  private def sanitizePolicy(
+    ownerUsername: domains.auth.model.Username,
+    accessPolicy: ResourceAccessPolicy
+  ): ResourceAccessPolicy =
+    accessPolicy.copy(
+      viewerGrants = accessPolicy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        }
+    )
 
   def removeProblemFromProblemSet(
     databaseSession: DatabaseSession,

@@ -4,7 +4,8 @@ import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblem, ProblemSetSlug, ProblemSetSummaryView, ProblemSetTitle, UpdateProblemSetRequest}
-import domains.shared.model.{PageResponse, ResourceStatus, ResourceVisibility}
+import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.model.{PageResponse, ResourceStatus}
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -18,7 +19,7 @@ object ProblemSetTable:
       |  slug varchar(64) not null unique,
       |  title varchar(120) not null,
       |  description text not null,
-      |  visibility varchar(32) not null check (visibility in ('private', 'group', 'public')),
+      |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
       |  status varchar(32) not null check (status in ('draft', 'published', 'archived')),
       |  owner_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
@@ -37,32 +38,123 @@ object ProblemSetTable:
       |);
       |""".stripMargin
 
+  val addBaseAccessColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problem_sets'
+      |      and column_name = 'base_access'
+      |  ) then
+      |    alter table problem_sets add column base_access varchar(32);
+      |  end if;
+      |
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problem_sets'
+      |      and column_name = 'visibility'
+      |  ) then
+      |    update problem_sets
+      |    set base_access = case visibility
+      |      when 'public' then 'public'
+      |      else 'owner_only'
+      |    end
+      |    where base_access is null or btrim(base_access) = '';
+      |  else
+      |    update problem_sets
+      |    set base_access = 'owner_only'
+      |    where base_access is null or btrim(base_access) = '';
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val setBaseAccessNotNullSql: String =
+    """
+      |alter table problem_sets
+      |alter column base_access set not null
+      |""".stripMargin
+
+  val setBaseAccessDefaultSql: String =
+    """
+      |alter table problem_sets
+      |alter column base_access set default 'owner_only'
+      |""".stripMargin
+
   val listSql: String =
     """
-      |select id, slug, title, description, visibility, status, owner_username, created_at, updated_at
-      |from problem_sets
-      |order by updated_at desc, slug asc
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.status, ps.owner_username, ps.created_at, ps.updated_at
+      |from problem_sets ps
+      |where
+      |  ? = true
+      |  or ps.owner_username = ?
+      |  or ps.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from resource_viewer_grants rvg
+      |    where rvg.resource_kind = 'problem_set'
+      |      and rvg.resource_id = ps.id
+      |      and rvg.subject_kind = 'user'
+      |      and rvg.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from resource_viewer_grants rvg
+      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where rvg.resource_kind = 'problem_set'
+      |      and rvg.resource_id = ps.id
+      |      and rvg.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |order by ps.updated_at desc, ps.slug asc
       |limit ? offset ?
       |""".stripMargin
 
   val countSql: String =
     """
       |select count(*) as total_items
-      |from problem_sets
+      |from problem_sets ps
+      |where
+      |  ? = true
+      |  or ps.owner_username = ?
+      |  or ps.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from resource_viewer_grants rvg
+      |    where rvg.resource_kind = 'problem_set'
+      |      and rvg.resource_id = ps.id
+      |      and rvg.subject_kind = 'user'
+      |      and rvg.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from resource_viewer_grants rvg
+      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where rvg.resource_kind = 'problem_set'
+      |      and rvg.resource_id = ps.id
+      |      and rvg.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
       |""".stripMargin
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, description, visibility, status, owner_username, created_at, updated_at
+      |select id, slug, title, description, base_access, status, owner_username, created_at, updated_at
       |from problem_sets
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problem_sets (id, slug, title, description, visibility, status, owner_username, created_at, updated_at)
+      |insert into problem_sets (id, slug, title, description, base_access, status, owner_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, description, visibility, status, owner_username, created_at, updated_at
+      |returning id, slug, title, description, base_access, status, owner_username, created_at, updated_at
       |""".stripMargin
 
   val listProblemsForSetSql: String =
@@ -97,7 +189,7 @@ object ProblemSetTable:
   val updateSql: String =
     """
       |update problem_sets
-      |set title = ?, description = ?, visibility = ?, updated_at = ?
+      |set title = ?, description = ?, base_access = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -140,15 +232,19 @@ object ProblemSetTable:
       val statement = connection.createStatement()
       try
         statement.execute(initTableSql)
+        statement.execute(addBaseAccessColumnSql)
+        statement.execute(setBaseAccessDefaultSql)
+        statement.execute(setBaseAccessNotNullSql)
         statement.execute(initProblemRelationTableSql)
       finally statement.close()
     }
 
-  def list(connection: Connection, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummaryView]] =
+  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummaryView]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
         try
+          bindVisibilityQuery(statement, actor, None, None)
           val resultSet = statement.executeQuery()
           try if resultSet.next() then resultSet.getLong("total_items") else 0L
           finally resultSet.close()
@@ -157,19 +253,24 @@ object ProblemSetTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSql)
         try
-          statement.setInt(1, pageSize)
-          statement.setInt(2, (page - 1) * pageSize)
+          bindVisibilityQuery(statement, actor, Some(pageSize), Some((page - 1) * pageSize))
           val resultSet = statement.executeQuery()
           try
             Iterator
               .continually(resultSet.next())
               .takeWhile(identity)
-              .map(_ => readProblemSetSummary(resultSet))
+              .map(_ => readProblemSetSummaryBase(resultSet))
               .toList
           finally resultSet.close()
         finally statement.close()
       }
-    yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
+      itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSetSummaryView])) { (accIO, item) =>
+        for
+          acc <- accIO
+          grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id))
+        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, grants))
+      }
+    yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
   def findBySlug(connection: Connection, slug: ProblemSetSlug): IO[Option[ProblemSet]] =
     IO.blocking {
@@ -182,7 +283,10 @@ object ProblemSetTable:
       finally statement.close()
     }.flatMap {
       case Some(problemSet) =>
-        listProblemsForSet(connection, problemSet.id).map(problems => Some(problemSet.copy(problems = problems)))
+        for
+          problems <- listProblemsForSet(connection, problemSet.id)
+          grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id))
+        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, grants)))
       case None =>
         IO.pure(None)
     }
@@ -196,7 +300,7 @@ object ProblemSetTable:
         statement.setString(2, request.slug.value)
         statement.setString(3, request.title.value)
         statement.setString(4, request.description.value)
-        statement.setString(5, ResourceVisibility.toDatabase(request.visibility))
+        statement.setString(5, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
         statement.setString(6, ResourceStatus.toDatabase(ResourceStatus.Draft))
         statement.setString(7, ownerUsername.value)
         statement.setTimestamp(8, Timestamp.from(now))
@@ -207,6 +311,11 @@ object ProblemSetTable:
           else throw new IllegalStateException("Insert succeeded but returned no problem set")
         finally resultSet.close()
       finally statement.close()
+    }.flatMap { problemSet =>
+      val sanitizedPolicy = sanitizePolicy(ownerUsername, request.accessPolicy)
+      ResourceViewerGrantTable
+        .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), sanitizedPolicy.viewerGrants)
+        .as(problemSet.copy(accessPolicy = sanitizedPolicy))
     }
 
   def addProblem(connection: Connection, problemSetId: ProblemSetId, problemId: ProblemId): IO[AddProblemTableResult] =
@@ -254,13 +363,13 @@ object ProblemSetTable:
       try
         statement.setString(1, request.title.value)
         statement.setString(2, request.description.value)
-        statement.setString(3, ResourceVisibility.toDatabase(request.visibility))
+        statement.setString(3, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
         statement.setTimestamp(4, Timestamp.from(now))
         statement.setObject(5, problemSetId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
-    }
+    } *> ResourceViewerGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), request.accessPolicy.viewerGrants)
 
   def delete(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
     IO.blocking {
@@ -305,13 +414,13 @@ object ProblemSetTable:
       finally positionStatement.close()
     }
 
-  private def readProblemSetSummary(resultSet: ResultSet): ProblemSetSummaryView =
+  private def readProblemSetSummaryBase(resultSet: ResultSet): ProblemSetSummaryView =
     ProblemSetSummaryView(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
       title = ProblemSetTitle.unsafe(resultSet.getString("title")),
       description = ProblemSetDescription.unsafe(resultSet.getString("description")),
-      visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
+      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -325,7 +434,7 @@ object ProblemSetTable:
       title = ProblemSetTitle.unsafe(resultSet.getString("title")),
       description = ProblemSetDescription.unsafe(resultSet.getString("description")),
       problems = Nil,
-      visibility = ResourceVisibility.fromDatabaseUnsafe(resultSet.getString("visibility")),
+      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
       status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -354,3 +463,32 @@ object ProblemSetTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private def bindVisibilityQuery(
+    statement: java.sql.PreparedStatement,
+    actor: domains.auth.model.AuthUser,
+    pageSize: Option[Int],
+    offset: Option[Int]
+  ): Unit =
+    statement.setBoolean(1, actor.siteManager || actor.problemManager)
+    statement.setString(2, actor.username.value)
+    statement.setString(3, actor.username.value)
+    statement.setString(4, actor.username.value)
+    pageSize.foreach(statement.setInt(5, _))
+    offset.foreach(statement.setInt(6, _))
+
+  private def policyFrom(baseAccess: BaseAccess, grants: List[domains.shared.access.ResourceViewerGrant]): ResourceAccessPolicy =
+    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = grants.map(_.subject))
+
+  private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
+    policy.copy(
+      viewerGrants = policy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        }
+    )
+
+  private def toResourceId(problemSetId: ProblemSetId): ResourceId =
+    ResourceId(problemSetId.value)

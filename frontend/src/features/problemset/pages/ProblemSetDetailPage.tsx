@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
@@ -20,6 +19,8 @@ import {
 } from '@/features/problemset/domain/problemset'
 import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-problemset-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetDetailPage() {
@@ -104,9 +105,10 @@ export function ProblemSetDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Badge variant="secondary">{model.problemSet.visibility}</Badge>
+                  <Badge variant="secondary">{resourceAccessBadgeLabel(model.problemSet.accessPolicy)}</Badge>
                   <Badge variant="outline">{model.problemSet.status}</Badge>
                 </div>
+                <p className="text-sm text-slate-600">{resourceAccessSummary(model.problemSet.accessPolicy)}</p>
                 <p className="text-sm leading-7 text-slate-600">
                   {problemSetDescriptionValue(model.problemSet.description) || 'No description provided.'}
                 </p>
@@ -125,7 +127,7 @@ export function ProblemSetDetailPage() {
                     </div>
                     <div>
                       <CardTitle className="text-xl text-slate-950">Edit Problem Set</CardTitle>
-                      <CardDescription>Update the title, description, and visibility of this problem set.</CardDescription>
+                      <CardDescription>Update the title, description, and access policy of this problem set.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -146,19 +148,14 @@ export function ProblemSetDetailPage() {
                       onChange={(event) => model.setDescription(event.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Visibility</Label>
-                    <Select value={model.visibility} onValueChange={(value) => model.setVisibility(value as 'private' | 'group' | 'public')}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select visibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="group">Group</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <ResourceAccessEditor
+                    accessPolicy={model.accessPolicy}
+                    grantedUsersInput={model.grantedUsersInput}
+                    grantedGroupsInput={model.grantedGroupsInput}
+                    onBaseAccessChange={model.setBaseAccess}
+                    onGrantedUsersInputChange={model.setGrantedUsersInput}
+                    onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+                  />
                   <Button
                     type="button"
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"

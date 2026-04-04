@@ -3,14 +3,16 @@ import { useCallback, useReducer } from 'react'
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblem } from '@/features/problem/api/problem-client'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
-import type { ResourceVisibility } from '@/shared/domain/resource-lifecycle'
+import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type CreateProblemPageState = {
   isSubmitting: boolean
   slug: string
   title: string
   statement: string
-  visibility: ResourceVisibility
+  baseAccess: BaseAccess
+  grantedUsersInput: string
+  grantedGroupsInput: string
   errorMessage: string
   successMessage: string
 }
@@ -19,7 +21,9 @@ type CreateProblemPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_title'; value: string }
   | { type: 'set_statement'; value: string }
-  | { type: 'set_visibility'; value: ResourceVisibility }
+  | { type: 'set_base_access'; value: BaseAccess }
+  | { type: 'set_granted_users_input'; value: string }
+  | { type: 'set_granted_groups_input'; value: string }
   | { type: 'submit_started' }
   | { type: 'submit_succeeded' }
   | { type: 'submit_failed'; message: string }
@@ -29,7 +33,9 @@ const initialState: CreateProblemPageState = {
   slug: '',
   title: '',
   statement: '',
-  visibility: 'private',
+  baseAccess: 'owner_only',
+  grantedUsersInput: '',
+  grantedGroupsInput: '',
   errorMessage: '',
   successMessage: '',
 }
@@ -42,8 +48,12 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
       return { ...state, title: action.value }
     case 'set_statement':
       return { ...state, statement: action.value }
-    case 'set_visibility':
-      return { ...state, visibility: action.value }
+    case 'set_base_access':
+      return { ...state, baseAccess: action.value }
+    case 'set_granted_users_input':
+      return { ...state, grantedUsersInput: action.value }
+    case 'set_granted_groups_input':
+      return { ...state, grantedGroupsInput: action.value }
     case 'submit_started':
       return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
     case 'submit_succeeded':
@@ -53,7 +63,9 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
         slug: '',
         title: '',
         statement: '',
-        visibility: 'private',
+        baseAccess: 'owner_only',
+        grantedUsersInput: '',
+        grantedGroupsInput: '',
         errorMessage: '',
         successMessage: 'Problem created successfully.',
       }
@@ -75,7 +87,9 @@ export function useCreateProblemPageModel(canCreate: boolean) {
       slug: state.slug,
       title: state.title,
       statement: state.statement,
-      visibility: state.visibility,
+      baseAccess: state.baseAccess,
+      grantedUsersInput: state.grantedUsersInput,
+      grantedGroupsInput: state.grantedGroupsInput,
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
@@ -91,14 +105,31 @@ export function useCreateProblemPageModel(canCreate: boolean) {
       const message = error instanceof HttpClientError ? error.message : 'Unable to create problem.'
       dispatch({ type: 'submit_failed', message })
     }
-  }, [canCreate, state.slug, state.statement, state.title, state.visibility])
+  }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.slug, state.statement, state.title])
 
   return {
     ...state,
+    accessPolicy: {
+      ...createOwnerOnlyAccessPolicy(),
+      baseAccess: state.baseAccess,
+      viewerGrants: [
+        ...splitGrantInput(state.grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
+        ...splitGrantInput(state.grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
+      ],
+    },
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setStatement: (value: string) => dispatch({ type: 'set_statement', value }),
-    setVisibility: (value: ResourceVisibility) => dispatch({ type: 'set_visibility', value }),
+    setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
+    setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
+    setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
     submit,
   }
+}
+
+function splitGrantInput(raw: string): string[] {
+  return raw
+    .split(/[\n,]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
 }

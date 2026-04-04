@@ -55,6 +55,8 @@ object UserGroupHttpResponses:
         errorResponse(Status.BadRequest, message)
       case UserGroupCommands.CreateUserGroupResult.SlugAlreadyExists =>
         errorResponse(Status.Conflict, "User group slug already exists.")
+      case UserGroupCommands.CreateUserGroupResult.SlugConflictsWithUsername =>
+        errorResponse(Status.Conflict, "User group slug conflicts with an existing username.")
       case UserGroupCommands.CreateUserGroupResult.Created(group) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toUserGroupDetail(group).asJson))
 

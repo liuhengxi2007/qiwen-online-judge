@@ -5,6 +5,8 @@ import database.DatabaseSession
 import domains.auth.application.{AuthUserCommands, PasswordHasher, SessionStore, UsernameRules}
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, LoginRequest, RegisterRequest, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
 import domains.auth.table.AuthUserTable
+import domains.usergroup.model.UserGroupSlug
+import domains.usergroup.table.UserGroupTable
 import io.circe.syntax.*
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
@@ -127,9 +129,12 @@ final class AuthHttpHandlers(
           databaseSession.withTransactionConnection { connection =>
             for
               existingUser <- AuthUserTable.findByUsername(connection, registerRequest.username)
+              existingUserGroup <- findConflictingUserGroup(connection, registerRequest.username)
               result <- existingUser match
                 case Some(_) =>
                   AuthHttpResponses.usernameConflictResponse
+                case None if existingUserGroup.nonEmpty =>
+                  AuthHttpResponses.usernameConflictsWithUserGroupResponse
                 case None =>
                   validateRegisterRequest(registerRequest) match
                     case Some(validationError) =>
@@ -166,6 +171,14 @@ final class AuthHttpHandlers(
     else if normalized.length > 255 then Some("Email must be at most 255 characters.")
     else if emailPattern.matches(normalized) then None
     else Some("Please enter a valid email address.")
+
+  private def findConflictingUserGroup(
+    connection: java.sql.Connection,
+    username: Username
+  ): IO[Option[domains.usergroup.model.UserGroup]] =
+    UserGroupSlug.parse(username.value) match
+      case Left(_) => IO.pure(None)
+      case Right(slug) => UserGroupTable.findBySlug(connection, slug)
 
   private def updateOwnUserSettings(
     request: Request[IO],

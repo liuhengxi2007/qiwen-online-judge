@@ -1,6 +1,7 @@
 package domains.problemset.model
 
-import domains.shared.model.{PageResponse, ResourceStatus, ResourceVisibility}
+import domains.shared.access.ResourceAccessPolicy
+import domains.shared.model.{PageResponse, ResourceStatus}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -77,7 +78,7 @@ final case class ProblemSetSummaryView(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -90,7 +91,7 @@ final case class ProblemSet(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   problems: List[ProblemSetProblem],
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -101,7 +102,7 @@ final case class CreateProblemSetRequest(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 )
 
 object CreateProblemSetRequest:
@@ -119,7 +120,7 @@ object AddProblemToProblemSetRequest:
 final case class UpdateProblemSetRequest(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 )
 
 object UpdateProblemSetRequest:
@@ -142,7 +143,7 @@ final case class ProblemSetSummary(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -164,7 +165,7 @@ final case class ProblemSetDetail(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,

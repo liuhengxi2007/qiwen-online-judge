@@ -30,7 +30,9 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     const result = await updateAction.save({
       title: editor.title,
       description: editor.description,
-      visibility: editor.visibility,
+      baseAccess: editor.baseAccess,
+      grantedUsersInput: editor.grantedUsersInput,
+      grantedGroupsInput: editor.grantedGroupsInput,
     })
 
     if (result.ok) {
@@ -97,17 +99,39 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     activeRemovingProblemSlug: removeAction.activeRemovingProblemSlug,
     title: editor.title,
     description: editor.description,
-    visibility: editor.visibility,
+    accessPolicy: modelAccessPolicy(editor.baseAccess, editor.grantedUsersInput, editor.grantedGroupsInput),
+    baseAccess: editor.baseAccess,
+    grantedUsersInput: editor.grantedUsersInput,
+    grantedGroupsInput: editor.grantedGroupsInput,
     linkProblemSlug: editor.linkProblemSlug,
     errorMessage: detailQuery.errorMessage || messageState.errorMessage,
     successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
     setTitle: editor.setTitle,
     setDescription: editor.setDescription,
-    setVisibility: editor.setVisibility,
+    setBaseAccess: editor.setBaseAccess,
+    setGrantedUsersInput: editor.setGrantedUsersInput,
+    setGrantedGroupsInput: editor.setGrantedGroupsInput,
     setLinkProblemSlug: editor.setLinkProblemSlug,
     save,
     removeProblem,
     deleteCurrentProblemSet,
     attachProblem,
   }
+}
+
+function modelAccessPolicy(baseAccess: 'owner_only' | 'public', grantedUsersInput: string, grantedGroupsInput: string) {
+  return {
+    baseAccess,
+    viewerGrants: [
+      ...splitGrantInput(grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
+      ...splitGrantInput(grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
+    ],
+  }
+}
+
+function splitGrantInput(raw: string): string[] {
+  return raw
+    .split(/[\n,]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
 }

@@ -20,7 +20,9 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     const result = await updateAction.save({
       title: editor.title,
       statement: editor.statement,
-      visibility: editor.visibility,
+      baseAccess: editor.baseAccess,
+      grantedUsersInput: editor.grantedUsersInput,
+      grantedGroupsInput: editor.grantedGroupsInput,
     })
 
     if (result.ok) {
@@ -49,13 +51,35 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     isDeleting: deleteAction.isDeleting,
     title: editor.title,
     statement: editor.statement,
-    visibility: editor.visibility,
+    accessPolicy: modelAccessPolicy(editor.baseAccess, editor.grantedUsersInput, editor.grantedGroupsInput),
+    baseAccess: editor.baseAccess,
+    grantedUsersInput: editor.grantedUsersInput,
+    grantedGroupsInput: editor.grantedGroupsInput,
     errorMessage: detailQuery.errorMessage || messageState.errorMessage,
     successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
     setTitle: editor.setTitle,
     setStatement: editor.setStatement,
-    setVisibility: editor.setVisibility,
+    setBaseAccess: editor.setBaseAccess,
+    setGrantedUsersInput: editor.setGrantedUsersInput,
+    setGrantedGroupsInput: editor.setGrantedGroupsInput,
     save,
     deleteCurrentProblem,
   }
+}
+
+function modelAccessPolicy(baseAccess: 'owner_only' | 'public', grantedUsersInput: string, grantedGroupsInput: string) {
+  return {
+    baseAccess,
+    viewerGrants: [
+      ...splitGrantInput(grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
+      ...splitGrantInput(grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
+    ],
+  }
+}
+
+function splitGrantInput(raw: string): string[] {
+  return raw
+    .split(/[\n,]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
 }

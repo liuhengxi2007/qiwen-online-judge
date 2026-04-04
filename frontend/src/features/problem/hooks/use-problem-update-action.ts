@@ -4,6 +4,7 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { updateProblem } from '@/features/problem/api/problem-client'
 import { validateProblemUpdateDraft } from '@/features/problem/domain/problem-form'
 import type { ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
+import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useProblemUpdateAction(problemSlug: ProblemSlug) {
   const [isSaving, setIsSaving] = useState(false)
@@ -12,7 +13,9 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
     async (draft: {
       title: string
       statement: string
-      visibility: 'private' | 'group' | 'public'
+      baseAccess: BaseAccess
+      grantedUsersInput: string
+      grantedGroupsInput: string
     }): Promise<{ ok: true; problem: ProblemDetail; message: string } | { ok: false; message: string }> => {
       const validation = validateProblemUpdateDraft(draft)
       if (!validation.ok) {

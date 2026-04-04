@@ -1,4 +1,21 @@
-export type ResourceVisibility = 'private' | 'group' | 'public'
+export type BaseAccess = 'owner_only' | 'public'
+
+export type UserAccessSubject = {
+  kind: 'user'
+  username: string
+}
+
+export type UserGroupAccessSubject = {
+  kind: 'user_group'
+  slug: string
+}
+
+export type AccessSubject = UserAccessSubject | UserGroupAccessSubject
+
+export type ResourceAccessPolicy = {
+  baseAccess: BaseAccess
+  viewerGrants: AccessSubject[]
+}
 
 export type ResourceStatus = 'draft' | 'published' | 'archived'
 

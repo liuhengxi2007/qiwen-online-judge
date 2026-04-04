@@ -1,6 +1,7 @@
 package domains.problem.model
 
-import domains.shared.model.{PageResponse, ResourceStatus, ResourceVisibility}
+import domains.shared.access.ResourceAccessPolicy
+import domains.shared.model.{PageResponse, ResourceStatus}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -70,7 +71,7 @@ final case class ProblemSummary(
   id: ProblemId,
   slug: ProblemSlug,
   title: ProblemTitle,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -82,7 +83,7 @@ final case class Problem(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -93,7 +94,7 @@ final case class CreateProblemRequest(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 )
 
 object CreateProblemRequest:
@@ -103,7 +104,7 @@ object CreateProblemRequest:
 final case class UpdateProblemRequest(
   title: ProblemTitle,
   statement: ProblemStatementText,
-  visibility: ResourceVisibility
+  accessPolicy: ResourceAccessPolicy
 )
 
 object UpdateProblemRequest:
@@ -114,7 +115,7 @@ final case class ProblemListItem(
   id: ProblemId,
   slug: ProblemSlug,
   title: ProblemTitle,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -135,7 +136,7 @@ final case class ProblemDetail(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
-  visibility: ResourceVisibility,
+  accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,

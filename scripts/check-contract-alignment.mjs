@@ -100,6 +100,7 @@ function run() {
   const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
   const backendSharedPagination = read('backend/src/main/scala/domains/shared/model/Pagination.scala')
   const backendSharedLifecycle = read('backend/src/main/scala/domains/shared/model/ResourceLifecycle.scala')
+  const backendSharedAccess = read('backend/src/main/scala/domains/shared/access/AccessPolicy.scala')
 
   const authFiles = {
     AuthUserListItem: read('backend/src/main/scala/domains/auth/model/AuthUserListItem.scala'),
@@ -138,9 +139,9 @@ function run() {
   )
 
   assertSameFields(
-    'shared.ResourceVisibility',
-    extractTsUnionLiterals(contractShared, 'ResourceVisibility'),
-    extractScalaStringCases(backendSharedLifecycle, 'ResourceVisibility'),
+    'shared.BaseAccess',
+    extractTsUnionLiterals(contractShared, 'BaseAccess'),
+    extractScalaStringCases(backendSharedAccess, 'BaseAccess'),
     errors,
   )
 
@@ -148,6 +149,13 @@ function run() {
     'shared.ResourceStatus',
     extractTsUnionLiterals(contractShared, 'ResourceStatus'),
     extractScalaStringCases(backendSharedLifecycle, 'ResourceStatus'),
+    errors,
+  )
+
+  assertSameFields(
+    'shared.ResourceAccessPolicy',
+    extractTsObjectTypeFields(contractShared, 'ResourceAccessPolicy'),
+    extractScalaCaseClassFields(backendSharedAccess, 'ResourceAccessPolicy'),
     errors,
   )
 

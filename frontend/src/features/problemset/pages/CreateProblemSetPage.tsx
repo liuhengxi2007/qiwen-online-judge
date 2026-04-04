@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemSetPageModel } from '@/features/problemset/hooks/use-create-problemset-page-model'
+import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function CreateProblemSetPage() {
@@ -124,19 +124,14 @@ export function CreateProblemSetPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Visibility</Label>
-              <Select value={model.visibility} onValueChange={(value) => model.setVisibility(value as 'private' | 'group' | 'public')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select visibility" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="private">Private</SelectItem>
-                  <SelectItem value="group">Group</SelectItem>
-                  <SelectItem value="public">Public</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ResourceAccessEditor
+              accessPolicy={model.accessPolicy}
+              grantedUsersInput={model.grantedUsersInput}
+              grantedGroupsInput={model.grantedGroupsInput}
+              onBaseAccessChange={model.setBaseAccess}
+              onGrantedUsersInputChange={model.setGrantedUsersInput}
+              onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+            />
 
             <Button
               type="button"

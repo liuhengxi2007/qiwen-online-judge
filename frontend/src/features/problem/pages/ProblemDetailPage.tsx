@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
@@ -19,6 +18,8 @@ import {
 } from '@/features/problem/domain/problem'
 import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDetailPage() {
@@ -110,9 +111,10 @@ export function ProblemDetailPage() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Badge variant="secondary">{model.problem.visibility}</Badge>
+                  <Badge variant="secondary">{resourceAccessBadgeLabel(model.problem.accessPolicy)}</Badge>
                   <Badge variant="outline">{model.problem.status}</Badge>
                 </div>
+                <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem.accessPolicy)}</p>
                 <pre className="whitespace-pre-wrap break-words rounded-3xl bg-slate-50 px-6 py-6 font-['Georgia'] text-sm leading-7 text-slate-700">
                   {problemStatementTextValue(model.problem.statement)}
                 </pre>
@@ -131,7 +133,7 @@ export function ProblemDetailPage() {
                     </div>
                     <div>
                       <CardTitle className="text-xl text-slate-950">Edit Problem</CardTitle>
-                      <CardDescription>Update the problem title, plain-text statement, and visibility.</CardDescription>
+                      <CardDescription>Update the problem title, plain-text statement, and access policy.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -153,19 +155,14 @@ export function ProblemDetailPage() {
                       onChange={(event) => model.setStatement(event.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Visibility</Label>
-                    <Select value={model.visibility} onValueChange={(value) => model.setVisibility(value as 'private' | 'group' | 'public')}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select visibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="group">Group</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <ResourceAccessEditor
+                    accessPolicy={model.accessPolicy}
+                    grantedUsersInput={model.grantedUsersInput}
+                    grantedGroupsInput={model.grantedGroupsInput}
+                    onBaseAccessChange={model.setBaseAccess}
+                    onGrantedUsersInputChange={model.setGrantedUsersInput}
+                    onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+                  />
                   <Button
                     type="button"
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"

@@ -12,6 +12,7 @@ import {
   problemTitleValue,
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
+import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemPage() {
@@ -110,7 +111,7 @@ export function ProblemPage() {
                       <Link className="text-lg font-semibold text-slate-950 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
                         {problemTitleValue(problem.title)}
                       </Link>
-                      <Badge variant="secondary">{problem.visibility}</Badge>
+                      <Badge variant="secondary">{resourceAccessBadgeLabel(problem.accessPolicy)}</Badge>
                       <Badge variant="outline">{problem.status}</Badge>
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p>

@@ -21,7 +21,7 @@ object ProblemHttpResponses:
       id = problem.id,
       slug = problem.slug,
       title = problem.title,
-      visibility = problem.visibility,
+      accessPolicy = problem.accessPolicy,
       status = problem.status,
       ownerUsername = problem.ownerUsername,
       createdAt = problem.createdAt,
@@ -34,7 +34,7 @@ object ProblemHttpResponses:
       slug = problem.slug,
       title = problem.title,
       statement = problem.statement,
-      visibility = problem.visibility,
+      accessPolicy = problem.accessPolicy,
       status = problem.status,
       ownerUsername = problem.ownerUsername,
       createdAt = problem.createdAt,
@@ -49,6 +49,8 @@ object ProblemHttpResponses:
         errorResponse(Status.BadRequest, message)
       case ProblemCommands.CreateProblemResult.SlugAlreadyExists =>
         errorResponse(Status.Conflict, "Problem slug already exists.")
+      case ProblemCommands.CreateProblemResult.SlugConflictsWithProblemSet =>
+        errorResponse(Status.Conflict, "Problem slug conflicts with an existing problem set slug.")
       case ProblemCommands.CreateProblemResult.Created(problem) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toProblemDetail(problem).asJson))
 
@@ -59,6 +61,8 @@ object ProblemHttpResponses:
     result match
       case ProblemCommands.GetProblemResult.NotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
+      case ProblemCommands.GetProblemResult.Forbidden =>
+        errorResponse(Status.Forbidden, "You do not have access to this problem.")
       case ProblemCommands.GetProblemResult.Found(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
 

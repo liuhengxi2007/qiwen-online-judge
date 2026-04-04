@@ -179,6 +179,7 @@ See also:
 - `docs/contract-checks.md`
 - `docs/planner-patterns.md`
 - `docs/resource-lifecycle-matrix.md`
+- `docs/resource-access-policy-design.md`
 
 ### Backend Shared Rules
 

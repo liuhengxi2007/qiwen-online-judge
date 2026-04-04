@@ -43,6 +43,9 @@ object AuthHttpResponses:
   def usernameConflictResponse: IO[Response[IO]] =
     errorResponse(Status.Conflict, "Username already exists, including case-only variations.")
 
+  def usernameConflictsWithUserGroupResponse: IO[Response[IO]] =
+    errorResponse(Status.Conflict, "Username conflicts with an existing user group slug.")
+
   def validationErrorResponse(message: String): IO[Response[IO]] =
     errorResponse(Status.BadRequest, message)
 
