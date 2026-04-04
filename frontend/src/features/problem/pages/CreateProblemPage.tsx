@@ -126,7 +126,7 @@ export function CreateProblemPage() {
                     placeholder={
                       '# Two Sum\n\nGiven an integer array and a target value, find two indices whose values sum to the target.\n\n$$a^2 + b^2 = c^2$$'
                     }
-                    className="min-h-64"
+                    className="min-h-64 !font-mono"
                     onChange={(event) => model.setStatement(event.target.value)}
                   />
                 </TabsContent>

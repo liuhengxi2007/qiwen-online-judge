@@ -128,7 +128,7 @@ a {
 
 .markdown-document {
   color: oklch(0.34 0.01 260);
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 0.98rem;
   line-height: 1.85;
 }
@@ -149,6 +149,12 @@ a {
   font-family: 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-weight: 600;
   letter-spacing: -0.02em;
+}
+
+.markdown-document code,
+.markdown-document pre {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas',
+    'Liberation Mono', monospace;
 }
 
 .markdown-document h1 {
@@ -176,6 +182,14 @@ a {
 .markdown-document ul,
 .markdown-document ol {
   padding-left: 1.5rem;
+}
+
+.markdown-document ul {
+  list-style: disc;
+}
+
+.markdown-document ol {
+  list-style: decimal;
 }
 
 .markdown-document li + li {

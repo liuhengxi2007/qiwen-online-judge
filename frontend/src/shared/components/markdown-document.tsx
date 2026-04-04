@@ -52,7 +52,7 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
             }
 
             return (
-              <code {...props} className={`${codeClassName ?? ''} font-mono text-sm text-slate-100`}>
+              <code {...props} className={`${codeClassName ?? ''} font-mono text-sm text-slate-800`}>
                 {children}
               </code>
             )
@@ -60,7 +60,7 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
           pre: ({ node: _node, ...props }) => (
             <pre
               {...props}
-              className="overflow-x-auto rounded-3xl bg-slate-950 px-5 py-4 text-sm leading-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+              className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm leading-7"
             />
           ),
         }}

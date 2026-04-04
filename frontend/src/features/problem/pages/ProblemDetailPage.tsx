@@ -161,7 +161,7 @@ export function ProblemDetailPage() {
                       <TabsContent value="write" className="mt-3">
                         <Textarea
                           id="problem-statement"
-                          className="min-h-64"
+                          className="min-h-64 !font-mono"
                           value={model.statement}
                           onChange={(event) => model.setStatement(event.target.value)}
                         />
