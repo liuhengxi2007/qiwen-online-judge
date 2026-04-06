@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react'
 
 import type { Username } from '@/features/auth/domain/auth'
 import type { UserGroupSlug } from '@/features/usergroup/domain/usergroup'
+import {
+  canRemoveUserGroupMember,
+  resolveUserGroupViewerPermissions,
+} from '@/features/usergroup/domain/usergroup-permissions'
 import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-usergroup-add-member-action'
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from '@/features/usergroup/hooks/use-usergroup-detail-query'
@@ -36,35 +40,12 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
 
   const permissions = useMemo(() => {
     const memberships = detailQuery.userGroup?.members ?? []
-    const currentMembership = memberships.find((member) => member.username === viewerUsername)
-    const role = currentMembership?.role ?? null
-    const canManage = isSiteManager || role === 'owner' || role === 'manager'
-    const canManageMemberRoles = isSiteManager || role === 'owner'
-    const canDelete = isSiteManager || role === 'owner'
-
-    return { canManage, canManageMemberRoles, canDelete }
+    return resolveUserGroupViewerPermissions(memberships, viewerUsername, isSiteManager)
   }, [detailQuery.userGroup?.members, isSiteManager, viewerUsername])
 
   function canRemoveMember(_targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
-    if (isSiteManager) {
-      return targetRole !== 'owner'
-    }
-
     const memberships = detailQuery.userGroup?.members ?? []
-    const currentMembership = memberships.find((member) => member.username === viewerUsername)
-    if (!currentMembership) {
-      return false
-    }
-
-    if (currentMembership.role === 'owner') {
-      return targetRole !== 'owner'
-    }
-
-    if (currentMembership.role === 'manager') {
-      return targetRole === 'member'
-    }
-
-    return false
+    return canRemoveUserGroupMember(memberships, viewerUsername, isSiteManager, targetRole)
   }
 
   async function save() {

@@ -35,8 +35,8 @@ export function resourceAccessBadgeLabel(accessPolicy: ResourceAccessPolicy): st
 }
 
 export function resourceAccessSummary(accessPolicy: ResourceAccessPolicy): string {
-  const directUsers = accessPolicy.viewerGrants.filter((grant) => grant.kind === 'user').length
-  const userGroups = accessPolicy.viewerGrants.filter((grant) => grant.kind === 'user_group').length
+  const directUsers = accessPolicy.viewerGrants.filter((grant: AccessSubject) => grant.kind === 'user').length
+  const userGroups = accessPolicy.viewerGrants.filter((grant: AccessSubject) => grant.kind === 'user_group').length
 
   if (accessPolicy.baseAccess === 'public') {
     return 'Visible to all signed-in users.'

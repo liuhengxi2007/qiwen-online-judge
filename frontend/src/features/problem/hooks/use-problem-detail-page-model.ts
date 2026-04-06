@@ -6,6 +6,11 @@ import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-del
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { useProblemEditorState } from '@/features/problem/hooks/use-problem-editor-state'
 import { useProblemUpdateAction } from '@/features/problem/hooks/use-problem-update-action'
+import {
+  buildResourceAccessPolicy,
+  grantedGroupsInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+} from '@/shared/domain/resource-access-input'
 
 type SectionMessageState = {
   errorMessage: string
@@ -35,9 +40,11 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     const result = await updateAction.save({
       title: editor.title,
       statement: editor.statement,
+      timeLimitMs: editor.timeLimitMs,
+      spaceLimitMb: editor.spaceLimitMb,
       baseAccess: currentProblem.accessPolicy.baseAccess,
-      grantedUsersInput: grantInputFromPolicy(currentProblem.accessPolicy, 'user'),
-      grantedGroupsInput: grantInputFromPolicy(currentProblem.accessPolicy, 'user_group'),
+      grantedUsersInput: grantedUsersInputFromAccessPolicy(currentProblem.accessPolicy),
+      grantedGroupsInput: grantedGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
     })
 
     if (result.ok) {
@@ -58,6 +65,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     const result = await updateAction.save({
       title: problemTitleValue(currentProblem.title),
       statement: problemStatementTextValue(currentProblem.statement),
+      timeLimitMs: currentProblem.timeLimitMs,
+      spaceLimitMb: currentProblem.spaceLimitMb,
       baseAccess: editor.baseAccess,
       grantedUsersInput: editor.grantedUsersInput,
       grantedGroupsInput: editor.grantedGroupsInput,
@@ -76,6 +85,12 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     return result.ok
   }
 
+  const accessPolicyResult = buildResourceAccessPolicy(
+    editor.baseAccess,
+    editor.grantedUsersInput,
+    editor.grantedGroupsInput,
+  )
+
   return {
     problem: detailQuery.problem,
     loadErrorMessage: detailQuery.errorMessage,
@@ -84,7 +99,9 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     isDeleting: deleteAction.isDeleting,
     title: editor.title,
     statement: editor.statement,
-    accessPolicy: modelAccessPolicy(editor.baseAccess, editor.grantedUsersInput, editor.grantedGroupsInput),
+    timeLimitMs: editor.timeLimitMs,
+    spaceLimitMb: editor.spaceLimitMb,
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : { baseAccess: editor.baseAccess, viewerGrants: [] },
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
@@ -94,6 +111,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     accessSuccessMessage: accessMessageState.successMessage,
     setTitle: editor.setTitle,
     setStatement: editor.setStatement,
+    setTimeLimitMs: editor.setTimeLimitMs,
+    setSpaceLimitMb: editor.setSpaceLimitMb,
     setBaseAccess: editor.setBaseAccess,
     setGrantedUsersInput: editor.setGrantedUsersInput,
     setGrantedGroupsInput: editor.setGrantedGroupsInput,
@@ -101,31 +120,4 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     saveAccess,
     deleteCurrentProblem,
   }
-}
-
-function modelAccessPolicy(baseAccess: 'owner_only' | 'public', grantedUsersInput: string, grantedGroupsInput: string) {
-  return {
-    baseAccess,
-    viewerGrants: [
-      ...splitGrantInput(grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
-      ...splitGrantInput(grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
-    ],
-  }
-}
-
-function splitGrantInput(raw: string): string[] {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-}
-
-function grantInputFromPolicy(
-  accessPolicy: { viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }> },
-  kind: 'user' | 'user_group',
-): string {
-  return accessPolicy.viewerGrants
-    .filter((grant) => grant.kind === kind)
-    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
-    .join('\n')
 }

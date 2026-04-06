@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemSlug, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.model.PageRequest
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
@@ -47,6 +47,48 @@ object ProblemRouter:
                 .flatMap(ProblemHttpResponses.mapGetResult)
             }
 
+      case request @ GET -> Root / "api" / "problems" / problemSlug / "data" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemCommands
+                .listProblemData(databaseSession, actor, parsedProblemSlug)
+                .flatMap(ProblemHttpResponses.mapListDataResult)
+            }
+
+      case request @ GET -> Root / "api" / "problems" / problemSlug / "data" / filename =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            ProblemDataFilename.parse(filename) match
+              case Left(message) =>
+                ProblemHttpResponses.validationErrorResponse(message)
+              case Right(parsedFilename) =>
+                sessionSupport.withAuthenticatedUser(request) { actor =>
+                  if !domains.problem.application.ProblemPolicy.canEdit(actor) then
+                    ProblemHttpResponses.validationErrorResponse("Problem manager permission required.")
+                  else
+                    ProblemHttpResponses.downloadDataResponse(parsedProblemSlug, parsedFilename)
+                }
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / filename / "delete" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            ProblemDataFilename.parse(filename) match
+              case Left(message) =>
+                ProblemHttpResponses.validationErrorResponse(message)
+              case Right(parsedFilename) =>
+                sessionSupport.withAuthenticatedUser(request) { actor =>
+                  ProblemCommands
+                    .deleteProblemData(databaseSession, actor, parsedProblemSlug, parsedFilename)
+                    .flatMap(ProblemHttpResponses.mapDeleteDataResult)
+                }
+
       case request @ POST -> Root / "api" / "problems" / problemSlug =>
         ProblemSlug.parse(problemSlug) match
           case Left(message) =>
@@ -58,6 +100,20 @@ object ProblemRouter:
                 response <- ProblemCommands
                   .updateProblem(databaseSession, actor, parsedProblemSlug, updateRequest)
                   .flatMap(ProblemHttpResponses.mapUpdateResult)
+              yield response
+            }
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              for
+                updateDataRequest <- request.as[UpdateProblemDataRequest]
+                response <- ProblemCommands
+                  .updateProblemData(databaseSession, actor, parsedProblemSlug, updateDataRequest)
+                  .flatMap(ProblemHttpResponses.mapUpdateDataResult)
               yield response
             }
 

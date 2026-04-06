@@ -1,11 +1,14 @@
 import { useEffect, useReducer } from 'react'
 
 import type { ProblemDetail } from '@/features/problem/domain/problem'
+import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemEditorState = {
   title: string
   statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -15,6 +18,8 @@ type ProblemEditorAction =
   | { type: 'hydrate'; problem: ProblemDetail | null }
   | { type: 'set_title'; value: string }
   | { type: 'set_statement'; value: string }
+  | { type: 'set_time_limit_ms'; value: number }
+  | { type: 'set_space_limit_mb'; value: number }
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
@@ -22,6 +27,8 @@ type ProblemEditorAction =
 const initialState: ProblemEditorState = {
   title: '',
   statement: '',
+  timeLimitMs: 1000,
+  spaceLimitMb: 256,
   baseAccess: 'owner_only',
   grantedUsersInput: '',
   grantedGroupsInput: '',
@@ -34,21 +41,21 @@ function reducer(state: ProblemEditorState, action: ProblemEditorAction): Proble
         ? {
             title: action.problem.title,
             statement: action.problem.statement,
+            timeLimitMs: action.problem.timeLimitMs,
+            spaceLimitMb: action.problem.spaceLimitMb,
             baseAccess: action.problem.accessPolicy.baseAccess,
-            grantedUsersInput: action.problem.accessPolicy.viewerGrants
-              .filter((grant) => grant.kind === 'user')
-              .map((grant) => grant.username)
-              .join('\n'),
-            grantedGroupsInput: action.problem.accessPolicy.viewerGrants
-              .filter((grant) => grant.kind === 'user_group')
-              .map((grant) => grant.slug)
-              .join('\n'),
+            grantedUsersInput: grantedUsersInputFromAccessPolicy(action.problem.accessPolicy),
+            grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problem.accessPolicy),
           }
         : initialState
     case 'set_title':
       return { ...state, title: action.value }
     case 'set_statement':
       return { ...state, statement: action.value }
+    case 'set_time_limit_ms':
+      return { ...state, timeLimitMs: action.value }
+    case 'set_space_limit_mb':
+      return { ...state, spaceLimitMb: action.value }
     case 'set_base_access':
       return { ...state, baseAccess: action.value }
     case 'set_granted_users_input':
@@ -69,6 +76,8 @@ export function useProblemEditorState(problem: ProblemDetail | null) {
     ...state,
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setStatement: (value: string) => dispatch({ type: 'set_statement', value }),
+    setTimeLimitMs: (value: number) => dispatch({ type: 'set_time_limit_ms', value }),
+    setSpaceLimitMb: (value: number) => dispatch({ type: 'set_space_limit_mb', value }),
     setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
     setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),

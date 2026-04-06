@@ -2,16 +2,19 @@ import type { CreateProblemRequest, UpdateProblemRequest } from '@/features/prob
 import {
   parseProblemSlug,
   parseProblemStatementText,
+  parseProblemSpaceLimitMb,
+  parseProblemTimeLimitMs,
   parseProblemTitle,
 } from '@/features/problem/domain/problem'
-import { parseUsername } from '@/features/auth/domain/auth'
-import { parseUserGroupSlug } from '@/features/usergroup/domain/usergroup'
-import type { AccessSubject, BaseAccess } from '@/shared/domain/resource-lifecycle'
+import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemDraft = {
   slug: string
   title: string
   statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -37,7 +40,17 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
     return { ok: false, message: statementResult.error }
   }
 
-  const accessPolicyResult = buildAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const timeLimitResult = parseProblemTimeLimitMs(draft.timeLimitMs)
+  if (!timeLimitResult.ok) {
+    return { ok: false, message: timeLimitResult.error }
+  }
+
+  const spaceLimitResult = parseProblemSpaceLimitMb(draft.spaceLimitMb)
+  if (!spaceLimitResult.ok) {
+    return { ok: false, message: spaceLimitResult.error }
+  }
+
+  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }
@@ -48,6 +61,8 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
       slug: slugResult.value,
       title: titleResult.value,
       statement: statementResult.value,
+      timeLimitMs: timeLimitResult.value,
+      spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
     },
   }
@@ -56,6 +71,8 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
 export type UpdateProblemDraft = {
   title: string
   statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -74,7 +91,17 @@ export function validateProblemUpdateDraft(
     return { ok: false, message: statementResult.error }
   }
 
-  const accessPolicyResult = buildAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const timeLimitResult = parseProblemTimeLimitMs(draft.timeLimitMs)
+  if (!timeLimitResult.ok) {
+    return { ok: false, message: timeLimitResult.error }
+  }
+
+  const spaceLimitResult = parseProblemSpaceLimitMb(draft.spaceLimitMb)
+  if (!spaceLimitResult.ok) {
+    return { ok: false, message: spaceLimitResult.error }
+  }
+
+  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }
@@ -84,64 +111,9 @@ export function validateProblemUpdateDraft(
     request: {
       title: titleResult.value,
       statement: statementResult.value,
+      timeLimitMs: timeLimitResult.value,
+      spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
     },
   }
-}
-
-function buildAccessPolicy(
-  baseAccess: BaseAccess,
-  grantedUsersInput: string,
-  grantedGroupsInput: string,
-): { ok: true; value: { baseAccess: BaseAccess; viewerGrants: AccessSubject[] } } | { ok: false; message: string } {
-  const users = parseTokenList(grantedUsersInput)
-  const groups = parseTokenList(grantedGroupsInput)
-
-  const parsedUsers: AccessSubject[] = []
-  for (const token of users) {
-    const result = parseUsername(token)
-    if (!result.ok) {
-      return { ok: false, message: result.error }
-    }
-
-    parsedUsers.push({ kind: 'user', username: result.value })
-  }
-
-  const parsedGroups: AccessSubject[] = []
-  for (const token of groups) {
-    const result = parseUserGroupSlug(token)
-    if (!result.ok) {
-      return { ok: false, message: result.error }
-    }
-
-    parsedGroups.push({ kind: 'user_group', slug: result.value })
-  }
-
-  return {
-    ok: true,
-    value: {
-      baseAccess,
-      viewerGrants: dedupeSubjects([...parsedGroups, ...parsedUsers]),
-    },
-  }
-}
-
-function parseTokenList(raw: string): string[] {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-}
-
-function dedupeSubjects(subjects: AccessSubject[]): AccessSubject[] {
-  const seen = new Set<string>()
-  return subjects.filter((subject) => {
-    const key =
-      subject.kind === 'user' ? `user:${subject.username}` : `user_group:${subject.slug}`
-    if (seen.has(key)) {
-      return false
-    }
-    seen.add(key)
-    return true
-  })
 }

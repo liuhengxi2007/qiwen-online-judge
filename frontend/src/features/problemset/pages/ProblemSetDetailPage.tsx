@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Link2, LogOut, PencilLine, Rows3, Trash2 } from 'lucide-react'
+import { ArrowLeft, Link2, LogOut, PencilLine, Rows3, ShieldCheck, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,11 @@ import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-pr
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import {
+  grantedGroupsInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+  normalizeAccessSubjectInput,
+} from '@/shared/domain/resource-access-input'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -48,6 +53,7 @@ export function ProblemSetDetailPage() {
 
   const canManageProblems = user.siteManager || user.problemManager
   const model = useProblemSetDetailPageModel(slugResult.value, canManageProblems)
+  const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
   const deferredDescription = useDeferredValue(model.description)
   const hasUnsavedChanges =
@@ -55,8 +61,10 @@ export function ProblemSetDetailPage() {
     (model.title !== problemSetTitleValue(model.problemSet.title) ||
       model.description !== problemSetDescriptionValue(model.problemSet.description) ||
       model.baseAccess !== model.problemSet.accessPolicy.baseAccess ||
-      normalizeGrantInput(model.grantedUsersInput) !== extractGrantInput(model.problemSet.accessPolicy, 'user') ||
-      normalizeGrantInput(model.grantedGroupsInput) !== extractGrantInput(model.problemSet.accessPolicy, 'user_group') ||
+      normalizeAccessSubjectInput(model.grantedUsersInput) !==
+        grantedUsersInputFromAccessPolicy(model.problemSet.accessPolicy) ||
+      normalizeAccessSubjectInput(model.grantedGroupsInput) !==
+        grantedGroupsInputFromAccessPolicy(model.problemSet.accessPolicy) ||
       model.linkProblemSlug.trim().length > 0)
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
@@ -108,17 +116,55 @@ export function ProblemSetDetailPage() {
           <div className="space-y-6">
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
-                <CardTitle className="text-2xl text-slate-950">{problemSetTitleValue(model.problemSet.title)}</CardTitle>
-                <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-                  {problemSetSlugValue(model.problemSet.slug)}
-                </CardDescription>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <CardTitle className="text-2xl text-slate-950">{problemSetTitleValue(model.problemSet.title)}</CardTitle>
+                    <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+                      {problemSetSlugValue(model.problemSet.slug)}
+                    </CardDescription>
+                  </div>
+
+                  {canManageProblems ? (
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant={managementPanel === 'edit' ? 'default' : 'outline'}
+                        className={
+                          managementPanel === 'edit'
+                            ? 'rounded-2xl bg-amber-600 text-white hover:bg-amber-700'
+                            : 'rounded-2xl border-amber-300 bg-white text-amber-800 hover:bg-amber-50'
+                        }
+                        onClick={() => {
+                          setManagementPanel((currentPanel) => (currentPanel === 'edit' ? null : 'edit'))
+                        }}
+                      >
+                        <PencilLine className="size-4" />
+                        Edit problem set
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={managementPanel === 'access' ? 'default' : 'outline'}
+                        className={
+                          managementPanel === 'access'
+                            ? 'rounded-2xl bg-teal-700 text-white hover:bg-teal-800'
+                            : 'rounded-2xl border-teal-300 bg-white text-teal-800 hover:bg-teal-50'
+                        }
+                        onClick={() => {
+                          setManagementPanel((currentPanel) => (currentPanel === 'access' ? null : 'access'))
+                        }}
+                      >
+                        <ShieldCheck className="size-4" />
+                        Access management
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary">{resourceAccessBadgeLabel(model.problemSet.accessPolicy)}</Badge>
                   <Badge variant="outline">{model.problemSet.status}</Badge>
                 </div>
-                <p className="text-sm text-slate-600">{resourceAccessSummary(model.problemSet.accessPolicy)}</p>
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
                   {problemSetDescriptionValue(model.problemSet.description) ? (
                     <MarkdownDocument content={problemSetDescriptionValue(model.problemSet.description)} />
@@ -132,7 +178,7 @@ export function ProblemSetDetailPage() {
               </CardContent>
             </Card>
 
-            {canManageProblems ? (
+            {canManageProblems && managementPanel === 'edit' ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -215,7 +261,7 @@ export function ProblemSetDetailPage() {
               </Card>
             ) : null}
 
-            {canManageProblems ? (
+            {canManageProblems && managementPanel === 'access' ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -229,6 +275,7 @@ export function ProblemSetDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-5">
+                  <p className="text-sm text-slate-600">{resourceAccessSummary(model.problemSet.accessPolicy)}</p>
                   <ResourceAccessEditor
                     accessPolicy={model.accessPolicy}
                     grantedUsersInput={model.grantedUsersInput}
@@ -319,7 +366,7 @@ export function ProblemSetDetailPage() {
               </CardContent>
             </Card>
 
-            {canManageProblems ? (
+            {canManageProblems && managementPanel === 'edit' ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -367,7 +414,7 @@ export function ProblemSetDetailPage() {
               </Card>
             ) : null}
 
-            {canManageProblems ? (
+            {canManageProblems && managementPanel === 'edit' ? (
               <Card className="border-rose-200 bg-rose-50/60 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -412,24 +459,4 @@ export function ProblemSetDetailPage() {
       </section>
     </main>
   )
-}
-
-function normalizeGrantInput(raw: string): string {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-    .join('\n')
-}
-
-function extractGrantInput(
-  accessPolicy: {
-    viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
-  },
-  kind: 'user' | 'user_group',
-): string {
-  return accessPolicy.viewerGrants
-    .filter((grant) => grant.kind === kind)
-    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
-    .join('\n')
 }
