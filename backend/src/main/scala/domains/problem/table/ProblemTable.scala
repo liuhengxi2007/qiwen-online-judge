@@ -100,6 +100,35 @@ object ProblemTable:
       |      and rvg.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
+      |  or exists (
+      |    select 1
+      |    from problem_set_problems psp
+      |    join problem_sets ps on ps.id = psp.problem_set_id
+      |    where psp.problem_id = p.id
+      |      and (
+      |        ? = true
+      |        or ps.owner_username = ?
+      |        or ps.base_access = 'public'
+      |        or exists (
+      |          select 1
+      |          from resource_viewer_grants rvg
+      |          where rvg.resource_kind = 'problem_set'
+      |            and rvg.resource_id = ps.id
+      |            and rvg.subject_kind = 'user'
+      |            and rvg.subject_key = ?
+      |        )
+      |        or exists (
+      |          select 1
+      |          from resource_viewer_grants rvg
+      |          join user_groups ug on ug.slug = rvg.subject_key
+      |          join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |          where rvg.resource_kind = 'problem_set'
+      |            and rvg.resource_id = ps.id
+      |            and rvg.subject_kind = 'user_group'
+      |            and ugm.username = ?
+      |        )
+      |      )
+      |  )
       |order by p.updated_at desc, p.slug asc
       |limit ? offset ?
       |""".stripMargin
@@ -129,6 +158,35 @@ object ProblemTable:
       |      and rvg.resource_id = p.id
       |      and rvg.subject_kind = 'user_group'
       |      and ugm.username = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from problem_set_problems psp
+      |    join problem_sets ps on ps.id = psp.problem_set_id
+      |    where psp.problem_id = p.id
+      |      and (
+      |        ? = true
+      |        or ps.owner_username = ?
+      |        or ps.base_access = 'public'
+      |        or exists (
+      |          select 1
+      |          from resource_viewer_grants rvg
+      |          where rvg.resource_kind = 'problem_set'
+      |            and rvg.resource_id = ps.id
+      |            and rvg.subject_kind = 'user'
+      |            and rvg.subject_key = ?
+      |        )
+      |        or exists (
+      |          select 1
+      |          from resource_viewer_grants rvg
+      |          join user_groups ug on ug.slug = rvg.subject_key
+      |          join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |          where rvg.resource_kind = 'problem_set'
+      |            and rvg.resource_id = ps.id
+      |            and rvg.subject_kind = 'user_group'
+      |            and ugm.username = ?
+      |        )
+      |      )
       |  )
       |""".stripMargin
 
@@ -219,6 +277,21 @@ object ProblemTable:
           .map(grants => Some(problem.copy(accessPolicy = policyFrom(problem.accessPolicy.baseAccess, grants))))
       case None =>
         IO.pure(None)
+    }
+
+  def hasVisibleContainingProblemSet(
+    connection: Connection,
+    actor: domains.auth.model.AuthUser,
+    problemId: ProblemId
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(hasVisibleContainingProblemSetSql)
+      try
+        bindContainingProblemSetVisibilityQuery(statement, actor, problemId)
+        val resultSet = statement.executeQuery()
+        try resultSet.next()
+        finally resultSet.close()
+      finally statement.close()
     }
 
   def insert(connection: Connection, ownerUsername: Username, request: CreateProblemRequest): IO[Problem] =
@@ -313,8 +386,55 @@ object ProblemTable:
     statement.setString(2, actor.username.value)
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)
-    pageSize.foreach(statement.setInt(5, _))
-    offset.foreach(statement.setInt(6, _))
+    statement.setBoolean(5, actor.siteManager || actor.problemManager)
+    statement.setString(6, actor.username.value)
+    statement.setString(7, actor.username.value)
+    statement.setString(8, actor.username.value)
+    pageSize.foreach(statement.setInt(9, _))
+    offset.foreach(statement.setInt(10, _))
+
+  private val hasVisibleContainingProblemSetSql: String =
+    """
+      |select 1
+      |from problem_set_problems psp
+      |join problem_sets ps on ps.id = psp.problem_set_id
+      |where psp.problem_id = ?
+      |  and (
+      |    ? = true
+      |    or ps.owner_username = ?
+      |    or ps.base_access = 'public'
+      |    or exists (
+      |      select 1
+      |      from resource_viewer_grants rvg
+      |      where rvg.resource_kind = 'problem_set'
+      |        and rvg.resource_id = ps.id
+      |        and rvg.subject_kind = 'user'
+      |        and rvg.subject_key = ?
+      |    )
+      |    or exists (
+      |      select 1
+      |      from resource_viewer_grants rvg
+      |      join user_groups ug on ug.slug = rvg.subject_key
+      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |      where rvg.resource_kind = 'problem_set'
+      |        and rvg.resource_id = ps.id
+      |        and rvg.subject_kind = 'user_group'
+      |        and ugm.username = ?
+      |    )
+      |  )
+      |limit 1
+      |""".stripMargin
+
+  private def bindContainingProblemSetVisibilityQuery(
+    statement: java.sql.PreparedStatement,
+    actor: domains.auth.model.AuthUser,
+    problemId: ProblemId
+  ): Unit =
+    statement.setObject(1, problemId.value)
+    statement.setBoolean(2, actor.siteManager || actor.problemManager)
+    statement.setString(3, actor.username.value)
+    statement.setString(4, actor.username.value)
+    statement.setString(5, actor.username.value)
 
   private def policyFrom(baseAccess: BaseAccess, grants: List[domains.shared.access.ResourceViewerGrant]): ResourceAccessPolicy =
     ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = grants.map(_.subject))

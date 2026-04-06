@@ -181,7 +181,9 @@ object ProblemCommands:
             domains.shared.access.ResourceId(problem.id.value),
             actor.username
           )
-      yield hasDirectGrant || hasGroupGrant
+        hasVisibleContainingProblemSet <- if hasDirectGrant || hasGroupGrant then IO.pure(false)
+        else ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
+      yield hasDirectGrant || hasGroupGrant || hasVisibleContainingProblemSet
 
   private def validateAccessPolicySubjects(
     connection: java.sql.Connection,
