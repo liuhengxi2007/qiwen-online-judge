@@ -1,6 +1,6 @@
 import { useCallback, useReducer } from 'react'
 
-import { usernameValue, type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/features/auth/domain/auth'
+import { usernameValue, type AuthUserListItem, type UpdateUserPermissionsRequest, type Username } from '@/features/auth/domain/auth'
 import { useSiteManageQuery } from '@/features/site-management/hooks/use-site-manage-query'
 import { useUserDeleteMutation } from '@/features/site-management/hooks/use-user-delete-mutation'
 import { useUserPermissionsMutation } from '@/features/site-management/hooks/use-user-permissions-mutation'
@@ -9,15 +9,15 @@ import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 type SiteManageState = {
   statusMessage: string
   actionErrorMessage: string
-  updatingUsername: string | null
+  updatingUsername: Username | null
   navigationIntent: NavigationIntent | null
 }
 
 type SiteManageAction =
-  | { type: 'update_started'; username: string }
+  | { type: 'update_started'; username: Username }
   | { type: 'update_succeeded'; user: AuthUserListItem }
-  | { type: 'delete_started'; username: string }
-  | { type: 'delete_succeeded'; username: string; message: string }
+  | { type: 'delete_started'; username: Username }
+  | { type: 'delete_succeeded'; username: Username; message: string }
   | { type: 'update_failed'; message: string }
   | { type: 'redirect_requested'; intent: NavigationIntent }
 
@@ -89,7 +89,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
         return
       }
 
-      dispatch({ type: 'update_started', username: usernameValue(listedUser.username) })
+      dispatch({ type: 'update_started', username: listedUser.username })
 
       const result = await saveUserPermissions(listedUser.username, nextPermissions)
 
@@ -114,7 +114,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
         return
       }
 
-      const username = usernameValue(listedUser.username)
+      const username = listedUser.username
       dispatch({ type: 'delete_started', username })
 
       const result = await deleteTargetUser(listedUser.username)

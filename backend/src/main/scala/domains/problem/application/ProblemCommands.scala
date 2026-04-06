@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{CreateProblemRequest, Problem, ProblemSummary, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, Problem, ProblemDataFileListResponse, ProblemDataFilename, UpdateProblemDataRequest, ProblemSummary, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
@@ -36,6 +36,23 @@ object ProblemCommands:
     case Forbidden
     case ProblemNotFound
     case Deleted
+
+  enum UpdateProblemDataResult:
+    case Forbidden
+    case ValidationFailed(message: String)
+    case ProblemNotFound
+    case Updated(problem: Problem)
+
+  enum ListProblemDataResult:
+    case Forbidden
+    case ProblemNotFound
+    case Listed(response: ProblemDataFileListResponse)
+
+  enum DeleteProblemDataResult:
+    case Forbidden
+    case ProblemNotFound
+    case DataFileNotFound
+    case Deleted(problem: Problem)
 
   def listProblems(
     databaseSession: DatabaseSession,
@@ -146,6 +163,96 @@ object ProblemCommands:
             case Some(problem) =>
               ProblemTable.delete(connection, problem.id).as(DeleteProblemResult.Deleted)
         yield result
+      }
+
+  def updateProblemData(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    request: UpdateProblemDataRequest
+  ): IO[UpdateProblemDataResult] =
+    if !ProblemPolicy.canEdit(actor) then
+      IO.pure(UpdateProblemDataResult.Forbidden)
+    else
+      ProblemValidation.validateDataUpdate(request) match
+        case Left(message) =>
+          IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+        case Right(validRequest) =>
+          validRequest.decodedBytes match
+            case Left(message) =>
+              IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+            case Right(decodedBytes) =>
+              databaseSession.withTransactionConnection { connection =>
+                for
+                  maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+                  result <- maybeProblem match
+                    case None =>
+                      IO.pure(UpdateProblemDataResult.ProblemNotFound)
+                    case Some(problem) =>
+                      ProblemDataStorage
+                        .writeFile(problem.slug, validRequest.filename, decodedBytes)
+                        .flatMap(savedFilename =>
+                          ProblemTable.updateData(connection, problem.id, savedFilename)
+                        )
+                        .flatMap(_ =>
+                          ProblemTable.findBySlug(connection, problem.slug).map {
+                            case Some(updatedProblem) => UpdateProblemDataResult.Updated(updatedProblem)
+                            case None => throw new IllegalStateException("Problem disappeared after data update")
+                          }
+                        )
+                yield result
+              }
+
+  def listProblemData(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug
+  ): IO[ListProblemDataResult] =
+    if !ProblemPolicy.canEdit(actor) then
+      IO.pure(ListProblemDataResult.Forbidden)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        ProblemTable.findBySlug(connection, problemSlug).flatMap {
+          case None =>
+            IO.pure(ListProblemDataResult.ProblemNotFound)
+          case Some(problem) =>
+            ProblemDataStorage
+              .listFiles(problem.slug)
+              .map(files => ListProblemDataResult.Listed(ProblemDataFileListResponse(files)))
+        }
+      }
+
+  def deleteProblemData(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    filename: ProblemDataFilename
+  ): IO[DeleteProblemDataResult] =
+    if !ProblemPolicy.canEdit(actor) then
+      IO.pure(DeleteProblemDataResult.Forbidden)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        ProblemTable.findBySlug(connection, problemSlug).flatMap {
+          case None =>
+            IO.pure(DeleteProblemDataResult.ProblemNotFound)
+          case Some(problem) =>
+            ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
+              case false =>
+                IO.pure(DeleteProblemDataResult.DataFileNotFound)
+              case true =>
+                ProblemDataStorage
+                  .listFiles(problem.slug)
+                  .flatMap { files =>
+                    ProblemTable.updateData(connection, problem.id, files.lastOption)
+                  }
+                  .flatMap(_ =>
+                    ProblemTable.findBySlug(connection, problem.slug).map {
+                      case Some(updatedProblem) => DeleteProblemDataResult.Deleted(updatedProblem)
+                      case None => throw new IllegalStateException("Problem disappeared after data deletion")
+                    }
+                  )
+            }
+        }
       }
 
   private def findConflictingProblemSet(

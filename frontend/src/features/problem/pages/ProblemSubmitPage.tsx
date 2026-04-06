@@ -1,0 +1,222 @@
+import { useState } from 'react'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Code2, LogOut, Send } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
+import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import {
+  parseProblemSlug,
+  problemSlugValue,
+  problemTitleValue,
+} from '@/features/problem/domain/problem'
+import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
+import { usePageTitle } from '@/shared/hooks/use-page-title'
+
+type SubmissionLanguage = 'cpp17' | 'python3'
+
+const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = [
+  { value: 'cpp17', label: 'C++17' },
+  { value: 'python3', label: 'Python 3' },
+]
+
+export function ProblemSubmitPage() {
+  usePageTitle('Qiwen Online Judge - Submit Code')
+  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { slug } = useParams<{ slug: string }>()
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
+  }
+
+  if (!user) {
+    return <Navigate replace to="/login" />
+  }
+
+  const slugResult = parseProblemSlug(slug ?? '')
+  if (!slugResult.ok) {
+    return <Navigate replace to="/problems" />
+  }
+
+  const detailQuery = useProblemDetailQuery(slugResult.value)
+  const [language, setLanguage] = useState<SubmissionLanguage>('cpp17')
+  const [sourceCode, setSourceCode] = useState('')
+  const [statusMessage, setStatusMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const hasUnsavedChanges = sourceCode.trim().length > 0
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
+
+  if (!detailQuery.isLoading && !detailQuery.problem) {
+    return <Navigate replace to="/problems" />
+  }
+
+  return (
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
+      <section className="mx-auto max-w-5xl">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Submit Code</h1>
+            <p className="text-sm text-slate-600">
+              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
+              <Link to={`/problems/${problemSlugValue(slugResult.value)}`}>
+                <ArrowLeft className="size-4" />
+                Back to Problem
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-slate-300 bg-white"
+              onClick={() => {
+                void signOut()
+              }}
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+
+        {detailQuery.errorMessage ? (
+          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{detailQuery.errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {detailQuery.isLoading ? (
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardContent className="py-10 text-sm text-slate-500">Loading problem for submission...</CardContent>
+          </Card>
+        ) : detailQuery.problem ? (
+          <div className="space-y-6">
+            <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                    <Code2 className="size-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl text-slate-950">
+                      {problemTitleValue(detailQuery.problem.title)}
+                    </CardTitle>
+                    <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+                      {problemSlugValue(detailQuery.problem.slug)}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-7 text-slate-600">
+                  This page prepares the submission experience only. Real judge execution has not been connected yet.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+              <CardHeader>
+                <CardTitle className="text-xl text-slate-950">Submission Editor</CardTitle>
+                <CardDescription>
+                  Choose a language and draft your source code before the backend judging flow is added.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="problem-submit-language">Language</Label>
+                  <Select
+                    value={language}
+                    onValueChange={(nextLanguage) => {
+                      if (nextLanguage === 'cpp17' || nextLanguage === 'python3') {
+                        setLanguage(nextLanguage)
+                      }
+                      setStatusMessage('')
+                      setErrorMessage('')
+                    }}
+                  >
+                    <SelectTrigger id="problem-submit-language" className="h-11 rounded-2xl">
+                      <SelectValue placeholder="Choose a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLanguages.map((supportedLanguage) => (
+                        <SelectItem key={supportedLanguage.value} value={supportedLanguage.value}>
+                          {supportedLanguage.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="problem-submit-source">Source code</Label>
+                  <Textarea
+                    id="problem-submit-source"
+                    value={sourceCode}
+                    className="min-h-[26rem] rounded-3xl !font-mono text-sm"
+                    placeholder="Write your solution here."
+                    onChange={(event) => {
+                      setSourceCode(event.target.value)
+                      setStatusMessage('')
+                      setErrorMessage('')
+                    }}
+                  />
+                </div>
+
+                {errorMessage ? (
+                  <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                    <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {statusMessage ? (
+                  <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                    <AlertDescription className="text-emerald-700">{statusMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                    onClick={() => {
+                      if (!sourceCode.trim()) {
+                        setErrorMessage('Source code is required before submitting.')
+                        setStatusMessage('')
+                        return
+                      }
+
+                      setErrorMessage('')
+                      setStatusMessage(
+                        `Submission draft prepared in ${supportedLanguages.find((item) => item.value === language)?.label ?? language}. Judge integration has not been implemented yet.`,
+                      )
+                    }}
+                  >
+                    <Send className="size-4" />
+                    Submit code
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+      </section>
+    </main>
+  )
+}

@@ -19,11 +19,17 @@ export type ProblemId = Brand<string, 'ProblemId'>
 export type ProblemSlug = Brand<string, 'ProblemSlug'>
 export type ProblemTitle = Brand<string, 'ProblemTitle'>
 export type ProblemStatementText = Brand<string, 'ProblemStatementText'>
+export type ProblemDataFilename = Brand<string, 'ProblemDataFilename'>
+export type ProblemTimeLimitMs = Brand<number, 'ProblemTimeLimitMs'>
+export type ProblemSpaceLimitMb = Brand<number, 'ProblemSpaceLimitMb'>
 
 export type ProblemSummary = {
   id: ProblemId
   slug: ProblemSlug
   title: ProblemTitle
+  data: ProblemDataFilename | null
+  timeLimitMs: ProblemTimeLimitMs
+  spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
@@ -36,6 +42,9 @@ export type ProblemDetail = {
   slug: ProblemSlug
   title: ProblemTitle
   statement: ProblemStatementText
+  data: ProblemDataFilename | null
+  timeLimitMs: ProblemTimeLimitMs
+  spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
   status: ResourceStatus
   ownerUsername: Username
@@ -47,16 +56,26 @@ export type CreateProblemRequest = {
   slug: ProblemSlug
   title: ProblemTitle
   statement: ProblemStatementText
+  timeLimitMs: ProblemTimeLimitMs
+  spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
 }
 
 export type UpdateProblemRequest = {
   title: ProblemTitle
   statement: ProblemStatementText
+  timeLimitMs: ProblemTimeLimitMs
+  spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
 }
 
+export type UpdateProblemDataRequest = {
+  filename: ProblemDataFilename
+  contentBase64: string
+}
+
 export type ProblemListResponse = PageResponse<ProblemSummary>
+export type ProblemDataFileList = ProblemDataFilename[]
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -74,6 +93,18 @@ function createProblemTitle(value: string): ProblemTitle {
 
 function createProblemStatementText(value: string): ProblemStatementText {
   return value as ProblemStatementText
+}
+
+function createProblemDataFilename(value: string): ProblemDataFilename {
+  return value as ProblemDataFilename
+}
+
+function createProblemTimeLimitMs(value: number): ProblemTimeLimitMs {
+  return value as ProblemTimeLimitMs
+}
+
+function createProblemSpaceLimitMb(value: number): ProblemSpaceLimitMb {
+  return value as ProblemSpaceLimitMb
 }
 
 function requireParsed<T>(result: ParseResult<T>, label: string): T {
@@ -98,6 +129,18 @@ export function problemTitleValue(title: ProblemTitle): string {
 
 export function problemStatementTextValue(statement: ProblemStatementText): string {
   return statement
+}
+
+export function problemDataFilenameValue(filename: ProblemDataFilename): string {
+  return filename
+}
+
+export function problemTimeLimitMsValue(timeLimitMs: ProblemTimeLimitMs): number {
+  return timeLimitMs
+}
+
+export function problemSpaceLimitMbValue(spaceLimitMb: ProblemSpaceLimitMb): number {
+  return spaceLimitMb
 }
 
 export function parseProblemSlug(rawSlug: string): ParseResult<ProblemSlug> {
@@ -144,11 +187,45 @@ export function parseProblemStatementText(rawStatement: string): ParseResult<Pro
   return { ok: true, value: createProblemStatementText(normalized) }
 }
 
+export function parseProblemDataFilename(rawFilename: string): ParseResult<ProblemDataFilename> {
+  const normalized = rawFilename.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Problem data file name is required.' }
+  }
+  if (normalized.length > 255) {
+    return { ok: false, error: 'Problem data file name must be at most 255 characters.' }
+  }
+  return { ok: true, value: createProblemDataFilename(normalized) }
+}
+
+export function parseProblemTimeLimitMs(rawTimeLimitMs: number): ParseResult<ProblemTimeLimitMs> {
+  if (!Number.isInteger(rawTimeLimitMs)) {
+    return { ok: false, error: 'Problem time limit must be an integer.' }
+  }
+  if (rawTimeLimitMs < 1 || rawTimeLimitMs > 600000) {
+    return { ok: false, error: 'Problem time limit must be between 1 and 600000 ms.' }
+  }
+  return { ok: true, value: createProblemTimeLimitMs(rawTimeLimitMs) }
+}
+
+export function parseProblemSpaceLimitMb(rawSpaceLimitMb: number): ParseResult<ProblemSpaceLimitMb> {
+  if (!Number.isInteger(rawSpaceLimitMb)) {
+    return { ok: false, error: 'Problem space limit must be an integer.' }
+  }
+  if (rawSpaceLimitMb < 1 || rawSpaceLimitMb > 65536) {
+    return { ok: false, error: 'Problem space limit must be between 1 and 65536 MB.' }
+  }
+  return { ok: true, value: createProblemSpaceLimitMb(rawSpaceLimitMb) }
+}
+
 export function fromProblemSummaryContract(problem: ProblemSummaryContract): ProblemSummary {
   return {
     id: requireParsed(parseProblemId(problem.id), 'problem summary id'),
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem summary slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem summary title'),
+    data: problem.data === null ? null : requireParsed(parseProblemDataFilename(problem.data), 'problem summary data'),
+    timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
+    spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
     status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem summary owner username'),
@@ -163,6 +240,9 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem detail slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem detail title'),
     statement: requireParsed(parseProblemStatementText(problem.statement), 'problem detail statement'),
+    data: problem.data === null ? null : requireParsed(parseProblemDataFilename(problem.data), 'problem detail data'),
+    timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
+    spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
     status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem detail owner username'),
@@ -182,17 +262,21 @@ export function fromProblemListResponseContract(response: ProblemListResponseCon
 
 export function toCreateProblemRequestContract(request: CreateProblemRequest): CreateProblemRequestContract {
   return {
-    slug: problemSlugValue(request.slug),
-    title: problemTitleValue(request.title),
-    statement: problemStatementTextValue(request.statement),
-    accessPolicy: request.accessPolicy,
+      slug: problemSlugValue(request.slug),
+      title: problemTitleValue(request.title),
+      statement: problemStatementTextValue(request.statement),
+      timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
+      spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
+      accessPolicy: request.accessPolicy,
   }
 }
 
 export function toUpdateProblemRequestContract(request: UpdateProblemRequest): UpdateProblemRequestContract {
   return {
-    title: problemTitleValue(request.title),
-    statement: problemStatementTextValue(request.statement),
-    accessPolicy: request.accessPolicy,
+      title: problemTitleValue(request.title),
+      statement: problemStatementTextValue(request.statement),
+      timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
+      spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
+      accessPolicy: request.accessPolicy,
   }
 }

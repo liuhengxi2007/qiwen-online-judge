@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, LogOut, PencilLine, ScrollText, Trash2 } from 'lucide-react'
+import { ArrowLeft, Database, LogOut, PencilLine, ScrollText, Send, ShieldCheck, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseProblemSlug,
+  problemDataFilenameValue,
   problemSlugValue,
   problemStatementTextValue,
   problemTitleValue,
@@ -22,6 +23,11 @@ import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import {
+  grantedGroupsInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+  normalizeAccessSubjectInput,
+} from '@/shared/domain/resource-access-input'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -47,15 +53,20 @@ export function ProblemDetailPage() {
 
   const model = useProblemDetailPageModel(slugResult.value)
   const canManageProblem = user.siteManager || user.problemManager
+  const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
   const deferredStatement = useDeferredValue(model.statement)
   const hasUnsavedChanges =
     model.problem !== null &&
     (model.title !== problemTitleValue(model.problem.title) ||
       model.statement !== problemStatementTextValue(model.problem.statement) ||
+      model.timeLimitMs !== model.problem.timeLimitMs ||
+      model.spaceLimitMb !== model.problem.spaceLimitMb ||
       model.baseAccess !== model.problem.accessPolicy.baseAccess ||
-      normalizeGrantInput(model.grantedUsersInput) !== extractGrantInput(model.problem.accessPolicy, 'user') ||
-      normalizeGrantInput(model.grantedGroupsInput) !== extractGrantInput(model.problem.accessPolicy, 'user_group'))
+      normalizeAccessSubjectInput(model.grantedUsersInput) !==
+        grantedUsersInputFromAccessPolicy(model.problem.accessPolicy) ||
+      normalizeAccessSubjectInput(model.grantedGroupsInput) !==
+        grantedGroupsInputFromAccessPolicy(model.problem.accessPolicy))
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -106,15 +117,74 @@ export function ProblemDetailPage() {
           <div className="space-y-6">
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                    <ScrollText className="size-5" />
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                      <ScrollText className="size-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl text-slate-950">{problemTitleValue(model.problem.title)}</CardTitle>
+                      <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+                        {problemSlugValue(model.problem.slug)}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl text-slate-950">{problemTitleValue(model.problem.title)}</CardTitle>
-                    <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-                      {problemSlugValue(model.problem.slug)}
-                    </CardDescription>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="rounded-2xl border-cyan-300 bg-white text-cyan-900 hover:bg-cyan-50"
+                    >
+                      <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submit`}>
+                        <Send className="size-4" />
+                        Submit code
+                      </Link>
+                    </Button>
+                    {canManageProblem ? (
+                      <>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="rounded-2xl border-sky-300 bg-white text-sky-900 hover:bg-sky-50"
+                      >
+                        <Link to={`/problems/${problemSlugValue(model.problem.slug)}/data`}>
+                          <Database className="size-4" />
+                          View data
+                        </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={managementPanel === 'edit' ? 'default' : 'outline'}
+                        className={
+                          managementPanel === 'edit'
+                            ? 'rounded-2xl bg-amber-600 text-white hover:bg-amber-700'
+                            : 'rounded-2xl border-amber-300 bg-white text-amber-800 hover:bg-amber-50'
+                        }
+                        onClick={() => {
+                          setManagementPanel((currentPanel) => (currentPanel === 'edit' ? null : 'edit'))
+                        }}
+                      >
+                        <PencilLine className="size-4" />
+                        Edit problem
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={managementPanel === 'access' ? 'default' : 'outline'}
+                        className={
+                          managementPanel === 'access'
+                            ? 'rounded-2xl bg-teal-700 text-white hover:bg-teal-800'
+                            : 'rounded-2xl border-teal-300 bg-white text-teal-800 hover:bg-teal-50'
+                        }
+                        onClick={() => {
+                          setManagementPanel((currentPanel) => (currentPanel === 'access' ? null : 'access'))
+                        }}
+                      >
+                        <ShieldCheck className="size-4" />
+                        Access management
+                      </Button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </CardHeader>
@@ -123,7 +193,22 @@ export function ProblemDetailPage() {
                   <Badge variant="secondary">{resourceAccessBadgeLabel(model.problem.accessPolicy)}</Badge>
                   <Badge variant="outline">{model.problem.status}</Badge>
                 </div>
-                <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem.accessPolicy)}</p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                    <p className="text-sm text-slate-500">Time limit</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                    <p className="text-sm text-slate-500">Space limit</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                    <p className="text-sm text-slate-500">Data</p>
+                    <p className="mt-2 text-sm font-medium text-slate-900">
+                      {model.problem.data ? problemDataFilenameValue(model.problem.data) : 'No data uploaded'}
+                    </p>
+                  </div>
+                </div>
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
                   <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
                 </div>
@@ -133,7 +218,7 @@ export function ProblemDetailPage() {
               </CardContent>
             </Card>
 
-            {canManageProblem ? (
+            {canManageProblem && managementPanel === 'edit' ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -194,6 +279,32 @@ export function ProblemDetailPage() {
                       Raw HTML is ignored.
                     </p>
                   </div>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="problem-time-limit">Time limit (ms)</Label>
+                      <Input
+                        id="problem-time-limit"
+                        type="number"
+                        min={1}
+                        value={model.timeLimitMs}
+                        onChange={(event) => {
+                          model.setTimeLimitMs(Number(event.target.value))
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="problem-space-limit">Space limit (MB)</Label>
+                      <Input
+                        id="problem-space-limit"
+                        type="number"
+                        min={1}
+                        value={model.spaceLimitMb}
+                        onChange={(event) => {
+                          model.setSpaceLimitMb(Number(event.target.value))
+                        }}
+                      />
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
@@ -218,7 +329,7 @@ export function ProblemDetailPage() {
               </Card>
             ) : null}
 
-            {canManageProblem ? (
+            {canManageProblem && managementPanel === 'access' ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -232,6 +343,7 @@ export function ProblemDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-5">
+                  <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem.accessPolicy)}</p>
                   <ResourceAccessEditor
                     accessPolicy={model.accessPolicy}
                     grantedUsersInput={model.grantedUsersInput}
@@ -264,7 +376,7 @@ export function ProblemDetailPage() {
               </Card>
             ) : null}
 
-            {canManageProblem ? (
+            {canManageProblem && managementPanel === 'edit' ? (
               <Card className="border-rose-200 bg-rose-50/60 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -309,24 +421,4 @@ export function ProblemDetailPage() {
       </section>
     </main>
   )
-}
-
-function normalizeGrantInput(raw: string): string {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-    .join('\n')
-}
-
-function extractGrantInput(
-  accessPolicy: {
-    viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
-  },
-  kind: 'user' | 'user_group',
-): string {
-  return accessPolicy.viewerGrants
-    .filter((grant) => grant.kind === kind)
-    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
-    .join('\n')
 }

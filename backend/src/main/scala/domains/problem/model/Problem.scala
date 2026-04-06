@@ -7,6 +7,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
 import java.util.UUID
+import java.util.Base64
 import scala.util.Try
 
 final case class ProblemId(value: UUID)
@@ -67,10 +68,73 @@ object ProblemStatementText:
   given Encoder[ProblemStatementText] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemStatementText] = Decoder.decodeString.emap(parse)
 
+final case class ProblemDataFilename(value: String)
+
+object ProblemDataFilename:
+  def parse(raw: String): Either[String, ProblemDataFilename] =
+    val normalized = raw.trim
+    if normalized.isEmpty then Left("Problem data file name is required.")
+    else if normalized.length > 255 then Left("Problem data file name must be at most 255 characters.")
+    else Right(ProblemDataFilename(normalized))
+
+  def unsafe(raw: String): ProblemDataFilename =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem data file name: $message"), identity)
+
+  given Encoder[ProblemDataFilename] = Encoder.encodeString.contramap(_.value)
+  given Decoder[ProblemDataFilename] = Decoder.decodeString.emap(parse)
+
+final case class ProblemData(value: Option[ProblemDataFilename])
+
+object ProblemData:
+  def parse(raw: Option[String]): Either[String, ProblemData] =
+    raw match
+      case None => Right(ProblemData(None))
+      case Some(value) =>
+        val normalized = value.trim
+        if normalized.isEmpty then Right(ProblemData(None))
+        else ProblemDataFilename.parse(normalized).map(filename => ProblemData(Some(filename)))
+
+  def unsafe(raw: Option[String]): ProblemData =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem data: $message"), identity)
+
+  given Encoder[ProblemData] = Encoder.encodeOption[ProblemDataFilename].contramap(_.value)
+  given Decoder[ProblemData] = Decoder.decodeOption[String].emap(parse)
+
+final case class ProblemTimeLimitMs(value: Int)
+
+object ProblemTimeLimitMs:
+  def parse(raw: Int): Either[String, ProblemTimeLimitMs] =
+    if raw < 1 then Left("Problem time limit must be at least 1 ms.")
+    else if raw > 600000 then Left("Problem time limit must be at most 600000 ms.")
+    else Right(ProblemTimeLimitMs(raw))
+
+  def unsafe(raw: Int): ProblemTimeLimitMs =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem time limit: $message"), identity)
+
+  given Encoder[ProblemTimeLimitMs] = Encoder.encodeInt.contramap(_.value)
+  given Decoder[ProblemTimeLimitMs] = Decoder.decodeInt.emap(parse)
+
+final case class ProblemSpaceLimitMb(value: Int)
+
+object ProblemSpaceLimitMb:
+  def parse(raw: Int): Either[String, ProblemSpaceLimitMb] =
+    if raw < 1 then Left("Problem space limit must be at least 1 MB.")
+    else if raw > 65536 then Left("Problem space limit must be at most 65536 MB.")
+    else Right(ProblemSpaceLimitMb(raw))
+
+  def unsafe(raw: Int): ProblemSpaceLimitMb =
+    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem space limit: $message"), identity)
+
+  given Encoder[ProblemSpaceLimitMb] = Encoder.encodeInt.contramap(_.value)
+  given Decoder[ProblemSpaceLimitMb] = Decoder.decodeInt.emap(parse)
+
 final case class ProblemSummary(
   id: ProblemId,
   slug: ProblemSlug,
   title: ProblemTitle,
+  data: ProblemData,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
@@ -83,6 +147,9 @@ final case class Problem(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
+  data: ProblemData,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
@@ -94,6 +161,8 @@ final case class CreateProblemRequest(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy
 )
 
@@ -104,6 +173,8 @@ object CreateProblemRequest:
 final case class UpdateProblemRequest(
   title: ProblemTitle,
   statement: ProblemStatementText,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy
 )
 
@@ -115,6 +186,9 @@ final case class ProblemListItem(
   id: ProblemId,
   slug: ProblemSlug,
   title: ProblemTitle,
+  data: ProblemData,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
@@ -136,6 +210,9 @@ final case class ProblemDetail(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
+  data: ProblemData,
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
@@ -150,5 +227,27 @@ object ProblemDetail:
   }
   given Encoder[ProblemDetail] = deriveEncoder[ProblemDetail]
   given Decoder[ProblemDetail] = deriveDecoder[ProblemDetail]
+
+final case class UpdateProblemDataRequest(
+  filename: ProblemDataFilename,
+  contentBase64: String
+)
+
+object UpdateProblemDataRequest:
+  given Encoder[UpdateProblemDataRequest] = deriveEncoder[UpdateProblemDataRequest]
+  given Decoder[UpdateProblemDataRequest] = deriveDecoder[UpdateProblemDataRequest]
+
+  extension (request: UpdateProblemDataRequest)
+    def decodedBytes: Either[String, Array[Byte]] =
+      Try(Base64.getDecoder.decode(request.contentBase64))
+        .toEither
+        .left
+        .map(_ => "Problem data content is not valid base64.")
+
+final case class ProblemDataFileListResponse(items: List[ProblemDataFilename])
+
+object ProblemDataFileListResponse:
+  given Encoder[ProblemDataFileListResponse] = deriveEncoder[ProblemDataFileListResponse]
+  given Decoder[ProblemDataFileListResponse] = deriveDecoder[ProblemDataFileListResponse]
 
 type ProblemListResponse = PageResponse[ProblemListItem]

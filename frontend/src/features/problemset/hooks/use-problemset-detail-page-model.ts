@@ -12,6 +12,11 @@ import { useProblemSetEditorState } from '@/features/problemset/hooks/use-proble
 import { useProblemSetLinkProblemAction } from '@/features/problemset/hooks/use-problemset-link-problem-action'
 import { useProblemSetRemoveProblemAction } from '@/features/problemset/hooks/use-problemset-remove-problem-action'
 import { useProblemSetUpdateAction } from '@/features/problemset/hooks/use-problemset-update-action'
+import {
+  buildResourceAccessPolicy,
+  grantedGroupsInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+} from '@/shared/domain/resource-access-input'
 
 type SectionMessageState = {
   errorMessage: string
@@ -51,8 +56,8 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
       title: editor.title,
       description: editor.description,
       baseAccess: currentProblemSet.accessPolicy.baseAccess,
-      grantedUsersInput: grantInputFromPolicy(currentProblemSet.accessPolicy, 'user'),
-      grantedGroupsInput: grantInputFromPolicy(currentProblemSet.accessPolicy, 'user_group'),
+      grantedUsersInput: grantedUsersInputFromAccessPolicy(currentProblemSet.accessPolicy),
+      grantedGroupsInput: grantedGroupsInputFromAccessPolicy(currentProblemSet.accessPolicy),
     })
 
     if (result.ok) {
@@ -134,6 +139,12 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     return result.ok
   }
 
+  const accessPolicyResult = buildResourceAccessPolicy(
+    editor.baseAccess,
+    editor.grantedUsersInput,
+    editor.grantedGroupsInput,
+  )
+
   return {
     problemSet: detailQuery.problemSet,
     loadErrorMessage: detailQuery.errorMessage,
@@ -144,7 +155,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     activeRemovingProblemSlug: removeAction.activeRemovingProblemSlug,
     title: editor.title,
     description: editor.description,
-    accessPolicy: modelAccessPolicy(editor.baseAccess, editor.grantedUsersInput, editor.grantedGroupsInput),
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : { baseAccess: editor.baseAccess, viewerGrants: [] },
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
@@ -169,31 +180,4 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     deleteCurrentProblemSet,
     attachProblem,
   }
-}
-
-function modelAccessPolicy(baseAccess: 'owner_only' | 'public', grantedUsersInput: string, grantedGroupsInput: string) {
-  return {
-    baseAccess,
-    viewerGrants: [
-      ...splitGrantInput(grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
-      ...splitGrantInput(grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
-    ],
-  }
-}
-
-function splitGrantInput(raw: string): string[] {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-}
-
-function grantInputFromPolicy(
-  accessPolicy: { viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }> },
-  kind: 'user' | 'user_group',
-): string {
-  return accessPolicy.viewerGrants
-    .filter((grant) => grant.kind === kind)
-    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
-    .join('\n')
 }

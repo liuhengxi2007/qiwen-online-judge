@@ -3,6 +3,7 @@ import { useCallback, useReducer } from 'react'
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblemSet } from '@/features/problemset/api/problemset-client'
 import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
+import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type CreateProblemSetPageState = {
@@ -76,6 +77,11 @@ function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageA
 
 export function useCreateProblemSetPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const accessPolicyResult = buildResourceAccessPolicy(
+    state.baseAccess,
+    state.grantedUsersInput,
+    state.grantedGroupsInput,
+  )
 
   const submit = useCallback(async () => {
     if (!canCreate) {
@@ -109,14 +115,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
 
   return {
     ...state,
-    accessPolicy: {
-      ...createOwnerOnlyAccessPolicy(),
-      baseAccess: state.baseAccess,
-      viewerGrants: [
-        ...splitGrantInput(state.grantedGroupsInput).map((slug) => ({ kind: 'user_group' as const, slug })),
-        ...splitGrantInput(state.grantedUsersInput).map((username) => ({ kind: 'user' as const, username })),
-      ],
-    },
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createOwnerOnlyAccessPolicy(),
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),
@@ -125,11 +124,4 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
     submit,
   }
-}
-
-function splitGrantInput(raw: string): string[] {
-  return raw
-    .split(/[\n,]/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
 }

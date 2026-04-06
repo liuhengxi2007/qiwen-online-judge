@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react'
 
 import type { ProblemSetDetail } from '@/features/problemset/domain/problemset'
+import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemSetEditorState = {
@@ -35,14 +36,8 @@ function reducer(state: ProblemSetEditorState, action: ProblemSetEditorAction): 
             title: action.problemSet.title,
             description: action.problemSet.description,
             baseAccess: action.problemSet.accessPolicy.baseAccess,
-            grantedUsersInput: action.problemSet.accessPolicy.viewerGrants
-              .filter((grant) => grant.kind === 'user')
-              .map((grant) => grant.username)
-              .join('\n'),
-            grantedGroupsInput: action.problemSet.accessPolicy.viewerGrants
-              .filter((grant) => grant.kind === 'user_group')
-              .map((grant) => grant.slug)
-              .join('\n'),
+            grantedUsersInput: grantedUsersInputFromAccessPolicy(action.problemSet.accessPolicy),
+            grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problemSet.accessPolicy),
           }
         : initialState
     case 'set_title':

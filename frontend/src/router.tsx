@@ -3,10 +3,12 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { CreateProblemPage } from '@/features/problem/pages/CreateProblemPage'
+import { ProblemDataPage } from '@/features/problem/pages/ProblemDataPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ProblemDetailPage } from '@/features/problem/pages/ProblemDetailPage'
 import { ProblemPage } from '@/features/problem/pages/ProblemPage'
+import { ProblemSubmitPage } from '@/features/problem/pages/ProblemSubmitPage'
 import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
@@ -60,6 +62,14 @@ export const router = createBrowserRouter([
   {
     path: '/problems/:slug',
     element: <AuthenticatedRoute element={<ProblemDetailPage />} />,
+  },
+  {
+    path: '/problems/:slug/submit',
+    element: <AuthenticatedRoute element={<ProblemSubmitPage />} />,
+  },
+  {
+    path: '/problems/:slug/data',
+    element: <AuthenticatedRoute element={<ProblemDataPage />} />,
   },
   {
     path: '/problem-sets',
