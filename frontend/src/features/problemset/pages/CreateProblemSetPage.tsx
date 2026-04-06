@@ -14,6 +14,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemSetPageModel } from '@/features/problemset/hooks/use-create-problemset-page-model'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function CreateProblemSetPage() {
@@ -32,6 +33,15 @@ export function CreateProblemSetPage() {
   const model = useCreateProblemSetPageModel(canCreate)
   const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
   const deferredDescription = useDeferredValue(model.description)
+  const hasUnsavedChanges =
+    model.slug.trim().length > 0 ||
+    model.title.trim().length > 0 ||
+    model.description.trim().length > 0 ||
+    model.baseAccess !== 'owner_only' ||
+    model.grantedUsersInput.trim().length > 0 ||
+    model.grantedGroupsInput.trim().length > 0
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ecf3fb_100%)] px-6 py-12 sm:px-8">

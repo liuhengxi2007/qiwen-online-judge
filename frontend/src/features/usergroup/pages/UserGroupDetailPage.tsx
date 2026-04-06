@@ -20,6 +20,7 @@ import {
 } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function UserGroupDetailPage() {
@@ -47,6 +48,14 @@ export function UserGroupDetailPage() {
     ownershipTargetUsername === null
       ? null
       : (model.userGroup?.members.find((member) => member.username === ownershipTargetUsername) ?? null)
+  const hasUnsavedChanges =
+    (model.userGroup !== null &&
+      (model.name !== userGroupNameValue(model.userGroup.name) ||
+        model.description !== userGroupDescriptionValue(model.userGroup.description))) ||
+    model.memberUsername.trim().length > 0 ||
+    model.memberRole !== 'member'
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eff4fb_100%)] px-6 py-12 sm:px-8">

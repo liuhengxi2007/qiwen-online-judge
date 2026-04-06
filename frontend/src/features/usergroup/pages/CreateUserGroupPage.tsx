@@ -10,12 +10,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateUserGroupPageModel } from '@/features/usergroup/hooks/use-create-usergroup-page-model'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function CreateUserGroupPage() {
   usePageTitle('Qiwen Online Judge - Create User Group')
   const { session: user, signOut, navigationIntent } = useSessionGuard()
   const model = useCreateUserGroupPageModel()
+  const hasUnsavedChanges =
+    model.slug.trim().length > 0 || model.name.trim().length > 0 || model.description.trim().length > 0
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />

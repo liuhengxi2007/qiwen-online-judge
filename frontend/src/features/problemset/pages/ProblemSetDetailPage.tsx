@@ -24,6 +24,7 @@ import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetDetailPage() {
@@ -49,6 +50,16 @@ export function ProblemSetDetailPage() {
   const model = useProblemSetDetailPageModel(slugResult.value, canManageProblems)
   const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
   const deferredDescription = useDeferredValue(model.description)
+  const hasUnsavedChanges =
+    model.problemSet !== null &&
+    (model.title !== problemSetTitleValue(model.problemSet.title) ||
+      model.description !== problemSetDescriptionValue(model.problemSet.description) ||
+      model.baseAccess !== model.problemSet.accessPolicy.baseAccess ||
+      normalizeGrantInput(model.grantedUsersInput) !== extractGrantInput(model.problemSet.accessPolicy, 'user') ||
+      normalizeGrantInput(model.grantedGroupsInput) !== extractGrantInput(model.problemSet.accessPolicy, 'user_group') ||
+      model.linkProblemSlug.trim().length > 0)
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ecf3fb_100%)] px-6 py-12 sm:px-8">
@@ -401,4 +412,24 @@ export function ProblemSetDetailPage() {
       </section>
     </main>
   )
+}
+
+function normalizeGrantInput(raw: string): string {
+  return raw
+    .split(/[\n,]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+    .join('\n')
+}
+
+function extractGrantInput(
+  accessPolicy: {
+    viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
+  },
+  kind: 'user' | 'user_group',
+): string {
+  return accessPolicy.viewerGrants
+    .filter((grant) => grant.kind === kind)
+    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
+    .join('\n')
 }

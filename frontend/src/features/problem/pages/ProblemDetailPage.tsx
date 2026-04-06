@@ -23,6 +23,7 @@ import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
+import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDetailPage() {
@@ -48,6 +49,15 @@ export function ProblemDetailPage() {
   const canManageProblem = user.siteManager || user.problemManager
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
   const deferredStatement = useDeferredValue(model.statement)
+  const hasUnsavedChanges =
+    model.problem !== null &&
+    (model.title !== problemTitleValue(model.problem.title) ||
+      model.statement !== problemStatementTextValue(model.problem.statement) ||
+      model.baseAccess !== model.problem.accessPolicy.baseAccess ||
+      normalizeGrantInput(model.grantedUsersInput) !== extractGrantInput(model.problem.accessPolicy, 'user') ||
+      normalizeGrantInput(model.grantedGroupsInput) !== extractGrantInput(model.problem.accessPolicy, 'user_group'))
+
+  useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
@@ -184,24 +194,16 @@ export function ProblemDetailPage() {
                       Raw HTML is ignored.
                     </p>
                   </div>
-                  <ResourceAccessEditor
-                    accessPolicy={model.accessPolicy}
-                    grantedUsersInput={model.grantedUsersInput}
-                    grantedGroupsInput={model.grantedGroupsInput}
-                    onBaseAccessChange={model.setBaseAccess}
-                    onGrantedUsersInputChange={model.setGrantedUsersInput}
-                    onGrantedGroupsInputChange={model.setGrantedGroupsInput}
-                  />
-                    <Button
-                      type="button"
-                      className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                      disabled={model.isSaving}
-                      onClick={() => {
-                        void model.saveContent()
-                      }}
-                    >
+                  <Button
+                    type="button"
+                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                    disabled={model.isSaving}
+                    onClick={() => {
+                      void model.saveContent()
+                    }}
+                  >
                     {model.isSaving ? 'Saving content...' : 'Save content'}
-                    </Button>
+                  </Button>
                   {model.contentErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
                       <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
@@ -307,4 +309,24 @@ export function ProblemDetailPage() {
       </section>
     </main>
   )
+}
+
+function normalizeGrantInput(raw: string): string {
+  return raw
+    .split(/[\n,]/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+    .join('\n')
+}
+
+function extractGrantInput(
+  accessPolicy: {
+    viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
+  },
+  kind: 'user' | 'user_group',
+): string {
+  return accessPolicy.viewerGrants
+    .filter((grant) => grant.kind === kind)
+    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
+    .join('\n')
 }
