@@ -7,7 +7,7 @@ import domains.problem.model.{CreateProblemRequest, Problem, ProblemDataFileList
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceViewerGrantTable}
+import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 import domains.auth.table.AuthUserTable
@@ -161,7 +161,10 @@ object ProblemCommands:
             case None =>
               IO.pure(DeleteProblemResult.ProblemNotFound)
             case Some(problem) =>
-              ProblemTable.delete(connection, problem.id).as(DeleteProblemResult.Deleted)
+              ResourceViewerGrantTable
+                .deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
+                .flatMap(_ => ProblemTable.delete(connection, problem.id))
+                .as(DeleteProblemResult.Deleted)
         yield result
       }
 
@@ -189,17 +192,23 @@ object ProblemCommands:
                     case None =>
                       IO.pure(UpdateProblemDataResult.ProblemNotFound)
                     case Some(problem) =>
-                      ProblemDataStorage
-                        .writeFile(problem.slug, validRequest.filename, decodedBytes)
-                        .flatMap(savedFilename =>
-                          ProblemTable.updateData(connection, problem.id, savedFilename)
-                        )
-                        .flatMap(_ =>
-                          ProblemTable.findBySlug(connection, problem.slug).map {
-                            case Some(updatedProblem) => UpdateProblemDataResult.Updated(updatedProblem)
-                            case None => throw new IllegalStateException("Problem disappeared after data update")
+                      for
+                        snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                        result <- ProblemDataStorage
+                          .writeFile(problem.slug, validRequest.filename, decodedBytes)
+                          .flatMap(savedFilename =>
+                            ProblemTable.updateData(connection, problem.id, savedFilename)
+                              .flatMap(_ =>
+                                ProblemTable.findBySlug(connection, problem.slug).map {
+                                  case Some(updatedProblem) => UpdateProblemDataResult.Updated(updatedProblem)
+                                  case None => throw new IllegalStateException("Problem disappeared after data update")
+                                }
+                              )
+                          )
+                          .handleErrorWith { error =>
+                            ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                           }
-                        )
+                      yield result
                 yield result
               }
 
@@ -236,22 +245,28 @@ object ProblemCommands:
           case None =>
             IO.pure(DeleteProblemDataResult.ProblemNotFound)
           case Some(problem) =>
-            ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
-              case false =>
-                IO.pure(DeleteProblemDataResult.DataFileNotFound)
-              case true =>
-                ProblemDataStorage
-                  .listFiles(problem.slug)
-                  .flatMap { files =>
-                    ProblemTable.updateData(connection, problem.id, files.lastOption)
-                  }
-                  .flatMap(_ =>
-                    ProblemTable.findBySlug(connection, problem.slug).map {
-                      case Some(updatedProblem) => DeleteProblemDataResult.Deleted(updatedProblem)
-                      case None => throw new IllegalStateException("Problem disappeared after data deletion")
+            for
+              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+              result <- ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
+                case false =>
+                  IO.pure(DeleteProblemDataResult.DataFileNotFound)
+                case true =>
+                  ProblemDataStorage
+                    .listFiles(problem.slug)
+                    .flatMap { files =>
+                      ProblemTable.updateData(connection, problem.id, files.lastOption)
                     }
-                  )
-            }
+                    .flatMap(_ =>
+                      ProblemTable.findBySlug(connection, problem.slug).map {
+                        case Some(updatedProblem) => DeleteProblemDataResult.Deleted(updatedProblem)
+                        case None => throw new IllegalStateException("Problem disappeared after data deletion")
+                      }
+                    )
+                    .handleErrorWith { error =>
+                      ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                    }
+              }
+            yield result
         }
       }
 
@@ -268,29 +283,20 @@ object ProblemCommands:
     actor: AuthUser,
     problem: Problem
   ): IO[Boolean] =
-    if problem.ownerUsername.value == actor.username.value || ProblemPolicy.hasGlobalViewOverride(actor) then
-      IO.pure(true)
-    else if problem.accessPolicy.baseAccess == BaseAccess.Public then
-      IO.pure(true)
-    else
-      for
-        hasDirectGrant <- ResourceViewerGrantTable.hasDirectUserGrant(
-          connection,
-          domains.shared.access.ResourceKind.Problem,
-          domains.shared.access.ResourceId(problem.id.value),
-          actor.username
-        )
-        hasGroupGrant <- if hasDirectGrant then IO.pure(false)
-        else
-          ResourceViewerGrantTable.hasAnyGrantedUserGroup(
-            connection,
-            domains.shared.access.ResourceKind.Problem,
-            domains.shared.access.ResourceId(problem.id.value),
-            actor.username
-          )
-        hasVisibleContainingProblemSet <- if hasDirectGrant || hasGroupGrant then IO.pure(false)
-        else ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
-      yield hasDirectGrant || hasGroupGrant || hasVisibleContainingProblemSet
+    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { viewerGroupSlugs =>
+      val canViewDirectly = AccessPolicyEvaluator.canView(
+        policy = problem.accessPolicy,
+        viewerUsername = actor.username,
+        viewerGroupSlugs = viewerGroupSlugs,
+        isOwner = problem.ownerUsername.value == actor.username.value,
+        hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
+      )
+
+      if canViewDirectly then
+        IO.pure(true)
+      else
+        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
+    }
 
   private def validateAccessPolicySubjects(
     connection: java.sql.Connection,

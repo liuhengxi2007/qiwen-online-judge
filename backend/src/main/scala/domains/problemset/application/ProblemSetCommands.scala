@@ -7,7 +7,7 @@ import domains.auth.table.AuthUserTable
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummaryView, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 
@@ -201,7 +201,10 @@ object ProblemSetCommands:
             case None =>
               IO.pure(DeleteProblemSetResult.ProblemSetNotFound)
             case Some(problemSet) =>
-              ProblemSetTable.delete(connection, problemSet.id).as(DeleteProblemSetResult.Deleted)
+              ResourceViewerGrantTable
+                .deleteAllForResource(connection, ResourceKind.ProblemSet, ResourceId(problemSet.id.value))
+                .flatMap(_ => ProblemSetTable.delete(connection, problemSet.id))
+                .as(DeleteProblemSetResult.Deleted)
         yield result
       }
 
@@ -210,27 +213,15 @@ object ProblemSetCommands:
     actor: AuthUser,
     problemSet: ProblemSet
   ): IO[Boolean] =
-    if problemSet.ownerUsername.value == actor.username.value || ProblemSetPolicy.hasGlobalViewOverride(actor) then
-      IO.pure(true)
-    else if problemSet.accessPolicy.baseAccess == BaseAccess.Public then
-      IO.pure(true)
-    else
-      for
-        hasDirectGrant <- ResourceViewerGrantTable.hasDirectUserGrant(
-          connection,
-          ResourceKind.ProblemSet,
-          ResourceId(problemSet.id.value),
-          actor.username
-        )
-        hasGroupGrant <- if hasDirectGrant then IO.pure(false)
-        else
-          ResourceViewerGrantTable.hasAnyGrantedUserGroup(
-            connection,
-            ResourceKind.ProblemSet,
-            ResourceId(problemSet.id.value),
-            actor.username
-          )
-      yield hasDirectGrant || hasGroupGrant
+    UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { viewerGroupSlugs =>
+      AccessPolicyEvaluator.canView(
+        policy = problemSet.accessPolicy,
+        viewerUsername = actor.username,
+        viewerGroupSlugs = viewerGroupSlugs,
+        isOwner = problemSet.ownerUsername.value == actor.username.value,
+        hasGlobalOverride = ProblemSetPolicy.hasGlobalViewOverride(actor)
+      )
+    }
 
   private def validateAccessPolicySubjects(
     connection: java.sql.Connection,

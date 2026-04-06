@@ -163,6 +163,15 @@ object UserGroupTable:
       |where user_group_id = ? and username = ?
       |""".stripMargin
 
+  val listGroupSlugsForMemberSql: String =
+    """
+      |select ug.slug
+      |from user_group_memberships ugm
+      |join user_groups ug on ug.id = ugm.user_group_id
+      |where ugm.username = ?
+      |order by ug.slug asc
+      |""".stripMargin
+
   val addMemberSql: String =
     """
       |insert into user_group_memberships (user_group_id, username, role, joined_at)
@@ -255,6 +264,22 @@ object UserGroupTable:
     }.flatMap {
       case Some(group) => listMembers(connection, group.id).map(members => Some(group.copy(members = members)))
       case None => IO.pure(None)
+    }
+
+  def listGroupSlugsForMember(connection: Connection, username: Username): IO[Set[UserGroupSlug]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listGroupSlugsForMemberSql)
+      try
+        statement.setString(1, username.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => UserGroupSlug.unsafe(resultSet.getString("slug")))
+            .toSet
+        finally resultSet.close()
+      finally statement.close()
     }
 
   def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroup] =

@@ -10,6 +10,8 @@ import java.util.zip.ZipInputStream
 
 object ProblemDataStorage:
 
+  type ProblemDataSnapshot = Map[ProblemDataFilename, Array[Byte]]
+
   private def rootDirectory: Path =
     Paths.get(sys.props.getOrElse("user.dir", "."), "problems")
 
@@ -28,6 +30,23 @@ object ProblemDataStorage:
             .map(path => ProblemDataFilename.unsafe(path.getFileName.toString))
             .toList
             .sortBy(_.value)
+        finally stream.close()
+    }
+
+  def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
+    IO.blocking {
+      val directory = dataDirectory(problemSlug)
+      if !Files.exists(directory) then Map.empty
+      else
+        val stream = Files.list(directory)
+        try
+          stream.iterator().asScala
+            .filter(path => Files.isRegularFile(path))
+            .map { path =>
+              val filename = ProblemDataFilename.unsafe(path.getFileName.toString)
+              filename -> Files.readAllBytes(path)
+            }
+            .toMap
         finally stream.close()
     }
 
@@ -63,6 +82,29 @@ object ProblemDataStorage:
       val sanitizedFilename = sanitizeFilename(filename)
       val path = dataDirectory(problemSlug).resolve(sanitizedFilename.value)
       Files.deleteIfExists(path)
+    }
+
+  def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
+    IO.blocking {
+      val directory = dataDirectory(problemSlug)
+      Files.createDirectories(directory)
+
+      val stream = Files.list(directory)
+      try
+        stream.iterator().asScala
+          .filter(path => Files.isRegularFile(path))
+          .foreach(path => Files.deleteIfExists(path))
+      finally stream.close()
+
+      snapshot.foreach { case (filename, bytes) =>
+        Files.write(
+          directory.resolve(filename.value),
+          bytes,
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING,
+          StandardOpenOption.WRITE
+        )
+      }
     }
 
   private def sanitizeFilename(filename: ProblemDataFilename): ProblemDataFilename =

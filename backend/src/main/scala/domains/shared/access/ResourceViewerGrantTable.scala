@@ -108,6 +108,13 @@ object ResourceViewerGrantTable:
       _ <- insertGrants(connection, resourceKind, resourceId, grants)
     yield ()
 
+  def deleteAllForResource(
+    connection: Connection,
+    resourceKind: ResourceKind,
+    resourceId: ResourceId
+  ): IO[Unit] =
+    deleteForResource(connection, resourceKind, resourceId)
+
   def hasDirectUserGrant(
     connection: Connection,
     resourceKind: ResourceKind,
