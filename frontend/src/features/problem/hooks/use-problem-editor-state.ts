@@ -63,7 +63,7 @@ export function useProblemEditorState(problem: ProblemDetail | null) {
 
   useEffect(() => {
     dispatch({ type: 'hydrate', problem })
-  }, [problem])
+  }, [problem?.id])
 
   return {
     ...state,

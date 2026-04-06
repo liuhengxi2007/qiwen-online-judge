@@ -82,9 +82,9 @@ export function ProblemDetailPage() {
           </div>
         </div>
 
-        {!model.isLoading && !model.problem && model.errorMessage ? (
+        {!model.isLoading && !model.problem && model.loadErrorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -131,9 +131,9 @@ export function ProblemDetailPage() {
                       <PencilLine className="size-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-slate-950">Edit Problem</CardTitle>
+                      <CardTitle className="text-xl text-slate-950">Edit Problem Content</CardTitle>
                       <CardDescription>
-                        Update the problem title, restricted Markdown statement, and access policy.
+                        Update the problem title and restricted Markdown statement.
                       </CardDescription>
                     </div>
                   </div>
@@ -192,24 +192,70 @@ export function ProblemDetailPage() {
                     onGrantedUsersInputChange={model.setGrantedUsersInput}
                     onGrantedGroupsInputChange={model.setGrantedGroupsInput}
                   />
+                    <Button
+                      type="button"
+                      className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                      disabled={model.isSaving}
+                      onClick={() => {
+                        void model.saveContent()
+                      }}
+                    >
+                    {model.isSaving ? 'Saving content...' : 'Save content'}
+                    </Button>
+                  {model.contentErrorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.contentSuccessMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.contentSuccessMessage}</AlertDescription>
+                      </Alert>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {canManageProblem ? (
+              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                      <PencilLine className="size-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl text-slate-950">Edit Problem Access</CardTitle>
+                      <CardDescription>Update who can view this problem.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <ResourceAccessEditor
+                    accessPolicy={model.accessPolicy}
+                    grantedUsersInput={model.grantedUsersInput}
+                    grantedGroupsInput={model.grantedGroupsInput}
+                    onBaseAccessChange={model.setBaseAccess}
+                    onGrantedUsersInputChange={model.setGrantedUsersInput}
+                    onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+                  />
                   <Button
                     type="button"
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                     disabled={model.isSaving}
                     onClick={() => {
-                      void model.save()
+                      void model.saveAccess()
                     }}
                   >
-                    {model.isSaving ? 'Saving changes...' : 'Save changes'}
+                    {model.isSaving ? 'Saving access...' : 'Save access'}
                   </Button>
-                  {model.errorMessage ? (
+                  {model.accessErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+                      <AlertDescription className="text-rose-700">{model.accessErrorMessage}</AlertDescription>
                     </Alert>
                   ) : null}
-                  {model.successMessage ? (
+                  {model.accessSuccessMessage ? (
                     <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+                      <AlertDescription className="text-emerald-700">{model.accessSuccessMessage}</AlertDescription>
                     </Alert>
                   ) : null}
                 </CardContent>
@@ -232,7 +278,7 @@ export function ProblemDetailPage() {
                 <CardContent>
                   <ConfirmActionDialog
                     title="Delete problem?"
-                    description="Delete this problem and remove all current problem set links to it. This action cannot be undone."
+                    description="Delete this problem and remove it from all current problem sets. No problem set will be deleted. This action cannot be undone."
                     confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem'}
                     destructive
                     onConfirm={() => {

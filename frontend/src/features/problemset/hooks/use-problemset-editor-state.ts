@@ -64,7 +64,7 @@ export function useProblemSetEditorState(problemSet: ProblemSetDetail | null) {
 
   useEffect(() => {
     dispatch({ type: 'hydrate', problemSet })
-  }, [problemSet])
+  }, [problemSet?.id])
 
   return {
     ...editorState,

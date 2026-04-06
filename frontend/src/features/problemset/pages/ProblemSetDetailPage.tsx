@@ -1,3 +1,4 @@
+import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Link2, LogOut, PencilLine, Rows3, Trash2 } from 'lucide-react'
 
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
@@ -19,6 +21,7 @@ import {
 } from '@/features/problemset/domain/problemset'
 import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-problemset-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -44,6 +47,8 @@ export function ProblemSetDetailPage() {
 
   const canManageProblems = user.siteManager || user.problemManager
   const model = useProblemSetDetailPageModel(slugResult.value, canManageProblems)
+  const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
+  const deferredDescription = useDeferredValue(model.description)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ecf3fb_100%)] px-6 py-12 sm:px-8">
@@ -78,9 +83,9 @@ export function ProblemSetDetailPage() {
           </div>
         </div>
 
-        {!model.isLoading && !model.problemSet && model.errorMessage ? (
+        {!model.isLoading && !model.problemSet && model.loadErrorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -103,9 +108,13 @@ export function ProblemSetDetailPage() {
                   <Badge variant="outline">{model.problemSet.status}</Badge>
                 </div>
                 <p className="text-sm text-slate-600">{resourceAccessSummary(model.problemSet.accessPolicy)}</p>
-                <p className="text-sm leading-7 text-slate-600">
-                  {problemSetDescriptionValue(model.problemSet.description) || 'No description provided.'}
-                </p>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                  {problemSetDescriptionValue(model.problemSet.description) ? (
+                    <MarkdownDocument content={problemSetDescriptionValue(model.problemSet.description)} />
+                  ) : (
+                    <p className="text-sm text-slate-500">No description provided.</p>
+                  )}
+                </div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
                   Owner {usernameValue(model.problemSet.ownerUsername)}
                 </p>
@@ -120,8 +129,8 @@ export function ProblemSetDetailPage() {
                       <PencilLine className="size-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-slate-950">Edit Problem Set</CardTitle>
-                      <CardDescription>Update the title, description, and access policy of this problem set.</CardDescription>
+                      <CardTitle className="text-xl text-slate-950">Edit Problem Set Content</CardTitle>
+                      <CardDescription>Update the title and Markdown description of this problem set.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -136,12 +145,79 @@ export function ProblemSetDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="problem-set-description">Description</Label>
-                    <Textarea
-                      id="problem-set-description"
-                      value={model.description}
-                      onChange={(event) => model.setDescription(event.target.value)}
-                    />
+                    <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
+                      <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
+                        <TabsTrigger value="write" className="rounded-xl">
+                          Write
+                        </TabsTrigger>
+                        <TabsTrigger value="preview" className="rounded-xl">
+                          Preview
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="write" className="mt-3">
+                        <Textarea
+                          id="problem-set-description"
+                          value={model.description}
+                          className="min-h-48 !font-mono"
+                          onChange={(event) => model.setDescription(event.target.value)}
+                        />
+                      </TabsContent>
+                      <TabsContent value="preview" className="mt-3">
+                        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                          {deferredDescription.trim() ? (
+                            <MarkdownDocument content={deferredDescription} />
+                          ) : (
+                            <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    <p className="text-xs text-slate-500">
+                      Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
+                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
+                      or
+                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
+                      Raw HTML is ignored.
+                    </p>
                   </div>
+                  <Button
+                    type="button"
+                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                    disabled={model.isSaving}
+                    onClick={() => {
+                      void model.saveContent()
+                    }}
+                  >
+                    {model.isSaving ? 'Saving content...' : 'Save content'}
+                  </Button>
+                  {model.contentErrorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.contentSuccessMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.contentSuccessMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {canManageProblems ? (
+              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                      <PencilLine className="size-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl text-slate-950">Edit Problem Set Access</CardTitle>
+                      <CardDescription>Update who can view this problem set.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
                   <ResourceAccessEditor
                     accessPolicy={model.accessPolicy}
                     grantedUsersInput={model.grantedUsersInput}
@@ -155,19 +231,19 @@ export function ProblemSetDetailPage() {
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                     disabled={model.isSaving}
                     onClick={() => {
-                      void model.save()
+                      void model.saveAccess()
                     }}
                   >
-                    {model.isSaving ? 'Saving changes...' : 'Save changes'}
+                    {model.isSaving ? 'Saving access...' : 'Save access'}
                   </Button>
-                  {model.errorMessage ? (
+                  {model.accessErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+                      <AlertDescription className="text-rose-700">{model.accessErrorMessage}</AlertDescription>
                     </Alert>
                   ) : null}
-                  {model.successMessage ? (
+                  {model.accessSuccessMessage ? (
                     <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+                      <AlertDescription className="text-emerald-700">{model.accessSuccessMessage}</AlertDescription>
                     </Alert>
                   ) : null}
                 </CardContent>
@@ -187,6 +263,16 @@ export function ProblemSetDetailPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {model.problemListErrorMessage ? (
+                  <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                    <AlertDescription className="text-rose-700">{model.problemListErrorMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+                {model.problemListSuccessMessage ? (
+                  <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                    <AlertDescription className="text-emerald-700">{model.problemListSuccessMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
                 {model.problemSet.problems.length === 0 ? (
                   <p className="text-sm text-slate-500">No problems linked yet.</p>
                 ) : (
@@ -236,6 +322,16 @@ export function ProblemSetDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {model.linkErrorMessage ? (
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                      <AlertDescription className="text-rose-700">{model.linkErrorMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
+                  {model.linkSuccessMessage ? (
+                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                      <AlertDescription className="text-emerald-700">{model.linkSuccessMessage}</AlertDescription>
+                    </Alert>
+                  ) : null}
                   <div className="space-y-2">
                     <Label htmlFor="link-problem-slug">Problem slug</Label>
                     <Input

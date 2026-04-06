@@ -1,13 +1,27 @@
 import { useState } from 'react'
 
-import type { ProblemSlug } from '@/features/problem/domain/problem'
-import type { ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { problemSlugValue, type ProblemSlug } from '@/features/problem/domain/problem'
+import {
+  problemSetDescriptionValue,
+  problemSetTitleValue,
+  type ProblemSetSlug,
+} from '@/features/problemset/domain/problemset'
 import { useProblemSetDeleteAction } from '@/features/problemset/hooks/use-problemset-delete-action'
 import { useProblemSetDetailQuery } from '@/features/problemset/hooks/use-problemset-detail-query'
 import { useProblemSetEditorState } from '@/features/problemset/hooks/use-problemset-editor-state'
 import { useProblemSetLinkProblemAction } from '@/features/problemset/hooks/use-problemset-link-problem-action'
 import { useProblemSetRemoveProblemAction } from '@/features/problemset/hooks/use-problemset-remove-problem-action'
 import { useProblemSetUpdateAction } from '@/features/problemset/hooks/use-problemset-update-action'
+
+type SectionMessageState = {
+  errorMessage: string
+  successMessage: string
+}
+
+const emptySectionMessageState: SectionMessageState = {
+  errorMessage: '',
+  successMessage: '',
+}
 
 export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, canManageProblems: boolean) {
   const detailQuery = useProblemSetDetailQuery(problemSetSlug)
@@ -16,20 +30,54 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
   const deleteAction = useProblemSetDeleteAction(problemSetSlug)
   const linkAction = useProblemSetLinkProblemAction(problemSetSlug)
   const removeAction = useProblemSetRemoveProblemAction(problemSetSlug)
-  const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
-    errorMessage: '',
-    successMessage: '',
-  })
+  const [contentMessageState, setContentMessageState] = useState<SectionMessageState>(emptySectionMessageState)
+  const [accessMessageState, setAccessMessageState] = useState<SectionMessageState>(emptySectionMessageState)
+  const [linkMessageState, setLinkMessageState] = useState<SectionMessageState>(emptySectionMessageState)
+  const [problemListMessageState, setProblemListMessageState] = useState<SectionMessageState>(emptySectionMessageState)
 
-  async function save() {
+  async function saveContent() {
     if (!canManageProblems) {
-      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setContentMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      return
+    }
+
+    const currentProblemSet = detailQuery.problemSet
+    if (!currentProblemSet) {
+      setContentMessageState({ errorMessage: 'Problem set detail is not loaded.', successMessage: '' })
       return
     }
 
     const result = await updateAction.save({
       title: editor.title,
       description: editor.description,
+      baseAccess: currentProblemSet.accessPolicy.baseAccess,
+      grantedUsersInput: grantInputFromPolicy(currentProblemSet.accessPolicy, 'user'),
+      grantedGroupsInput: grantInputFromPolicy(currentProblemSet.accessPolicy, 'user_group'),
+    })
+
+    if (result.ok) {
+      detailQuery.replaceProblemSet(result.problemSet)
+      setContentMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setContentMessageState({ errorMessage: result.message, successMessage: '' })
+    }
+  }
+
+  async function saveAccess() {
+    if (!canManageProblems) {
+      setAccessMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      return
+    }
+
+    const currentProblemSet = detailQuery.problemSet
+    if (!currentProblemSet) {
+      setAccessMessageState({ errorMessage: 'Problem set detail is not loaded.', successMessage: '' })
+      return
+    }
+
+    const result = await updateAction.save({
+      title: problemSetTitleValue(currentProblemSet.title),
+      description: problemSetDescriptionValue(currentProblemSet.description),
       baseAccess: editor.baseAccess,
       grantedUsersInput: editor.grantedUsersInput,
       grantedGroupsInput: editor.grantedGroupsInput,
@@ -37,15 +85,15 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
     if (result.ok) {
       detailQuery.replaceProblemSet(result.problemSet)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setAccessMessageState({ errorMessage: '', successMessage: result.message })
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setAccessMessageState({ errorMessage: result.message, successMessage: '' })
     }
   }
 
   async function attachProblem() {
     if (!canManageProblems) {
-      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setLinkMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
       return
     }
 
@@ -53,45 +101,42 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     if (result.ok) {
       detailQuery.replaceProblemSet(result.problemSet)
       editor.clearLinkedProblemSlug()
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setLinkMessageState({ errorMessage: '', successMessage: result.message })
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setLinkMessageState({ errorMessage: result.message, successMessage: '' })
     }
   }
 
   async function removeProblem(problemSlug: ProblemSlug) {
     if (!canManageProblems) {
-      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setProblemListMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
       return
     }
 
     const result = await removeAction.removeProblem(problemSlug)
     if (result.ok) {
       detailQuery.replaceProblemSet(result.problemSet)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setProblemListMessageState({
+        errorMessage: '',
+        successMessage: `Removed ${problemSlugValue(problemSlug)} from the problem set.`,
+      })
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setProblemListMessageState({ errorMessage: result.message, successMessage: '' })
     }
   }
 
   async function deleteCurrentProblemSet() {
     if (!canManageProblems) {
-      setMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
       return false
     }
 
     const result = await deleteAction.deleteCurrentProblemSet()
-    if (result.ok) {
-      setMessageState({ errorMessage: '', successMessage: result.message })
-      return true
-    }
-
-    setMessageState({ errorMessage: result.message, successMessage: '' })
-    return false
+    return result.ok
   }
 
   return {
     problemSet: detailQuery.problemSet,
+    loadErrorMessage: detailQuery.errorMessage,
     isLoading: detailQuery.isLoading,
     activeLink: linkAction.activeLink,
     isSaving: updateAction.isSaving,
@@ -104,15 +149,22 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
     linkProblemSlug: editor.linkProblemSlug,
-    errorMessage: detailQuery.errorMessage || messageState.errorMessage,
-    successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
+    contentErrorMessage: contentMessageState.errorMessage,
+    contentSuccessMessage: contentMessageState.successMessage,
+    accessErrorMessage: accessMessageState.errorMessage,
+    accessSuccessMessage: accessMessageState.successMessage,
+    linkErrorMessage: linkMessageState.errorMessage,
+    linkSuccessMessage: linkMessageState.successMessage,
+    problemListErrorMessage: problemListMessageState.errorMessage,
+    problemListSuccessMessage: problemListMessageState.successMessage,
     setTitle: editor.setTitle,
     setDescription: editor.setDescription,
     setBaseAccess: editor.setBaseAccess,
     setGrantedUsersInput: editor.setGrantedUsersInput,
     setGrantedGroupsInput: editor.setGrantedGroupsInput,
     setLinkProblemSlug: editor.setLinkProblemSlug,
-    save,
+    saveContent,
+    saveAccess,
     removeProblem,
     deleteCurrentProblemSet,
     attachProblem,
@@ -134,4 +186,14 @@ function splitGrantInput(raw: string): string[] {
     .split(/[\n,]/)
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
+}
+
+function grantInputFromPolicy(
+  accessPolicy: { viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }> },
+  kind: 'user' | 'user_group',
+): string {
+  return accessPolicy.viewerGrants
+    .filter((grant) => grant.kind === kind)
+    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
+    .join('\n')
 }

@@ -1,3 +1,4 @@
+import { useDeferredValue, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, BookPlus, LogOut } from 'lucide-react'
 
@@ -6,10 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemSetPageModel } from '@/features/problemset/hooks/use-create-problemset-page-model'
+import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -27,6 +30,8 @@ export function CreateProblemSetPage() {
 
   const canCreate = user.siteManager || user.problemManager
   const model = useCreateProblemSetPageModel(canCreate)
+  const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
+  const deferredDescription = useDeferredValue(model.description)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ecf3fb_100%)] px-6 py-12 sm:px-8">
@@ -70,7 +75,7 @@ export function CreateProblemSetPage() {
               <div>
                 <CardTitle className="text-xl text-slate-950">Problem Set Metadata</CardTitle>
                 <CardDescription>
-                  This form creates a draft problem set with typed metadata.
+                  This form creates a draft problem set with Markdown and LaTeX description support.
                 </CardDescription>
               </div>
             </div>
@@ -105,12 +110,43 @@ export function CreateProblemSetPage() {
 
             <div className="space-y-2">
               <Label htmlFor="problem-set-description">Description</Label>
-              <Textarea
-                id="problem-set-description"
-                value={model.description}
-                placeholder="A draft set for graph fundamentals and shortest path practice."
-                onChange={(event) => model.setDescription(event.target.value)}
-              />
+              <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
+                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
+                  <TabsTrigger value="write" className="rounded-xl">
+                    Write
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="rounded-xl">
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="write" className="mt-3">
+                  <Textarea
+                    id="problem-set-description"
+                    value={model.description}
+                    className="min-h-48 !font-mono"
+                    placeholder={
+                      '## Graph Theory Ladder\n\nPractice BFS, shortest paths, and spanning tree basics.\n\n- Warm-up graph traversal\n- Weighted shortest path\n\n$$O((n + m) \\log n)$$'
+                    }
+                    onChange={(event) => model.setDescription(event.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="preview" className="mt-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                    {deferredDescription.trim() ? (
+                      <MarkdownDocument content={deferredDescription} />
+                    ) : (
+                      <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              <p className="text-xs text-slate-500">
+                Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
+                or
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
+                Raw HTML is ignored.
+              </p>
             </div>
 
             <ResourceAccessEditor

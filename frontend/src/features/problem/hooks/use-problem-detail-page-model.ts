@@ -1,25 +1,63 @@
 import { useState } from 'react'
 
 import type { ProblemSlug } from '@/features/problem/domain/problem'
+import { problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
 import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-delete-action'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { useProblemEditorState } from '@/features/problem/hooks/use-problem-editor-state'
 import { useProblemUpdateAction } from '@/features/problem/hooks/use-problem-update-action'
+
+type SectionMessageState = {
+  errorMessage: string
+  successMessage: string
+}
+
+const emptySectionMessageState: SectionMessageState = {
+  errorMessage: '',
+  successMessage: '',
+}
 
 export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug)
   const editor = useProblemEditorState(detailQuery.problem)
   const updateAction = useProblemUpdateAction(problemSlug)
   const deleteAction = useProblemDeleteAction(problemSlug)
-  const [messageState, setMessageState] = useState<{ errorMessage: string; successMessage: string }>({
-    errorMessage: '',
-    successMessage: '',
-  })
+  const [contentMessageState, setContentMessageState] = useState<SectionMessageState>(emptySectionMessageState)
+  const [accessMessageState, setAccessMessageState] = useState<SectionMessageState>(emptySectionMessageState)
 
-  async function save() {
+  async function saveContent() {
+    const currentProblem = detailQuery.problem
+    if (!currentProblem) {
+      setContentMessageState({ errorMessage: 'Problem detail is not loaded.', successMessage: '' })
+      return
+    }
+
     const result = await updateAction.save({
       title: editor.title,
       statement: editor.statement,
+      baseAccess: currentProblem.accessPolicy.baseAccess,
+      grantedUsersInput: grantInputFromPolicy(currentProblem.accessPolicy, 'user'),
+      grantedGroupsInput: grantInputFromPolicy(currentProblem.accessPolicy, 'user_group'),
+    })
+
+    if (result.ok) {
+      detailQuery.replaceProblem(result.problem)
+      setContentMessageState({ errorMessage: '', successMessage: result.message })
+    } else {
+      setContentMessageState({ errorMessage: result.message, successMessage: '' })
+    }
+  }
+
+  async function saveAccess() {
+    const currentProblem = detailQuery.problem
+    if (!currentProblem) {
+      setAccessMessageState({ errorMessage: 'Problem detail is not loaded.', successMessage: '' })
+      return
+    }
+
+    const result = await updateAction.save({
+      title: problemTitleValue(currentProblem.title),
+      statement: problemStatementTextValue(currentProblem.statement),
       baseAccess: editor.baseAccess,
       grantedUsersInput: editor.grantedUsersInput,
       grantedGroupsInput: editor.grantedGroupsInput,
@@ -27,25 +65,20 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
 
     if (result.ok) {
       detailQuery.replaceProblem(result.problem)
-      setMessageState({ errorMessage: '', successMessage: result.message })
+      setAccessMessageState({ errorMessage: '', successMessage: result.message })
     } else {
-      setMessageState({ errorMessage: result.message, successMessage: '' })
+      setAccessMessageState({ errorMessage: result.message, successMessage: '' })
     }
   }
 
   async function deleteCurrentProblem() {
     const result = await deleteAction.deleteCurrentProblem()
-    if (result.ok) {
-      setMessageState({ errorMessage: '', successMessage: result.message })
-      return true
-    }
-
-    setMessageState({ errorMessage: result.message, successMessage: '' })
-    return false
+    return result.ok
   }
 
   return {
     problem: detailQuery.problem,
+    loadErrorMessage: detailQuery.errorMessage,
     isLoading: detailQuery.isLoading,
     isSaving: updateAction.isSaving,
     isDeleting: deleteAction.isDeleting,
@@ -55,14 +88,17 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
-    errorMessage: detailQuery.errorMessage || messageState.errorMessage,
-    successMessage: detailQuery.errorMessage ? '' : messageState.successMessage,
+    contentErrorMessage: contentMessageState.errorMessage,
+    contentSuccessMessage: contentMessageState.successMessage,
+    accessErrorMessage: accessMessageState.errorMessage,
+    accessSuccessMessage: accessMessageState.successMessage,
     setTitle: editor.setTitle,
     setStatement: editor.setStatement,
     setBaseAccess: editor.setBaseAccess,
     setGrantedUsersInput: editor.setGrantedUsersInput,
     setGrantedGroupsInput: editor.setGrantedGroupsInput,
-    save,
+    saveContent,
+    saveAccess,
     deleteCurrentProblem,
   }
 }
@@ -82,4 +118,14 @@ function splitGrantInput(raw: string): string[] {
     .split(/[\n,]/)
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
+}
+
+function grantInputFromPolicy(
+  accessPolicy: { viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }> },
+  kind: 'user' | 'user_group',
+): string {
+  return accessPolicy.viewerGrants
+    .filter((grant) => grant.kind === kind)
+    .map((grant) => (grant.kind === 'user' ? grant.username : grant.slug))
+    .join('\n')
 }

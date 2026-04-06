@@ -45,7 +45,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     return { canManage, canManageMemberRoles, canDelete }
   }, [detailQuery.userGroup?.members, isSiteManager, viewerUsername])
 
-  function canRemoveMember(targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
+  function canRemoveMember(_targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
     if (isSiteManager) {
       return targetRole !== 'owner'
     }
