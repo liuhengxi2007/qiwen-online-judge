@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -178,136 +179,6 @@ export function ProblemSetDetailPage() {
               </CardContent>
             </Card>
 
-            {canManageProblems && managementPanel === 'edit' ? (
-              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                      <PencilLine className="size-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-slate-950">Edit Problem Set Content</CardTitle>
-                      <CardDescription>Update the title and Markdown description of this problem set.</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="problem-set-title">Title</Label>
-                    <Input
-                      id="problem-set-title"
-                      value={model.title}
-                      onChange={(event) => model.setTitle(event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="problem-set-description">Description</Label>
-                    <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
-                      <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
-                        <TabsTrigger value="write" className="rounded-xl">
-                          Write
-                        </TabsTrigger>
-                        <TabsTrigger value="preview" className="rounded-xl">
-                          Preview
-                        </TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="write" className="mt-3">
-                        <Textarea
-                          id="problem-set-description"
-                          value={model.description}
-                          className="min-h-48 !font-mono"
-                          onChange={(event) => model.setDescription(event.target.value)}
-                        />
-                      </TabsContent>
-                      <TabsContent value="preview" className="mt-3">
-                        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
-                          {deferredDescription.trim() ? (
-                            <MarkdownDocument content={deferredDescription} />
-                          ) : (
-                            <p className="text-sm text-slate-500">Nothing to preview yet.</p>
-                          )}
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                    <p className="text-xs text-slate-500">
-                      Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
-                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
-                      or
-                      <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
-                      Raw HTML is ignored.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                    disabled={model.isSaving}
-                    onClick={() => {
-                      void model.saveContent()
-                    }}
-                  >
-                    {model.isSaving ? 'Saving content...' : 'Save content'}
-                  </Button>
-                  {model.contentErrorMessage ? (
-                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                  {model.contentSuccessMessage ? (
-                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.contentSuccessMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {canManageProblems && managementPanel === 'access' ? (
-              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
-                      <PencilLine className="size-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-slate-950">Edit Problem Set Access</CardTitle>
-                      <CardDescription>Update who can view this problem set.</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <p className="text-sm text-slate-600">{resourceAccessSummary(model.problemSet.accessPolicy)}</p>
-                  <ResourceAccessEditor
-                    accessPolicy={model.accessPolicy}
-                    grantedUsersInput={model.grantedUsersInput}
-                    grantedGroupsInput={model.grantedGroupsInput}
-                    onBaseAccessChange={model.setBaseAccess}
-                    onGrantedUsersInputChange={model.setGrantedUsersInput}
-                    onGrantedGroupsInputChange={model.setGrantedGroupsInput}
-                  />
-                  <Button
-                    type="button"
-                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                    disabled={model.isSaving}
-                    onClick={() => {
-                      void model.saveAccess()
-                    }}
-                  >
-                    {model.isSaving ? 'Saving access...' : 'Save access'}
-                  </Button>
-                  {model.accessErrorMessage ? (
-                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.accessErrorMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                  {model.accessSuccessMessage ? (
-                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.accessSuccessMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ) : null}
-
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -366,97 +237,232 @@ export function ProblemSetDetailPage() {
               </CardContent>
             </Card>
 
-            {canManageProblems && managementPanel === 'edit' ? (
-              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                      <Link2 className="size-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-slate-950">Link Problem</CardTitle>
-                      <CardDescription>Add an existing problem into this problem set by slug.</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {model.linkErrorMessage ? (
-                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                      <AlertDescription className="text-rose-700">{model.linkErrorMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                  {model.linkSuccessMessage ? (
-                    <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                      <AlertDescription className="text-emerald-700">{model.linkSuccessMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
-                  <div className="space-y-2">
-                    <Label htmlFor="link-problem-slug">Problem slug</Label>
-                    <Input
-                      id="link-problem-slug"
-                      value={model.linkProblemSlug}
-                      placeholder="two-sum-intro"
-                      onChange={(event) => model.setLinkProblemSlug(event.target.value)}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl border-slate-300 bg-white"
-                    disabled={model.activeLink}
-                    onClick={() => {
-                      void model.attachProblem()
-                    }}
-                  >
-                    {model.activeLink ? 'Linking problem...' : 'Link problem'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {canManageProblems && managementPanel === 'edit' ? (
-              <Card className="border-rose-200 bg-rose-50/60 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                      <Trash2 className="size-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-rose-950">Delete Problem Set</CardTitle>
-                      <CardDescription>This removes the problem set and all of its current problem links.</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ConfirmActionDialog
-                    title="Delete problem set?"
-                    description="Delete this problem set and all of its current problem links. This action cannot be undone."
-                    confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem set'}
-                    destructive
-                    onConfirm={() => {
-                      void model.deleteCurrentProblemSet().then((deleted) => {
-                        if (deleted) {
-                          void navigate('/problem-sets')
-                        }
-                      })
-                    }}
-                    trigger={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                        disabled={model.isDeleting}
-                      >
-                        {model.isDeleting ? 'Deleting...' : 'Delete problem set'}
-                      </Button>
-                    }
-                  />
-                </CardContent>
-              </Card>
-            ) : null}
           </div>
         ) : null}
       </section>
+
+      <Dialog
+        open={canManageProblems && managementPanel === 'edit'}
+        onOpenChange={(open) => {
+          setManagementPanel(open ? 'edit' : null)
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] max-w-4xl overflow-y-auto rounded-[2rem] border-slate-200 bg-white p-0 shadow-[0_28px_90px_rgba(15,23,42,0.22)]">
+          <DialogHeader className="border-b border-slate-200 px-7 py-6 sm:px-8">
+            <DialogTitle className="flex items-center gap-3 text-2xl text-slate-950">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                <PencilLine className="size-5" />
+              </span>
+              Edit Problem Set
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-7 text-slate-600">
+              Edit content, manage linked problems, and handle destructive actions in a front-layer card.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 px-7 py-7 sm:px-8">
+            <div className="space-y-2">
+              <Label htmlFor="problem-set-title">Title</Label>
+              <Input id="problem-set-title" value={model.title} onChange={(event) => model.setTitle(event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="problem-set-description">Description</Label>
+              <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
+                <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
+                  <TabsTrigger value="write" className="rounded-xl">
+                    Write
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="rounded-xl">
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="write" className="mt-3">
+                  <Textarea
+                    id="problem-set-description"
+                    value={model.description}
+                    className="min-h-48 !font-mono"
+                    onChange={(event) => model.setDescription(event.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="preview" className="mt-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+                    {deferredDescription.trim() ? (
+                      <MarkdownDocument content={deferredDescription} />
+                    ) : (
+                      <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              <p className="text-xs text-slate-500">
+                Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
+                or
+                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
+                Raw HTML is ignored.
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+              disabled={model.isSaving}
+              onClick={() => {
+                void model.saveContent()
+              }}
+            >
+              {model.isSaving ? 'Saving content...' : 'Save content'}
+            </Button>
+            {model.contentErrorMessage ? (
+              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {model.contentSuccessMessage ? (
+              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                <AlertDescription className="text-emerald-700">{model.contentSuccessMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                  <Link2 className="size-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950">Link Problem</h2>
+                  <p className="text-sm text-slate-600">Add an existing problem into this problem set by slug.</p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                {model.linkErrorMessage ? (
+                  <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                    <AlertDescription className="text-rose-700">{model.linkErrorMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+                {model.linkSuccessMessage ? (
+                  <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                    <AlertDescription className="text-emerald-700">{model.linkSuccessMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="link-problem-slug">Problem slug</Label>
+                  <Input
+                    id="link-problem-slug"
+                    value={model.linkProblemSlug}
+                    placeholder="two-sum-intro"
+                    onChange={(event) => model.setLinkProblemSlug(event.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl border-slate-300 bg-white"
+                  disabled={model.activeLink}
+                  onClick={() => {
+                    void model.attachProblem()
+                  }}
+                >
+                  {model.activeLink ? 'Linking problem...' : 'Link problem'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50/60 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                  <Trash2 className="size-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-rose-950">Delete Problem Set</h2>
+                  <p className="text-sm text-rose-900/80">
+                    This removes the problem set and all of its current problem links.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5">
+                <ConfirmActionDialog
+                  title="Delete problem set?"
+                  description="Delete this problem set and all of its current problem links. This action cannot be undone."
+                  confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem set'}
+                  destructive
+                  onConfirm={() => {
+                    void model.deleteCurrentProblemSet().then((deleted) => {
+                      if (deleted) {
+                        void navigate('/problem-sets')
+                      }
+                    })
+                  }}
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                      disabled={model.isDeleting}
+                    >
+                      {model.isDeleting ? 'Deleting...' : 'Delete problem set'}
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={canManageProblems && managementPanel === 'access'}
+        onOpenChange={(open) => {
+          setManagementPanel(open ? 'access' : null)
+        }}
+      >
+        <DialogContent className="max-h-[calc(100vh-2rem)] max-w-3xl overflow-y-auto rounded-[2rem] border-slate-200 bg-white p-0 shadow-[0_28px_90px_rgba(15,23,42,0.22)]">
+          <DialogHeader className="border-b border-slate-200 px-7 py-6 sm:px-8">
+            <DialogTitle className="flex items-center gap-3 text-2xl text-slate-950">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                <ShieldCheck className="size-5" />
+              </span>
+              Access Management
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-7 text-slate-600">
+              Update who can view this problem set.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 px-7 py-7 sm:px-8">
+            <p className="text-sm text-slate-600">
+              {resourceAccessSummary(model.problemSet?.accessPolicy ?? model.accessPolicy)}
+            </p>
+            <ResourceAccessEditor
+              accessPolicy={model.accessPolicy}
+              grantedUsersInput={model.grantedUsersInput}
+              grantedGroupsInput={model.grantedGroupsInput}
+              onBaseAccessChange={model.setBaseAccess}
+              onGrantedUsersInputChange={model.setGrantedUsersInput}
+              onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+            />
+            <Button
+              type="button"
+              className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+              disabled={model.isSaving}
+              onClick={() => {
+                void model.saveAccess()
+              }}
+            >
+              {model.isSaving ? 'Saving access...' : 'Save access'}
+            </Button>
+            {model.accessErrorMessage ? (
+              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                <AlertDescription className="text-rose-700">{model.accessErrorMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {model.accessSuccessMessage ? (
+              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+                <AlertDescription className="text-emerald-700">{model.accessSuccessMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }
