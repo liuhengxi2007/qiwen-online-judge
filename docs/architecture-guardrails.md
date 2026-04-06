@@ -95,7 +95,7 @@ Bad examples:
 Better examples:
 
 - `def updateUser(username: Username, role: UserRole)`
-- `type Problem = { id: ProblemId; status: ResourceStatus }`
+- `type Problem = { id: ProblemId; accessPolicy: ResourceAccessPolicy }`
 
 ### Functional Core, Imperative Shell
 

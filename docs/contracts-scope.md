@@ -29,7 +29,6 @@ These types should become shared contracts.
 - `ErrorResponse`
 - `PageResponse<T>`
 - `ResourceVisibility`
-- `ResourceStatus`
 
 ### Auth
 

@@ -1,7 +1,7 @@
 package domains.problemset.model
 
 import domains.shared.access.ResourceAccessPolicy
-import domains.shared.model.{PageResponse, ResourceStatus}
+import domains.shared.model.PageResponse
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -79,7 +79,6 @@ final case class ProblemSetSummaryView(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -92,7 +91,6 @@ final case class ProblemSet(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblem],
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -144,7 +142,6 @@ final case class ProblemSetSummary(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -166,7 +163,6 @@ final case class ProblemSetDetail(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant

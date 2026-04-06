@@ -1,7 +1,7 @@
 package domains.problem.model
 
 import domains.shared.access.ResourceAccessPolicy
-import domains.shared.model.{PageResponse, ResourceStatus}
+import domains.shared.model.PageResponse
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -136,7 +136,6 @@ final case class ProblemSummary(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -151,7 +150,6 @@ final case class Problem(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -190,7 +188,6 @@ final case class ProblemListItem(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -214,7 +211,6 @@ final case class ProblemDetail(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  status: ResourceStatus,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant

@@ -164,7 +164,6 @@ export function ProblemSetDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary">{resourceAccessBadgeLabel(model.problemSet.accessPolicy)}</Badge>
-                  <Badge variant="outline">{model.problemSet.status}</Badge>
                 </div>
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
                   {problemSetDescriptionValue(model.problemSet.description) ? (

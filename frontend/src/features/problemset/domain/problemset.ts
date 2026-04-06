@@ -19,7 +19,7 @@ import {
   type ProblemTitle,
 } from '@/features/problem/domain/problem'
 import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceAccessPolicy, ResourceStatus } from '@/shared/domain/resource-lifecycle'
+import type { ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
 
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
@@ -45,7 +45,6 @@ export type ProblemSetSummary = {
   title: ProblemSetTitle
   description: ProblemSetDescription
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: Username
   createdAt: string
   updatedAt: string
@@ -58,7 +57,6 @@ export type ProblemSetDetail = {
   description: ProblemSetDescription
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: Username
   createdAt: string
   updatedAt: string
@@ -198,7 +196,6 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
       'problem set summary description',
     ),
     accessPolicy: problemSet.accessPolicy,
-    status: problemSet.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set summary owner username'),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
@@ -216,7 +213,6 @@ export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContrac
     ),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
     accessPolicy: problemSet.accessPolicy,
-    status: problemSet.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set detail owner username'),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,

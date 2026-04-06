@@ -2,7 +2,6 @@ import type {
   AccessSubject as ContractAccessSubject,
   BaseAccess as ContractBaseAccess,
   ResourceAccessPolicy as ContractResourceAccessPolicy,
-  ResourceStatus as ContractResourceStatus,
 } from '@contracts/shared'
 
 export type BaseAccess = ContractBaseAccess
@@ -11,8 +10,6 @@ export type UserAccessSubject = Extract<ContractAccessSubject, { kind: 'user' }>
 export type UserGroupAccessSubject = Extract<ContractAccessSubject, { kind: 'user_group' }>
 export type AccessSubject = ContractAccessSubject
 export type ResourceAccessPolicy = ContractResourceAccessPolicy
-
-export type ResourceStatus = ContractResourceStatus
 
 export type AuditFields = {
   createdAt: string

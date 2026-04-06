@@ -112,7 +112,6 @@ export function ProblemPage() {
                         {problemTitleValue(problem.title)}
                       </Link>
                       <Badge variant="secondary">{resourceAccessBadgeLabel(problem.accessPolicy)}</Badge>
-                      <Badge variant="outline">{problem.status}</Badge>
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p>
                     <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">

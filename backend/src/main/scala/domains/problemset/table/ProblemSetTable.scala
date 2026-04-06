@@ -5,7 +5,7 @@ import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblem, ProblemSetSlug, ProblemSetSummaryView, ProblemSetTitle, UpdateProblemSetRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
-import domains.shared.model.{PageResponse, ResourceStatus}
+import domains.shared.model.PageResponse
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -20,7 +20,6 @@ object ProblemSetTable:
       |  title varchar(120) not null,
       |  description text not null,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  status varchar(32) not null check (status in ('draft', 'published', 'archived')),
       |  owner_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
@@ -85,9 +84,15 @@ object ProblemSetTable:
       |alter column base_access set default 'owner_only'
       |""".stripMargin
 
+  val dropStatusColumnSql: String =
+    """
+      |alter table problem_sets
+      |drop column if exists status
+      |""".stripMargin
+
   val listSql: String =
     """
-      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.status, ps.owner_username, ps.created_at, ps.updated_at
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.owner_username, ps.created_at, ps.updated_at
       |from problem_sets ps
       |where
       |  ? = true
@@ -145,16 +150,16 @@ object ProblemSetTable:
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, description, base_access, status, owner_username, created_at, updated_at
+      |select id, slug, title, description, base_access, owner_username, created_at, updated_at
       |from problem_sets
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problem_sets (id, slug, title, description, visibility, base_access, status, owner_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, description, base_access, status, owner_username, created_at, updated_at
+      |insert into problem_sets (id, slug, title, description, visibility, base_access, owner_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |returning id, slug, title, description, base_access, owner_username, created_at, updated_at
       |""".stripMargin
 
   val listProblemsForSetSql: String =
@@ -235,6 +240,7 @@ object ProblemSetTable:
         statement.execute(addBaseAccessColumnSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
+        statement.execute(dropStatusColumnSql)
         statement.execute(initProblemRelationTableSql)
       finally statement.close()
     }
@@ -302,10 +308,9 @@ object ProblemSetTable:
         statement.setString(4, request.description.value)
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(7, ResourceStatus.toDatabase(ResourceStatus.Draft))
-        statement.setString(8, ownerUsername.value)
+        statement.setString(7, ownerUsername.value)
+        statement.setTimestamp(8, Timestamp.from(now))
         statement.setTimestamp(9, Timestamp.from(now))
-        statement.setTimestamp(10, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemSetDetailBase(resultSet).copy(problems = Nil)
@@ -423,7 +428,6 @@ object ProblemSetTable:
       title = ProblemSetTitle.unsafe(resultSet.getString("title")),
       description = ProblemSetDescription.unsafe(resultSet.getString("description")),
       accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
-      status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -437,7 +441,6 @@ object ProblemSetTable:
       description = ProblemSetDescription.unsafe(resultSet.getString("description")),
       problems = Nil,
       accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
-      status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

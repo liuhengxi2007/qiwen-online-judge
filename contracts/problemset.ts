@@ -1,4 +1,4 @@
-import type { PageResponse, ResourceAccessPolicy, ResourceStatus } from './shared'
+import type { PageResponse, ResourceAccessPolicy } from './shared'
 
 export type ProblemSetProblemSummary = {
   id: string
@@ -13,7 +13,6 @@ export type ProblemSetSummary = {
   title: string
   description: string
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: string
   createdAt: string
   updatedAt: string
@@ -26,7 +25,6 @@ export type ProblemSetDetail = {
   description: string
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: string
   createdAt: string
   updatedAt: string

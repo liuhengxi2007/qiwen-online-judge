@@ -8,7 +8,7 @@ import type {
 import type { Username } from '@/features/auth/domain/auth'
 import { parseUsername } from '@/features/auth/domain/auth'
 import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceAccessPolicy, ResourceStatus } from '@/shared/domain/resource-lifecycle'
+import type { ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
 
 type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
@@ -31,7 +31,6 @@ export type ProblemSummary = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: Username
   createdAt: string
   updatedAt: string
@@ -46,7 +45,6 @@ export type ProblemDetail = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  status: ResourceStatus
   ownerUsername: Username
   createdAt: string
   updatedAt: string
@@ -227,7 +225,6 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
-    status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem summary owner username'),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
@@ -244,7 +241,6 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
-    status: problem.status as ResourceStatus,
     ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem detail owner username'),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,

@@ -17,8 +17,6 @@ export type ResourceAccessPolicy = {
   viewerGrants: AccessSubject[]
 }
 
-export type ResourceStatus = 'draft' | 'published' | 'archived'
-
 export type ErrorResponse = {
   message: string
 }

@@ -113,7 +113,6 @@ export function ProblemSetPage() {
                         {problemSetTitleValue(problemSet.title)}
                       </Link>
                       <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy)}</Badge>
-                      <Badge variant="outline">{problemSet.status}</Badge>
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSetSlugValue(problemSet.slug)}</p>
                     <p className="mt-3 text-sm leading-7 text-slate-600">

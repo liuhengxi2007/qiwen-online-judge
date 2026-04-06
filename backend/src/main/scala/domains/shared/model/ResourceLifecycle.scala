@@ -28,30 +28,3 @@ object ResourceVisibility:
   given Decoder[ResourceVisibility] = Decoder.decodeString.emap { value =>
     fromDatabase(value).toRight(s"Unknown resource visibility: $value")
   }
-
-enum ResourceStatus:
-  case Draft
-  case Published
-  case Archived
-
-object ResourceStatus:
-  def fromDatabase(value: String): Option[ResourceStatus] =
-    value match
-      case "draft" => Some(ResourceStatus.Draft)
-      case "published" => Some(ResourceStatus.Published)
-      case "archived" => Some(ResourceStatus.Archived)
-      case _ => None
-
-  def fromDatabaseUnsafe(value: String): ResourceStatus =
-    fromDatabase(value).getOrElse(throw IllegalArgumentException(s"Unknown resource status: $value"))
-
-  def toDatabase(value: ResourceStatus): String =
-    value match
-      case ResourceStatus.Draft => "draft"
-      case ResourceStatus.Published => "published"
-      case ResourceStatus.Archived => "archived"
-
-  given Encoder[ResourceStatus] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[ResourceStatus] = Decoder.decodeString.emap { value =>
-    fromDatabase(value).toRight(s"Unknown resource status: $value")
-  }

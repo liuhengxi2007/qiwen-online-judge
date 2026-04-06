@@ -5,7 +5,6 @@ import domains.auth.model.Username
 import domains.problem.model.{CreateProblemRequest, Problem, ProblemData, ProblemDataFilename, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.PageResponse
-import domains.shared.model.ResourceStatus
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -24,7 +23,6 @@ object ProblemTable:
       |  time_limit_ms integer not null default 1000,
       |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  status varchar(32) not null check (status in ('draft', 'published', 'archived')),
       |  owner_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
@@ -179,9 +177,15 @@ object ProblemTable:
       |alter column base_access set default 'owner_only'
       |""".stripMargin
 
+  val dropStatusColumnSql: String =
+    """
+      |alter table problems
+      |drop column if exists status
+      |""".stripMargin
+
   val listSql: String =
     """
-      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.status, p.owner_username, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.owner_username, p.created_at, p.updated_at
       |from problems p
       |where
       |  ? = true
@@ -297,16 +301,16 @@ object ProblemTable:
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, status, owner_username, created_at, updated_at
+      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, owner_username, created_at, updated_at
       |from problems
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, status, owner_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, status, owner_username, created_at, updated_at
+      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, owner_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, owner_username, created_at, updated_at
       |""".stripMargin
 
   val updateSql: String =
@@ -343,6 +347,7 @@ object ProblemTable:
         statement.execute(setTimeLimitNotNullSql)
         statement.execute(setSpaceLimitDefaultSql)
         statement.execute(setSpaceLimitNotNullSql)
+        statement.execute(dropStatusColumnSql)
       finally statement.close()
     }
 
@@ -427,10 +432,9 @@ object ProblemTable:
         statement.setInt(8, request.spaceLimitMb.value)
         statement.setString(9, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(10, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(11, ResourceStatus.toDatabase(ResourceStatus.Draft))
-        statement.setString(12, ownerUsername.value)
+        statement.setString(11, ownerUsername.value)
+        statement.setTimestamp(12, Timestamp.from(now))
         statement.setTimestamp(13, Timestamp.from(now))
-        statement.setTimestamp(14, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
@@ -502,7 +506,6 @@ object ProblemTable:
       timeLimitMs = ProblemTimeLimitMs.unsafe(resultSet.getInt("time_limit_ms")),
       spaceLimitMb = ProblemSpaceLimitMb.unsafe(resultSet.getInt("space_limit_mb")),
       accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
-      status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -518,7 +521,6 @@ object ProblemTable:
       timeLimitMs = ProblemTimeLimitMs.unsafe(resultSet.getInt("time_limit_ms")),
       spaceLimitMb = ProblemSpaceLimitMb.unsafe(resultSet.getInt("space_limit_mb")),
       accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
-      status = ResourceStatus.fromDatabaseUnsafe(resultSet.getString("status")),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

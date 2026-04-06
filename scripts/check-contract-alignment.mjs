@@ -146,13 +146,6 @@ function run() {
   )
 
   assertSameFields(
-    'shared.ResourceStatus',
-    extractTsUnionLiterals(contractShared, 'ResourceStatus'),
-    extractScalaStringCases(backendSharedLifecycle, 'ResourceStatus'),
-    errors,
-  )
-
-  assertSameFields(
     'shared.ResourceAccessPolicy',
     extractTsObjectTypeFields(contractShared, 'ResourceAccessPolicy'),
     extractScalaCaseClassFields(backendSharedAccess, 'ResourceAccessPolicy'),

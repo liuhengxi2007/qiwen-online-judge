@@ -29,7 +29,6 @@ object ProblemHttpResponses:
       timeLimitMs = problem.timeLimitMs,
       spaceLimitMb = problem.spaceLimitMb,
       accessPolicy = problem.accessPolicy,
-      status = problem.status,
       ownerUsername = problem.ownerUsername,
       createdAt = problem.createdAt,
       updatedAt = problem.updatedAt
@@ -45,7 +44,6 @@ object ProblemHttpResponses:
       timeLimitMs = problem.timeLimitMs,
       spaceLimitMb = problem.spaceLimitMb,
       accessPolicy = problem.accessPolicy,
-      status = problem.status,
       ownerUsername = problem.ownerUsername,
       createdAt = problem.createdAt,
       updatedAt = problem.updatedAt

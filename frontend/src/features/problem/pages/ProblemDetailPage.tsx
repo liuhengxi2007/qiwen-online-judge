@@ -192,7 +192,6 @@ export function ProblemDetailPage() {
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary">{resourceAccessBadgeLabel(model.problem.accessPolicy)}</Badge>
-                  <Badge variant="outline">{model.problem.status}</Badge>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 px-5 py-4">

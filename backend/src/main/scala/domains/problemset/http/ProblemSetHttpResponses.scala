@@ -23,7 +23,6 @@ object ProblemSetHttpResponses:
       title = problemSet.title,
       description = problemSet.description,
       accessPolicy = problemSet.accessPolicy,
-      status = problemSet.status,
       ownerUsername = problemSet.ownerUsername,
       createdAt = problemSet.createdAt,
       updatedAt = problemSet.updatedAt
@@ -45,7 +44,6 @@ object ProblemSetHttpResponses:
       description = problemSet.description,
       problems = problemSet.problems.map(toProblemSetProblemSummary),
       accessPolicy = problemSet.accessPolicy,
-      status = problemSet.status,
       ownerUsername = problemSet.ownerUsername,
       createdAt = problemSet.createdAt,
       updatedAt = problemSet.updatedAt
