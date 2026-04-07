@@ -54,6 +54,11 @@ object ProblemCommands:
     case DataFileNotFound
     case Deleted(problem: Problem)
 
+  enum ClearProblemDataResult:
+    case Forbidden
+    case ProblemNotFound
+    case Cleared(problem: Problem)
+
   def listProblems(
     databaseSession: DatabaseSession,
     actor: AuthUser,
@@ -266,6 +271,37 @@ object ProblemCommands:
                       ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                     }
               }
+            yield result
+        }
+      }
+
+  def clearProblemData(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug
+  ): IO[ClearProblemDataResult] =
+    if !ProblemPolicy.canEdit(actor) then
+      IO.pure(ClearProblemDataResult.Forbidden)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        ProblemTable.findBySlug(connection, problemSlug).flatMap {
+          case None =>
+            IO.pure(ClearProblemDataResult.ProblemNotFound)
+          case Some(problem) =>
+            for
+              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+              result <- ProblemDataStorage
+                .deleteAllFiles(problem.slug)
+                .flatMap(_ => ProblemTable.updateData(connection, problem.id, None))
+                .flatMap(_ =>
+                  ProblemTable.findBySlug(connection, problem.slug).map {
+                    case Some(updatedProblem) => ClearProblemDataResult.Cleared(updatedProblem)
+                    case None => throw new IllegalStateException("Problem disappeared after clearing data")
+                  }
+                )
+                .handleErrorWith { error =>
+                  ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                }
             yield result
         }
       }

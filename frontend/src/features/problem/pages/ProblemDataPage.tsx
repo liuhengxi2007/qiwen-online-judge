@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowDownToLine, ArrowLeft, FileUp, HardDriveUpload, LogOut, Trash2 } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeft, Eraser, FileUp, HardDriveUpload, LogOut, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import {
   problemTitleValue,
 } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDataPage() {
@@ -95,11 +96,21 @@ export function ProblemDataPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                <p className="text-sm text-slate-500">Latest uploaded file</p>
-                <p className="mt-2 text-base font-medium text-slate-900">
-                  {model.problem.data ? problemDataFilenameValue(model.problem.data) : 'No data uploaded'}
-                </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                  <p className="text-sm text-slate-500">Time limit</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                  <p className="text-sm text-slate-500">Space limit</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                  <p className="text-sm text-slate-500">Latest uploaded file</p>
+                  <p className="mt-2 text-base font-medium text-slate-900">
+                    {model.problem.data ? problemDataFilenameValue(model.problem.data) : 'No data uploaded'}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -154,6 +165,28 @@ export function ProblemDataPage() {
                   <p className="text-sm text-slate-500">No data files uploaded yet.</p>
                 ) : (
                   <div className="space-y-3">
+                    <div className="flex justify-end">
+                      <ConfirmActionDialog
+                        title="Clear all data files?"
+                        description="This currently deletes every uploaded data file for the problem. This action cannot be undone."
+                        confirmLabel={model.isClearingAll ? 'Clearing...' : 'Clear all files'}
+                        destructive
+                        onConfirm={() => {
+                          void model.clearAllDataFiles()
+                        }}
+                        trigger={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={model.isClearingAll}
+                            className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                          >
+                            <Eraser className="size-4" />
+                            {model.isClearingAll ? 'Clearing...' : 'Clear all files'}
+                          </Button>
+                        }
+                      />
+                    </div>
                     {model.dataFiles.map((filename) => (
                       <div
                         key={problemDataFilenameValue(filename)}

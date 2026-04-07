@@ -15,7 +15,6 @@ import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseProblemSlug,
-  problemDataFilenameValue,
   problemSlugValue,
   problemStatementTextValue,
   problemTitleValue,
@@ -192,22 +191,6 @@ export function ProblemDetailPage() {
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary">{resourceAccessBadgeLabel(model.problem.accessPolicy)}</Badge>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                    <p className="text-sm text-slate-500">Time limit</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                    <p className="text-sm text-slate-500">Space limit</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                    <p className="text-sm text-slate-500">Data</p>
-                    <p className="mt-2 text-sm font-medium text-slate-900">
-                      {model.problem.data ? problemDataFilenameValue(model.problem.data) : 'No data uploaded'}
-                    </p>
-                  </div>
                 </div>
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
                   <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />

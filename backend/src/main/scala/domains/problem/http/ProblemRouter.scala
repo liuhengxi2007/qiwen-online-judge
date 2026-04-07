@@ -89,6 +89,17 @@ object ProblemRouter:
                     .flatMap(ProblemHttpResponses.mapDeleteDataResult)
                 }
 
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / "clear" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            sessionSupport.withAuthenticatedUser(request) { actor =>
+              ProblemCommands
+                .clearProblemData(databaseSession, actor, parsedProblemSlug)
+                .flatMap(ProblemHttpResponses.mapClearDataResult)
+            }
+
       case request @ POST -> Root / "api" / "problems" / problemSlug =>
         ProblemSlug.parse(problemSlug) match
           case Left(message) =>

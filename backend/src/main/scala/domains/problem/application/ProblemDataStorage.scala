@@ -84,6 +84,18 @@ object ProblemDataStorage:
       Files.deleteIfExists(path)
     }
 
+  def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
+    IO.blocking {
+      val directory = dataDirectory(problemSlug)
+      if Files.exists(directory) then
+        val stream = Files.list(directory)
+        try
+          stream.iterator().asScala
+            .filter(path => Files.isRegularFile(path))
+            .foreach(path => Files.deleteIfExists(path))
+        finally stream.close()
+    }
+
   def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
     IO.blocking {
       val directory = dataDirectory(problemSlug)

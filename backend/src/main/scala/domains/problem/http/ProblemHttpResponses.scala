@@ -125,6 +125,15 @@ object ProblemHttpResponses:
       case ProblemCommands.DeleteProblemDataResult.Deleted(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
 
+  def mapClearDataResult(result: ProblemCommands.ClearProblemDataResult): IO[Response[IO]] =
+    result match
+      case ProblemCommands.ClearProblemDataResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Problem manager permission required.")
+      case ProblemCommands.ClearProblemDataResult.ProblemNotFound =>
+        errorResponse(Status.NotFound, "Problem not found.")
+      case ProblemCommands.ClearProblemDataResult.Cleared(problem) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+
   def downloadDataResponse(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
     ProblemDataStorage.readFile(problemSlug, filename).flatMap {
       case None =>

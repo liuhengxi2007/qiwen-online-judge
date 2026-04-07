@@ -83,6 +83,14 @@ export async function deleteProblemData(problemSlug: ProblemSlug, filename: Prob
   return fromProblemDetailContract(response)
 }
 
+export async function clearProblemData(problemSlug: ProblemSlug): Promise<ProblemDetail> {
+  const response = await postJson<ProblemDetailContract>(
+    `/api/problems/${problemSlugValue(problemSlug)}/data/clear`,
+    {},
+  )
+  return fromProblemDetailContract(response)
+}
+
 export function problemDataDownloadUrl(problemSlug: ProblemSlug, filename: ProblemDataFilename): string {
   return `/api/problems/${problemSlugValue(problemSlug)}/data/${encodeURIComponent(filename)}`
 }

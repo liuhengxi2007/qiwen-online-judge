@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import {
+  clearProblemData,
   deleteProblemData,
   listProblemDataFiles,
   updateProblemData,
@@ -24,6 +25,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const [isUploading, setIsUploading] = useState(false)
   const [isLoadingFiles, setIsLoadingFiles] = useState(true)
   const [deletingFilename, setDeletingFilename] = useState<ProblemDataFilename | null>(null)
+  const [isClearingAll, setIsClearingAll] = useState(false)
   const [dataFiles, setDataFiles] = useState<ProblemDataFilename[]>([])
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -116,6 +118,26 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     [loadFiles, problemSlug, replaceProblem],
   )
 
+  const clearAllDataFiles = useCallback(async (): Promise<DeleteResult> => {
+    setIsClearingAll(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    try {
+      const updatedProblem = await clearProblemData(problemSlug)
+      replaceProblem(updatedProblem)
+      setSuccessMessage('Cleared all data files successfully.')
+      await loadFiles()
+      return { ok: true }
+    } catch (error) {
+      const message = error instanceof HttpClientError ? error.message : 'Unable to clear problem data.'
+      setErrorMessage(message)
+      return { ok: false, message }
+    } finally {
+      setIsClearingAll(false)
+    }
+  }, [loadFiles, problemSlug, replaceProblem])
+
   return {
     problem: detailQuery.problem,
     isProblemLoading: detailQuery.isLoading,
@@ -124,6 +146,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     isUploading,
     isLoadingFiles,
     deletingFilename,
+    isClearingAll,
     dataFiles,
     errorMessage,
     successMessage,
@@ -132,5 +155,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     setSuccessMessage,
     uploadSelectedFile,
     deleteDataFile,
+    clearAllDataFiles,
   }
 }
