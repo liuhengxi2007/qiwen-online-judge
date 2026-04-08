@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 const root = process.cwd()
 
 function read(relativePath) {
-  return readFileSync(resolve(root, relativePath), 'utf8')
+  return readFileSync(resolve(root, relativePath), 'utf8').replace(/\r\n/g, '\n')
 }
 
 function normalizeFieldName(field) {
@@ -32,7 +32,7 @@ function extractTsObjectTypeFields(source, typeName) {
 }
 
 function extractTsUnionLiterals(source, typeName) {
-  const pattern = new RegExp(`export type ${typeName} = ([^\\n]+)`, 'm')
+  const pattern = new RegExp(`export type ${typeName} =\\s*([\\s\\S]*?)(?=\\nexport type|$)`)
   const match = source.match(pattern)
   if (!match) {
     throw new Error(`Unable to find TypeScript union ${typeName}`)
@@ -94,6 +94,7 @@ function run() {
   const contractAuth = read('contracts/auth.ts')
   const contractProblem = read('contracts/problem.ts')
   const contractProblemSet = read('contracts/problemset.ts')
+  const contractSubmission = read('contracts/submission.ts')
   const contractUserGroup = read('contracts/usergroup.ts')
 
   const backendSharedError = read('backend/src/main/scala/domains/shared/model/ErrorResponse.scala')
@@ -115,6 +116,7 @@ function run() {
 
   const problemModel = read('backend/src/main/scala/domains/problem/model/Problem.scala')
   const problemSetModel = read('backend/src/main/scala/domains/problemset/model/ProblemSet.scala')
+  const submissionModel = read('backend/src/main/scala/domains/submission/model/Submission.scala')
   const userGroupModel = read('backend/src/main/scala/domains/usergroup/model/UserGroup.scala')
 
   assertSameFields(
@@ -176,7 +178,7 @@ function run() {
   const problemMappings = [
     ['CreateProblemRequest', 'CreateProblemRequest'],
     ['UpdateProblemRequest', 'UpdateProblemRequest'],
-    ['ProblemSummary', 'ProblemListItem'],
+    ['ProblemSummary', 'ProblemSummary'],
     ['ProblemDetail', 'ProblemDetail'],
   ]
 
@@ -203,6 +205,42 @@ function run() {
       `problemset.${contractType}`,
       extractTsObjectTypeFields(contractProblemSet, contractType),
       extractScalaCaseClassFields(problemSetModel, scalaType),
+      errors,
+    )
+  }
+
+  assertSameFields(
+    'submission.SubmissionLanguage',
+    extractTsUnionLiterals(contractSubmission, 'SubmissionLanguage'),
+    extractScalaStringCases(submissionModel, 'SubmissionLanguage'),
+    errors,
+  )
+
+  assertSameFields(
+    'submission.SubmissionStatus',
+    extractTsUnionLiterals(contractSubmission, 'SubmissionStatus'),
+    extractScalaStringCases(submissionModel, 'SubmissionStatus'),
+    errors,
+  )
+
+  assertSameFields(
+    'submission.SubmissionVerdict',
+    extractTsUnionLiterals(contractSubmission, 'SubmissionVerdict'),
+    extractScalaStringCases(submissionModel, 'SubmissionVerdict'),
+    errors,
+  )
+
+  const submissionMappings = [
+    ['CreateSubmissionRequest', 'CreateSubmissionRequest'],
+    ['SubmissionSummary', 'SubmissionSummary'],
+    ['SubmissionDetail', 'SubmissionDetail'],
+  ]
+
+  for (const [contractType, scalaType] of submissionMappings) {
+    assertSameFields(
+      `submission.${contractType}`,
+      extractTsObjectTypeFields(contractSubmission, contractType),
+      extractScalaCaseClassFields(submissionModel, scalaType),
       errors,
     )
   }
