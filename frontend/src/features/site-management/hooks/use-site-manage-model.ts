@@ -95,6 +95,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
 
       switch (result.kind) {
         case 'updated':
+          query.replaceUser(result.user)
           dispatch({ type: 'update_succeeded', user: result.user })
           return
         case 'forbidden':
@@ -121,6 +122,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
 
       switch (result.kind) {
         case 'deleted':
+          query.removeUser(username)
           dispatch({ type: 'delete_succeeded', username, message: result.message })
           return
         case 'forbidden':

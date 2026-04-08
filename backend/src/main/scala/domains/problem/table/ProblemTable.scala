@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, Problem, ProblemData, ProblemDataFilename, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.PageResponse
 
@@ -371,7 +371,7 @@ object ProblemTable:
             Iterator
               .continually(resultSet.next())
               .takeWhile(identity)
-              .map(_ => readProblemListItemBase(resultSet))
+              .map(_ => readProblemSummaryBase(resultSet))
               .toList
           finally resultSet.close()
         finally statement.close()
@@ -384,7 +384,7 @@ object ProblemTable:
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
-  def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[Problem]] =
+  def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSql)
       try
@@ -417,7 +417,7 @@ object ProblemTable:
       finally statement.close()
     }
 
-  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemRequest): IO[Problem] =
+  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemRequest): IO[ProblemDetail] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
@@ -497,7 +497,7 @@ object ProblemTable:
       finally statement.close()
     }
 
-  private def readProblemListItemBase(resultSet: ResultSet): ProblemSummary =
+  private def readProblemSummaryBase(resultSet: ResultSet): ProblemSummary =
     ProblemSummary(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSlug.unsafe(resultSet.getString("slug")),
@@ -511,8 +511,8 @@ object ProblemTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readProblemDetailBase(resultSet: ResultSet): Problem =
-    Problem(
+  private def readProblemDetailBase(resultSet: ResultSet): ProblemDetail =
+    ProblemDetail(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSlug.unsafe(resultSet.getString("slug")),
       title = ProblemTitle.unsafe(resultSet.getString("title")),

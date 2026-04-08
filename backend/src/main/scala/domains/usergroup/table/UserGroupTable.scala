@@ -3,7 +3,7 @@ package domains.usergroup.table
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
-import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMemberRecord, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummaryView}
+import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
 
 import java.sql.{Connection, ResultSet, SQLException, Timestamp}
 import java.time.Instant
@@ -224,7 +224,7 @@ object UserGroupTable:
       finally statement.close()
     }
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummaryView]] =
+  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countVisibleSql)
@@ -440,7 +440,7 @@ object UserGroupTable:
       finally statement.close()
     }
 
-  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMemberRecord]] =
+  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
     IO.blocking {
       val statement = connection.prepareStatement(listMembersSql)
       try
@@ -451,8 +451,8 @@ object UserGroupTable:
       finally statement.close()
     }
 
-  private def readSummary(resultSet: ResultSet): UserGroupSummaryView =
-    UserGroupSummaryView(
+  private def readSummary(resultSet: ResultSet): UserGroupSummary =
+    UserGroupSummary(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = UserGroupSlug.unsafe(resultSet.getString("slug")),
       name = UserGroupName.unsafe(resultSet.getString("name")),
@@ -474,8 +474,8 @@ object UserGroupTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def readMember(resultSet: ResultSet): UserGroupMemberRecord =
-    UserGroupMemberRecord(
+  private def readMember(resultSet: ResultSet): UserGroupMember =
+    UserGroupMember(
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       role = UserGroupRole.fromDatabaseUnsafe(resultSet.getString("role")),

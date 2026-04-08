@@ -97,6 +97,33 @@ Better examples:
 - `def updateUser(username: Username, role: UserRole)`
 - `type Problem = { id: ProblemId; accessPolicy: ResourceAccessPolicy }`
 
+### Cross-Stack Naming Alignment
+
+Cross-stack type names should align when they represent the same transport shape or the same stable business concept.
+
+Rules:
+
+- HTTP contract types in `contracts/` are the naming source of truth for both frontend and backend boundary models
+- if frontend and backend both expose the same response shape, use the same type name on both sides
+- do not introduce backend-only aliases like `SummaryView`, `ListItem`, or `MemberRecord` when they mean the same thing as an existing contract-facing type
+- do not introduce frontend-only aliases for the same contract shape unless the frontend model has meaningfully different fields or semantics
+- if a type is only an internal application or persistence model, it may differ, but its name must reflect that different role explicitly
+
+Prefer:
+
+- `ProblemSummary` on both sides for the problem list item shape
+- `ProblemDetail` on both sides for the problem detail shape
+- `UserGroupMember` on both sides for the member payload shape
+
+Avoid:
+
+- `ProblemListItem` when the shared shape is already `ProblemSummary`
+- `ProblemSetSummaryView` when the shared shape is already `ProblemSetSummary`
+- `UserGroupMemberRecord` when the shared shape is already `UserGroupMember`
+
+When the shape is identical, prefer one name everywhere.
+When the shape is different, prefer different names that make the difference obvious.
+
 ### Functional Core, Imperative Shell
 
 Push side effects to the boundary.
@@ -160,6 +187,32 @@ Avoid:
 - callbacks that depend on entire reducer state objects
 - effects that depend on freshly created wrapper objects
 - broad dependency arrays that cause needless recomputation or callback churn
+
+### Store Boundaries
+
+State stores are allowed only for real shared state containers. They must not become hidden query or workflow layers.
+
+Rules:
+
+- `src/stores` is reserved for app-shell state that is not owned by a single business domain
+- `features/*/stores` should be rare and only used for domain-local shared state across multiple pages or entry points
+- stores may hold state, derived flags, and simple state transitions
+- stores must not directly own fetch, mutation, permission redirect, or orchestration logic
+- query loading belongs in hooks
+- mutation side effects belong in hooks or explicit clients
+- page models may coordinate query and mutation results, but should not hide that coordination inside a store
+
+Prefer:
+
+- a `use...Query` hook that loads data and exposes `replace...` helpers for local synchronization
+- a `use...Mutation` hook that performs one request and returns a typed result
+- a store only for session state, theme state, or other cross-page state that is truly shared
+
+Avoid:
+
+- stores that call APIs directly and also manage redirect decisions
+- stores that mix cache state, loading state, permission errors, and mutation workflows
+- adding a feature store only to avoid choosing between a hook and a reducer
 
 ## Backend
 

@@ -3,7 +3,7 @@ package domains.problemset.table
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblem, ProblemSetSlug, ProblemSetSummaryView, ProblemSetTitle, UpdateProblemSetRequest}
+import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle, UpdateProblemSetRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.PageResponse
 
@@ -245,7 +245,7 @@ object ProblemSetTable:
       finally statement.close()
     }
 
-  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummaryView]] =
+  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
@@ -270,7 +270,7 @@ object ProblemSetTable:
           finally resultSet.close()
         finally statement.close()
       }
-      itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSetSummaryView])) { (accIO, item) =>
+      itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSetSummary])) { (accIO, item) =>
         for
           acc <- accIO
           grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id))
@@ -421,8 +421,8 @@ object ProblemSetTable:
       finally positionStatement.close()
     }
 
-  private def readProblemSetSummaryBase(resultSet: ResultSet): ProblemSetSummaryView =
-    ProblemSetSummaryView(
+  private def readProblemSetSummaryBase(resultSet: ResultSet): ProblemSetSummary =
+    ProblemSetSummary(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
       slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
       title = ProblemSetTitle.unsafe(resultSet.getString("title")),
@@ -446,7 +446,7 @@ object ProblemSetTable:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def listProblemsForSet(connection: Connection, problemSetId: ProblemSetId): IO[List[ProblemSetProblem]] =
+  private def listProblemsForSet(connection: Connection, problemSetId: ProblemSetId): IO[List[ProblemSetProblemSummary]] =
     IO.blocking {
       val statement = connection.prepareStatement(listProblemsForSetSql)
       try
@@ -457,7 +457,7 @@ object ProblemSetTable:
             .continually(resultSet.next())
             .takeWhile(identity)
             .map { _ =>
-              ProblemSetProblem(
+              ProblemSetProblemSummary(
                 id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
                 slug = ProblemSlug.unsafe(resultSet.getString("slug")),
                 title = ProblemTitle.unsafe(resultSet.getString("title")),

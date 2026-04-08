@@ -225,6 +225,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
       switch (result.kind) {
         case 'updated':
+          query.replaceEditedUser(targetUsername, result.user)
           dispatch({
             type: 'submit_succeeded',
             user: result.user,

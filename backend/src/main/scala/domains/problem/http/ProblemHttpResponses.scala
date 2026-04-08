@@ -3,7 +3,7 @@ package domains.problem.http
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.{Problem, ProblemDataFileListResponse, ProblemDataFilename, ProblemDetail, ProblemListItem, ProblemSlug, ProblemSummary}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDetail, ProblemSlug, ProblemSummary}
 import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
 import fs2.Stream
 import io.circe.syntax.*
@@ -17,37 +17,8 @@ object ProblemHttpResponses:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     errorResponse(Status.BadRequest, message)
 
-  def toProblemListResponse(response: PageResponse[ProblemSummary]): PageResponse[ProblemListItem] =
-    response.copy(items = response.items.map(toProblemListItem))
-
-  def toProblemListItem(problem: ProblemSummary): ProblemListItem =
-    ProblemListItem(
-      id = problem.id,
-      slug = problem.slug,
-      title = problem.title,
-      data = problem.data,
-      timeLimitMs = problem.timeLimitMs,
-      spaceLimitMb = problem.spaceLimitMb,
-      accessPolicy = problem.accessPolicy,
-      ownerUsername = problem.ownerUsername,
-      createdAt = problem.createdAt,
-      updatedAt = problem.updatedAt
-    )
-
-  def toProblemDetail(problem: Problem): ProblemDetail =
-    ProblemDetail(
-      id = problem.id,
-      slug = problem.slug,
-      title = problem.title,
-      statement = problem.statement,
-      data = problem.data,
-      timeLimitMs = problem.timeLimitMs,
-      spaceLimitMb = problem.spaceLimitMb,
-      accessPolicy = problem.accessPolicy,
-      ownerUsername = problem.ownerUsername,
-      createdAt = problem.createdAt,
-      updatedAt = problem.updatedAt
-    )
+  def toProblemListResponse(response: PageResponse[ProblemSummary]): PageResponse[ProblemSummary] =
+    response
 
   def mapCreateResult(result: ProblemCommands.CreateProblemResult): IO[Response[IO]] =
     result match
@@ -60,7 +31,7 @@ object ProblemHttpResponses:
       case ProblemCommands.CreateProblemResult.SlugConflictsWithProblemSet =>
         errorResponse(Status.Conflict, "Problem slug conflicts with an existing problem set slug.")
       case ProblemCommands.CreateProblemResult.Created(problem) =>
-        IO.pure(Response[IO](status = Status.Created).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Created).withEntity(problem.asJson))
 
   private def errorResponse(status: Status, message: String): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))
@@ -72,7 +43,7 @@ object ProblemHttpResponses:
       case ProblemCommands.GetProblemResult.Forbidden =>
         errorResponse(Status.Forbidden, "You do not have access to this problem.")
       case ProblemCommands.GetProblemResult.Found(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapUpdateResult(result: ProblemCommands.UpdateProblemResult): IO[Response[IO]] =
     result match
@@ -83,7 +54,7 @@ object ProblemHttpResponses:
       case ProblemCommands.UpdateProblemResult.ProblemNotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
       case ProblemCommands.UpdateProblemResult.Updated(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapDeleteResult(result: ProblemCommands.DeleteProblemResult): IO[Response[IO]] =
     result match
@@ -103,7 +74,7 @@ object ProblemHttpResponses:
       case ProblemCommands.UpdateProblemDataResult.ProblemNotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
       case ProblemCommands.UpdateProblemDataResult.Updated(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapListDataResult(result: ProblemCommands.ListProblemDataResult): IO[Response[IO]] =
     result match
@@ -123,7 +94,7 @@ object ProblemHttpResponses:
       case ProblemCommands.DeleteProblemDataResult.DataFileNotFound =>
         errorResponse(Status.NotFound, "Problem data file not found.")
       case ProblemCommands.DeleteProblemDataResult.Deleted(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapClearDataResult(result: ProblemCommands.ClearProblemDataResult): IO[Response[IO]] =
     result match
@@ -132,7 +103,7 @@ object ProblemHttpResponses:
       case ProblemCommands.ClearProblemDataResult.ProblemNotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
       case ProblemCommands.ClearProblemDataResult.Cleared(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemDetail(problem).asJson))
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def downloadDataResponse(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
     ProblemDataStorage.readFile(problemSlug, filename).flatMap {

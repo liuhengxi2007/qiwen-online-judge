@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{CreateProblemRequest, Problem, ProblemDataFileListResponse, ProblemDataFilename, UpdateProblemDataRequest, ProblemSummary, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFileListResponse, ProblemDataFilename, ProblemDetail, ProblemSummary, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
@@ -19,18 +19,18 @@ object ProblemCommands:
     case ValidationFailed(message: String)
     case SlugAlreadyExists
     case SlugConflictsWithProblemSet
-    case Created(problem: Problem)
+    case Created(problem: ProblemDetail)
 
   enum GetProblemResult:
     case NotFound
     case Forbidden
-    case Found(problem: Problem)
+    case Found(problem: ProblemDetail)
 
   enum UpdateProblemResult:
     case Forbidden
     case ValidationFailed(message: String)
     case ProblemNotFound
-    case Updated(problem: Problem)
+    case Updated(problem: ProblemDetail)
 
   enum DeleteProblemResult:
     case Forbidden
@@ -41,7 +41,7 @@ object ProblemCommands:
     case Forbidden
     case ValidationFailed(message: String)
     case ProblemNotFound
-    case Updated(problem: Problem)
+    case Updated(problem: ProblemDetail)
 
   enum ListProblemDataResult:
     case Forbidden
@@ -52,12 +52,12 @@ object ProblemCommands:
     case Forbidden
     case ProblemNotFound
     case DataFileNotFound
-    case Deleted(problem: Problem)
+    case Deleted(problem: ProblemDetail)
 
   enum ClearProblemDataResult:
     case Forbidden
     case ProblemNotFound
-    case Cleared(problem: Problem)
+    case Cleared(problem: ProblemDetail)
 
   def listProblems(
     databaseSession: DatabaseSession,
@@ -317,7 +317,7 @@ object ProblemCommands:
   private def canViewProblem(
     connection: java.sql.Connection,
     actor: AuthUser,
-    problem: Problem
+    problem: ProblemDetail
   ): IO[Boolean] =
     UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { viewerGroupSlugs =>
       val canViewDirectly = AccessPolicyEvaluator.canView(

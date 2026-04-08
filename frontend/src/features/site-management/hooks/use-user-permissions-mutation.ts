@@ -4,7 +4,6 @@ import { type AuthUserListItem, type UpdateUserPermissionsRequest, type Username
 import { AuthClientError, updateUserPermissions } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { useUserDirectoryStore } from '@/features/site-management/stores/use-user-directory-store'
 
 type SavePermissionsResult =
   | { kind: 'updated'; user: AuthUserListItem }
@@ -12,7 +11,6 @@ type SavePermissionsResult =
   | { kind: 'failed'; message: string }
 
 export function useUserPermissionsMutation() {
-  const replaceUser = useUserDirectoryStore((state) => state.replaceUser)
   const [updatingUsername, setUpdatingUsername] = useState<Username | null>(null)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
@@ -23,7 +21,6 @@ export function useUserPermissionsMutation() {
 
       try {
         const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
-        replaceUser(updatedUser)
         setUpdatingUsername(null)
         return { kind: 'updated', user: updatedUser }
       } catch (error) {
@@ -38,7 +35,7 @@ export function useUserPermissionsMutation() {
         return { kind: 'failed', message }
       }
     },
-    [replaceUser],
+    [],
   )
 
   return {

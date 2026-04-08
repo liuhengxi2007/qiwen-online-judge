@@ -2,7 +2,7 @@ package domains.problemset.http
 
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
-import domains.problemset.model.{ProblemSet, ProblemSetDetail, ProblemSetProblem, ProblemSetProblemSummary, ProblemSetSummary, ProblemSetSummaryView}
+import domains.problemset.model.{ProblemSet, ProblemSetDetail, ProblemSetProblemSummary, ProblemSetSummary}
 import domains.shared.model.{ErrorResponse, PageResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -13,28 +13,8 @@ object ProblemSetHttpResponses:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     errorResponse(Status.BadRequest, message)
 
-  def toProblemSetListResponse(response: PageResponse[ProblemSetSummaryView]): PageResponse[ProblemSetSummary] =
-    response.copy(items = response.items.map(toProblemSetSummary))
-
-  def toProblemSetSummary(problemSet: ProblemSetSummaryView): ProblemSetSummary =
-    ProblemSetSummary(
-      id = problemSet.id,
-      slug = problemSet.slug,
-      title = problemSet.title,
-      description = problemSet.description,
-      accessPolicy = problemSet.accessPolicy,
-      ownerUsername = problemSet.ownerUsername,
-      createdAt = problemSet.createdAt,
-      updatedAt = problemSet.updatedAt
-    )
-
-  def toProblemSetProblemSummary(problem: ProblemSetProblem): ProblemSetProblemSummary =
-    ProblemSetProblemSummary(
-      id = problem.id,
-      slug = problem.slug,
-      title = problem.title,
-      position = problem.position
-    )
+  def toProblemSetListResponse(response: PageResponse[ProblemSetSummary]): PageResponse[ProblemSetSummary] =
+    response
 
   def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =
     ProblemSetDetail(
@@ -42,7 +22,7 @@ object ProblemSetHttpResponses:
       slug = problemSet.slug,
       title = problemSet.title,
       description = problemSet.description,
-      problems = problemSet.problems.map(toProblemSetProblemSummary),
+      problems = problemSet.problems,
       accessPolicy = problemSet.accessPolicy,
       ownerUsername = problemSet.ownerUsername,
       createdAt = problemSet.createdAt,

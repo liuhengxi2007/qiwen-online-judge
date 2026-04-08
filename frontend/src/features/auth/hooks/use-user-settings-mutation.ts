@@ -16,7 +16,6 @@ import {
 } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { useUserSettingsQueryStore } from '@/features/auth/stores/use-user-settings-query-store'
 
 type SubmitSettingsParams =
   | {
@@ -40,7 +39,6 @@ type SubmitSettingsResult =
   | { kind: 'failed'; message: string }
 
 export function useUserSettingsMutation() {
-  const setEditedUser = useUserSettingsQueryStore((state) => state.setEditedUser)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
@@ -60,8 +58,6 @@ export function useUserSettingsMutation() {
         if (params.kind === 'own' && !shouldSignOutAfterUpdate) {
           params.setViewer(toAuthSession(updatedUser))
         }
-
-        setEditedUser(params.targetUsername, updatedUser)
 
         if (shouldSignOutAfterUpdate) {
           await logout()
@@ -98,7 +94,7 @@ export function useUserSettingsMutation() {
         return { kind: 'failed', message }
       }
     },
-    [setEditedUser],
+    [],
   )
 
   return {

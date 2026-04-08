@@ -141,7 +141,7 @@ final case class ProblemSummary(
   updatedAt: Instant
 )
 
-final case class Problem(
+final case class ProblemDetail(
   id: ProblemId,
   slug: ProblemSlug,
   title: ProblemTitle,
@@ -180,41 +180,14 @@ object UpdateProblemRequest:
   given Encoder[UpdateProblemRequest] = deriveEncoder[UpdateProblemRequest]
   given Decoder[UpdateProblemRequest] = deriveDecoder[UpdateProblemRequest]
 
-final case class ProblemListItem(
-  id: ProblemId,
-  slug: ProblemSlug,
-  title: ProblemTitle,
-  data: ProblemData,
-  timeLimitMs: ProblemTimeLimitMs,
-  spaceLimitMb: ProblemSpaceLimitMb,
-  accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
-  createdAt: Instant,
-  updatedAt: Instant
-)
-
-object ProblemListItem:
+object ProblemSummary:
   private given instantEncoder: Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given instantDecoder: Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)
   }
 
-  given Encoder[ProblemListItem] = deriveEncoder[ProblemListItem]
-  given Decoder[ProblemListItem] = deriveDecoder[ProblemListItem]
-
-final case class ProblemDetail(
-  id: ProblemId,
-  slug: ProblemSlug,
-  title: ProblemTitle,
-  statement: ProblemStatementText,
-  data: ProblemData,
-  timeLimitMs: ProblemTimeLimitMs,
-  spaceLimitMb: ProblemSpaceLimitMb,
-  accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
-  createdAt: Instant,
-  updatedAt: Instant
-)
+  given Encoder[ProblemSummary] = deriveEncoder[ProblemSummary]
+  given Decoder[ProblemSummary] = deriveDecoder[ProblemSummary]
 
 object ProblemDetail:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
@@ -246,4 +219,4 @@ object ProblemDataFileListResponse:
   given Encoder[ProblemDataFileListResponse] = deriveEncoder[ProblemDataFileListResponse]
   given Decoder[ProblemDataFileListResponse] = deriveDecoder[ProblemDataFileListResponse]
 
-type ProblemListResponse = PageResponse[ProblemListItem]
+type ProblemListResponse = PageResponse[ProblemSummary]

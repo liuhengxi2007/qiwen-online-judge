@@ -1,46 +1,74 @@
 import { useEffect, useState } from 'react'
 
+import { AuthClientError, listUsers } from '@/features/auth/api/auth-client'
+import type { AuthUserListItem } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { useUserDirectoryStore } from '@/features/site-management/stores/use-user-directory-store'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean) {
-  const users = useUserDirectoryStore((state) => state.users)
-  const isLoadingUsers = useUserDirectoryStore((state) => state.isLoadingUsers)
-  const userListError = useUserDirectoryStore((state) => state.userListError)
-  const loadUsers = useUserDirectoryStore((state) => state.loadUsers)
-  const reset = useUserDirectoryStore((state) => state.reset)
+  const [users, setUsers] = useState<AuthUserListItem[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+  const [userListError, setUserListError] = useState('')
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
   useEffect(() => {
     if (!siteManagerEnabled) {
-      reset()
+      setUsers([])
+      setIsLoadingUsers(false)
+      setUserListError('')
       setNavigationIntent(null)
       return
     }
 
     let isCancelled = false
+    setUsers([])
+    setIsLoadingUsers(true)
+    setUserListError('')
     setNavigationIntent(null)
 
-    void loadUsers().then((result) => {
-      if (isCancelled) {
-        return
-      }
+    void listUsers()
+      .then((loadedUsers) => {
+        if (isCancelled) {
+          return
+        }
 
-      if (result.kind === 'forbidden') {
-        setNavigationIntent(toSiteManageDeniedRedirect())
-      }
-    })
+        setUsers(loadedUsers)
+        setIsLoadingUsers(false)
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) {
+          return
+        }
+
+        setUsers([])
+        setIsLoadingUsers(false)
+
+        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+          setUserListError('')
+          setNavigationIntent(toSiteManageDeniedRedirect())
+          return
+        }
+
+        setUserListError('Unable to load the user list.')
+      })
 
     return () => {
       isCancelled = true
     }
-  }, [loadUsers, reset, siteManagerEnabled])
+  }, [siteManagerEnabled])
 
   return {
     users,
     isLoadingUsers,
     userListError,
     navigationIntent,
+    replaceUser(updatedUser: AuthUserListItem) {
+      setUsers((currentUsers) =>
+        currentUsers.map((currentUser) => (currentUser.username === updatedUser.username ? updatedUser : currentUser)),
+      )
+    },
+    removeUser(targetUsername: AuthUserListItem['username']) {
+      setUsers((currentUsers) => currentUsers.filter((currentUser) => currentUser.username !== targetUsername))
+    },
   }
 }

@@ -3,7 +3,7 @@ package domains.usergroup.http
 import cats.effect.IO
 import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{UserGroup, UserGroupDetail, UserGroupMember, UserGroupMemberRecord, UserGroupSummary, UserGroupSummaryView}
+import domains.usergroup.model.{UserGroup, UserGroupDetail, UserGroupMember, UserGroupSummary}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -13,27 +13,8 @@ object UserGroupHttpResponses:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     errorResponse(Status.BadRequest, message)
 
-  def toUserGroupListResponse(response: PageResponse[UserGroupSummaryView]): PageResponse[UserGroupSummary] =
-    response.copy(items = response.items.map(toUserGroupSummary))
-
-  def toUserGroupSummary(group: UserGroupSummaryView): UserGroupSummary =
-    UserGroupSummary(
-      id = group.id,
-      slug = group.slug,
-      name = group.name,
-      description = group.description,
-      ownerUsername = group.ownerUsername,
-      createdAt = group.createdAt,
-      updatedAt = group.updatedAt
-    )
-
-  def toUserGroupMember(member: UserGroupMemberRecord): UserGroupMember =
-    UserGroupMember(
-      username = member.username,
-      displayName = member.displayName,
-      role = member.role,
-      joinedAt = member.joinedAt
-    )
+  def toUserGroupListResponse(response: PageResponse[UserGroupSummary]): PageResponse[UserGroupSummary] =
+    response
 
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =
     UserGroupDetail(
@@ -42,7 +23,7 @@ object UserGroupHttpResponses:
       name = group.name,
       description = group.description,
       ownerUsername = group.ownerUsername,
-      members = group.members.map(toUserGroupMember),
+      members = group.members,
       createdAt = group.createdAt,
       updatedAt = group.updatedAt
     )

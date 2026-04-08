@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react'
 import { AuthClientError, deleteUser } from '@/features/auth/api/auth-client'
 import type { Username } from '@/features/auth/domain/auth'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { useUserDirectoryStore } from '@/features/site-management/stores/use-user-directory-store'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type DeleteUserResult =
@@ -12,7 +11,6 @@ type DeleteUserResult =
   | { kind: 'failed'; message: string }
 
 export function useUserDeleteMutation() {
-  const removeUser = useUserDirectoryStore((state) => state.removeUser)
   const [deletingUsername, setDeletingUsername] = useState<Username | null>(null)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
@@ -23,7 +21,6 @@ export function useUserDeleteMutation() {
 
       try {
         const response = await deleteUser(targetUsername)
-        removeUser(targetUsername)
         setDeletingUsername(null)
         return { kind: 'deleted', message: response.message }
       } catch (error) {
@@ -38,7 +35,7 @@ export function useUserDeleteMutation() {
         return { kind: 'failed', message }
       }
     },
-    [removeUser],
+    [],
   )
 
   return {

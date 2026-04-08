@@ -66,14 +66,7 @@ object ProblemSetDescription:
   given Encoder[ProblemSetDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemSetDescription] = Decoder.decodeString.emap(parse)
 
-final case class ProblemSetProblem(
-  id: domains.problem.model.ProblemId,
-  slug: domains.problem.model.ProblemSlug,
-  title: domains.problem.model.ProblemTitle,
-  position: Int
-)
-
-final case class ProblemSetSummaryView(
+final case class ProblemSetSummary(
   id: ProblemSetId,
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
@@ -89,7 +82,7 @@ final case class ProblemSet(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  problems: List[ProblemSetProblem],
+  problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
   ownerUsername: domains.auth.model.Username,
   createdAt: Instant,
@@ -135,17 +128,6 @@ final case class ProblemSetProblemSummary(
 object ProblemSetProblemSummary:
   given Encoder[ProblemSetProblemSummary] = deriveEncoder[ProblemSetProblemSummary]
   given Decoder[ProblemSetProblemSummary] = deriveDecoder[ProblemSetProblemSummary]
-
-final case class ProblemSetSummary(
-  id: ProblemSetId,
-  slug: ProblemSetSlug,
-  title: ProblemSetTitle,
-  description: ProblemSetDescription,
-  accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
-  createdAt: Instant,
-  updatedAt: Instant
-)
 
 object ProblemSetSummary:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)

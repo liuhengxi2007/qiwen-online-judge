@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.auth.table.AuthUserTable
 import domains.problem.table.ProblemTable
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummaryView, UpdateProblemSetRequest}
+import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummary, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
 import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
@@ -55,7 +55,7 @@ object ProblemSetCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     pageRequest: PageRequest
-  ): IO[PageResponse[ProblemSetSummaryView]] =
+  ): IO[PageResponse[ProblemSetSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>
       ProblemSetTable.listVisibleTo(connection, actor, normalizedPageRequest.page, normalizedPageRequest.pageSize)

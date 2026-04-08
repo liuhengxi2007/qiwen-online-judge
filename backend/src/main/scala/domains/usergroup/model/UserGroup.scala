@@ -66,14 +66,14 @@ object UserGroupDescription:
   given Encoder[UserGroupDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupDescription] = Decoder.decodeString.emap(parse)
 
-final case class UserGroupMemberRecord(
+final case class UserGroupMember(
   username: Username,
   displayName: DisplayName,
   role: UserGroupRole,
   joinedAt: Instant
 )
 
-final case class UserGroupSummaryView(
+final case class UserGroupSummary(
   id: UserGroupId,
   slug: UserGroupSlug,
   name: UserGroupName,
@@ -89,7 +89,7 @@ final case class UserGroup(
   name: UserGroupName,
   description: UserGroupDescription,
   ownerUsername: Username,
-  members: List[UserGroupMemberRecord],
+  members: List[UserGroupMember],
   createdAt: Instant,
   updatedAt: Instant
 )
@@ -178,13 +178,6 @@ object UpdateUserGroupMemberRoleRequest:
   given Encoder[UpdateUserGroupMemberRoleRequest] = deriveEncoder[UpdateUserGroupMemberRoleRequest]
   given Decoder[UpdateUserGroupMemberRoleRequest] = deriveDecoder[UpdateUserGroupMemberRoleRequest]
 
-final case class UserGroupMember(
-  username: Username,
-  displayName: DisplayName,
-  role: UserGroupRole,
-  joinedAt: Instant
-)
-
 object UserGroupMember:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Instant] = Decoder.decodeString.emap { value =>
@@ -193,16 +186,6 @@ object UserGroupMember:
 
   given Encoder[UserGroupMember] = deriveEncoder[UserGroupMember]
   given Decoder[UserGroupMember] = deriveDecoder[UserGroupMember]
-
-final case class UserGroupSummary(
-  id: UserGroupId,
-  slug: UserGroupSlug,
-  name: UserGroupName,
-  description: UserGroupDescription,
-  ownerUsername: Username,
-  createdAt: Instant,
-  updatedAt: Instant
-)
 
 object UserGroupSummary:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)

@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.auth.table.AuthUserTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroup, UserGroupSlug, UserGroupRole, UserGroupSummaryView}
+import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroup, UserGroupSlug, UserGroupRole, UserGroupSummary}
 import domains.usergroup.table.UserGroupTable
 
 object UserGroupCommands:
@@ -61,7 +61,7 @@ object UserGroupCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     pageRequest: PageRequest
-  ): IO[PageResponse[UserGroupSummaryView]] =
+  ): IO[PageResponse[UserGroupSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     if !UserGroupPolicy.canList(actor) then
       IO.pure(PageResponse(items = Nil, page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize, totalItems = 0L))
