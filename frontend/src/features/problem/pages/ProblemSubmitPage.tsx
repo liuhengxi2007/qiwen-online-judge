@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Code2, LogOut, Send } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -22,10 +22,16 @@ import {
   problemTitleValue,
 } from '@/features/problem/domain/problem'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
+import { createSubmission } from '@/features/submission/api/submission-client'
+import {
+  type SubmissionLanguage,
+  isSubmissionLanguage,
+  parseSubmissionSourceCode,
+  submissionIdValue,
+} from '@/features/submission/domain/submission'
+import { HttpClientError } from '@/shared/api/http-client'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-
-type SubmissionLanguage = 'cpp17' | 'python3'
 
 const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = [
   { value: 'cpp17', label: 'C++17' },
@@ -36,6 +42,7 @@ export function ProblemSubmitPage() {
   usePageTitle('Qiwen Online Judge - Submit Code')
   const { session: user, signOut, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -55,6 +62,7 @@ export function ProblemSubmitPage() {
   const [sourceCode, setSourceCode] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const hasUnsavedChanges = sourceCode.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
@@ -126,7 +134,7 @@ export function ProblemSubmitPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm leading-7 text-slate-600">
-                  This page prepares the submission experience only. Real judge execution has not been connected yet.
+                  This page records code submissions now. Real judge execution will be connected in a later step.
                 </p>
               </CardContent>
             </Card>
@@ -135,7 +143,8 @@ export function ProblemSubmitPage() {
               <CardHeader>
                 <CardTitle className="text-xl text-slate-950">Submission Editor</CardTitle>
                 <CardDescription>
-                  Choose a language and draft your source code before the backend judging flow is added.
+                  Choose a language and submit your source code. The submission record is saved immediately, even
+                  though judging has not been added yet.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -144,7 +153,7 @@ export function ProblemSubmitPage() {
                   <Select
                     value={language}
                     onValueChange={(nextLanguage) => {
-                      if (nextLanguage === 'cpp17' || nextLanguage === 'python3') {
+                      if (isSubmissionLanguage(nextLanguage)) {
                         setLanguage(nextLanguage)
                       }
                       setStatusMessage('')
@@ -194,22 +203,43 @@ export function ProblemSubmitPage() {
                 <div className="flex flex-wrap gap-3">
                   <Button
                     type="button"
+                    disabled={isSubmitting}
                     className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                     onClick={() => {
-                      if (!sourceCode.trim()) {
-                        setErrorMessage('Source code is required before submitting.')
+                      const sourceCodeResult = parseSubmissionSourceCode(sourceCode)
+                      if (!sourceCodeResult.ok) {
+                        setErrorMessage(sourceCodeResult.error)
                         setStatusMessage('')
                         return
                       }
 
+                      setIsSubmitting(true)
                       setErrorMessage('')
-                      setStatusMessage(
-                        `Submission draft prepared in ${supportedLanguages.find((item) => item.value === language)?.label ?? language}. Judge integration has not been implemented yet.`,
-                      )
+                      setStatusMessage('')
+
+                      void createSubmission({
+                        problemSlug: slugResult.value,
+                        language,
+                        sourceCode: sourceCodeResult.value,
+                      })
+                        .then((submission) => {
+                          void navigate(`/submissions/${submissionIdValue(submission.id)}`)
+                        })
+                        .catch((error: unknown) => {
+                          if (error instanceof HttpClientError) {
+                            setErrorMessage(error.message)
+                            return
+                          }
+
+                          setErrorMessage('Unable to create submission right now.')
+                        })
+                        .finally(() => {
+                          setIsSubmitting(false)
+                        })
                     }}
                   >
                     <Send className="size-4" />
-                    Submit code
+                    {isSubmitting ? 'Submitting...' : 'Submit code'}
                   </Button>
                 </div>
               </CardContent>

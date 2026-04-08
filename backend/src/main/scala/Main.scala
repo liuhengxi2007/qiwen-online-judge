@@ -8,10 +8,12 @@ import org.http4s.server.middleware.{CORS, Logger}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
+import domains.judge.application.JudgeConfig
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
 import domains.shared.access.ResourceViewerGrantTable
+import domains.submission.table.SubmissionTable
 import domains.usergroup.table.UserGroupTable
 
 object Main extends IOApp.Simple:
@@ -30,6 +32,7 @@ object Main extends IOApp.Simple:
     for
       databaseSession <- DatabaseSession.resource
       sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession))
+      judgeConfig = JudgeConfig.loadFromEnvironment()
       _ <- cats.effect.Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for
@@ -38,13 +41,14 @@ object Main extends IOApp.Simple:
             _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
+            _ <- SubmissionTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
             _ <- ResourceViewerGrantTable.initialize(connection)
           yield ()
         }
       }
       httpApp = CORS.policy.withAllowOriginAll(
-        Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp(databaseSession, sessionStore))
+        Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig))
       )
       server <- serverResource(httpApp)
     yield server

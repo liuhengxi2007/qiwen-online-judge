@@ -13,6 +13,8 @@ import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemS
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
+import { SubmissionDetailPage } from '@/features/submission/pages/SubmissionDetailPage'
+import { SubmissionPage } from '@/features/submission/pages/SubmissionPage'
 import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/features/usergroup/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/features/usergroup/pages/UserGroupDetailPage'
@@ -82,6 +84,14 @@ export const router = createBrowserRouter([
   {
     path: '/problem-sets/:slug',
     element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
+  },
+  {
+    path: '/submissions',
+    element: <AuthenticatedRoute element={<SubmissionPage />} />,
+  },
+  {
+    path: '/submissions/:submissionId',
+    element: <AuthenticatedRoute element={<SubmissionDetailPage />} />,
   },
   {
     path: '/user-groups',

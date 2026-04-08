@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { BookCopy, FileText, LogOut, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
+import { BookCopy, FileText, Files, LogOut, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -154,6 +154,31 @@ export function DashboardPage() {
               </p>
               <Button asChild className="rounded-2xl bg-emerald-600 text-emerald-50 hover:bg-emerald-700">
                 <Link to="/problems">Open Problems</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+                  <Files className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">Submissions</CardTitle>
+                  <CardDescription>
+                    Review recorded code submissions in the dedicated submission domain.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-7 text-slate-600">
+                Open the submissions page to browse saved submissions in reverse chronological order and inspect their
+                source code.
+              </p>
+              <Button asChild className="rounded-2xl bg-indigo-600 text-indigo-50 hover:bg-indigo-700">
+                <Link to="/submissions">Open Submissions</Link>
               </Button>
             </CardContent>
           </Card>
