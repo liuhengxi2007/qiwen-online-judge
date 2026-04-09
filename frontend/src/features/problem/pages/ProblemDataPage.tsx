@@ -21,7 +21,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDataPage() {
-  usePageTitle('Qiwen Online Judge - Problem Data')
+  usePageTitle('Qiwen Online Judge - Manage Problem Data')
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
 
@@ -46,11 +46,11 @@ export function ProblemDataPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-3xl">
+      <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Problem Data</h1>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Manage Problem Data</h1>
             <p className="text-sm text-slate-600">
               Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
             </p>

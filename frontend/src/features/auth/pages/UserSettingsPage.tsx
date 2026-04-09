@@ -67,7 +67,7 @@ export function UserSettingsPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-4xl">
+      <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>

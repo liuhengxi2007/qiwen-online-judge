@@ -46,7 +46,7 @@ export function CreateProblemPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-3xl">
+      <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
