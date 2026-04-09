@@ -7,7 +7,6 @@ import judger.config.{AppConfig, RegisteredJudger}
 import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient}
 import org.typelevel.log4cats.Logger
 
-import java.io.{PrintWriter, StringWriter}
 import scala.concurrent.duration.DurationLong
 
 final class JudgerService(
@@ -21,9 +20,7 @@ final class JudgerService(
 
   private def iteration: IO[Unit] =
     processOnce.handleErrorWith { error =>
-      val stackTrace = renderStackTrace(error)
-      logger.error(error)(s"[judger] Unhandled execution error: ${Option(error.getMessage).getOrElse(error.getClass.getName)}") *>
-        IO.blocking(System.err.println(stackTrace))
+      logger.error(error)(s"[judger] Unhandled execution error: ${Option(error.getMessage).getOrElse(error.getClass.getName)}")
     } *> IO.sleep(config.pollIntervalMs.millis)
 
   private def processOnce: IO[Unit] =
@@ -64,10 +61,3 @@ final class JudgerService(
         logger.error(s"$summary ${result.judgeMessage.getOrElse("")}".trim)
       case _ =>
         IO.unit
-
-  private def renderStackTrace(error: Throwable): String =
-    val writer = StringWriter()
-    val printWriter = PrintWriter(writer)
-    try error.printStackTrace(printWriter)
-    finally printWriter.close()
-    s"[judger] Stack trace follows\n${writer.toString}"

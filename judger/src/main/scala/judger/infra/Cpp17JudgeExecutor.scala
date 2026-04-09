@@ -17,13 +17,7 @@ object Cpp17JudgeExecutor:
   def judge(task: JudgeTask, config: AppConfig): IO[ReportJudgeResultRequest] =
     resolveCompilerPath(config).flatMap {
       case Left(message) =>
-        IO.pure(
-          ReportJudgeResultRequest(
-            status = SubmissionStatus.Failed,
-            verdict = Some(SubmissionVerdict.SystemError),
-            judgeMessage = Some(message)
-          )
-        )
+        IO.pure(systemError(message))
       case Right(compilerPath) =>
         withWorkingDirectory(config.workRoot, "qiwen-judger-") { workingDirectory =>
           IsolateSandbox.resource(config) { sandbox =>
@@ -40,21 +34,9 @@ object Cpp17JudgeExecutor:
               )
               result <-
                 if compileResult.timedOut then
-                  IO.pure(
-                    ReportJudgeResultRequest(
-                      status = SubmissionStatus.Failed,
-                      verdict = Some(SubmissionVerdict.SystemError),
-                      judgeMessage = Some("Compilation timed out on the judger machine.")
-                    )
-                  )
+                  IO.pure(systemError("Compilation timed out on the judger machine."))
                 else if compileResult.exitCode.getOrElse(-1) != 0 then
-                  IO.pure(
-                    ReportJudgeResultRequest(
-                      status = SubmissionStatus.Completed,
-                      verdict = Some(SubmissionVerdict.CompileError),
-                      judgeMessage = Some(formatCompileError(compilerPath, compileResult))
-                    )
-                  )
+                  IO.pure(completed(SubmissionVerdict.CompileError, formatCompileError(compilerPath, compileResult)))
                 else
                   ensureExecutableExists(workingDirectory.resolve("main")) *> judgeTestcases(task, workingDirectory, sandbox)
             yield result
@@ -62,11 +44,7 @@ object Cpp17JudgeExecutor:
         }
     }.handleError { error =>
       val message = Option(error.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(error.getClass.getName)
-      ReportJudgeResultRequest(
-        status = SubmissionStatus.Failed,
-        verdict = Some(SubmissionVerdict.SystemError),
-        judgeMessage = Some(s"${error.getClass.getSimpleName}: $message")
-      )
+      systemError(s"${error.getClass.getSimpleName}: $message")
     }
 
   private def judgeTestcases(
@@ -93,40 +71,16 @@ object Cpp17JudgeExecutor:
             workingDirectory
           ).map { runResult =>
             if runResult.timedOut then
-              Some(
-                ReportJudgeResultRequest(
-                  status = SubmissionStatus.Completed,
-                  verdict = Some(SubmissionVerdict.TimeLimitExceeded),
-                  judgeMessage = Some(s"Time limit exceeded on testcase ${testcase.name.value}.")
-                )
-              )
+              Some(completed(SubmissionVerdict.TimeLimitExceeded, s"Time limit exceeded on testcase ${testcase.name.value}."))
             else if runResult.exitCode.getOrElse(-1) != 0 then
-              Some(
-                ReportJudgeResultRequest(
-                  status = SubmissionStatus.Completed,
-                  verdict = Some(SubmissionVerdict.RuntimeError),
-                  judgeMessage = Some(formatRuntimeError(testcase.name.value, runResult))
-                )
-              )
+              Some(completed(SubmissionVerdict.RuntimeError, formatRuntimeError(testcase.name.value, runResult)))
             else if normalizeOutput(runResult.stdout) != normalizeOutput(expectedOutput) then
-              Some(
-                ReportJudgeResultRequest(
-                  status = SubmissionStatus.Completed,
-                  verdict = Some(SubmissionVerdict.WrongAnswer),
-                  judgeMessage = Some(s"Wrong answer on testcase ${testcase.name.value}.")
-                )
-              )
+              Some(completed(SubmissionVerdict.WrongAnswer, s"Wrong answer on testcase ${testcase.name.value}."))
             else None
           }
       }
     }.map(
-      _.getOrElse(
-        ReportJudgeResultRequest(
-          status = SubmissionStatus.Completed,
-          verdict = Some(SubmissionVerdict.Accepted),
-          judgeMessage = None
-        )
-      )
+      _.getOrElse(completed(SubmissionVerdict.Accepted))
     )
 
   private def withWorkingDirectory[A](workRoot: Path, prefix: String)(use: Path => IO[A]): IO[A] =
@@ -191,24 +145,7 @@ object Cpp17JudgeExecutor:
       if exitCode == 127 then
         s"Compiler '$compilerPath' was not found on the judger host (exit status 127)."
       else s"Compilation failed with exit status $exitCode using $compilerPath."
-
-    val isolateDetail =
-      List(
-        result.isolateStatus.map(status => s"isolate status: $status"),
-        result.isolateMessage.map(message => s"isolate message: $message")
-      ).flatten
-
-    val stderr = result.stderr.trim
-    val stdout = result.stdout.trim
-    val sections =
-      List(
-        Some(detail),
-        Option.when(isolateDetail.nonEmpty)(isolateDetail.mkString("\n")),
-        Option.when(stderr.nonEmpty)(s"stderr:\n$stderr"),
-        Option.when(stdout.nonEmpty)(s"stdout:\n$stdout")
-      ).flatten
-
-    sections.mkString("\n\n")
+    renderDetail(detail, result)
 
   private def formatRuntimeError(testcaseName: String, result: ProcessResult): String =
     val exitCode = result.exitCode.getOrElse(-1)
@@ -217,21 +154,7 @@ object Cpp17JudgeExecutor:
         s"Executable './main' was not found or was not executable inside isolate sandbox on testcase $testcaseName."
       else
         s"Runtime error on testcase $testcaseName (exit status $exitCode)."
-
-    val isolateDetail =
-      List(
-        result.isolateStatus.map(status => s"isolate status: $status"),
-        result.isolateMessage.map(message => s"isolate message: $message")
-      ).flatten
-
-    val stderr = result.stderr.trim
-    val stdout = result.stdout.trim
-    List(
-      Some(detail),
-      Option.when(isolateDetail.nonEmpty)(isolateDetail.mkString("\n")),
-      Option.when(stderr.nonEmpty)(s"stderr:\n$stderr"),
-      Option.when(stdout.nonEmpty)(s"stdout:\n$stdout")
-    ).flatten.mkString("\n\n")
+    renderDetail(detail, result, includeIsolateDetail = true)
 
   private def runHostProcess(
     command: String,
@@ -284,6 +207,39 @@ object Cpp17JudgeExecutor:
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()
+
+  private def completed(verdict: SubmissionVerdict, message: String = ""): ReportJudgeResultRequest =
+    ReportJudgeResultRequest(
+      status = SubmissionStatus.Completed,
+      verdict = Some(verdict),
+      judgeMessage = Option.when(message.nonEmpty)(message)
+    )
+
+  private def systemError(message: String): ReportJudgeResultRequest =
+    ReportJudgeResultRequest(
+      status = SubmissionStatus.Failed,
+      verdict = Some(SubmissionVerdict.SystemError),
+      judgeMessage = Some(message)
+    )
+
+  private def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =
+    val isolateDetail =
+      if includeIsolateDetail then
+        List(
+          result.isolateStatus.map(status => s"isolate status: $status"),
+          result.isolateMessage.map(message => s"isolate message: $message")
+        ).flatten
+      else Nil
+
+    List(
+      Some(detail),
+      Option.when(isolateDetail.nonEmpty)(isolateDetail.mkString("\n")),
+      namedSection("stderr", result.stderr),
+      namedSection("stdout", result.stdout)
+    ).flatten.mkString("\n\n")
+
+  private def namedSection(label: String, value: String): Option[String] =
+    Option.when(value.trim.nonEmpty)(s"$label:\n${value.trim}")
 
   private def nonEmptyOrFallback(primary: String, secondary: String, fallback: String): String =
     val first = primary.trim

@@ -27,14 +27,11 @@ final case class SandboxExecutionRequest(
 )
 
 private final case class SandboxState(
-  boxRoot: Path,
   boxId: Int,
   useCgroups: Boolean
 )
 
 final class IsolateSandbox private (private val state: SandboxState, config: AppConfig):
-  def boxRoot: Path = state.boxRoot
-
   def run(request: SandboxExecutionRequest, hostWorkingDirectory: Path): IO[ProcessResult] =
     IO.blocking {
       val safePhase = IsolateSandbox.sanitizeFilename(request.phase)
@@ -136,10 +133,10 @@ object IsolateSandbox:
     if exitCode != 0 then
       throw RuntimeException(nonEmptyOrFallback(stderr, stdout, s"Failed to initialize isolate sandbox (exit=$exitCode)."))
 
-    val boxRoot = stdout.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse {
+    stdout.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse {
       throw IllegalStateException("isolate --init returned no sandbox path.")
     }
-    SandboxState(boxRoot = Path.of(boxRoot), boxId = config.isolateBoxId, useCgroups = useCgroups)
+    SandboxState(boxId = config.isolateBoxId, useCgroups = useCgroups)
 
   private[judger] def readOptionalFile(path: Path): String =
     if Files.exists(path) then Files.readString(path, StandardCharsets.UTF_8) else ""

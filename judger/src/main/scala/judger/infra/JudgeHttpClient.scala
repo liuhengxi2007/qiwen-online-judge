@@ -15,16 +15,17 @@ final case class LeaseExpiredException(message: String) extends RuntimeException
 
 final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
   def registerJudger: IO[RegisterJudgerResponse] =
-    val body = RegisterJudgerRequest(
-      preferredPrefix = config.preferredJudgerPrefix,
-      host = config.host,
-      processId = config.processId,
-      supportedLanguages = config.supportedLanguages
-    ).asJson.noSpaces
     requestExpectJson[RegisterJudgerResponse](
       path = "/api/internal/judgers/register",
       method = "POST",
-      body = Some(body)
+      body = Some(
+        RegisterJudgerRequest(
+          preferredPrefix = config.preferredJudgerPrefix,
+          host = config.host,
+          processId = config.processId,
+          supportedLanguages = config.supportedLanguages
+        ).asJson.noSpaces
+      )
     )
 
   def heartbeat(judgerId: JudgerId): IO[Unit] =
@@ -32,22 +33,17 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
       path = s"/api/internal/judgers/${URLEncoder.encode(judgerId.value, StandardCharsets.UTF_8)}/heartbeat",
       method = "POST",
       body = Some(JudgerHeartbeatRequest().asJson.noSpaces)
-    ).flatMap { response =>
-      if response.statusCode / 100 == 2 then IO.unit
-      else if response.statusCode == 404 then IO.raiseError(LeaseExpiredException(s"Judger lease expired for ${judgerId.value}."))
-      else IO.raiseError(RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${response.body}"))
-    }
+    ).flatMap(handleHeartbeatResponse(judgerId, _))
 
   def claimTask(judgerId: JudgerId): IO[Option[JudgeTask]] =
-    val body = ClaimJudgeTaskRequest(judgerId).asJson.noSpaces
     requestRaw(
       path = "/api/internal/judge/claim",
       method = "POST",
-      body = Some(body)
+      body = Some(ClaimJudgeTaskRequest(judgerId).asJson.noSpaces)
     ).flatMap { response =>
       if response.statusCode == 204 then IO.pure(None)
       else if response.statusCode / 100 != 2 then
-        IO.raiseError(RuntimeException(s"Claim failed with HTTP ${response.statusCode}: ${response.body}"))
+        requestFailed("Claim failed", response)
       else
         IO.fromEither(decode[JudgeTask](response.body).left.map(error => RuntimeException(error.getMessage))).map(Some(_))
     }
@@ -62,7 +58,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
   private def requestExpectSuccess(path: String, method: String, body: Option[String]): IO[String] =
     requestRaw(path, method, body).flatMap { response =>
       if response.statusCode / 100 == 2 then IO.pure(response.body)
-      else IO.raiseError(RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${response.body}"))
+      else requestFailed("Request failed", response)
     }
 
   private def requestExpectJson[A: io.circe.Decoder](path: String, method: String, body: Option[String]): IO[A] =
@@ -85,6 +81,14 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
 
       httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
     }
+
+  private def handleHeartbeatResponse(judgerId: JudgerId, response: HttpResponse[String]): IO[Unit] =
+    if response.statusCode / 100 == 2 then IO.unit
+    else if response.statusCode == 404 then IO.raiseError(LeaseExpiredException(s"Judger lease expired for ${judgerId.value}."))
+    else requestFailed("Request failed", response)
+
+  private def requestFailed[A](prefix: String, response: HttpResponse[String]): IO[A] =
+    IO.raiseError(RuntimeException(s"$prefix with HTTP ${response.statusCode}: ${response.body}"))
 
 object JudgeHttpClient:
   def create(config: AppConfig): JudgeHttpClient =
