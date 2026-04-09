@@ -6,7 +6,7 @@ if [[ -z "${JUDGE_TOKEN:-}" ]]; then
 fi
 
 if [[ -z "${JUDGER_NAME:-}" ]]; then
-  export JUDGER_NAME="cpp17-wsl-judger"
+  export JUDGER_NAME="cpp17-judger"
 fi
 
 if [[ -z "${POLL_INTERVAL_MS:-}" ]]; then
@@ -38,8 +38,7 @@ resolve_backend_base_url() {
     return 0
   fi
 
-  candidates+=("http://172.30.224.1:8080")
-  candidates+=("http://127.0.0.1:8080")
+  candidates+=("http://localhost:8080")
 
   if command -v ip >/dev/null 2>&1; then
     local gateway_ip
@@ -81,15 +80,15 @@ if resolved_backend_base_url="$(resolve_backend_base_url)"; then
   export BACKEND_BASE_URL="${resolved_backend_base_url}"
 else
   echo "Unable to reach the backend from WSL." >&2
-  echo "Tried 127.0.0.1 and detected Windows host gateway addresses on port 8080." >&2
+  echo "Tried localhost and detected Windows host gateway addresses on port 8080." >&2
   echo "Set BACKEND_BASE_URL manually if your backend is listening elsewhere." >&2
   exit 1
 fi
 
 echo "Starting WSL judger ${JUDGER_NAME} against ${BACKEND_BASE_URL}"
 
-if ! command -v npm >/dev/null 2>&1; then
-  echo "npm is required inside WSL." >&2
+if ! command -v sbt >/dev/null 2>&1; then
+  echo "sbt is required inside WSL." >&2
   exit 1
 fi
 
@@ -98,6 +97,4 @@ if ! command -v "${CXX}" >/dev/null 2>&1; then
   exit 1
 fi
 
-npm install
-npm run build
-node dist/index.js
+sbt run

@@ -3,7 +3,12 @@ frontend/dist/
 backend/target/
 backend/project/target
 backend/.idea/
+frontend/.idea/
 backend/project/.sbt-boot/
 backend/project/.sbt-global/
 .codex
 backend/problems/
+judger/target/
+judger/project/target/
+judger/project/.sbt-boot/
+judger/project/.sbt-global/

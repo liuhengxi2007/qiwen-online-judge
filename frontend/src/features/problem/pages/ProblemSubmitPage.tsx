@@ -134,7 +134,7 @@ export function ProblemSubmitPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm leading-7 text-slate-600">
-                  This page records code submissions now. Real judge execution will be connected in a later step.
+                  This page creates a submission record and sends it into the judge queue for asynchronous execution.
                 </p>
               </CardContent>
             </Card>
@@ -143,8 +143,8 @@ export function ProblemSubmitPage() {
               <CardHeader>
                 <CardTitle className="text-xl text-slate-950">Submission Editor</CardTitle>
                 <CardDescription>
-                  Choose a language and submit your source code. The submission record is saved immediately, even
-                  though judging has not been added yet.
+                  Choose a language and submit your source code. The submission is saved immediately, then picked up
+                  by the judger and updated with status, verdict, and judge messages.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
