@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Code2, LogOut, Send } from 'lucide-react'
+import { Code2, Send } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -41,7 +41,7 @@ const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = 
 
 export function ProblemSubmitPage() {
   usePageTitle('Qiwen Online Judge - Submit Code')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
 
@@ -84,20 +84,7 @@ export function ProblemSubmitPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {detailQuery.errorMessage ? (
@@ -130,7 +117,7 @@ export function ProblemSubmitPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm leading-7 text-slate-600">
-                  This page creates a submission record and sends it into the judge queue for asynchronous execution.
+                  Submit your solution here and track its result after it enters the judging queue.
                 </p>
               </CardContent>
             </Card>
@@ -140,7 +127,7 @@ export function ProblemSubmitPage() {
                 <CardTitle className="text-xl text-slate-950">Submission Editor</CardTitle>
                 <CardDescription>
                   Choose a language and submit your source code. The submission is saved immediately, then picked up
-                  by the judger and updated with status, verdict, and judge messages.
+                  by the judge system and updated with status, verdict, and judge messages.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">

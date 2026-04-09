@@ -38,17 +38,6 @@ export function DashboardPage() {
               Welcome back, {displayNameValue(user.displayName)}
             </h1>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-full border-slate-300 bg-white"
-            onClick={() => {
-              void signOut()
-            }}
-          >
-            <LogOut className="size-4" />
-            Sign out
-          </Button>
         </div>
 
         {noticeMessage ? (
@@ -59,16 +48,29 @@ export function DashboardPage() {
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                <ShieldCheck className="size-5" />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                  <ShieldCheck className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">Qiwen Online Judge Console</CardTitle>
+                  <CardDescription>
+                    Review your account at a glance and jump to the areas you use most.
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-xl text-slate-950">Qiwen Online Judge Console</CardTitle>
-                <CardDescription>
-                  Your account is connected to the backend service and ready for management tasks.
-                </CardDescription>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-slate-300 bg-white"
+                onClick={() => {
+                  void signOut()
+                }}
+              >
+                <LogOut className="size-4" />
+                Sign out
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -95,16 +97,13 @@ export function DashboardPage() {
                 <div>
                   <CardTitle className="text-xl text-slate-950">User Settings</CardTitle>
                   <CardDescription>
-                    Review your account route and permission summary.
+                    Update your profile information, manage your password, and review your account permissions.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-7 text-slate-600">
-                Open your dedicated settings page under the username-scoped route.
-              </p>
-              <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
                 <Link to={`/user/${usernameValue(user.username)}/settings`}>Open User Settings</Link>
               </Button>
             </CardContent>
@@ -119,16 +118,13 @@ export function DashboardPage() {
                 <div>
                   <CardTitle className="text-xl text-slate-950">Problem Sets</CardTitle>
                   <CardDescription>
-                    Manage draft problem sets and typed metadata in the new domain module.
+                    Organize problems into curated sets for contests, training, or private review, and manage linked problems in one place.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-7 text-slate-600">
-                The problemset module is now wired end-to-end with backend persistence and a dedicated frontend route.
-              </p>
-              <Button asChild className="rounded-2xl bg-rose-600 text-rose-50 hover:bg-rose-700">
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400">
                 <Link to="/problem-sets">Open Problem Sets</Link>
               </Button>
             </CardContent>
@@ -143,16 +139,13 @@ export function DashboardPage() {
                 <div>
                   <CardTitle className="text-xl text-slate-950">Problems</CardTitle>
                   <CardDescription>
-                    Manage draft problems with typed metadata and plain-text statements.
+                    Create, edit, and review problems with formatted statements, access controls, and full problem details.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-7 text-slate-600">
-                The first problem domain supports creation, listing, and whitespace-preserving statement display.
-              </p>
-              <Button asChild className="rounded-2xl bg-emerald-600 text-emerald-50 hover:bg-emerald-700">
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                 <Link to="/problems">Open Problems</Link>
               </Button>
             </CardContent>
@@ -167,17 +160,13 @@ export function DashboardPage() {
                 <div>
                   <CardTitle className="text-xl text-slate-950">Submissions</CardTitle>
                   <CardDescription>
-                    Review recorded code submissions in the dedicated submission domain.
+                    Browse past submissions, review their status and verdict, and inspect the source code you sent.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-7 text-slate-600">
-                Open the submissions page to browse saved submissions in reverse chronological order and inspect their
-                source code.
-              </p>
-              <Button asChild className="rounded-2xl bg-indigo-600 text-indigo-50 hover:bg-indigo-700">
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
                 <Link to="/submissions">Open Submissions</Link>
               </Button>
             </CardContent>
@@ -192,16 +181,13 @@ export function DashboardPage() {
                 <div>
                   <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
                   <CardDescription>
-                    Organize collaborative groups before wiring them into resource-level permissions.
+                    Create groups, manage members, and organize collaboration and access control more easily.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm leading-7 text-slate-600">
-                The usergroup module now manages group metadata and memberships in a dedicated domain.
-              </p>
-              <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-sky-300 text-sky-950 hover:bg-sky-400">
                 <Link to="/user-groups">Open User Groups</Link>
               </Button>
             </CardContent>
@@ -215,18 +201,15 @@ export function DashboardPage() {
                     <Users className="size-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl text-slate-950">Site Manage</CardTitle>
+                    <CardTitle className="text-xl text-slate-950">Site Management</CardTitle>
                     <CardDescription>
-                      Review users and site-level permissions in a dedicated management page.
+                      Review registered users, adjust site-wide permissions, and maintain user accounts.
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm leading-7 text-slate-600">
-                  User management has moved out of the dashboard into its own route.
-                </p>
-                <Button asChild className="rounded-2xl bg-amber-500 text-stone-950 hover:bg-amber-400">
+              <CardContent>
+                <Button asChild className="rounded-2xl bg-amber-300 text-amber-950 hover:bg-amber-400">
                   <Link to="/site-manage">Open Site Management</Link>
                 </Button>
               </CardContent>

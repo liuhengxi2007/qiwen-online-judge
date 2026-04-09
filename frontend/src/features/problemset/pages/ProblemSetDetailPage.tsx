@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
-
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { EditProblemSetDialog } from '@/features/problemset/components/edit-problem-set-dialog'
@@ -24,7 +21,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetDetailPage() {
   usePageTitle('Qiwen Online Judge - Problem Set Detail')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
 
   if (navigationIntent) {
@@ -68,20 +65,7 @@ export function ProblemSetDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {!model.isLoading && !model.problemSet && model.loadErrorMessage ? (

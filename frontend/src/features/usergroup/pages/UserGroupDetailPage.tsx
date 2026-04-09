@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
+import { PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function UserGroupDetailPage() {
   usePageTitle('Qiwen Online Judge - User Group Detail')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
 
@@ -70,20 +70,7 @@ export function UserGroupDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {!model.isLoading && !model.userGroup && model.errorMessage ? (

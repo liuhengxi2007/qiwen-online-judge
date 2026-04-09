@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { LogOut, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function CreateUserGroupPage() {
   usePageTitle('Qiwen Online Judge - Create User Group')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const model = useCreateUserGroupPageModel()
   const hasUnsavedChanges =
     model.slug.trim().length > 0 || model.name.trim().length > 0 || model.description.trim().length > 0
@@ -43,20 +43,7 @@ export function CreateUserGroupPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

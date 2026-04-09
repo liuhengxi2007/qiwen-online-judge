@@ -1,5 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { Files, LogOut } from 'lucide-react'
+import { Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function SubmissionDetailPage() {
   usePageTitle('Qiwen Online Judge - Submission Detail')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const { submissionId } = useParams<{ submissionId: string }>()
 
   if (navigationIntent) {
@@ -57,20 +57,7 @@ export function SubmissionDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {submissionQuery.errorMessage ? (

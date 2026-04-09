@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Database, LogOut, PencilLine, ScrollText, Send, ShieldCheck, Trash2 } from 'lucide-react'
+import { Database, PencilLine, ScrollText, Send, ShieldCheck, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +35,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDetailPage() {
   usePageTitle('Qiwen Online Judge - Problem Detail')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
 
@@ -83,20 +83,7 @@ export function ProblemDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {!model.isLoading && !model.problem && model.loadErrorMessage ? (

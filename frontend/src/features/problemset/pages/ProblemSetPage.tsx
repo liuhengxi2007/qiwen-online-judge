@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { BookPlus, Layers3, LogOut } from 'lucide-react'
+import { BookPlus, Layers3 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemSetPage() {
   usePageTitle('Qiwen Online Judge - Problem Sets')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -44,20 +44,7 @@ export function ProblemSetPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         <div className="space-y-6">
@@ -98,7 +85,7 @@ export function ProblemSetPage() {
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
                   <p className="text-base font-medium text-slate-900">No problem sets yet.</p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    This domain is now wired end-to-end. Create the first draft problem set from the left panel.
+                    Create the first problem set to organize problems for contests, practice, or private review.
                   </p>
                 </div>
               ) : (

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, Files, LogOut } from 'lucide-react'
+import { ArrowRight, Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function SubmissionPage() {
   usePageTitle('Qiwen Online Judge - Submissions')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const [filterInput, setFilterInput] = useState('')
   const [activeUsernameFilter, setActiveUsernameFilter] = useState<Username | null>(null)
   const [filterErrorMessage, setFilterErrorMessage] = useState('')
@@ -52,20 +52,7 @@ export function SubmissionPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {submissionQuery.errorMessage ? (
@@ -174,7 +161,7 @@ export function SubmissionPage() {
                       <CardTitle className="text-xl text-slate-950">
                         Submission #{submissionIdValue(submission.id)}
                       </CardTitle>
-                      <CardDescription className="mt-2 text-sm text-slate-500">
+                      <CardDescription className="mt-2 text-sm font-medium text-slate-700">
                         {submissionIdValue(submission.id)}
                       </CardDescription>
                     </div>
@@ -212,7 +199,7 @@ export function SubmissionPage() {
                     </div>
                   </dl>
 
-                  <Button asChild className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800">
+                  <Button asChild className="rounded-2xl bg-indigo-700 text-white hover:bg-indigo-800">
                     <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
                       View Source Code
                       <ArrowRight className="size-4" />

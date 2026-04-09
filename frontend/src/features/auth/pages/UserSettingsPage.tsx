@@ -1,5 +1,5 @@
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
-import { LockKeyhole, LogOut, Settings, ShieldCheck } from 'lucide-react'
+import { LockKeyhole, Settings, ShieldCheck } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ export function UserSettingsPage() {
   usePageTitle('Qiwen Online Judge - User Settings')
   const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
-  const { session: viewer, setSession: setViewer, signOut, navigationIntent: guardNavigationIntent } =
+  const { session: viewer, setSession: setViewer, navigationIntent: guardNavigationIntent } =
     useSessionGuard()
   const notice = searchParams.get('notice')
   const noticeMessage =
@@ -83,20 +83,7 @@ export function UserSettingsPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">

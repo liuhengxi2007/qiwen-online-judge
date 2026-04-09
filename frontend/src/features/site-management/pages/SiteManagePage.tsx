@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { LogOut, Settings2, Trash2 } from 'lucide-react'
+import { Settings2, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 
 export function SiteManagePage() {
   usePageTitle('Qiwen Online Judge - Site Management')
-  const { session: user, siteManagerSession, signOut, navigationIntent: guardNavigationIntent } =
+  const { session: user, siteManagerSession, navigationIntent: guardNavigationIntent } =
     useSessionGuard({ requireSiteManager: true })
   const {
     users,
@@ -61,20 +61,7 @@ export function SiteManagePage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-stone-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />
         </div>
 
         <Card className="border-stone-200 bg-white shadow-[0_24px_60px_rgba(28,25,23,0.08)]">
@@ -108,7 +95,7 @@ export function SiteManagePage() {
               <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center">
                 <p className="text-base font-medium text-stone-900">No users are available yet.</p>
                 <p className="mt-2 text-sm leading-7 text-stone-600">
-                  This management flow is still valid: the empty state is explicit, and you can return to the dashboard.
+                  No registered users are available to manage yet.
                 </p>
                 <Button asChild variant="outline" className="mt-5 rounded-full border-stone-300 bg-white">
                   <Link to="/">Back to Dashboard</Link>

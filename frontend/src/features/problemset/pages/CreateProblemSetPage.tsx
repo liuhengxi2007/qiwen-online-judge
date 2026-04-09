@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { BookPlus, LogOut } from 'lucide-react'
+import { BookPlus } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function CreateProblemSetPage() {
   usePageTitle('Qiwen Online Judge - Create Problem Set')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -56,20 +56,7 @@ export function CreateProblemSetPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -81,7 +68,7 @@ export function CreateProblemSetPage() {
               <div>
                 <CardTitle className="text-xl text-slate-950">Problem Set Metadata</CardTitle>
                 <CardDescription>
-                  This form creates a draft problem set with Markdown and LaTeX description support.
+                  Create a problem set with Markdown and LaTeX support for the description.
                 </CardDescription>
               </div>
             </div>

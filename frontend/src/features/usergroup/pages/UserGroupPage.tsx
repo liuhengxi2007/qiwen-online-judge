@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, FolderKanban, LogOut, Users } from 'lucide-react'
+import { ArrowRight, FolderKanban, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function UserGroupPage() {
   usePageTitle('Qiwen Online Judge - User Groups')
-  const { session: user, signOut, navigationIntent } = useSessionGuard()
+  const { session: user, navigationIntent } = useSessionGuard()
   const model = useUserGroupPageModel()
 
   if (navigationIntent) {
@@ -36,20 +36,7 @@ export function UserGroupPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <AncestorNavigation />
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-slate-300 bg-white"
-              onClick={() => {
-                void signOut()
-              }}
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          <AncestorNavigation />
         </div>
 
         {model.errorMessage ? (
@@ -67,7 +54,7 @@ export function UserGroupPage() {
               <div>
                 <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
                 <CardDescription>
-                  Manage collaborative groups and inspect their membership from a dedicated domain page.
+                  Create groups, manage membership, and control collaboration in one place.
                 </CardDescription>
               </div>
             </div>
