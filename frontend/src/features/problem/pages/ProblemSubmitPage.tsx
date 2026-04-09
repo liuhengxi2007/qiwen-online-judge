@@ -102,7 +102,7 @@ export function ProblemSubmitPage() {
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <Code2 className="size-5" />
                   </div>
                   <div>

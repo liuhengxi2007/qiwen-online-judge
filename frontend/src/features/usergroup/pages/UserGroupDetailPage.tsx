@@ -106,7 +106,7 @@ export function UserGroupDetailPage() {
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
                       <PencilLine className="size-5" />
                     </div>
                     <div>
@@ -130,7 +130,7 @@ export function UserGroupDetailPage() {
                   </div>
                   <Button
                     type="button"
-                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                    className="rounded-2xl bg-sky-300 text-sky-950 hover:bg-sky-400"
                     disabled={model.isSaving}
                     onClick={() => {
                       void model.save()
@@ -155,7 +155,7 @@ export function UserGroupDetailPage() {
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
                     <Users className="size-5" />
                   </div>
                   <div>

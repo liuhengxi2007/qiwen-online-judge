@@ -154,7 +154,7 @@ export function SubmissionPage() {
               >
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
                       <Files className="size-5" />
                     </div>
                     <div>
@@ -199,7 +199,7 @@ export function SubmissionPage() {
                     </div>
                   </dl>
 
-                  <Button asChild className="rounded-2xl bg-indigo-700 text-white hover:bg-indigo-800">
+                  <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
                     <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
                       View Source Code
                       <ArrowRight className="size-4" />

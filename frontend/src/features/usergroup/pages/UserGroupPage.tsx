@@ -47,27 +47,27 @@ export function UserGroupPage() {
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                <FolderKanban className="size-5" />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                  <FolderKanban className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
+                  <CardDescription>
+                    Create groups, manage membership, and control collaboration in one place.
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
-                <CardDescription>
-                  Create groups, manage membership, and control collaboration in one place.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-start">
-              <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
+              <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                 <Link to="/user-groups/new">
                   <Users className="size-4" />
                   Create User Group
                 </Link>
               </Button>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {model.isLoading ? (
               <p className="text-sm text-slate-500">Loading user groups...</p>
             ) : model.groups.length === 0 ? (

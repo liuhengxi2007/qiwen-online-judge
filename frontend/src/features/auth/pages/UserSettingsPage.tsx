@@ -90,7 +90,7 @@ export function UserSettingsPage() {
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                   <Settings className="size-5" />
                 </div>
                 <div>
@@ -103,8 +103,8 @@ export function UserSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               {noticeMessage ? (
-                <Alert className="rounded-2xl border-sky-200 bg-sky-50/95">
-                  <AlertDescription className="text-sky-700">{noticeMessage}</AlertDescription>
+                <Alert className="rounded-2xl border-violet-200 bg-violet-50/95">
+                  <AlertDescription className="text-violet-700">{noticeMessage}</AlertDescription>
                 </Alert>
               ) : null}
               {!displayedUser ? (
@@ -194,7 +194,7 @@ export function UserSettingsPage() {
               <Button
                 type="button"
                 disabled={isSubmitting || !displayedUser}
-                className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+                className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
                 onClick={() => {
                   void submit()
                 }}
@@ -207,7 +207,7 @@ export function UserSettingsPage() {
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>

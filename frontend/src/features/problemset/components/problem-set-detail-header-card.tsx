@@ -49,8 +49,8 @@ export function ProblemSetDetailHeaderCard({
                 variant={managementPanel === 'edit' ? 'default' : 'outline'}
                 className={
                   managementPanel === 'edit'
-                    ? 'rounded-2xl bg-amber-600 text-white hover:bg-amber-700'
-                    : 'rounded-2xl border-amber-300 bg-white text-amber-800 hover:bg-amber-50'
+                    ? 'rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400'
+                    : 'rounded-2xl border-rose-300 bg-white text-rose-900 hover:bg-rose-50'
                 }
                 onClick={() => {
                   onTogglePanel('edit')
@@ -63,8 +63,8 @@ export function ProblemSetDetailHeaderCard({
                 variant={managementPanel === 'access' ? 'default' : 'outline'}
                 className={
                   managementPanel === 'access'
-                    ? 'rounded-2xl bg-teal-700 text-white hover:bg-teal-800'
-                    : 'rounded-2xl border-teal-300 bg-white text-teal-800 hover:bg-teal-50'
+                    ? 'rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400'
+                    : 'rounded-2xl border-rose-300 bg-white text-rose-900 hover:bg-rose-50'
                 }
                 onClick={() => {
                   onTogglePanel('access')

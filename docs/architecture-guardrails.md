@@ -19,6 +19,25 @@ The repository is organized around business domains first, with technical layers
 - `src/components/ui`
   - Shared presentational UI primitives
 
+### Frontend UI Copy and Color Rules
+
+Frontend copy should describe user-facing actions and outcomes, not implementation details.
+
+Rules:
+
+- avoid developer-facing wording such as `domain`, `module`, `route`, `backend service`, `wired end-to-end`, or similar internal phrases in page copy
+- prefer direct product language that explains what the user can do on the page
+- avoid placeholder or process-era copy like `left panel`, `draft module`, or `this flow is still valid`
+- use `judge system` or direct outcome language instead of internal worker names like `judger`
+
+For colored action buttons with dark text:
+
+- use `bg-*-300` as the default background color
+- use `hover:bg-*-400` for hover state
+- pair them with sufficiently dark text such as `text-*-950`
+- keep one dominant color family per feature area unless there is a clear semantic reason to introduce another accent
+- keep related actions in the same page or feature on the same color family whenever they represent the same kind of task
+
 ### Shared Is Not a Junk Drawer
 
 `shared` exists only for code that is genuinely cross-domain and stable.

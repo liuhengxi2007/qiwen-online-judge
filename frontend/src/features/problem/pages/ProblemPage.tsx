@@ -57,7 +57,7 @@ export function ProblemPage() {
             <CardHeader>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <LibraryBig className="size-5" />
                   </div>
                   <div>
@@ -68,7 +68,7 @@ export function ProblemPage() {
                   </div>
                 </div>
                 {canCreate ? (
-                  <Button asChild className="rounded-2xl bg-emerald-600 text-emerald-50 hover:bg-emerald-700">
+                  <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                     <Link to="/problems/new">
                       <FilePlus2 className="size-4" />
                       Create problem

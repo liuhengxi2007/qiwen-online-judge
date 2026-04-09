@@ -58,7 +58,7 @@ export function ProblemSetPage() {
             <CardHeader>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
                     <Layers3 className="size-5" />
                   </div>
                   <div>
@@ -69,7 +69,7 @@ export function ProblemSetPage() {
                   </div>
                 </div>
                 {canCreate ? (
-                  <Button asChild className="rounded-2xl bg-sky-600 text-sky-50 hover:bg-sky-700">
+                  <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                     <Link to="/problem-sets/new">
                       <BookPlus className="size-4" />
                       Create problem set

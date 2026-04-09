@@ -117,7 +117,7 @@ export function ProblemDetailPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="rounded-2xl border-cyan-300 bg-white text-cyan-900 hover:bg-cyan-50"
+                      className="rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
                     >
                       <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submit`}>
                         <Send className="size-4" />
@@ -129,7 +129,7 @@ export function ProblemDetailPage() {
                       <Button
                         asChild
                         variant="outline"
-                        className="rounded-2xl border-sky-300 bg-white text-sky-900 hover:bg-sky-50"
+                        className="rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
                       >
                         <Link to={`/problems/${problemSlugValue(model.problem.slug)}/data`}>
                           <Database className="size-4" />
@@ -141,8 +141,8 @@ export function ProblemDetailPage() {
                         variant={managementPanel === 'edit' ? 'default' : 'outline'}
                         className={
                           managementPanel === 'edit'
-                            ? 'rounded-2xl bg-amber-600 text-white hover:bg-amber-700'
-                            : 'rounded-2xl border-amber-300 bg-white text-amber-800 hover:bg-amber-50'
+                            ? 'rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400'
+                            : 'rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50'
                         }
                         onClick={() => {
                           setManagementPanel((currentPanel) => (currentPanel === 'edit' ? null : 'edit'))
@@ -156,8 +156,8 @@ export function ProblemDetailPage() {
                         variant={managementPanel === 'access' ? 'default' : 'outline'}
                         className={
                           managementPanel === 'access'
-                            ? 'rounded-2xl bg-teal-700 text-white hover:bg-teal-800'
-                            : 'rounded-2xl border-teal-300 bg-white text-teal-800 hover:bg-teal-50'
+                            ? 'rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400'
+                            : 'rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50'
                         }
                         onClick={() => {
                           setManagementPanel((currentPanel) => (currentPanel === 'access' ? null : 'access'))
@@ -202,7 +202,7 @@ export function ProblemDetailPage() {
         >
           <DialogHeader className="border-b border-slate-200 px-7 py-6 sm:px-8">
             <DialogTitle className="flex items-center gap-3 text-2xl text-slate-950">
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                 <PencilLine className="size-5" />
               </span>
               Edit Problem
@@ -357,7 +357,7 @@ export function ProblemDetailPage() {
         >
           <DialogHeader className="border-b border-slate-200 px-7 py-6 sm:px-8">
             <DialogTitle className="flex items-center gap-3 text-2xl text-slate-950">
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                 <ShieldCheck className="size-5" />
               </span>
               Access Management

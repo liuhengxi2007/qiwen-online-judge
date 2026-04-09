@@ -102,7 +102,7 @@ export function CreateUserGroupPage() {
             <Button
               type="button"
               disabled={model.isSubmitting}
-              className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+              className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
               onClick={() => {
                 void model.submit()
               }}
