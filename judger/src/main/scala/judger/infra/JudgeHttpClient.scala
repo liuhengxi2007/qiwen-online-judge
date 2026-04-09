@@ -42,7 +42,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
       body = Some(ClaimJudgeTaskRequest(judgerId).asJson.noSpaces)
     ).flatMap { response =>
       if response.statusCode == 204 then IO.pure(None)
-      else if response.statusCode / 100 != 2 then
+      else if !response.isSuccess then
         requestFailed("Claim failed", response)
       else
         IO.fromEither(decode[JudgeTask](response.body).left.map(error => RuntimeException(error.getMessage))).map(Some(_))
@@ -57,7 +57,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
 
   private def requestExpectSuccess(path: String, method: String, body: Option[String]): IO[String] =
     requestRaw(path, method, body).flatMap { response =>
-      if response.statusCode / 100 == 2 then IO.pure(response.body)
+      if response.isSuccess then IO.pure(response.body)
       else requestFailed("Request failed", response)
     }
 
@@ -83,7 +83,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
     }
 
   private def handleHeartbeatResponse(judgerId: JudgerId, response: HttpResponse[String]): IO[Unit] =
-    if response.statusCode / 100 == 2 then IO.unit
+    if response.isSuccess then IO.unit
     else if response.statusCode == 404 then IO.raiseError(LeaseExpiredException(s"Judger lease expired for ${judgerId.value}."))
     else requestFailed("Request failed", response)
 
@@ -96,3 +96,7 @@ object JudgeHttpClient:
       HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
       config
     )
+
+extension (response: HttpResponse[?])
+  private def isSuccess: Boolean =
+    response.statusCode >= 200 && response.statusCode < 300
