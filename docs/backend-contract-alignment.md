@@ -36,6 +36,24 @@ Keep these roles separate:
 - backend `http/`
   request decoding, response encoding, contract mapping
 
+If a non-backend Scala process such as `judger` needs the same boundary types, do not make that process depend on the backend project directly.
+
+Preferred split:
+
+- `contracts/`
+  TypeScript transport source of truth
+- backend `model/`
+  backend-owned HTTP-facing Scala models and domain values
+- worker-local Scala models
+  worker-owned execution and orchestration types
+- optional shared Scala protocol module
+  a small dependency used by both backend and workers for stable cross-process boundary types
+
+Bad split:
+
+- `judger -> backend`
+- worker code importing backend routers, commands, or tables just to reuse a protocol case class
+
 ## Mapping Rule
 
 Backend HTTP handlers should not expose raw domain entities directly.
@@ -116,6 +134,10 @@ Do not force these into `contracts/`.
 - SQL row mapping structures
 - persistence-specific helpers
 
+Do not expose these as a shared Scala worker dependency either.
+
+If a worker needs a type that currently lives beside backend-only code, split the shared boundary type into a separate protocol module instead of depending on the whole backend project.
+
 ## Alignment Check Checklist
 
 Whenever a contract-shaped backend model changes, check all of the following:
@@ -171,6 +193,8 @@ Examples:
 - `AuthUser`
 - `SiteManagerUser`
 - `UpdateUserSettingsResult`
+
+If a shared Scala protocol module is introduced, its names should still align with `contracts/` for the stable transport shape, while backend-only names should continue to signal backend ownership.
 
 ## Migration Strategy
 

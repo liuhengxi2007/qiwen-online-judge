@@ -3,7 +3,7 @@ package domains.judge.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.judge.application.{JudgeCommands, JudgeConfig}
-import domains.judge.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
+import judgeprotocol.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
 import domains.submission.model.SubmissionId
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*

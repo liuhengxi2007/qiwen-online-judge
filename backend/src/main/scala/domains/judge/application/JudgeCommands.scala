@@ -2,9 +2,9 @@ package domains.judge.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.judge.model.{JudgeTask, JudgerName, ReportJudgeResultRequest}
 import domains.submission.model.{SubmissionId, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
+import judgeprotocol.model.{JudgeTask, JudgerName, ReportJudgeResultRequest}
 
 object JudgeCommands:
 
@@ -50,16 +50,38 @@ object JudgeCommands:
     request: ReportJudgeResultRequest
   ): IO[ReportJudgeResult] =
     request.status match
-      case SubmissionStatus.Completed | SubmissionStatus.Failed =>
+      case judgeprotocol.model.SubmissionStatus.Completed | judgeprotocol.model.SubmissionStatus.Failed =>
         databaseSession.withTransactionConnection { connection =>
           SubmissionTable.findById(connection, submissionId).flatMap {
             case None =>
               IO.pure(ReportJudgeResult.SubmissionNotFound)
             case Some(_) =>
               SubmissionTable
-                .markCompleted(connection, submissionId, request.status, request.verdict, request.judgeMessage)
+                .markCompleted(
+                  connection,
+                  submissionId,
+                  fromProtocolStatus(request.status),
+                  request.verdict.map(fromProtocolVerdict),
+                  request.judgeMessage
+                )
                 .as(ReportJudgeResult.Updated)
           }
         }
       case _ =>
         IO.pure(ReportJudgeResult.ValidationFailed("Judge results may only set status to completed or failed."))
+
+  private def fromProtocolStatus(status: judgeprotocol.model.SubmissionStatus): SubmissionStatus =
+    status match
+      case judgeprotocol.model.SubmissionStatus.Queued => SubmissionStatus.Queued
+      case judgeprotocol.model.SubmissionStatus.Running => SubmissionStatus.Running
+      case judgeprotocol.model.SubmissionStatus.Completed => SubmissionStatus.Completed
+      case judgeprotocol.model.SubmissionStatus.Failed => SubmissionStatus.Failed
+
+  private def fromProtocolVerdict(verdict: judgeprotocol.model.SubmissionVerdict): SubmissionVerdict =
+    verdict match
+      case judgeprotocol.model.SubmissionVerdict.Accepted => SubmissionVerdict.Accepted
+      case judgeprotocol.model.SubmissionVerdict.WrongAnswer => SubmissionVerdict.WrongAnswer
+      case judgeprotocol.model.SubmissionVerdict.CompileError => SubmissionVerdict.CompileError
+      case judgeprotocol.model.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
+      case judgeprotocol.model.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
+      case judgeprotocol.model.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError

@@ -33,10 +33,7 @@ object ProblemValidation:
     )
 
   def validateDataUpdate(request: UpdateProblemDataRequest): Either[String, UpdateProblemDataRequest] =
-    for
-      filename <- validateFilename(request.filename)
-      _ <- Right(request.contentBase64)
-    yield request.copy(filename = filename)
+    validateFilename(request.filename).map(filename => request.copy(filename = filename))
 
   private def validateSlug(slug: ProblemSlug): Either[String, ProblemSlug] =
     ProblemSlug.parse(slug.value)

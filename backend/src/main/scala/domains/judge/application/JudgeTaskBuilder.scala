@@ -1,11 +1,11 @@
 package domains.judge.application
 
 import cats.effect.IO
-import domains.judge.model.{JudgeTask, JudgeTaskTestcase}
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.ProblemDataFilename
 import domains.problem.table.ProblemTable
 import domains.submission.table.ClaimedSubmission
+import judgeprotocol.model.{JudgeTask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 
 import java.util.Base64
 
@@ -27,12 +27,12 @@ object JudgeTaskBuilder:
         case Some(_) =>
           Right(
             JudgeTask(
-              submissionId = claimedSubmission.id,
-              problemSlug = claimedSubmission.problemSlug,
-              language = claimedSubmission.language,
-              sourceCode = claimedSubmission.sourceCode.value,
-              timeLimitMs = claimedSubmission.timeLimitMs,
-              spaceLimitMb = claimedSubmission.spaceLimitMb,
+              submissionId = SubmissionId(claimedSubmission.id.value),
+              problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
+              language = toProtocolLanguage(claimedSubmission.language),
+              sourceCode = SubmissionSourceCode(claimedSubmission.sourceCode.value),
+              timeLimitMs = ProblemTimeLimitMs(claimedSubmission.timeLimitMs),
+              spaceLimitMb = ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb),
               testcases = testcases
             )
           )
@@ -70,7 +70,7 @@ object JudgeTaskBuilder:
         (_, inputBytes) <- maybeInput
         (_, outputBytes) <- maybeOutput
       yield JudgeTaskTestcase(
-        name = testcaseName,
+        name = TestcaseName(testcaseName),
         inputBase64 = Base64.getEncoder.encodeToString(inputBytes),
         expectedOutputBase64 = Base64.getEncoder.encodeToString(outputBytes)
       )
@@ -87,3 +87,8 @@ object JudgeTaskBuilder:
           case some @ Some(_) => IO.pure(some)
           case None => loadExpectedOutput(claimedSubmission, remaining)
         }
+
+  private def toProtocolLanguage(language: domains.submission.model.SubmissionLanguage): SubmissionLanguage =
+    language match
+      case domains.submission.model.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
+      case domains.submission.model.SubmissionLanguage.Python3 => SubmissionLanguage.Python3

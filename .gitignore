@@ -6,9 +6,14 @@ backend/.idea/
 frontend/.idea/
 backend/project/.sbt-boot/
 backend/project/.sbt-global/
+backend/.bsp/
 .codex
 backend/problems/
 judger/target/
 judger/project/target/
 judger/project/.sbt-boot/
 judger/project/.sbt-global/
+judge-protocol-scala/target/
+judge-protocol-scala/project/target/
+judge-protocol-scala/project/.sbt-boot/
+judge-protocol-scala/project/.sbt-global/

@@ -2,7 +2,10 @@ ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / organization := "com.example"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
+lazy val judgeProtocol = RootProject(file("../judge-protocol-scala"))
+
 lazy val root = (project in file("."))
+  .dependsOn(judgeProtocol)
   .settings(
     name := "qiwen-judger",
     libraryDependencies ++= Seq(
