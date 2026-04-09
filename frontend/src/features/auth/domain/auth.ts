@@ -2,6 +2,7 @@ import type {
   AuthUserListItem as AuthUserListItemContract,
   LoginRequest as LoginRequestContract,
   LoginResponse as LoginResponseContract,
+  RegisteredJudgerListItem as RegisteredJudgerListItemContract,
   RegisterRequest as RegisterRequestContract,
   RegisterResponse as RegisterResponseContract,
   SessionResponse as SessionResponseContract,
@@ -62,6 +63,16 @@ export type AuthUserListItem = {
   email: EmailAddress
   siteManager: boolean
   problemManager: boolean
+}
+
+export type RegisteredJudgerListItem = {
+  judgerId: string
+  requestedPrefix: string
+  host: string
+  processId: string | null
+  supportedLanguages: string[]
+  registeredAt: string
+  lastHeartbeatAt: string
 }
 
 export type ErrorResponse = ErrorResponseContract
@@ -255,6 +266,18 @@ export function fromAuthUserListItemContract(response: AuthUserListItemContract)
     email: requireParsed(parseEmailAddress(response.email), 'auth user email'),
     siteManager: response.siteManager,
     problemManager: response.problemManager,
+  }
+}
+
+export function fromRegisteredJudgerListItemContract(response: RegisteredJudgerListItemContract): RegisteredJudgerListItem {
+  return {
+    judgerId: response.judgerId,
+    requestedPrefix: response.requestedPrefix,
+    host: response.host.trim(),
+    processId: response.processId?.trim() || null,
+    supportedLanguages: response.supportedLanguages.map((language) => language.trim()).filter((language) => language.length > 0),
+    registeredAt: response.registeredAt,
+    lastHeartbeatAt: response.lastHeartbeatAt,
   }
 }
 

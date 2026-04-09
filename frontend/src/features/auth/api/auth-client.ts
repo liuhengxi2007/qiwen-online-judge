@@ -1,6 +1,7 @@
 import type {
   AuthUserListItem as AuthUserListItemContract,
   LoginResponse as LoginResponseContract,
+  RegisteredJudgerListItem as RegisteredJudgerListItemContract,
   RegisterResponse as RegisterResponseContract,
   SessionResponse as SessionResponseContract,
 } from '@contracts/auth'
@@ -8,6 +9,7 @@ import type {
   AuthUserListItem,
   LoginRequest,
   LoginResponse,
+  RegisteredJudgerListItem,
   RegisterRequest,
   RegisterResponse,
   SessionResponse,
@@ -19,6 +21,7 @@ import type {
 import {
   fromAuthUserListItemContract,
   fromLoginResponseContract,
+  fromRegisteredJudgerListItemContract,
   fromRegisterResponseContract,
   fromSessionResponseContract,
   toLoginRequestContract,
@@ -58,6 +61,11 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
 export async function listUsers(): Promise<AuthUserListItem[]> {
   const response = await requestJson<AuthUserListItemContract[]>('/api/auth/users')
   return response.map(fromAuthUserListItemContract)
+}
+
+export async function listRegisteredJudgers(): Promise<RegisteredJudgerListItem[]> {
+  const response = await requestJson<RegisteredJudgerListItemContract[]>('/api/auth/judgers')
+  return response.map(fromRegisteredJudgerListItemContract)
 }
 
 export function updateUserPermissions(

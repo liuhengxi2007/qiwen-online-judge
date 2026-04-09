@@ -137,8 +137,11 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
 
   return {
     users: query.users,
+    judgers: query.judgers,
     userListError: state.actionErrorMessage || query.userListError,
+    judgerListError: query.judgerListError,
     isLoadingUsers: query.isLoadingUsers,
+    isLoadingJudgers: query.isLoadingJudgers,
     statusMessage: state.statusMessage,
     updatingUsername: currentUpdatingUsername,
     deletingUsername: currentDeletingUsername,

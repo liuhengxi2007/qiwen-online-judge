@@ -2,11 +2,42 @@ package domains.judger.table
 
 import cats.effect.IO
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
+import io.circe.Encoder
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
 object JudgerTable:
+
+  final case class RegisteredJudgerListItem(
+    judgerId: String,
+    requestedPrefix: String,
+    host: String,
+    processId: Option[String],
+    supportedLanguages: List[String],
+    registeredAt: Instant,
+    lastHeartbeatAt: Instant
+  )
+
+  given Encoder[RegisteredJudgerListItem] = Encoder.forProduct7(
+    "judgerId",
+    "requestedPrefix",
+    "host",
+    "processId",
+    "supportedLanguages",
+    "registeredAt",
+    "lastHeartbeatAt"
+  )(item =>
+    (
+      item.judgerId,
+      item.requestedPrefix,
+      item.host,
+      item.processId,
+      item.supportedLanguages,
+      item.registeredAt.toString,
+      item.lastHeartbeatAt.toString
+    )
+  )
 
   val initTableSql: String =
     """
@@ -47,6 +78,13 @@ object JudgerTable:
       |set last_heartbeat_at = ?
       |where judger_id = ?
       |  and last_heartbeat_at >= ?
+      |""".stripMargin
+
+  private val listJudgersSql: String =
+    """
+      |select judger_id, requested_prefix, host, process_id, supported_languages, registered_at, last_heartbeat_at
+      |from judgers
+      |order by last_heartbeat_at desc, judger_id asc
       |""".stripMargin
 
   def initialize(connection: Connection): IO[Unit] =
@@ -97,6 +135,38 @@ object JudgerTable:
         statement.setString(2, judgerId.value)
         statement.setTimestamp(3, Timestamp.from(now.minusMillis(heartbeatTimeoutMs)))
         statement.executeUpdate() > 0
+      finally statement.close()
+    }
+
+  def listJudgers(connection: Connection, heartbeatTimeoutMs: Long): IO[List[RegisteredJudgerListItem]] =
+    IO.blocking {
+      deleteExpired(connection, Instant.now().minusMillis(heartbeatTimeoutMs))
+
+      val statement = connection.prepareStatement(listJudgersSql)
+      try
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map { _ =>
+              RegisteredJudgerListItem(
+                judgerId = resultSet.getString("judger_id"),
+                requestedPrefix = resultSet.getString("requested_prefix"),
+                host = resultSet.getString("host"),
+                processId = Option(resultSet.getString("process_id")),
+                supportedLanguages =
+                  Option(resultSet.getString("supported_languages"))
+                    .toList
+                    .flatMap(_.split(",").toList)
+                    .map(_.trim)
+                    .filter(_.nonEmpty),
+                registeredAt = resultSet.getTimestamp("registered_at").toInstant,
+                lastHeartbeatAt = resultSet.getTimestamp("last_heartbeat_at").toInstant
+              )
+            }
+            .toList
+        finally resultSet.close()
       finally statement.close()
     }
 

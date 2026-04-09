@@ -5,6 +5,8 @@ import database.DatabaseSession
 import domains.auth.application.{AuthUserCommands, PasswordHasher, SessionStore, UsernameRules}
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, LoginRequest, RegisterRequest, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
 import domains.auth.table.AuthUserTable
+import domains.judge.application.JudgeConfig
+import domains.judger.table.JudgerTable
 import domains.usergroup.model.UserGroupSlug
 import domains.usergroup.table.UserGroupTable
 import io.circe.syntax.*
@@ -17,7 +19,8 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 final class AuthHttpHandlers(
   databaseSession: DatabaseSession,
   sessionStore: SessionStore,
-  sessionSupport: AuthHttpSessionSupport
+  sessionSupport: AuthHttpSessionSupport,
+  judgeConfig: JudgeConfig
 )(using dsl: Http4sDsl[IO]):
 
   import dsl.*
@@ -45,6 +48,15 @@ final class AuthHttpHandlers(
         )
         response <- Ok(users.asJson)
       yield response
+    }
+
+  def listJudgers(request: Request[IO]): IO[Response[IO]] =
+    sessionSupport.withSiteManager(request) { _ =>
+      databaseSession.withTransactionConnection { connection =>
+        JudgerTable
+          .listJudgers(connection, judgeConfig.heartbeatTimeoutMs)
+          .flatMap(registeredJudgers => Ok(registeredJudgers.asJson))
+      }
     }
 
   def getUserSettings(request: Request[IO], targetUsername: Username): IO[Response[IO]] =
