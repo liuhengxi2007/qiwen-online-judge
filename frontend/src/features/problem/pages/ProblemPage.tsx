@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, FilePlus2, LibraryBig, LogOut } from 'lucide-react'
+import { FilePlus2, LibraryBig, LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import {
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemPage() {
@@ -43,12 +44,7 @@ export function ProblemPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/">
-                <ArrowLeft className="size-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -3,6 +3,7 @@ package judger.config
 import judgeprotocol.model.{JudgerId, SubmissionLanguage}
 
 import java.net.InetAddress
+import java.nio.file.Path
 import scala.util.Try
 
 final case class AppConfig(
@@ -16,7 +17,8 @@ final case class AppConfig(
   cxx: String,
   isolateBin: String,
   isolateBoxId: Int,
-  preferIsolateCgroups: Boolean
+  preferIsolateCgroups: Boolean,
+  workRoot: Path
 )
 
 object AppConfig:
@@ -40,7 +42,10 @@ object AppConfig:
       cxx = env.get("CXX").map(_.trim).filter(_.nonEmpty).getOrElse("g++"),
       isolateBin = env.get("ISOLATE_BIN").map(_.trim).filter(_.nonEmpty).getOrElse("isolate"),
       isolateBoxId = parseBoxId(env.get("ISOLATE_BOX_ID"), env.get("JUDGER_PROCESS_ID").orElse(detectProcessId())),
-      preferIsolateCgroups = parseBoolean(env.get("ISOLATE_PREFER_CGROUPS"), defaultValue = true)
+      preferIsolateCgroups = parseBoolean(env.get("ISOLATE_PREFER_CGROUPS"), defaultValue = true),
+      workRoot = Path.of(
+        env.get("JUDGER_WORK_ROOT").map(_.trim).filter(_.nonEmpty).getOrElse(defaultWorkRoot().toString)
+      )
     )
 
   private def parsePositiveLong(raw: String, name: String): Either[String, Long] =
@@ -76,3 +81,6 @@ object AppConfig:
         case "0" | "false" | "no" | "off" => false
       }
       .getOrElse(defaultValue)
+
+  private def defaultWorkRoot(): Path =
+    Path.of(sys.props.getOrElse("user.home", "."), ".cache", "qiwen-judger")

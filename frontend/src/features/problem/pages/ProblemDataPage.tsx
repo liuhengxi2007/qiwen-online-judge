@@ -1,5 +1,5 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowDownToLine, ArrowLeft, Eraser, FileUp, HardDriveUpload, LogOut, Trash2 } from 'lucide-react'
+import { Navigate, useParams } from 'react-router-dom'
+import { ArrowDownToLine, Eraser, FileUp, HardDriveUpload, LogOut, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import {
 } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function ProblemDataPage() {
@@ -56,12 +57,7 @@ export function ProblemDataPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to={`/problems/${problemSlugValue(slugResult.value)}`}>
-                <ArrowLeft className="size-4" />
-                Back to Problem
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, FolderKanban, LogOut, Users } from 'lucide-react'
+import { ArrowRight, FolderKanban, LogOut, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupPageModel } from '@/features/usergroup/hooks/use-usergroup-page-model'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function UserGroupPage() {
@@ -36,12 +37,7 @@ export function UserGroupPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/">
-                <ArrowLeft className="size-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

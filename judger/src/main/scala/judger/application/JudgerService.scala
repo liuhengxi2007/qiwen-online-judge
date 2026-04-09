@@ -1,16 +1,18 @@
 package judger.application
 
 import cats.effect.IO
+import cats.effect.kernel.Ref
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judger.config.{AppConfig, RegisteredJudger}
 import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient}
 import org.typelevel.log4cats.Logger
 
+import java.io.{PrintWriter, StringWriter}
 import scala.concurrent.duration.DurationLong
 
 final class JudgerService(
   config: AppConfig,
-  registeredJudger: RegisteredJudger,
+  registeredJudgerRef: Ref[IO, RegisteredJudger],
   httpClient: JudgeHttpClient,
   logger: Logger[IO]
 ):
@@ -19,17 +21,17 @@ final class JudgerService(
 
   private def iteration: IO[Unit] =
     processOnce.handleErrorWith { error =>
-      logger.error(error)(s"[judger] ${error.getMessage}")
+      val stackTrace = renderStackTrace(error)
+      logger.error(error)(s"[judger] Unhandled execution error: ${Option(error.getMessage).getOrElse(error.getClass.getName)}") *>
+        IO.blocking(System.err.println(stackTrace))
     } *> IO.sleep(config.pollIntervalMs.millis)
 
   private def processOnce: IO[Unit] =
-    httpClient.claimTask(registeredJudger.judgerId).flatMap {
+    registeredJudgerRef.get.flatMap(registeredJudger => httpClient.claimTask(registeredJudger.judgerId)).flatMap {
       case None =>
         IO.unit
       case Some(task) =>
-        logger.info(
-          s"[judger] Claimed submission #${task.submissionId.value} (${SubmissionLanguage.render(task.language)}) for problem ${task.problemSlug.value}."
-        ) *> handleTask(task)
+        handleTask(task)
     }
 
   private def handleTask(task: JudgeTask): IO[Unit] =
@@ -48,7 +50,24 @@ final class JudgerService(
 
     resultIo.flatMap { result =>
       httpClient.reportResult(task.submissionId, result) *>
-        logger.info(
-          s"[judger] Finished submission #${task.submissionId.value} with status=${SubmissionStatus.render(result.status)}, verdict=${result.verdict.map(SubmissionVerdict.render).getOrElse("pending")}."
-        )
+        logResult(task, result)
     }
+
+  private def logResult(task: JudgeTask, result: ReportJudgeResultRequest): IO[Unit] =
+    val status = SubmissionStatus.render(result.status)
+    val verdict = result.verdict.map(SubmissionVerdict.render).getOrElse("pending")
+    val summary =
+      s"[judger] Submission #${task.submissionId.value} (${SubmissionLanguage.render(task.language)}) finished with status=$status verdict=$verdict."
+
+    (result.status, result.verdict) match
+      case (SubmissionStatus.Failed, _) | (_, Some(SubmissionVerdict.SystemError)) =>
+        logger.error(s"$summary ${result.judgeMessage.getOrElse("")}".trim)
+      case _ =>
+        IO.unit
+
+  private def renderStackTrace(error: Throwable): String =
+    val writer = StringWriter()
+    val printWriter = PrintWriter(writer)
+    try error.printStackTrace(printWriter)
+    finally printWriter.close()
+    s"[judger] Stack trace follows\n${writer.toString}"

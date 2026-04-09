@@ -4,7 +4,7 @@ import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
-import org.http4s.server.middleware.{CORS, Logger}
+import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
@@ -49,9 +49,7 @@ object Main extends IOApp.Simple:
           yield ()
         }
       }
-      httpApp = CORS.policy.withAllowOriginAll(
-        Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig))
-      )
+      httpApp = CORS.policy.withAllowOriginAll(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig))
       server <- serverResource(httpApp)
     yield server
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { LogOut, PencilLine, ShieldPlus, Trash2, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
 } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -70,12 +71,7 @@ export function UserGroupDetailPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/user-groups">
-                <ArrowLeft className="size-4" />
-                Back to User Groups
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Files, LogOut } from 'lucide-react'
+import { ArrowRight, Files, LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import {
   submissionVerdictLabel,
 } from '@/features/submission/domain/submission'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function SubmissionPage() {
@@ -52,12 +53,7 @@ export function SubmissionPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/">
-                <ArrowLeft className="size-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, FilePlus2, LogOut } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
+import { FilePlus2, LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemPageModel } from '@/features/problem/hooks/use-create-problem-page-model'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -56,12 +57,7 @@ export function CreateProblemPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/problems">
-                <ArrowLeft className="size-4" />
-                Back to Problems
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -11,6 +11,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 
+final case class LeaseExpiredException(message: String) extends RuntimeException(message)
+
 final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
   def registerJudger: IO[RegisterJudgerResponse] =
     val body = RegisterJudgerRequest(
@@ -26,11 +28,15 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
     )
 
   def heartbeat(judgerId: JudgerId): IO[Unit] =
-    requestExpectSuccess(
+    requestRaw(
       path = s"/api/internal/judgers/${URLEncoder.encode(judgerId.value, StandardCharsets.UTF_8)}/heartbeat",
       method = "POST",
       body = Some(JudgerHeartbeatRequest().asJson.noSpaces)
-    ).void
+    ).flatMap { response =>
+      if response.statusCode / 100 == 2 then IO.unit
+      else if response.statusCode == 404 then IO.raiseError(LeaseExpiredException(s"Judger lease expired for ${judgerId.value}."))
+      else IO.raiseError(RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${response.body}"))
+    }
 
   def claimTask(judgerId: JudgerId): IO[Option[JudgeTask]] =
     val body = ClaimJudgeTaskRequest(judgerId).asJson.noSpaces

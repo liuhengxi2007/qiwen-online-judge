@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit
 
 final case class ProcessResult(
   exitCode: Option[Int],
+  isolateStatus: Option[String],
+  isolateMessage: Option[String],
   stdout: String,
   stderr: String,
   timedOut: Boolean
@@ -21,7 +23,7 @@ final case class SandboxExecutionRequest(
   args: List[String],
   stdin: Option[Array[Byte]],
   limits: SandboxLimits,
-  allowChildProcesses: Boolean
+  processLimit: Int
 )
 
 private final case class SandboxState(
@@ -47,19 +49,21 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
         List(
           config.isolateBin,
           s"--box-id=${state.boxId}",
+          s"--dir=/box=${hostWorkingDirectory.toAbsolutePath}:rw",
           s"--meta=${metaPath.toAbsolutePath}",
-          s"--stdout=${stdoutPath.toAbsolutePath}",
-          s"--stderr=${stderrPath.toAbsolutePath}",
+          s"--stdout=${stdoutPath.getFileName}",
+          s"--stderr=${stderrPath.getFileName}",
+          "--chdir=/box",
           s"--time=${IsolateSandbox.secondsCeil(request.limits.timeLimit.value)}",
           s"--wall-time=${IsolateSandbox.secondsCeil(request.limits.wallTimeLimit.value)}",
           s"--mem=${request.limits.memoryLimitKb.value}"
         ) ++
           (if state.useCgroups then List("--cg") else Nil) ++
-          (if request.allowChildProcesses then List("--processes=64") else Nil) ++
+          List(s"--processes=${math.max(request.processLimit, 1)}") ++
           List("--run", "--", request.command) ++ request.args
 
       val builder = new ProcessBuilder(isolateArgs*)
-      builder.directory(state.boxRoot.toFile)
+      builder.directory(hostWorkingDirectory.toFile)
       val process = builder.start()
 
       request.stdin.foreach { bytes =>
@@ -85,6 +89,8 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
           .get("exitcode")
           .flatMap(_.toIntOption)
           .orElse(if completed then Some(process.exitValue()) else None),
+        isolateStatus = meta.get("status"),
+        isolateMessage = meta.get("message"),
         stdout = stdout,
         stderr = stderr,
         timedOut = !completed || meta.get("status").contains("TO")

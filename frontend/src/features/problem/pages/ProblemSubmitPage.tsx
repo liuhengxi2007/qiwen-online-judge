@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Code2, LogOut, Send } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Code2, LogOut, Send } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,7 @@ import {
   submissionIdValue,
 } from '@/features/submission/domain/submission'
 import { HttpClientError } from '@/shared/api/http-client'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -84,12 +85,7 @@ export function ProblemSubmitPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to={`/problems/${problemSlugValue(slugResult.value)}`}>
-                <ArrowLeft className="size-4" />
-                Back to Problem
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

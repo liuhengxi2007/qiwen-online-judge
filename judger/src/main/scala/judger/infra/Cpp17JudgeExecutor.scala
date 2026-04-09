@@ -4,57 +4,68 @@ import cats.effect.IO
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionStatus, SubmissionVerdict}
 import judger.config.AppConfig
 
+import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.Base64
+import java.util.concurrent.TimeUnit
 
 object Cpp17JudgeExecutor:
   private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 10000L, memoryLimitMb = 1024)
 
   def judge(task: JudgeTask, config: AppConfig): IO[ReportJudgeResultRequest] =
-    withWorkingDirectory("qiwen-judger-") { workingDirectory =>
-      IsolateSandbox.resource(config) { sandbox =>
-        val sourceFile = sandbox.boxRoot.resolve("main.cpp")
-
-        for
-          _ <- IO.blocking(Files.writeString(sourceFile, task.sourceCode.value, StandardCharsets.UTF_8))
-          compileResult <- sandbox.run(
-            SandboxExecutionRequest(
-              phase = "compile",
-              command = resolveExecutable(config.cxx).getOrElse(config.cxx),
-              args = List("main.cpp", "-o", "main", "-O2", "-std=c++17"),
-              stdin = None,
-              limits = CompileLimits,
-              allowChildProcesses = true
-            ),
-            workingDirectory
+    resolveCompilerPath(config).flatMap {
+      case Left(message) =>
+        IO.pure(
+          ReportJudgeResultRequest(
+            status = SubmissionStatus.Failed,
+            verdict = Some(SubmissionVerdict.SystemError),
+            judgeMessage = Some(message)
           )
-          result <-
-            if compileResult.timedOut then
-              IO.pure(
-                ReportJudgeResultRequest(
-                  status = SubmissionStatus.Failed,
-                  verdict = Some(SubmissionVerdict.SystemError),
-                  judgeMessage = Some("Compilation timed out on the judger machine.")
-                )
+        )
+      case Right(compilerPath) =>
+        withWorkingDirectory(config.workRoot, "qiwen-judger-") { workingDirectory =>
+          IsolateSandbox.resource(config) { sandbox =>
+            val sourceFile = workingDirectory.resolve("main.cpp")
+
+            for
+              _ <- IO.blocking(Files.writeString(sourceFile, task.sourceCode.value, StandardCharsets.UTF_8))
+              compileResult <- runHostProcess(
+                command = compilerPath,
+                args = List("main.cpp", "-o", "main", "-O2", "-std=c++17"),
+                cwd = workingDirectory,
+                stdin = None,
+                timeoutMs = CompileLimits.wallTimeLimit.value
               )
-            else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(
-                ReportJudgeResultRequest(
-                  status = SubmissionStatus.Completed,
-                  verdict = Some(SubmissionVerdict.CompileError),
-                  judgeMessage = Some(nonEmptyOrFallback(compileResult.stderr, compileResult.stdout, "Compilation failed."))
-                )
-              )
-            else
-              judgeTestcases(task, workingDirectory, sandbox)
-        yield result
-      }
+              result <-
+                if compileResult.timedOut then
+                  IO.pure(
+                    ReportJudgeResultRequest(
+                      status = SubmissionStatus.Failed,
+                      verdict = Some(SubmissionVerdict.SystemError),
+                      judgeMessage = Some("Compilation timed out on the judger machine.")
+                    )
+                  )
+                else if compileResult.exitCode.getOrElse(-1) != 0 then
+                  IO.pure(
+                    ReportJudgeResultRequest(
+                      status = SubmissionStatus.Completed,
+                      verdict = Some(SubmissionVerdict.CompileError),
+                      judgeMessage = Some(formatCompileError(compilerPath, compileResult))
+                    )
+                  )
+                else
+                  ensureExecutableExists(workingDirectory.resolve("main")) *> judgeTestcases(task, workingDirectory, sandbox)
+            yield result
+          }
+        }
     }.handleError { error =>
+      val message = Option(error.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(error.getClass.getName)
       ReportJudgeResultRequest(
         status = SubmissionStatus.Failed,
         verdict = Some(SubmissionVerdict.SystemError),
-        judgeMessage = Some(error.getMessage)
+        judgeMessage = Some(s"${error.getClass.getSimpleName}: $message")
       )
     }
 
@@ -73,11 +84,11 @@ object Cpp17JudgeExecutor:
           sandbox.run(
             SandboxExecutionRequest(
               phase = s"run-${testcase.name.value}",
-              command = "./main",
+              command = "/box/main",
               args = Nil,
               stdin = Some(input),
               limits = SandboxLimits.runtime(task.timeLimitMs.value.toLong, task.spaceLimitMb.value),
-              allowChildProcesses = false
+              processLimit = 1
             ),
             workingDirectory
           ).map { runResult =>
@@ -94,7 +105,7 @@ object Cpp17JudgeExecutor:
                 ReportJudgeResultRequest(
                   status = SubmissionStatus.Completed,
                   verdict = Some(SubmissionVerdict.RuntimeError),
-                  judgeMessage = Some(nonEmptyOrFallback(runResult.stderr, "", s"Runtime error on testcase ${testcase.name.value}."))
+                  judgeMessage = Some(formatRuntimeError(testcase.name.value, runResult))
                 )
               )
             else if normalizeOutput(runResult.stdout) != normalizeOutput(expectedOutput) then
@@ -118,8 +129,13 @@ object Cpp17JudgeExecutor:
       )
     )
 
-  private def withWorkingDirectory[A](prefix: String)(use: Path => IO[A]): IO[A] =
-    IO.blocking(Files.createTempDirectory(prefix)).bracket(use) { path =>
+  private def withWorkingDirectory[A](workRoot: Path, prefix: String)(use: Path => IO[A]): IO[A] =
+    IO.blocking {
+      Files.createDirectories(workRoot)
+      val path = Files.createTempDirectory(workRoot, prefix)
+      ensureSandboxAccessible(path)
+      path
+    }.bracket(use) { path =>
       deleteRecursively(path)
     }
 
@@ -133,7 +149,7 @@ object Cpp17JudgeExecutor:
 
   private def resolveExecutable(command: String): Option[String] =
     val commandPath = Path.of(command)
-    if commandPath.isAbsolute && Files.isExecutable(commandPath) then Some(commandPath.toString)
+    if commandPath.isAbsolute && Files.isExecutable(commandPath) then resolveRealExecutablePath(commandPath)
     else
       sys.env
         .get("PATH")
@@ -141,7 +157,130 @@ object Cpp17JudgeExecutor:
         .flatMap(_.split(java.io.File.pathSeparator).toList)
         .map(pathEntry => Path.of(pathEntry).resolve(command))
         .find(path => Files.isRegularFile(path) && Files.isExecutable(path))
-        .map(_.toString)
+        .flatMap(resolveRealExecutablePath)
+
+  private def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
+    IO.blocking {
+      resolveExecutable(config.cxx) match
+        case None =>
+          Left(s"Compiler '${config.cxx}' was not found on the judger host.")
+        case Some(path) if isSandboxVisibleExecutable(path) =>
+          Right(path)
+        case Some(path) =>
+          Left(
+            s"Compiler '$path' is not visible inside isolate. " +
+              "Use a compiler under /usr or /bin, or adjust the judger configuration."
+          )
+    }
+
+  private def isSandboxVisibleExecutable(path: String): Boolean =
+    path.startsWith("/usr/") || path == "/usr" || path.startsWith("/bin/") || path == "/bin"
+
+  private def resolveRealExecutablePath(path: Path): Option[String] =
+    scala.util.Try(path.toRealPath().toString).toOption
+
+  private def ensureSandboxAccessible(path: Path): Unit =
+    scala.util.Try {
+      Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxrwxrwx"))
+    }
+    ()
+
+  private def formatCompileError(compilerPath: String, result: ProcessResult): String =
+    val exitCode = result.exitCode.getOrElse(-1)
+    val detail =
+      if exitCode == 127 then
+        s"Compiler '$compilerPath' was not found on the judger host (exit status 127)."
+      else s"Compilation failed with exit status $exitCode using $compilerPath."
+
+    val isolateDetail =
+      List(
+        result.isolateStatus.map(status => s"isolate status: $status"),
+        result.isolateMessage.map(message => s"isolate message: $message")
+      ).flatten
+
+    val stderr = result.stderr.trim
+    val stdout = result.stdout.trim
+    val sections =
+      List(
+        Some(detail),
+        Option.when(isolateDetail.nonEmpty)(isolateDetail.mkString("\n")),
+        Option.when(stderr.nonEmpty)(s"stderr:\n$stderr"),
+        Option.when(stdout.nonEmpty)(s"stdout:\n$stdout")
+      ).flatten
+
+    sections.mkString("\n\n")
+
+  private def formatRuntimeError(testcaseName: String, result: ProcessResult): String =
+    val exitCode = result.exitCode.getOrElse(-1)
+    val detail =
+      if exitCode == 127 then
+        s"Executable './main' was not found or was not executable inside isolate sandbox on testcase $testcaseName."
+      else
+        s"Runtime error on testcase $testcaseName (exit status $exitCode)."
+
+    val isolateDetail =
+      List(
+        result.isolateStatus.map(status => s"isolate status: $status"),
+        result.isolateMessage.map(message => s"isolate message: $message")
+      ).flatten
+
+    val stderr = result.stderr.trim
+    val stdout = result.stdout.trim
+    List(
+      Some(detail),
+      Option.when(isolateDetail.nonEmpty)(isolateDetail.mkString("\n")),
+      Option.when(stderr.nonEmpty)(s"stderr:\n$stderr"),
+      Option.when(stdout.nonEmpty)(s"stdout:\n$stdout")
+    ).flatten.mkString("\n\n")
+
+  private def runHostProcess(
+    command: String,
+    args: List[String],
+    cwd: Path,
+    stdin: Option[Array[Byte]],
+    timeoutMs: Long
+  ): IO[ProcessResult] =
+    IO.blocking {
+      val builder = new ProcessBuilder((command :: args)*)
+      builder.directory(cwd.toFile)
+      val process = builder.start()
+
+      stdin.foreach { bytes =>
+        val stream = process.getOutputStream
+        try stream.write(bytes)
+        finally stream.close()
+      }
+      if stdin.isEmpty then process.getOutputStream.close()
+
+      val completed = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+      if !completed then
+        process.destroyForcibly()
+        process.waitFor(5, TimeUnit.SECONDS)
+
+      ProcessResult(
+        exitCode = if completed then Some(process.exitValue()) else None,
+        isolateStatus = None,
+        isolateMessage = None,
+        stdout = readStream(process.getInputStream),
+        stderr = readStream(process.getErrorStream),
+        timedOut = !completed
+      )
+    }
+
+  private def ensureExecutableExists(path: Path): IO[Unit] =
+    IO.blocking {
+      if !Files.exists(path) then
+        throw RuntimeException(s"Compiled executable was not produced at ${path.toAbsolutePath}.")
+      if !Files.isRegularFile(path) then
+        throw RuntimeException(s"Compiled executable path is not a regular file: ${path.toAbsolutePath}.")
+      if !Files.isExecutable(path) then
+        throw RuntimeException(s"Compiled executable is not executable: ${path.toAbsolutePath}.")
+    }
+
+  private def readStream(stream: java.io.InputStream): String =
+    val buffer = ByteArrayOutputStream()
+    stream.transferTo(buffer)
+    buffer.toString(StandardCharsets.UTF_8)
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()

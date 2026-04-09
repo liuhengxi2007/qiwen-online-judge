@@ -1,5 +1,5 @@
-import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, LockKeyhole, LogOut, Settings, ShieldCheck } from 'lucide-react'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { LockKeyhole, LogOut, Settings, ShieldCheck } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import {
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/features/auth/hooks/use-user-settings-model'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 
 export function UserSettingsPage() {
   usePageTitle('Qiwen Online Judge - User Settings')
@@ -83,12 +84,7 @@ export function UserSettingsPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/">
-                <ArrowLeft className="size-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

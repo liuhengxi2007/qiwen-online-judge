@@ -1,5 +1,5 @@
-import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, LogOut, Users } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
+import { LogOut, Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateUserGroupPageModel } from '@/features/usergroup/hooks/use-create-usergroup-page-model'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -43,12 +44,7 @@ export function CreateUserGroupPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/user-groups">
-                <ArrowLeft className="size-4" />
-                Back to User Groups
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

@@ -17,6 +17,27 @@ if [[ -z "${CXX:-}" ]]; then
   export CXX="g++"
 fi
 
+if [[ -z "${JUDGER_START_DELAY_SECONDS:-}" ]]; then
+  export JUDGER_START_DELAY_SECONDS="0"
+fi
+
+if ! command -v sbt >/dev/null 2>&1; then
+  echo "sbt is required inside WSL." >&2
+  exit 1
+fi
+
+if ! command -v "${CXX}" >/dev/null 2>&1; then
+  echo "C++ compiler '${CXX}' was not found inside WSL." >&2
+  exit 1
+fi
+
+export CXX="$(command -v "${CXX}")"
+
+if ! command -v "${ISOLATE_BIN:-isolate}" >/dev/null 2>&1; then
+  echo "isolate is required for safe judging inside WSL." >&2
+  exit 1
+fi
+
 probe_backend_url() {
   local candidate="$1"
   if [[ -z "${candidate}" ]]; then
@@ -76,6 +97,9 @@ resolve_backend_base_url() {
   return 1
 }
 
+echo "Compiling judger..."
+sbt compile
+
 if resolved_backend_base_url="$(resolve_backend_base_url)"; then
   export BACKEND_BASE_URL="${resolved_backend_base_url}"
 else
@@ -86,20 +110,9 @@ else
 fi
 
 echo "Starting WSL judger prefix ${JUDGER_ID_PREFIX} against ${BACKEND_BASE_URL}"
-
-if ! command -v sbt >/dev/null 2>&1; then
-  echo "sbt is required inside WSL." >&2
-  exit 1
-fi
-
-if ! command -v "${CXX}" >/dev/null 2>&1; then
-  echo "C++ compiler '${CXX}' was not found inside WSL." >&2
-  exit 1
-fi
-
-if ! command -v "${ISOLATE_BIN:-isolate}" >/dev/null 2>&1; then
-  echo "isolate is required for safe judging inside WSL." >&2
-  exit 1
+if [[ "${JUDGER_START_DELAY_SECONDS}" != "0" ]]; then
+  echo "Waiting ${JUDGER_START_DELAY_SECONDS} seconds before running judger..."
+  sleep "${JUDGER_START_DELAY_SECONDS}"
 fi
 
 sbt run

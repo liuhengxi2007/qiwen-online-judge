@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowLeft, LogOut, Settings2, Trash2 } from 'lucide-react'
+import { LogOut, Settings2, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
   usernameValue,
   type AuthUserListItem,
 } from '@/features/auth/domain/auth'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
@@ -61,12 +62,7 @@ export function SiteManagePage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-stone-300 bg-white">
-              <Link to="/">
-                <ArrowLeft className="size-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
+            <AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />
             <Button
               type="button"
               variant="outline"

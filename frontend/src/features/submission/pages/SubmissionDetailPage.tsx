@@ -1,5 +1,5 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Files, LogOut } from 'lucide-react'
+import { Navigate, useParams } from 'react-router-dom'
+import { Files, LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import {
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
 export function SubmissionDetailPage() {
@@ -57,12 +58,7 @@ export function SubmissionDetailPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/submissions">
-                <ArrowLeft className="size-4" />
-                Back to Submissions
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

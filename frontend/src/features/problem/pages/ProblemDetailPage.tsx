@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Database, LogOut, PencilLine, ScrollText, Send, ShieldCheck, Trash2 } from 'lucide-react'
+import { Database, LogOut, PencilLine, ScrollText, Send, ShieldCheck, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,7 @@ import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
@@ -83,12 +84,7 @@ export function ProblemDetailPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/problems">
-                <ArrowLeft className="size-4" />
-                Back to Problems
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"

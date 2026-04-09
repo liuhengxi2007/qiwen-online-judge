@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, LogOut } from 'lucide-react'
+import { Navigate, useParams } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import {
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
 } from '@/shared/domain/resource-access-input'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 
@@ -68,12 +69,7 @@ export function ProblemSetDetailPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/problem-sets">
-                <ArrowLeft className="size-4" />
-                Back to Problem Sets
-              </Link>
-            </Button>
+            <AncestorNavigation />
             <Button
               type="button"
               variant="outline"
