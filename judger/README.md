@@ -29,7 +29,16 @@ WSL:
 - `JUDGER_ID_PREFIX`，默认 `local-judger`
 - `POLL_INTERVAL_MS`，默认 `2000`
 - `CXX`，默认 `g++`
+- `ISOLATE_BIN`，默认 `isolate`
+- `ISOLATE_BOX_ID`，默认按当前进程 PID 推导
+- `ISOLATE_PREFER_CGROUPS`，默认 `true`；若环境不支持，judger 会自动退回不带 `--cg` 的 isolate
 
 ## 当前范围
 
 当前只支持 `cpp17`。
+
+## 安全执行
+
+Linux / WSL 下，提交代码会通过 `isolate` 进入沙箱后再编译和运行。
+如果环境支持 cgroup，judger 会优先使用 `isolate --cg`；若不支持，会自动退回普通 `isolate`。
+如果 `isolate` 不可用，`run-wsl.sh` 会直接拒绝启动 judger，而不会退回到裸进程执行。

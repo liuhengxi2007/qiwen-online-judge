@@ -13,7 +13,10 @@ final case class AppConfig(
   processId: Option[String],
   supportedLanguages: List[SubmissionLanguage],
   pollIntervalMs: Long,
-  cxx: String
+  cxx: String,
+  isolateBin: String,
+  isolateBoxId: Int,
+  preferIsolateCgroups: Boolean
 )
 
 object AppConfig:
@@ -34,7 +37,10 @@ object AppConfig:
       processId = env.get("JUDGER_PROCESS_ID").map(_.trim).filter(_.nonEmpty).orElse(detectProcessId()),
       supportedLanguages = List(SubmissionLanguage.Cpp17),
       pollIntervalMs = pollIntervalMs,
-      cxx = env.get("CXX").map(_.trim).filter(_.nonEmpty).getOrElse("g++")
+      cxx = env.get("CXX").map(_.trim).filter(_.nonEmpty).getOrElse("g++"),
+      isolateBin = env.get("ISOLATE_BIN").map(_.trim).filter(_.nonEmpty).getOrElse("isolate"),
+      isolateBoxId = parseBoxId(env.get("ISOLATE_BOX_ID"), env.get("JUDGER_PROCESS_ID").orElse(detectProcessId())),
+      preferIsolateCgroups = parseBoolean(env.get("ISOLATE_PREFER_CGROUPS"), defaultValue = true)
     )
 
   private def parsePositiveLong(raw: String, name: String): Either[String, Long] =
@@ -48,3 +54,25 @@ object AppConfig:
 
   private def detectProcessId(): Option[String] =
     Try(ProcessHandle.current().pid().toString).toOption.filter(_.nonEmpty)
+
+  private def parseBoxId(configured: Option[String], processId: Option[String]): Int =
+    configured
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .flatMap(raw => Try(raw.toInt).toOption)
+      .filter(boxId => boxId >= 0 && boxId <= 999)
+      .orElse {
+        processId
+          .flatMap(raw => Try(raw.toLong).toOption)
+          .map(pid => ((pid % 900) + 100).toInt)
+      }
+      .getOrElse(100)
+
+  private def parseBoolean(raw: Option[String], defaultValue: Boolean): Boolean =
+    raw
+      .map(_.trim.toLowerCase)
+      .collect {
+        case "1" | "true" | "yes" | "on" => true
+        case "0" | "false" | "no" | "off" => false
+      }
+      .getOrElse(defaultValue)

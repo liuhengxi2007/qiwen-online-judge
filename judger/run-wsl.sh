@@ -97,4 +97,9 @@ if ! command -v "${CXX}" >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v "${ISOLATE_BIN:-isolate}" >/dev/null 2>&1; then
+  echo "isolate is required for safe judging inside WSL." >&2
+  exit 1
+fi
+
 sbt run

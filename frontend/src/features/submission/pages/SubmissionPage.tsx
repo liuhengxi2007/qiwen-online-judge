@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, Files, LogOut } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Files, LogOut } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -53,7 +53,10 @@ export function SubmissionPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button asChild variant="outline" className="rounded-full border-slate-300 bg-white">
-              <Link to="/">Back to Dashboard</Link>
+              <Link to="/">
+                <ArrowLeft className="size-4" />
+                Back to Dashboard
+              </Link>
             </Button>
             <Button
               type="button"
