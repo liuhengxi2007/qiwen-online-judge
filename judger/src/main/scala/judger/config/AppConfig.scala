@@ -1,13 +1,17 @@
 package judger.config
 
-import judgeprotocol.model.JudgerName
+import judgeprotocol.model.{JudgerId, SubmissionLanguage}
 
+import java.net.InetAddress
 import scala.util.Try
 
 final case class AppConfig(
   backendBaseUrl: String,
   judgeToken: String,
-  judgerName: JudgerName,
+  preferredJudgerPrefix: JudgerId,
+  host: String,
+  processId: Option[String],
+  supportedLanguages: List[SubmissionLanguage],
   pollIntervalMs: Long,
   cxx: String
 )
@@ -15,7 +19,9 @@ final case class AppConfig(
 object AppConfig:
   def fromEnvironment(env: scala.collection.Map[String, String]): Either[String, AppConfig] =
     for
-      judgerName <- JudgerName.parse(env.get("JUDGER_NAME").map(_.trim).filter(_.nonEmpty).getOrElse("cpp17-judger"))
+      preferredJudgerPrefix <- JudgerId.parse(
+        env.get("JUDGER_ID_PREFIX").map(_.trim).filter(_.nonEmpty).getOrElse("local-judger")
+      )
       pollIntervalMs <- parsePositiveLong(
         env.get("POLL_INTERVAL_MS").map(_.trim).filter(_.nonEmpty).getOrElse("2000"),
         "POLL_INTERVAL_MS"
@@ -23,7 +29,10 @@ object AppConfig:
     yield AppConfig(
       backendBaseUrl = env.get("BACKEND_BASE_URL").map(_.trim).filter(_.nonEmpty).getOrElse("http://localhost:8080"),
       judgeToken = env.get("JUDGE_TOKEN").map(_.trim).filter(_.nonEmpty).getOrElse("dev-judge-token"),
-      judgerName = judgerName,
+      preferredJudgerPrefix = preferredJudgerPrefix,
+      host = env.get("JUDGER_HOST").map(_.trim).filter(_.nonEmpty).getOrElse(detectHost()),
+      processId = env.get("JUDGER_PROCESS_ID").map(_.trim).filter(_.nonEmpty).orElse(detectProcessId()),
+      supportedLanguages = List(SubmissionLanguage.Cpp17),
       pollIntervalMs = pollIntervalMs,
       cxx = env.get("CXX").map(_.trim).filter(_.nonEmpty).getOrElse("g++")
     )
@@ -33,3 +42,9 @@ object AppConfig:
       if value < 1 then Left(s"$name must be greater than 0.")
       else Right(value)
     }
+
+  private def detectHost(): String =
+    Try(InetAddress.getLocalHost.getHostName).toOption.map(_.trim).filter(_.nonEmpty).getOrElse("localhost")
+
+  private def detectProcessId(): Option[String] =
+    Try(ProcessHandle.current().pid().toString).toOption.filter(_.nonEmpty)

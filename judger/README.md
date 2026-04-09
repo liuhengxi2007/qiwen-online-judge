@@ -26,7 +26,7 @@ WSL:
 
 - `BACKEND_BASE_URL`，默认优先自动探测，否则使用 `http://localhost:8080`
 - `JUDGE_TOKEN`，默认 `dev-judge-token`
-- `JUDGER_NAME`，默认 `cpp17-judger`
+- `JUDGER_ID_PREFIX`，默认 `local-judger`
 - `POLL_INTERVAL_MS`，默认 `2000`
 - `CXX`，默认 `g++`
 

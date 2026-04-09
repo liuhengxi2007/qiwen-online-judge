@@ -2,7 +2,7 @@ package judger.application
 
 import cats.effect.IO
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
-import judger.config.AppConfig
+import judger.config.{AppConfig, RegisteredJudger}
 import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient}
 import org.typelevel.log4cats.Logger
 
@@ -10,6 +10,7 @@ import scala.concurrent.duration.DurationLong
 
 final class JudgerService(
   config: AppConfig,
+  registeredJudger: RegisteredJudger,
   httpClient: JudgeHttpClient,
   logger: Logger[IO]
 ):
@@ -22,7 +23,7 @@ final class JudgerService(
     } *> IO.sleep(config.pollIntervalMs.millis)
 
   private def processOnce: IO[Unit] =
-    httpClient.claimTask.flatMap {
+    httpClient.claimTask(registeredJudger.judgerId).flatMap {
       case None =>
         IO.unit
       case Some(task) =>

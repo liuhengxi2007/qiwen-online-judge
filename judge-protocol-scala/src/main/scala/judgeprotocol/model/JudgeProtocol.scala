@@ -65,17 +65,17 @@ object TestcaseName:
   given Encoder[TestcaseName] = Encoder.encodeString.contramap(_.value)
   given Decoder[TestcaseName] = Decoder.decodeString.emap(parse)
 
-final case class JudgerName(value: String)
+final case class JudgerId(value: String)
 
-object JudgerName:
-  def parse(raw: String): Either[String, JudgerName] =
+object JudgerId:
+  def parse(raw: String): Either[String, JudgerId] =
     val normalized = raw.trim
-    if normalized.isEmpty then Left("Judger name is required.")
-    else if normalized.length > 120 then Left("Judger name must be at most 120 characters.")
-    else Right(JudgerName(normalized))
+    if normalized.isEmpty then Left("Judger id is required.")
+    else if normalized.length > 120 then Left("Judger id must be at most 120 characters.")
+    else Right(JudgerId(normalized))
 
-  given Encoder[JudgerName] = Encoder.encodeString.contramap(_.value)
-  given Decoder[JudgerName] = Decoder.decodeString.emap(parse)
+  given Encoder[JudgerId] = Encoder.encodeString.contramap(_.value)
+  given Decoder[JudgerId] = Decoder.decodeString.emap(parse)
 
 enum SubmissionLanguage:
   case Cpp17
@@ -146,7 +146,34 @@ object SubmissionVerdict:
     case other => Left(s"Unsupported submission verdict: $other")
   }
 
-final case class ClaimJudgeTaskRequest(judgerName: JudgerName)
+final case class RegisterJudgerRequest(
+  preferredPrefix: JudgerId,
+  host: String,
+  processId: Option[String],
+  supportedLanguages: List[SubmissionLanguage]
+)
+
+object RegisterJudgerRequest:
+  given Encoder[RegisterJudgerRequest] = deriveEncoder[RegisterJudgerRequest]
+  given Decoder[RegisterJudgerRequest] = deriveDecoder[RegisterJudgerRequest]
+
+final case class RegisterJudgerResponse(
+  judgerId: JudgerId,
+  heartbeatIntervalMs: Long,
+  heartbeatTimeoutMs: Long
+)
+
+object RegisterJudgerResponse:
+  given Encoder[RegisterJudgerResponse] = deriveEncoder[RegisterJudgerResponse]
+  given Decoder[RegisterJudgerResponse] = deriveDecoder[RegisterJudgerResponse]
+
+final case class JudgerHeartbeatRequest()
+
+object JudgerHeartbeatRequest:
+  given Encoder[JudgerHeartbeatRequest] = deriveEncoder[JudgerHeartbeatRequest]
+  given Decoder[JudgerHeartbeatRequest] = deriveDecoder[JudgerHeartbeatRequest]
+
+final case class ClaimJudgeTaskRequest(judgerId: JudgerId)
 
 object ClaimJudgeTaskRequest:
   given Encoder[ClaimJudgeTaskRequest] = deriveEncoder[ClaimJudgeTaskRequest]

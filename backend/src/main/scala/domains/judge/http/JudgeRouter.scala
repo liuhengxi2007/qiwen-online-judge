@@ -19,7 +19,7 @@ object JudgeRouter:
           for
             claimRequest <- request.as[ClaimJudgeTaskRequest]
             response <- JudgeCommands
-              .claimCpp17Task(databaseSession, claimRequest.judgerName)
+              .claimCpp17Task(databaseSession, claimRequest.judgerId)
               .flatMap(JudgeHttpResponses.mapClaimResult)
           yield response
         }

@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.submission.model.{SubmissionId, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
-import judgeprotocol.model.{JudgeTask, JudgerName, ReportJudgeResultRequest}
+import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
 
 object JudgeCommands:
 
@@ -20,7 +20,7 @@ object JudgeCommands:
 
   def claimCpp17Task(
     databaseSession: DatabaseSession,
-    judgerName: JudgerName
+    judgerId: JudgerId
   ): IO[ClaimJudgeTaskResult] =
     databaseSession.withTransactionConnection { connection =>
       SubmissionTable.claimNextCpp17(connection).flatMap {
@@ -35,7 +35,7 @@ object JudgeCommands:
                   claimedSubmission.id,
                   status = SubmissionStatus.Failed,
                   verdict = Some(SubmissionVerdict.SystemError),
-                  judgeMessage = Some(s"${judgerName.value}: $message")
+                  judgeMessage = Some(s"${judgerId.value}: $message")
                 )
                 .as(ClaimJudgeTaskResult.ValidationFailed(message))
             case Right(task) =>

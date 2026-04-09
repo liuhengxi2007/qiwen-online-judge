@@ -5,8 +5,8 @@ if [[ -z "${JUDGE_TOKEN:-}" ]]; then
   export JUDGE_TOKEN="dev-judge-token"
 fi
 
-if [[ -z "${JUDGER_NAME:-}" ]]; then
-  export JUDGER_NAME="cpp17-judger"
+if [[ -z "${JUDGER_ID_PREFIX:-}" ]]; then
+  export JUDGER_ID_PREFIX="local-judger"
 fi
 
 if [[ -z "${POLL_INTERVAL_MS:-}" ]]; then
@@ -85,7 +85,7 @@ else
   exit 1
 fi
 
-echo "Starting WSL judger ${JUDGER_NAME} against ${BACKEND_BASE_URL}"
+echo "Starting WSL judger prefix ${JUDGER_ID_PREFIX} against ${BACKEND_BASE_URL}"
 
 if ! command -v sbt >/dev/null 2>&1; then
   echo "sbt is required inside WSL." >&2

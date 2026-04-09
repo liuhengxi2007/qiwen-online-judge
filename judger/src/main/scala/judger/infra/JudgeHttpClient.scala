@@ -3,17 +3,37 @@ package judger.infra
 import cats.effect.IO
 import io.circe.parser.decode
 import io.circe.syntax.*
-import judgeprotocol.model.{ClaimJudgeTaskRequest, JudgeTask, ReportJudgeResultRequest, SubmissionId}
+import judgeprotocol.model.*
 import judger.config.AppConfig
 
-import java.net.URI
+import java.net.{URI, URLEncoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
-  def claimTask: IO[Option[JudgeTask]] =
-    val body = ClaimJudgeTaskRequest(config.judgerName).asJson.noSpaces
+  def registerJudger: IO[RegisterJudgerResponse] =
+    val body = RegisterJudgerRequest(
+      preferredPrefix = config.preferredJudgerPrefix,
+      host = config.host,
+      processId = config.processId,
+      supportedLanguages = config.supportedLanguages
+    ).asJson.noSpaces
+    requestExpectJson[RegisterJudgerResponse](
+      path = "/api/internal/judgers/register",
+      method = "POST",
+      body = Some(body)
+    )
+
+  def heartbeat(judgerId: JudgerId): IO[Unit] =
+    requestExpectSuccess(
+      path = s"/api/internal/judgers/${URLEncoder.encode(judgerId.value, StandardCharsets.UTF_8)}/heartbeat",
+      method = "POST",
+      body = Some(JudgerHeartbeatRequest().asJson.noSpaces)
+    ).void
+
+  def claimTask(judgerId: JudgerId): IO[Option[JudgeTask]] =
+    val body = ClaimJudgeTaskRequest(judgerId).asJson.noSpaces
     requestRaw(
       path = "/api/internal/judge/claim",
       method = "POST",
@@ -37,6 +57,11 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
     requestRaw(path, method, body).flatMap { response =>
       if response.statusCode / 100 == 2 then IO.pure(response.body)
       else IO.raiseError(RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${response.body}"))
+    }
+
+  private def requestExpectJson[A: io.circe.Decoder](path: String, method: String, body: Option[String]): IO[A] =
+    requestExpectSuccess(path, method, body).flatMap { responseBody =>
+      IO.fromEither(decode[A](responseBody).left.map(error => RuntimeException(error.getMessage)))
     }
 
   private def requestRaw(path: String, method: String, body: Option[String]): IO[HttpResponse[String]] =

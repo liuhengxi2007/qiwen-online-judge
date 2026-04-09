@@ -14,6 +14,7 @@ import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
 import domains.shared.access.ResourceViewerGrantTable
 import domains.submission.table.SubmissionTable
+import domains.judger.table.JudgerTable
 import domains.usergroup.table.UserGroupTable
 
 object Main extends IOApp.Simple:
@@ -42,6 +43,7 @@ object Main extends IOApp.Simple:
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
             _ <- SubmissionTable.initialize(connection)
+            _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
             _ <- ResourceViewerGrantTable.initialize(connection)
           yield ()

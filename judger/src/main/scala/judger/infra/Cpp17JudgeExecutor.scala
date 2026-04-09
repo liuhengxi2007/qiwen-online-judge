@@ -111,7 +111,7 @@ object Cpp17JudgeExecutor:
         ReportJudgeResultRequest(
           status = SubmissionStatus.Completed,
           verdict = Some(SubmissionVerdict.Accepted),
-          judgeMessage = Some(s"Accepted by ${config.judgerName.value}.")
+          judgeMessage = None
         )
       )
     )
