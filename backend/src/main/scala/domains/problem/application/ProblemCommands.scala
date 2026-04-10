@@ -7,11 +7,11 @@ import domains.problem.model.{CreateProblemRequest, ProblemDataFileListResponse,
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
+import domains.usergroup.table.UserGroupTable
 import domains.auth.table.AuthUserTable
 import domains.problem.application.ProblemDecisions.*
-import domains.usergroup.table.UserGroupTable
 
 object ProblemCommands:
 
@@ -109,7 +109,7 @@ object ProblemCommands:
     databaseSession.withTransactionConnection { connection =>
       ProblemTable.findBySlug(connection, slug).flatMap {
         case Some(problem) =>
-          ProblemTable.isVisibleTo(connection, actor, problem).map {
+          canViewProblem(connection, actor, problem).map {
             case true => GetProblemResult.Found(problem)
             case false => GetProblemResult.Forbidden
           }
@@ -319,6 +319,26 @@ object ProblemCommands:
 
   private def updatedProblemOrError(message: String)(maybeProblem: Option[ProblemDetail]): ProblemDetail =
     maybeProblem.getOrElse(throw new IllegalStateException(message))
+
+  private def canViewProblem(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problem: ProblemDetail
+  ): IO[Boolean] =
+    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { viewerGroupSlugs =>
+      val canViewDirectly = AccessPolicyEvaluator.canView(
+        policy = problem.accessPolicy,
+        viewerUsername = actor.username,
+        viewerGroupSlugs = viewerGroupSlugs,
+        isOwner = problem.ownerUsername.value == actor.username.value,
+        hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
+      )
+
+      if canViewDirectly then
+        IO.pure(true)
+      else
+        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
+    }
 
   private def validateAccessPolicySubjects(
     connection: java.sql.Connection,
