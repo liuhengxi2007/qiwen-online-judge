@@ -7,30 +7,9 @@ import domains.auth.table.AuthUserTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, ManagedUserGroup, OwnedUserGroup, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroup, UserGroupSlug, UserGroupRole, UserGroupSummary}
 import domains.usergroup.table.UserGroupTable
+import domains.usergroup.application.UserGroupDecisions.*
 
 object UserGroupCommands:
-
-  private enum CreateUserGroupDecision:
-    case SlugAlreadyExists
-    case SlugConflictsWithUsername
-    case Create
-
-  private enum UpdateUserGroupDecision:
-    case NotFound
-    case Forbidden
-    case Update(managedGroup: ManagedUserGroup)
-
-  private enum MemberRoleUpdateDecision:
-    case MemberNotFound
-    case CannotModifyOwnerRole
-    case TransferOwnership(targetUsername: Username)
-    case UpdateRole(targetUsername: Username, role: UserGroupRole)
-
-  private enum MemberRemovalDecision:
-    case MemberNotFound
-    case CannotRemoveOwner
-    case Forbidden
-    case Remove(targetUsername: Username)
 
   enum CreateUserGroupResult:
     case Forbidden
@@ -340,53 +319,3 @@ object UserGroupCommands:
 
   private def updatedUserGroupOrError(message: String)(maybeGroup: Option[UserGroup]): UserGroup =
     maybeGroup.getOrElse(throw new IllegalStateException(message))
-
-  private def decideCreateUserGroup(
-    existingGroup: Option[UserGroup],
-    conflictingUser: Option[domains.auth.model.AuthUser],
-  ): CreateUserGroupDecision =
-    existingGroup match
-      case Some(_) => CreateUserGroupDecision.SlugAlreadyExists
-      case None if conflictingUser.nonEmpty => CreateUserGroupDecision.SlugConflictsWithUsername
-      case None => CreateUserGroupDecision.Create
-
-  private def decideUpdateUserGroup(
-    actor: AuthUser,
-    maybeGroup: Option[UserGroup],
-  ): UpdateUserGroupDecision =
-    maybeGroup match
-      case None => UpdateUserGroupDecision.NotFound
-      case Some(group) =>
-        UserGroupPolicy.requireManaged(actor, group) match
-          case None => UpdateUserGroupDecision.Forbidden
-          case Some(managedGroup) => UpdateUserGroupDecision.Update(managedGroup)
-
-  private def decideMemberRoleUpdate(
-    group: UserGroup,
-    targetUsername: Username,
-    request: UpdateUserGroupMemberRoleRequest,
-  ): MemberRoleUpdateDecision =
-    group.members.find(_.username.value == targetUsername.value) match
-      case None =>
-        MemberRoleUpdateDecision.MemberNotFound
-      case Some(targetMember) if targetMember.role == UserGroupRole.Owner && request.role != UserGroupRole.Owner =>
-        MemberRoleUpdateDecision.CannotModifyOwnerRole
-      case Some(targetMember) if request.role == UserGroupRole.Owner =>
-        MemberRoleUpdateDecision.TransferOwnership(targetMember.username)
-      case Some(targetMember) =>
-        MemberRoleUpdateDecision.UpdateRole(targetMember.username, request.role)
-
-  private def decideMemberRemoval(
-    actor: AuthUser,
-    group: UserGroup,
-    targetUsername: Username,
-  ): MemberRemovalDecision =
-    group.members.find(_.username.value == targetUsername.value) match
-      case None =>
-        MemberRemovalDecision.MemberNotFound
-      case Some(targetMember) if targetMember.role == UserGroupRole.Owner =>
-        MemberRemovalDecision.CannotRemoveOwner
-      case Some(targetMember) if !UserGroupPolicy.canRemoveMember(actor, group, targetMember.username, targetMember.role) =>
-        MemberRemovalDecision.Forbidden
-      case Some(targetMember) =>
-        MemberRemovalDecision.Remove(targetMember.username)

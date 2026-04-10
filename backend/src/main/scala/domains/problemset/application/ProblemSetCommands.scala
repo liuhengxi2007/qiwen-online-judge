@@ -11,29 +11,9 @@ import domains.problemset.table.ProblemSetTable
 import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
+import domains.problemset.application.ProblemSetDecisions.*
 
 object ProblemSetCommands:
-
-  private enum CreateProblemSetDecision:
-    case SlugAlreadyExists
-    case SlugConflictsWithProblem
-    case ValidationFailed(message: String)
-    case Create
-
-  private enum UpdateProblemSetDecision:
-    case ProblemSetNotFound
-    case ValidationFailed(message: String)
-    case Update(problemSet: ProblemSet)
-
-  private enum AddProblemDecision:
-    case ProblemSetNotFound
-    case ProblemNotFound
-    case Link(problemSet: ProblemSet, problem: domains.problem.model.ProblemDetail)
-
-  private enum RemoveProblemDecision:
-    case ProblemSetNotFound
-    case ProblemNotFound
-    case Remove(problemSet: ProblemSet, problem: domains.problem.model.ProblemDetail)
 
   enum CreateProblemSetResult:
     case Forbidden
@@ -325,43 +305,3 @@ object ProblemSetCommands:
 
   private def updatedProblemSetOrError(message: String)(maybeProblemSet: Option[ProblemSet]): ProblemSet =
     maybeProblemSet.getOrElse(throw new IllegalStateException(message))
-
-  private def decideCreateProblemSet(
-    existingProblemSet: Option[ProblemSet],
-    conflictingProblem: Option[domains.problem.model.ProblemDetail],
-    accessPolicyValidation: Option[String],
-  ): CreateProblemSetDecision =
-    existingProblemSet match
-      case Some(_) => CreateProblemSetDecision.SlugAlreadyExists
-      case None if conflictingProblem.nonEmpty => CreateProblemSetDecision.SlugConflictsWithProblem
-      case None =>
-        accessPolicyValidation match
-          case Some(message) => CreateProblemSetDecision.ValidationFailed(message)
-          case None => CreateProblemSetDecision.Create
-
-  private def decideUpdateProblemSet(
-    maybeProblemSet: Option[ProblemSet],
-    accessPolicyValidation: Option[String],
-  ): UpdateProblemSetDecision =
-    maybeProblemSet match
-      case None => UpdateProblemSetDecision.ProblemSetNotFound
-      case Some(_) if accessPolicyValidation.nonEmpty => UpdateProblemSetDecision.ValidationFailed(accessPolicyValidation.get)
-      case Some(problemSet) => UpdateProblemSetDecision.Update(problemSet)
-
-  private def decideAddProblem(
-    maybeProblemSet: Option[ProblemSet],
-    maybeProblem: Option[domains.problem.model.ProblemDetail],
-  ): AddProblemDecision =
-    maybeProblemSet match
-      case None => AddProblemDecision.ProblemSetNotFound
-      case Some(_) if maybeProblem.isEmpty => AddProblemDecision.ProblemNotFound
-      case Some(problemSet) => AddProblemDecision.Link(problemSet, maybeProblem.get)
-
-  private def decideRemoveProblem(
-    maybeProblemSet: Option[ProblemSet],
-    maybeProblem: Option[domains.problem.model.ProblemDetail],
-  ): RemoveProblemDecision =
-    maybeProblemSet match
-      case None => RemoveProblemDecision.ProblemSetNotFound
-      case Some(_) if maybeProblem.isEmpty => RemoveProblemDecision.ProblemNotFound
-      case Some(problemSet) => RemoveProblemDecision.Remove(problemSet, maybeProblem.get)
