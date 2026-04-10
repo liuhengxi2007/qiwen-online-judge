@@ -402,6 +402,21 @@ object ProblemTable:
         IO.pure(None)
     }
 
+  def isVisibleTo(
+    connection: Connection,
+    actor: domains.auth.model.AuthUser,
+    problem: ProblemDetail
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(isVisibleSql)
+      try
+        bindVisibleByProblemIdQuery(statement, actor, problem.id)
+        val resultSet = statement.executeQuery()
+        try resultSet.next()
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   def hasVisibleContainingProblemSet(
     connection: Connection,
     actor: domains.auth.model.AuthUser,
@@ -560,6 +575,66 @@ object ProblemTable:
     pageSize.foreach(statement.setInt(9, _))
     offset.foreach(statement.setInt(10, _))
 
+  private val isVisibleSql: String =
+    """
+      |select 1
+      |from problems p
+      |where p.id = ?
+      |  and (
+      |    ? = true
+      |    or p.owner_username = ?
+      |    or p.base_access = 'public'
+      |    or exists (
+      |      select 1
+      |      from resource_viewer_grants rvg
+      |      where rvg.resource_kind = 'problem'
+      |        and rvg.resource_id = p.id
+      |        and rvg.subject_kind = 'user'
+      |        and rvg.subject_key = ?
+      |    )
+      |    or exists (
+      |      select 1
+      |      from resource_viewer_grants rvg
+      |      join user_groups ug on ug.slug = rvg.subject_key
+      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |      where rvg.resource_kind = 'problem'
+      |        and rvg.resource_id = p.id
+      |        and rvg.subject_kind = 'user_group'
+      |        and ugm.username = ?
+      |    )
+      |    or exists (
+      |      select 1
+      |      from problem_set_problems psp
+      |      join problem_sets ps on ps.id = psp.problem_set_id
+      |      where psp.problem_id = p.id
+      |        and (
+      |          ? = true
+      |          or ps.owner_username = ?
+      |          or ps.base_access = 'public'
+      |          or exists (
+      |            select 1
+      |            from resource_viewer_grants rvg
+      |            where rvg.resource_kind = 'problem_set'
+      |              and rvg.resource_id = ps.id
+      |              and rvg.subject_kind = 'user'
+      |              and rvg.subject_key = ?
+      |          )
+      |          or exists (
+      |            select 1
+      |            from resource_viewer_grants rvg
+      |            join user_groups ug on ug.slug = rvg.subject_key
+      |            join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |            where rvg.resource_kind = 'problem_set'
+      |              and rvg.resource_id = ps.id
+      |              and rvg.subject_kind = 'user_group'
+      |              and ugm.username = ?
+      |          )
+      |        )
+      |    )
+      |  )
+      |limit 1
+      |""".stripMargin
+
   private val hasVisibleContainingProblemSetSql: String =
     """
       |select 1
@@ -602,6 +677,21 @@ object ProblemTable:
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)
     statement.setString(5, actor.username.value)
+
+  private def bindVisibleByProblemIdQuery(
+    statement: java.sql.PreparedStatement,
+    actor: domains.auth.model.AuthUser,
+    problemId: ProblemId
+  ): Unit =
+    statement.setObject(1, problemId.value)
+    statement.setBoolean(2, actor.siteManager || actor.problemManager)
+    statement.setString(3, actor.username.value)
+    statement.setString(4, actor.username.value)
+    statement.setString(5, actor.username.value)
+    statement.setBoolean(6, actor.siteManager || actor.problemManager)
+    statement.setString(7, actor.username.value)
+    statement.setString(8, actor.username.value)
+    statement.setString(9, actor.username.value)
 
   private def policyFrom(baseAccess: BaseAccess, grants: List[domains.shared.access.ResourceViewerGrant]): ResourceAccessPolicy =
     ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = grants.map(_.subject))

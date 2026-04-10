@@ -6,10 +6,8 @@ import domains.auth.model.AuthUser
 import domains.auth.model.Username
 import domains.problem.model.ProblemDetail
 import domains.problem.table.ProblemTable
-import domains.shared.access.AccessPolicyEvaluator
 import domains.submission.model.{CreateSubmissionRequest, SubmissionDetail, SubmissionId, SubmissionSummary}
 import domains.submission.table.SubmissionTable
-import domains.usergroup.table.UserGroupTable
 
 object SubmissionCommands:
 
@@ -41,7 +39,7 @@ object SubmissionCommands:
             case None =>
               IO.pure(CreateSubmissionResult.ProblemNotFound)
             case Some(problem) =>
-              canSubmitToProblem(connection, actor, problem).flatMap {
+              ProblemTable.isVisibleTo(connection, actor, problem).flatMap {
                 case false =>
                   IO.pure(CreateSubmissionResult.Forbidden)
                 case true =>
@@ -84,24 +82,4 @@ object SubmissionCommands:
         case Some(_) =>
           GetSubmissionResult.Forbidden
       }
-    }
-
-  private def canSubmitToProblem(
-    connection: java.sql.Connection,
-    actor: AuthUser,
-    problem: ProblemDetail
-  ): IO[Boolean] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { viewerGroupSlugs =>
-      val canViewDirectly = AccessPolicyEvaluator.canView(
-        policy = problem.accessPolicy,
-        viewerUsername = actor.username,
-        viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = problem.ownerUsername.value == actor.username.value,
-        hasGlobalOverride = SubmissionPolicy.hasGlobalViewOverride(actor)
-      )
-
-      if canViewDirectly then
-        IO.pure(true)
-      else
-        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
     }
