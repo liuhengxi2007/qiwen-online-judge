@@ -348,9 +348,7 @@ object SubmissionTable:
               problemSlug = problemSlug,
               submitterUsername = submitterUsername,
               language = language,
-              status = SubmissionStatus.fromDatabase(resultSet.getString("status")).getOrElse {
-                throw new IllegalStateException("Invalid submission status stored in database")
-              },
+              status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
               verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
               judgeMessage = Option(resultSet.getString("judge_message")),
               sourceCode = sourceCode,
@@ -358,7 +356,7 @@ object SubmissionTable:
               startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
               finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
             )
-          else throw new IllegalStateException("Insert succeeded but returned no submission")
+          else missingInsertResult("submission")
         finally resultSet.close()
       finally statement.close()
     }
@@ -411,11 +409,9 @@ object SubmissionTable:
               ClaimedSubmission(
                 id = SubmissionId(resultSet.getLong("public_id")),
                 problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
-                problemSlug = ProblemSlug.unsafe(resultSet.getString("problem_slug")),
-                language = SubmissionLanguage.fromDatabase(resultSet.getString("language")).getOrElse {
-                  throw new IllegalStateException("Invalid submission language stored in database")
-                },
-                sourceCode = SubmissionSourceCode.unsafe(resultSet.getString("source_code")),
+                problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
+                language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
+                sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
                 timeLimitMs = resultSet.getInt("time_limit_ms"),
                 spaceLimitMb = resultSet.getInt("space_limit_mb")
               )
@@ -453,14 +449,10 @@ object SubmissionTable:
     SubmissionSummary(
       id = SubmissionId(resultSet.getLong("public_id")),
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
-      problemSlug = ProblemSlug.unsafe(resultSet.getString("problem_slug")),
+      problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       submitterUsername = Username.canonical(resultSet.getString("submitter_username")),
-      language = SubmissionLanguage.fromDatabase(resultSet.getString("language")).getOrElse {
-        throw new IllegalStateException("Invalid submission language stored in database")
-      },
-      status = SubmissionStatus.fromDatabase(resultSet.getString("status")).getOrElse {
-        throw new IllegalStateException("Invalid submission status stored in database")
-      },
+      language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
+      status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
       verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
       submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
       startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
@@ -471,18 +463,20 @@ object SubmissionTable:
     SubmissionDetail(
       id = SubmissionId(resultSet.getLong("public_id")),
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
-      problemSlug = ProblemSlug.unsafe(resultSet.getString("problem_slug")),
+      problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       submitterUsername = Username.canonical(resultSet.getString("submitter_username")),
-      language = SubmissionLanguage.fromDatabase(resultSet.getString("language")).getOrElse {
-        throw new IllegalStateException("Invalid submission language stored in database")
-      },
-      status = SubmissionStatus.fromDatabase(resultSet.getString("status")).getOrElse {
-        throw new IllegalStateException("Invalid submission status stored in database")
-      },
+      language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
+      status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
       verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
       judgeMessage = Option(resultSet.getString("judge_message")),
-      sourceCode = SubmissionSourceCode.unsafe(resultSet.getString("source_code")),
+      sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
       submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
       startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
     )
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")

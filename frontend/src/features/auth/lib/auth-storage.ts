@@ -22,21 +22,9 @@ export function readAuthSession(): AuthSession | null {
   }
 
   try {
-    const parsed = JSON.parse(rawSession) as {
-      displayName?: unknown
-      username?: unknown
-      email?: unknown
-      siteManager?: unknown
-      problemManager?: unknown
-    }
+    const parsed = JSON.parse(rawSession) as unknown
 
-    if (
-      typeof parsed.displayName !== 'string' ||
-      typeof parsed.username !== 'string' ||
-      typeof parsed.email !== 'string' ||
-      typeof parsed.siteManager !== 'boolean' ||
-      typeof parsed.problemManager !== 'boolean'
-    ) {
+    if (!isStoredAuthSessionValue(parsed)) {
       clearAuthSession()
       return null
     }
@@ -61,4 +49,28 @@ export function readAuthSession(): AuthSession | null {
     clearAuthSession()
     return null
   }
+}
+
+function isStoredAuthSessionValue(
+  value: unknown,
+): value is {
+  displayName: string
+  username: string
+  email: string
+  siteManager: boolean
+  problemManager: boolean
+} {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+
+  return (
+    typeof record.displayName === 'string' &&
+    typeof record.username === 'string' &&
+    typeof record.email === 'string' &&
+    typeof record.siteManager === 'boolean' &&
+    typeof record.problemManager === 'boolean'
+  )
 }

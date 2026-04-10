@@ -10,6 +10,28 @@ import domains.usergroup.table.UserGroupTable
 
 object UserGroupCommands:
 
+  private enum CreateUserGroupDecision:
+    case SlugAlreadyExists
+    case SlugConflictsWithUsername
+    case Create
+
+  private enum UpdateUserGroupDecision:
+    case NotFound
+    case Forbidden
+    case Update(managedGroup: ManagedUserGroup)
+
+  private enum MemberRoleUpdateDecision:
+    case MemberNotFound
+    case CannotModifyOwnerRole
+    case TransferOwnership(targetUsername: Username)
+    case UpdateRole(targetUsername: Username, role: UserGroupRole)
+
+  private enum MemberRemovalDecision:
+    case MemberNotFound
+    case CannotRemoveOwner
+    case Forbidden
+    case Remove(targetUsername: Username)
+
   enum CreateUserGroupResult:
     case Forbidden
     case ValidationFailed(message: String)
@@ -86,11 +108,12 @@ object UserGroupCommands:
             for
               existing <- UserGroupTable.findBySlug(connection, validRequest.slug)
               conflictingUser <- AuthUserTable.findByUsername(connection, Username.canonical(validRequest.slug.value))
-              result <- existing match
-                case Some(_) => IO.pure(CreateUserGroupResult.SlugAlreadyExists)
-                case None if conflictingUser.nonEmpty =>
+              result <- decideCreateUserGroup(existing, conflictingUser) match
+                case CreateUserGroupDecision.SlugAlreadyExists =>
+                  IO.pure(CreateUserGroupResult.SlugAlreadyExists)
+                case CreateUserGroupDecision.SlugConflictsWithUsername =>
                   IO.pure(CreateUserGroupResult.SlugConflictsWithUsername)
-                case None =>
+                case CreateUserGroupDecision.Create =>
                   UserGroupTable.insert(connection, actor.username, validRequest).map(CreateUserGroupResult.Created(_))
             yield result
           }
@@ -121,12 +144,13 @@ object UserGroupCommands:
         databaseSession.withTransactionConnection { connection =>
           for
             maybeGroup <- UserGroupTable.findBySlug(connection, slug)
-            result <- maybeGroup match
-              case None => IO.pure(UpdateUserGroupResult.NotFound)
-              case Some(group) =>
-                UserGroupPolicy.requireManaged(actor, group) match
-                  case None => IO.pure(UpdateUserGroupResult.Forbidden)
-                  case Some(managedGroup) => updateManagedUserGroup(connection, managedGroup, validRequest)
+            result <- decideUpdateUserGroup(actor, maybeGroup) match
+              case UpdateUserGroupDecision.NotFound =>
+                IO.pure(UpdateUserGroupResult.NotFound)
+              case UpdateUserGroupDecision.Forbidden =>
+                IO.pure(UpdateUserGroupResult.Forbidden)
+              case UpdateUserGroupDecision.Update(managedGroup) =>
+                updateManagedUserGroup(connection, managedGroup, validRequest)
           yield result
         }
 
@@ -220,10 +244,10 @@ object UserGroupCommands:
     request: UpdateUserGroupRequest
   ): IO[UpdateUserGroupResult] =
     UserGroupTable.update(connection, managedGroup.value.id, request).flatMap { _ =>
-      UserGroupTable.findBySlug(connection, managedGroup.value.slug).map {
-        case Some(updatedGroup) => UpdateUserGroupResult.Updated(updatedGroup)
-        case None => throw new IllegalStateException("User group disappeared after update")
-      }
+      UserGroupTable
+        .findBySlug(connection, managedGroup.value.slug)
+        .map(updatedUserGroupOrError("User group disappeared after update"))
+        .map(UpdateUserGroupResult.Updated(_))
     }
 
   private def addMemberToManagedUserGroup(
@@ -240,10 +264,10 @@ object UserGroupCommands:
           case UserGroupTable.AddMemberTableResult.UserNotFound =>
             IO.pure(AddUserGroupMemberResult.UserNotFound)
           case UserGroupTable.AddMemberTableResult.Added =>
-            UserGroupTable.findBySlug(connection, managedGroup.value.slug).map {
-              case Some(updatedGroup) => AddUserGroupMemberResult.Added(updatedGroup)
-              case None => throw new IllegalStateException("User group disappeared after member add")
-            }
+            UserGroupTable
+              .findBySlug(connection, managedGroup.value.slug)
+              .map(updatedUserGroupOrError("User group disappeared after member add"))
+              .map(AddUserGroupMemberResult.Added(_))
         }
     }
 
@@ -259,37 +283,36 @@ object UserGroupCommands:
     targetUsername: Username,
     request: UpdateUserGroupMemberRoleRequest
   ): IO[UpdateUserGroupMemberRoleResult] =
-    val currentOwnerUsername = ownedGroup.value.ownerUsername
-    val targetMembership = ownedGroup.value.members.find(_.username.value == targetUsername.value)
-
-    targetMembership match
-      case None =>
+    decideMemberRoleUpdate(ownedGroup.value, targetUsername, request) match
+      case MemberRoleUpdateDecision.MemberNotFound =>
         IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
-      case Some(targetMember) =>
-        val canonicalTargetUsername = targetMember.username
-
-        if targetMember.role == UserGroupRole.Owner && request.role != UserGroupRole.Owner then
-          IO.pure(UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole)
-        else if request.role == UserGroupRole.Owner then
-          UserGroupTable.transferOwnership(connection, ownedGroup.value.id, currentOwnerUsername, canonicalTargetUsername).flatMap {
-            case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
-              IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
-            case UserGroupTable.UpdateMemberRoleTableResult.Updated =>
-              UserGroupTable.findBySlug(connection, ownedGroup.value.slug).map {
-                case Some(updatedGroup) => UpdateUserGroupMemberRoleResult.Updated(updatedGroup)
-                case None => throw new IllegalStateException("User group disappeared after ownership transfer")
-              }
-          }
-        else
-          UserGroupTable.updateMemberRole(connection, ownedGroup.value.id, canonicalTargetUsername, request.role).flatMap {
-            case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
-              IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
-            case UserGroupTable.UpdateMemberRoleTableResult.Updated =>
-              UserGroupTable.findBySlug(connection, ownedGroup.value.slug).map {
-                case Some(updatedGroup) => UpdateUserGroupMemberRoleResult.Updated(updatedGroup)
-                case None => throw new IllegalStateException("User group disappeared after member role update")
-              }
-          }
+      case MemberRoleUpdateDecision.CannotModifyOwnerRole =>
+        IO.pure(UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole)
+      case MemberRoleUpdateDecision.TransferOwnership(canonicalTargetUsername) =>
+        UserGroupTable.transferOwnership(
+          connection,
+          ownedGroup.value.id,
+          ownedGroup.value.ownerUsername,
+          canonicalTargetUsername,
+        ).flatMap {
+          case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
+            IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
+          case UserGroupTable.UpdateMemberRoleTableResult.Updated =>
+            UserGroupTable
+              .findBySlug(connection, ownedGroup.value.slug)
+              .map(updatedUserGroupOrError("User group disappeared after ownership transfer"))
+              .map(UpdateUserGroupMemberRoleResult.Updated(_))
+        }
+      case MemberRoleUpdateDecision.UpdateRole(canonicalTargetUsername, role) =>
+        UserGroupTable.updateMemberRole(connection, ownedGroup.value.id, canonicalTargetUsername, role).flatMap {
+          case UserGroupTable.UpdateMemberRoleTableResult.MemberNotFound =>
+            IO.pure(UpdateUserGroupMemberRoleResult.MemberNotFound)
+          case UserGroupTable.UpdateMemberRoleTableResult.Updated =>
+            UserGroupTable
+              .findBySlug(connection, ownedGroup.value.slug)
+              .map(updatedUserGroupOrError("User group disappeared after member role update"))
+              .map(UpdateUserGroupMemberRoleResult.Updated(_))
+        }
 
   private def removeMemberFromGroup(
     connection: java.sql.Connection,
@@ -297,20 +320,73 @@ object UserGroupCommands:
     group: UserGroup,
     targetUsername: Username
   ): IO[RemoveUserGroupMemberResult] =
-    group.members.find(_.username.value == targetUsername.value) match
-      case None =>
+    decideMemberRemoval(actor, group, targetUsername) match
+      case MemberRemovalDecision.MemberNotFound =>
         IO.pure(RemoveUserGroupMemberResult.MemberNotFound)
-      case Some(targetMember) if targetMember.role == UserGroupRole.Owner =>
+      case MemberRemovalDecision.CannotRemoveOwner =>
         IO.pure(RemoveUserGroupMemberResult.CannotRemoveOwner)
-      case Some(targetMember) if !UserGroupPolicy.canRemoveMember(actor, group, targetMember.username, targetMember.role) =>
+      case MemberRemovalDecision.Forbidden =>
         IO.pure(RemoveUserGroupMemberResult.Forbidden)
-      case Some(targetMember) =>
-        UserGroupTable.removeMember(connection, group.id, targetMember.username).flatMap {
+      case MemberRemovalDecision.Remove(canonicalTargetUsername) =>
+        UserGroupTable.removeMember(connection, group.id, canonicalTargetUsername).flatMap {
           case UserGroupTable.RemoveMemberTableResult.MemberNotFound =>
             IO.pure(RemoveUserGroupMemberResult.MemberNotFound)
           case UserGroupTable.RemoveMemberTableResult.Removed =>
-            UserGroupTable.findBySlug(connection, group.slug).map {
-              case Some(updatedGroup) => RemoveUserGroupMemberResult.Removed(updatedGroup)
-              case None => throw new IllegalStateException("User group disappeared after member removal")
-            }
+            UserGroupTable
+              .findBySlug(connection, group.slug)
+              .map(updatedUserGroupOrError("User group disappeared after member removal"))
+              .map(RemoveUserGroupMemberResult.Removed(_))
         }
+
+  private def updatedUserGroupOrError(message: String)(maybeGroup: Option[UserGroup]): UserGroup =
+    maybeGroup.getOrElse(throw new IllegalStateException(message))
+
+  private def decideCreateUserGroup(
+    existingGroup: Option[UserGroup],
+    conflictingUser: Option[domains.auth.model.AuthUser],
+  ): CreateUserGroupDecision =
+    existingGroup match
+      case Some(_) => CreateUserGroupDecision.SlugAlreadyExists
+      case None if conflictingUser.nonEmpty => CreateUserGroupDecision.SlugConflictsWithUsername
+      case None => CreateUserGroupDecision.Create
+
+  private def decideUpdateUserGroup(
+    actor: AuthUser,
+    maybeGroup: Option[UserGroup],
+  ): UpdateUserGroupDecision =
+    maybeGroup match
+      case None => UpdateUserGroupDecision.NotFound
+      case Some(group) =>
+        UserGroupPolicy.requireManaged(actor, group) match
+          case None => UpdateUserGroupDecision.Forbidden
+          case Some(managedGroup) => UpdateUserGroupDecision.Update(managedGroup)
+
+  private def decideMemberRoleUpdate(
+    group: UserGroup,
+    targetUsername: Username,
+    request: UpdateUserGroupMemberRoleRequest,
+  ): MemberRoleUpdateDecision =
+    group.members.find(_.username.value == targetUsername.value) match
+      case None =>
+        MemberRoleUpdateDecision.MemberNotFound
+      case Some(targetMember) if targetMember.role == UserGroupRole.Owner && request.role != UserGroupRole.Owner =>
+        MemberRoleUpdateDecision.CannotModifyOwnerRole
+      case Some(targetMember) if request.role == UserGroupRole.Owner =>
+        MemberRoleUpdateDecision.TransferOwnership(targetMember.username)
+      case Some(targetMember) =>
+        MemberRoleUpdateDecision.UpdateRole(targetMember.username, request.role)
+
+  private def decideMemberRemoval(
+    actor: AuthUser,
+    group: UserGroup,
+    targetUsername: Username,
+  ): MemberRemovalDecision =
+    group.members.find(_.username.value == targetUsername.value) match
+      case None =>
+        MemberRemovalDecision.MemberNotFound
+      case Some(targetMember) if targetMember.role == UserGroupRole.Owner =>
+        MemberRemovalDecision.CannotRemoveOwner
+      case Some(targetMember) if !UserGroupPolicy.canRemoveMember(actor, group, targetMember.username, targetMember.role) =>
+        MemberRemovalDecision.Forbidden
+      case Some(targetMember) =>
+        MemberRemovalDecision.Remove(targetMember.username)

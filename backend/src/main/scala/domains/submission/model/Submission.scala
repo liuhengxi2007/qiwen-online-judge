@@ -21,9 +21,6 @@ object SubmissionId:
         else Right(SubmissionId(value))
       }
 
-  def unsafe(raw: String): SubmissionId =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid submission id: $message"), identity)
-
   given Encoder[SubmissionId] = Encoder.encodeLong.contramap(_.value)
   given Decoder[SubmissionId] = Decoder.decodeLong.emap { value =>
     if value < 1 then Left("Submission id is invalid.") else Right(SubmissionId(value))
@@ -138,9 +135,6 @@ object SubmissionSourceCode:
     if raw.trim.isEmpty then Left("Source code is required.")
     else if raw.length > 200000 then Left("Source code must be at most 200000 characters.")
     else Right(SubmissionSourceCode(raw))
-
-  def unsafe(raw: String): SubmissionSourceCode =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid submission source code: $message"), identity)
 
   given Encoder[SubmissionSourceCode] = Encoder.encodeString.contramap(_.value)
   given Decoder[SubmissionSourceCode] = Decoder.decodeString.emap(parse)

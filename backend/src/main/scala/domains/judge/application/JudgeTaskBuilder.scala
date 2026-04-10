@@ -58,10 +58,8 @@ object JudgeTaskBuilder:
     inputFilename: ProblemDataFilename
   ): IO[Option[JudgeTaskTestcase]] =
     val testcaseName = inputFilename.value.stripSuffix(".in")
-    val candidateOutputFilenames = List(
-      ProblemDataFilename.unsafe(testcaseName + ".out"),
-      ProblemDataFilename.unsafe(testcaseName + ".ans")
-    )
+    val candidateOutputFilenames =
+      List(testcaseName + ".out", testcaseName + ".ans").flatMap(candidate => ProblemDataFilename.parse(candidate).toOption)
     for
       maybeInput <- ProblemDataStorage.readFile(claimedSubmission.problemSlug, inputFilename)
       maybeOutput <- loadExpectedOutput(claimedSubmission, candidateOutputFilenames)

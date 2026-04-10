@@ -314,7 +314,7 @@ object ProblemSetTable:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemSetDetailBase(resultSet).copy(problems = Nil)
-          else throw new IllegalStateException("Insert succeeded but returned no problem set")
+          else missingInsertResult("problem set")
         finally resultSet.close()
       finally statement.close()
     }.flatMap { problemSet =>
@@ -424,10 +424,11 @@ object ProblemSetTable:
   private def readProblemSetSummaryBase(resultSet: ResultSet): ProblemSetSummary =
     ProblemSetSummary(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
-      title = ProblemSetTitle.unsafe(resultSet.getString("title")),
-      description = ProblemSetDescription.unsafe(resultSet.getString("description")),
-      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
+      slug = parseColumn("problem_sets.slug", resultSet.getString("slug"), ProblemSetSlug.parse),
+      title = parseColumn("problem_sets.title", resultSet.getString("title"), ProblemSetTitle.parse),
+      description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
+      accessPolicy =
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -436,11 +437,12 @@ object ProblemSetTable:
   private def readProblemSetDetailBase(resultSet: ResultSet): ProblemSet =
     ProblemSet(
       id = ProblemSetId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSetSlug.unsafe(resultSet.getString("slug")),
-      title = ProblemSetTitle.unsafe(resultSet.getString("title")),
-      description = ProblemSetDescription.unsafe(resultSet.getString("description")),
+      slug = parseColumn("problem_sets.slug", resultSet.getString("slug"), ProblemSetSlug.parse),
+      title = parseColumn("problem_sets.title", resultSet.getString("title"), ProblemSetTitle.parse),
+      description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       problems = Nil,
-      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
+      accessPolicy =
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -459,8 +461,8 @@ object ProblemSetTable:
             .map { _ =>
               ProblemSetProblemSummary(
                 id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-                slug = ProblemSlug.unsafe(resultSet.getString("slug")),
-                title = ProblemTitle.unsafe(resultSet.getString("title")),
+                slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+                title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
                 position = resultSet.getInt("position")
               )
             }
@@ -468,6 +470,15 @@ object ProblemSetTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+
+  private def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
   private def bindVisibilityQuery(
     statement: java.sql.PreparedStatement,

@@ -195,7 +195,7 @@ object ResourceViewerGrantTable:
 
   private def readGrant(resultSet: ResultSet): ResourceViewerGrant =
     ResourceViewerGrant(
-      resourceKind = ResourceKind.fromDatabaseUnsafe(resultSet.getString("resource_kind")),
+      resourceKind = parseOptionalColumn("resource_viewer_grants.resource_kind", resultSet.getString("resource_kind"), ResourceKind.fromDatabase),
       resourceId = ResourceId(resultSet.getObject("resource_id", classOf[java.util.UUID])),
       subject = readSubject(resultSet.getString("subject_kind"), resultSet.getString("subject_key")),
       createdAt = resultSet.getTimestamp("created_at").toInstant
@@ -204,5 +204,18 @@ object ResourceViewerGrantTable:
   private def readSubject(subjectKind: String, subjectKey: String): AccessSubject =
     subjectKind match
       case "user" => AccessSubject.User(Username.canonical(subjectKey))
-      case "user_group" => AccessSubject.UserGroup(domains.usergroup.model.UserGroupSlug.unsafe(subjectKey))
-      case other => throw IllegalArgumentException(s"Unknown access subject kind: $other")
+      case "user_group" =>
+        AccessSubject.UserGroup(
+          parseColumn(
+            "resource_viewer_grants.subject_key",
+            subjectKey,
+            domains.usergroup.model.UserGroupSlug.parse,
+          )
+        )
+      case other => throw IllegalStateException(s"Invalid value in resource_viewer_grants.subject_kind: $other")
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))

@@ -4,6 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.auth.table.AuthUserTable
+import domains.problem.model.ProblemSlug
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummary, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
@@ -12,6 +13,27 @@ import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 
 object ProblemSetCommands:
+
+  private enum CreateProblemSetDecision:
+    case SlugAlreadyExists
+    case SlugConflictsWithProblem
+    case ValidationFailed(message: String)
+    case Create
+
+  private enum UpdateProblemSetDecision:
+    case ProblemSetNotFound
+    case ValidationFailed(message: String)
+    case Update(problemSet: ProblemSet)
+
+  private enum AddProblemDecision:
+    case ProblemSetNotFound
+    case ProblemNotFound
+    case Link(problemSet: ProblemSet, problem: domains.problem.model.ProblemDetail)
+
+  private enum RemoveProblemDecision:
+    case ProblemSetNotFound
+    case ProblemNotFound
+    case Remove(problemSet: ProblemSet, problem: domains.problem.model.ProblemDetail)
 
   enum CreateProblemSetResult:
     case Forbidden
@@ -76,16 +98,18 @@ object ProblemSetCommands:
           databaseSession.withTransactionConnection { connection =>
             for
               existing <- ProblemSetTable.findBySlug(connection, validRequest.slug)
-              conflictingProblem <- ProblemTable.findBySlug(connection, domains.problem.model.ProblemSlug.unsafe(validRequest.slug.value))
+              conflictingProblem <- ProblemSlug.parse(validRequest.slug.value) match
+                case Left(message) => IO.raiseError(IllegalStateException(s"Validated problem set slug became invalid: $message"))
+                case Right(problemSlug) => ProblemTable.findBySlug(connection, problemSlug)
               accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- existing match
-                case Some(_) =>
+              result <- decideCreateProblemSet(existing, conflictingProblem, accessPolicyValidation) match
+                case CreateProblemSetDecision.SlugAlreadyExists =>
                   IO.pure(CreateProblemSetResult.SlugAlreadyExists)
-                case None if conflictingProblem.nonEmpty =>
+                case CreateProblemSetDecision.SlugConflictsWithProblem =>
                   IO.pure(CreateProblemSetResult.SlugConflictsWithProblem)
-                case None if accessPolicyValidation.nonEmpty =>
-                  IO.pure(CreateProblemSetResult.ValidationFailed(accessPolicyValidation.get))
-                case None =>
+                case CreateProblemSetDecision.ValidationFailed(message) =>
+                  IO.pure(CreateProblemSetResult.ValidationFailed(message))
+                case CreateProblemSetDecision.Create =>
                   ProblemSetTable
                     .insert(connection, actor.username, sanitizePolicy(actor.username, validRequest))
                     .map(problemSet => CreateProblemSetResult.Created(problemSet))
@@ -125,30 +149,26 @@ object ProblemSetCommands:
           databaseSession.withTransactionConnection { connection =>
             for
               maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
-              result <- maybeProblemSet match
-                case None =>
+              maybeProblem <- maybeProblemSet match
+                case None => IO.pure(None)
+                case Some(_) => ProblemTable.findBySlug(connection, validRequest.problemSlug)
+              result <- decideAddProblem(maybeProblemSet, maybeProblem) match
+                case AddProblemDecision.ProblemSetNotFound =>
                   IO.pure(AddProblemResult.ProblemSetNotFound)
-                case Some(problemSet) =>
-                  for
-                    maybeProblem <- ProblemTable.findBySlug(connection, validRequest.problemSlug)
-                    linkedResult <- maybeProblem match
-                      case None =>
-                        IO.pure(AddProblemResult.ProblemNotFound)
-                      case Some(problem) =>
+                case AddProblemDecision.ProblemNotFound =>
+                  IO.pure(AddProblemResult.ProblemNotFound)
+                case AddProblemDecision.Link(problemSet, problem) =>
+                  ProblemSetTable
+                    .addProblem(connection, problemSet.id, problem.id)
+                    .flatMap {
+                      case ProblemSetTable.AddProblemTableResult.AlreadyLinked =>
+                        IO.pure(AddProblemResult.ProblemAlreadyLinked)
+                      case ProblemSetTable.AddProblemTableResult.Linked =>
                         ProblemSetTable
-                          .addProblem(connection, problemSet.id, problem.id)
-                          .flatMap {
-                            case ProblemSetTable.AddProblemTableResult.AlreadyLinked =>
-                              IO.pure(AddProblemResult.ProblemAlreadyLinked)
-                            case ProblemSetTable.AddProblemTableResult.Linked =>
-                              ProblemSetTable
-                                .findBySlug(connection, problemSet.slug)
-                                .map {
-                                  case Some(updatedProblemSet) => AddProblemResult.Linked(updatedProblemSet)
-                                  case None => throw new IllegalStateException("Problem set disappeared after problem link")
-                                }
-                          }
-                  yield linkedResult
+                          .findBySlug(connection, problemSet.slug)
+                          .map(updatedProblemSetOrError("Problem set disappeared after problem link"))
+                          .map(AddProblemResult.Linked(_))
+                    }
             yield result
           }
 
@@ -169,19 +189,19 @@ object ProblemSetCommands:
             for
               maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
               accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- maybeProblemSet match
-                case None =>
+              result <- decideUpdateProblemSet(maybeProblemSet, accessPolicyValidation) match
+                case UpdateProblemSetDecision.ProblemSetNotFound =>
                   IO.pure(UpdateProblemSetResult.ProblemSetNotFound)
-                case Some(_) if accessPolicyValidation.nonEmpty =>
-                  IO.pure(UpdateProblemSetResult.ValidationFailed(accessPolicyValidation.get))
-                case Some(problemSet) =>
+                case UpdateProblemSetDecision.ValidationFailed(message) =>
+                  IO.pure(UpdateProblemSetResult.ValidationFailed(message))
+                case UpdateProblemSetDecision.Update(problemSet) =>
                   ProblemSetTable
                     .update(connection, problemSet.id, sanitizePolicy(problemSet.ownerUsername, validRequest))
                     .flatMap(_ =>
-                      ProblemSetTable.findBySlug(connection, problemSet.slug).map {
-                        case Some(updatedProblemSet) => UpdateProblemSetResult.Updated(updatedProblemSet)
-                        case None => throw new IllegalStateException("Problem set disappeared after update")
-                      }
+                      ProblemSetTable
+                        .findBySlug(connection, problemSet.slug)
+                        .map(updatedProblemSetOrError("Problem set disappeared after update"))
+                        .map(UpdateProblemSetResult.Updated(_))
                     )
             yield result
           }
@@ -282,25 +302,66 @@ object ProblemSetCommands:
       databaseSession.withTransactionConnection { connection =>
         for
           maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
-          result <- maybeProblemSet match
-            case None =>
+          maybeProblem <- maybeProblemSet match
+            case None => IO.pure(None)
+            case Some(_) => ProblemTable.findBySlug(connection, problemSlug)
+          result <- decideRemoveProblem(maybeProblemSet, maybeProblem) match
+            case RemoveProblemDecision.ProblemSetNotFound =>
               IO.pure(RemoveProblemResult.ProblemSetNotFound)
-            case Some(problemSet) =>
-              for
-                maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-                removeResult <- maybeProblem match
-                  case None =>
-                    IO.pure(RemoveProblemResult.ProblemNotFound)
-                  case Some(problem) =>
-                    ProblemSetTable.removeProblem(connection, problemSet.id, problem.id).flatMap {
-                      case ProblemSetTable.RemoveProblemTableResult.NotLinked =>
-                        IO.pure(RemoveProblemResult.ProblemNotLinked)
-                      case ProblemSetTable.RemoveProblemTableResult.Removed =>
-                        ProblemSetTable.findBySlug(connection, problemSet.slug).map {
-                          case Some(updatedProblemSet) => RemoveProblemResult.Removed(updatedProblemSet)
-                          case None => throw new IllegalStateException("Problem set disappeared after problem removal")
-                        }
-                    }
-              yield removeResult
+            case RemoveProblemDecision.ProblemNotFound =>
+              IO.pure(RemoveProblemResult.ProblemNotFound)
+            case RemoveProblemDecision.Remove(problemSet, problem) =>
+              ProblemSetTable.removeProblem(connection, problemSet.id, problem.id).flatMap {
+                case ProblemSetTable.RemoveProblemTableResult.NotLinked =>
+                  IO.pure(RemoveProblemResult.ProblemNotLinked)
+                case ProblemSetTable.RemoveProblemTableResult.Removed =>
+                  ProblemSetTable
+                    .findBySlug(connection, problemSet.slug)
+                    .map(updatedProblemSetOrError("Problem set disappeared after problem removal"))
+                    .map(RemoveProblemResult.Removed(_))
+              }
         yield result
       }
+
+  private def updatedProblemSetOrError(message: String)(maybeProblemSet: Option[ProblemSet]): ProblemSet =
+    maybeProblemSet.getOrElse(throw new IllegalStateException(message))
+
+  private def decideCreateProblemSet(
+    existingProblemSet: Option[ProblemSet],
+    conflictingProblem: Option[domains.problem.model.ProblemDetail],
+    accessPolicyValidation: Option[String],
+  ): CreateProblemSetDecision =
+    existingProblemSet match
+      case Some(_) => CreateProblemSetDecision.SlugAlreadyExists
+      case None if conflictingProblem.nonEmpty => CreateProblemSetDecision.SlugConflictsWithProblem
+      case None =>
+        accessPolicyValidation match
+          case Some(message) => CreateProblemSetDecision.ValidationFailed(message)
+          case None => CreateProblemSetDecision.Create
+
+  private def decideUpdateProblemSet(
+    maybeProblemSet: Option[ProblemSet],
+    accessPolicyValidation: Option[String],
+  ): UpdateProblemSetDecision =
+    maybeProblemSet match
+      case None => UpdateProblemSetDecision.ProblemSetNotFound
+      case Some(_) if accessPolicyValidation.nonEmpty => UpdateProblemSetDecision.ValidationFailed(accessPolicyValidation.get)
+      case Some(problemSet) => UpdateProblemSetDecision.Update(problemSet)
+
+  private def decideAddProblem(
+    maybeProblemSet: Option[ProblemSet],
+    maybeProblem: Option[domains.problem.model.ProblemDetail],
+  ): AddProblemDecision =
+    maybeProblemSet match
+      case None => AddProblemDecision.ProblemSetNotFound
+      case Some(_) if maybeProblem.isEmpty => AddProblemDecision.ProblemNotFound
+      case Some(problemSet) => AddProblemDecision.Link(problemSet, maybeProblem.get)
+
+  private def decideRemoveProblem(
+    maybeProblemSet: Option[ProblemSet],
+    maybeProblem: Option[domains.problem.model.ProblemDetail],
+  ): RemoveProblemDecision =
+    maybeProblemSet match
+      case None => RemoveProblemDecision.ProblemSetNotFound
+      case Some(_) if maybeProblem.isEmpty => RemoveProblemDecision.ProblemNotFound
+      case Some(problemSet) => RemoveProblemDecision.Remove(problemSet, maybeProblem.get)

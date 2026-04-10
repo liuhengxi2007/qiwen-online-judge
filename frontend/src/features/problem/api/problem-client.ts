@@ -1,8 +1,3 @@
-import type {
-  ProblemDataFileListResponse as ProblemDataFileListResponseContract,
-  ProblemDetail as ProblemDetailContract,
-  ProblemListResponse as ProblemListResponseContract,
-} from '@contracts/problem'
 import type { SuccessResponse } from '@contracts/shared'
 import type {
   CreateProblemRequest,
@@ -22,73 +17,80 @@ import {
   toCreateProblemRequestContract,
   toUpdateProblemRequestContract,
 } from '@/features/problem/domain/problem'
-import { postJson, requestJson } from '@/shared/api/http-client'
+import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
 
 export async function listProblems(): Promise<ProblemListResponse> {
-  const response = await requestJson<ProblemListResponseContract>('/api/problems')
-  return fromProblemListResponseContract(response)
+  return requestJson('/api/problems', fromProblemListResponseContract)
 }
 
 export async function createProblem(request: CreateProblemRequest): Promise<ProblemDetail> {
-  const response = await postJson<ProblemDetailContract>('/api/problems', toCreateProblemRequestContract(request))
-  return fromProblemDetailContract(response)
+  return postJson('/api/problems', fromProblemDetailContract, toCreateProblemRequestContract(request))
 }
 
 export async function getProblem(problemSlug: ProblemSlug): Promise<ProblemDetail> {
-  const response = await requestJson<ProblemDetailContract>(`/api/problems/${problemSlugValue(problemSlug)}`)
-  return fromProblemDetailContract(response)
+  return requestJson(`/api/problems/${problemSlugValue(problemSlug)}`, fromProblemDetailContract)
 }
 
 export async function updateProblem(problemSlug: ProblemSlug, request: UpdateProblemRequest): Promise<ProblemDetail> {
-  const response = await postJson<ProblemDetailContract>(
+  return postJson(
     `/api/problems/${problemSlugValue(problemSlug)}`,
+    fromProblemDetailContract,
     toUpdateProblemRequestContract(request),
   )
-  return fromProblemDetailContract(response)
 }
 
 export function deleteProblem(problemSlug: ProblemSlug): Promise<SuccessResponse> {
-  return postJson<SuccessResponse>(`/api/problems/${problemSlugValue(problemSlug)}/delete`, {})
+  return postJson(`/api/problems/${problemSlugValue(problemSlug)}/delete`, decodeSuccessResponse, {})
 }
 
 export async function updateProblemData(
   problemSlug: ProblemSlug,
   request: UpdateProblemDataRequest,
 ): Promise<ProblemDetail> {
-  const response = await postJson<ProblemDetailContract>(
+  return postJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data`,
+    fromProblemDetailContract,
     request,
   )
-  return fromProblemDetailContract(response)
 }
 
 export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileList> {
-  const response = await requestJson<ProblemDataFileListResponseContract>(
+  return requestJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data`,
+    (value) => {
+      if (typeof value !== 'object' || value === null || !('items' in value) || !Array.isArray(value.items)) {
+        throw new Error('Invalid problem data file list payload.')
+      }
+
+      return value.items.map((item: unknown, index: number) => {
+        if (typeof item !== 'string') {
+          throw new Error(`Invalid problem data filename at index ${index}: expected string.`)
+        }
+
+        const result = parseProblemDataFilename(item)
+        if (!result.ok) {
+          throw new Error(`Invalid problem data filename at index ${index}: ${result.error}`)
+        }
+        return result.value
+      })
+    },
   )
-  return response.items.map((item: string, index: number) => {
-    const result = parseProblemDataFilename(item)
-    if (!result.ok) {
-      throw new Error(`Invalid problem data filename at index ${index}: ${result.error}`)
-    }
-    return result.value
-  })
 }
 
 export async function deleteProblemData(problemSlug: ProblemSlug, filename: ProblemDataFilename): Promise<ProblemDetail> {
-  const response = await postJson<ProblemDetailContract>(
+  return postJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data/${encodeURIComponent(filename)}/delete`,
+    fromProblemDetailContract,
     {},
   )
-  return fromProblemDetailContract(response)
 }
 
 export async function clearProblemData(problemSlug: ProblemSlug): Promise<ProblemDetail> {
-  const response = await postJson<ProblemDetailContract>(
+  return postJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data/clear`,
+    fromProblemDetailContract,
     {},
   )
-  return fromProblemDetailContract(response)
 }
 
 export function problemDataDownloadUrl(problemSlug: ProblemSlug, filename: ProblemDataFilename): string {

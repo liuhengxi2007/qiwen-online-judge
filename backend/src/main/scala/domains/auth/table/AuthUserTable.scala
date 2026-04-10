@@ -260,11 +260,14 @@ object AuthUserTable:
           val resultSet = statement.executeQuery()
           try
             if resultSet.next() then readAuthUser(resultSet)
-            else throw new IllegalStateException("Insert succeeded but returned no user")
+            else missingInsertResult("user")
           finally resultSet.close()
         finally statement.close()
       }
     yield user
+
+  private def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
   def listUsers(connection: Connection, actor: SiteManagerUser): IO[List[AuthUserListItem]] =
     IO.blocking {

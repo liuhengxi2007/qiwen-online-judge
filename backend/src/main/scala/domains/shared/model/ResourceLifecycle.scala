@@ -15,9 +15,6 @@ object ResourceVisibility:
       case "public" => Some(ResourceVisibility.Public)
       case _ => None
 
-  def fromDatabaseUnsafe(value: String): ResourceVisibility =
-    fromDatabase(value).getOrElse(throw IllegalArgumentException(s"Unknown resource visibility: $value"))
-
   def toDatabase(value: ResourceVisibility): String =
     value match
       case ResourceVisibility.Private => "private"

@@ -14,6 +14,29 @@ import domains.auth.table.AuthUserTable
 
 object ProblemCommands:
 
+  private enum CreateProblemDecision:
+    case SlugAlreadyExists
+    case SlugConflictsWithProblemSet
+    case ValidationFailed(message: String)
+    case Create
+
+  private enum UpdateProblemDecision:
+    case ProblemNotFound
+    case ValidationFailed(message: String)
+    case Update(problem: ProblemDetail)
+
+  private enum ProblemDataUpdateDecision:
+    case ProblemNotFound
+    case Update(problem: ProblemDetail)
+
+  private enum ProblemDataDeletionDecision:
+    case ProblemNotFound
+    case Delete(problem: ProblemDetail)
+
+  private enum ProblemDataClearDecision:
+    case ProblemNotFound
+    case Clear(problem: ProblemDetail)
+
   enum CreateProblemResult:
     case Forbidden
     case ValidationFailed(message: String)
@@ -86,14 +109,14 @@ object ProblemCommands:
               existing <- ProblemTable.findBySlug(connection, validRequest.slug)
               conflictingProblemSet <- findConflictingProblemSet(connection, validRequest.slug.value)
               accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- existing match
-                case Some(_) =>
+              result <- decideCreateProblem(existing, conflictingProblemSet, accessPolicyValidation) match
+                case CreateProblemDecision.SlugAlreadyExists =>
                   IO.pure(CreateProblemResult.SlugAlreadyExists)
-                case None if conflictingProblemSet.nonEmpty =>
+                case CreateProblemDecision.SlugConflictsWithProblemSet =>
                   IO.pure(CreateProblemResult.SlugConflictsWithProblemSet)
-                case None if accessPolicyValidation.nonEmpty =>
-                  IO.pure(CreateProblemResult.ValidationFailed(accessPolicyValidation.get))
-                case None =>
+                case CreateProblemDecision.ValidationFailed(message) =>
+                  IO.pure(CreateProblemResult.ValidationFailed(message))
+                case CreateProblemDecision.Create =>
                   ProblemTable
                     .insert(connection, actor.username, sanitizePolicy(actor.username, validRequest))
                     .map(problem => CreateProblemResult.Created(problem))
@@ -134,19 +157,19 @@ object ProblemCommands:
             for
               maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
               accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- maybeProblem match
-                case None =>
+              result <- decideUpdateProblem(maybeProblem, accessPolicyValidation) match
+                case UpdateProblemDecision.ProblemNotFound =>
                   IO.pure(UpdateProblemResult.ProblemNotFound)
-                case Some(_) if accessPolicyValidation.nonEmpty =>
-                  IO.pure(UpdateProblemResult.ValidationFailed(accessPolicyValidation.get))
-                case Some(problem) =>
+                case UpdateProblemDecision.ValidationFailed(message) =>
+                  IO.pure(UpdateProblemResult.ValidationFailed(message))
+                case UpdateProblemDecision.Update(problem) =>
                   ProblemTable
                     .update(connection, problem.id, sanitizePolicy(problem.ownerUsername, validRequest))
                     .flatMap(_ =>
-                      ProblemTable.findBySlug(connection, problem.slug).map {
-                        case Some(updatedProblem) => UpdateProblemResult.Updated(updatedProblem)
-                        case None => throw new IllegalStateException("Problem disappeared after update")
-                      }
+                      ProblemTable
+                        .findBySlug(connection, problem.slug)
+                        .map(updatedProblemOrError("Problem disappeared after update"))
+                        .map(UpdateProblemResult.Updated(_))
                     )
             yield result
           }
@@ -193,10 +216,10 @@ object ProblemCommands:
               databaseSession.withTransactionConnection { connection =>
                 for
                   maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-                  result <- maybeProblem match
-                    case None =>
+                  result <- decideUpdateProblemData(maybeProblem) match
+                    case ProblemDataUpdateDecision.ProblemNotFound =>
                       IO.pure(UpdateProblemDataResult.ProblemNotFound)
-                    case Some(problem) =>
+                    case ProblemDataUpdateDecision.Update(problem) =>
                       for
                         snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
                         result <- ProblemDataStorage
@@ -204,10 +227,10 @@ object ProblemCommands:
                           .flatMap(savedFilename =>
                             ProblemTable.updateData(connection, problem.id, savedFilename)
                               .flatMap(_ =>
-                                ProblemTable.findBySlug(connection, problem.slug).map {
-                                  case Some(updatedProblem) => UpdateProblemDataResult.Updated(updatedProblem)
-                                  case None => throw new IllegalStateException("Problem disappeared after data update")
-                                }
+                                ProblemTable
+                                  .findBySlug(connection, problem.slug)
+                                  .map(updatedProblemOrError("Problem disappeared after data update"))
+                                  .map(UpdateProblemDataResult.Updated(_))
                               )
                           )
                           .handleErrorWith { error =>
@@ -246,32 +269,33 @@ object ProblemCommands:
       IO.pure(DeleteProblemDataResult.Forbidden)
     else
       databaseSession.withTransactionConnection { connection =>
-        ProblemTable.findBySlug(connection, problemSlug).flatMap {
-          case None =>
-            IO.pure(DeleteProblemDataResult.ProblemNotFound)
-          case Some(problem) =>
-            for
-              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-              result <- ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
-                case false =>
-                  IO.pure(DeleteProblemDataResult.DataFileNotFound)
-                case true =>
-                  ProblemDataStorage
-                    .listFiles(problem.slug)
-                    .flatMap { files =>
-                      ProblemTable.updateData(connection, problem.id, files.lastOption)
-                    }
-                    .flatMap(_ =>
-                      ProblemTable.findBySlug(connection, problem.slug).map {
-                        case Some(updatedProblem) => DeleteProblemDataResult.Deleted(updatedProblem)
-                        case None => throw new IllegalStateException("Problem disappeared after data deletion")
+        ProblemTable.findBySlug(connection, problemSlug).flatMap { maybeProblem =>
+          decideDeleteProblemData(maybeProblem) match
+            case ProblemDataDeletionDecision.ProblemNotFound =>
+              IO.pure(DeleteProblemDataResult.ProblemNotFound)
+            case ProblemDataDeletionDecision.Delete(problem) =>
+              for
+                snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                result <- ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
+                  case false =>
+                    IO.pure(DeleteProblemDataResult.DataFileNotFound)
+                  case true =>
+                    ProblemDataStorage
+                      .listFiles(problem.slug)
+                      .flatMap { files =>
+                        ProblemTable.updateData(connection, problem.id, files.lastOption)
                       }
-                    )
-                    .handleErrorWith { error =>
-                      ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                    }
-              }
-            yield result
+                      .flatMap(_ =>
+                        ProblemTable
+                          .findBySlug(connection, problem.slug)
+                          .map(updatedProblemOrError("Problem disappeared after data deletion"))
+                          .map(DeleteProblemDataResult.Deleted(_))
+                      )
+                      .handleErrorWith { error =>
+                        ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                      }
+                }
+              yield result
         }
       }
 
@@ -284,25 +308,26 @@ object ProblemCommands:
       IO.pure(ClearProblemDataResult.Forbidden)
     else
       databaseSession.withTransactionConnection { connection =>
-        ProblemTable.findBySlug(connection, problemSlug).flatMap {
-          case None =>
-            IO.pure(ClearProblemDataResult.ProblemNotFound)
-          case Some(problem) =>
-            for
-              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-              result <- ProblemDataStorage
-                .deleteAllFiles(problem.slug)
-                .flatMap(_ => ProblemTable.updateData(connection, problem.id, None))
-                .flatMap(_ =>
-                  ProblemTable.findBySlug(connection, problem.slug).map {
-                    case Some(updatedProblem) => ClearProblemDataResult.Cleared(updatedProblem)
-                    case None => throw new IllegalStateException("Problem disappeared after clearing data")
+        ProblemTable.findBySlug(connection, problemSlug).flatMap { maybeProblem =>
+          decideClearProblemData(maybeProblem) match
+            case ProblemDataClearDecision.ProblemNotFound =>
+              IO.pure(ClearProblemDataResult.ProblemNotFound)
+            case ProblemDataClearDecision.Clear(problem) =>
+              for
+                snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                result <- ProblemDataStorage
+                  .deleteAllFiles(problem.slug)
+                  .flatMap(_ => ProblemTable.updateData(connection, problem.id, None))
+                  .flatMap(_ =>
+                    ProblemTable
+                      .findBySlug(connection, problem.slug)
+                      .map(updatedProblemOrError("Problem disappeared after clearing data"))
+                      .map(ClearProblemDataResult.Cleared(_))
+                  )
+                  .handleErrorWith { error =>
+                    ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                   }
-                )
-                .handleErrorWith { error =>
-                  ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                }
-            yield result
+              yield result
         }
       }
 
@@ -313,6 +338,46 @@ object ProblemCommands:
     ProblemSetSlug.parse(rawSlug) match
       case Left(_) => IO.pure(None)
       case Right(slug) => ProblemSetTable.findBySlug(connection, slug)
+
+  private def updatedProblemOrError(message: String)(maybeProblem: Option[ProblemDetail]): ProblemDetail =
+    maybeProblem.getOrElse(throw new IllegalStateException(message))
+
+  private def decideCreateProblem(
+    existingProblem: Option[ProblemDetail],
+    conflictingProblemSet: Option[domains.problemset.model.ProblemSet],
+    accessPolicyValidation: Option[String],
+  ): CreateProblemDecision =
+    existingProblem match
+      case Some(_) => CreateProblemDecision.SlugAlreadyExists
+      case None if conflictingProblemSet.nonEmpty => CreateProblemDecision.SlugConflictsWithProblemSet
+      case None =>
+        accessPolicyValidation match
+          case Some(message) => CreateProblemDecision.ValidationFailed(message)
+          case None => CreateProblemDecision.Create
+
+  private def decideUpdateProblem(
+    maybeProblem: Option[ProblemDetail],
+    accessPolicyValidation: Option[String],
+  ): UpdateProblemDecision =
+    maybeProblem match
+      case None => UpdateProblemDecision.ProblemNotFound
+      case Some(_) if accessPolicyValidation.nonEmpty => UpdateProblemDecision.ValidationFailed(accessPolicyValidation.get)
+      case Some(problem) => UpdateProblemDecision.Update(problem)
+
+  private def decideUpdateProblemData(maybeProblem: Option[ProblemDetail]): ProblemDataUpdateDecision =
+    maybeProblem match
+      case None => ProblemDataUpdateDecision.ProblemNotFound
+      case Some(problem) => ProblemDataUpdateDecision.Update(problem)
+
+  private def decideDeleteProblemData(maybeProblem: Option[ProblemDetail]): ProblemDataDeletionDecision =
+    maybeProblem match
+      case None => ProblemDataDeletionDecision.ProblemNotFound
+      case Some(problem) => ProblemDataDeletionDecision.Delete(problem)
+
+  private def decideClearProblemData(maybeProblem: Option[ProblemDetail]): ProblemDataClearDecision =
+    maybeProblem match
+      case None => ProblemDataClearDecision.ProblemNotFound
+      case Some(problem) => ProblemDataClearDecision.Clear(problem)
 
   private def canViewProblem(
     connection: java.sql.Connection,

@@ -276,7 +276,7 @@ object UserGroupTable:
           Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
-            .map(_ => UserGroupSlug.unsafe(resultSet.getString("slug")))
+            .map(_ => parseColumn("user_groups.slug", resultSet.getString("slug"), UserGroupSlug.parse))
             .toSet
         finally resultSet.close()
       finally statement.close()
@@ -307,7 +307,7 @@ object UserGroupTable:
               ownerMembershipStatement.executeUpdate()
             finally ownerMembershipStatement.close()
             readDetailBase(resultSet)
-          else throw new IllegalStateException("Insert succeeded but returned no user group")
+          else missingInsertResult("user group")
         finally resultSet.close()
       finally statement.close()
     }.flatMap { group =>
@@ -454,9 +454,9 @@ object UserGroupTable:
   private def readSummary(resultSet: ResultSet): UserGroupSummary =
     UserGroupSummary(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = UserGroupSlug.unsafe(resultSet.getString("slug")),
-      name = UserGroupName.unsafe(resultSet.getString("name")),
-      description = UserGroupDescription.unsafe(resultSet.getString("description")),
+      slug = parseColumn("user_groups.slug", resultSet.getString("slug"), UserGroupSlug.parse),
+      name = parseColumn("user_groups.name", resultSet.getString("name"), UserGroupName.parse),
+      description = parseColumn("user_groups.description", resultSet.getString("description"), UserGroupDescription.parse),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -465,9 +465,9 @@ object UserGroupTable:
   private def readDetailBase(resultSet: ResultSet): UserGroup =
     UserGroup(
       id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = UserGroupSlug.unsafe(resultSet.getString("slug")),
-      name = UserGroupName.unsafe(resultSet.getString("name")),
-      description = UserGroupDescription.unsafe(resultSet.getString("description")),
+      slug = parseColumn("user_groups.slug", resultSet.getString("slug"), UserGroupSlug.parse),
+      name = parseColumn("user_groups.name", resultSet.getString("name"), UserGroupName.parse),
+      description = parseColumn("user_groups.description", resultSet.getString("description"), UserGroupDescription.parse),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       members = Nil,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -478,6 +478,15 @@ object UserGroupTable:
     UserGroupMember(
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
-      role = UserGroupRole.fromDatabaseUnsafe(resultSet.getString("role")),
+      role = parseOptionalColumn("user_group_memberships.role", resultSet.getString("role"), UserGroupRole.fromDatabase),
       joinedAt = resultSet.getTimestamp("joined_at").toInstant
     )
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+
+  private def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")

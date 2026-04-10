@@ -438,7 +438,7 @@ object ProblemTable:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
-          else throw new IllegalStateException("Insert succeeded but returned no problem")
+          else missingInsertResult("problem")
         finally resultSet.close()
       finally statement.close()
     }.flatMap { problem =>
@@ -500,12 +500,13 @@ object ProblemTable:
   private def readProblemSummaryBase(resultSet: ResultSet): ProblemSummary =
     ProblemSummary(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSlug.unsafe(resultSet.getString("slug")),
-      title = ProblemTitle.unsafe(resultSet.getString("title")),
-      data = ProblemData.unsafe(Option(resultSet.getString("data_name"))),
-      timeLimitMs = ProblemTimeLimitMs.unsafe(resultSet.getInt("time_limit_ms")),
-      spaceLimitMb = ProblemSpaceLimitMb.unsafe(resultSet.getInt("space_limit_mb")),
-      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
+      slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+      title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
+      data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
+      timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
+      spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
+      accessPolicy =
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -514,17 +515,33 @@ object ProblemTable:
   private def readProblemDetailBase(resultSet: ResultSet): ProblemDetail =
     ProblemDetail(
       id = ProblemId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = ProblemSlug.unsafe(resultSet.getString("slug")),
-      title = ProblemTitle.unsafe(resultSet.getString("title")),
-      statement = ProblemStatementText.unsafe(resultSet.getString("statement_text")),
-      data = ProblemData.unsafe(Option(resultSet.getString("data_name"))),
-      timeLimitMs = ProblemTimeLimitMs.unsafe(resultSet.getInt("time_limit_ms")),
-      spaceLimitMb = ProblemSpaceLimitMb.unsafe(resultSet.getInt("space_limit_mb")),
-      accessPolicy = ResourceAccessPolicy(BaseAccess.fromDatabaseUnsafe(resultSet.getString("base_access")), Nil),
+      slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+      title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
+      statement = parseColumn("problems.statement_text", resultSet.getString("statement_text"), ProblemStatementText.parse),
+      data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
+      timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
+      spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
+      accessPolicy =
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
       ownerUsername = Username.canonical(resultSet.getString("owner_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseColumn[A](columnName: String, rawValue: Int, parse: Int => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseColumn[A](columnName: String, rawValue: Option[String], parse: Option[String] => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+
+  private def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
   private def bindVisibilityQuery(
     statement: java.sql.PreparedStatement,

@@ -31,9 +31,6 @@ object ResourceKind:
       case "problem_set" => Some(ResourceKind.ProblemSet)
       case _ => None
 
-  def fromDatabaseUnsafe(value: String): ResourceKind =
-    fromDatabase(value).getOrElse(throw IllegalArgumentException(s"Unknown resource kind: $value"))
-
   def toDatabase(value: ResourceKind): String =
     value match
       case ResourceKind.Problem => "problem"
@@ -54,9 +51,6 @@ object BaseAccess:
       case "owner_only" => Some(BaseAccess.OwnerOnly)
       case "public" => Some(BaseAccess.Public)
       case _ => None
-
-  def fromDatabaseUnsafe(value: String): BaseAccess =
-    fromDatabase(value).getOrElse(throw IllegalArgumentException(s"Unknown base access: $value"))
 
   def toDatabase(value: BaseAccess): String =
     value match

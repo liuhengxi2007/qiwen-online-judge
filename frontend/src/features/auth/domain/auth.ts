@@ -211,11 +211,19 @@ export function toAuthSession(
 }
 
 export function asSiteManagerSession(session: AuthSession): SiteManagerSession | null {
-  return session.siteManager ? (session as SiteManagerSession) : null
+  return isSiteManagerSession(session) ? session : null
 }
 
 export function asProblemManagerSession(session: AuthSession): ProblemManagerSession | null {
-  return session.problemManager ? (session as ProblemManagerSession) : null
+  return isProblemManagerSession(session) ? session : null
+}
+
+export function isSiteManagerSession(session: AuthSession): session is SiteManagerSession {
+  return session.siteManager
+}
+
+export function isProblemManagerSession(session: AuthSession): session is ProblemManagerSession {
+  return session.problemManager
 }
 
 export function toLoginRequestContract(request: LoginRequest): LoginRequestContract {

@@ -27,7 +27,7 @@ object ProblemDataStorage:
         try
           stream.iterator().asScala
             .filter(path => Files.isRegularFile(path))
-            .map(path => ProblemDataFilename.unsafe(path.getFileName.toString))
+            .map(path => parseFilename(path.getFileName.toString, s"problem data file ${path.toString}"))
             .toList
             .sortBy(_.value)
         finally stream.close()
@@ -43,7 +43,7 @@ object ProblemDataStorage:
           stream.iterator().asScala
             .filter(path => Files.isRegularFile(path))
             .map { path =>
-              val filename = ProblemDataFilename.unsafe(path.getFileName.toString)
+              val filename = parseFilename(path.getFileName.toString, s"problem data file ${path.toString}")
               filename -> Files.readAllBytes(path)
             }
             .toMap
@@ -120,7 +120,7 @@ object ProblemDataStorage:
     }
 
   private def sanitizeFilename(filename: ProblemDataFilename): ProblemDataFilename =
-    ProblemDataFilename.unsafe(Paths.get(filename.value.trim).getFileName.toString)
+    parseFilename(Paths.get(filename.value.trim).getFileName.toString, s"problem data filename ${filename.value}")
 
   private def unzipIntoDirectory(directory: Path, bytes: Array[Byte]): Unit =
     val zipInputStream = ZipInputStream(ByteArrayInputStream(bytes))
@@ -139,4 +139,9 @@ object ProblemDataStorage:
     finally zipInputStream.close()
 
   private def sanitizeFilename(filename: String): ProblemDataFilename =
-    ProblemDataFilename.unsafe(Paths.get(filename.trim).getFileName.toString)
+    parseFilename(Paths.get(filename.trim).getFileName.toString, s"problem data filename $filename")
+
+  private def parseFilename(rawFilename: String, label: String): ProblemDataFilename =
+    ProblemDataFilename
+      .parse(rawFilename)
+      .fold(message => throw IllegalStateException(s"Invalid $label: $message"), identity)

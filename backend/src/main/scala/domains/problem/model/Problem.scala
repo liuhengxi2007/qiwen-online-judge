@@ -32,9 +32,6 @@ object ProblemSlug:
     else if !slugPattern.matches(normalized) then Left("Problem slug may contain only lowercase letters, numbers, and hyphens.")
     else Right(ProblemSlug(normalized))
 
-  def unsafe(raw: String): ProblemSlug =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem slug: $message"), identity)
-
   given Encoder[ProblemSlug] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemSlug] = Decoder.decodeString.emap(parse)
 
@@ -46,9 +43,6 @@ object ProblemTitle:
     if normalized.isEmpty then Left("Problem title is required.")
     else if normalized.length > 120 then Left("Problem title must be at most 120 characters.")
     else Right(ProblemTitle(normalized))
-
-  def unsafe(raw: String): ProblemTitle =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem title: $message"), identity)
 
   given Encoder[ProblemTitle] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemTitle] = Decoder.decodeString.emap(parse)
@@ -62,9 +56,6 @@ object ProblemStatementText:
     else if normalized.length > 20000 then Left("Problem statement must be at most 20000 characters.")
     else Right(ProblemStatementText(normalized))
 
-  def unsafe(raw: String): ProblemStatementText =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem statement: $message"), identity)
-
   given Encoder[ProblemStatementText] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemStatementText] = Decoder.decodeString.emap(parse)
 
@@ -76,9 +67,6 @@ object ProblemDataFilename:
     if normalized.isEmpty then Left("Problem data file name is required.")
     else if normalized.length > 255 then Left("Problem data file name must be at most 255 characters.")
     else Right(ProblemDataFilename(normalized))
-
-  def unsafe(raw: String): ProblemDataFilename =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem data file name: $message"), identity)
 
   given Encoder[ProblemDataFilename] = Encoder.encodeString.contramap(_.value)
   given Decoder[ProblemDataFilename] = Decoder.decodeString.emap(parse)
@@ -94,9 +82,6 @@ object ProblemData:
         if normalized.isEmpty then Right(ProblemData(None))
         else ProblemDataFilename.parse(normalized).map(filename => ProblemData(Some(filename)))
 
-  def unsafe(raw: Option[String]): ProblemData =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem data: $message"), identity)
-
   given Encoder[ProblemData] = Encoder.encodeOption[ProblemDataFilename].contramap(_.value)
   given Decoder[ProblemData] = Decoder.decodeOption[String].emap(parse)
 
@@ -108,9 +93,6 @@ object ProblemTimeLimitMs:
     else if raw > 600000 then Left("Problem time limit must be at most 600000 ms.")
     else Right(ProblemTimeLimitMs(raw))
 
-  def unsafe(raw: Int): ProblemTimeLimitMs =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem time limit: $message"), identity)
-
   given Encoder[ProblemTimeLimitMs] = Encoder.encodeInt.contramap(_.value)
   given Decoder[ProblemTimeLimitMs] = Decoder.decodeInt.emap(parse)
 
@@ -121,9 +103,6 @@ object ProblemSpaceLimitMb:
     if raw < 1 then Left("Problem space limit must be at least 1 MB.")
     else if raw > 65536 then Left("Problem space limit must be at most 65536 MB.")
     else Right(ProblemSpaceLimitMb(raw))
-
-  def unsafe(raw: Int): ProblemSpaceLimitMb =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid problem space limit: $message"), identity)
 
   given Encoder[ProblemSpaceLimitMb] = Encoder.encodeInt.contramap(_.value)
   given Decoder[ProblemSpaceLimitMb] = Decoder.decodeInt.emap(parse)

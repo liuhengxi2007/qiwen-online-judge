@@ -1,8 +1,3 @@
-import type {
-  ProblemSetDetail as ProblemSetDetailContract,
-  ProblemSetListResponse as ProblemSetListResponseContract,
-  ProblemSetSummary as ProblemSetSummaryContract,
-} from '@contracts/problemset'
 import type { SuccessResponse } from '@contracts/shared'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import type {
@@ -23,21 +18,18 @@ import {
   toLinkProblemRequestContract,
   toUpdateProblemSetRequestContract,
 } from '@/features/problemset/domain/problemset'
-import { postJson, requestJson } from '@/shared/api/http-client'
+import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
 
 export async function listProblemSets(): Promise<ProblemSetListResponse> {
-  const response = await requestJson<ProblemSetListResponseContract>('/api/problem-sets')
-  return fromProblemSetListResponseContract(response)
+  return requestJson('/api/problem-sets', fromProblemSetListResponseContract)
 }
 
 export async function createProblemSet(request: CreateProblemSetRequest): Promise<ProblemSetSummary> {
-  const response = await postJson<ProblemSetSummaryContract>('/api/problem-sets', toCreateProblemSetRequestContract(request))
-  return fromProblemSetSummaryContract(response)
+  return postJson('/api/problem-sets', fromProblemSetSummaryContract, toCreateProblemSetRequestContract(request))
 }
 
 export async function getProblemSet(problemSetSlug: ProblemSetSlug): Promise<ProblemSetDetail> {
-  const response = await requestJson<ProblemSetDetailContract>(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}`)
-  return fromProblemSetDetailContract(response)
+  return requestJson(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}`, fromProblemSetDetailContract)
 }
 
 export function addProblemToProblemSet(
@@ -51,11 +43,11 @@ async function addProblemToProblemSetInternal(
   problemSetSlug: ProblemSetSlug,
   request: AddProblemToProblemSetRequest,
 ): Promise<ProblemSetDetail> {
-  const response = await postJson<ProblemSetDetailContract>(
+  return postJson(
     `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/problems`,
+    fromProblemSetDetailContract,
     toLinkProblemRequestContract(request),
   )
-  return fromProblemSetDetailContract(response)
 }
 
 export function updateProblemSet(
@@ -69,15 +61,15 @@ async function updateProblemSetInternal(
   problemSetSlug: ProblemSetSlug,
   request: UpdateProblemSetRequest,
 ): Promise<ProblemSetDetail> {
-  const response = await postJson<ProblemSetDetailContract>(
+  return postJson(
     `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}`,
+    fromProblemSetDetailContract,
     toUpdateProblemSetRequestContract(request),
   )
-  return fromProblemSetDetailContract(response)
 }
 
 export function deleteProblemSet(problemSetSlug: ProblemSetSlug): Promise<SuccessResponse> {
-  return postJson<SuccessResponse>(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/delete`, {})
+  return postJson(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/delete`, decodeSuccessResponse, {})
 }
 
 export function removeProblemFromProblemSet(
@@ -91,9 +83,9 @@ async function removeProblemFromProblemSetInternal(
   problemSetSlug: ProblemSetSlug,
   problemSlug: ProblemSlug,
 ): Promise<ProblemSetDetail> {
-  const response = await postJson<ProblemSetDetailContract>(
+  return postJson(
     `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/problems/${problemSlug}/remove`,
+    fromProblemSetDetailContract,
     {},
   )
-  return fromProblemSetDetailContract(response)
 }

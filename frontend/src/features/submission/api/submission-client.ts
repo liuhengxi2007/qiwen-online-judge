@@ -13,19 +13,14 @@ import {
   toCreateSubmissionRequestContract,
 } from '@/features/submission/domain/submission'
 import { postJson, requestJson } from '@/shared/api/http-client'
-import type {
-  CreateSubmissionRequest as CreateSubmissionRequestContract,
-  SubmissionDetail as SubmissionDetailContract,
-  SubmissionListResponse as SubmissionListResponseContract,
-} from '@contracts/submission'
+import type { CreateSubmissionRequest as CreateSubmissionRequestContract } from '@contracts/submission'
 
 export async function createSubmission(request: CreateSubmissionRequest): Promise<SubmissionDetail> {
-  const response = await postJson<SubmissionDetailContract>(
+  return postJson(
     '/api/submissions',
+    fromSubmissionDetailContract,
     toCreateSubmissionRequestContract(request) satisfies CreateSubmissionRequestContract,
   )
-
-  return fromSubmissionDetailContract(response)
 }
 
 export async function listSubmissions(submitterUsername?: Username | null): Promise<SubmissionListResponse> {
@@ -34,11 +29,9 @@ export async function listSubmissions(submitterUsername?: Username | null): Prom
     url.searchParams.set('username', usernameValue(submitterUsername))
   }
 
-  const response = await requestJson<SubmissionListResponseContract>(url.pathname + url.search)
-  return fromSubmissionListResponseContract(response)
+  return requestJson(url.pathname + url.search, fromSubmissionListResponseContract)
 }
 
 export async function getSubmission(submissionId: SubmissionId): Promise<SubmissionDetail> {
-  const response = await requestJson<SubmissionDetailContract>(`/api/submissions/${submissionIdValue(submissionId)}`)
-  return fromSubmissionDetailContract(response)
+  return requestJson(`/api/submissions/${submissionIdValue(submissionId)}`, fromSubmissionDetailContract)
 }

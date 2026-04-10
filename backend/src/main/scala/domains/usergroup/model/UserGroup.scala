@@ -31,9 +31,6 @@ object UserGroupSlug:
     else if !slugPattern.matches(normalized) then Left("User group slug may contain only lowercase letters, numbers, and hyphens.")
     else Right(UserGroupSlug(normalized))
 
-  def unsafe(raw: String): UserGroupSlug =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group slug: $message"), identity)
-
   given Encoder[UserGroupSlug] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupSlug] = Decoder.decodeString.emap(parse)
 
@@ -46,9 +43,6 @@ object UserGroupName:
     else if normalized.length > 120 then Left("User group name must be at most 120 characters.")
     else Right(UserGroupName(normalized))
 
-  def unsafe(raw: String): UserGroupName =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group name: $message"), identity)
-
   given Encoder[UserGroupName] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupName] = Decoder.decodeString.emap(parse)
 
@@ -59,9 +53,6 @@ object UserGroupDescription:
     val normalized = raw.trim
     if normalized.length > 2000 then Left("User group description must be at most 2000 characters.")
     else Right(UserGroupDescription(normalized))
-
-  def unsafe(raw: String): UserGroupDescription =
-    parse(raw).fold(message => throw IllegalStateException(s"Invalid user group description: $message"), identity)
 
   given Encoder[UserGroupDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupDescription] = Decoder.decodeString.emap(parse)
@@ -106,9 +97,6 @@ object UserGroupRole:
       case "manager" => Some(UserGroupRole.Manager)
       case "member" => Some(UserGroupRole.Member)
       case _ => None
-
-  def fromDatabaseUnsafe(value: String): UserGroupRole =
-    fromDatabase(value).getOrElse(throw IllegalArgumentException(s"Unknown user group role: $value"))
 
   def toDatabase(value: UserGroupRole): String =
     value match

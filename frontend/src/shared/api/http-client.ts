@@ -1,7 +1,14 @@
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
+export type JsonDecoder<T> = {
+  bivarianceHack(value: unknown): T
+}['bivarianceHack']
 
 type ErrorResponse = {
   message?: string
+}
+
+type SuccessResponse = {
+  message: string
 }
 
 export class HttpClientError extends Error {
@@ -16,7 +23,7 @@ export class HttpClientError extends Error {
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const jsonResponse = response.clone()
   const textResponse = response.clone()
-  const errorData = (await jsonResponse.json().catch(() => null)) as ErrorResponse | null
+  const errorData = parseErrorResponse(await jsonResponse.json().catch(() => null))
 
   if (errorData?.message) {
     return errorData.message
@@ -30,7 +37,27 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return `${fallback} (HTTP ${response.status})`
 }
 
-export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+function parseErrorResponse(value: unknown): ErrorResponse | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  return typeof value.message === 'string' ? { message: value.message } : null
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+export function decodeSuccessResponse(value: unknown): SuccessResponse {
+  if (!isRecord(value) || typeof value.message !== 'string') {
+    throw new Error('Invalid success response payload.')
+  }
+
+  return { message: value.message }
+}
+
+export async function requestJson<T>(input: RequestInfo, decode: JsonDecoder<T>, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     credentials: 'same-origin',
     ...init,
@@ -52,11 +79,11 @@ export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Pr
     throw new HttpClientError('http', await readErrorMessage(response, 'Request failed.'))
   }
 
-  return (await response.json()) as T
+  return decode(await response.json())
 }
 
-export function postJson<TResponse>(input: RequestInfo, body?: unknown): Promise<TResponse> {
-  return requestJson<TResponse>(input, {
+export function postJson<TResponse>(input: RequestInfo, decode: JsonDecoder<TResponse>, body?: unknown): Promise<TResponse> {
+  return requestJson<TResponse>(input, decode, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
