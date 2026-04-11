@@ -9,6 +9,8 @@ import { useProblemUpdateAction } from '@/features/problem/hooks/use-problem-upd
 import {
   buildResourceAccessPolicy,
   grantedGroupsInputFromAccessPolicy,
+  grantedManagerGroupsInputFromAccessPolicy,
+  grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
 } from '@/shared/domain/resource-access-input'
 
@@ -45,6 +47,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
       baseAccess: currentProblem.accessPolicy.baseAccess,
       grantedUsersInput: grantedUsersInputFromAccessPolicy(currentProblem.accessPolicy),
       grantedGroupsInput: grantedGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
+      managerUsersInput: grantedManagerUsersInputFromAccessPolicy(currentProblem.accessPolicy),
+      managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
     })
 
     if (result.ok) {
@@ -70,6 +74,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
       baseAccess: editor.baseAccess,
       grantedUsersInput: editor.grantedUsersInput,
       grantedGroupsInput: editor.grantedGroupsInput,
+      managerUsersInput: editor.managerUsersInput,
+      managerGroupsInput: editor.managerGroupsInput,
     })
 
     if (result.ok) {
@@ -89,6 +95,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     editor.baseAccess,
     editor.grantedUsersInput,
     editor.grantedGroupsInput,
+    editor.managerUsersInput,
+    editor.managerGroupsInput,
   )
 
   return {
@@ -101,10 +109,15 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     statement: editor.statement,
     timeLimitMs: editor.timeLimitMs,
     spaceLimitMb: editor.spaceLimitMb,
-    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : { baseAccess: editor.baseAccess, viewerGrants: [] },
+    accessPolicy: accessPolicyResult.ok
+      ? accessPolicyResult.value
+      : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] },
+    canManage: detailQuery.problem?.canManage ?? false,
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
+    managerUsersInput: editor.managerUsersInput,
+    managerGroupsInput: editor.managerGroupsInput,
     contentErrorMessage: contentMessageState.errorMessage,
     contentSuccessMessage: contentMessageState.successMessage,
     accessErrorMessage: accessMessageState.errorMessage,
@@ -116,6 +129,8 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     setBaseAccess: editor.setBaseAccess,
     setGrantedUsersInput: editor.setGrantedUsersInput,
     setGrantedGroupsInput: editor.setGrantedGroupsInput,
+    setManagerUsersInput: editor.setManagerUsersInput,
+    setManagerGroupsInput: editor.setManagerGroupsInput,
     saveContent,
     saveAccess,
     deleteCurrentProblem,

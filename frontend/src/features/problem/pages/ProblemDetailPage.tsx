@@ -26,6 +26,8 @@ import { ResourceAccessEditor } from '@/shared/components/resource-access-editor
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import {
   grantedGroupsInputFromAccessPolicy,
+  grantedManagerGroupsInputFromAccessPolicy,
+  grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
 } from '@/shared/domain/resource-access-input'
@@ -53,7 +55,7 @@ export function ProblemDetailPage() {
   }
 
   const model = useProblemDetailPageModel(slugResult.value)
-  const canManageProblem = user.siteManager || user.problemManager
+  const canManageProblem = model.canManage
   const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
   const deferredStatement = useDeferredValue(model.statement)
@@ -67,7 +69,11 @@ export function ProblemDetailPage() {
       normalizeAccessSubjectInput(model.grantedUsersInput) !==
         grantedUsersInputFromAccessPolicy(model.problem.accessPolicy) ||
       normalizeAccessSubjectInput(model.grantedGroupsInput) !==
-        grantedGroupsInputFromAccessPolicy(model.problem.accessPolicy))
+        grantedGroupsInputFromAccessPolicy(model.problem.accessPolicy) ||
+      normalizeAccessSubjectInput(model.managerUsersInput) !==
+        grantedManagerUsersInputFromAccessPolicy(model.problem.accessPolicy) ||
+      normalizeAccessSubjectInput(model.managerGroupsInput) !==
+        grantedManagerGroupsInputFromAccessPolicy(model.problem.accessPolicy))
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -363,7 +369,7 @@ export function ProblemDetailPage() {
               Access Management
             </DialogTitle>
             <DialogDescription className="text-sm leading-7 text-slate-600">
-              Update who can view this problem.
+              Update who can view this problem and who can manage it.
             </DialogDescription>
           </DialogHeader>
 
@@ -373,9 +379,13 @@ export function ProblemDetailPage() {
               accessPolicy={model.accessPolicy}
               grantedUsersInput={model.grantedUsersInput}
               grantedGroupsInput={model.grantedGroupsInput}
+              grantedManagerUsersInput={model.managerUsersInput}
+              grantedManagerGroupsInput={model.managerGroupsInput}
               onBaseAccessChange={model.setBaseAccess}
               onGrantedUsersInputChange={model.setGrantedUsersInput}
               onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+              onGrantedManagerUsersInputChange={model.setManagerUsersInput}
+              onGrantedManagerGroupsInputChange={model.setManagerGroupsInput}
             />
             <Button
               type="button"

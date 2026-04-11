@@ -8,7 +8,7 @@ import domains.problem.model.ProblemSlug
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummary, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 import domains.problemset.application.ProblemSetDecisions.*
@@ -201,7 +201,7 @@ object ProblemSetCommands:
             case None =>
               IO.pure(DeleteProblemSetResult.ProblemSetNotFound)
             case Some(problemSet) =>
-              ResourceViewerGrantTable
+              ResourceAccessGrantTable
                 .deleteAllForResource(connection, ResourceKind.ProblemSet, ResourceId(problemSet.id.value))
                 .flatMap(_ => ProblemSetTable.delete(connection, problemSet.id))
                 .as(DeleteProblemSetResult.Deleted)
@@ -227,7 +227,7 @@ object ProblemSetCommands:
     connection: java.sql.Connection,
     policy: ResourceAccessPolicy
   ): IO[Option[String]] =
-    policy.viewerGrants.foldLeft(IO.pure(Option.empty[String])) { (accIO, subject) =>
+    (policy.viewerGrants ++ policy.managerGrants).foldLeft(IO.pure(Option.empty[String])) { (accIO, subject) =>
       accIO.flatMap {
         case some @ Some(_) => IO.pure(some)
         case None =>
@@ -263,6 +263,12 @@ object ProblemSetCommands:
   ): ResourceAccessPolicy =
     accessPolicy.copy(
       viewerGrants = accessPolicy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        },
+      managerGrants = accessPolicy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
         .filter {
           case AccessSubject.User(username) => username.value != ownerUsername.value

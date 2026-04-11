@@ -130,6 +130,7 @@ final case class ProblemDetail(
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   creatorUsername: domains.auth.model.Username,
+  canManage: Boolean,
   createdAt: Instant,
   updatedAt: Instant
 )

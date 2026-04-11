@@ -40,7 +40,9 @@ export function CreateProblemPage() {
     model.statement.trim().length > 0 ||
     model.baseAccess !== 'owner_only' ||
     model.grantedUsersInput.trim().length > 0 ||
-    model.grantedGroupsInput.trim().length > 0
+    model.grantedGroupsInput.trim().length > 0 ||
+    model.managerUsersInput.trim().length > 0 ||
+    model.managerGroupsInput.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -146,9 +148,13 @@ export function CreateProblemPage() {
               accessPolicy={model.accessPolicy}
               grantedUsersInput={model.grantedUsersInput}
               grantedGroupsInput={model.grantedGroupsInput}
+              grantedManagerUsersInput={model.managerUsersInput}
+              grantedManagerGroupsInput={model.managerGroupsInput}
               onBaseAccessChange={model.setBaseAccess}
               onGrantedUsersInputChange={model.setGrantedUsersInput}
               onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+              onGrantedManagerUsersInputChange={model.setManagerUsersInput}
+              onGrantedManagerGroupsInputChange={model.setManagerGroupsInput}
             />
 
             {model.errorMessage ? (

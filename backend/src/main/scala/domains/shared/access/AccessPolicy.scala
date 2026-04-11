@@ -103,28 +103,51 @@ object AccessSubject:
 
 final case class ResourceAccessPolicy(
   baseAccess: BaseAccess,
-  viewerGrants: List[AccessSubject]
+  viewerGrants: List[AccessSubject],
+  managerGrants: List[AccessSubject]
 )
 
 object ResourceAccessPolicy:
   given Encoder[ResourceAccessPolicy] = deriveEncoder[ResourceAccessPolicy]
   given Decoder[ResourceAccessPolicy] = deriveDecoder[ResourceAccessPolicy]
 
-final case class ResourceViewerGrant(
+enum GrantRole:
+  case Viewer
+  case Manager
+
+object GrantRole:
+  def fromDatabase(value: String): Option[GrantRole] =
+    value match
+      case "viewer" => Some(GrantRole.Viewer)
+      case "manager" => Some(GrantRole.Manager)
+      case _ => None
+
+  def toDatabase(value: GrantRole): String =
+    value match
+      case GrantRole.Viewer => "viewer"
+      case GrantRole.Manager => "manager"
+
+  given Encoder[GrantRole] = Encoder.encodeString.contramap(toDatabase)
+  given Decoder[GrantRole] = Decoder.decodeString.emap { value =>
+    fromDatabase(value).toRight(s"Unknown grant role: $value")
+  }
+
+final case class ResourceAccessGrant(
   resourceKind: ResourceKind,
   resourceId: ResourceId,
+  grantRole: GrantRole,
   subject: AccessSubject,
   createdAt: Instant
 )
 
-object ResourceViewerGrant:
+object ResourceAccessGrant:
   private given instantEncoder: Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given instantDecoder: Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)
   }
 
-  given Encoder[ResourceViewerGrant] = deriveEncoder[ResourceViewerGrant]
-  given Decoder[ResourceViewerGrant] = deriveDecoder[ResourceViewerGrant]
+  given Encoder[ResourceAccessGrant] = deriveEncoder[ResourceAccessGrant]
+  given Decoder[ResourceAccessGrant] = deriveDecoder[ResourceAccessGrant]
 
 object AccessPolicyEvaluator:
   def canView(
@@ -142,4 +165,18 @@ object AccessPolicyEvaluator:
           username.value == viewerUsername.value
         case AccessSubject.UserGroup(slug) =>
           viewerGroupSlugs.contains(slug)
+      }
+
+  def canManage(
+    policy: ResourceAccessPolicy,
+    actorUsername: Username,
+    actorGroupSlugs: Set[UserGroupSlug],
+    hasGlobalOverride: Boolean
+  ): Boolean =
+    hasGlobalOverride ||
+      policy.managerGrants.exists {
+        case AccessSubject.User(username) =>
+          username.value == actorUsername.value
+        case AccessSubject.UserGroup(slug) =>
+          actorGroupSlugs.contains(slug)
       }

@@ -3,7 +3,7 @@ package domains.problem.table
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{CreateProblemRequest, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.PageResponse
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -215,20 +215,22 @@ object ProblemTable:
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    where rvg.resource_kind = 'problem'
-      |      and rvg.resource_id = p.id
-      |      and rvg.subject_kind = 'user'
-      |      and rvg.subject_key = ?
+      |    from resource_access_grants rag
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user'
+      |      and rag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    from resource_access_grants rag
+      |    join user_groups ug on ug.slug = rag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rvg.resource_kind = 'problem'
-      |      and rvg.resource_id = p.id
-      |      and rvg.subject_kind = 'user_group'
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |  or exists (
@@ -242,20 +244,22 @@ object ProblemTable:
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
-      |          from resource_viewer_grants rvg
-      |          where rvg.resource_kind = 'problem_set'
-      |            and rvg.resource_id = ps.id
-      |            and rvg.subject_kind = 'user'
-      |            and rvg.subject_key = ?
+      |          from resource_access_grants rag
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user'
+      |            and rag.subject_key = ?
       |        )
       |        or exists (
       |          select 1
-      |          from resource_viewer_grants rvg
-      |          join user_groups ug on ug.slug = rvg.subject_key
+      |          from resource_access_grants rag
+      |          join user_groups ug on ug.slug = rag.subject_key
       |          join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |          where rvg.resource_kind = 'problem_set'
-      |            and rvg.resource_id = ps.id
-      |            and rvg.subject_kind = 'user_group'
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user_group'
       |            and ugm.username = ?
       |        )
       |      )
@@ -274,20 +278,22 @@ object ProblemTable:
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    where rvg.resource_kind = 'problem'
-      |      and rvg.resource_id = p.id
-      |      and rvg.subject_kind = 'user'
-      |      and rvg.subject_key = ?
+      |    from resource_access_grants rag
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user'
+      |      and rag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    from resource_access_grants rag
+      |    join user_groups ug on ug.slug = rag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rvg.resource_kind = 'problem'
-      |      and rvg.resource_id = p.id
-      |      and rvg.subject_kind = 'user_group'
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |  or exists (
@@ -301,20 +307,22 @@ object ProblemTable:
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
-      |          from resource_viewer_grants rvg
-      |          where rvg.resource_kind = 'problem_set'
-      |            and rvg.resource_id = ps.id
-      |            and rvg.subject_kind = 'user'
-      |            and rvg.subject_key = ?
+      |          from resource_access_grants rag
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user'
+      |            and rag.subject_key = ?
       |        )
       |        or exists (
       |          select 1
-      |          from resource_viewer_grants rvg
-      |          join user_groups ug on ug.slug = rvg.subject_key
+      |          from resource_access_grants rag
+      |          join user_groups ug on ug.slug = rag.subject_key
       |          join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |          where rvg.resource_kind = 'problem_set'
-      |            and rvg.resource_id = ps.id
-      |            and rvg.subject_kind = 'user_group'
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user_group'
       |            and ugm.username = ?
       |        )
       |      )
@@ -402,8 +410,9 @@ object ProblemTable:
       itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSummary])) { (accIO, item) =>
         for
           acc <- accIO
-          grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id))
-        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, grants))
+          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Viewer)
+          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Manager)
+        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
@@ -418,9 +427,10 @@ object ProblemTable:
       finally statement.close()
     }.flatMap {
       case Some(problem) =>
-        ResourceViewerGrantTable
-          .listForResource(connection, ResourceKind.Problem, toResourceId(problem.id))
-          .map(grants => Some(problem.copy(accessPolicy = policyFrom(problem.accessPolicy.baseAccess, grants))))
+        for
+          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Viewer)
+          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Manager)
+        yield Some(problem.copy(accessPolicy = policyFrom(problem.accessPolicy.baseAccess, viewerGrants, managerGrants)))
       case None =>
         IO.pure(None)
     }
@@ -466,8 +476,17 @@ object ProblemTable:
       finally statement.close()
     }.flatMap { problem =>
       val sanitizedPolicy = sanitizePolicy(ownerUsername, request.accessPolicy)
-      ResourceViewerGrantTable
-        .replaceForResource(connection, ResourceKind.Problem, toResourceId(problem.id), sanitizedPolicy.viewerGrants)
+      ResourceAccessGrantTable
+        .replaceForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
+        .flatMap(_ =>
+          ResourceAccessGrantTable.replaceForResource(
+            connection,
+            ResourceKind.Problem,
+            toResourceId(problem.id),
+            GrantRole.Manager,
+            sanitizedPolicy.managerGrants
+          )
+        )
         .as(problem.copy(accessPolicy = sanitizedPolicy))
     }
 
@@ -489,7 +508,8 @@ object ProblemTable:
         ()
       finally statement.close()
       }
-      _ <- ResourceViewerGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), request.accessPolicy.viewerGrants)
+      _ <- ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), GrantRole.Viewer, request.accessPolicy.viewerGrants)
+      _ <- ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), GrantRole.Manager, request.accessPolicy.managerGrants)
     yield ()
 
   def updateData(connection: Connection, problemId: ProblemId, filename: ProblemDataFilename): IO[Unit] =
@@ -529,7 +549,7 @@ object ProblemTable:
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -545,8 +565,9 @@ object ProblemTable:
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
+      canManage = false,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -595,20 +616,22 @@ object ProblemTable:
       |    or ps.base_access = 'public'
       |    or exists (
       |      select 1
-      |      from resource_viewer_grants rvg
-      |      where rvg.resource_kind = 'problem_set'
-      |        and rvg.resource_id = ps.id
-      |        and rvg.subject_kind = 'user'
-      |        and rvg.subject_key = ?
+      |      from resource_access_grants rag
+      |      where rag.resource_kind = 'problem_set'
+      |        and rag.resource_id = ps.id
+      |        and rag.grant_role = 'viewer'
+      |        and rag.subject_kind = 'user'
+      |        and rag.subject_key = ?
       |    )
       |    or exists (
       |      select 1
-      |      from resource_viewer_grants rvg
-      |      join user_groups ug on ug.slug = rvg.subject_key
+      |      from resource_access_grants rag
+      |      join user_groups ug on ug.slug = rag.subject_key
       |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rvg.resource_kind = 'problem_set'
-      |        and rvg.resource_id = ps.id
-      |        and rvg.subject_kind = 'user_group'
+      |      where rag.resource_kind = 'problem_set'
+      |        and rag.resource_id = ps.id
+      |        and rag.grant_role = 'viewer'
+      |        and rag.subject_kind = 'user_group'
       |        and ugm.username = ?
       |    )
       |  )
@@ -626,12 +649,22 @@ object ProblemTable:
     statement.setString(4, actor.username.value)
     statement.setString(5, actor.username.value)
 
-  private def policyFrom(baseAccess: BaseAccess, grants: List[domains.shared.access.ResourceViewerGrant]): ResourceAccessPolicy =
-    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = grants.map(_.subject))
+  private def policyFrom(
+    baseAccess: BaseAccess,
+    viewerGrants: List[ResourceAccessGrant],
+    managerGrants: List[ResourceAccessGrant]
+  ): ResourceAccessPolicy =
+    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = viewerGrants.map(_.subject), managerGrants = managerGrants.map(_.subject))
 
   private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
       viewerGrants = policy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        },
+      managerGrants = policy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
         .filter {
           case AccessSubject.User(username) => username.value != ownerUsername.value

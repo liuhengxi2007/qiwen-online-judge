@@ -210,20 +210,22 @@ object SubmissionTable:
       |    or p.base_access = 'public'
       |    or exists (
       |      select 1
-      |      from resource_viewer_grants rvg
-      |      where rvg.resource_kind = 'problem'
-      |        and rvg.resource_id = p.id
-      |        and rvg.subject_kind = 'user'
-      |        and rvg.subject_key = ?
+      |      from resource_access_grants rag
+      |      where rag.resource_kind = 'problem'
+      |        and rag.resource_id = p.id
+      |        and rag.grant_role = 'viewer'
+      |        and rag.subject_kind = 'user'
+      |        and rag.subject_key = ?
       |    )
       |    or exists (
       |      select 1
-      |      from resource_viewer_grants rvg
-      |      join user_groups ug on ug.slug = rvg.subject_key
+      |      from resource_access_grants rag
+      |      join user_groups ug on ug.slug = rag.subject_key
       |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rvg.resource_kind = 'problem'
-      |        and rvg.resource_id = p.id
-      |        and rvg.subject_kind = 'user_group'
+      |      where rag.resource_kind = 'problem'
+      |        and rag.resource_id = p.id
+      |        and rag.grant_role = 'viewer'
+      |        and rag.subject_kind = 'user_group'
       |        and ugm.username = ?
       |    )
       |    or exists (
@@ -237,20 +239,22 @@ object SubmissionTable:
       |          or ps.base_access = 'public'
       |          or exists (
       |            select 1
-      |            from resource_viewer_grants rvg
-      |            where rvg.resource_kind = 'problem_set'
-      |              and rvg.resource_id = ps.id
-      |              and rvg.subject_kind = 'user'
-      |              and rvg.subject_key = ?
+      |            from resource_access_grants rag
+      |            where rag.resource_kind = 'problem_set'
+      |              and rag.resource_id = ps.id
+      |              and rag.grant_role = 'viewer'
+      |              and rag.subject_kind = 'user'
+      |              and rag.subject_key = ?
       |          )
       |          or exists (
       |            select 1
-      |            from resource_viewer_grants rvg
-      |            join user_groups ug on ug.slug = rvg.subject_key
+      |            from resource_access_grants rag
+      |            join user_groups ug on ug.slug = rag.subject_key
       |            join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |            where rvg.resource_kind = 'problem_set'
-      |              and rvg.resource_id = ps.id
-      |              and rvg.subject_kind = 'user_group'
+      |            where rag.resource_kind = 'problem_set'
+      |              and rag.resource_id = ps.id
+      |              and rag.grant_role = 'viewer'
+      |              and rag.subject_kind = 'user_group'
       |              and ugm.username = ?
       |          )
       |        )

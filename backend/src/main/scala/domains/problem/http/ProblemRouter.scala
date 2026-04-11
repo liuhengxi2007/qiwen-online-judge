@@ -68,10 +68,14 @@ object ProblemRouter:
                 ProblemHttpResponses.validationErrorResponse(message)
               case Right(parsedFilename) =>
                 sessionSupport.withAuthenticatedUser(request) { actor =>
-                  if !domains.problem.application.ProblemPolicy.canEdit(actor) then
-                    ProblemHttpResponses.validationErrorResponse("Problem manager permission required.")
-                  else
-                    ProblemHttpResponses.downloadDataResponse(parsedProblemSlug, parsedFilename)
+                  ProblemCommands
+                    .authorizeProblemDataDownload(databaseSession, actor, parsedProblemSlug)
+                    .flatMap {
+                      case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
+                        ProblemHttpResponses.downloadDataResponse(parsedProblemSlug, parsedFilename)
+                      case other =>
+                        ProblemHttpResponses.mapAuthorizeDownloadResult(other)
+                    }
                 }
 
       case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / filename / "delete" =>

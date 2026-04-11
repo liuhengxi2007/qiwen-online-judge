@@ -6,51 +6,67 @@ import domains.auth.model.Username
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
 
-object ResourceViewerGrantTable:
+object ResourceAccessGrantTable:
 
   val initTableSql: String =
     """
-      |create table if not exists resource_viewer_grants (
+      |create table if not exists resource_access_grants (
       |  resource_kind varchar(32) not null check (resource_kind in ('problem', 'problem_set')),
       |  resource_id uuid not null,
+      |  grant_role varchar(32) not null check (grant_role in ('viewer', 'manager')),
       |  subject_kind varchar(32) not null check (subject_kind in ('user', 'user_group')),
       |  subject_key varchar(64) not null,
       |  created_at timestamp not null,
-      |  primary key (resource_kind, resource_id, subject_kind, subject_key)
+      |  primary key (resource_kind, resource_id, grant_role, subject_kind, subject_key)
       |);
-      |create index if not exists idx_resource_viewer_grants_resource
-      |  on resource_viewer_grants(resource_kind, resource_id);
-      |create index if not exists idx_resource_viewer_grants_subject
-      |  on resource_viewer_grants(subject_kind, subject_key);
+      |create index if not exists idx_resource_access_grants_resource
+      |  on resource_access_grants(resource_kind, resource_id, grant_role);
+      |create index if not exists idx_resource_access_grants_subject
+      |  on resource_access_grants(grant_role, subject_kind, subject_key);
+      |""".stripMargin
+
+  val backfillLegacyViewerGrantSql: String =
+    """
+      |insert into resource_access_grants (resource_kind, resource_id, grant_role, subject_kind, subject_key, created_at)
+      |select resource_kind, resource_id, 'viewer', subject_kind, subject_key, created_at
+      |from resource_viewer_grants
+      |on conflict (resource_kind, resource_id, grant_role, subject_kind, subject_key) do nothing
       |""".stripMargin
 
   val listForResourceSql: String =
     """
-      |select resource_kind, resource_id, subject_kind, subject_key, created_at
-      |from resource_viewer_grants
-      |where resource_kind = ? and resource_id = ?
+      |select resource_kind, resource_id, grant_role, subject_kind, subject_key, created_at
+      |from resource_access_grants
+      |where resource_kind = ? and resource_id = ? and grant_role = ?
       |order by subject_kind asc, subject_key asc
       |""".stripMargin
 
-  val deleteForResourceSql: String =
+  val deleteForResourceAndRoleSql: String =
     """
-      |delete from resource_viewer_grants
+      |delete from resource_access_grants
+      |where resource_kind = ? and resource_id = ? and grant_role = ?
+      |""".stripMargin
+
+  val deleteAllForResourceSql: String =
+    """
+      |delete from resource_access_grants
       |where resource_kind = ? and resource_id = ?
       |""".stripMargin
 
   val insertGrantSql: String =
     """
-      |insert into resource_viewer_grants (resource_kind, resource_id, subject_kind, subject_key, created_at)
-      |values (?, ?, ?, ?, ?)
-      |on conflict (resource_kind, resource_id, subject_kind, subject_key) do nothing
+      |insert into resource_access_grants (resource_kind, resource_id, grant_role, subject_kind, subject_key, created_at)
+      |values (?, ?, ?, ?, ?, ?)
+      |on conflict (resource_kind, resource_id, grant_role, subject_kind, subject_key) do nothing
       |""".stripMargin
 
   val hasDirectUserGrantSql: String =
     """
       |select 1
-      |from resource_viewer_grants
+      |from resource_access_grants
       |where resource_kind = ?
       |  and resource_id = ?
+      |  and grant_role = ?
       |  and subject_kind = 'user'
       |  and subject_key = ?
       |limit 1
@@ -59,12 +75,13 @@ object ResourceViewerGrantTable:
   val hasGrantedUserGroupSql: String =
     """
       |select 1
-      |from resource_viewer_grants rvg
-      |join user_groups ug on ug.slug = rvg.subject_key
+      |from resource_access_grants rag
+      |join user_groups ug on ug.slug = rag.subject_key
       |join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |where rvg.resource_kind = ?
-      |  and rvg.resource_id = ?
-      |  and rvg.subject_kind = 'user_group'
+      |where rag.resource_kind = ?
+      |  and rag.resource_id = ?
+      |  and rag.grant_role = ?
+      |  and rag.subject_kind = 'user_group'
       |  and ugm.username = ?
       |limit 1
       |""".stripMargin
@@ -72,20 +89,29 @@ object ResourceViewerGrantTable:
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()
-      try statement.execute(initTableSql)
+      try
+        statement.execute(initTableSql)
+        val hasLegacyTable =
+          Option(connection.getMetaData.getTables(null, null, "resource_viewer_grants", null)).exists { resultSet =>
+            try resultSet.next()
+            finally resultSet.close()
+          }
+        if hasLegacyTable then statement.executeUpdate(backfillLegacyViewerGrantSql)
       finally statement.close()
     }
 
   def listForResource(
     connection: Connection,
     resourceKind: ResourceKind,
-    resourceId: ResourceId
-  ): IO[List[ResourceViewerGrant]] =
+    resourceId: ResourceId,
+    grantRole: GrantRole
+  ): IO[List[ResourceAccessGrant]] =
     IO.blocking {
       val statement = connection.prepareStatement(listForResourceSql)
       try
         statement.setString(1, ResourceKind.toDatabase(resourceKind))
         statement.setObject(2, resourceId.value)
+        statement.setString(3, GrantRole.toDatabase(grantRole))
         val resultSet = statement.executeQuery()
         try
           Iterator
@@ -101,11 +127,12 @@ object ResourceViewerGrantTable:
     connection: Connection,
     resourceKind: ResourceKind,
     resourceId: ResourceId,
+    grantRole: GrantRole,
     grants: List[AccessSubject]
   ): IO[Unit] =
     for
-      _ <- deleteForResource(connection, resourceKind, resourceId)
-      _ <- insertGrants(connection, resourceKind, resourceId, grants)
+      _ <- deleteForResource(connection, resourceKind, resourceId, grantRole)
+      _ <- insertGrants(connection, resourceKind, resourceId, grantRole, grants)
     yield ()
 
   def deleteAllForResource(
@@ -113,42 +140,56 @@ object ResourceViewerGrantTable:
     resourceKind: ResourceKind,
     resourceId: ResourceId
   ): IO[Unit] =
-    deleteForResource(connection, resourceKind, resourceId)
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteAllForResourceSql)
+      try
+        statement.setString(1, ResourceKind.toDatabase(resourceKind))
+        statement.setObject(2, resourceId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
 
   def hasDirectUserGrant(
     connection: Connection,
     resourceKind: ResourceKind,
     resourceId: ResourceId,
+    grantRole: GrantRole,
     username: Username
   ): IO[Boolean] =
     exists(connection, hasDirectUserGrantSql) { statement =>
       statement.setString(1, ResourceKind.toDatabase(resourceKind))
       statement.setObject(2, resourceId.value)
-      statement.setString(3, username.value)
+      statement.setString(3, GrantRole.toDatabase(grantRole))
+      statement.setString(4, username.value)
     }
 
   def hasAnyGrantedUserGroup(
     connection: Connection,
     resourceKind: ResourceKind,
     resourceId: ResourceId,
+    grantRole: GrantRole,
     username: Username
   ): IO[Boolean] =
     exists(connection, hasGrantedUserGroupSql) { statement =>
       statement.setString(1, ResourceKind.toDatabase(resourceKind))
       statement.setObject(2, resourceId.value)
-      statement.setString(3, username.value)
+      statement.setString(3, GrantRole.toDatabase(grantRole))
+      statement.setString(4, username.value)
     }
 
   private def deleteForResource(
     connection: Connection,
     resourceKind: ResourceKind,
-    resourceId: ResourceId
+    resourceId: ResourceId,
+    grantRole: GrantRole
   ): IO[Unit] =
     IO.blocking {
-      val statement = connection.prepareStatement(deleteForResourceSql)
+      val statement = connection.prepareStatement(deleteForResourceAndRoleSql)
       try
         statement.setString(1, ResourceKind.toDatabase(resourceKind))
         statement.setObject(2, resourceId.value)
+        statement.setString(3, GrantRole.toDatabase(grantRole))
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -158,6 +199,7 @@ object ResourceViewerGrantTable:
     connection: Connection,
     resourceKind: ResourceKind,
     resourceId: ResourceId,
+    grantRole: GrantRole,
     grants: List[AccessSubject]
   ): IO[Unit] =
     IO.blocking {
@@ -169,9 +211,10 @@ object ResourceViewerGrantTable:
           .foreach { subject =>
             statement.setString(1, ResourceKind.toDatabase(resourceKind))
             statement.setObject(2, resourceId.value)
-            statement.setString(3, AccessSubject.subjectKind(subject))
-            statement.setString(4, AccessSubject.subjectKey(subject))
-            statement.setTimestamp(5, Timestamp.from(now))
+            statement.setString(3, GrantRole.toDatabase(grantRole))
+            statement.setString(4, AccessSubject.subjectKind(subject))
+            statement.setString(5, AccessSubject.subjectKey(subject))
+            statement.setTimestamp(6, Timestamp.from(now))
             statement.addBatch()
           }
         statement.executeBatch()
@@ -193,10 +236,11 @@ object ResourceViewerGrantTable:
       finally statement.close()
     }
 
-  private def readGrant(resultSet: ResultSet): ResourceViewerGrant =
-    ResourceViewerGrant(
-      resourceKind = parseOptionalColumn("resource_viewer_grants.resource_kind", resultSet.getString("resource_kind"), ResourceKind.fromDatabase),
+  private def readGrant(resultSet: ResultSet): ResourceAccessGrant =
+    ResourceAccessGrant(
+      resourceKind = parseOptionalColumn("resource_access_grants.resource_kind", resultSet.getString("resource_kind"), ResourceKind.fromDatabase),
       resourceId = ResourceId(resultSet.getObject("resource_id", classOf[java.util.UUID])),
+      grantRole = parseOptionalColumn("resource_access_grants.grant_role", resultSet.getString("grant_role"), GrantRole.fromDatabase),
       subject = readSubject(resultSet.getString("subject_kind"), resultSet.getString("subject_key")),
       createdAt = resultSet.getTimestamp("created_at").toInstant
     )
@@ -207,12 +251,12 @@ object ResourceViewerGrantTable:
       case "user_group" =>
         AccessSubject.UserGroup(
           parseColumn(
-            "resource_viewer_grants.subject_key",
+            "resource_access_grants.subject_key",
             subjectKey,
             domains.usergroup.model.UserGroupSlug.parse,
           )
         )
-      case other => throw IllegalStateException(s"Invalid value in resource_viewer_grants.subject_kind: $other")
+      case other => throw IllegalStateException(s"Invalid value in resource_access_grants.subject_kind: $other")
 
   private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

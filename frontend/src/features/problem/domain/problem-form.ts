@@ -18,6 +18,8 @@ type ProblemDraft = {
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
+  managerUsersInput: string
+  managerGroupsInput: string
 }
 
 type ProblemDraftValidation =
@@ -50,7 +52,13 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
     return { ok: false, message: spaceLimitResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const accessPolicyResult = buildResourceAccessPolicy(
+    draft.baseAccess,
+    draft.grantedUsersInput,
+    draft.grantedGroupsInput,
+    draft.managerUsersInput,
+    draft.managerGroupsInput,
+  )
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }
@@ -76,6 +84,8 @@ export type UpdateProblemDraft = {
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
+  managerUsersInput: string
+  managerGroupsInput: string
 }
 
 export function validateProblemUpdateDraft(
@@ -101,7 +111,13 @@ export function validateProblemUpdateDraft(
     return { ok: false, message: spaceLimitResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const accessPolicyResult = buildResourceAccessPolicy(
+    draft.baseAccess,
+    draft.grantedUsersInput,
+    draft.grantedGroupsInput,
+    draft.managerUsersInput,
+    draft.managerGroupsInput,
+  )
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }

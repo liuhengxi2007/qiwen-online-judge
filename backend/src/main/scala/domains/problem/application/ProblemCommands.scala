@@ -7,7 +7,7 @@ import domains.problem.model.{CreateProblemRequest, ProblemDataFileListResponse,
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, GrantRole, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 import domains.auth.table.AuthUserTable
@@ -48,6 +48,11 @@ object ProblemCommands:
     case Forbidden
     case ProblemNotFound
     case Listed(response: ProblemDataFileListResponse)
+
+  enum AuthorizeProblemDataDownloadResult:
+    case Forbidden
+    case ProblemNotFound
+    case Authorized
 
   enum DeleteProblemDataResult:
     case Forbidden
@@ -97,7 +102,7 @@ object ProblemCommands:
                 case CreateProblemDecision.Create =>
                   ProblemTable
                     .insert(connection, actor.username, sanitizePolicy(actor.username, validRequest))
-                    .map(problem => CreateProblemResult.Created(problem))
+                    .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
             yield result
           }
 
@@ -109,9 +114,9 @@ object ProblemCommands:
     databaseSession.withTransactionConnection { connection =>
       ProblemTable.findBySlug(connection, slug).flatMap {
         case Some(problem) =>
-          canViewProblem(connection, actor, problem).map {
-            case true => GetProblemResult.Found(problem)
-            case false => GetProblemResult.Forbidden
+          enrichProblemPermissions(connection, actor, problem).map {
+            case Some(enrichedProblem) => GetProblemResult.Found(enrichedProblem)
+            case None => GetProblemResult.Forbidden
           }
         case None =>
           IO.pure(GetProblemResult.NotFound)
@@ -124,55 +129,62 @@ object ProblemCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     request: UpdateProblemRequest
   ): IO[UpdateProblemResult] =
-    if !ProblemPolicy.canEdit(actor) then
-      IO.pure(UpdateProblemResult.Forbidden)
-    else
-      ProblemValidation.validateUpdate(request) match
-        case Left(message) =>
-          IO.pure(UpdateProblemResult.ValidationFailed(message))
-        case Right(validRequest) =>
-          databaseSession.withTransactionConnection { connection =>
-            for
-              maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-              accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- decideUpdateProblem(maybeProblem, accessPolicyValidation) match
-                case UpdateProblemDecision.ProblemNotFound =>
-                  IO.pure(UpdateProblemResult.ProblemNotFound)
-                case UpdateProblemDecision.ValidationFailed(message) =>
-                  IO.pure(UpdateProblemResult.ValidationFailed(message))
-                case UpdateProblemDecision.Update(problem) =>
-                  ProblemTable
-                    .update(connection, problem.id, sanitizePolicy(problem.creatorUsername, validRequest))
-                    .flatMap(_ =>
-                      ProblemTable
-                        .findBySlug(connection, problem.slug)
-                        .map(updatedProblemOrError("Problem disappeared after update"))
-                        .map(UpdateProblemResult.Updated(_))
-                    )
-            yield result
-          }
+    ProblemValidation.validateUpdate(request) match
+      case Left(message) =>
+        IO.pure(UpdateProblemResult.ValidationFailed(message))
+      case Right(validRequest) =>
+        databaseSession.withTransactionConnection { connection =>
+          for
+            maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+            result <- maybeProblem match
+              case None =>
+                IO.pure(UpdateProblemResult.ProblemNotFound)
+              case Some(problem) =>
+                canManageProblem(connection, actor, problem).flatMap {
+                  case false =>
+                    IO.pure(UpdateProblemResult.Forbidden)
+                  case true =>
+                    validateAccessPolicySubjects(connection, validRequest.accessPolicy).flatMap {
+                      case Some(message) =>
+                        IO.pure(UpdateProblemResult.ValidationFailed(message))
+                      case None =>
+                        ProblemTable
+                          .update(connection, problem.id, sanitizePolicy(problem.creatorUsername, validRequest))
+                          .flatMap(_ =>
+                            ProblemTable
+                              .findBySlug(connection, problem.slug)
+                              .map(updatedProblemOrError("Problem disappeared after update"))
+                              .map(_.copy(canManage = true))
+                              .map(UpdateProblemResult.Updated(_))
+                          )
+                    }
+                }
+          yield result
+        }
 
   def deleteProblem(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[DeleteProblemResult] =
-    if !ProblemPolicy.canDelete(actor) then
-      IO.pure(DeleteProblemResult.Forbidden)
-    else
-      databaseSession.withTransactionConnection { connection =>
-        for
-          maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-          result <- maybeProblem match
-            case None =>
-              IO.pure(DeleteProblemResult.ProblemNotFound)
-            case Some(problem) =>
-              ResourceViewerGrantTable
-                .deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
-                .flatMap(_ => ProblemTable.delete(connection, problem.id))
-                .as(DeleteProblemResult.Deleted)
-        yield result
-      }
+    databaseSession.withTransactionConnection { connection =>
+      for
+        maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+        result <- maybeProblem match
+          case None =>
+            IO.pure(DeleteProblemResult.ProblemNotFound)
+          case Some(problem) =>
+            canManageProblem(connection, actor, problem).flatMap {
+              case false =>
+                IO.pure(DeleteProblemResult.Forbidden)
+              case true =>
+                ResourceAccessGrantTable
+                  .deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
+                  .flatMap(_ => ProblemTable.delete(connection, problem.id))
+                  .as(DeleteProblemResult.Deleted)
+            }
+      yield result
+    }
 
   def updateProblemData(
     databaseSession: DatabaseSession,
@@ -180,62 +192,84 @@ object ProblemCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     request: UpdateProblemDataRequest
   ): IO[UpdateProblemDataResult] =
-    if !ProblemPolicy.canEdit(actor) then
-      IO.pure(UpdateProblemDataResult.Forbidden)
-    else
-      ProblemValidation.validateDataUpdate(request) match
-        case Left(message) =>
-          IO.pure(UpdateProblemDataResult.ValidationFailed(message))
-        case Right(validRequest) =>
-          validRequest.decodedBytes match
-            case Left(message) =>
-              IO.pure(UpdateProblemDataResult.ValidationFailed(message))
-            case Right(decodedBytes) =>
-              databaseSession.withTransactionConnection { connection =>
-                for
-                  maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-                  result <- decideUpdateProblemData(maybeProblem) match
-                    case ProblemDataUpdateDecision.ProblemNotFound =>
-                      IO.pure(UpdateProblemDataResult.ProblemNotFound)
-                    case ProblemDataUpdateDecision.Update(problem) =>
-                      for
-                        snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-                        result <- ProblemDataStorage
-                          .writeFile(problem.slug, validRequest.filename, decodedBytes)
-                          .flatMap(savedFilename =>
-                            ProblemTable.updateData(connection, problem.id, savedFilename)
-                              .flatMap(_ =>
-                                ProblemTable
-                                  .findBySlug(connection, problem.slug)
-                                  .map(updatedProblemOrError("Problem disappeared after data update"))
-                                  .map(UpdateProblemDataResult.Updated(_))
-                              )
-                          )
-                          .handleErrorWith { error =>
-                            ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                          }
-                      yield result
-                yield result
-              }
+    ProblemValidation.validateDataUpdate(request) match
+      case Left(message) =>
+        IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+      case Right(validRequest) =>
+        validRequest.decodedBytes match
+          case Left(message) =>
+            IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+          case Right(decodedBytes) =>
+            databaseSession.withTransactionConnection { connection =>
+              for
+                maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+                result <- maybeProblem match
+                  case None =>
+                    IO.pure(UpdateProblemDataResult.ProblemNotFound)
+                  case Some(problem) =>
+                    canManageProblem(connection, actor, problem).flatMap {
+                      case false =>
+                        IO.pure(UpdateProblemDataResult.Forbidden)
+                      case true =>
+                        for
+                          snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                          result <- ProblemDataStorage
+                            .writeFile(problem.slug, validRequest.filename, decodedBytes)
+                            .flatMap(savedFilename =>
+                              ProblemTable.updateData(connection, problem.id, savedFilename)
+                                .flatMap(_ =>
+                                  ProblemTable
+                                    .findBySlug(connection, problem.slug)
+                                    .map(updatedProblemOrError("Problem disappeared after data update"))
+                                    .map(_.copy(canManage = true))
+                                    .map(UpdateProblemDataResult.Updated(_))
+                                )
+                            )
+                            .handleErrorWith { error =>
+                              ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                            }
+                        yield result
+                    }
+              yield result
+            }
 
   def listProblemData(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ListProblemDataResult] =
-    if !ProblemPolicy.canEdit(actor) then
-      IO.pure(ListProblemDataResult.Forbidden)
-    else
-      databaseSession.withTransactionConnection { connection =>
-        ProblemTable.findBySlug(connection, problemSlug).flatMap {
-          case None =>
-            IO.pure(ListProblemDataResult.ProblemNotFound)
-          case Some(problem) =>
-            ProblemDataStorage
-              .listFiles(problem.slug)
-              .map(files => ListProblemDataResult.Listed(ProblemDataFileListResponse(files)))
-        }
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None =>
+          IO.pure(ListProblemDataResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).flatMap {
+            case false =>
+              IO.pure(ListProblemDataResult.Forbidden)
+            case true =>
+              ProblemDataStorage
+                .listFiles(problem.slug)
+                .map(files => ListProblemDataResult.Listed(ProblemDataFileListResponse(files)))
+          }
       }
+    }
+
+  def authorizeProblemDataDownload(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug
+  ): IO[AuthorizeProblemDataDownloadResult] =
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None =>
+          IO.pure(AuthorizeProblemDataDownloadResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).map {
+            case true => AuthorizeProblemDataDownloadResult.Authorized
+            case false => AuthorizeProblemDataDownloadResult.Forbidden
+          }
+      }
+    }
 
   def deleteProblemData(
     databaseSession: DatabaseSession,
@@ -243,15 +277,15 @@ object ProblemCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     filename: ProblemDataFilename
   ): IO[DeleteProblemDataResult] =
-    if !ProblemPolicy.canEdit(actor) then
-      IO.pure(DeleteProblemDataResult.Forbidden)
-    else
-      databaseSession.withTransactionConnection { connection =>
-        ProblemTable.findBySlug(connection, problemSlug).flatMap { maybeProblem =>
-          decideDeleteProblemData(maybeProblem) match
-            case ProblemDataDeletionDecision.ProblemNotFound =>
-              IO.pure(DeleteProblemDataResult.ProblemNotFound)
-            case ProblemDataDeletionDecision.Delete(problem) =>
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None =>
+          IO.pure(DeleteProblemDataResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).flatMap {
+            case false =>
+              IO.pure(DeleteProblemDataResult.Forbidden)
+            case true =>
               for
                 snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
                 result <- ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
@@ -267,6 +301,7 @@ object ProblemCommands:
                         ProblemTable
                           .findBySlug(connection, problem.slug)
                           .map(updatedProblemOrError("Problem disappeared after data deletion"))
+                          .map(_.copy(canManage = true))
                           .map(DeleteProblemDataResult.Deleted(_))
                       )
                       .handleErrorWith { error =>
@@ -274,23 +309,24 @@ object ProblemCommands:
                       }
                 }
               yield result
-        }
+          }
       }
+    }
 
   def clearProblemData(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ClearProblemDataResult] =
-    if !ProblemPolicy.canEdit(actor) then
-      IO.pure(ClearProblemDataResult.Forbidden)
-    else
-      databaseSession.withTransactionConnection { connection =>
-        ProblemTable.findBySlug(connection, problemSlug).flatMap { maybeProblem =>
-          decideClearProblemData(maybeProblem) match
-            case ProblemDataClearDecision.ProblemNotFound =>
-              IO.pure(ClearProblemDataResult.ProblemNotFound)
-            case ProblemDataClearDecision.Clear(problem) =>
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None =>
+          IO.pure(ClearProblemDataResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).flatMap {
+            case false =>
+              IO.pure(ClearProblemDataResult.Forbidden)
+            case true =>
               for
                 snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
                 result <- ProblemDataStorage
@@ -300,14 +336,16 @@ object ProblemCommands:
                     ProblemTable
                       .findBySlug(connection, problem.slug)
                       .map(updatedProblemOrError("Problem disappeared after clearing data"))
+                      .map(_.copy(canManage = true))
                       .map(ClearProblemDataResult.Cleared(_))
                   )
                   .handleErrorWith { error =>
                     ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                   }
               yield result
-        }
+          }
       }
+    }
 
   private def findConflictingProblemSet(
     connection: java.sql.Connection,
@@ -320,31 +358,54 @@ object ProblemCommands:
   private def updatedProblemOrError(message: String)(maybeProblem: Option[ProblemDetail]): ProblemDetail =
     maybeProblem.getOrElse(throw new IllegalStateException(message))
 
-  private def canViewProblem(
+  private def enrichProblemPermissions(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problem: ProblemDetail
+  ): IO[Option[ProblemDetail]] =
+    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { actorGroupSlugs =>
+      val canViewDirectly = AccessPolicyEvaluator.canView(
+        policy = problem.accessPolicy,
+        viewerUsername = actor.username,
+        viewerGroupSlugs = actorGroupSlugs,
+        isOwner = problem.creatorUsername.value == actor.username.value,
+        hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
+      )
+      val canManage = AccessPolicyEvaluator.canManage(
+        policy = problem.accessPolicy,
+        actorUsername = actor.username,
+        actorGroupSlugs = actorGroupSlugs,
+        hasGlobalOverride = ProblemPolicy.hasGlobalManageOverride(actor)
+      )
+
+      if canViewDirectly then
+        IO.pure(Some(problem.copy(canManage = canManage)))
+      else
+        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map {
+          case true => Some(problem.copy(canManage = canManage))
+          case false => None
+        }
+    }
+
+  private def canManageProblem(
     connection: java.sql.Connection,
     actor: AuthUser,
     problem: ProblemDetail
   ): IO[Boolean] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { viewerGroupSlugs =>
-      val canViewDirectly = AccessPolicyEvaluator.canView(
+    UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { actorGroupSlugs =>
+      AccessPolicyEvaluator.canManage(
         policy = problem.accessPolicy,
-        viewerUsername = actor.username,
-        viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = problem.creatorUsername.value == actor.username.value,
-        hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
+        actorUsername = actor.username,
+        actorGroupSlugs = actorGroupSlugs,
+        hasGlobalOverride = ProblemPolicy.hasGlobalManageOverride(actor)
       )
-
-      if canViewDirectly then
-        IO.pure(true)
-      else
-        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
     }
 
   private def validateAccessPolicySubjects(
     connection: java.sql.Connection,
     policy: ResourceAccessPolicy
   ): IO[Option[String]] =
-    policy.viewerGrants.foldLeft(IO.pure(Option.empty[String])) { (accIO, subject) =>
+    (policy.viewerGrants ++ policy.managerGrants).foldLeft(IO.pure(Option.empty[String])) { (accIO, subject) =>
       accIO.flatMap {
         case some @ Some(_) => IO.pure(some)
         case None =>
@@ -380,6 +441,12 @@ object ProblemCommands:
   ): ResourceAccessPolicy =
     accessPolicy.copy(
       viewerGrants = accessPolicy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        },
+      managerGrants = accessPolicy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
         .filter {
           case AccessSubject.User(username) => username.value != ownerUsername.value

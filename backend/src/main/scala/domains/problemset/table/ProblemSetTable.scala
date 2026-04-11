@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle, UpdateProblemSetRequest}
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessPolicy, ResourceId, ResourceKind, ResourceViewerGrantTable}
+import domains.shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.PageResponse
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -122,20 +122,22 @@ object ProblemSetTable:
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    where rvg.resource_kind = 'problem_set'
-      |      and rvg.resource_id = ps.id
-      |      and rvg.subject_kind = 'user'
-      |      and rvg.subject_key = ?
+      |    from resource_access_grants rag
+      |    where rag.resource_kind = 'problem_set'
+      |      and rag.resource_id = ps.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user'
+      |      and rag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    from resource_access_grants rag
+      |    join user_groups ug on ug.slug = rag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rvg.resource_kind = 'problem_set'
-      |      and rvg.resource_id = ps.id
-      |      and rvg.subject_kind = 'user_group'
+      |    where rag.resource_kind = 'problem_set'
+      |      and rag.resource_id = ps.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |order by ps.updated_at desc, ps.slug asc
@@ -152,20 +154,22 @@ object ProblemSetTable:
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    where rvg.resource_kind = 'problem_set'
-      |      and rvg.resource_id = ps.id
-      |      and rvg.subject_kind = 'user'
-      |      and rvg.subject_key = ?
+      |    from resource_access_grants rag
+      |    where rag.resource_kind = 'problem_set'
+      |      and rag.resource_id = ps.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user'
+      |      and rag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_viewer_grants rvg
-      |    join user_groups ug on ug.slug = rvg.subject_key
+      |    from resource_access_grants rag
+      |    join user_groups ug on ug.slug = rag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rvg.resource_kind = 'problem_set'
-      |      and rvg.resource_id = ps.id
-      |      and rvg.subject_kind = 'user_group'
+      |    where rag.resource_kind = 'problem_set'
+      |      and rag.resource_id = ps.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |""".stripMargin
@@ -296,8 +300,9 @@ object ProblemSetTable:
       itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSetSummary])) { (accIO, item) =>
         for
           acc <- accIO
-          grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id))
-        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, grants))
+          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id), GrantRole.Viewer)
+          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id), GrantRole.Manager)
+        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
@@ -314,8 +319,9 @@ object ProblemSetTable:
       case Some(problemSet) =>
         for
           problems <- listProblemsForSet(connection, problemSet.id)
-          grants <- ResourceViewerGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id))
-        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, grants)))
+          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer)
+          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Manager)
+        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, viewerGrants, managerGrants)))
       case None =>
         IO.pure(None)
     }
@@ -342,8 +348,17 @@ object ProblemSetTable:
       finally statement.close()
     }.flatMap { problemSet =>
       val sanitizedPolicy = sanitizePolicy(ownerUsername, request.accessPolicy)
-      ResourceViewerGrantTable
-        .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), sanitizedPolicy.viewerGrants)
+      ResourceAccessGrantTable
+        .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
+        .flatMap(_ =>
+          ResourceAccessGrantTable.replaceForResource(
+            connection,
+            ResourceKind.ProblemSet,
+            toResourceId(problemSet.id),
+            GrantRole.Manager,
+            sanitizedPolicy.managerGrants
+          )
+        )
         .as(problemSet.copy(accessPolicy = sanitizedPolicy))
     }
 
@@ -399,7 +414,9 @@ object ProblemSetTable:
         statement.executeUpdate()
         ()
       finally statement.close()
-    } *> ResourceViewerGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), request.accessPolicy.viewerGrants)
+    } *>
+      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Viewer, request.accessPolicy.viewerGrants) *>
+      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Manager, request.accessPolicy.managerGrants)
 
   def delete(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
     IO.blocking {
@@ -451,7 +468,7 @@ object ProblemSetTable:
       title = parseColumn("problem_sets.title", resultSet.getString("title"), ProblemSetTitle.parse),
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -465,7 +482,7 @@ object ProblemSetTable:
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       problems = Nil,
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -516,12 +533,22 @@ object ProblemSetTable:
     pageSize.foreach(statement.setInt(5, _))
     offset.foreach(statement.setInt(6, _))
 
-  private def policyFrom(baseAccess: BaseAccess, grants: List[domains.shared.access.ResourceViewerGrant]): ResourceAccessPolicy =
-    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = grants.map(_.subject))
+  private def policyFrom(
+    baseAccess: BaseAccess,
+    viewerGrants: List[ResourceAccessGrant],
+    managerGrants: List[ResourceAccessGrant]
+  ): ResourceAccessPolicy =
+    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = viewerGrants.map(_.subject), managerGrants = managerGrants.map(_.subject))
 
   private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
       viewerGrants = policy.viewerGrants
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+        .filter {
+          case AccessSubject.User(username) => username.value != ownerUsername.value
+          case AccessSubject.UserGroup(_) => true
+        },
+      managerGrants = policy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
         .filter {
           case AccessSubject.User(username) => username.value != ownerUsername.value

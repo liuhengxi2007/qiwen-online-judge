@@ -23,6 +23,7 @@ export type ProblemDetail = {
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
   creatorUsername: string
+  canManage: boolean
   createdAt: string
   updatedAt: string
 }

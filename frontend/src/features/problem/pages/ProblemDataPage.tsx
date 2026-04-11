@@ -38,11 +38,11 @@ export function ProblemDataPage() {
     return <Navigate replace to="/problems" />
   }
 
-  if (!(user.siteManager || user.problemManager)) {
+  const model = useProblemDataPageModel(slugResult.value)
+
+  if (!model.isProblemLoading && model.problem && !model.problem.canManage) {
     return <Navigate replace to={`/problems/${problemSlugValue(slugResult.value)}`} />
   }
-
-  const model = useProblemDataPageModel(slugResult.value)
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">

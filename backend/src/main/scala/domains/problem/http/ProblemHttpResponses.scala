@@ -85,6 +85,15 @@ object ProblemHttpResponses:
       case ProblemCommands.ListProblemDataResult.Listed(response) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
+  def mapAuthorizeDownloadResult(result: ProblemCommands.AuthorizeProblemDataDownloadResult): IO[Response[IO]] =
+    result match
+      case ProblemCommands.AuthorizeProblemDataDownloadResult.Forbidden =>
+        errorResponse(Status.Forbidden, "Problem manager permission required.")
+      case ProblemCommands.AuthorizeProblemDataDownloadResult.ProblemNotFound =>
+        errorResponse(Status.NotFound, "Problem not found.")
+      case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
+        IO.pure(Response[IO](status = Status.Ok))
+
   def mapDeleteDataResult(result: ProblemCommands.DeleteProblemDataResult): IO[Response[IO]] =
     result match
       case ProblemCommands.DeleteProblemDataResult.Forbidden =>

@@ -155,7 +155,9 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     activeRemovingProblemSlug: removeAction.activeRemovingProblemSlug,
     title: editor.title,
     description: editor.description,
-    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : { baseAccess: editor.baseAccess, viewerGrants: [] },
+    accessPolicy: accessPolicyResult.ok
+      ? accessPolicyResult.value
+      : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] },
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,

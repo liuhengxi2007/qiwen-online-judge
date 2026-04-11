@@ -15,6 +15,7 @@ export type AccessSubject = UserAccessSubject | UserGroupAccessSubject
 export type ResourceAccessPolicy = {
   baseAccess: BaseAccess
   viewerGrants: AccessSubject[]
+  managerGrants: AccessSubject[]
 }
 
 export type ErrorResponse = {

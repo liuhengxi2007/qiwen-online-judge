@@ -1,7 +1,12 @@
 import { useEffect, useReducer } from 'react'
 
 import type { ProblemDetail } from '@/features/problem/domain/problem'
-import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
+import {
+  grantedGroupsInputFromAccessPolicy,
+  grantedManagerGroupsInputFromAccessPolicy,
+  grantedManagerUsersInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+} from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemEditorState = {
@@ -12,6 +17,8 @@ type ProblemEditorState = {
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
+  managerUsersInput: string
+  managerGroupsInput: string
 }
 
 type ProblemEditorAction =
@@ -23,6 +30,8 @@ type ProblemEditorAction =
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
+  | { type: 'set_manager_users_input'; value: string }
+  | { type: 'set_manager_groups_input'; value: string }
 
 const initialState: ProblemEditorState = {
   title: '',
@@ -32,6 +41,8 @@ const initialState: ProblemEditorState = {
   baseAccess: 'owner_only',
   grantedUsersInput: '',
   grantedGroupsInput: '',
+  managerUsersInput: '',
+  managerGroupsInput: '',
 }
 
 function reducer(state: ProblemEditorState, action: ProblemEditorAction): ProblemEditorState {
@@ -46,6 +57,8 @@ function reducer(state: ProblemEditorState, action: ProblemEditorAction): Proble
             baseAccess: action.problem.accessPolicy.baseAccess,
             grantedUsersInput: grantedUsersInputFromAccessPolicy(action.problem.accessPolicy),
             grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problem.accessPolicy),
+            managerUsersInput: grantedManagerUsersInputFromAccessPolicy(action.problem.accessPolicy),
+            managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(action.problem.accessPolicy),
           }
         : initialState
     case 'set_title':
@@ -62,6 +75,10 @@ function reducer(state: ProblemEditorState, action: ProblemEditorAction): Proble
       return { ...state, grantedUsersInput: action.value }
     case 'set_granted_groups_input':
       return { ...state, grantedGroupsInput: action.value }
+    case 'set_manager_users_input':
+      return { ...state, managerUsersInput: action.value }
+    case 'set_manager_groups_input':
+      return { ...state, managerGroupsInput: action.value }
   }
 }
 
@@ -81,5 +98,7 @@ export function useProblemEditorState(problem: ProblemDetail | null) {
     setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
     setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
+    setManagerUsersInput: (value: string) => dispatch({ type: 'set_manager_users_input', value }),
+    setManagerGroupsInput: (value: string) => dispatch({ type: 'set_manager_groups_input', value }),
   }
 }

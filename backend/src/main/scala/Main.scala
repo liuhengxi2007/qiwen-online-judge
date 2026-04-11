@@ -12,7 +12,7 @@ import domains.judge.application.JudgeConfig
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.ResourceViewerGrantTable
+import domains.shared.access.ResourceAccessGrantTable
 import domains.submission.table.SubmissionTable
 import domains.judger.table.JudgerTable
 import domains.usergroup.table.UserGroupTable
@@ -45,7 +45,7 @@ object Main extends IOApp.Simple:
             _ <- SubmissionTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
-            _ <- ResourceViewerGrantTable.initialize(connection)
+            _ <- ResourceAccessGrantTable.initialize(connection)
           yield ()
         }
       }

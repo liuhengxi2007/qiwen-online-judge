@@ -46,6 +46,7 @@ export type ProblemDetail = {
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
   creatorUsername: Username
+  canManage: boolean
   createdAt: string
   updatedAt: string
 }
@@ -242,6 +243,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
     creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem detail creator username'),
+    canManage: problem.canManage,
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
   }

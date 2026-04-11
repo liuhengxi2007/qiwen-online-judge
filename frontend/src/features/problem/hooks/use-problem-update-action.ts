@@ -18,6 +18,8 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
       baseAccess: BaseAccess
       grantedUsersInput: string
       grantedGroupsInput: string
+      managerUsersInput: string
+      managerGroupsInput: string
     }): Promise<{ ok: true; problem: ProblemDetail; message: string } | { ok: false; message: string }> => {
       const validation = validateProblemUpdateDraft(draft)
       if (!validation.ok) {
