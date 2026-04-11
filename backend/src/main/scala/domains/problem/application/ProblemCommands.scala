@@ -101,7 +101,7 @@ object ProblemCommands:
                   IO.pure(CreateProblemResult.ValidationFailed(message))
                 case CreateProblemDecision.Create =>
                   ProblemTable
-                    .insert(connection, actor.username, sanitizePolicy(actor.username, validRequest))
+                    .insert(connection, actor.username, sanitizePolicy(validRequest))
                     .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
             yield result
           }
@@ -149,7 +149,7 @@ object ProblemCommands:
                         IO.pure(UpdateProblemResult.ValidationFailed(message))
                       case None =>
                         ProblemTable
-                          .update(connection, problem.id, sanitizePolicy(problem.creatorUsername, validRequest))
+                          .update(connection, problem.id, sanitizePolicy(validRequest))
                           .flatMap(_ =>
                             ProblemTable
                               .findBySlug(connection, problem.slug)
@@ -423,20 +423,13 @@ object ProblemCommands:
       }
     }
 
-  private def sanitizePolicy(
-    ownerUsername: domains.auth.model.Username,
-    request: CreateProblemRequest
-  ): CreateProblemRequest =
-    request.copy(accessPolicy = sanitizePolicy(ownerUsername, request.accessPolicy))
+  private def sanitizePolicy(request: CreateProblemRequest): CreateProblemRequest =
+    request.copy(accessPolicy = sanitizePolicy(request.accessPolicy))
+
+  private def sanitizePolicy(request: UpdateProblemRequest): UpdateProblemRequest =
+    request.copy(accessPolicy = sanitizePolicy(request.accessPolicy))
 
   private def sanitizePolicy(
-    ownerUsername: domains.auth.model.Username,
-    request: UpdateProblemRequest
-  ): UpdateProblemRequest =
-    request.copy(accessPolicy = sanitizePolicy(ownerUsername, request.accessPolicy))
-
-  private def sanitizePolicy(
-    ownerUsername: domains.auth.model.Username,
     accessPolicy: ResourceAccessPolicy
   ): ResourceAccessPolicy =
     accessPolicy.copy(

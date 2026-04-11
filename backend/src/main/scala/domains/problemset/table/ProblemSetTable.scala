@@ -324,7 +324,7 @@ object ProblemSetTable:
         IO.pure(None)
     }
 
-  def insert(connection: Connection, ownerUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
+  def insert(connection: Connection, creatorUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
@@ -335,7 +335,7 @@ object ProblemSetTable:
         statement.setString(4, request.description.value)
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(7, ownerUsername.value)
+        statement.setString(7, creatorUsername.value)
         statement.setTimestamp(8, Timestamp.from(now))
         statement.setTimestamp(9, Timestamp.from(now))
         val resultSet = statement.executeQuery()
@@ -345,7 +345,7 @@ object ProblemSetTable:
         finally resultSet.close()
       finally statement.close()
     }.flatMap { problemSet =>
-      val sanitizedPolicy = sanitizePolicy(ownerUsername, request.accessPolicy)
+      val sanitizedPolicy = sanitizePolicy(request.accessPolicy)
       ResourceAccessGrantTable
         .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
         .flatMap(_ =>
@@ -537,7 +537,7 @@ object ProblemSetTable:
   ): ResourceAccessPolicy =
     ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = viewerGrants.map(_.subject), managerGrants = managerGrants.map(_.subject))
 
-  private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
+  private def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
       viewerGrants = policy.viewerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
       managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
