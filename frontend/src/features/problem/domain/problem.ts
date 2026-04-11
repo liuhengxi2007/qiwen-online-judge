@@ -22,6 +22,7 @@ export type ProblemStatementText = Brand<string, 'ProblemStatementText'>
 export type ProblemDataFilename = Brand<string, 'ProblemDataFilename'>
 export type ProblemTimeLimitMs = Brand<number, 'ProblemTimeLimitMs'>
 export type ProblemSpaceLimitMb = Brand<number, 'ProblemSpaceLimitMb'>
+export type OthersSubmissionAccess = CreateProblemRequestContract['othersSubmissionAccess']
 
 export type ProblemSummary = {
   id: ProblemId
@@ -31,6 +32,7 @@ export type ProblemSummary = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
   creatorUsername: Username
   createdAt: string
   updatedAt: string
@@ -45,6 +47,7 @@ export type ProblemDetail = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
   creatorUsername: Username
   canManage: boolean
   createdAt: string
@@ -58,6 +61,7 @@ export type CreateProblemRequest = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 export type UpdateProblemRequest = {
@@ -66,6 +70,7 @@ export type UpdateProblemRequest = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 export type UpdateProblemDataRequest = {
@@ -226,6 +231,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
+    othersSubmissionAccess: problem.othersSubmissionAccess,
     creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem summary creator username'),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
@@ -242,6 +248,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
+    othersSubmissionAccess: problem.othersSubmissionAccess,
     creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem detail creator username'),
     canManage: problem.canManage,
     createdAt: problem.createdAt,
@@ -266,6 +273,7 @@ export function toCreateProblemRequestContract(request: CreateProblemRequest): C
       timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
       spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
       accessPolicy: request.accessPolicy,
+      othersSubmissionAccess: request.othersSubmissionAccess,
   }
 }
 
@@ -276,5 +284,6 @@ export function toUpdateProblemRequestContract(request: UpdateProblemRequest): U
       timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
       spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
       accessPolicy: request.accessPolicy,
+      othersSubmissionAccess: request.othersSubmissionAccess,
   }
 }

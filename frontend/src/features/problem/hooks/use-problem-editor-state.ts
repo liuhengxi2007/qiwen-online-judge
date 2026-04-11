@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import type { ProblemDetail } from '@/features/problem/domain/problem'
+import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedManagerGroupsInputFromAccessPolicy,
@@ -19,6 +19,7 @@ type ProblemEditorState = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 type ProblemEditorAction =
@@ -32,6 +33,7 @@ type ProblemEditorAction =
   | { type: 'set_granted_groups_input'; value: string }
   | { type: 'set_manager_users_input'; value: string }
   | { type: 'set_manager_groups_input'; value: string }
+  | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
 
 const initialState: ProblemEditorState = {
   title: '',
@@ -43,6 +45,7 @@ const initialState: ProblemEditorState = {
   grantedGroupsInput: '',
   managerUsersInput: '',
   managerGroupsInput: '',
+  othersSubmissionAccess: 'none',
 }
 
 function reducer(state: ProblemEditorState, action: ProblemEditorAction): ProblemEditorState {
@@ -59,6 +62,7 @@ function reducer(state: ProblemEditorState, action: ProblemEditorAction): Proble
             grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problem.accessPolicy),
             managerUsersInput: grantedManagerUsersInputFromAccessPolicy(action.problem.accessPolicy),
             managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(action.problem.accessPolicy),
+            othersSubmissionAccess: action.problem.othersSubmissionAccess,
           }
         : initialState
     case 'set_title':
@@ -79,6 +83,8 @@ function reducer(state: ProblemEditorState, action: ProblemEditorAction): Proble
       return { ...state, managerUsersInput: action.value }
     case 'set_manager_groups_input':
       return { ...state, managerGroupsInput: action.value }
+    case 'set_others_submission_access':
+      return { ...state, othersSubmissionAccess: action.value }
   }
 }
 
@@ -100,5 +106,6 @@ export function useProblemEditorState(problem: ProblemDetail | null) {
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
     setManagerUsersInput: (value: string) => dispatch({ type: 'set_manager_users_input', value }),
     setManagerGroupsInput: (value: string) => dispatch({ type: 'set_manager_groups_input', value }),
+    setOthersSubmissionAccess: (value: OthersSubmissionAccess) => dispatch({ type: 'set_others_submission_access', value }),
   }
 }

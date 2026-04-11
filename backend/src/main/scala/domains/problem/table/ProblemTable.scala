@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.PageResponse
 
@@ -23,6 +23,7 @@ object ProblemTable:
       |  time_limit_ms integer not null default 1000,
       |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
+      |  others_submission_access varchar(32) not null default 'none' check (others_submission_access in ('none', 'summary', 'detail')),
       |  creator_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
@@ -199,6 +200,38 @@ object ProblemTable:
       |alter column base_access set default 'owner_only'
       |""".stripMargin
 
+  val addOthersSubmissionAccessColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'others_submission_access'
+      |  ) then
+      |    alter table problems add column others_submission_access varchar(32);
+      |  end if;
+      |
+      |  update problems
+      |  set others_submission_access = 'none'
+      |  where others_submission_access is null or btrim(others_submission_access) = '';
+      |end $$;
+      |""".stripMargin
+
+  val setOthersSubmissionAccessNotNullSql: String =
+    """
+      |alter table problems
+      |alter column others_submission_access set not null
+      |""".stripMargin
+
+  val setOthersSubmissionAccessDefaultSql: String =
+    """
+      |alter table problems
+      |alter column others_submission_access set default 'none'
+      |""".stripMargin
+
   val dropStatusColumnSql: String =
     """
       |alter table problems
@@ -207,7 +240,7 @@ object ProblemTable:
 
   val listSql: String =
     """
-      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.creator_username, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, p.creator_username, p.created_at, p.updated_at
       |from problems p
       |where
       |  ? = true
@@ -327,22 +360,22 @@ object ProblemTable:
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, creator_username, created_at, updated_at
+      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, others_submission_access, creator_username, created_at, updated_at
       |from problems
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, creator_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, creator_username, created_at, updated_at
+      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, others_submission_access, creator_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, others_submission_access, creator_username, created_at, updated_at
       |""".stripMargin
 
   val updateSql: String =
     """
       |update problems
-      |set title = ?, statement_text = ?, time_limit_ms = ?, space_limit_mb = ?, visibility = ?, base_access = ?, updated_at = ?
+      |set title = ?, statement_text = ?, time_limit_ms = ?, space_limit_mb = ?, visibility = ?, base_access = ?, others_submission_access = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -370,6 +403,9 @@ object ProblemTable:
         statement.execute(addDataAndLimitColumnsSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
+        statement.execute(addOthersSubmissionAccessColumnSql)
+        statement.execute(setOthersSubmissionAccessDefaultSql)
+        statement.execute(setOthersSubmissionAccessNotNullSql)
         statement.execute(setTimeLimitDefaultSql)
         statement.execute(setTimeLimitNotNullSql)
         statement.execute(setSpaceLimitDefaultSql)
@@ -461,9 +497,10 @@ object ProblemTable:
         statement.setInt(8, request.spaceLimitMb.value)
         statement.setString(9, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(10, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(11, creatorUsername.value)
-        statement.setTimestamp(12, Timestamp.from(now))
+        statement.setString(11, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
+        statement.setString(12, creatorUsername.value)
         statement.setTimestamp(13, Timestamp.from(now))
+        statement.setTimestamp(14, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
@@ -498,8 +535,9 @@ object ProblemTable:
         statement.setInt(4, request.spaceLimitMb.value)
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setTimestamp(7, Timestamp.from(now))
-        statement.setObject(8, problemId.value)
+        statement.setString(7, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
+        statement.setTimestamp(8, Timestamp.from(now))
+        statement.setObject(9, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -546,6 +584,8 @@ object ProblemTable:
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+      othersSubmissionAccess =
+        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -562,6 +602,8 @@ object ProblemTable:
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+      othersSubmissionAccess =
+        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
       creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       canManage = false,
       createdAt = resultSet.getTimestamp("created_at").toInstant,

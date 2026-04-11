@@ -1,5 +1,7 @@
 import type { PageResponse, ResourceAccessPolicy } from './shared'
 
+export type OthersSubmissionAccess = 'none' | 'summary' | 'detail'
+
 export type ProblemSummary = {
   id: string
   slug: string
@@ -8,6 +10,7 @@ export type ProblemSummary = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
   creatorUsername: string
   createdAt: string
   updatedAt: string
@@ -22,6 +25,7 @@ export type ProblemDetail = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
   creatorUsername: string
   canManage: boolean
   createdAt: string
@@ -35,6 +39,7 @@ export type CreateProblemRequest = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 export type UpdateProblemRequest = {
@@ -43,6 +48,7 @@ export type UpdateProblemRequest = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 export type UpdateProblemDataRequest = {

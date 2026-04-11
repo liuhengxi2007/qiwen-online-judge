@@ -1,4 +1,4 @@
-import type { CreateProblemRequest, UpdateProblemRequest } from '@/features/problem/domain/problem'
+import type { CreateProblemRequest, OthersSubmissionAccess, UpdateProblemRequest } from '@/features/problem/domain/problem'
 import {
   parseProblemSlug,
   parseProblemStatementText,
@@ -20,6 +20,7 @@ type ProblemDraft = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 type ProblemDraftValidation =
@@ -72,6 +73,7 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
       timeLimitMs: timeLimitResult.value,
       spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
+      othersSubmissionAccess: draft.othersSubmissionAccess,
     },
   }
 }
@@ -86,6 +88,7 @@ export type UpdateProblemDraft = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
+  othersSubmissionAccess: OthersSubmissionAccess
 }
 
 export function validateProblemUpdateDraft(
@@ -130,6 +133,7 @@ export function validateProblemUpdateDraft(
       timeLimitMs: timeLimitResult.value,
       spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
+      othersSubmissionAccess: draft.othersSubmissionAccess,
     },
   }
 }

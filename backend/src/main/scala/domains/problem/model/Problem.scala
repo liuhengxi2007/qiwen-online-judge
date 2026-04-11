@@ -107,6 +107,35 @@ object ProblemSpaceLimitMb:
   given Encoder[ProblemSpaceLimitMb] = Encoder.encodeInt.contramap(_.value)
   given Decoder[ProblemSpaceLimitMb] = Decoder.decodeInt.emap(parse)
 
+enum OthersSubmissionAccess:
+  case None
+  case Summary
+  case Detail
+
+object OthersSubmissionAccess:
+  def parse(raw: String): Either[String, OthersSubmissionAccess] =
+    raw.trim match
+      case "none" => Right(OthersSubmissionAccess.None)
+      case "summary" => Right(OthersSubmissionAccess.Summary)
+      case "detail" => Right(OthersSubmissionAccess.Detail)
+      case _ => Left("Other-user submission access must be one of: none, summary, detail.")
+
+  def fromDatabase(value: String): Option[OthersSubmissionAccess] =
+    value match
+      case "none" => scala.Some(OthersSubmissionAccess.None)
+      case "summary" => scala.Some(OthersSubmissionAccess.Summary)
+      case "detail" => scala.Some(OthersSubmissionAccess.Detail)
+      case _ => scala.None
+
+  def toDatabase(value: OthersSubmissionAccess): String =
+    value match
+      case OthersSubmissionAccess.None => "none"
+      case OthersSubmissionAccess.Summary => "summary"
+      case OthersSubmissionAccess.Detail => "detail"
+
+  given Encoder[OthersSubmissionAccess] = Encoder.encodeString.contramap(toDatabase)
+  given Decoder[OthersSubmissionAccess] = Decoder.decodeString.emap(parse)
+
 final case class ProblemSummary(
   id: ProblemId,
   slug: ProblemSlug,
@@ -115,6 +144,7 @@ final case class ProblemSummary(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
+  othersSubmissionAccess: OthersSubmissionAccess,
   creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
@@ -129,6 +159,7 @@ final case class ProblemDetail(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
+  othersSubmissionAccess: OthersSubmissionAccess,
   creatorUsername: domains.auth.model.Username,
   canManage: Boolean,
   createdAt: Instant,
@@ -141,7 +172,8 @@ final case class CreateProblemRequest(
   statement: ProblemStatementText,
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicy,
+  othersSubmissionAccess: OthersSubmissionAccess
 )
 
 object CreateProblemRequest:
@@ -153,7 +185,8 @@ final case class UpdateProblemRequest(
   statement: ProblemStatementText,
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicy,
+  othersSubmissionAccess: OthersSubmissionAccess
 )
 
 object UpdateProblemRequest:

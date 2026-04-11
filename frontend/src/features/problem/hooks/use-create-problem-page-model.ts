@@ -2,6 +2,7 @@ import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblem } from '@/features/problem/api/problem-client'
+import type { OthersSubmissionAccess } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
@@ -18,6 +19,7 @@ type CreateProblemPageState = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
+  othersSubmissionAccess: OthersSubmissionAccess
   errorMessage: string
   successMessage: string
 }
@@ -33,6 +35,7 @@ type CreateProblemPageAction =
   | { type: 'set_granted_groups_input'; value: string }
   | { type: 'set_manager_users_input'; value: string }
   | { type: 'set_manager_groups_input'; value: string }
+  | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
   | { type: 'submit_started' }
   | { type: 'submit_succeeded' }
   | { type: 'submit_failed'; message: string }
@@ -49,6 +52,7 @@ const initialState: CreateProblemPageState = {
   grantedGroupsInput: '',
   managerUsersInput: '',
   managerGroupsInput: '',
+  othersSubmissionAccess: 'none',
   errorMessage: '',
   successMessage: '',
 }
@@ -75,6 +79,8 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
       return { ...state, managerUsersInput: action.value }
     case 'set_manager_groups_input':
       return { ...state, managerGroupsInput: action.value }
+    case 'set_others_submission_access':
+      return { ...state, othersSubmissionAccess: action.value }
     case 'submit_started':
       return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
     case 'submit_succeeded':
@@ -91,6 +97,7 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
         grantedGroupsInput: '',
         managerUsersInput: '',
         managerGroupsInput: '',
+        othersSubmissionAccess: 'none',
         errorMessage: '',
         successMessage: 'Problem created successfully.',
       }
@@ -126,6 +133,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
       grantedGroupsInput: state.grantedGroupsInput,
       managerUsersInput: state.managerUsersInput,
       managerGroupsInput: state.managerGroupsInput,
+      othersSubmissionAccess: state.othersSubmissionAccess,
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
@@ -141,7 +149,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
       const message = error instanceof HttpClientError ? error.message : 'Unable to create problem.'
       dispatch({ type: 'submit_failed', message })
     }
-  }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.managerGroupsInput, state.managerUsersInput, state.slug, state.spaceLimitMb, state.statement, state.timeLimitMs, state.title])
+  }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.managerGroupsInput, state.managerUsersInput, state.othersSubmissionAccess, state.slug, state.spaceLimitMb, state.statement, state.timeLimitMs, state.title])
 
   return {
     ...state,
@@ -156,6 +164,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
     setManagerUsersInput: (value: string) => dispatch({ type: 'set_manager_users_input', value }),
     setManagerGroupsInput: (value: string) => dispatch({ type: 'set_manager_groups_input', value }),
+    setOthersSubmissionAccess: (value: OthersSubmissionAccess) => dispatch({ type: 'set_others_submission_access', value }),
     submit,
   }
 }

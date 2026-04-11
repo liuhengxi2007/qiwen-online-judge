@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.auth.model.Username
-import domains.problem.model.ProblemDetail
+import domains.problem.model.{OthersSubmissionAccess, ProblemDetail}
 import domains.problem.table.ProblemTable
 import domains.shared.access.AccessPolicyEvaluator
 import domains.submission.model.{CreateSubmissionRequest, SubmissionDetail, SubmissionId, SubmissionSummary}
@@ -76,17 +76,47 @@ object SubmissionCommands:
     submissionId: SubmissionId
   ): IO[GetSubmissionResult] =
     databaseSession.withTransactionConnection { connection =>
-      SubmissionTable.findById(connection, submissionId).map {
+      SubmissionTable.findById(connection, submissionId).flatMap {
         case None =>
-          GetSubmissionResult.NotFound
-        case Some(submission) if SubmissionPolicy.canView(actor, submission.submitterUsername) =>
-          GetSubmissionResult.Found(submission)
-        case Some(_) =>
-          GetSubmissionResult.Forbidden
+          IO.pure(GetSubmissionResult.NotFound)
+        case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitterUsername) =>
+          IO.pure(GetSubmissionResult.Found(submission))
+        case Some(submission) =>
+          ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {
+            case None =>
+              IO.pure(GetSubmissionResult.NotFound)
+            case Some(problem) =>
+              canViewOthersSubmission(connection, actor, problem, OthersSubmissionAccess.Detail).map {
+                case true => GetSubmissionResult.Found(submission)
+                case false => GetSubmissionResult.Forbidden
+              }
+          }
       }
     }
 
   private def canSubmitToProblem(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problem: ProblemDetail
+  ): IO[Boolean] =
+    canViewProblem(connection, actor, problem)
+
+  private def canViewOthersSubmission(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problem: ProblemDetail,
+    minimumAccess: OthersSubmissionAccess
+  ): IO[Boolean] =
+    canViewProblem(connection, actor, problem).map {
+      case false => false
+      case true =>
+        minimumAccess match
+          case OthersSubmissionAccess.Detail => SubmissionPolicy.canViewDetailOfOthers(problem.othersSubmissionAccess)
+          case OthersSubmissionAccess.Summary => SubmissionPolicy.canViewSummaryOfOthers(problem.othersSubmissionAccess)
+          case OthersSubmissionAccess.None => true
+    }
+
+  private def canViewProblem(
     connection: java.sql.Connection,
     actor: AuthUser,
     problem: ProblemDetail

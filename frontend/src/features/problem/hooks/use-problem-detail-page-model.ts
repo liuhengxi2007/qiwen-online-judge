@@ -49,6 +49,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
       grantedGroupsInput: grantedGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
       managerUsersInput: grantedManagerUsersInputFromAccessPolicy(currentProblem.accessPolicy),
       managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
+      othersSubmissionAccess: currentProblem.othersSubmissionAccess,
     })
 
     if (result.ok) {
@@ -76,6 +77,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
       grantedGroupsInput: editor.grantedGroupsInput,
       managerUsersInput: editor.managerUsersInput,
       managerGroupsInput: editor.managerGroupsInput,
+      othersSubmissionAccess: editor.othersSubmissionAccess,
     })
 
     if (result.ok) {
@@ -118,6 +120,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     grantedGroupsInput: editor.grantedGroupsInput,
     managerUsersInput: editor.managerUsersInput,
     managerGroupsInput: editor.managerGroupsInput,
+    othersSubmissionAccess: editor.othersSubmissionAccess,
     contentErrorMessage: contentMessageState.errorMessage,
     contentSuccessMessage: contentMessageState.successMessage,
     accessErrorMessage: accessMessageState.errorMessage,
@@ -131,6 +134,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     setGrantedGroupsInput: editor.setGrantedGroupsInput,
     setManagerUsersInput: editor.setManagerUsersInput,
     setManagerGroupsInput: editor.setManagerGroupsInput,
+    setOthersSubmissionAccess: editor.setOthersSubmissionAccess,
     saveContent,
     saveAccess,
     deleteCurrentProblem,

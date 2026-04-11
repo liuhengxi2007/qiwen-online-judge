@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
@@ -17,6 +18,12 @@ import { ResourceAccessEditor } from '@/shared/components/resource-access-editor
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+
+const othersSubmissionAccessOptions = [
+  { value: 'none', label: 'Cannot view others', description: 'Other users can only access their own submissions.' },
+  { value: 'summary', label: 'List only', description: 'Other users can see submission list entries, but not open details.' },
+  { value: 'detail', label: 'Full detail', description: 'Other users can open full submission details.' },
+] as const
 
 export function CreateProblemPage() {
   usePageTitle('Qiwen Online Judge - Create Problem')
@@ -42,7 +49,8 @@ export function CreateProblemPage() {
     model.grantedUsersInput.trim().length > 0 ||
     model.grantedGroupsInput.trim().length > 0 ||
     model.managerUsersInput.trim().length > 0 ||
-    model.managerGroupsInput.trim().length > 0
+    model.managerGroupsInput.trim().length > 0 ||
+    model.othersSubmissionAccess !== 'none'
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -156,6 +164,24 @@ export function CreateProblemPage() {
               onGrantedManagerUsersInputChange={model.setManagerUsersInput}
               onGrantedManagerGroupsInputChange={model.setManagerGroupsInput}
             />
+            <div className="space-y-2">
+              <Label htmlFor="problem-others-submission-access">Other Users' Submission Access</Label>
+              <Select value={model.othersSubmissionAccess} onValueChange={model.setOthersSubmissionAccess}>
+                <SelectTrigger id="problem-others-submission-access" className="rounded-2xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {othersSubmissionAccessOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500">
+                {othersSubmissionAccessOptions.find((option) => option.value === model.othersSubmissionAccess)?.description}
+              </p>
+            </div>
 
             {model.errorMessage ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

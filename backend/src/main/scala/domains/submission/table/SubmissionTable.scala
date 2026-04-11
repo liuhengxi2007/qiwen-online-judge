@@ -206,56 +206,62 @@ object SubmissionTable:
       |  (? = false or s.submitter_username = ?)
       |  and (
       |    ? = true
-      |    or p.base_access = 'public'
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user'
-      |        and rag.subject_key = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      join user_groups ug on ug.slug = rag.subject_key
-      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user_group'
-      |        and ugm.username = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from problem_set_problems psp
-      |      join problem_sets ps on ps.id = psp.problem_set_id
-      |      where psp.problem_id = p.id
-      |        and (
-      |          ? = true
-      |          or ps.base_access = 'public'
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user'
-      |              and rag.subject_key = ?
-      |          )
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            join user_groups ug on ug.slug = rag.subject_key
-      |            join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user_group'
-      |              and ugm.username = ?
-      |          )
+      |    or s.submitter_username = ?
+      |    or (
+      |      p.others_submission_access in ('summary', 'detail')
+      |      and (
+      |        p.base_access = 'public'
+      |        or exists (
+      |          select 1
+      |          from resource_access_grants rag
+      |          where rag.resource_kind = 'problem'
+      |            and rag.resource_id = p.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user'
+      |            and rag.subject_key = ?
       |        )
+      |        or exists (
+      |          select 1
+      |          from resource_access_grants rag
+      |          join user_groups ug on ug.slug = rag.subject_key
+      |          join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |          where rag.resource_kind = 'problem'
+      |            and rag.resource_id = p.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user_group'
+      |            and ugm.username = ?
+      |        )
+      |        or exists (
+      |          select 1
+      |          from problem_set_problems psp
+      |          join problem_sets ps on ps.id = psp.problem_set_id
+      |          where psp.problem_id = p.id
+      |            and (
+      |              ? = true
+      |              or ps.base_access = 'public'
+      |              or exists (
+      |                select 1
+      |                from resource_access_grants rag
+      |                where rag.resource_kind = 'problem_set'
+      |                  and rag.resource_id = ps.id
+      |                  and rag.grant_role = 'viewer'
+      |                  and rag.subject_kind = 'user'
+      |                  and rag.subject_key = ?
+      |              )
+      |              or exists (
+      |                select 1
+      |                from resource_access_grants rag
+      |                join user_groups ug on ug.slug = rag.subject_key
+      |                join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |                where rag.resource_kind = 'problem_set'
+      |                  and rag.resource_id = ps.id
+      |                  and rag.grant_role = 'viewer'
+      |                  and rag.subject_kind = 'user_group'
+      |                  and ugm.username = ?
+      |              )
+      |            )
+      |        )
+      |      )
       |    )
       |  )
       |order by s.submitted_at desc, s.public_id desc
@@ -372,9 +378,10 @@ object SubmissionTable:
         statement.setBoolean(3, SubmissionPolicy.hasGlobalViewOverride(actor))
         statement.setString(4, actor.username.value)
         statement.setString(5, actor.username.value)
-        statement.setBoolean(6, SubmissionPolicy.hasGlobalViewOverride(actor))
-        statement.setString(7, actor.username.value)
+        statement.setString(6, actor.username.value)
+        statement.setBoolean(7, SubmissionPolicy.hasGlobalViewOverride(actor))
         statement.setString(8, actor.username.value)
+        statement.setString(9, actor.username.value)
         val resultSet = statement.executeQuery()
         try
           Iterator
