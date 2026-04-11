@@ -102,7 +102,7 @@ export function ProblemSetPage() {
                       {problemSetDescriptionValue(problemSet.description) || 'No description provided.'}
                     </p>
                     <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      Owner {usernameValue(problemSet.ownerUsername)}
+                      Created by {usernameValue(problemSet.creatorUsername)}
                     </p>
                   </div>
                 ))

@@ -13,7 +13,7 @@ export type ProblemSetSummary = {
   title: string
   description: string
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: string
+  creatorUsername: string
   createdAt: string
   updatedAt: string
 }
@@ -25,7 +25,7 @@ export type ProblemSetDetail = {
   description: string
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: string
+  creatorUsername: string
   createdAt: string
   updatedAt: string
 }

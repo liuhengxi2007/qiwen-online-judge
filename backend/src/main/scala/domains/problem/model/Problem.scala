@@ -115,7 +115,7 @@ final case class ProblemSummary(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
+  creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
 )
@@ -129,7 +129,7 @@ final case class ProblemDetail(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
+  creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
 )

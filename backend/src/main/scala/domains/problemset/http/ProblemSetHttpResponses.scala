@@ -24,7 +24,7 @@ object ProblemSetHttpResponses:
       description = problemSet.description,
       problems = problemSet.problems,
       accessPolicy = problemSet.accessPolicy,
-      ownerUsername = problemSet.ownerUsername,
+      creatorUsername = problemSet.creatorUsername,
       createdAt = problemSet.createdAt,
       updatedAt = problemSet.updatedAt
     )

@@ -88,7 +88,7 @@ export function ProblemSetDetailHeaderCard({
           )}
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          Owner {usernameValue(problemSet.ownerUsername)}
+          Created by {usernameValue(problemSet.creatorUsername)}
         </p>
       </CardContent>
     </Card>

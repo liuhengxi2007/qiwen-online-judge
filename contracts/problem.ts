@@ -8,7 +8,7 @@ export type ProblemSummary = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: string
+  creatorUsername: string
   createdAt: string
   updatedAt: string
 }
@@ -22,7 +22,7 @@ export type ProblemDetail = {
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: string
+  creatorUsername: string
   createdAt: string
   updatedAt: string
 }

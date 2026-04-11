@@ -45,7 +45,7 @@ export type ProblemSetSummary = {
   title: ProblemSetTitle
   description: ProblemSetDescription
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: Username
+  creatorUsername: Username
   createdAt: string
   updatedAt: string
 }
@@ -57,7 +57,7 @@ export type ProblemSetDetail = {
   description: ProblemSetDescription
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: Username
+  creatorUsername: Username
   createdAt: string
   updatedAt: string
 }
@@ -196,7 +196,7 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
       'problem set summary description',
     ),
     accessPolicy: problemSet.accessPolicy,
-    ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set summary owner username'),
+    creatorUsername: requireParsed(parseUsername(problemSet.creatorUsername), 'problem set summary creator username'),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
   }
@@ -213,7 +213,7 @@ export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContrac
     ),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
     accessPolicy: problemSet.accessPolicy,
-    ownerUsername: requireParsed(parseUsername(problemSet.ownerUsername), 'problem set detail owner username'),
+    creatorUsername: requireParsed(parseUsername(problemSet.creatorUsername), 'problem set detail creator username'),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
   }

@@ -63,7 +63,7 @@ final case class ProblemSetSummary(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
+  creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
 )
@@ -75,7 +75,7 @@ final case class ProblemSet(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
+  creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
 )
@@ -136,7 +136,7 @@ final case class ProblemSetDetail(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
-  ownerUsername: domains.auth.model.Username,
+  creatorUsername: domains.auth.model.Username,
   createdAt: Instant,
   updatedAt: Instant
 )

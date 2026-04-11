@@ -20,10 +20,32 @@ object ProblemSetTable:
       |  title varchar(120) not null,
       |  description text not null,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  owner_username varchar(120) not null references auth_users(username),
+      |  creator_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
+      |""".stripMargin
+
+  val migrateCreatorUsernameColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problem_sets'
+      |      and column_name = 'owner_username'
+      |  ) and not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problem_sets'
+      |      and column_name = 'creator_username'
+      |  ) then
+      |    alter table problem_sets rename column owner_username to creator_username;
+      |  end if;
+      |end $$;
       |""".stripMargin
 
   val initProblemRelationTableSql: String =
@@ -92,11 +114,11 @@ object ProblemSetTable:
 
   val listSql: String =
     """
-      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.owner_username, ps.created_at, ps.updated_at
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.creator_username, ps.created_at, ps.updated_at
       |from problem_sets ps
       |where
       |  ? = true
-      |  or ps.owner_username = ?
+      |  or ps.creator_username = ?
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
@@ -126,7 +148,7 @@ object ProblemSetTable:
       |from problem_sets ps
       |where
       |  ? = true
-      |  or ps.owner_username = ?
+      |  or ps.creator_username = ?
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
@@ -150,16 +172,16 @@ object ProblemSetTable:
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, description, base_access, owner_username, created_at, updated_at
+      |select id, slug, title, description, base_access, creator_username, created_at, updated_at
       |from problem_sets
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problem_sets (id, slug, title, description, visibility, base_access, owner_username, created_at, updated_at)
+      |insert into problem_sets (id, slug, title, description, visibility, base_access, creator_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, description, base_access, owner_username, created_at, updated_at
+      |returning id, slug, title, description, base_access, creator_username, created_at, updated_at
       |""".stripMargin
 
   val listProblemsForSetSql: String =
@@ -237,6 +259,7 @@ object ProblemSetTable:
       val statement = connection.createStatement()
       try
         statement.execute(initTableSql)
+        statement.execute(migrateCreatorUsernameColumnSql)
         statement.execute(addBaseAccessColumnSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
@@ -429,7 +452,7 @@ object ProblemSetTable:
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
+      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -443,7 +466,7 @@ object ProblemSetTable:
       problems = Nil,
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
+      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )

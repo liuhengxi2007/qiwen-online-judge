@@ -23,10 +23,32 @@ object ProblemTable:
       |  time_limit_ms integer not null default 1000,
       |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  owner_username varchar(120) not null references auth_users(username),
+      |  creator_username varchar(120) not null references auth_users(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
+      |""".stripMargin
+
+  val migrateCreatorUsernameColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'owner_username'
+      |  ) and not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'creator_username'
+      |  ) then
+      |    alter table problems rename column owner_username to creator_username;
+      |  end if;
+      |end $$;
       |""".stripMargin
 
   val addBaseAccessColumnSql: String =
@@ -185,11 +207,11 @@ object ProblemTable:
 
   val listSql: String =
     """
-      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.owner_username, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.creator_username, p.created_at, p.updated_at
       |from problems p
       |where
       |  ? = true
-      |  or p.owner_username = ?
+      |  or p.creator_username = ?
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
@@ -216,7 +238,7 @@ object ProblemTable:
       |    where psp.problem_id = p.id
       |      and (
       |        ? = true
-      |        or ps.owner_username = ?
+      |        or ps.creator_username = ?
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
@@ -248,7 +270,7 @@ object ProblemTable:
       |from problems p
       |where
       |  ? = true
-      |  or p.owner_username = ?
+      |  or p.creator_username = ?
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
@@ -275,7 +297,7 @@ object ProblemTable:
       |    where psp.problem_id = p.id
       |      and (
       |        ? = true
-      |        or ps.owner_username = ?
+      |        or ps.creator_username = ?
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
@@ -301,16 +323,16 @@ object ProblemTable:
 
   val findBySlugSql: String =
     """
-      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, owner_username, created_at, updated_at
+      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, creator_username, created_at, updated_at
       |from problems
       |where slug = ?
       |""".stripMargin
 
   val insertSql: String =
     """
-      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, owner_username, created_at, updated_at)
+      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, creator_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, owner_username, created_at, updated_at
+      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, creator_username, created_at, updated_at
       |""".stripMargin
 
   val updateSql: String =
@@ -338,6 +360,7 @@ object ProblemTable:
       val statement = connection.createStatement()
       try
         statement.execute(initTableSql)
+        statement.execute(migrateCreatorUsernameColumnSql)
         statement.execute(addVisibilityColumnSql)
         statement.execute(addBaseAccessColumnSql)
         statement.execute(addDataAndLimitColumnsSql)
@@ -507,7 +530,7 @@ object ProblemTable:
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
+      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -523,7 +546,7 @@ object ProblemTable:
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
+      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -568,7 +591,7 @@ object ProblemTable:
       |where psp.problem_id = ?
       |  and (
       |    ? = true
-      |    or ps.owner_username = ?
+      |    or ps.creator_username = ?
       |    or ps.base_access = 'public'
       |    or exists (
       |      select 1

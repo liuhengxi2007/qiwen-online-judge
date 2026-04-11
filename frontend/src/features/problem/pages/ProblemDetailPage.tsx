@@ -179,7 +179,7 @@ export function ProblemDetailPage() {
                   <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
                 </div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                  Owner {usernameValue(model.problem.ownerUsername)}
+                  Created by {usernameValue(model.problem.creatorUsername)}
                 </p>
               </CardContent>
             </Card>

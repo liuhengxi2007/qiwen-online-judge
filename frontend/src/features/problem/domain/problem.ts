@@ -31,7 +31,7 @@ export type ProblemSummary = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: Username
+  creatorUsername: Username
   createdAt: string
   updatedAt: string
 }
@@ -45,7 +45,7 @@ export type ProblemDetail = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  ownerUsername: Username
+  creatorUsername: Username
   createdAt: string
   updatedAt: string
 }
@@ -225,7 +225,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
-    ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem summary owner username'),
+    creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem summary creator username'),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
   }
@@ -241,7 +241,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
-    ownerUsername: requireParsed(parseUsername(problem.ownerUsername), 'problem detail owner username'),
+    creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem detail creator username'),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
   }

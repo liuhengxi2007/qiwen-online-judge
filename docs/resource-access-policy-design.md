@@ -258,8 +258,14 @@ Access to view a resource and access to edit its ACL are separate concerns.
 
 Recommended default:
 
-- owner can edit ACL
+- ACL edit rights should follow the domain's management policy
 - global override actors may edit ACL only if the existing product rules already allow them to manage the resource
+
+In this repository's current `problem` and `problemset` domains:
+
+- the resource stores a `creator` identity for attribution and baseline access evaluation
+- that `creator` field is not itself a management permission
+- create, update, delete, and ACL edits remain governed by manager permissions unless product rules change
 
 This document does not propose changing ownership semantics. It only replaces the visibility model.
 

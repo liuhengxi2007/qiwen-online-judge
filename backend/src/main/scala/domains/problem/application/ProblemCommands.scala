@@ -142,7 +142,7 @@ object ProblemCommands:
                   IO.pure(UpdateProblemResult.ValidationFailed(message))
                 case UpdateProblemDecision.Update(problem) =>
                   ProblemTable
-                    .update(connection, problem.id, sanitizePolicy(problem.ownerUsername, validRequest))
+                    .update(connection, problem.id, sanitizePolicy(problem.creatorUsername, validRequest))
                     .flatMap(_ =>
                       ProblemTable
                         .findBySlug(connection, problem.slug)
@@ -330,7 +330,7 @@ object ProblemCommands:
         policy = problem.accessPolicy,
         viewerUsername = actor.username,
         viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = problem.ownerUsername.value == actor.username.value,
+        isOwner = problem.creatorUsername.value == actor.username.value,
         hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
       )
 

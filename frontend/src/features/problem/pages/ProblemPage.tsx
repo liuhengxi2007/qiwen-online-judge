@@ -98,7 +98,7 @@ export function ProblemPage() {
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p>
                     <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      Owner {usernameValue(problem.ownerUsername)}
+                      Created by {usernameValue(problem.creatorUsername)}
                     </p>
                   </div>
                 ))

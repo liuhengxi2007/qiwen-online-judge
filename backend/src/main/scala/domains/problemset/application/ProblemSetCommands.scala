@@ -176,7 +176,7 @@ object ProblemSetCommands:
                   IO.pure(UpdateProblemSetResult.ValidationFailed(message))
                 case UpdateProblemSetDecision.Update(problemSet) =>
                   ProblemSetTable
-                    .update(connection, problemSet.id, sanitizePolicy(problemSet.ownerUsername, validRequest))
+                    .update(connection, problemSet.id, sanitizePolicy(problemSet.creatorUsername, validRequest))
                     .flatMap(_ =>
                       ProblemSetTable
                         .findBySlug(connection, problemSet.slug)
@@ -218,7 +218,7 @@ object ProblemSetCommands:
         policy = problemSet.accessPolicy,
         viewerUsername = actor.username,
         viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = problemSet.ownerUsername.value == actor.username.value,
+        isOwner = problemSet.creatorUsername.value == actor.username.value,
         hasGlobalOverride = ProblemSetPolicy.hasGlobalViewOverride(actor)
       )
     }
