@@ -96,7 +96,7 @@ object SubmissionCommands:
         policy = problem.accessPolicy,
         viewerUsername = actor.username,
         viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = problem.creatorUsername.value == actor.username.value,
+        isOwner = false,
         hasGlobalOverride = SubmissionPolicy.hasGlobalViewOverride(actor)
       )
 

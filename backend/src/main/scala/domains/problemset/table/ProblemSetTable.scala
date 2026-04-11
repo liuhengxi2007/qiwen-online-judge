@@ -118,7 +118,6 @@ object ProblemSetTable:
       |from problem_sets ps
       |where
       |  ? = true
-      |  or ps.creator_username = ?
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
@@ -150,7 +149,6 @@ object ProblemSetTable:
       |from problem_sets ps
       |where
       |  ? = true
-      |  or ps.creator_username = ?
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
@@ -529,9 +527,8 @@ object ProblemSetTable:
     statement.setBoolean(1, actor.siteManager || actor.problemManager)
     statement.setString(2, actor.username.value)
     statement.setString(3, actor.username.value)
-    statement.setString(4, actor.username.value)
-    pageSize.foreach(statement.setInt(5, _))
-    offset.foreach(statement.setInt(6, _))
+    pageSize.foreach(statement.setInt(4, _))
+    offset.foreach(statement.setInt(5, _))
 
   private def policyFrom(
     baseAccess: BaseAccess,
@@ -542,18 +539,8 @@ object ProblemSetTable:
 
   private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
-      viewerGrants = policy.viewerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        },
-      managerGrants = policy.managerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        }
+      viewerGrants = policy.viewerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
+      managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
     )
 
   private def toResourceId(problemSetId: ProblemSetId): ResourceId =

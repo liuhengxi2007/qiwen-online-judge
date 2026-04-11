@@ -211,7 +211,6 @@ object ProblemTable:
       |from problems p
       |where
       |  ? = true
-      |  or p.creator_username = ?
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
@@ -240,7 +239,6 @@ object ProblemTable:
       |    where psp.problem_id = p.id
       |      and (
       |        ? = true
-      |        or ps.creator_username = ?
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
@@ -274,7 +272,6 @@ object ProblemTable:
       |from problems p
       |where
       |  ? = true
-      |  or p.creator_username = ?
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
@@ -303,7 +300,6 @@ object ProblemTable:
       |    where psp.problem_id = p.id
       |      and (
       |        ? = true
-      |        or ps.creator_username = ?
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
@@ -596,13 +592,11 @@ object ProblemTable:
     statement.setBoolean(1, actor.siteManager || actor.problemManager)
     statement.setString(2, actor.username.value)
     statement.setString(3, actor.username.value)
-    statement.setString(4, actor.username.value)
-    statement.setBoolean(5, actor.siteManager || actor.problemManager)
+    statement.setBoolean(4, actor.siteManager || actor.problemManager)
+    statement.setString(5, actor.username.value)
     statement.setString(6, actor.username.value)
-    statement.setString(7, actor.username.value)
-    statement.setString(8, actor.username.value)
-    pageSize.foreach(statement.setInt(9, _))
-    offset.foreach(statement.setInt(10, _))
+    pageSize.foreach(statement.setInt(7, _))
+    offset.foreach(statement.setInt(8, _))
 
   private val hasVisibleContainingProblemSetSql: String =
     """
@@ -612,7 +606,6 @@ object ProblemTable:
       |where psp.problem_id = ?
       |  and (
       |    ? = true
-      |    or ps.creator_username = ?
       |    or ps.base_access = 'public'
       |    or exists (
       |      select 1
@@ -647,7 +640,6 @@ object ProblemTable:
     statement.setBoolean(2, actor.siteManager || actor.problemManager)
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)
-    statement.setString(5, actor.username.value)
 
   private def policyFrom(
     baseAccess: BaseAccess,
@@ -658,18 +650,8 @@ object ProblemTable:
 
   private def sanitizePolicy(ownerUsername: Username, policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
-      viewerGrants = policy.viewerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        },
-      managerGrants = policy.managerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        }
+      viewerGrants = policy.viewerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
+      managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
     )
 
   private def toResourceId(problemId: ProblemId): ResourceId =

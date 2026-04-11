@@ -42,7 +42,7 @@ export function resourceAccessSummary(accessPolicy: ResourceAccessPolicy): strin
     accessPolicy.baseAccess === 'public'
       ? 'Visible to all signed-in users.'
       : directUsers === 0 && userGroups === 0
-        ? 'Visible only to the creator and global managers.'
+        ? 'Visible only to explicitly granted viewers and global managers.'
         : `Shared with ${formatGrantSummary(userGroups, directUsers)}.`
 
   if (managerUsers === 0 && managerGroups === 0) {

@@ -368,7 +368,7 @@ object ProblemCommands:
         policy = problem.accessPolicy,
         viewerUsername = actor.username,
         viewerGroupSlugs = actorGroupSlugs,
-        isOwner = problem.creatorUsername.value == actor.username.value,
+        isOwner = false,
         hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
       )
       val canManage = AccessPolicyEvaluator.canManage(
@@ -441,15 +441,7 @@ object ProblemCommands:
   ): ResourceAccessPolicy =
     accessPolicy.copy(
       viewerGrants = accessPolicy.viewerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        },
+        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
       managerGrants = accessPolicy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-        .filter {
-          case AccessSubject.User(username) => username.value != ownerUsername.value
-          case AccessSubject.UserGroup(_) => true
-        }
     )

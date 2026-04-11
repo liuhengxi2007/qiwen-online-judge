@@ -206,7 +206,6 @@ object SubmissionTable:
       |  (? = false or s.submitter_username = ?)
       |  and (
       |    ? = true
-      |    or p.owner_username = ?
       |    or p.base_access = 'public'
       |    or exists (
       |      select 1
@@ -235,7 +234,6 @@ object SubmissionTable:
       |      where psp.problem_id = p.id
       |        and (
       |          ? = true
-      |          or ps.owner_username = ?
       |          or ps.base_access = 'public'
       |          or exists (
       |            select 1
@@ -374,11 +372,9 @@ object SubmissionTable:
         statement.setBoolean(3, SubmissionPolicy.hasGlobalViewOverride(actor))
         statement.setString(4, actor.username.value)
         statement.setString(5, actor.username.value)
-        statement.setString(6, actor.username.value)
-        statement.setBoolean(7, SubmissionPolicy.hasGlobalViewOverride(actor))
+        statement.setBoolean(6, SubmissionPolicy.hasGlobalViewOverride(actor))
+        statement.setString(7, actor.username.value)
         statement.setString(8, actor.username.value)
-        statement.setString(9, actor.username.value)
-        statement.setString(10, actor.username.value)
         val resultSet = statement.executeQuery()
         try
           Iterator
