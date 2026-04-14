@@ -11,88 +11,44 @@ import type {
   UpdateUserPermissionsRequest as UpdateUserPermissionsRequestContract,
 } from '@contracts/auth'
 import type { ErrorResponse as ErrorResponseContract } from '@contracts/shared'
+import type { AuthUserListItem } from '@/features/auth/model/AuthUserListItem'
+import type {
+  DisplayName,
+  EmailAddress,
+  PlaintextPassword,
+  Username,
+} from '@/features/auth/model/AuthValues'
+import type { LoginRequest } from '@/features/auth/model/LoginRequest'
+import type { LoginResponse } from '@/features/auth/model/LoginResponse'
+import type { RegisterRequest } from '@/features/auth/model/RegisterRequest'
+import type { RegisterResponse } from '@/features/auth/model/RegisterResponse'
+import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { UpdateManagedUserSettingsRequest } from '@/features/auth/model/UpdateManagedUserSettingsRequest'
+import type { UpdateOwnSettingsRequest } from '@/features/auth/model/UpdateOwnSettingsRequest'
+import type { UpdateUserPermissionsRequest } from '@/features/auth/model/UpdateUserPermissionsRequest'
+import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 
-type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
 type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
-export type Username = Brand<string, 'Username'>
-export type DisplayName = Brand<string, 'DisplayName'>
-export type EmailAddress = Brand<string, 'EmailAddress'>
-export type PlaintextPassword = Brand<string, 'PlaintextPassword'>
-
-export type AuthSession = {
-  displayName: DisplayName
-  username: Username
-  email: EmailAddress
-  siteManager: boolean
-  problemManager: boolean
-}
-
-export type SiteManagerSession = AuthSession & {
-  siteManager: true
-}
-
-export type ProblemManagerSession = AuthSession & {
-  problemManager: true
-}
-
-export type LoginRequest = {
-  username: Username
-  password: PlaintextPassword
-}
-
-export type LoginResponse = AuthSession & {
-  message: string
-}
-
-export type RegisterRequest = {
-  username: Username
-  displayName: DisplayName
-  email: EmailAddress
-  password: PlaintextPassword
-}
-
-export type RegisterResponse = LoginResponse
-export type SessionResponse = AuthSession
-
-export type AuthUserListItem = {
-  username: Username
-  displayName: DisplayName
-  email: EmailAddress
-  siteManager: boolean
-  problemManager: boolean
-}
-
-export type RegisteredJudgerListItem = {
-  judgerId: string
-  requestedPrefix: string
-  host: string
-  processId: string | null
-  supportedLanguages: string[]
-  registeredAt: string
-  lastHeartbeatAt: string
-}
-
 export type ErrorResponse = ErrorResponseContract
 
-export type UpdateUserPermissionsRequest = {
-  siteManager: boolean
-  problemManager: boolean
-}
-
-export type UpdateOwnSettingsRequest = {
-  displayName: DisplayName
-  email: EmailAddress
-  currentPassword: PlaintextPassword
-  newPassword: PlaintextPassword | null
-}
-
-export type UpdateManagedUserSettingsRequest = {
-  displayName: DisplayName
-  email: EmailAddress
-  newPassword: PlaintextPassword | null
+export type {
+  AuthUserListItem,
+  DisplayName,
+  EmailAddress,
+  LoginRequest,
+  LoginResponse,
+  PlaintextPassword,
+  RegisterRequest,
+  RegisterResponse,
+  RegisteredJudgerListItem,
+  SessionResponse,
+  UpdateManagedUserSettingsRequest,
+  UpdateOwnSettingsRequest,
+  UpdateUserPermissionsRequest,
+  Username,
 }
 
 const usernamePattern = /^[a-z0-9_-]+$/
@@ -200,7 +156,7 @@ export function parsePlaintextPassword(rawPassword: string): ParseResult<Plainte
 
 export function toAuthSession(
   response: Pick<LoginResponse, 'displayName' | 'username' | 'email' | 'siteManager' | 'problemManager'>,
-): AuthSession {
+): SessionResponse {
   return {
     displayName: response.displayName,
     username: response.username,
@@ -210,19 +166,23 @@ export function toAuthSession(
   }
 }
 
-export function asSiteManagerSession(session: AuthSession): SiteManagerSession | null {
+export function asSiteManagerSession(session: SessionResponse): (SessionResponse & { siteManager: true }) | null {
   return isSiteManagerSession(session) ? session : null
 }
 
-export function asProblemManagerSession(session: AuthSession): ProblemManagerSession | null {
+export function asProblemManagerSession(
+  session: SessionResponse,
+): (SessionResponse & { problemManager: true }) | null {
   return isProblemManagerSession(session) ? session : null
 }
 
-export function isSiteManagerSession(session: AuthSession): session is SiteManagerSession {
+export function isSiteManagerSession(session: SessionResponse): session is SessionResponse & { siteManager: true } {
   return session.siteManager
 }
 
-export function isProblemManagerSession(session: AuthSession): session is ProblemManagerSession {
+export function isProblemManagerSession(
+  session: SessionResponse,
+): session is SessionResponse & { problemManager: true } {
   return session.problemManager
 }
 

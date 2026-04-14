@@ -2,7 +2,6 @@ import type {
   AuthUserListItem,
   LoginRequest,
   LoginResponse,
-  RegisteredJudgerListItem,
   RegisterRequest,
   RegisterResponse,
   SessionResponse,
@@ -11,6 +10,7 @@ import type {
   UpdateUserPermissionsRequest,
   Username,
 } from '@/features/auth/domain/auth'
+import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 import {
   fromAuthUserListItemContract,
   fromLoginResponseContract,

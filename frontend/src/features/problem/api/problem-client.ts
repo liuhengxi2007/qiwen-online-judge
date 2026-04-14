@@ -1,7 +1,7 @@
 import type { SuccessResponse } from '@contracts/shared'
 import type {
   CreateProblemRequest,
-  ProblemDataFileList,
+  ProblemDataFileListResponse,
   ProblemDataFilename,
   ProblemDetail,
   ProblemListResponse,
@@ -54,7 +54,7 @@ export async function updateProblemData(
   )
 }
 
-export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileList> {
+export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileListResponse> {
   return requestJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data`,
     (value) => {
@@ -62,7 +62,7 @@ export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<Pr
         throw new Error('Invalid problem data file list payload.')
       }
 
-      return value.items.map((item: unknown, index: number) => {
+      const items = value.items.map((item: unknown, index: number) => {
         if (typeof item !== 'string') {
           throw new Error(`Invalid problem data filename at index ${index}: expected string.`)
         }
@@ -73,6 +73,8 @@ export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<Pr
         }
         return result.value
       })
+
+      return { items }
     },
   )
 }

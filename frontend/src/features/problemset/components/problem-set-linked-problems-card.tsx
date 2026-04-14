@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
 import {
-  problemSetProblemPositionValue,
   type ProblemSetProblemSummary,
 } from '@/features/problemset/domain/problemset'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -62,7 +61,7 @@ export function ProblemSetLinkedProblemsCard({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">#{problemSetProblemPositionValue(problem.position)}</Badge>
+                    <Badge variant="outline">#{problem.position}</Badge>
                     <Link
                       className="text-sm font-medium text-slate-900 hover:underline"
                       to={`/problems/${problemSlugValue(problem.slug)}`}

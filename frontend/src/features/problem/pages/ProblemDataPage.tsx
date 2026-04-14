@@ -93,7 +93,9 @@ export function ProblemDataPage() {
                 <div className="rounded-2xl bg-slate-50 px-5 py-4">
                   <p className="text-sm text-slate-500">{t('problem.data.latestFile')}</p>
                   <p className="mt-2 text-base font-medium text-slate-900">
-                    {model.problem.data ? problemDataFilenameValue(model.problem.data) : t('problem.data.noDataUploaded')}
+                    {model.problem.data.value
+                      ? problemDataFilenameValue(model.problem.data.value)
+                      : t('problem.data.noDataUploaded')}
                   </p>
                 </div>
               </div>

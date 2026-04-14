@@ -7,79 +7,44 @@ import type {
   ProblemSetSummary as ProblemSetSummaryContract,
   UpdateProblemSetRequest as UpdateProblemSetRequestContract,
 } from '@contracts/problemset'
-import type { Username } from '@/features/auth/domain/auth'
 import { parseUsername } from '@/features/auth/domain/auth'
 import {
   parseProblemId,
   parseProblemSlug,
   parseProblemTitle,
   problemSlugValue,
-  type ProblemId,
-  type ProblemSlug,
-  type ProblemTitle,
 } from '@/features/problem/domain/problem'
-import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
+import type {
+  AddProblemToProblemSetRequest,
+  ProblemSetDescription,
+  ProblemSetDetail,
+  ProblemSetId,
+  ProblemSetListResponse,
+  ProblemSetProblemSummary,
+  ProblemSetSlug,
+  ProblemSetSummary,
+  ProblemSetTitle,
+  UpdateProblemSetRequest,
+  CreateProblemSetRequest,
+} from '@/features/problemset/model/ProblemSet'
 
-type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
 type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
-export type ProblemSetId = Brand<string, 'ProblemSetId'>
-export type ProblemSetSlug = Brand<string, 'ProblemSetSlug'>
-export type ProblemSetTitle = Brand<string, 'ProblemSetTitle'>
-export type ProblemSetDescription = Brand<string, 'ProblemSetDescription'>
-export type ProblemSetProblemPosition = Brand<number, 'ProblemSetProblemPosition'>
-
-export type ProblemSetProblemSummary = {
-  id: ProblemId
-  slug: ProblemSlug
-  title: ProblemTitle
-  position: ProblemSetProblemPosition
+export type {
+  AddProblemToProblemSetRequest,
+  CreateProblemSetRequest,
+  ProblemSetDescription,
+  ProblemSetDetail,
+  ProblemSetId,
+  ProblemSetListResponse,
+  ProblemSetProblemSummary,
+  ProblemSetSlug,
+  ProblemSetSummary,
+  ProblemSetTitle,
+  UpdateProblemSetRequest,
 }
-
-export type ProblemSetSummary = {
-  id: ProblemSetId
-  slug: ProblemSetSlug
-  title: ProblemSetTitle
-  description: ProblemSetDescription
-  accessPolicy: ResourceAccessPolicy
-  creatorUsername: Username
-  createdAt: string
-  updatedAt: string
-}
-
-export type ProblemSetDetail = {
-  id: ProblemSetId
-  slug: ProblemSetSlug
-  title: ProblemSetTitle
-  description: ProblemSetDescription
-  problems: ProblemSetProblemSummary[]
-  accessPolicy: ResourceAccessPolicy
-  creatorUsername: Username
-  createdAt: string
-  updatedAt: string
-}
-
-export type CreateProblemSetRequest = {
-  slug: ProblemSetSlug
-  title: ProblemSetTitle
-  description: ProblemSetDescription
-  accessPolicy: ResourceAccessPolicy
-}
-
-export type UpdateProblemSetRequest = {
-  title: ProblemSetTitle
-  description: ProblemSetDescription
-  accessPolicy: ResourceAccessPolicy
-}
-
-export type AddProblemToProblemSetRequest = {
-  problemSlug: ProblemSlug
-}
-
-export type ProblemSetListResponse = PageResponse<ProblemSetSummary>
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -97,10 +62,6 @@ function createProblemSetTitle(value: string): ProblemSetTitle {
 
 function createProblemSetDescription(value: string): ProblemSetDescription {
   return value as ProblemSetDescription
-}
-
-function createProblemSetProblemPosition(value: number): ProblemSetProblemPosition {
-  return value as ProblemSetProblemPosition
 }
 
 function requireParsed<T>(result: ParseResult<T>, label: string): T {
@@ -121,10 +82,6 @@ export function problemSetTitleValue(title: ProblemSetTitle): string {
 
 export function problemSetDescriptionValue(description: ProblemSetDescription): string {
   return description
-}
-
-export function problemSetProblemPositionValue(position: ProblemSetProblemPosition): number {
-  return position
 }
 
 export function parseProblemSetId(rawId: string): ParseResult<ProblemSetId> {
@@ -168,11 +125,11 @@ export function parseProblemSetDescription(rawDescription: string): ParseResult<
   return { ok: true, value: createProblemSetDescription(normalized) }
 }
 
-export function parseProblemSetProblemPosition(rawPosition: number): ParseResult<ProblemSetProblemPosition> {
+export function parseProblemSetProblemPosition(rawPosition: number): ParseResult<number> {
   if (!Number.isInteger(rawPosition) || rawPosition <= 0) {
     return { ok: false, error: 'Problem set problem position must be a positive integer.' }
   }
-  return { ok: true, value: createProblemSetProblemPosition(rawPosition) }
+  return { ok: true, value: rawPosition }
 }
 
 export function fromProblemSetProblemSummaryContract(

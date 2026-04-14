@@ -2,7 +2,7 @@ package domains.auth.http
 
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
-import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, SessionResponse}
+import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse}
 import domains.shared.model.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
@@ -92,6 +92,16 @@ object AuthHttpResponses:
 
   def toLoginResponse(user: AuthUser, message: String): LoginResponse =
     LoginResponse(
+      displayName = user.displayName,
+      username = user.username,
+      email = user.email,
+      siteManager = user.siteManager,
+      problemManager = user.problemManager,
+      message = message
+    )
+
+  def toRegisterResponse(user: AuthUser, message: String): RegisterResponse =
+    RegisterResponse(
       displayName = user.displayName,
       username = user.username,
       email = user.email,

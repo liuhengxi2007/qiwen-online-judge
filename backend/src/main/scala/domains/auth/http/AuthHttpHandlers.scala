@@ -248,6 +248,6 @@ final class AuthHttpHandlers(
 
   private def loginCreatedUser(connection: java.sql.Connection, createdUser: AuthUser): IO[Response[IO]] =
     sessionStore.createSessionInConnection(connection, createdUser.username).flatMap { sessionToken =>
-      Created(AuthHttpResponses.toLoginResponse(createdUser, "Registration successful").asJson)
+      Created(AuthHttpResponses.toRegisterResponse(createdUser, "Registration successful").asJson)
         .map(_.addCookie(AuthHttpResponses.sessionCookie(sessionToken)))
     }

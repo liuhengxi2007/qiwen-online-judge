@@ -1,43 +1,13 @@
 package domains.judger.table
 
 import cats.effect.IO
+import domains.judger.model.RegisteredJudgerListItem
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
-import io.circe.Encoder
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
 object JudgerTable:
-
-  final case class RegisteredJudgerListItem(
-    judgerId: String,
-    requestedPrefix: String,
-    host: String,
-    processId: Option[String],
-    supportedLanguages: List[String],
-    registeredAt: Instant,
-    lastHeartbeatAt: Instant
-  )
-
-  given Encoder[RegisteredJudgerListItem] = Encoder.forProduct7(
-    "judgerId",
-    "requestedPrefix",
-    "host",
-    "processId",
-    "supportedLanguages",
-    "registeredAt",
-    "lastHeartbeatAt"
-  )(item =>
-    (
-      item.judgerId,
-      item.requestedPrefix,
-      item.host,
-      item.processId,
-      item.supportedLanguages,
-      item.registeredAt.toString,
-      item.lastHeartbeatAt.toString
-    )
-  )
 
   val initTableSql: String =
     """

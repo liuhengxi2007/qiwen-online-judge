@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { AuthClientError, listRegisteredJudgers, listUsers } from '@/features/auth/api/auth-client'
-import type { AuthUserListItem, RegisteredJudgerListItem } from '@/features/auth/domain/auth'
+import type { AuthUserListItem } from '@/features/auth/domain/auth'
+import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 

@@ -2,12 +2,12 @@ import {
   parseDisplayName,
   parseEmailAddress,
   parseUsername,
-  type AuthSession,
 } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/model/SessionResponse'
 
 const authUserStorageKey = 'auth_user'
 
-export function persistAuthSession(session: AuthSession): void {
+export function persistAuthSession(session: SessionResponse): void {
   window.localStorage.setItem(authUserStorageKey, JSON.stringify(session))
 }
 
@@ -15,7 +15,7 @@ export function clearAuthSession(): void {
   window.localStorage.removeItem(authUserStorageKey)
 }
 
-export function readAuthSession(): AuthSession | null {
+export function readAuthSession(): SessionResponse | null {
   const rawSession = window.localStorage.getItem(authUserStorageKey)
   if (!rawSession) {
     return null

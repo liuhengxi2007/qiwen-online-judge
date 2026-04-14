@@ -5,81 +5,48 @@ import type {
   ProblemSummary as ProblemSummaryContract,
   UpdateProblemRequest as UpdateProblemRequestContract,
 } from '@contracts/problem'
-import type { Username } from '@/features/auth/domain/auth'
 import { parseUsername } from '@/features/auth/domain/auth'
-import type { PageResponse } from '@/shared/domain/pagination'
-import type { ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
+import type {
+  CreateProblemRequest,
+  ProblemData,
+  OthersSubmissionAccess,
+  ProblemDataFileListResponse,
+  ProblemDataFilename,
+  ProblemDetail,
+  ProblemId,
+  ProblemListResponse,
+  ProblemSlug,
+  ProblemSpaceLimitMb,
+  ProblemStatementText,
+  ProblemSummary,
+  ProblemTimeLimitMs,
+  ProblemTitle,
+  UpdateProblemDataRequest,
+  UpdateProblemRequest,
+} from '@/features/problem/model/Problem'
 
-type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
 type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
-export type ProblemId = Brand<string, 'ProblemId'>
-export type ProblemSlug = Brand<string, 'ProblemSlug'>
-export type ProblemTitle = Brand<string, 'ProblemTitle'>
-export type ProblemStatementText = Brand<string, 'ProblemStatementText'>
-export type ProblemDataFilename = Brand<string, 'ProblemDataFilename'>
-export type ProblemTimeLimitMs = Brand<number, 'ProblemTimeLimitMs'>
-export type ProblemSpaceLimitMb = Brand<number, 'ProblemSpaceLimitMb'>
-export type OthersSubmissionAccess = CreateProblemRequestContract['othersSubmissionAccess']
-
-export type ProblemSummary = {
-  id: ProblemId
-  slug: ProblemSlug
-  title: ProblemTitle
-  data: ProblemDataFilename | null
-  timeLimitMs: ProblemTimeLimitMs
-  spaceLimitMb: ProblemSpaceLimitMb
-  accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
-  creatorUsername: Username
-  createdAt: string
-  updatedAt: string
+export type {
+  CreateProblemRequest,
+  ProblemData,
+  OthersSubmissionAccess,
+  ProblemDataFileListResponse,
+  ProblemDataFilename,
+  ProblemDetail,
+  ProblemId,
+  ProblemListResponse,
+  ProblemSlug,
+  ProblemSpaceLimitMb,
+  ProblemStatementText,
+  ProblemSummary,
+  ProblemTimeLimitMs,
+  ProblemTitle,
+  UpdateProblemDataRequest,
+  UpdateProblemRequest,
 }
-
-export type ProblemDetail = {
-  id: ProblemId
-  slug: ProblemSlug
-  title: ProblemTitle
-  statement: ProblemStatementText
-  data: ProblemDataFilename | null
-  timeLimitMs: ProblemTimeLimitMs
-  spaceLimitMb: ProblemSpaceLimitMb
-  accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
-  creatorUsername: Username
-  canManage: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export type CreateProblemRequest = {
-  slug: ProblemSlug
-  title: ProblemTitle
-  statement: ProblemStatementText
-  timeLimitMs: ProblemTimeLimitMs
-  spaceLimitMb: ProblemSpaceLimitMb
-  accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
-}
-
-export type UpdateProblemRequest = {
-  title: ProblemTitle
-  statement: ProblemStatementText
-  timeLimitMs: ProblemTimeLimitMs
-  spaceLimitMb: ProblemSpaceLimitMb
-  accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
-}
-
-export type UpdateProblemDataRequest = {
-  filename: ProblemDataFilename
-  contentBase64: string
-}
-
-export type ProblemListResponse = PageResponse<ProblemSummary>
-export type ProblemDataFileList = ProblemDataFilename[]
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -117,6 +84,12 @@ function requireParsed<T>(result: ParseResult<T>, label: string): T {
   }
 
   return result.value
+}
+
+function fromProblemDataContract(rawData: string | null, label: string): ProblemData {
+  return {
+    value: rawData === null ? null : requireParsed(parseProblemDataFilename(rawData), label),
+  }
 }
 
 export function problemIdValue(problemId: ProblemId): string {
@@ -227,7 +200,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     id: requireParsed(parseProblemId(problem.id), 'problem summary id'),
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem summary slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem summary title'),
-    data: problem.data === null ? null : requireParsed(parseProblemDataFilename(problem.data), 'problem summary data'),
+    data: fromProblemDataContract(problem.data, 'problem summary data'),
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
@@ -244,7 +217,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem detail slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem detail title'),
     statement: requireParsed(parseProblemStatementText(problem.statement), 'problem detail statement'),
-    data: problem.data === null ? null : requireParsed(parseProblemDataFilename(problem.data), 'problem detail data'),
+    data: fromProblemDataContract(problem.data, 'problem detail data'),
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,

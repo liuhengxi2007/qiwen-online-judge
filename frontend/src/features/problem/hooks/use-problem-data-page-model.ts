@@ -36,7 +36,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     setIsLoadingFiles(true)
     try {
       const files = await listProblemDataFiles(problemSlug)
-      setDataFiles(files)
+      setDataFiles(files.items)
       return { ok: true as const }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
@@ -84,7 +84,9 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       })
 
       replaceProblem(updatedProblem)
-      setSuccessMessage(`Uploaded ${updatedProblem.data ?? problemDataFilenameValue(filenameResult.value)} successfully.`)
+      setSuccessMessage(
+        `Uploaded ${updatedProblem.data.value ?? problemDataFilenameValue(filenameResult.value)} successfully.`,
+      )
       setSelectedFile(null)
       await loadFiles()
       return { ok: true }

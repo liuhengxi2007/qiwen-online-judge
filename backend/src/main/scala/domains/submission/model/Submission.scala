@@ -194,3 +194,5 @@ object SubmissionDetail:
 
   given Encoder[SubmissionDetail] = deriveEncoder[SubmissionDetail]
   given Decoder[SubmissionDetail] = deriveDecoder[SubmissionDetail]
+
+type SubmissionListResponse = List[SubmissionSummary]

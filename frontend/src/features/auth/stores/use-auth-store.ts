@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 
-import type { AuthSession } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/model/SessionResponse'
 import { clearAuthSession, persistAuthSession, readAuthSession } from '@/features/auth/lib/auth-storage'
 
 type AuthStore = {
-  session: AuthSession | null
-  setSession: (session: AuthSession | null) => void
+  session: SessionResponse | null
+  setSession: (session: SessionResponse | null) => void
   clearSession: () => void
 }
 
