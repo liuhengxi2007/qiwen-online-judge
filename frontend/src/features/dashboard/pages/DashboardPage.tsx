@@ -7,17 +7,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function DashboardPage() {
-  usePageTitle('Qiwen Online Judge')
+  const { t } = useI18n()
+  usePageTitle(t('dashboard.title'))
   const [searchParams] = useSearchParams()
   const { session: user, siteManagerSession, signOut, navigationIntent } = useSessionGuard()
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'site-manage-denied'
-      ? 'Site management is available only to accounts with the site manager permission.'
+      ? t('dashboard.notice.siteManageDenied')
       : notice === 'settings-route-corrected'
-        ? 'The settings route was corrected to match your signed-in username.'
+        ? t('dashboard.notice.settingsRouteCorrected')
         : null
 
   if (navigationIntent) {
@@ -33,11 +36,12 @@ export function DashboardPage() {
       <section className="mx-auto max-w-4xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="mt-2 font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              Welcome back, {displayNameValue(user.displayName)}
+              {t('dashboard.welcome', { displayName: displayNameValue(user.displayName) })}
             </h1>
           </div>
+          <AncestorNavigation />
         </div>
 
         {noticeMessage ? (
@@ -54,9 +58,9 @@ export function DashboardPage() {
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Qiwen Online Judge Console</CardTitle>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.console.title')}</CardTitle>
                   <CardDescription>
-                    Review your account at a glance and jump to the areas you use most.
+                    {t('dashboard.console.description')}
                   </CardDescription>
                 </div>
               </div>
@@ -69,19 +73,19 @@ export function DashboardPage() {
                 }}
               >
                 <LogOut className="size-4" />
-                Sign out
+                {t('dashboard.signOut')}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Display name</p>
+              <p className="text-sm text-slate-500">{t('dashboard.displayName')}</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">
                 {displayNameValue(user.displayName)}
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Username</p>
+              <p className="text-sm text-slate-500">{t('dashboard.username')}</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">{usernameValue(user.username)}</p>
             </div>
           </CardContent>

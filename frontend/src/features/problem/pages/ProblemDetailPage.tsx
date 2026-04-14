@@ -35,15 +35,16 @@ import {
 import { resourceAccessBadgeLabel, resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-
-const othersSubmissionAccessOptions = [
-  { value: 'none', label: 'Cannot view others', description: 'Other users can only access their own submissions.' },
-  { value: 'summary', label: 'List only', description: 'Other users can see submission list entries, but not open details.' },
-  { value: 'detail', label: 'Full detail', description: 'Other users can open full submission details.' },
-] as const
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function ProblemDetailPage() {
-  usePageTitle('Qiwen Online Judge - Problem Detail')
+  const { t } = useI18n()
+  const othersSubmissionAccessOptions = [
+    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
+    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
+    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
+  ] as const
+  usePageTitle(t('problem.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
@@ -90,10 +91,13 @@ export function ProblemDetailPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Problem Detail</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.detail.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', {
+                displayName: displayNameValue(user.displayName),
+                username: usernameValue(user.username),
+              })}
             </p>
           </div>
 
@@ -108,7 +112,7 @@ export function ProblemDetailPage() {
 
         {model.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading problem detail...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('problem.detail.loading')}</CardContent>
           </Card>
         ) : model.problem ? (
           <div className="space-y-6">
@@ -135,7 +139,7 @@ export function ProblemDetailPage() {
                     >
                       <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submit`}>
                         <Send className="size-4" />
-                        Submit code
+                        {t('problem.detail.submitCode')}
                       </Link>
                     </Button>
                     {canManageProblem ? (
@@ -147,7 +151,7 @@ export function ProblemDetailPage() {
                       >
                         <Link to={`/problems/${problemSlugValue(model.problem.slug)}/data`}>
                           <Database className="size-4" />
-                          Manage data
+                          {t('problem.detail.manageData')}
                         </Link>
                       </Button>
                       <Button
@@ -163,7 +167,7 @@ export function ProblemDetailPage() {
                         }}
                       >
                         <PencilLine className="size-4" />
-                        Edit problem
+                        {t('problem.detail.edit')}
                       </Button>
                       <Button
                         type="button"
@@ -178,7 +182,7 @@ export function ProblemDetailPage() {
                         }}
                       >
                         <ShieldCheck className="size-4" />
-                        Access management
+                        {t('problem.detail.accessManagement')}
                       </Button>
                       </>
                     ) : null}
@@ -193,7 +197,7 @@ export function ProblemDetailPage() {
                   <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
                 </div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                  Created by {usernameValue(model.problem.creatorUsername)}
+                  {t('problem.createdBy', { username: usernameValue(model.problem.creatorUsername) })}
                 </p>
               </CardContent>
             </Card>
@@ -219,27 +223,27 @@ export function ProblemDetailPage() {
               <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                 <PencilLine className="size-5" />
               </span>
-              Edit Problem
+              {t('problem.detail.editDialogTitle')}
             </DialogTitle>
             <DialogDescription className="text-sm leading-7 text-slate-600">
-              Update the problem content and manage destructive actions without leaving the detail page.
+              {t('problem.detail.editDialogDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 px-7 py-7 sm:px-8">
             <div className="space-y-2">
-              <Label htmlFor="problem-title">Title</Label>
+              <Label htmlFor="problem-title">{t('problem.create.titleLabel')}</Label>
               <Input id="problem-title" value={model.title} onChange={(event) => model.setTitle(event.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="problem-statement">Statement</Label>
+              <Label htmlFor="problem-statement">{t('problem.create.statement')}</Label>
               <Tabs value={statementTab} onValueChange={(value) => setStatementTab(value as 'write' | 'preview')}>
                 <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
                   <TabsTrigger value="write" className="rounded-xl">
-                    Write
+                    {t('common.write')}
                   </TabsTrigger>
                   <TabsTrigger value="preview" className="rounded-xl">
-                    Preview
+                    {t('common.preview')}
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="write" className="mt-3">
@@ -255,22 +259,16 @@ export function ProblemDetailPage() {
                     {deferredStatement.trim() ? (
                       <MarkdownDocument content={deferredStatement} />
                     ) : (
-                      <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                      <p className="text-sm text-slate-500">{t('common.nothingToPreview')}</p>
                     )}
                   </div>
                 </TabsContent>
               </Tabs>
-              <p className="text-xs text-slate-500">
-                Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
-                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
-                or
-                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
-                Raw HTML is ignored.
-              </p>
+              <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="problem-time-limit">Time limit (ms)</Label>
+                <Label htmlFor="problem-time-limit">{t('problem.detail.timeLimit')}</Label>
                 <Input
                   id="problem-time-limit"
                   type="number"
@@ -282,7 +280,7 @@ export function ProblemDetailPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="problem-space-limit">Space limit (MB)</Label>
+                <Label htmlFor="problem-space-limit">{t('problem.detail.spaceLimit')}</Label>
                 <Input
                   id="problem-space-limit"
                   type="number"
@@ -302,7 +300,7 @@ export function ProblemDetailPage() {
                 void model.saveContent()
               }}
             >
-              {model.isSaving ? 'Saving content...' : 'Save content'}
+              {model.isSaving ? t('problem.detail.savingContent') : t('problem.detail.saveContent')}
             </Button>
             {model.contentErrorMessage ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
@@ -321,17 +319,17 @@ export function ProblemDetailPage() {
                   <Trash2 className="size-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-rose-950">Delete Problem</h2>
+                  <h2 className="text-xl font-semibold text-rose-950">{t('problem.detail.deleteTitle')}</h2>
                   <p className="text-sm text-rose-900/80">
-                    This removes the problem and any existing problem set links to it.
+                    {t('problem.detail.deleteDescription')}
                   </p>
                 </div>
               </div>
               <div className="mt-5">
                 <ConfirmActionDialog
-                  title="Delete problem?"
-                  description="Delete this problem and remove it from all current problem sets. No problem set will be deleted. This action cannot be undone."
-                  confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete problem'}
+                  title={t('problem.detail.deleteConfirmTitle')}
+                  description={t('problem.detail.deleteConfirmDescription')}
+                  confirmLabel={model.isDeleting ? t('problem.detail.deletingAction') : t('problem.detail.deleteAction')}
                   destructive
                   onConfirm={() => {
                     void model.deleteCurrentProblem().then((deleted) => {
@@ -347,7 +345,7 @@ export function ProblemDetailPage() {
                       className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
                       disabled={model.isDeleting}
                     >
-                      {model.isDeleting ? 'Deleting...' : 'Delete problem'}
+                      {model.isDeleting ? t('problem.detail.deletingAction') : t('problem.detail.deleteAction')}
                     </Button>
                   }
                 />
@@ -374,10 +372,10 @@ export function ProblemDetailPage() {
               <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                 <ShieldCheck className="size-5" />
               </span>
-              Access Management
+              {t('problem.detail.accessDialogTitle')}
             </DialogTitle>
             <DialogDescription className="text-sm leading-7 text-slate-600">
-              Update who can view this problem and who can manage it.
+              {t('problem.detail.accessDialogDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -396,7 +394,7 @@ export function ProblemDetailPage() {
               onGrantedManagerGroupsInputChange={model.setManagerGroupsInput}
             />
             <div className="space-y-2">
-              <Label htmlFor="problem-others-submission-access">Other Users' Submission Access</Label>
+              <Label htmlFor="problem-others-submission-access">{t('problem.create.othersSubmissionAccess')}</Label>
               <Select value={model.othersSubmissionAccess} onValueChange={model.setOthersSubmissionAccess}>
                 <SelectTrigger id="problem-others-submission-access" className="rounded-2xl">
                   <SelectValue />
@@ -421,7 +419,7 @@ export function ProblemDetailPage() {
                 void model.saveAccess()
               }}
             >
-              {model.isSaving ? 'Saving access...' : 'Save access'}
+              {model.isSaving ? t('problem.detail.savingAccess') : t('problem.detail.saveAccess')}
             </Button>
             {model.accessErrorMessage ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

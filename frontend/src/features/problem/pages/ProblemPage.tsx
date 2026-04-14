@@ -15,9 +15,11 @@ import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-m
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function ProblemPage() {
-  usePageTitle('Qiwen Online Judge - Problems')
+  const { t } = useI18n()
+  usePageTitle(t('problem.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
 
   if (navigationIntent) {
@@ -36,10 +38,13 @@ export function ProblemPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Problems</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.list.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', {
+                displayName: displayNameValue(user.displayName),
+                username: usernameValue(user.username),
+              })}
             </p>
           </div>
 
@@ -61,9 +66,9 @@ export function ProblemPage() {
                     <LibraryBig className="size-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl text-slate-950">Current Problems</CardTitle>
+                    <CardTitle className="text-xl text-slate-950">{t('problem.list.cardTitle')}</CardTitle>
                     <CardDescription>
-                      Browse available problems and open each statement in its full formatted view.
+                      {t('problem.list.cardDescription')}
                     </CardDescription>
                   </div>
                 </div>
@@ -71,7 +76,7 @@ export function ProblemPage() {
                   <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                     <Link to="/problems/new">
                       <FilePlus2 className="size-4" />
-                      Create problem
+                      {t('problem.list.create')}
                     </Link>
                   </Button>
                 ) : null}
@@ -79,12 +84,12 @@ export function ProblemPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {model.isLoading ? (
-                <p className="text-sm text-slate-500">Loading problems...</p>
+                <p className="text-sm text-slate-500">{t('problem.list.loading')}</p>
               ) : model.problems.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-                  <p className="text-base font-medium text-slate-900">No problems yet.</p>
+                  <p className="text-base font-medium text-slate-900">{t('problem.list.emptyTitle')}</p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Create the first problem to start building your problem library.
+                    {t('problem.list.emptyDescription')}
                   </p>
                 </div>
               ) : (
@@ -98,7 +103,7 @@ export function ProblemPage() {
                     </div>
                     <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p>
                     <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      Created by {usernameValue(problem.creatorUsername)}
+                      {t('problem.createdBy', { username: usernameValue(problem.creatorUsername) })}
                     </p>
                   </div>
                 ))

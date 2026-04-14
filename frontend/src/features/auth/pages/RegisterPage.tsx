@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useRegisterModel } from '@/features/auth/hooks/use-register-model'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function RegisterPage() {
-  usePageTitle('Qiwen Online Judge - Register')
+  const { t } = useI18n()
+  usePageTitle(t('auth.register.pageTitle'))
   const {
     username,
     displayName,
@@ -49,20 +51,19 @@ export function RegisterPage() {
           <div className="space-y-6">
             <div className="max-w-xl space-y-4">
               <h1 className="font-['Georgia'] text-4xl leading-tight font-semibold tracking-tight text-slate-950 sm:text-5xl">
-                Create your Qiwen Online Judge account
+                {t('auth.register.heroTitle')}
               </h1>
               <p className="text-base leading-8 text-slate-600 sm:text-lg">
-                Register an administrator account with a unique username, display name, email,
-                and password.
+                {t('auth.register.heroDescription')}
               </p>
             </div>
           </div>
 
           <Card className="border-white/80 bg-white/82 py-0 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl">
             <CardHeader className="gap-3 border-b border-slate-200/80 px-7 py-7 sm:px-8">
-              <CardTitle className="text-2xl text-slate-950">Register</CardTitle>
+              <CardTitle className="text-2xl text-slate-950">{t('auth.register.cardTitle')}</CardTitle>
               <CardDescription className="text-sm text-slate-500">
-                Create a new administrator account in the backend database.
+                {t('auth.register.cardDescription')}
               </CardDescription>
             </CardHeader>
 
@@ -70,7 +71,7 @@ export function RegisterPage() {
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="register-username" className="text-slate-700">
-                    Username
+                    {t('auth.register.username')}
                   </Label>
                   <div className="relative">
                     <UserRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -80,7 +81,7 @@ export function RegisterPage() {
                       autoComplete="username"
                       value={username}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder="Enter a unique username"
+                      placeholder={t('auth.register.usernamePlaceholder')}
                       onChange={(event) => setUsername(event.target.value.toLowerCase())}
                     />
                   </div>
@@ -88,7 +89,7 @@ export function RegisterPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="register-display-name" className="text-slate-700">
-                    Display name
+                    {t('auth.register.displayName')}
                   </Label>
                   <div className="relative">
                     <IdCard className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -97,7 +98,7 @@ export function RegisterPage() {
                       type="text"
                       value={displayName}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder="Enter the display name"
+                      placeholder={t('auth.register.displayNamePlaceholder')}
                       onChange={(event) => setDisplayName(event.target.value)}
                     />
                   </div>
@@ -105,7 +106,7 @@ export function RegisterPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="register-email" className="text-slate-700">
-                    Email
+                    {t('auth.register.email')}
                   </Label>
                   <div className="relative">
                     <AtSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -115,7 +116,7 @@ export function RegisterPage() {
                       autoComplete="email"
                       value={email}
                       className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder="Enter your email"
+                      placeholder={t('auth.register.emailPlaceholder')}
                       onChange={(event) => setEmail(event.target.value)}
                     />
                   </div>
@@ -124,7 +125,7 @@ export function RegisterPage() {
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="register-password" className="text-slate-700">
-                      Password
+                      {t('auth.register.password')}
                     </Label>
                     <div className="relative">
                       <LockKeyhole className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -134,7 +135,7 @@ export function RegisterPage() {
                       autoComplete="new-password"
                       value={password}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                        placeholder="Enter a password"
+                        placeholder={t('auth.register.passwordPlaceholder')}
                       onChange={(event) => setPassword(event.target.value)}
                       />
                     </div>
@@ -142,7 +143,7 @@ export function RegisterPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="register-password-repeat" className="text-slate-700">
-                      Repeat password
+                      {t('auth.register.confirmPassword')}
                     </Label>
                     <div className="relative">
                       <LockKeyhole className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -152,7 +153,7 @@ export function RegisterPage() {
                       autoComplete="new-password"
                       value={confirmPassword}
                         className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                        placeholder="Repeat the password"
+                        placeholder={t('auth.register.confirmPasswordPlaceholder')}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       />
                     </div>
@@ -173,13 +174,13 @@ export function RegisterPage() {
                   disabled={isSubmitting}
                   className="h-12 w-full rounded-2xl bg-slate-950 text-base text-white hover:bg-slate-800"
                 >
-                  {isSubmitting ? 'Creating account...' : 'Create account'}
+                  {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
                 </Button>
 
                 <p className="text-center text-sm text-slate-500">
-                  Already have an account?{' '}
+                  {t('auth.register.loginPrompt')}{' '}
                   <Link to="/login" className="font-medium text-slate-900 underline underline-offset-4">
-                    Sign in
+                    {t('auth.register.loginLink')}
                   </Link>
                 </p>
               </form>

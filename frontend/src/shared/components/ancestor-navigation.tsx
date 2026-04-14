@@ -2,10 +2,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type AncestorLink = {
   to: string
-  label: string
+  labelKey: 'dashboard' | 'problems' | 'problem' | 'problemSets' | 'submissions' | 'userGroups'
 }
 
 function buildAncestorLinks(pathname: string): AncestorLink[] {
@@ -14,88 +15,88 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
   }
 
   if (pathname === '/site-manage') {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
   if (pathname === '/problems') {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
   if (pathname === '/problems/new') {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/problems', label: 'Problems' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/problems', labelKey: 'problems' },
     ]
   }
 
   if (/^\/problems\/[^/]+$/.test(pathname)) {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/problems', label: 'Problems' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/problems', labelKey: 'problems' },
     ]
   }
 
   if (/^\/problems\/[^/]+\/(submit|data)$/.test(pathname)) {
     const slug = pathname.split('/')[2]
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/problems', label: 'Problems' },
-      { to: `/problems/${slug}`, label: 'Problem' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/problems', labelKey: 'problems' },
+      { to: `/problems/${slug}`, labelKey: 'problem' },
     ]
   }
 
   if (pathname === '/problem-sets') {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
   if (pathname === '/problem-sets/new') {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/problem-sets', label: 'Problem Sets' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/problem-sets', labelKey: 'problemSets' },
     ]
   }
 
   if (/^\/problem-sets\/[^/]+$/.test(pathname)) {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/problem-sets', label: 'Problem Sets' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/problem-sets', labelKey: 'problemSets' },
     ]
   }
 
   if (pathname === '/submissions') {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
   if (/^\/submissions\/[^/]+$/.test(pathname)) {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/submissions', label: 'Submissions' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/submissions', labelKey: 'submissions' },
     ]
   }
 
   if (pathname === '/user-groups') {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
   if (pathname === '/user-groups/new') {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/user-groups', label: 'User Groups' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/user-groups', labelKey: 'userGroups' },
     ]
   }
 
   if (/^\/user-groups\/[^/]+$/.test(pathname)) {
     return [
-      { to: '/', label: 'Dashboard' },
-      { to: '/user-groups', label: 'User Groups' },
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/user-groups', labelKey: 'userGroups' },
     ]
   }
 
   if (/^\/user\/[^/]+\/settings$/.test(pathname)) {
-    return [{ to: '/', label: 'Dashboard' }]
+    return [{ to: '/', labelKey: 'dashboard' }]
   }
 
-  return [{ to: '/', label: 'Dashboard' }]
+  return [{ to: '/', labelKey: 'dashboard' }]
 }
 
 export function AncestorNavigation({
@@ -104,11 +105,8 @@ export function AncestorNavigation({
   buttonClassName?: string
 }) {
   const { pathname } = useLocation()
+  const { t } = useI18n()
   const ancestorLinks = buildAncestorLinks(pathname)
-
-  if (ancestorLinks.length === 0) {
-    return null
-  }
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -116,7 +114,7 @@ export function AncestorNavigation({
         <Button key={link.to} asChild variant="outline" className={buttonClassName}>
           <Link to={link.to}>
             <ArrowLeft className="size-4" />
-            Back to {link.label}
+            {t('nav.backTo', { label: t(`nav.${link.labelKey}`) })}
           </Link>
         </Button>
       ))}

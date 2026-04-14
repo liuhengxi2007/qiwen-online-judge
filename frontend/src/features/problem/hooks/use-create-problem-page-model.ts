@@ -5,6 +5,7 @@ import { createProblem } from '@/features/problem/api/problem-client'
 import type { OthersSubmissionAccess } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import { useI18n } from '@/shared/i18n/i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type CreateProblemPageState = {
@@ -37,7 +38,7 @@ type CreateProblemPageAction =
   | { type: 'set_manager_groups_input'; value: string }
   | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
   | { type: 'submit_started' }
-  | { type: 'submit_succeeded' }
+  | { type: 'submit_succeeded'; message: string }
   | { type: 'submit_failed'; message: string }
 
 const initialState: CreateProblemPageState = {
@@ -99,7 +100,7 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
         managerGroupsInput: '',
         othersSubmissionAccess: 'none',
         errorMessage: '',
-        successMessage: 'Problem created successfully.',
+        successMessage: action.message,
       }
     case 'submit_failed':
       return { ...state, isSubmitting: false, errorMessage: action.message, successMessage: '' }
@@ -108,6 +109,7 @@ function reducer(state: CreateProblemPageState, action: CreateProblemPageAction)
 
 export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const { t } = useI18n()
   const accessPolicyResult = buildResourceAccessPolicy(
     state.baseAccess,
     state.grantedUsersInput,
@@ -118,7 +120,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
 
   const submit = useCallback(async () => {
     if (!canCreate) {
-      dispatch({ type: 'submit_failed', message: 'Problem manager permission required.' })
+      dispatch({ type: 'submit_failed', message: t('problem.message.managerPermissionRequired') })
       return
     }
 
@@ -144,12 +146,12 @@ export function useCreateProblemPageModel(canCreate: boolean) {
 
     try {
       await createProblem(validation.request)
-      dispatch({ type: 'submit_succeeded' })
+      dispatch({ type: 'submit_succeeded', message: t('problem.message.createSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to create problem.'
+      const message = error instanceof HttpClientError ? error.message : t('problem.message.createFailed')
       dispatch({ type: 'submit_failed', message })
     }
-  }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.managerGroupsInput, state.managerUsersInput, state.othersSubmissionAccess, state.slug, state.spaceLimitMb, state.statement, state.timeLimitMs, state.title])
+  }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.managerGroupsInput, state.managerUsersInput, state.othersSubmissionAccess, state.slug, state.spaceLimitMb, state.statement, state.timeLimitMs, state.title, t])
 
   return {
     ...state,

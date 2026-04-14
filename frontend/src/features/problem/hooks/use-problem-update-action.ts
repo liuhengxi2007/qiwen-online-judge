@@ -4,10 +4,12 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { updateProblem } from '@/features/problem/api/problem-client'
 import { validateProblemUpdateDraft } from '@/features/problem/domain/problem-form'
 import type { OthersSubmissionAccess, ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
+import { useI18n } from '@/shared/i18n/i18n'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useProblemUpdateAction(problemSlug: ProblemSlug) {
   const [isSaving, setIsSaving] = useState(false)
+  const { t } = useI18n()
 
   const save = useCallback(
     async (draft: {
@@ -30,15 +32,15 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
       setIsSaving(true)
       try {
         const updatedProblem = await updateProblem(problemSlug, validation.request)
-        return { ok: true, problem: updatedProblem, message: 'Problem updated successfully.' }
+        return { ok: true, problem: updatedProblem, message: t('problem.message.updateSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to update problem.'
+        const message = error instanceof HttpClientError ? error.message : t('problem.message.updateFailed')
         return { ok: false, message }
       } finally {
         setIsSaving(false)
       }
     },
-    [problemSlug],
+    [problemSlug, t],
   )
 
   return { isSaving, save }
