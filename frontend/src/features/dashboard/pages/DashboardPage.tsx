@@ -99,16 +99,16 @@ export function DashboardPage() {
                   <Settings className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">User Settings</CardTitle>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.userSettings.title')}</CardTitle>
                   <CardDescription>
-                    Update your profile information, manage your password, and review your account permissions.
+                    {t('dashboard.userSettings.description')}
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
-                <Link to={`/user/${usernameValue(user.username)}/settings`}>Open User Settings</Link>
+                <Link to={`/user/${usernameValue(user.username)}/settings`}>{t('dashboard.userSettings.open')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -120,16 +120,14 @@ export function DashboardPage() {
                   <BookCopy className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Problem Sets</CardTitle>
-                  <CardDescription>
-                    Organize problems into curated sets for contests, training, or private review, and manage linked problems in one place.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.problemSets.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.problemSets.description')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400">
-                <Link to="/problem-sets">Open Problem Sets</Link>
+                <Link to="/problem-sets">{t('dashboard.problemSets.open')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -141,16 +139,14 @@ export function DashboardPage() {
                   <FileText className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Problems</CardTitle>
-                  <CardDescription>
-                    Create, edit, and review problems with formatted statements, access controls, and full problem details.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.problems.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.problems.description')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
-                <Link to="/problems">Open Problems</Link>
+                <Link to="/problems">{t('dashboard.problems.open')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -162,16 +158,14 @@ export function DashboardPage() {
                   <Files className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Submissions</CardTitle>
-                  <CardDescription>
-                    Browse past submissions, review their status and verdict, and inspect the source code you sent.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.submissions.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.submissions.description')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
-                <Link to="/submissions">Open Submissions</Link>
+                <Link to="/submissions">{t('dashboard.submissions.open')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -183,16 +177,14 @@ export function DashboardPage() {
                   <UsersRound className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
-                  <CardDescription>
-                    Create groups, manage members, and organize collaboration and access control more easily.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.userGroups.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.userGroups.description')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Button asChild className="rounded-2xl bg-sky-300 text-sky-950 hover:bg-sky-400">
-                <Link to="/user-groups">Open User Groups</Link>
+                <Link to="/user-groups">{t('dashboard.userGroups.open')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -205,16 +197,14 @@ export function DashboardPage() {
                     <Users className="size-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl text-slate-950">Site Management</CardTitle>
-                    <CardDescription>
-                      Review registered users, adjust site-wide permissions, and maintain user accounts.
-                    </CardDescription>
+                    <CardTitle className="text-xl text-slate-950">{t('dashboard.siteManage.title')}</CardTitle>
+                    <CardDescription>{t('dashboard.siteManage.description')}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Button asChild className="rounded-2xl bg-amber-300 text-amber-950 hover:bg-amber-400">
-                  <Link to="/site-manage">Open Site Management</Link>
+                  <Link to="/site-manage">{t('dashboard.siteManage.open')}</Link>
                 </Button>
               </CardContent>
             </Card>

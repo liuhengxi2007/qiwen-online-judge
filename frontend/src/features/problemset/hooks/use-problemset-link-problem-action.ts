@@ -4,8 +4,10 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { addProblemToProblemSet } from '@/features/problemset/api/problemset-client'
 import { validateProblemSetLinkDraft } from '@/features/problemset/domain/problemset-link-form'
 import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useProblemSetLinkProblemAction(problemSetSlug: ProblemSetSlug) {
+  const { t } = useI18n()
   const [activeLink, setActiveLink] = useState(false)
 
   const attachProblem = useCallback(
@@ -18,15 +20,15 @@ export function useProblemSetLinkProblemAction(problemSetSlug: ProblemSetSlug) {
       setActiveLink(true)
       try {
         const updatedProblemSet = await addProblemToProblemSet(problemSetSlug, validation.request)
-        return { ok: true, problemSet: updatedProblemSet, message: 'Problem linked to problem set.' }
+        return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.linkSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to link problem to problem set.'
+        const message = error instanceof HttpClientError ? error.message : t('problemSet.message.linkFailed')
         return { ok: false, message }
       } finally {
         setActiveLink(false)
       }
     },
-    [problemSetSlug],
+    [problemSetSlug, t],
   )
 
   return { activeLink, attachProblem }

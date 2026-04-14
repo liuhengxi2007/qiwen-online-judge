@@ -23,9 +23,11 @@ import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function UserGroupDetailPage() {
-  usePageTitle('Qiwen Online Judge - User Group Detail')
+  const { t } = useI18n()
+  usePageTitle(t('userGroup.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
@@ -63,10 +65,10 @@ export function UserGroupDetailPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">User Group Detail</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('userGroup.detail.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -81,7 +83,7 @@ export function UserGroupDetailPage() {
 
         {model.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading user group detail...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('userGroup.detail.loading')}</CardContent>
           </Card>
         ) : model.userGroup ? (
           <div className="space-y-6">
@@ -94,10 +96,10 @@ export function UserGroupDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm leading-7 text-slate-600">
-                  {userGroupDescriptionValue(model.userGroup.description) || 'No description provided.'}
+                  {userGroupDescriptionValue(model.userGroup.description) || t('common.noDescription')}
                 </p>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                  Owner {usernameValue(model.userGroup.ownerUsername)}
+                  {t('userGroup.detail.owner', { username: usernameValue(model.userGroup.ownerUsername) })}
                 </p>
               </CardContent>
             </Card>
@@ -110,18 +112,18 @@ export function UserGroupDetailPage() {
                       <PencilLine className="size-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-slate-950">Edit User Group</CardTitle>
-                      <CardDescription>Update the name and description of this group.</CardDescription>
+                      <CardTitle className="text-xl text-slate-950">{t('userGroup.detail.editTitle')}</CardTitle>
+                      <CardDescription>{t('userGroup.detail.editDescription')}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="user-group-name">Name</Label>
+                    <Label htmlFor="user-group-name">{t('userGroup.create.name')}</Label>
                     <Input id="user-group-name" value={model.name} onChange={(event) => model.setName(event.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-group-description">Description</Label>
+                    <Label htmlFor="user-group-description">{t('userGroup.create.description')}</Label>
                     <Textarea
                       id="user-group-description"
                       value={model.description}
@@ -136,7 +138,7 @@ export function UserGroupDetailPage() {
                       void model.save()
                     }}
                   >
-                    {model.isSaving ? 'Saving changes...' : 'Save changes'}
+                    {model.isSaving ? t('userGroup.detail.saving') : t('userGroup.detail.save')}
                   </Button>
                   {model.saveErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
@@ -155,14 +157,14 @@ export function UserGroupDetailPage() {
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                    <Users className="size-5" />
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                      <Users className="size-5" />
+                    </div>
+                    <div>
+                    <CardTitle className="text-xl text-slate-950">{t('userGroup.detail.membersTitle')}</CardTitle>
+                    <CardDescription>{t('userGroup.detail.membersDescription')}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-xl text-slate-950">Members</CardTitle>
-                    <CardDescription>Membership is the first piece of the future resource permission chain.</CardDescription>
-                  </div>
-                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {model.userGroup.members.map((member) => (
@@ -209,7 +211,7 @@ export function UserGroupDetailPage() {
                                 model.activeRemovingUsername === member.username
                               }
                             />
-                            <span>Owner</span>
+                            <span>{t('userGroup.detail.role.owner')}</span>
                           </label>
                           <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
                             <RadioGroupItem
@@ -221,7 +223,7 @@ export function UserGroupDetailPage() {
                                 model.activeRemovingUsername === member.username
                               }
                             />
-                            <span>Manager</span>
+                            <span>{t('userGroup.detail.role.manager')}</span>
                           </label>
                           <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
                             <RadioGroupItem
@@ -233,15 +235,15 @@ export function UserGroupDetailPage() {
                                 model.activeRemovingUsername === member.username
                               }
                             />
-                            <span>Member</span>
+                            <span>{t('userGroup.detail.role.member')}</span>
                           </label>
                         </RadioGroup>
 
                         {member.role !== 'owner' ? (
                           <ConfirmActionDialog
-                            title="Remove member?"
-                            description={`Remove ${usernameValue(member.username)} from this user group.`}
-                            confirmLabel="Remove member"
+                            title={t('userGroup.detail.removeMemberTitle')}
+                            description={t('userGroup.detail.removeMemberDescription', { username: usernameValue(member.username) })}
+                            confirmLabel={t('userGroup.detail.removeMemberAction')}
                             destructive
                             onConfirm={() => {
                               void model.removeMember(member.username)
@@ -279,30 +281,30 @@ export function UserGroupDetailPage() {
                       <ShieldPlus className="size-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-slate-950">Add Member</CardTitle>
-                      <CardDescription>Add an existing user into this group with a typed group role.</CardDescription>
+                      <CardTitle className="text-xl text-slate-950">{t('userGroup.detail.addMemberTitle')}</CardTitle>
+                      <CardDescription>{t('userGroup.detail.addMemberDescription')}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="member-username">Username</Label>
+                    <Label htmlFor="member-username">{t('common.username')}</Label>
                     <Input
                       id="member-username"
                       value={model.memberUsername}
-                      placeholder="alice"
+                      placeholder={t('userGroup.detail.memberUsernamePlaceholder')}
                       onChange={(event) => model.setMemberUsername(event.target.value.toLowerCase())}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Role</Label>
+                    <Label>{t('userGroup.detail.roleLabel')}</Label>
                     <Select value={model.memberRole} onValueChange={(value) => model.setMemberRole(value as 'manager' | 'member')}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder={t('userGroup.detail.rolePlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="member">{t('userGroup.detail.role.member')}</SelectItem>
+                        <SelectItem value="manager">{t('userGroup.detail.role.manager')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -315,7 +317,7 @@ export function UserGroupDetailPage() {
                       void model.addMember()
                     }}
                   >
-                    {model.isAddingMember ? 'Adding member...' : 'Add member'}
+                    {model.isAddingMember ? t('userGroup.detail.addingMember') : t('userGroup.detail.addMember')}
                   </Button>
                   {model.addMemberErrorMessage ? (
                     <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
@@ -339,16 +341,16 @@ export function UserGroupDetailPage() {
                       <Trash2 className="size-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-rose-950">Delete User Group</CardTitle>
-                      <CardDescription>This removes the group and all of its membership records.</CardDescription>
+                      <CardTitle className="text-xl text-rose-950">{t('userGroup.detail.deleteTitle')}</CardTitle>
+                      <CardDescription>{t('userGroup.detail.deleteDescription')}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ConfirmActionDialog
-                    title="Delete user group?"
-                    description="Delete this user group and all of its membership records. This action cannot be undone."
-                    confirmLabel={model.isDeleting ? 'Deleting...' : 'Delete user group'}
+                    title={t('userGroup.detail.deleteConfirmTitle')}
+                    description={t('userGroup.detail.deleteConfirmDescription')}
+                    confirmLabel={model.isDeleting ? t('problemSet.detail.deletingAction') : t('userGroup.detail.deleteAction')}
                     destructive
                     onConfirm={() => {
                       void model.deleteCurrentUserGroup().then((deleted) => {
@@ -364,7 +366,7 @@ export function UserGroupDetailPage() {
                         className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
                         disabled={model.isDeleting}
                       >
-                        {model.isDeleting ? 'Deleting...' : 'Delete user group'}
+                        {model.isDeleting ? t('problemSet.detail.deletingAction') : t('userGroup.detail.deleteAction')}
                       </Button>
                     }
                   />
@@ -381,13 +383,15 @@ export function UserGroupDetailPage() {
             setOwnershipTargetUsername(null)
           }
         }}
-        title="Transfer ownership?"
+        title={t('userGroup.detail.transferOwnershipTitle')}
         description={
           ownershipTargetMember
-            ? `Transfer ownership to ${usernameValue(ownershipTargetMember.username)} and demote the current owner to manager.`
+            ? t('userGroup.detail.transferOwnershipDescription', {
+                username: usernameValue(ownershipTargetMember.username),
+              })
             : ''
         }
-        confirmLabel="Transfer ownership"
+        confirmLabel={t('userGroup.detail.transferOwnershipAction')}
         onConfirm={() => {
           if (!ownershipTargetMember) {
             return

@@ -17,9 +17,11 @@ import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function SiteManagePage() {
-  usePageTitle('Qiwen Online Judge - Site Management')
+  const { t } = useI18n()
+  usePageTitle(t('siteManage.pageTitle'))
   const { session: user, siteManagerSession, navigationIntent: guardNavigationIntent } =
     useSessionGuard({ requireSiteManager: true })
   const {
@@ -55,12 +57,12 @@ export function SiteManagePage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-stone-500">Qiwen Online Judge</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-stone-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-stone-950">
-              Site Management
+              {t('siteManage.heading')}
             </h1>
             <p className="text-sm text-stone-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -74,10 +76,8 @@ export function SiteManagePage() {
                 <Settings2 className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-xl text-stone-950">User Management</CardTitle>
-                <CardDescription>
-                  Site managers can review all registered users and current permission flags.
-                </CardDescription>
+                <CardTitle className="text-xl text-stone-950">{t('siteManage.userManagementTitle')}</CardTitle>
+                <CardDescription>{t('siteManage.userManagementDescription')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -93,28 +93,26 @@ export function SiteManagePage() {
               </Alert>
             ) : null}
             {isLoadingUsers ? (
-              <p className="text-sm text-stone-500">Loading users...</p>
+              <p className="text-sm text-stone-500">{t('siteManage.loadingUsers')}</p>
             ) : users.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center">
-                <p className="text-base font-medium text-stone-900">No users are available yet.</p>
-                <p className="mt-2 text-sm leading-7 text-stone-600">
-                  No registered users are available to manage yet.
-                </p>
+                <p className="text-base font-medium text-stone-900">{t('siteManage.emptyUsersTitle')}</p>
+                <p className="mt-2 text-sm leading-7 text-stone-600">{t('siteManage.emptyUsersDescription')}</p>
                 <Button asChild variant="outline" className="mt-5 rounded-full border-stone-300 bg-white">
-                  <Link to="/">Back to Dashboard</Link>
+                  <Link to="/">{t('siteManage.backToDashboard')}</Link>
                 </Button>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Display name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Settings</TableHead>
-                    <TableHead>Site manager</TableHead>
-                    <TableHead>Problem manager</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('common.username')}</TableHead>
+                    <TableHead>{t('common.displayName')}</TableHead>
+                    <TableHead>{t('common.email')}</TableHead>
+                    <TableHead>{t('common.settings')}</TableHead>
+                    <TableHead>{t('siteManage.siteManager')}</TableHead>
+                    <TableHead>{t('siteManage.problemManager')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -128,7 +126,7 @@ export function SiteManagePage() {
                       <TableCell>
                         <Button asChild variant="outline" size="sm" className="rounded-full border-stone-300 bg-white">
                           <Link to={`/user/${usernameValue(listedUser.username)}/settings`}>
-                            Open settings
+                            {t('siteManage.openSettings')}
                           </Link>
                         </Button>
                       </TableCell>
@@ -168,9 +166,9 @@ export function SiteManagePage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <ConfirmActionDialog
-                          title="Delete user?"
-                          description={`Delete ${usernameValue(listedUser.username)} from the site. This user must not own any problems, problem sets, or user groups before deletion.`}
-                          confirmLabel="Delete user"
+                          title={t('siteManage.deleteUserTitle')}
+                          description={t('siteManage.deleteUserDescription', { username: usernameValue(listedUser.username) })}
+                          confirmLabel={t('siteManage.deleteUserAction')}
                           destructive
                           onConfirm={() => {
                             void deleteUser(listedUser)
@@ -206,10 +204,8 @@ export function SiteManagePage() {
                 <Cpu className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-xl text-stone-950">Registered Judgers</CardTitle>
-                <CardDescription>
-                  Review currently registered judge workers and their latest heartbeat.
-                </CardDescription>
+                <CardTitle className="text-xl text-stone-950">{t('siteManage.judgersTitle')}</CardTitle>
+                <CardDescription>{t('siteManage.judgersDescription')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -220,25 +216,23 @@ export function SiteManagePage() {
               </Alert>
             ) : null}
             {isLoadingJudgers ? (
-              <p className="text-sm text-stone-500">Loading registered judgers...</p>
+              <p className="text-sm text-stone-500">{t('siteManage.loadingJudgers')}</p>
             ) : judgers.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center">
-                <p className="text-base font-medium text-stone-900">No judgers are registered right now.</p>
-                <p className="mt-2 text-sm leading-7 text-stone-600">
-                  Start a judge worker to see it appear here.
-                </p>
+                <p className="text-base font-medium text-stone-900">{t('siteManage.emptyJudgersTitle')}</p>
+                <p className="mt-2 text-sm leading-7 text-stone-600">{t('siteManage.emptyJudgersDescription')}</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Judger ID</TableHead>
-                    <TableHead>Prefix</TableHead>
-                    <TableHead>Host</TableHead>
-                    <TableHead>Process ID</TableHead>
-                    <TableHead>Languages</TableHead>
-                    <TableHead>Registered at</TableHead>
-                    <TableHead>Last heartbeat</TableHead>
+                    <TableHead>{t('siteManage.judgerId')}</TableHead>
+                    <TableHead>{t('siteManage.prefix')}</TableHead>
+                    <TableHead>{t('siteManage.host')}</TableHead>
+                    <TableHead>{t('siteManage.processId')}</TableHead>
+                    <TableHead>{t('siteManage.languages')}</TableHead>
+                    <TableHead>{t('siteManage.registeredAt')}</TableHead>
+                    <TableHead>{t('siteManage.lastHeartbeat')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -247,8 +241,8 @@ export function SiteManagePage() {
                       <TableCell className="font-medium text-stone-900">{judger.judgerId}</TableCell>
                       <TableCell>{judger.requestedPrefix}</TableCell>
                       <TableCell>{judger.host}</TableCell>
-                      <TableCell>{judger.processId ?? 'N/A'}</TableCell>
-                      <TableCell>{judger.supportedLanguages.join(', ') || 'N/A'}</TableCell>
+                      <TableCell>{judger.processId ?? t('siteManage.notAvailable')}</TableCell>
+                      <TableCell>{judger.supportedLanguages.join(', ') || t('siteManage.notAvailable')}</TableCell>
                       <TableCell>{new Date(judger.registeredAt).toLocaleString()}</TableCell>
                       <TableCell>{new Date(judger.lastHeartbeatAt).toLocaleString()}</TableCell>
                     </TableRow>

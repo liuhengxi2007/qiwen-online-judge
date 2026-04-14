@@ -2,113 +2,18 @@ import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblem } from '@/features/problem/api/problem-client'
+import {
+  initialCreateProblemPageState,
+  reduceCreateProblemPageState,
+} from '@/features/problem/domain/create-problem-page-state'
 import type { OthersSubmissionAccess } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { useI18n } from '@/shared/i18n/i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
-type CreateProblemPageState = {
-  isSubmitting: boolean
-  slug: string
-  title: string
-  statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
-  baseAccess: BaseAccess
-  grantedUsersInput: string
-  grantedGroupsInput: string
-  managerUsersInput: string
-  managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
-  errorMessage: string
-  successMessage: string
-}
-
-type CreateProblemPageAction =
-  | { type: 'set_slug'; value: string }
-  | { type: 'set_title'; value: string }
-  | { type: 'set_statement'; value: string }
-  | { type: 'set_time_limit_ms'; value: number }
-  | { type: 'set_space_limit_mb'; value: number }
-  | { type: 'set_base_access'; value: BaseAccess }
-  | { type: 'set_granted_users_input'; value: string }
-  | { type: 'set_granted_groups_input'; value: string }
-  | { type: 'set_manager_users_input'; value: string }
-  | { type: 'set_manager_groups_input'; value: string }
-  | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
-  | { type: 'submit_started' }
-  | { type: 'submit_succeeded'; message: string }
-  | { type: 'submit_failed'; message: string }
-
-const initialState: CreateProblemPageState = {
-  isSubmitting: false,
-  slug: '',
-  title: '',
-  statement: '',
-  timeLimitMs: 1000,
-  spaceLimitMb: 256,
-  baseAccess: 'owner_only',
-  grantedUsersInput: '',
-  grantedGroupsInput: '',
-  managerUsersInput: '',
-  managerGroupsInput: '',
-  othersSubmissionAccess: 'none',
-  errorMessage: '',
-  successMessage: '',
-}
-
-function reducer(state: CreateProblemPageState, action: CreateProblemPageAction): CreateProblemPageState {
-  switch (action.type) {
-    case 'set_slug':
-      return { ...state, slug: action.value }
-    case 'set_title':
-      return { ...state, title: action.value }
-    case 'set_statement':
-      return { ...state, statement: action.value }
-    case 'set_time_limit_ms':
-      return { ...state, timeLimitMs: action.value }
-    case 'set_space_limit_mb':
-      return { ...state, spaceLimitMb: action.value }
-    case 'set_base_access':
-      return { ...state, baseAccess: action.value }
-    case 'set_granted_users_input':
-      return { ...state, grantedUsersInput: action.value }
-    case 'set_granted_groups_input':
-      return { ...state, grantedGroupsInput: action.value }
-    case 'set_manager_users_input':
-      return { ...state, managerUsersInput: action.value }
-    case 'set_manager_groups_input':
-      return { ...state, managerGroupsInput: action.value }
-    case 'set_others_submission_access':
-      return { ...state, othersSubmissionAccess: action.value }
-    case 'submit_started':
-      return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
-    case 'submit_succeeded':
-      return {
-        ...state,
-        isSubmitting: false,
-        slug: '',
-        title: '',
-        statement: '',
-        timeLimitMs: 1000,
-        spaceLimitMb: 256,
-        baseAccess: 'owner_only',
-        grantedUsersInput: '',
-        grantedGroupsInput: '',
-        managerUsersInput: '',
-        managerGroupsInput: '',
-        othersSubmissionAccess: 'none',
-        errorMessage: '',
-        successMessage: action.message,
-      }
-    case 'submit_failed':
-      return { ...state, isSubmitting: false, errorMessage: action.message, successMessage: '' }
-  }
-}
-
 export function useCreateProblemPageModel(canCreate: boolean) {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
   const { t } = useI18n()
   const accessPolicyResult = buildResourceAccessPolicy(
     state.baseAccess,

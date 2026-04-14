@@ -16,9 +16,11 @@ import {
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function SubmissionDetailPage() {
-  usePageTitle('Qiwen Online Judge - Submission Detail')
+  const { t } = useI18n()
+  usePageTitle(t('submission.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { submissionId } = useParams<{ submissionId: string }>()
 
@@ -47,12 +49,12 @@ export function SubmissionDetailPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              Submission Detail
+              {t('submission.detail.heading')}
             </h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -67,7 +69,7 @@ export function SubmissionDetailPage() {
 
         {submissionQuery.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading submission details...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('submission.detail.loading')}</CardContent>
           </Card>
         ) : submissionQuery.submission ? (
           <div className="space-y-6">
@@ -82,42 +84,42 @@ export function SubmissionDetailPage() {
                       Submission {submissionIdValue(submissionQuery.submission.id)}
                     </CardTitle>
                     <CardDescription className="mt-2 text-sm text-slate-500">
-                      Problem {submissionQuery.submission.problemSlug}
+                      {t('submission.detail.problem', { slug: submissionQuery.submission.problemSlug })}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-6">
                 <div>
-                  <p className="text-slate-500">Submitter</p>
+                  <p className="text-slate-500">{t('submission.detail.submitter')}</p>
                   <p className="mt-1 font-medium text-slate-900">{submissionQuery.submission.submitterUsername}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Language</p>
+                  <p className="text-slate-500">{t('common.languageLabel')}</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {submissionLanguageLabel(submissionQuery.submission.language)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Status</p>
+                  <p className="text-slate-500">{t('common.status')}</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {submissionStatusLabel(submissionQuery.submission.status)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Verdict</p>
+                  <p className="text-slate-500">{t('common.verdict')}</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {submissionVerdictLabel(submissionQuery.submission.verdict)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Submitted at</p>
+                  <p className="text-slate-500">{t('common.submittedAt')}</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {new Date(submissionQuery.submission.submittedAt).toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Problem slug</p>
+                  <p className="text-slate-500">{t('submission.detail.problemSlug')}</p>
                   <p className="mt-1 font-medium text-slate-900">{submissionQuery.submission.problemSlug}</p>
                 </div>
               </CardContent>
@@ -126,7 +128,7 @@ export function SubmissionDetailPage() {
             {submissionQuery.submission.judgeMessage ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <CardHeader>
-                  <CardTitle className="text-xl text-slate-950">Judge message</CardTitle>
+                  <CardTitle className="text-xl text-slate-950">{t('submission.detail.judgeMessage')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
@@ -138,8 +140,8 @@ export function SubmissionDetailPage() {
 
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
-                <CardTitle className="text-xl text-slate-950">Source code</CardTitle>
-                <CardDescription>This page shows the exact source code saved in the submission record.</CardDescription>
+                <CardTitle className="text-xl text-slate-950">{t('submission.detail.sourceCode')}</CardTitle>
+                <CardDescription>{t('submission.detail.sourceDescription')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <pre className="overflow-x-auto rounded-3xl bg-slate-950 p-6 text-sm leading-7 text-slate-100">

@@ -5,6 +5,7 @@ import { createProblemSet } from '@/features/problemset/api/problemset-client'
 import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type CreateProblemSetPageState = {
   isSubmitting: boolean
@@ -76,6 +77,7 @@ function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageA
 }
 
 export function useCreateProblemSetPageModel(canCreate: boolean) {
+  const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
   const accessPolicyResult = buildResourceAccessPolicy(
     state.baseAccess,
@@ -85,7 +87,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
 
   const submit = useCallback(async () => {
     if (!canCreate) {
-      dispatch({ type: 'submit_failed', message: 'Problem manager permission required.' })
+      dispatch({ type: 'submit_failed', message: t('problemSet.message.managerPermissionRequired') })
       return
     }
 
@@ -108,13 +110,14 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
       await createProblemSet(validation.request)
       dispatch({ type: 'submit_succeeded' })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to create problem set.'
+      const message = error instanceof HttpClientError ? error.message : t('problemSet.message.createFailed')
       dispatch({ type: 'submit_failed', message })
     }
-  }, [canCreate, state.baseAccess, state.description, state.grantedGroupsInput, state.grantedUsersInput, state.slug, state.title])
+  }, [canCreate, state.baseAccess, state.description, state.grantedGroupsInput, state.grantedUsersInput, state.slug, state.title, t])
 
   return {
     ...state,
+    successMessage: state.successMessage ? t('problemSet.message.createSuccess') : '',
     accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createOwnerOnlyAccessPolicy(),
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),

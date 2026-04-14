@@ -13,8 +13,10 @@ import { useUserGroupEditorState } from '@/features/usergroup/hooks/use-usergrou
 import { useUserGroupRemoveMemberAction } from '@/features/usergroup/hooks/use-usergroup-remove-member-action'
 import { useUserGroupUpdateMemberRoleAction } from '@/features/usergroup/hooks/use-usergroup-update-member-role-action'
 import { useUserGroupUpdateAction } from '@/features/usergroup/hooks/use-usergroup-update-action'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewerUsername: Username, isSiteManager: boolean) {
+  const { t } = useI18n()
   const detailQuery = useUserGroupDetailQuery(userGroupSlug)
   const editor = useUserGroupEditorState(detailQuery.userGroup)
   const updateAction = useUserGroupUpdateAction(userGroupSlug)
@@ -52,7 +54,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (!permissions.canManage) {
       setMessageState((current) => ({
         ...current,
-        saveErrorMessage: 'Owner, manager, or site manager permission required.',
+        saveErrorMessage: t('userGroup.message.managePermissionRequired'),
         saveSuccessMessage: '',
       }))
       return
@@ -83,7 +85,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (!permissions.canManage) {
       setMessageState((current) => ({
         ...current,
-        addMemberErrorMessage: 'Owner, manager, or site manager permission required.',
+        addMemberErrorMessage: t('userGroup.message.managePermissionRequired'),
         addMemberSuccessMessage: '',
       }))
       return
@@ -111,7 +113,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (!permissions.canDelete) {
       setMessageState((current) => ({
         ...current,
-        generalErrorMessage: 'Owner or site manager permission required.',
+        generalErrorMessage: t('userGroup.message.ownerPermissionRequired'),
         generalSuccessMessage: '',
       }))
       return false
@@ -139,7 +141,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (!permissions.canManageMemberRoles) {
       setMessageState((current) => ({
         ...current,
-        generalErrorMessage: 'Owner or site manager permission required.',
+        generalErrorMessage: t('userGroup.message.ownerPermissionRequired'),
         generalSuccessMessage: '',
       }))
       return false
@@ -168,7 +170,7 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (!permissions.canManage) {
       setMessageState((current) => ({
         ...current,
-        generalErrorMessage: 'Owner, manager, or site manager permission required.',
+        generalErrorMessage: t('userGroup.message.managePermissionRequired'),
         generalSuccessMessage: '',
       }))
       return false

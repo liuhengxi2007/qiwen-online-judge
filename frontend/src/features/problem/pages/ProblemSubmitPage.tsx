@@ -33,6 +33,7 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = [
   { value: 'cpp17', label: 'C++17' },
@@ -40,7 +41,8 @@ const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = 
 ]
 
 export function ProblemSubmitPage() {
-  usePageTitle('Qiwen Online Judge - Submit Code')
+  const { t } = useI18n()
+  usePageTitle(t('problem.submit.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
@@ -77,10 +79,10 @@ export function ProblemSubmitPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Submit Code</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.submit.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -95,7 +97,7 @@ export function ProblemSubmitPage() {
 
         {detailQuery.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading problem for submission...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('problem.submit.loading')}</CardContent>
           </Card>
         ) : detailQuery.problem ? (
           <div className="space-y-6">
@@ -116,23 +118,18 @@ export function ProblemSubmitPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-7 text-slate-600">
-                  Submit your solution here and track its result after it enters the judging queue.
-                </p>
+                <p className="text-sm leading-7 text-slate-600">{t('problem.submit.description')}</p>
               </CardContent>
             </Card>
 
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
-                <CardTitle className="text-xl text-slate-950">Submission Editor</CardTitle>
-                <CardDescription>
-                  Choose a language and submit your source code. The submission is saved immediately, then picked up
-                  by the judge system and updated with status, verdict, and judge messages.
-                </CardDescription>
+                <CardTitle className="text-xl text-slate-950">{t('problem.submit.editorTitle')}</CardTitle>
+                <CardDescription>{t('problem.submit.editorDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="problem-submit-language">Language</Label>
+                  <Label htmlFor="problem-submit-language">{t('common.languageLabel')}</Label>
                   <Select
                     value={language}
                     onValueChange={(nextLanguage) => {
@@ -144,7 +141,7 @@ export function ProblemSubmitPage() {
                     }}
                   >
                     <SelectTrigger id="problem-submit-language" className="h-11 rounded-2xl">
-                      <SelectValue placeholder="Choose a language" />
+                      <SelectValue placeholder={t('problem.submit.languagePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {supportedLanguages.map((supportedLanguage) => (
@@ -157,12 +154,12 @@ export function ProblemSubmitPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="problem-submit-source">Source code</Label>
+                  <Label htmlFor="problem-submit-source">{t('problem.submit.sourceCode')}</Label>
                   <Textarea
                     id="problem-submit-source"
                     value={sourceCode}
                     className="min-h-[26rem] rounded-3xl !font-mono text-sm"
-                    placeholder="Write your solution here."
+                    placeholder={t('problem.submit.sourcePlaceholder')}
                     onChange={(event) => {
                       setSourceCode(event.target.value)
                       setStatusMessage('')
@@ -214,7 +211,7 @@ export function ProblemSubmitPage() {
                             return
                           }
 
-                          setErrorMessage('Unable to create submission right now.')
+                          setErrorMessage(t('problem.submit.createFailed'))
                         })
                         .finally(() => {
                           setIsSubmitting(false)
@@ -222,7 +219,7 @@ export function ProblemSubmitPage() {
                     }}
                   >
                     <Send className="size-4" />
-                    {isSubmitting ? 'Submitting...' : 'Submit code'}
+                    {isSubmitting ? t('problem.submit.submitting') : t('problem.submit.submit')}
                   </Button>
                 </div>
               </CardContent>

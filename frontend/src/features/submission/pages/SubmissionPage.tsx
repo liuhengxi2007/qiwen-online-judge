@@ -23,9 +23,11 @@ import {
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function SubmissionPage() {
-  usePageTitle('Qiwen Online Judge - Submissions')
+  const { t } = useI18n()
+  usePageTitle(t('submission.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const [filterInput, setFilterInput] = useState('')
   const [activeUsernameFilter, setActiveUsernameFilter] = useState<Username | null>(null)
@@ -45,10 +47,10 @@ export function SubmissionPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Submissions</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('submission.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -63,18 +65,16 @@ export function SubmissionPage() {
 
         <Card className="mb-6 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <CardTitle className="text-xl text-slate-950">Filter submissions</CardTitle>
-            <CardDescription>
-              Enter a username to show submissions from that user among the submissions you are allowed to view.
-            </CardDescription>
+            <CardTitle className="text-xl text-slate-950">{t('submission.filter.title')}</CardTitle>
+            <CardDescription>{t('submission.filter.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="submission-username-filter">Username</Label>
+              <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
               <Input
                 id="submission-username-filter"
                 value={filterInput}
-                placeholder="Enter a username"
+                placeholder={t('submission.filter.placeholder')}
                 onChange={(event) => {
                   setFilterInput(event.target.value)
                   setFilterErrorMessage('')
@@ -111,7 +111,7 @@ export function SubmissionPage() {
                   setFilterErrorMessage('')
                 }}
               >
-                Apply filter
+                {t('submission.filter.apply')}
               </Button>
               <Button
                 type="button"
@@ -123,27 +123,27 @@ export function SubmissionPage() {
                   setFilterErrorMessage('')
                 }}
               >
-                Clear filter
+                {t('submission.filter.clear')}
               </Button>
             </div>
 
             {activeUsernameFilter ? (
               <p className="text-sm text-slate-600">
-                Showing submissions for <span className="font-medium text-slate-900">{usernameValue(activeUsernameFilter)}</span>.
+                {t('submission.filter.showingUser', { username: usernameValue(activeUsernameFilter) })}
               </p>
             ) : (
-              <p className="text-sm text-slate-600">Showing submissions for all visible users.</p>
+              <p className="text-sm text-slate-600">{t('submission.filter.showingAll')}</p>
             )}
           </CardContent>
         </Card>
 
         {submissionQuery.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading submissions...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.loading')}</CardContent>
           </Card>
         ) : submissionQuery.submissions.length === 0 ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">No submissions have been recorded yet.</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.empty')}</CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -170,29 +170,29 @@ export function SubmissionPage() {
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <dl className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-6">
                     <div>
-                      <dt className="text-slate-500">Problem</dt>
+                      <dt className="text-slate-500">{t('submission.list.problem')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">{submission.problemSlug}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Submitter</dt>
+                      <dt className="text-slate-500">{t('submission.list.submitter')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">{submission.submitterUsername}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Language</dt>
+                      <dt className="text-slate-500">{t('common.languageLabel')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">
                         {submissionLanguageLabel(submission.language)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Status</dt>
+                      <dt className="text-slate-500">{t('common.status')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">{submissionStatusLabel(submission.status)}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Verdict</dt>
+                      <dt className="text-slate-500">{t('common.verdict')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">{submissionVerdictLabel(submission.verdict)}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Submitted at</dt>
+                      <dt className="text-slate-500">{t('common.submittedAt')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">
                         {new Date(submission.submittedAt).toLocaleString()}
                       </dd>
@@ -201,7 +201,7 @@ export function SubmissionPage() {
 
                   <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
                     <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
-                      View Source Code
+                      {t('submission.list.viewSource')}
                       <ArrowRight className="size-4" />
                     </Link>
                   </Button>

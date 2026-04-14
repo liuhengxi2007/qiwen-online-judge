@@ -13,9 +13,11 @@ import { useCreateUserGroupPageModel } from '@/features/usergroup/hooks/use-crea
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function CreateUserGroupPage() {
-  usePageTitle('Qiwen Online Judge - Create User Group')
+  const { t } = useI18n()
+  usePageTitle(t('userGroup.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const model = useCreateUserGroupPageModel()
   const hasUnsavedChanges =
@@ -36,10 +38,10 @@ export function CreateUserGroupPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Create User Group</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('userGroup.create.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -53,38 +55,38 @@ export function CreateUserGroupPage() {
                 <Users className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-xl text-slate-950">Group Metadata</CardTitle>
-                <CardDescription>Create a new collaborative group and become its owner automatically.</CardDescription>
+                <CardTitle className="text-xl text-slate-950">{t('userGroup.create.cardTitle')}</CardTitle>
+                <CardDescription>{t('userGroup.create.cardDescription')}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="user-group-slug">Slug</Label>
+              <Label htmlFor="user-group-slug">{t('userGroup.create.slug')}</Label>
               <Input
                 id="user-group-slug"
                 value={model.slug}
-                placeholder="round123-testers"
+                placeholder={t('userGroup.create.slugPlaceholder')}
                 onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-group-name">Name</Label>
+              <Label htmlFor="user-group-name">{t('userGroup.create.name')}</Label>
               <Input
                 id="user-group-name"
                 value={model.name}
-                placeholder="Round 123 Testers"
+                placeholder={t('userGroup.create.namePlaceholder')}
                 onChange={(event) => model.setName(event.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-group-description">Description</Label>
+              <Label htmlFor="user-group-description">{t('userGroup.create.description')}</Label>
               <Textarea
                 id="user-group-description"
                 value={model.description}
-                placeholder="Internal testing group for Round 123 problem preparation."
+                placeholder={t('userGroup.create.descriptionPlaceholder')}
                 onChange={(event) => model.setDescription(event.target.value)}
               />
             </div>
@@ -107,7 +109,7 @@ export function CreateUserGroupPage() {
                 void model.submit()
               }}
             >
-              {model.isSubmitting ? 'Creating user group...' : 'Create user group'}
+              {model.isSubmitting ? t('userGroup.create.submitting') : t('userGroup.create.submit')}
             </Button>
           </CardContent>
         </Card>

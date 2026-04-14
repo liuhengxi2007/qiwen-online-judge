@@ -17,6 +17,7 @@ import {
   grantedGroupsInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
 } from '@/shared/domain/resource-access-input'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type SectionMessageState = {
   errorMessage: string
@@ -29,6 +30,7 @@ const emptySectionMessageState: SectionMessageState = {
 }
 
 export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, canManageProblems: boolean) {
+  const { t } = useI18n()
   const detailQuery = useProblemSetDetailQuery(problemSetSlug)
   const editor = useProblemSetEditorState(detailQuery.problemSet)
   const updateAction = useProblemSetUpdateAction(problemSetSlug)
@@ -42,13 +44,13 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
   async function saveContent() {
     if (!canManageProblems) {
-      setContentMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setContentMessageState({ errorMessage: t('problemSet.message.managerPermissionRequired'), successMessage: '' })
       return
     }
 
     const currentProblemSet = detailQuery.problemSet
     if (!currentProblemSet) {
-      setContentMessageState({ errorMessage: 'Problem set detail is not loaded.', successMessage: '' })
+      setContentMessageState({ errorMessage: t('problemSet.message.detailNotLoaded'), successMessage: '' })
       return
     }
 
@@ -70,13 +72,13 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
   async function saveAccess() {
     if (!canManageProblems) {
-      setAccessMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setAccessMessageState({ errorMessage: t('problemSet.message.managerPermissionRequired'), successMessage: '' })
       return
     }
 
     const currentProblemSet = detailQuery.problemSet
     if (!currentProblemSet) {
-      setAccessMessageState({ errorMessage: 'Problem set detail is not loaded.', successMessage: '' })
+      setAccessMessageState({ errorMessage: t('problemSet.message.detailNotLoaded'), successMessage: '' })
       return
     }
 
@@ -98,7 +100,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
   async function attachProblem() {
     if (!canManageProblems) {
-      setLinkMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setLinkMessageState({ errorMessage: t('problemSet.message.managerPermissionRequired'), successMessage: '' })
       return
     }
 
@@ -114,7 +116,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
 
   async function removeProblem(problemSlug: ProblemSlug) {
     if (!canManageProblems) {
-      setProblemListMessageState({ errorMessage: 'Problem manager permission required.', successMessage: '' })
+      setProblemListMessageState({ errorMessage: t('problemSet.message.managerPermissionRequired'), successMessage: '' })
       return
     }
 
@@ -123,7 +125,7 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
       detailQuery.replaceProblemSet(result.problemSet)
       setProblemListMessageState({
         errorMessage: '',
-        successMessage: `Removed ${problemSlugValue(problemSlug)} from the problem set.`,
+        successMessage: t('problemSet.message.removeNamed', { slug: problemSlugValue(problemSlug) }),
       })
     } else {
       setProblemListMessageState({ errorMessage: result.message, successMessage: '' })

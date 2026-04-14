@@ -10,6 +10,7 @@ import {
 } from '@/features/problemset/domain/problemset'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type ProblemSetDetailHeaderCardProps = {
   problemSet: ProblemSetDetail
@@ -28,6 +29,7 @@ export function ProblemSetDetailHeaderCard({
   managementPanel,
   onTogglePanel,
 }: ProblemSetDetailHeaderCardProps) {
+  const { t } = useI18n()
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <CardHeader>
@@ -38,7 +40,10 @@ export function ProblemSetDetailHeaderCard({
               {problemSetSlugValue(problemSet.slug)}
             </CardDescription>
             <p className="mt-3 text-sm text-slate-600">
-              Signed in as {displayNameValue(signedInDisplayName)} ({usernameValue(signedInUsername)}).
+              {t('common.signedInAs', {
+                displayName: displayNameValue(signedInDisplayName),
+                username: usernameValue(signedInUsername),
+              })}
             </p>
           </div>
 
@@ -56,7 +61,7 @@ export function ProblemSetDetailHeaderCard({
                   onTogglePanel('edit')
                 }}
               >
-                Edit problem set
+                {t('problemSet.detail.edit')}
               </Button>
               <Button
                 type="button"
@@ -70,7 +75,7 @@ export function ProblemSetDetailHeaderCard({
                   onTogglePanel('access')
                 }}
               >
-                Access management
+                {t('problemSet.detail.access')}
               </Button>
             </div>
           ) : null}
@@ -78,17 +83,17 @@ export function ProblemSetDetailHeaderCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy)}</Badge>
+          <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy, t)}</Badge>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
           {problemSetDescriptionValue(problemSet.description) ? (
             <MarkdownDocument content={problemSetDescriptionValue(problemSet.description)} />
           ) : (
-            <p className="text-sm text-slate-500">No description provided.</p>
+            <p className="text-sm text-slate-500">{t('common.noDescription')}</p>
           )}
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          Created by {usernameValue(problemSet.creatorUsername)}
+          {t('common.createdBy', { username: usernameValue(problemSet.creatorUsername) })}
         </p>
       </CardContent>
     </Card>

@@ -4,8 +4,10 @@ import type { Username } from '@/features/auth/domain/auth'
 import { removeUserGroupMember } from '@/features/usergroup/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { HttpClientError } from '@/shared/api/http-client'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
+  const { t } = useI18n()
   const [activeRemovingUsername, setActiveRemovingUsername] = useState<Username | null>(null)
 
   const removeMember = useCallback(
@@ -16,16 +18,16 @@ export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
         return {
           ok: true,
           userGroup: updatedUserGroup,
-          message: 'Member removed successfully.',
+          message: t('userGroup.message.removeMemberSuccess'),
         }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to remove member.'
+        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.removeMemberFailed')
         return { ok: false, message }
       } finally {
         setActiveRemovingUsername(null)
       }
     },
-    [userGroupSlug],
+    [userGroupSlug, t],
   )
 
   return { activeRemovingUsername, removeMember }

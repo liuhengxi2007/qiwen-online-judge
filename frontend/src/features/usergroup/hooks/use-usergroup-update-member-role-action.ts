@@ -4,8 +4,10 @@ import { updateUserGroupMemberRole } from '@/features/usergroup/api/usergroup-cl
 import type { UserGroupDetail, UserGroupRole, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import type { Username } from '@/features/auth/domain/auth'
 import { HttpClientError } from '@/shared/api/http-client'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useUserGroupUpdateMemberRoleAction(userGroupSlug: UserGroupSlug) {
+  const { t } = useI18n()
   const [activeUpdatingUsername, setActiveUpdatingUsername] = useState<Username | null>(null)
 
   const updateRole = useCallback(
@@ -19,16 +21,16 @@ export function useUserGroupUpdateMemberRoleAction(userGroupSlug: UserGroupSlug)
         return {
           ok: true,
           userGroup: updatedUserGroup,
-          message: role === 'owner' ? 'Ownership transferred successfully.' : 'Member role updated successfully.',
+          message: role === 'owner' ? t('userGroup.message.transferOwnershipSuccess') : t('userGroup.message.memberRoleUpdatedSuccess'),
         }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to update member role.'
+        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.updateMemberRoleFailed')
         return { ok: false, message }
       } finally {
         setActiveUpdatingUsername(null)
       }
     },
-    [userGroupSlug],
+    [userGroupSlug, t],
   )
 
   return { activeUpdatingUsername, updateRole }

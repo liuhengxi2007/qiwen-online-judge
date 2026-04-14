@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useReducer } from 'react'
 
+import {
+  emptySectionMessageState,
+  reduceSectionMessageState,
+} from '@/features/problem/domain/problem-detail-page-state'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import { problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
 import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-delete-action'
@@ -14,28 +18,18 @@ import {
   grantedUsersInputFromAccessPolicy,
 } from '@/shared/domain/resource-access-input'
 
-type SectionMessageState = {
-  errorMessage: string
-  successMessage: string
-}
-
-const emptySectionMessageState: SectionMessageState = {
-  errorMessage: '',
-  successMessage: '',
-}
-
 export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug)
   const editor = useProblemEditorState(detailQuery.problem)
   const updateAction = useProblemUpdateAction(problemSlug)
   const deleteAction = useProblemDeleteAction(problemSlug)
-  const [contentMessageState, setContentMessageState] = useState<SectionMessageState>(emptySectionMessageState)
-  const [accessMessageState, setAccessMessageState] = useState<SectionMessageState>(emptySectionMessageState)
+  const [contentMessageState, dispatchContentMessage] = useReducer(reduceSectionMessageState, emptySectionMessageState)
+  const [accessMessageState, dispatchAccessMessage] = useReducer(reduceSectionMessageState, emptySectionMessageState)
 
   async function saveContent() {
     const currentProblem = detailQuery.problem
     if (!currentProblem) {
-      setContentMessageState({ errorMessage: 'Problem detail is not loaded.', successMessage: '' })
+      dispatchContentMessage({ type: 'set_error', message: 'Problem detail is not loaded.' })
       return
     }
 
@@ -54,16 +48,16 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
 
     if (result.ok) {
       detailQuery.replaceProblem(result.problem)
-      setContentMessageState({ errorMessage: '', successMessage: result.message })
+      dispatchContentMessage({ type: 'set_success', message: result.message })
     } else {
-      setContentMessageState({ errorMessage: result.message, successMessage: '' })
+      dispatchContentMessage({ type: 'set_error', message: result.message })
     }
   }
 
   async function saveAccess() {
     const currentProblem = detailQuery.problem
     if (!currentProblem) {
-      setAccessMessageState({ errorMessage: 'Problem detail is not loaded.', successMessage: '' })
+      dispatchAccessMessage({ type: 'set_error', message: 'Problem detail is not loaded.' })
       return
     }
 
@@ -82,9 +76,9 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
 
     if (result.ok) {
       detailQuery.replaceProblem(result.problem)
-      setAccessMessageState({ errorMessage: '', successMessage: result.message })
+      dispatchAccessMessage({ type: 'set_success', message: result.message })
     } else {
-      setAccessMessageState({ errorMessage: result.message, successMessage: '' })
+      dispatchAccessMessage({ type: 'set_error', message: result.message })
     }
   }
 

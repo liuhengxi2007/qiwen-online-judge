@@ -4,8 +4,10 @@ import { updateUserGroup } from '@/features/usergroup/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { validateUserGroupUpdateDraft } from '@/features/usergroup/domain/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
+  const { t } = useI18n()
   const [isSaving, setIsSaving] = useState(false)
 
   const save = useCallback(
@@ -21,15 +23,15 @@ export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
       setIsSaving(true)
       try {
         const updatedUserGroup = await updateUserGroup(userGroupSlug, validation.request)
-        return { ok: true, userGroup: updatedUserGroup, message: 'User group updated successfully.' }
+        return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.updateSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to update user group.'
+        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.updateFailed')
         return { ok: false, message }
       } finally {
         setIsSaving(false)
       }
     },
-    [userGroupSlug],
+    [userGroupSlug, t],
   )
 
   return { isSaving, save }

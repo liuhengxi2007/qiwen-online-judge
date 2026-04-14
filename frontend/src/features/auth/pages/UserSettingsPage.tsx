@@ -15,9 +15,11 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/features/auth/hooks/use-user-settings-model'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function UserSettingsPage() {
-  usePageTitle('Qiwen Online Judge - User Settings')
+  const { t } = useI18n()
+  usePageTitle(t('userSettings.pageTitle'))
   const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, setSession: setViewer, navigationIntent: guardNavigationIntent } =
@@ -25,7 +27,7 @@ export function UserSettingsPage() {
   const notice = searchParams.get('notice')
   const noticeMessage =
     notice === 'route-corrected'
-      ? 'The route was corrected to match your signed-in username.'
+      ? t('userSettings.routeCorrected')
       : null
 
   if (guardNavigationIntent) {
@@ -70,16 +72,22 @@ export function UserSettingsPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              User Settings
+              {t('userSettings.heading')}
             </h1>
             <p className="text-sm text-slate-600">
               {displayedUser
                 ? isEditingOwnSettings
-                  ? `Manage settings for ${displayNameValue(displayedUser.displayName)} (${usernameValue(displayedUser.username)}).`
-                  : `Site manager editing ${displayNameValue(displayedUser.displayName)} (${usernameValue(displayedUser.username)}).`
-                : `Loading settings for ${targetUsername}.`}
+                  ? t('userSettings.managingOwn', {
+                      displayName: displayNameValue(displayedUser.displayName),
+                      username: usernameValue(displayedUser.username),
+                    })
+                  : t('userSettings.managingOther', {
+                      displayName: displayNameValue(displayedUser.displayName),
+                      username: usernameValue(displayedUser.username),
+                    })
+                : t('userSettings.loadingFor', { username: targetUsername })}
             </p>
           </div>
 
@@ -94,10 +102,8 @@ export function UserSettingsPage() {
                   <Settings className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Profile Settings</CardTitle>
-                  <CardDescription>
-                    This page is scoped to the signed-in account route.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('userSettings.profileTitle')}</CardTitle>
+                  <CardDescription>{t('userSettings.profileDescription')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -109,18 +115,18 @@ export function UserSettingsPage() {
               ) : null}
               {!displayedUser ? (
                 <Alert className="rounded-2xl border-slate-200 bg-slate-50/95">
-                  <AlertDescription className="text-slate-700">Loading the selected user settings.</AlertDescription>
+                  <AlertDescription className="text-slate-700">{t('userSettings.loadingSelected')}</AlertDescription>
                 </Alert>
               ) : null}
               <div className="rounded-2xl bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Username</p>
+                <p className="text-sm text-slate-500">{t('common.username')}</p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">
                   {displayedUser ? usernameValue(displayedUser.username) : targetUsername}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="settings-display-name">Display name</Label>
+                <Label htmlFor="settings-display-name">{t('common.displayName')}</Label>
                 <Input
                   id="settings-display-name"
                   value={displayName}
@@ -129,7 +135,7 @@ export function UserSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="settings-email">Email</Label>
+                <Label htmlFor="settings-email">{t('common.email')}</Label>
                 <Input
                   id="settings-email"
                   value={email}
@@ -139,7 +145,7 @@ export function UserSettingsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="settings-new-password">New password</Label>
+                  <Label htmlFor="settings-new-password">{t('userSettings.newPassword')}</Label>
                   <Input
                     id="settings-new-password"
                     type="password"
@@ -148,7 +154,7 @@ export function UserSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="settings-confirm-password">Confirm new password</Label>
+                  <Label htmlFor="settings-confirm-password">{t('userSettings.confirmNewPassword')}</Label>
                   <Input
                     id="settings-confirm-password"
                     type="password"
@@ -162,10 +168,10 @@ export function UserSettingsPage() {
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <div className="mb-3 flex items-center gap-2 text-slate-800">
                     <LockKeyhole className="size-4" />
-                    <p className="font-medium">Confirm with current password</p>
+                    <p className="font-medium">{t('userSettings.currentPasswordTitle')}</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="settings-current-password">Current password</Label>
+                    <Label htmlFor="settings-current-password">{t('userSettings.currentPassword')}</Label>
                     <Input
                       id="settings-current-password"
                       type="password"
@@ -176,7 +182,7 @@ export function UserSettingsPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-                  As a site manager, you can update this user's profile directly. A current password is not required.
+                  {t('userSettings.siteManagerNotice')}
                 </div>
               )}
 
@@ -199,7 +205,7 @@ export function UserSettingsPage() {
                   void submit()
                 }}
               >
-                {isSubmitting ? 'Saving settings...' : 'Save settings'}
+                {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
               </Button>
             </CardContent>
           </Card>
@@ -211,25 +217,23 @@ export function UserSettingsPage() {
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">Permissions</CardTitle>
-                  <CardDescription>
-                    Current permission flags attached to your signed-in account.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('userSettings.permissionsTitle')}</CardTitle>
+                  <CardDescription>{t('userSettings.permissionsDescription')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4">
                 <div>
-                  <p className="font-medium text-slate-900">Site manager</p>
-                  <p className="text-sm text-slate-500">Access to site-level management pages.</p>
+                  <p className="font-medium text-slate-900">{t('siteManage.siteManager')}</p>
+                  <p className="text-sm text-slate-500">{t('userSettings.siteManagerDescription')}</p>
                 </div>
                 <Checkbox checked={displayedUser?.siteManager ?? false} disabled aria-label="Site manager permission" />
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4">
                 <div>
-                  <p className="font-medium text-slate-900">Problem manager</p>
-                  <p className="text-sm text-slate-500">Reserved for future problem administration tools.</p>
+                  <p className="font-medium text-slate-900">{t('siteManage.problemManager')}</p>
+                  <p className="text-sm text-slate-500">{t('userSettings.problemManagerDescription')}</p>
                 </div>
                 <Checkbox checked={displayedUser?.problemManager ?? false} disabled aria-label="Problem manager permission" />
               </div>

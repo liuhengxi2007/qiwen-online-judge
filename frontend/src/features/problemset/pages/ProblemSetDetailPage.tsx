@@ -18,9 +18,11 @@ import {
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function ProblemSetDetailPage() {
-  usePageTitle('Qiwen Online Judge - Problem Set Detail')
+  const { t } = useI18n()
+  usePageTitle(t('problemSet.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
 
@@ -58,10 +60,10 @@ export function ProblemSetDetailPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Problem Set Detail</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.detail.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -76,7 +78,7 @@ export function ProblemSetDetailPage() {
 
         {model.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading problem set detail...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('problemSet.detail.loading')}</CardContent>
           </Card>
         ) : model.problemSet ? (
           <div className="space-y-6">

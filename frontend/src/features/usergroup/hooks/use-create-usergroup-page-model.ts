@@ -1,62 +1,17 @@
 import { useCallback, useReducer } from 'react'
 
 import { createUserGroup } from '@/features/usergroup/api/usergroup-client'
+import {
+  initialCreateUserGroupPageState,
+  reduceCreateUserGroupPageState,
+} from '@/features/usergroup/domain/create-usergroup-page-state'
 import { validateUserGroupDraft } from '@/features/usergroup/domain/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
-
-type CreateUserGroupPageState = {
-  isSubmitting: boolean
-  slug: string
-  name: string
-  description: string
-  errorMessage: string
-  successMessage: string
-}
-
-type CreateUserGroupPageAction =
-  | { type: 'set_slug'; value: string }
-  | { type: 'set_name'; value: string }
-  | { type: 'set_description'; value: string }
-  | { type: 'submit_started' }
-  | { type: 'submit_succeeded' }
-  | { type: 'submit_failed'; message: string }
-
-const initialState: CreateUserGroupPageState = {
-  isSubmitting: false,
-  slug: '',
-  name: '',
-  description: '',
-  errorMessage: '',
-  successMessage: '',
-}
-
-function reducer(state: CreateUserGroupPageState, action: CreateUserGroupPageAction): CreateUserGroupPageState {
-  switch (action.type) {
-    case 'set_slug':
-      return { ...state, slug: action.value }
-    case 'set_name':
-      return { ...state, name: action.value }
-    case 'set_description':
-      return { ...state, description: action.value }
-    case 'submit_started':
-      return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
-    case 'submit_succeeded':
-      return {
-        ...state,
-        isSubmitting: false,
-        slug: '',
-        name: '',
-        description: '',
-        errorMessage: '',
-        successMessage: 'User group created successfully.',
-      }
-    case 'submit_failed':
-      return { ...state, isSubmitting: false, errorMessage: action.message, successMessage: '' }
-  }
-}
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useCreateUserGroupPageModel() {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const { t } = useI18n()
+  const [state, dispatch] = useReducer(reduceCreateUserGroupPageState, initialCreateUserGroupPageState)
 
   const submit = useCallback(async () => {
     const validation = validateUserGroupDraft({
@@ -73,12 +28,12 @@ export function useCreateUserGroupPageModel() {
 
     try {
       await createUserGroup(validation.request)
-      dispatch({ type: 'submit_succeeded' })
+      dispatch({ type: 'submit_succeeded', message: t('userGroup.message.createSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to create user group.'
+      const message = error instanceof HttpClientError ? error.message : t('userGroup.message.createFailed')
       dispatch({ type: 'submit_failed', message })
     }
-  }, [state.description, state.name, state.slug])
+  }, [state.description, state.name, state.slug, t])
 
   return {
     ...state,

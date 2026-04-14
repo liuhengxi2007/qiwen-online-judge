@@ -17,9 +17,11 @@ import { ResourceAccessEditor } from '@/shared/components/resource-access-editor
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function CreateProblemSetPage() {
-  usePageTitle('Qiwen Online Judge - Create Problem Set')
+  const { t } = useI18n()
+  usePageTitle(t('problemSet.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
 
   if (navigationIntent) {
@@ -49,10 +51,10 @@ export function CreateProblemSetPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Create Problem Set</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.create.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -66,60 +68,52 @@ export function CreateProblemSetPage() {
                 <BookPlus className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-xl text-slate-950">Problem Set Metadata</CardTitle>
-                <CardDescription>
-                  Create a problem set with Markdown and LaTeX support for the description.
-                </CardDescription>
+                <CardTitle className="text-xl text-slate-950">{t('problemSet.create.cardTitle')}</CardTitle>
+                <CardDescription>{t('problemSet.create.cardDescription')}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
             {!canCreate ? (
-              <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
-                <AlertDescription className="text-amber-900">
-                  Problem manager or site manager permission is required to create problem sets.
-                </AlertDescription>
-              </Alert>
-            ) : null}
+                <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
+                  <AlertDescription className="text-amber-900">
+                    {t('problemSet.create.permissionRequired')}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
             <div className="space-y-2">
-              <Label htmlFor="problem-set-slug">Slug</Label>
+              <Label htmlFor="problem-set-slug">{t('problemSet.create.slug')}</Label>
               <Input
                 id="problem-set-slug"
                 value={model.slug}
-                placeholder="graph-theory-ladder"
+                placeholder={t('problemSet.create.slugPlaceholder')}
                 onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="problem-set-title">Title</Label>
+              <Label htmlFor="problem-set-title">{t('problemSet.create.titleLabel')}</Label>
               <Input
                 id="problem-set-title"
                 value={model.title}
-                placeholder="Graph Theory Ladder"
+                placeholder={t('problemSet.create.titlePlaceholder')}
                 onChange={(event) => model.setTitle(event.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="problem-set-description">Description</Label>
+              <Label htmlFor="problem-set-description">{t('problemSet.create.descriptionLabel')}</Label>
               <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
                 <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
-                  <TabsTrigger value="write" className="rounded-xl">
-                    Write
-                  </TabsTrigger>
-                  <TabsTrigger value="preview" className="rounded-xl">
-                    Preview
-                  </TabsTrigger>
+                  <TabsTrigger value="write" className="rounded-xl">{t('common.write')}</TabsTrigger>
+                  <TabsTrigger value="preview" className="rounded-xl">{t('common.preview')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="write" className="mt-3">
                   <Textarea
                     id="problem-set-description"
                     value={model.description}
                     className="min-h-48 !font-mono"
-                    placeholder={
-                      '## Graph Theory Ladder\n\nPractice BFS, shortest paths, and spanning tree basics.\n\n- Warm-up graph traversal\n- Weighted shortest path\n\n$$O((n + m) \\log n)$$'
-                    }
+                    placeholder={t('problemSet.create.descriptionPlaceholder')}
                     onChange={(event) => model.setDescription(event.target.value)}
                   />
                 </TabsContent>
@@ -128,18 +122,12 @@ export function CreateProblemSetPage() {
                     {deferredDescription.trim() ? (
                       <MarkdownDocument content={deferredDescription} />
                     ) : (
-                      <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                      <p className="text-sm text-slate-500">{t('common.nothingToPreview')}</p>
                     )}
                   </div>
                 </TabsContent>
               </Tabs>
-              <p className="text-xs text-slate-500">
-                Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
-                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
-                or
-                <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
-                Raw HTML is ignored.
-              </p>
+              <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
             </div>
 
             <ResourceAccessEditor
@@ -169,7 +157,7 @@ export function CreateProblemSetPage() {
                 void model.submit()
               }}
             >
-              {model.isSubmitting ? 'Creating problem set...' : 'Create problem set'}
+              {model.isSubmitting ? t('problemSet.create.submitting') : t('problemSet.create.submit')}
             </Button>
           </CardContent>
         </Card>

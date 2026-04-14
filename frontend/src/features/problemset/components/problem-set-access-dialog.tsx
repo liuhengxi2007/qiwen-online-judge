@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessSummary, type ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type ProblemSetAccessDialogProps = {
   open: boolean
@@ -37,6 +38,7 @@ export function ProblemSetAccessDialog({
   onGrantedGroupsInputChange,
   onSave,
 }: ProblemSetAccessDialogProps) {
+  const { t } = useI18n()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100vh-2rem)] max-w-3xl overflow-y-auto rounded-[2rem] border-slate-200 bg-white p-0 shadow-[0_28px_90px_rgba(15,23,42,0.22)]">
@@ -45,13 +47,13 @@ export function ProblemSetAccessDialog({
             <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
               <ShieldCheck className="size-5" />
             </span>
-            Access Management
+            {t('problemSet.detail.accessDialogTitle')}
           </DialogTitle>
-          <DialogDescription className="text-sm leading-7 text-slate-600">Update who can view this problem set.</DialogDescription>
+          <DialogDescription className="text-sm leading-7 text-slate-600">{t('problemSet.detail.accessDialogDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 px-7 py-7 sm:px-8">
-          <p className="text-sm text-slate-600">{resourceAccessSummary(summaryPolicy)}</p>
+          <p className="text-sm text-slate-600">{resourceAccessSummary(summaryPolicy, t)}</p>
           <ResourceAccessEditor
             accessPolicy={accessPolicy}
             grantedUsersInput={grantedUsersInput}
@@ -61,7 +63,7 @@ export function ProblemSetAccessDialog({
             onGrantedGroupsInputChange={onGrantedGroupsInputChange}
           />
           <Button type="button" className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800" disabled={isSaving} onClick={onSave}>
-            {isSaving ? 'Saving access...' : 'Save access'}
+            {isSaving ? t('problemSet.detail.savingAccess') : t('problemSet.detail.saveAccess')}
           </Button>
           {errorMessage ? (
             <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

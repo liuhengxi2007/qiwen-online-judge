@@ -14,11 +14,13 @@ import {
 } from '@/features/problem/domain/problem'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type UploadResult = { ok: true } | { ok: false; message: string }
 type DeleteResult = { ok: true } | { ok: false; message: string }
 
 export function useProblemDataPageModel(problemSlug: ProblemSlug) {
+  const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug)
   const replaceProblem = detailQuery.replaceProblem
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -37,7 +39,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       setDataFiles(files)
       return { ok: true as const }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to load problem data files.'
+      const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
       setErrorMessage(message)
       return { ok: false as const, message }
     } finally {

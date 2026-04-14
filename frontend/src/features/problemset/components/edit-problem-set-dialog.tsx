@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type EditProblemSetDialogProps = {
   open: boolean
@@ -53,6 +54,7 @@ export function EditProblemSetDialog({
   onAttachProblem,
   onDeleteProblemSet,
 }: EditProblemSetDialogProps) {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
   const deferredDescription = useDeferredValue(description)
@@ -65,16 +67,16 @@ export function EditProblemSetDialog({
             <span className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
               <PencilLine className="size-5" />
             </span>
-            Edit Problem Set
+            {t('problemSet.detail.editDialogTitle')}
           </DialogTitle>
           <DialogDescription className="text-sm leading-7 text-slate-600">
-            Edit content, manage linked problems, and handle destructive actions in a front-layer card.
+            {t('problemSet.detail.editDialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 px-7 py-7 sm:px-8">
           <div className="space-y-2">
-            <Label htmlFor="problem-set-title">Title</Label>
+            <Label htmlFor="problem-set-title">{t('problemSet.create.titleLabel')}</Label>
             <Input
               id="problem-set-title"
               value={title}
@@ -84,15 +86,11 @@ export function EditProblemSetDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="problem-set-description">Description</Label>
+            <Label htmlFor="problem-set-description">{t('problemSet.create.descriptionLabel')}</Label>
             <Tabs value={descriptionTab} onValueChange={(value) => setDescriptionTab(value as 'write' | 'preview')}>
               <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
-                <TabsTrigger value="write" className="rounded-xl">
-                  Write
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="rounded-xl">
-                  Preview
-                </TabsTrigger>
+                <TabsTrigger value="write" className="rounded-xl">{t('common.write')}</TabsTrigger>
+                <TabsTrigger value="preview" className="rounded-xl">{t('common.preview')}</TabsTrigger>
               </TabsList>
               <TabsContent value="write" className="mt-3">
                 <Textarea
@@ -109,18 +107,12 @@ export function EditProblemSetDialog({
                   {deferredDescription.trim() ? (
                     <MarkdownDocument content={deferredDescription} />
                   ) : (
-                    <p className="text-sm text-slate-500">Nothing to preview yet.</p>
+                    <p className="text-sm text-slate-500">{t('common.nothingToPreview')}</p>
                   )}
                 </div>
               </TabsContent>
             </Tabs>
-            <p className="text-xs text-slate-500">
-              Supported: headings, lists, emphasis, tables, fenced code blocks, links, images, and LaTeX with
-              <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$...$</code>
-              or
-              <code className="mx-1 rounded bg-slate-100 px-1 py-0.5">$$...$$</code>.
-              Raw HTML is ignored.
-            </p>
+            <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
           </div>
           <Button
             type="button"
@@ -128,7 +120,7 @@ export function EditProblemSetDialog({
             disabled={isSaving}
             onClick={onSaveContent}
           >
-            {isSaving ? 'Saving content...' : 'Save content'}
+            {isSaving ? t('problemSet.detail.savingContent') : t('problemSet.detail.saveContent')}
           </Button>
           {contentErrorMessage ? (
             <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
@@ -147,8 +139,8 @@ export function EditProblemSetDialog({
                 <Link2 className="size-5" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-slate-950">Link Problem</h2>
-                <p className="text-sm text-slate-600">Add an existing problem into this problem set by slug.</p>
+                <h2 className="text-xl font-semibold text-slate-950">{t('problemSet.detail.linkProblemTitle')}</h2>
+                <p className="text-sm text-slate-600">{t('problemSet.detail.linkProblemDescription')}</p>
               </div>
             </div>
             <div className="mt-5 space-y-3">
@@ -163,11 +155,11 @@ export function EditProblemSetDialog({
                 </Alert>
               ) : null}
               <div className="space-y-2">
-                <Label htmlFor="link-problem-slug">Problem slug</Label>
+                <Label htmlFor="link-problem-slug">{t('problemSet.detail.linkProblemSlug')}</Label>
                 <Input
                   id="link-problem-slug"
                   value={linkProblemSlug}
-                  placeholder="two-sum-intro"
+                  placeholder={t('problemSet.detail.linkProblemPlaceholder')}
                   onChange={(event) => {
                     onLinkProblemSlugChange(event.target.value)
                   }}
@@ -180,7 +172,7 @@ export function EditProblemSetDialog({
                 disabled={activeLink}
                 onClick={onAttachProblem}
               >
-                {activeLink ? 'Linking problem...' : 'Link problem'}
+                {activeLink ? t('problemSet.detail.linkingProblem') : t('problemSet.detail.linkProblem')}
               </Button>
             </div>
           </div>
@@ -191,15 +183,15 @@ export function EditProblemSetDialog({
                 <Trash2 className="size-5" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-rose-950">Delete Problem Set</h2>
-                <p className="text-sm text-rose-900/80">This removes the problem set and all of its current problem links.</p>
+                <h2 className="text-xl font-semibold text-rose-950">{t('problemSet.detail.deleteTitle')}</h2>
+                <p className="text-sm text-rose-900/80">{t('problemSet.detail.deleteDescription')}</p>
               </div>
             </div>
             <div className="mt-5">
               <ConfirmActionDialog
-                title="Delete problem set?"
-                description="Delete this problem set and all of its current problem links. This action cannot be undone."
-                confirmLabel={isDeleting ? 'Deleting...' : 'Delete problem set'}
+                title={t('problemSet.detail.deleteConfirmTitle')}
+                description={t('problemSet.detail.deleteConfirmDescription')}
+                confirmLabel={isDeleting ? t('problemSet.detail.deletingAction') : t('problemSet.detail.deleteAction')}
                 destructive
                 onConfirm={() => {
                   void onDeleteProblemSet().then((deleted) => {
@@ -215,7 +207,7 @@ export function EditProblemSetDialog({
                     className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
                     disabled={isDeleting}
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete problem set'}
+                    {isDeleting ? t('problemSet.detail.deletingAction') : t('problemSet.detail.deleteAction')}
                   </Button>
                 }
               />

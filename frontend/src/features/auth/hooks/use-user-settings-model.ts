@@ -14,6 +14,7 @@ import {
   resolveUserSettingsRoutePolicy,
   toSiteManageDeniedRedirect,
 } from '@/features/auth/lib/route-policy'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type UserSettingsState = {
   editedUser: SessionResponse | null
@@ -136,6 +137,7 @@ type UseUserSettingsModelArgs = {
 }
 
 export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUserSettingsModelArgs) {
+  const { t } = useI18n()
   const [state, dispatch] = useReducer(userSettingsReducer, initialState)
   const mutation = useUserSettingsMutation()
 
@@ -186,7 +188,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
   const submit = useCallback(async () => {
     if (!displayedUser) {
-      dispatch({ type: 'submit_failed', message: 'Unable to load settings.' })
+      dispatch({ type: 'submit_failed', message: t('userSettings.loadingSelected') })
       return
     }
 
@@ -255,6 +257,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     state.newPassword,
     submitSettings,
     targetUsername,
+    t,
   ])
 
   return {

@@ -8,7 +8,7 @@ import domains.problem.model.ProblemSlug
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSet, ProblemSetSummary, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
+import domains.shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 import domains.problemset.application.ProblemSetDecisions.*
@@ -214,13 +214,19 @@ object ProblemSetCommands:
     problemSet: ProblemSet
   ): IO[Boolean] =
     UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { viewerGroupSlugs =>
-      AccessPolicyEvaluator.canView(
-        policy = problemSet.accessPolicy,
-        viewerUsername = actor.username,
-        viewerGroupSlugs = viewerGroupSlugs,
-        isOwner = false,
-        hasGlobalOverride = ProblemSetPolicy.hasGlobalViewOverride(actor)
-      )
+      ProblemSetAccessDecision
+        .evaluate(
+          ProblemSetAccessFacts(
+            resourceAccess = ResourceAccessFacts(
+              policy = problemSet.accessPolicy,
+              actorUsername = actor.username,
+              actorGroupSlugs = viewerGroupSlugs,
+              hasGlobalViewOverride = ProblemSetPolicy.hasGlobalViewOverride(actor),
+              hasGlobalManageOverride = ProblemSetPolicy.hasGlobalViewOverride(actor)
+            )
+          )
+        )
+        .canView
     }
 
   private def validateAccessPolicySubjects(

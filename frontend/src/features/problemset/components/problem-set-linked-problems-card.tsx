@@ -10,6 +10,7 @@ import {
   problemSetProblemPositionValue,
   type ProblemSetProblemSummary,
 } from '@/features/problemset/domain/problemset'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type ProblemSetLinkedProblemsCardProps = {
   problems: ProblemSetProblemSummary[]
@@ -28,6 +29,7 @@ export function ProblemSetLinkedProblemsCard({
   successMessage,
   onRemoveProblem,
 }: ProblemSetLinkedProblemsCardProps) {
+  const { t } = useI18n()
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <CardHeader>
@@ -36,8 +38,8 @@ export function ProblemSetLinkedProblemsCard({
             <Rows3 className="size-5" />
           </div>
           <div>
-            <CardTitle className="text-xl text-slate-950">Linked Problems</CardTitle>
-            <CardDescription>Detailed linked problem information lives here instead of the list page.</CardDescription>
+            <CardTitle className="text-xl text-slate-950">{t('problemSet.detail.linkedProblemsTitle')}</CardTitle>
+            <CardDescription>{t('problemSet.detail.linkedProblemsDescription')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -53,7 +55,7 @@ export function ProblemSetLinkedProblemsCard({
           </Alert>
         ) : null}
         {problems.length === 0 ? (
-          <p className="text-sm text-slate-500">No problems linked yet.</p>
+          <p className="text-sm text-slate-500">{t('problemSet.detail.emptyProblems')}</p>
         ) : (
           problems.map((problem) => (
             <div key={problem.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -80,7 +82,7 @@ export function ProblemSetLinkedProblemsCard({
                       onRemoveProblem(problem.slug)
                     }}
                   >
-                    {activeRemovingProblemSlug === problem.slug ? 'Removing...' : 'Remove'}
+                    {activeRemovingProblemSlug === problem.slug ? t('problemSet.detail.removingProblem') : t('problemSet.detail.removeProblem')}
                   </Button>
                 ) : null}
               </div>

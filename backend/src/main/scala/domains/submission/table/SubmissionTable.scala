@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, Username}
 import domains.problem.model.{ProblemId, ProblemSlug}
 import domains.submission.application.SubmissionPolicy
-import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
+import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -287,21 +287,21 @@ object SubmissionTable:
       |  limit 1
       |)
       |update submissions s
-      |set status = 'running',
+      |set status = ?,
       |    started_at = ?,
-      |    finished_at = null,
-      |    verdict = null,
-      |    judge_message = null
+      |    finished_at = ?,
+      |    verdict = ?,
+      |    judge_message = ?
       |from next_submission ns, problems p
       |where s.id = ns.id
       |  and p.id = s.problem_id
       |returning s.public_id, s.problem_id, p.slug as problem_slug, s.language, s.source_code, p.time_limit_ms, p.space_limit_mb
       |""".stripMargin
 
-  val markCompletedSql: String =
+  val updateJudgeStateSql: String =
     """
       |update submissions
-      |set status = ?, verdict = ?, judge_message = ?, finished_at = ?
+      |set status = ?, verdict = ?, judge_message = ?, started_at = ?, finished_at = ?
       |where public_id = ?
       |""".stripMargin
 
@@ -404,11 +404,15 @@ object SubmissionTable:
       finally statement.close()
     }
 
-  def claimNextCpp17(connection: Connection): IO[Option[ClaimedSubmission]] =
+  def claimNextCpp17(connection: Connection, runningState: SubmissionJudgeState): IO[Option[ClaimedSubmission]] =
     IO.blocking {
       val statement = connection.prepareStatement(claimNextCpp17Sql)
       try
-        statement.setTimestamp(1, Timestamp.from(Instant.now()))
+        statement.setString(1, SubmissionStatus.toDatabase(runningState.status))
+        setOptionalTimestamp(statement, 2, runningState.startedAt)
+        setOptionalTimestamp(statement, 3, runningState.finishedAt)
+        setOptionalVerdict(statement, 4, runningState.verdict)
+        setOptionalJudgeMessage(statement, 5, runningState.judgeMessage)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -428,25 +432,20 @@ object SubmissionTable:
       finally statement.close()
     }
 
-  def markCompleted(
+  def updateJudgeState(
     connection: Connection,
     submissionId: SubmissionId,
-    status: SubmissionStatus,
-    verdict: Option[SubmissionVerdict],
-    judgeMessage: Option[String]
+    judgeState: SubmissionJudgeState
   ): IO[Unit] =
     IO.blocking {
-      val statement = connection.prepareStatement(markCompletedSql)
+      val statement = connection.prepareStatement(updateJudgeStateSql)
       try
-        statement.setString(1, SubmissionStatus.toDatabase(status))
-        verdict match
-          case Some(value) => statement.setString(2, SubmissionVerdict.toDatabase(value))
-          case None => statement.setNull(2, java.sql.Types.VARCHAR)
-        judgeMessage match
-          case Some(value) => statement.setString(3, value)
-          case None => statement.setNull(3, java.sql.Types.LONGVARCHAR)
-        statement.setTimestamp(4, Timestamp.from(Instant.now()))
-        statement.setLong(5, submissionId.value)
+        statement.setString(1, SubmissionStatus.toDatabase(judgeState.status))
+        setOptionalVerdict(statement, 2, judgeState.verdict)
+        setOptionalJudgeMessage(statement, 3, judgeState.judgeMessage)
+        setOptionalTimestamp(statement, 4, judgeState.startedAt)
+        setOptionalTimestamp(statement, 5, judgeState.finishedAt)
+        statement.setLong(6, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -484,6 +483,33 @@ object SubmissionTable:
 
   private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  private def setOptionalVerdict(
+    statement: java.sql.PreparedStatement,
+    parameterIndex: Int,
+    verdict: Option[SubmissionVerdict]
+  ): Unit =
+    verdict match
+      case Some(value) => statement.setString(parameterIndex, SubmissionVerdict.toDatabase(value))
+      case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
+
+  private def setOptionalJudgeMessage(
+    statement: java.sql.PreparedStatement,
+    parameterIndex: Int,
+    judgeMessage: Option[String]
+  ): Unit =
+    judgeMessage match
+      case Some(value) => statement.setString(parameterIndex, value)
+      case None => statement.setNull(parameterIndex, java.sql.Types.LONGVARCHAR)
+
+  private def setOptionalTimestamp(
+    statement: java.sql.PreparedStatement,
+    parameterIndex: Int,
+    timestamp: Option[Instant]
+  ): Unit =
+    timestamp match
+      case Some(value) => statement.setTimestamp(parameterIndex, Timestamp.from(value))
+      case None => statement.setNull(parameterIndex, java.sql.Types.TIMESTAMP)
 
   private def missingInsertResult(entityName: String): Nothing =
     throw new IllegalStateException(s"Insert succeeded but returned no $entityName")

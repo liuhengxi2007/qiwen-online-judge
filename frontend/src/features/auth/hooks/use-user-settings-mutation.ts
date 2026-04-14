@@ -16,6 +16,7 @@ import {
 } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type SubmitSettingsParams =
   | {
@@ -39,6 +40,7 @@ type SubmitSettingsResult =
   | { kind: 'failed'; message: string }
 
 export function useUserSettingsMutation() {
+  const { t } = useI18n()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
@@ -69,8 +71,8 @@ export function useUserSettingsMutation() {
 
         const message =
           params.kind === 'own'
-            ? 'Settings updated successfully.'
-            : `Settings updated for ${usernameValue(updatedUser.username)}.`
+            ? t('userGroup.message.updateSuccess')
+            : `${t('userSettings.save')} ${usernameValue(updatedUser.username)}.`
 
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }
@@ -84,17 +86,17 @@ export function useUserSettingsMutation() {
         if (error instanceof AuthClientError && error.kind === 'unauthorized') {
           const message =
             error.message ||
-            (params.kind === 'own' ? 'Current password is incorrect.' : 'Unable to update settings.')
+            (params.kind === 'own' ? t('userSettings.currentPasswordTitle') : t('userGroup.message.updateFailed'))
           setIsSubmitting(false)
           return { kind: 'unauthorized', message }
         }
 
-        const message = 'Unable to update settings.'
+        const message = t('userGroup.message.updateFailed')
         setIsSubmitting(false)
         return { kind: 'failed', message }
       }
     },
-    [],
+    [t],
   )
 
   return {

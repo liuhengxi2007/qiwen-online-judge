@@ -7,7 +7,7 @@ import domains.problem.model.{CreateProblemRequest, ProblemDataFileListResponse,
 import domains.problem.table.ProblemTable
 import domains.problemset.model.ProblemSetSlug
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessPolicyEvaluator, AccessSubject, GrantRole, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
+import domains.shared.access.{AccessSubject, GrantRole, ResourceAccessFacts, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.table.UserGroupTable
 import domains.auth.table.AuthUserTable
@@ -364,27 +364,24 @@ object ProblemCommands:
     problem: ProblemDetail
   ): IO[Option[ProblemDetail]] =
     UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { actorGroupSlugs =>
-      val canViewDirectly = AccessPolicyEvaluator.canView(
-        policy = problem.accessPolicy,
-        viewerUsername = actor.username,
-        viewerGroupSlugs = actorGroupSlugs,
-        isOwner = false,
-        hasGlobalOverride = ProblemPolicy.hasGlobalViewOverride(actor)
-      )
-      val canManage = AccessPolicyEvaluator.canManage(
+      val resourceAccessFacts = ResourceAccessFacts(
         policy = problem.accessPolicy,
         actorUsername = actor.username,
         actorGroupSlugs = actorGroupSlugs,
-        hasGlobalOverride = ProblemPolicy.hasGlobalManageOverride(actor)
+        hasGlobalViewOverride = ProblemPolicy.hasGlobalViewOverride(actor),
+        hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
       )
 
-      if canViewDirectly then
-        IO.pure(Some(problem.copy(canManage = canManage)))
-      else
-        ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map {
-          case true => Some(problem.copy(canManage = canManage))
-          case false => None
-        }
+      ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map { hasVisibleContainingProblemSet =>
+        val decision = ProblemAccessDecision.evaluate(
+          ProblemAccessFacts(
+            resourceAccess = resourceAccessFacts,
+            hasVisibleContainingProblemSet = hasVisibleContainingProblemSet
+          )
+        )
+
+        if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
+      }
     }
 
   private def canManageProblem(
@@ -393,12 +390,20 @@ object ProblemCommands:
     problem: ProblemDetail
   ): IO[Boolean] =
     UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { actorGroupSlugs =>
-      AccessPolicyEvaluator.canManage(
-        policy = problem.accessPolicy,
-        actorUsername = actor.username,
-        actorGroupSlugs = actorGroupSlugs,
-        hasGlobalOverride = ProblemPolicy.hasGlobalManageOverride(actor)
-      )
+      ProblemAccessDecision
+        .evaluate(
+          ProblemAccessFacts(
+            resourceAccess = ResourceAccessFacts(
+              policy = problem.accessPolicy,
+              actorUsername = actor.username,
+              actorGroupSlugs = actorGroupSlugs,
+              hasGlobalViewOverride = ProblemPolicy.hasGlobalViewOverride(actor),
+              hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
+            ),
+            hasVisibleContainingProblemSet = false
+          )
+        )
+        .canManage
     }
 
   private def validateAccessPolicySubjects(

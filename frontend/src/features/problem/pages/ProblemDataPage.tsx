@@ -19,9 +19,11 @@ import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-da
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function ProblemDataPage() {
-  usePageTitle('Qiwen Online Judge - Manage Problem Data')
+  const { t } = useI18n()
+  usePageTitle(t('problem.data.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
 
@@ -49,10 +51,10 @@ export function ProblemDataPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">Manage Problem Data</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.data.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -61,7 +63,7 @@ export function ProblemDataPage() {
 
         {model.isProblemLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">Loading problem data...</CardContent>
+            <CardContent className="py-10 text-sm text-slate-500">{t('problem.data.loading')}</CardContent>
           </Card>
         ) : model.problem ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -81,23 +83,23 @@ export function ProblemDataPage() {
             <CardContent className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">Time limit</p>
+                  <p className="text-sm text-slate-500">{t('problem.data.timeLimit')}</p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">Space limit</p>
+                  <p className="text-sm text-slate-500">{t('problem.data.spaceLimit')}</p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">Latest uploaded file</p>
+                  <p className="text-sm text-slate-500">{t('problem.data.latestFile')}</p>
                   <p className="mt-2 text-base font-medium text-slate-900">
-                    {model.problem.data ? problemDataFilenameValue(model.problem.data) : 'No data uploaded'}
+                    {model.problem.data ? problemDataFilenameValue(model.problem.data) : t('problem.data.noDataUploaded')}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="problem-data-file">Upload file</Label>
+                <Label htmlFor="problem-data-file">{t('problem.data.uploadFile')}</Label>
                 <Input
                   id="problem-data-file"
                   type="file"
@@ -131,28 +133,26 @@ export function ProblemDataPage() {
                 }}
               >
                 <FileUp className="size-4" />
-                {model.isUploading ? 'Uploading data...' : 'Upload data file'}
+                {model.isUploading ? t('problem.data.uploading') : t('problem.data.upload')}
               </Button>
 
               <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Uploaded data files</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Files are stored under the problem folder and can be downloaded here.
-                  </p>
+                  <p className="text-sm font-medium text-slate-900">{t('problem.data.filesTitle')}</p>
+                  <p className="mt-1 text-sm text-slate-500">{t('problem.data.filesDescription')}</p>
                 </div>
 
                 {model.isLoadingFiles ? (
-                  <p className="text-sm text-slate-500">Loading files...</p>
+                  <p className="text-sm text-slate-500">{t('problem.data.loadingFiles')}</p>
                 ) : model.dataFiles.length === 0 ? (
-                  <p className="text-sm text-slate-500">No data files uploaded yet.</p>
+                  <p className="text-sm text-slate-500">{t('problem.data.emptyFiles')}</p>
                 ) : (
                   <div className="space-y-3">
                     <div className="flex justify-end">
                       <ConfirmActionDialog
-                        title="Clear all data files?"
-                        description="This currently deletes every uploaded data file for the problem. This action cannot be undone."
-                        confirmLabel={model.isClearingAll ? 'Clearing...' : 'Clear all files'}
+                        title={t('problem.data.clearAllTitle')}
+                        description={t('problem.data.clearAllDescription')}
+                        confirmLabel={model.isClearingAll ? t('problem.data.clearing') : t('problem.data.clearAll')}
                         destructive
                         onConfirm={() => {
                           void model.clearAllDataFiles()
@@ -165,7 +165,7 @@ export function ProblemDataPage() {
                             className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                           >
                             <Eraser className="size-4" />
-                            {model.isClearingAll ? 'Clearing...' : 'Clear all files'}
+                            {model.isClearingAll ? t('problem.data.clearing') : t('problem.data.clearAll')}
                           </Button>
                         }
                       />
@@ -180,7 +180,7 @@ export function ProblemDataPage() {
                           <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
                             <a href={problemDataDownloadUrl(slugResult.value, filename)}>
                               <ArrowDownToLine className="size-4" />
-                              Download
+                              {t('problem.data.download')}
                             </a>
                           </Button>
                           <Button
@@ -193,7 +193,7 @@ export function ProblemDataPage() {
                             }}
                           >
                             <Trash2 className="size-4" />
-                            {model.deletingFilename === filename ? 'Deleting...' : 'Delete'}
+                            {model.deletingFilename === filename ? t('problem.data.deleting') : t('problem.data.delete')}
                           </Button>
                         </div>
                       </div>
@@ -206,7 +206,7 @@ export function ProblemDataPage() {
         ) : (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">
-              {model.problemErrorMessage || 'Unable to load problem details.'}
+              {model.problemErrorMessage || t('problem.data.loadFailed')}
             </AlertDescription>
           </Alert>
         )}

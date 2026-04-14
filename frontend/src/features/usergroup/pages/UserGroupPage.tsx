@@ -10,9 +10,11 @@ import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } fro
 import { useUserGroupPageModel } from '@/features/usergroup/hooks/use-usergroup-page-model'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function UserGroupPage() {
-  usePageTitle('Qiwen Online Judge - User Groups')
+  const { t } = useI18n()
+  usePageTitle(t('userGroup.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const model = useUserGroupPageModel()
 
@@ -29,10 +31,10 @@ export function UserGroupPage() {
       <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Qiwen Online Judge</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">User Groups</h1>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
+            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('userGroup.heading')}</h1>
             <p className="text-sm text-slate-600">
-              Signed in as {displayNameValue(user.displayName)} ({usernameValue(user.username)}).
+              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
             </p>
           </div>
 
@@ -53,25 +55,23 @@ export function UserGroupPage() {
                   <FolderKanban className="size-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-slate-950">User Groups</CardTitle>
-                  <CardDescription>
-                    Create groups, manage membership, and control collaboration in one place.
-                  </CardDescription>
+                  <CardTitle className="text-xl text-slate-950">{t('userGroup.list.cardTitle')}</CardTitle>
+                  <CardDescription>{t('userGroup.list.cardDescription')}</CardDescription>
                 </div>
               </div>
               <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
                 <Link to="/user-groups/new">
                   <Users className="size-4" />
-                  Create User Group
+                  {t('userGroup.list.create')}
                 </Link>
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {model.isLoading ? (
-              <p className="text-sm text-slate-500">Loading user groups...</p>
+              <p className="text-sm text-slate-500">{t('userGroup.list.loading')}</p>
             ) : model.groups.length === 0 ? (
-              <p className="text-sm text-slate-500">No user groups available yet.</p>
+              <p className="text-sm text-slate-500">{t('userGroup.list.empty')}</p>
             ) : (
               model.groups.map((group) => (
                 <div key={group.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -80,13 +80,13 @@ export function UserGroupPage() {
                       <h2 className="text-lg font-semibold text-slate-950">{userGroupNameValue(group.name)}</h2>
                       <p className="font-mono text-xs text-slate-500">{userGroupSlugValue(group.slug)}</p>
                       <p className="text-sm leading-7 text-slate-600">
-                        {userGroupDescriptionValue(group.description) || 'No description provided.'}
+                        {userGroupDescriptionValue(group.description) || t('common.noDescription')}
                       </p>
                     </div>
 
                     <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
                       <Link to={`/user-groups/${userGroupSlugValue(group.slug)}`}>
-                        Open detail
+                        {t('userGroup.list.open')}
                         <ArrowRight className="size-4" />
                       </Link>
                     </Button>

@@ -4,8 +4,10 @@ import { addUserGroupMember } from '@/features/usergroup/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { validateAddUserGroupMemberDraft } from '@/features/usergroup/domain/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
+import { useI18n } from '@/shared/i18n/i18n'
 
 export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
+  const { t } = useI18n()
   const [isAddingMember, setIsAddingMember] = useState(false)
 
   const addMember = useCallback(
@@ -18,15 +20,15 @@ export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
       setIsAddingMember(true)
       try {
         const updatedUserGroup = await addUserGroupMember(userGroupSlug, validation.request)
-        return { ok: true, userGroup: updatedUserGroup, message: 'Member added successfully.' }
+        return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.addMemberSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to add group member.'
+        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.addMemberFailed')
         return { ok: false, message }
       } finally {
         setIsAddingMember(false)
       }
     },
-    [userGroupSlug],
+    [userGroupSlug, t],
   )
 
   return { isAddingMember, addMember }

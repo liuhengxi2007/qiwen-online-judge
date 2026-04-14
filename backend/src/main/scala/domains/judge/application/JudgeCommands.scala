@@ -2,9 +2,11 @@ package domains.judge.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.submission.model.{SubmissionId, SubmissionStatus, SubmissionVerdict}
+import domains.submission.model.{SubmissionId, SubmissionJudgeCompletion, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
 import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
+
+import java.time.Instant
 
 object JudgeCommands:
 
@@ -22,27 +24,39 @@ object JudgeCommands:
     databaseSession: DatabaseSession,
     judgerId: JudgerId
   ): IO[ClaimJudgeTaskResult] =
-    databaseSession.withTransactionConnection { connection =>
-      SubmissionTable.claimNextCpp17(connection).flatMap {
-        case None =>
-          IO.pure(ClaimJudgeTaskResult.NoTask)
-        case Some(claimedSubmission) =>
-          JudgeTaskBuilder.buildJudgeTask(connection, claimedSubmission).flatMap {
-            case Left(message) =>
-              SubmissionTable
-                .markCompleted(
-                  connection,
-                  claimedSubmission.id,
-                  status = SubmissionStatus.Failed,
-                  verdict = Some(SubmissionVerdict.SystemError),
-                  judgeMessage = Some(s"${judgerId.value}: $message")
-                )
-                .as(ClaimJudgeTaskResult.ValidationFailed(message))
-            case Right(task) =>
-              IO.pure(ClaimJudgeTaskResult.Claimed(task))
+    SubmissionLifecycle.beginJudging(SubmissionJudgeState.queued, Instant.now()) match
+      case Left(message) =>
+        IO.pure(ClaimJudgeTaskResult.ValidationFailed(message))
+      case Right(runningState) =>
+        databaseSession.withTransactionConnection { connection =>
+          SubmissionTable.claimNextCpp17(connection, runningState).flatMap {
+            case None =>
+              IO.pure(ClaimJudgeTaskResult.NoTask)
+            case Some(claimedSubmission) =>
+              JudgeTaskBuilder.buildJudgeTask(connection, claimedSubmission).flatMap {
+                case Left(message) =>
+                  SubmissionLifecycle
+                    .completeJudging(
+                      runningState,
+                      SubmissionJudgeCompletion(
+                        status = SubmissionStatus.Failed,
+                        verdict = Some(SubmissionVerdict.SystemError),
+                        judgeMessage = Some(s"${judgerId.value}: $message")
+                      ),
+                      Instant.now()
+                    )
+                    .fold(
+                      lifecycleMessage => IO.pure(ClaimJudgeTaskResult.ValidationFailed(lifecycleMessage)),
+                      failedState =>
+                        SubmissionTable
+                          .updateJudgeState(connection, claimedSubmission.id, failedState)
+                          .as(ClaimJudgeTaskResult.ValidationFailed(message))
+                    )
+                case Right(task) =>
+                  IO.pure(ClaimJudgeTaskResult.Claimed(task))
+              }
           }
-      }
-    }
+        }
 
   def reportJudgeResult(
     databaseSession: DatabaseSession,
@@ -55,16 +69,24 @@ object JudgeCommands:
           SubmissionTable.findById(connection, submissionId).flatMap {
             case None =>
               IO.pure(ReportJudgeResult.SubmissionNotFound)
-            case Some(_) =>
-              SubmissionTable
-                .markCompleted(
-                  connection,
-                  submissionId,
-                  fromProtocolStatus(request.status),
-                  request.verdict.map(fromProtocolVerdict),
-                  request.judgeMessage
+            case Some(submission) =>
+              SubmissionLifecycle
+                .completeJudging(
+                  SubmissionJudgeState.fromSubmissionDetail(submission),
+                  SubmissionJudgeCompletion(
+                    status = fromProtocolStatus(request.status),
+                    verdict = request.verdict.map(fromProtocolVerdict),
+                    judgeMessage = request.judgeMessage
+                  ),
+                  Instant.now()
                 )
-                .as(ReportJudgeResult.Updated)
+                .fold(
+                  message => IO.pure(ReportJudgeResult.ValidationFailed(message)),
+                  completedState =>
+                    SubmissionTable
+                      .updateJudgeState(connection, submissionId, completedState)
+                      .as(ReportJudgeResult.Updated)
+                )
           }
         }
       case _ =>
