@@ -13,8 +13,7 @@ object AuthRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, judgeConfig: JudgeConfig): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
-    val handlers = new AuthHttpHandlers(databaseSession, sessionStore, sessionSupport, judgeConfig)
+    val handlers = new AuthHttpHandlers(databaseSession, sessionStore, judgeConfig)
 
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "auth" / "session" =>

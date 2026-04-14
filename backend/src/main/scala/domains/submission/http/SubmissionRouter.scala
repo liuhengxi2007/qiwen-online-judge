@@ -14,11 +14,9 @@ import org.http4s.dsl.io.*
 object SubmissionRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
-
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           val submitterUsernameFilter = request.uri.query.params.get("username").map(Username.canonical)
           SubmissionCommands
             .listSubmissions(databaseSession, actor, submitterUsernameFilter)
@@ -26,7 +24,7 @@ object SubmissionRouter:
         }
 
       case request @ POST -> Root / "api" / "submissions" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           for
             createRequest <- request.as[CreateSubmissionRequest]
             response <- SubmissionCommands
@@ -40,7 +38,7 @@ object SubmissionRouter:
           case Left(message) =>
             SubmissionHttpResponses.validationErrorResponse(message)
           case Right(submissionId) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               SubmissionCommands
                 .getSubmission(databaseSession, actor, submissionId)
                 .flatMap(SubmissionHttpResponses.mapGetResult)

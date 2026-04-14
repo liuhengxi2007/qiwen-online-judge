@@ -17,11 +17,9 @@ import org.http4s.dsl.io.*
 object UserGroupRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
-
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           UserGroupCommands
             .listUserGroups(databaseSession, actor, PageRequest())
             .flatMap(response => Ok(UserGroupHttpResponses.toUserGroupListResponse(response).asJson))
@@ -32,14 +30,14 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               UserGroupCommands
                 .getUserGroupBySlug(databaseSession, actor, parsedGroupSlug)
                 .flatMap(UserGroupHttpResponses.mapGetResult)
             }
 
       case request @ POST -> Root / "api" / "user-groups" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           for
             createRequest <- request.as[CreateUserGroupRequest]
             response <- UserGroupCommands
@@ -53,7 +51,7 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 updateRequest <- request.as[UpdateUserGroupRequest]
                 response <- UserGroupCommands
@@ -67,7 +65,7 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               UserGroupCommands
                 .deleteUserGroup(databaseSession, actor, parsedGroupSlug)
                 .flatMap(UserGroupHttpResponses.mapDeleteResult)
@@ -78,7 +76,7 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 addMemberRequest <- request.as[AddUserGroupMemberRequest]
                 response <- UserGroupCommands
@@ -92,7 +90,7 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
                 response <- UserGroupCommands
@@ -112,7 +110,7 @@ object UserGroupRouter:
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               UserGroupCommands
                 .removeUserGroupMember(
                   databaseSession,

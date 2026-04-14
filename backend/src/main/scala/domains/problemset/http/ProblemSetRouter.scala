@@ -17,11 +17,9 @@ import org.http4s.dsl.io.*
 object ProblemSetRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
-
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           ProblemSetCommands
             .listProblemSets(databaseSession, actor, PageRequest())
             .flatMap(response => Ok(ProblemSetHttpResponses.toProblemSetListResponse(response).asJson))
@@ -32,14 +30,14 @@ object ProblemSetRouter:
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemSetCommands
                 .getProblemSetBySlug(databaseSession, actor, parsedProblemSetSlug)
                 .flatMap(ProblemSetHttpResponses.mapGetResult)
             }
 
       case request @ POST -> Root / "api" / "problem-sets" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           for
             createRequest <- request.as[CreateProblemSetRequest]
             response <- ProblemSetCommands
@@ -53,7 +51,7 @@ object ProblemSetRouter:
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 addRequest <- request.as[AddProblemToProblemSetRequest]
                 response <- ProblemSetCommands
@@ -67,7 +65,7 @@ object ProblemSetRouter:
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 updateRequest <- request.as[UpdateProblemSetRequest]
                 response <- ProblemSetCommands
@@ -81,7 +79,7 @@ object ProblemSetRouter:
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemSetCommands
                 .deleteProblemSet(databaseSession, actor, parsedProblemSetSlug)
                 .flatMap(ProblemSetHttpResponses.mapDeleteResult)
@@ -94,7 +92,7 @@ object ProblemSetRouter:
           case (_, Left(message)) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemSetCommands
                 .removeProblemFromProblemSet(databaseSession, actor, parsedProblemSetSlug, parsedProblemSlug)
                 .flatMap(ProblemSetHttpResponses.mapRemoveProblemResult)

@@ -19,7 +19,6 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 final class AuthHttpHandlers(
   databaseSession: DatabaseSession,
   sessionStore: SessionStore,
-  sessionSupport: AuthHttpSessionSupport,
   judgeConfig: JudgeConfig
 )(using dsl: Http4sDsl[IO]):
 
@@ -28,19 +27,19 @@ final class AuthHttpHandlers(
   private val logger = Slf4jLogger.getLogger[IO]
 
   def session(request: Request[IO]): IO[Response[IO]] =
-    sessionSupport.withAuthenticatedUser(request) { user =>
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { user =>
       Ok(AuthHttpResponses.toSessionResponse(user).asJson)
     }
 
   def logout(request: Request[IO]): IO[Response[IO]] =
-    sessionSupport.currentSessionToken(request) match
+    AuthHttpSessionSupport.currentSessionToken(request) match
       case Some(token) =>
         sessionStore.deleteSession(token) *> AuthHttpResponses.loggedOutResponse(AuthHttpResponses.clearedSessionCookie)
       case None =>
         AuthHttpResponses.loggedOutResponse(AuthHttpResponses.clearedSessionCookie)
 
   def listUsers(request: Request[IO]): IO[Response[IO]] =
-    sessionSupport.withSiteManager(request) { siteManagerActor =>
+    AuthHttpSessionSupport.withSiteManager(databaseSession, sessionStore, request) { siteManagerActor =>
       for
         _ <- logger.info("AuthRouter received user list request")
         users <- databaseSession.withTransactionConnection(connection =>
@@ -51,7 +50,7 @@ final class AuthHttpHandlers(
     }
 
   def listJudgers(request: Request[IO]): IO[Response[IO]] =
-    sessionSupport.withSiteManager(request) { _ =>
+    AuthHttpSessionSupport.withSiteManager(databaseSession, sessionStore, request) { _ =>
       databaseSession.withTransactionConnection { connection =>
         JudgerTable
           .listJudgers(connection, judgeConfig.heartbeatTimeoutMs)
@@ -60,7 +59,7 @@ final class AuthHttpHandlers(
     }
 
   def getUserSettings(request: Request[IO], targetUsername: Username): IO[Response[IO]] =
-    sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { authenticatedActor =>
       AuthUserCommands
         .getUserSettings(databaseSession, authenticatedActor, targetUsername)
         .flatMap(AuthHttpResponses.mapGetUserSettingsResult)
@@ -70,7 +69,7 @@ final class AuthHttpHandlers(
     request: Request[IO],
     targetUsername: Username
   ): IO[Response[IO]] =
-    sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { authenticatedActor =>
       for
         permissionsRequest <- request.as[UpdateUserPermissionsRequest]
         response <- AuthUserCommands
@@ -88,7 +87,7 @@ final class AuthHttpHandlers(
     request: Request[IO],
     targetUsername: Username
   ): IO[Response[IO]] =
-    sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { authenticatedActor =>
       val isOwnSettings = targetUsername.value == authenticatedActor.username.value
 
       if isOwnSettings then
@@ -102,7 +101,7 @@ final class AuthHttpHandlers(
     }
 
   def deleteUser(request: Request[IO], targetUsername: Username): IO[Response[IO]] =
-    sessionSupport.withAuthenticatedUser(request) { authenticatedActor =>
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { authenticatedActor =>
       AuthUserCommands
         .deleteUser(databaseSession, authenticatedActor, targetUsername)
         .flatMap(AuthHttpResponses.mapDeleteUserResult)

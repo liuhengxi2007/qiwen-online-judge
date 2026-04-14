@@ -16,18 +16,16 @@ import org.http4s.dsl.io.*
 object ProblemRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val sessionSupport = new AuthHttpSessionSupport(databaseSession, sessionStore)
-
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problems" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           ProblemCommands
             .listProblems(databaseSession, actor, PageRequest())
             .flatMap(response => Ok(ProblemHttpResponses.toProblemListResponse(response).asJson))
         }
 
       case request @ POST -> Root / "api" / "problems" =>
-        sessionSupport.withAuthenticatedUser(request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
           for
             createRequest <- request.as[CreateProblemRequest]
             response <- ProblemCommands
@@ -41,7 +39,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemCommands
                 .getProblemBySlug(databaseSession, actor, parsedProblemSlug)
                 .flatMap(ProblemHttpResponses.mapGetResult)
@@ -52,7 +50,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemCommands
                 .listProblemData(databaseSession, actor, parsedProblemSlug)
                 .flatMap(ProblemHttpResponses.mapListDataResult)
@@ -67,7 +65,7 @@ object ProblemRouter:
               case Left(message) =>
                 ProblemHttpResponses.validationErrorResponse(message)
               case Right(parsedFilename) =>
-                sessionSupport.withAuthenticatedUser(request) { actor =>
+                AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
                   ProblemCommands
                     .authorizeProblemDataDownload(databaseSession, actor, parsedProblemSlug)
                     .flatMap {
@@ -87,7 +85,7 @@ object ProblemRouter:
               case Left(message) =>
                 ProblemHttpResponses.validationErrorResponse(message)
               case Right(parsedFilename) =>
-                sessionSupport.withAuthenticatedUser(request) { actor =>
+                AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
                   ProblemCommands
                     .deleteProblemData(databaseSession, actor, parsedProblemSlug, parsedFilename)
                     .flatMap(ProblemHttpResponses.mapDeleteDataResult)
@@ -98,7 +96,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemCommands
                 .clearProblemData(databaseSession, actor, parsedProblemSlug)
                 .flatMap(ProblemHttpResponses.mapClearDataResult)
@@ -109,7 +107,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 updateRequest <- request.as[UpdateProblemRequest]
                 response <- ProblemCommands
@@ -123,7 +121,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               for
                 updateDataRequest <- request.as[UpdateProblemDataRequest]
                 response <- ProblemCommands
@@ -137,7 +135,7 @@ object ProblemRouter:
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            sessionSupport.withAuthenticatedUser(request) { actor =>
+            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
               ProblemCommands
                 .deleteProblem(databaseSession, actor, parsedProblemSlug)
                 .flatMap(ProblemHttpResponses.mapDeleteResult)
