@@ -3,66 +3,17 @@ package domains.judger.table
 import cats.effect.IO
 import domains.judger.model.RegisteredJudgerListItem
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
+import domains.judger.table.JudgerTableSchema.*
+import domains.judger.table.JudgerTableSql.*
+import domains.judger.table.JudgerTableSupport.*
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
 object JudgerTable:
 
-  val initTableSql: String =
-    """
-      |create table if not exists judgers (
-      |  judger_id varchar(120) primary key,
-      |  requested_prefix varchar(120) not null,
-      |  host varchar(255) not null,
-      |  process_id varchar(120),
-      |  supported_languages text not null,
-      |  registered_at timestamp not null,
-      |  last_heartbeat_at timestamp not null
-      |);
-      |""".stripMargin
-
-  private val deleteExpiredSql: String =
-    """
-      |delete from judgers
-      |where last_heartbeat_at < ?
-      |""".stripMargin
-
-  private val listAllocatedIdsSql: String =
-    """
-      |select judger_id
-      |from judgers
-      |where requested_prefix = ?
-      |order by judger_id asc
-      |""".stripMargin
-
-  private val insertSql: String =
-    """
-      |insert into judgers (judger_id, requested_prefix, host, process_id, supported_languages, registered_at, last_heartbeat_at)
-      |values (?, ?, ?, ?, ?, ?, ?)
-      |""".stripMargin
-
-  private val heartbeatSql: String =
-    """
-      |update judgers
-      |set last_heartbeat_at = ?
-      |where judger_id = ?
-      |  and last_heartbeat_at >= ?
-      |""".stripMargin
-
-  private val listJudgersSql: String =
-    """
-      |select judger_id, requested_prefix, host, process_id, supported_languages, registered_at, last_heartbeat_at
-      |from judgers
-      |order by last_heartbeat_at desc, judger_id asc
-      |""".stripMargin
-
   def initialize(connection: Connection): IO[Unit] =
-    IO.blocking {
-      val statement = connection.createStatement()
-      try statement.execute(initTableSql)
-      finally statement.close()
-    }
+    JudgerTableSchema.initialize(connection)
 
   def register(
     connection: Connection,
@@ -70,31 +21,31 @@ object JudgerTable:
     heartbeatIntervalMs: Long,
     heartbeatTimeoutMs: Long
   ): IO[RegisterJudgerResponse] =
-    IO.blocking {
-      val now = Instant.now()
-      deleteExpired(connection, now.minusMillis(heartbeatTimeoutMs))
-      val allocatedId = allocateJudgerId(connection, request.preferredPrefix)
-
-      val statement = connection.prepareStatement(insertSql)
-      try
-        statement.setString(1, allocatedId.value)
-        statement.setString(2, request.preferredPrefix.value)
-        statement.setString(3, request.host)
-        request.processId match
-          case Some(processId) => statement.setString(4, processId)
-          case None => statement.setNull(4, java.sql.Types.VARCHAR)
-        statement.setString(5, request.supportedLanguages.map(SubmissionLanguage.render).mkString(","))
-        statement.setTimestamp(6, Timestamp.from(now))
-        statement.setTimestamp(7, Timestamp.from(now))
-        statement.executeUpdate()
-      finally statement.close()
-
-      RegisterJudgerResponse(
-        judgerId = allocatedId,
-        heartbeatIntervalMs = heartbeatIntervalMs,
-        heartbeatTimeoutMs = heartbeatTimeoutMs
-      )
-    }
+    for
+      now <- IO.realTimeInstant
+      _ <- deleteExpired(connection, now.minusMillis(heartbeatTimeoutMs))
+      allocatedId <- allocateJudgerId(connection, request.preferredPrefix)
+      _ <- IO.blocking {
+        val statement = connection.prepareStatement(insertSql)
+        try
+          statement.setString(1, allocatedId.value)
+          statement.setString(2, request.preferredPrefix.value)
+          statement.setString(3, request.host)
+          request.processId match
+            case Some(processId) => statement.setString(4, processId)
+            case None => statement.setNull(4, java.sql.Types.VARCHAR)
+          statement.setString(5, request.supportedLanguages.map(SubmissionLanguage.render).mkString(","))
+          statement.setTimestamp(6, Timestamp.from(now))
+          statement.setTimestamp(7, Timestamp.from(now))
+          statement.executeUpdate()
+          ()
+        finally statement.close()
+      }
+    yield RegisterJudgerResponse(
+      judgerId = allocatedId,
+      heartbeatIntervalMs = heartbeatIntervalMs,
+      heartbeatTimeoutMs = heartbeatTimeoutMs
+    )
 
   def heartbeat(connection: Connection, judgerId: JudgerId, heartbeatTimeoutMs: Long): IO[Boolean] =
     IO.blocking {
@@ -109,65 +60,20 @@ object JudgerTable:
     }
 
   def listJudgers(connection: Connection, heartbeatTimeoutMs: Long): IO[List[RegisteredJudgerListItem]] =
-    IO.blocking {
-      deleteExpired(connection, Instant.now().minusMillis(heartbeatTimeoutMs))
-
-      val statement = connection.prepareStatement(listJudgersSql)
-      try
-        val resultSet = statement.executeQuery()
+    for
+      now <- IO.realTimeInstant
+      _ <- deleteExpired(connection, now.minusMillis(heartbeatTimeoutMs))
+      judgers <- IO.blocking {
+        val statement = connection.prepareStatement(listJudgersSql)
         try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map { _ =>
-              RegisteredJudgerListItem(
-                judgerId = resultSet.getString("judger_id"),
-                requestedPrefix = resultSet.getString("requested_prefix"),
-                host = resultSet.getString("host"),
-                processId = Option(resultSet.getString("process_id")),
-                supportedLanguages =
-                  Option(resultSet.getString("supported_languages"))
-                    .toList
-                    .flatMap(_.split(",").toList)
-                    .map(_.trim)
-                    .filter(_.nonEmpty),
-                registeredAt = resultSet.getTimestamp("registered_at").toInstant,
-                lastHeartbeatAt = resultSet.getTimestamp("last_heartbeat_at").toInstant
-              )
-            }
-            .toList
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private def deleteExpired(connection: Connection, cutoff: Instant): Unit =
-    val statement = connection.prepareStatement(deleteExpiredSql)
-    try
-      statement.setTimestamp(1, Timestamp.from(cutoff))
-      statement.executeUpdate()
-    finally statement.close()
-
-  private def allocateJudgerId(connection: Connection, preferredPrefix: JudgerId): JudgerId =
-    val statement = connection.prepareStatement(listAllocatedIdsSql)
-    try
-      statement.setString(1, preferredPrefix.value)
-      val resultSet = statement.executeQuery()
-      try
-        val allocatedIds =
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map(_ => resultSet.getString("judger_id"))
-            .toSet
-
-        Iterator
-          .from(1)
-          .map { index =>
-            if index == 1 then preferredPrefix.value
-            else s"${preferredPrefix.value}-$index"
-          }
-          .find(id => !allocatedIds.contains(id))
-          .flatMap(JudgerId.parse(_).toOption)
-          .getOrElse(throw new IllegalStateException("Failed to allocate judger id."))
-      finally resultSet.close()
-    finally statement.close()
+          val resultSet = statement.executeQuery()
+          try
+            Iterator
+              .continually(resultSet.next())
+              .takeWhile(identity)
+              .map(_ => readRegisteredJudgerListItem(resultSet))
+              .toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield judgers

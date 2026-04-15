@@ -153,6 +153,7 @@ Rules:
 - isolate IO, HTTP, database, time, randomness, and storage access at the edge
 - domain functions should return data, decisions, or errors, not perform effects directly unless they are boundary services
 - compose pure functions in the core, then execute effects in routers, clients, stores, or infrastructure adapters
+- if a helper performs JDBC, clock, randomness, file, or network work, its signature must expose that effect explicitly, typically as `IO[...]`
 
 Preferred layering:
 
@@ -243,6 +244,49 @@ Avoid:
   - Shared models used across domains, including pagination and lifecycle primitives
 - `src/main/scala/database`
   - Shared database bootstrap and connection management
+
+### Backend File Templates
+
+Backend domains should use consistent file-role templates instead of ad hoc mixed-responsibility files.
+
+For `application`:
+
+- `*CommandResults.scala`
+  result ADTs returned by the application layer
+- `*CommandSupport.scala`
+  internal helpers shared by multiple commands in the domain
+- `*QueryCommands.scala`
+  read-only use cases
+- `*MutationCommands.scala`
+  write-oriented use cases
+- `*Commands.scala`
+  facade-only file that re-exports the domain command surface
+
+Domain-specific specialized command files are allowed when a domain has one extra responsibility that does not fit cleanly into generic query or mutation buckets.
+
+For `http`:
+
+- `*Router.scala`
+  path matching and route dispatch only
+- `*HttpHandlers.scala`
+  request decoding, auth/session wrapping, command invocation
+- `*HttpResponses.scala`
+  translation from command results to HTTP responses
+- `*HttpSupport.scala`
+  optional HTTP-only shared helpers for the domain
+
+For `table`:
+
+- `*Table.scala`
+  outward-facing persistence API
+- `*TableSchema.scala`
+  DDL, migration, initialization
+- `*TableSql.scala`
+  SQL constants
+- `*TableSupport.scala`
+  row readers, bind helpers, and persistence-local support code
+
+These templates exist to stop large files from mixing routing, orchestration, SQL, migrations, and decoding in one place.
 
 ## Workers
 

@@ -9,38 +9,25 @@ import domains.submission.application.SubmissionCommands
 import domains.submission.model.{CreateSubmissionRequest, SubmissionId}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 
 object SubmissionRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val handlers = new SubmissionHttpHandlers(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
-        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-          val submitterUsernameFilter = request.uri.query.params.get("username").map(Username.canonical)
-          SubmissionCommands
-            .listSubmissions(databaseSession, actor, submitterUsernameFilter)
-            .flatMap(SubmissionHttpResponses.mapListResult)
-        }
+        handlers.listSubmissions(request)
 
       case request @ POST -> Root / "api" / "submissions" =>
-        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-          for
-            createRequest <- request.as[CreateSubmissionRequest]
-            response <- SubmissionCommands
-              .createSubmission(databaseSession, actor, createRequest)
-              .flatMap(SubmissionHttpResponses.mapCreateResult)
-          yield response
-        }
+        handlers.createSubmission(request)
 
       case request @ GET -> Root / "api" / "submissions" / rawSubmissionId =>
         SubmissionId.parse(rawSubmissionId) match
           case Left(message) =>
             SubmissionHttpResponses.validationErrorResponse(message)
           case Right(submissionId) =>
-            AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-              SubmissionCommands
-                .getSubmission(databaseSession, actor, submissionId)
-                .flatMap(SubmissionHttpResponses.mapGetResult)
-            }
+            handlers.getSubmission(request, submissionId)
     }

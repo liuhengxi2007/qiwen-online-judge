@@ -1,0 +1,41 @@
+package domains.judger.http
+
+import cats.effect.IO
+import database.DatabaseSession
+import domains.judge.application.JudgeConfig
+import domains.judger.application.JudgerRegistryCommands
+import judgeprotocol.model.{JudgerHeartbeatRequest, JudgerId, RegisterJudgerRequest}
+import org.http4s.{Request, Response}
+import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.dsl.Http4sDsl
+
+final class JudgerRegistryHttpHandlers(
+  databaseSession: DatabaseSession,
+  judgeConfig: JudgeConfig
+)(using dsl: Http4sDsl[IO]):
+
+  import dsl.*
+
+  def register(request: Request[IO]): IO[Response[IO]] =
+    JudgerRegistryHttpSupport.withJudgeToken(request, judgeConfig) {
+      for
+        registerRequest <- request.as[RegisterJudgerRequest]
+        response <- JudgerRegistryCommands
+          .register(databaseSession, judgeConfig, registerRequest)
+          .flatMap(JudgerRegistryHttpResponses.mapRegisterResult)
+      yield response
+    }
+
+  def heartbeat(request: Request[IO], rawJudgerId: String): IO[Response[IO]] =
+    JudgerRegistryHttpSupport.withJudgeToken(request, judgeConfig) {
+      JudgerId.parse(rawJudgerId) match
+        case Left(message) =>
+          JudgerRegistryHttpResponses.validationErrorResponse(message)
+        case Right(judgerId) =>
+          for
+            _ <- request.as[JudgerHeartbeatRequest]
+            response <- JudgerRegistryCommands
+              .heartbeat(databaseSession, judgeConfig, judgerId)
+              .flatMap(JudgerRegistryHttpResponses.mapHeartbeatResult)
+          yield response
+    }

@@ -4,199 +4,14 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
 import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
+import domains.usergroup.table.UserGroupTableSchema.*
+import domains.usergroup.table.UserGroupTableSql.*
+import domains.usergroup.table.UserGroupTableSupport.*
 
 import java.sql.{Connection, ResultSet, SQLException, Timestamp}
 import java.time.Instant
 
 object UserGroupTable:
-
-  val initTableSql: String =
-    """
-      |create table if not exists user_groups (
-      |  id uuid primary key,
-      |  slug varchar(64) not null unique,
-      |  name varchar(120) not null,
-      |  description text not null,
-      |  visibility varchar(32) not null default 'private' check (visibility in ('private', 'group', 'public')),
-      |  owner_username varchar(120) not null references auth_users(username),
-      |  created_at timestamp not null,
-      |  updated_at timestamp not null
-      |);
-      |""".stripMargin
-
-  val addVisibilityColumnSql: String =
-    """
-      |do $$
-      |begin
-      |  if not exists (
-      |    select 1
-      |    from information_schema.columns
-      |    where table_schema = 'public'
-      |      and table_name = 'user_groups'
-      |      and column_name = 'visibility'
-      |  ) then
-      |    alter table user_groups add column visibility varchar(32);
-      |  end if;
-      |end $$;
-      |""".stripMargin
-
-  val backfillVisibilitySql: String =
-    """
-      |update user_groups
-      |set visibility = 'private'
-      |where visibility is null or btrim(visibility) = ''
-      |""".stripMargin
-
-  val setVisibilityNotNullSql: String =
-    """
-      |alter table user_groups
-      |alter column visibility set not null
-      |""".stripMargin
-
-  val setVisibilityDefaultSql: String =
-    """
-      |alter table user_groups
-      |alter column visibility set default 'private'
-      |""".stripMargin
-
-  val initMembershipTableSql: String =
-    """
-      |create table if not exists user_group_memberships (
-      |  user_group_id uuid not null references user_groups(id) on delete cascade,
-      |  username varchar(120) not null references auth_users(username) on delete cascade,
-      |  role varchar(32) not null check (role in ('owner', 'manager', 'member')),
-      |  joined_at timestamp not null,
-      |  primary key (user_group_id, username)
-      |);
-      |create index if not exists idx_user_group_memberships_username on user_group_memberships(username);
-      |""".stripMargin
-
-  val countVisibleSql: String =
-    """
-      |select count(*) as total_items
-      |from user_groups ug
-      |where
-      |  ? = true
-      |  or lower(ug.owner_username) = lower(?)
-      |  or exists (
-      |    select 1
-      |    from user_group_memberships ugm
-      |    where ugm.user_group_id = ug.id and lower(ugm.username) = lower(?)
-      |  )
-      |""".stripMargin
-
-  val listVisibleSql: String =
-    """
-      |select ug.id, ug.slug, ug.name, ug.description, ug.owner_username, ug.created_at, ug.updated_at
-      |from user_groups ug
-      |where
-      |  ? = true
-      |  or lower(ug.owner_username) = lower(?)
-      |  or exists (
-      |    select 1
-      |    from user_group_memberships ugm
-      |    where ugm.user_group_id = ug.id and lower(ugm.username) = lower(?)
-      |  )
-      |order by ug.updated_at desc, ug.slug asc
-      |limit ? offset ?
-      |""".stripMargin
-
-  val findBySlugSql: String =
-    """
-      |select id, slug, name, description, owner_username, created_at, updated_at
-      |from user_groups
-      |where slug = ?
-      |""".stripMargin
-
-  val insertSql: String =
-    """
-      |insert into user_groups (id, slug, name, description, visibility, owner_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, name, description, owner_username, created_at, updated_at
-      |""".stripMargin
-
-  val insertOwnerMembershipSql: String =
-    """
-      |insert into user_group_memberships (user_group_id, username, role, joined_at)
-      |values (?, ?, 'owner', ?)
-      |""".stripMargin
-
-  val listMembersSql: String =
-    """
-      |select ugm.username, au.display_name, ugm.role, ugm.joined_at
-      |from user_group_memberships ugm
-      |join auth_users au on au.username = ugm.username
-      |where ugm.user_group_id = ?
-      |order by
-      |  case ugm.role
-      |    when 'owner' then 1
-      |    when 'manager' then 2
-      |    else 3
-      |  end asc,
-      |  lower(ugm.username) asc
-      |""".stripMargin
-
-  val updateSql: String =
-    """
-      |update user_groups
-      |set name = ?, description = ?, updated_at = ?
-      |where id = ?
-      |""".stripMargin
-
-  val deleteSql: String =
-    """
-      |delete from user_groups
-      |where id = ?
-      |""".stripMargin
-
-  val userExistsSql: String =
-    """
-      |select 1
-      |from auth_users
-      |where username = ?
-      |""".stripMargin
-
-  val membershipExistsSql: String =
-    """
-      |select 1
-      |from user_group_memberships
-      |where user_group_id = ? and username = ?
-      |""".stripMargin
-
-  val listGroupSlugsForMemberSql: String =
-    """
-      |select ug.slug
-      |from user_group_memberships ugm
-      |join user_groups ug on ug.id = ugm.user_group_id
-      |where ugm.username = ?
-      |order by ug.slug asc
-      |""".stripMargin
-
-  val addMemberSql: String =
-    """
-      |insert into user_group_memberships (user_group_id, username, role, joined_at)
-      |values (?, ?, ?, ?)
-      |""".stripMargin
-
-  val updateMemberRoleSql: String =
-    """
-      |update user_group_memberships
-      |set role = ?
-      |where user_group_id = ? and username = ?
-      |""".stripMargin
-
-  val deleteMemberSql: String =
-    """
-      |delete from user_group_memberships
-      |where user_group_id = ? and username = ?
-      |""".stripMargin
-
-  val updateOwnerUsernameSql: String =
-    """
-      |update user_groups
-      |set owner_username = ?, updated_at = ?
-      |where id = ?
-      |""".stripMargin
 
   enum AddMemberTableResult:
     case AlreadyExists
@@ -212,17 +27,7 @@ object UserGroupTable:
     case Removed
 
   def initialize(connection: Connection): IO[Unit] =
-    IO.blocking {
-      val statement = connection.createStatement()
-      try
-        statement.execute(initTableSql)
-        statement.execute(addVisibilityColumnSql)
-        statement.executeUpdate(backfillVisibilitySql)
-        statement.execute(setVisibilityDefaultSql)
-        statement.execute(setVisibilityNotNullSql)
-        statement.execute(initMembershipTableSql)
-      finally statement.close()
-    }
+    UserGroupTableSchema.initialize(connection)
 
   def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
     for
@@ -262,7 +67,7 @@ object UserGroupTable:
         finally resultSet.close()
       finally statement.close()
     }.flatMap {
-      case Some(group) => listMembers(connection, group.id).map(members => Some(group.copy(members = members)))
+      case Some(group) => listMembers(connection, group.id, listMembersSql).map(members => Some(group.copy(members = members)))
       case None => IO.pure(None)
     }
 
@@ -311,7 +116,7 @@ object UserGroupTable:
         finally resultSet.close()
       finally statement.close()
     }.flatMap { group =>
-      listMembers(connection, group.id).map(members => group.copy(members = members))
+      listMembers(connection, group.id, listMembersSql).map(members => group.copy(members = members))
     }
 
   def update(connection: Connection, groupId: UserGroupId, request: UpdateUserGroupRequest): IO[Unit] =
@@ -439,54 +244,3 @@ object UserGroupTable:
         if deletedRows == 0 then RemoveMemberTableResult.MemberNotFound else RemoveMemberTableResult.Removed
       finally statement.close()
     }
-
-  private def listMembers(connection: Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(listMembersSql)
-      try
-        statement.setObject(1, groupId.value)
-        val resultSet = statement.executeQuery()
-        try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readMember(resultSet)).toList
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private def readSummary(resultSet: ResultSet): UserGroupSummary =
-    UserGroupSummary(
-      id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = parseColumn("user_groups.slug", resultSet.getString("slug"), UserGroupSlug.parse),
-      name = parseColumn("user_groups.name", resultSet.getString("name"), UserGroupName.parse),
-      description = parseColumn("user_groups.description", resultSet.getString("description"), UserGroupDescription.parse),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
-      createdAt = resultSet.getTimestamp("created_at").toInstant,
-      updatedAt = resultSet.getTimestamp("updated_at").toInstant
-    )
-
-  private def readDetailBase(resultSet: ResultSet): UserGroup =
-    UserGroup(
-      id = UserGroupId(resultSet.getObject("id", classOf[java.util.UUID])),
-      slug = parseColumn("user_groups.slug", resultSet.getString("slug"), UserGroupSlug.parse),
-      name = parseColumn("user_groups.name", resultSet.getString("name"), UserGroupName.parse),
-      description = parseColumn("user_groups.description", resultSet.getString("description"), UserGroupDescription.parse),
-      ownerUsername = Username.canonical(resultSet.getString("owner_username")),
-      members = Nil,
-      createdAt = resultSet.getTimestamp("created_at").toInstant,
-      updatedAt = resultSet.getTimestamp("updated_at").toInstant
-    )
-
-  private def readMember(resultSet: ResultSet): UserGroupMember =
-    UserGroupMember(
-      username = Username.canonical(resultSet.getString("username")),
-      displayName = DisplayName(resultSet.getString("display_name")),
-      role = parseOptionalColumn("user_group_memberships.role", resultSet.getString("role"), UserGroupRole.fromDatabase),
-      joinedAt = resultSet.getTimestamp("joined_at").toInstant
-    )
-
-  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
-    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
-
-  private def missingInsertResult(entityName: String): Nothing =
-    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
