@@ -22,6 +22,9 @@ That means:
 - request and response field shape must match `contracts/`
 - enum values exposed over HTTP must match `contracts/`
 - backend domain objects may remain richer or stricter than contract objects
+- if a backend model is mirrored by the frontend model layer, the mirrored type name must match exactly
+- if a backend model is mirrored by the frontend model layer, the mirrored file basename must match exactly
+- mirrored model files on both sides must contain definitions only
 
 ## Layer Split
 
@@ -138,6 +141,31 @@ Do not expose these as a shared Scala worker dependency either.
 
 If a worker needs a type that currently lives beside backend-only code, split the shared boundary type into a separate protocol module instead of depending on the whole backend project.
 
+## Required Frontend Mirror
+
+When a backend model participates in the shared frontend-backend type system, it must have a directly corresponding frontend model file.
+
+Required mappings:
+
+- `backend/src/main/scala/domains/<domain>/model/<Name>.scala`
+  mirrors
+  `frontend/src/features/<domain>/model/<Name>.ts`
+
+- `backend/src/main/scala/domains/shared/model/<Name>.scala`
+  mirrors
+  `frontend/src/shared/model/<Name>.ts`
+
+- `backend/src/main/scala/domains/shared/access/<Name>.scala`
+  mirrors
+  `frontend/src/shared/access/<Name>.ts`
+
+Rules:
+
+- do not merge multiple mirrored types into one file on one side only
+- do not split one mirrored type into multiple files on one side only
+- do not rename a mirrored type on one side without renaming the corresponding file and type on the other side
+- keep mapping, validation, and codec behavior out of mirrored model files
+
 ## Alignment Check Checklist
 
 Whenever a contract-shaped backend model changes, check all of the following:
@@ -148,6 +176,9 @@ Whenever a contract-shaped backend model changes, check all of the following:
 4. frontend transport consumers still parse the same shape
 5. backend HTTP encoders still produce contract-shaped JSON
 6. backend HTTP decoders still accept contract-shaped JSON
+7. mirrored frontend and backend filenames still match exactly
+8. mirrored frontend and backend type names still match exactly
+9. mirrored model files still contain definitions only
 
 ## Required Review Discipline
 

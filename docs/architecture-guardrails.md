@@ -143,6 +143,52 @@ Avoid:
 When the shape is identical, prefer one name everywhere.
 When the shape is different, prefer different names that make the difference obvious.
 
+### Frontend and Backend Type System Mirror Rule
+
+Frontend and backend model layers must stay fully aligned for shared cross-stack types.
+
+This is stricter than "close enough naming".
+
+Rules:
+
+- if frontend and backend represent the same stable type, the type name must match exactly
+- if frontend and backend represent the same stable type, the file basename must match exactly
+- mirrored type files must contain type definitions only
+- parsing, mapping, validation, reducers, codecs, and other behavior must live outside mirrored type files
+- do not keep one large aggregate model file on one side while splitting the same mirrored types into many files on the other side
+- do not introduce frontend-only or backend-only aliases for a mirrored type
+
+Required path rules:
+
+- backend domain model:
+  `backend/src/main/scala/domains/<domain>/model/<Name>.scala`
+- frontend domain model:
+  `frontend/src/features/<domain>/model/<Name>.ts`
+
+- backend shared model:
+  `backend/src/main/scala/domains/shared/model/<Name>.scala`
+- frontend shared model:
+  `frontend/src/shared/model/<Name>.ts`
+
+- backend shared access:
+  `backend/src/main/scala/domains/shared/access/<Name>.scala`
+- frontend shared access:
+  `frontend/src/shared/access/<Name>.ts`
+
+The mapping must be simple enough that a script can derive one side from the other without special cases.
+
+Prefer:
+
+- `ProblemSummary.scala` and `ProblemSummary.ts`
+- `SubmissionLifecycle.scala` and `SubmissionLifecycle.ts`
+- `AccessPolicy.scala` and `AccessPolicy.ts`
+
+Avoid:
+
+- `Problem.scala` on one side and `ProblemTypes.ts` on the other
+- one side using `ProblemListItem` while the other uses `ProblemSummary`
+- type definitions mixed into parser, mapper, or codec files
+
 ### Functional Core, Imperative Shell
 
 Push side effects to the boundary.
