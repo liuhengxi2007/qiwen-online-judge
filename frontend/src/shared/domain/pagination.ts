@@ -1,11 +1,5 @@
-import type { PageResponse as ContractPageResponse } from '@contracts/shared'
-
-export type PageRequest = {
-  page: number
-  pageSize: number
-}
-
-export type PageResponse<TItem> = ContractPageResponse<TItem>
+export type { PageRequest, PageResponse } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/Pagination'
 
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 20

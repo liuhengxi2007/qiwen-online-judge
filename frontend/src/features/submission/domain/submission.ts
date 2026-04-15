@@ -1,63 +1,38 @@
 import type {
   CreateSubmissionRequest as CreateSubmissionRequestContract,
   SubmissionDetail as SubmissionDetailContract,
-  SubmissionLanguage as SubmissionLanguageContract,
   SubmissionListResponse as SubmissionListResponseContract,
-  SubmissionStatus as SubmissionStatusContract,
-  SubmissionVerdict as SubmissionVerdictContract,
   SubmissionSummary as SubmissionSummaryContract,
 } from '@contracts/submission'
-import type { Username } from '@/features/auth/domain/auth'
 import { parseUsername } from '@/features/auth/domain/auth'
-import type { ProblemId, ProblemSlug } from '@/features/problem/domain/problem'
 import { parseProblemId, parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
+import type {
+  CreateSubmissionRequest
+} from '@/features/submission/model/CreateSubmissionRequest'
+import type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'
+import type { SubmissionId } from '@/features/submission/model/SubmissionId'
+import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
+import type { SubmissionListResponse } from '@/features/submission/model/SubmissionListResponse'
+import type { SubmissionSourceCode } from '@/features/submission/model/SubmissionSourceCode'
+import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
+import type { SubmissionSummary } from '@/features/submission/model/SubmissionSummary'
+import type { SubmissionVerdict } from '@/features/submission/model/SubmissionVerdict'
 
-type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
 type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
-export type SubmissionId = Brand<number, 'SubmissionId'>
-export type SubmissionSourceCode = Brand<string, 'SubmissionSourceCode'>
-export type SubmissionLanguage = SubmissionLanguageContract
-export type SubmissionStatus = SubmissionStatusContract
-export type SubmissionVerdict = SubmissionVerdictContract
-
-export type SubmissionSummary = {
-  id: SubmissionId
-  problemId: ProblemId
-  problemSlug: ProblemSlug
-  submitterUsername: Username
-  language: SubmissionLanguage
-  status: SubmissionStatus
-  verdict: SubmissionVerdict | null
-  submittedAt: string
-  startedAt: string | null
-  finishedAt: string | null
+export type {
+  CreateSubmissionRequest,
+  SubmissionDetail,
+  SubmissionId,
+  SubmissionLanguage,
+  SubmissionListResponse,
+  SubmissionSourceCode,
+  SubmissionStatus,
+  SubmissionSummary,
+  SubmissionVerdict,
 }
-
-export type SubmissionDetail = {
-  id: SubmissionId
-  problemId: ProblemId
-  problemSlug: ProblemSlug
-  submitterUsername: Username
-  language: SubmissionLanguage
-  status: SubmissionStatus
-  verdict: SubmissionVerdict | null
-  judgeMessage: string | null
-  sourceCode: SubmissionSourceCode
-  submittedAt: string
-  startedAt: string | null
-  finishedAt: string | null
-}
-
-export type CreateSubmissionRequest = {
-  problemSlug: ProblemSlug
-  language: SubmissionLanguage
-  sourceCode: SubmissionSourceCode
-}
-
-export type SubmissionListResponse = SubmissionSummary[]
 
 const supportedSubmissionLanguages = ['cpp17', 'python3'] as const satisfies readonly SubmissionLanguage[]
 const supportedSubmissionStatuses = ['queued', 'running', 'completed', 'failed'] as const satisfies readonly SubmissionStatus[]

@@ -14,6 +14,7 @@ const profiles = {
       'frontend/src/features',
       'frontend/src/shared',
       'frontend/src/router.tsx',
+      'judger/src/main/scala',
     ],
   },
   app: {
@@ -22,6 +23,7 @@ const profiles = {
       'backend/src/main/scala',
       'contracts',
       'frontend/src',
+      'judger/src/main/scala',
     ],
   },
 }
@@ -72,8 +74,8 @@ function printHelp() {
   node scripts/calc-loc.mjs --json
 
 Modes:
-  business  backend/src/main/scala + contracts + frontend feature/shared code + router
-  app       backend/src/main/scala + contracts + all frontend/src code
+  business  backend/src/main/scala + contracts + frontend feature/shared code + router + judger/src/main/scala
+  app       backend/src/main/scala + contracts + all frontend/src code + judger/src/main/scala
   all       print both business and app profiles
 `)
 }
@@ -140,6 +142,7 @@ function summarizeProfile(profile) {
     backend: 0,
     contracts: 0,
     frontend: 0,
+    judger: 0,
   }
 
   for (const entry of counts) {
@@ -149,6 +152,8 @@ function summarizeProfile(profile) {
       groups.contracts += entry.lines
     } else if (entry.file.startsWith('frontend/')) {
       groups.frontend += entry.lines
+    } else if (entry.file.startsWith('judger/')) {
+      groups.judger += entry.lines
     }
   }
 
@@ -170,6 +175,7 @@ function printSummary(name, summary) {
   console.log(`  backend: ${formatNumber(summary.groups.backend)} LoC`)
   console.log(`  frontend: ${formatNumber(summary.groups.frontend)} LoC`)
   console.log(`  contracts: ${formatNumber(summary.groups.contracts)} LoC`)
+  console.log(`  judger: ${formatNumber(summary.groups.judger)} LoC`)
   console.log(`  files: ${formatNumber(summary.fileCount)}`)
 }
 

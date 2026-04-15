@@ -1,20 +1,11 @@
-import type {
-  AccessSubject as ContractAccessSubject,
-  BaseAccess as ContractBaseAccess,
-  ResourceAccessPolicy as ContractResourceAccessPolicy,
-} from '@contracts/shared'
-
-export type BaseAccess = ContractBaseAccess
-
-export type UserAccessSubject = Extract<ContractAccessSubject, { kind: 'user' }>
-export type UserGroupAccessSubject = Extract<ContractAccessSubject, { kind: 'user_group' }>
-export type AccessSubject = ContractAccessSubject
-export type ResourceAccessPolicy = ContractResourceAccessPolicy
-
-export type AuditFields = {
-  createdAt: string
-  updatedAt: string
-}
+export type {
+  AccessSubject,
+  BaseAccess,
+  ResourceAccessPolicy,
+  UserAccessSubject,
+  UserGroupAccessSubject,
+} from '@/shared/access/AccessPolicy'
+import type { AccessSubject, ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
 
 type Translate = (key: string, values?: Record<string, string | number>) => string
 

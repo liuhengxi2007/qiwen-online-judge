@@ -7,23 +7,23 @@ import type {
 } from '@contracts/problem'
 import { parseUsername } from '@/features/auth/domain/auth'
 import type {
-  CreateProblemRequest,
-  ProblemData,
-  OthersSubmissionAccess,
-  ProblemDataFileListResponse,
-  ProblemDataFilename,
-  ProblemDetail,
-  ProblemId,
-  ProblemListResponse,
-  ProblemSlug,
-  ProblemSpaceLimitMb,
-  ProblemStatementText,
-  ProblemSummary,
-  ProblemTimeLimitMs,
-  ProblemTitle,
-  UpdateProblemDataRequest,
-  UpdateProblemRequest,
-} from '@/features/problem/model/Problem'
+  CreateProblemRequest
+} from '@/features/problem/model/CreateProblemRequest'
+import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
+import type { ProblemData } from '@/features/problem/model/ProblemData'
+import type { ProblemDataFileListResponse } from '@/features/problem/model/ProblemDataFileListResponse'
+import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
+import type { ProblemId } from '@/features/problem/model/ProblemId'
+import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'
+import type { ProblemStatementText } from '@/features/problem/model/ProblemStatementText'
+import type { ProblemSummary } from '@/features/problem/model/ProblemSummary'
+import type { ProblemTimeLimitMs } from '@/features/problem/model/ProblemTimeLimitMs'
+import type { ProblemTitle } from '@/features/problem/model/ProblemTitle'
+import type { UpdateProblemDataRequest } from '@/features/problem/model/UpdateProblemDataRequest'
+import type { UpdateProblemRequest } from '@/features/problem/model/UpdateProblemRequest'
 
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }

@@ -108,16 +108,49 @@ function run() {
     LoginRequest: read('backend/src/main/scala/domains/auth/model/LoginRequest.scala'),
     LoginResponse: read('backend/src/main/scala/domains/auth/model/LoginResponse.scala'),
     RegisterRequest: read('backend/src/main/scala/domains/auth/model/RegisterRequest.scala'),
+    RegisterResponse: read('backend/src/main/scala/domains/auth/model/RegisterResponse.scala'),
     SessionResponse: read('backend/src/main/scala/domains/auth/model/SessionResponse.scala'),
     UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateOwnSettingsRequest.scala'),
     UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateManagedUserSettingsRequest.scala'),
     UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/auth/model/UpdateUserPermissionsRequest.scala'),
   }
 
-  const problemModel = read('backend/src/main/scala/domains/problem/model/Problem.scala')
-  const problemSetModel = read('backend/src/main/scala/domains/problemset/model/ProblemSet.scala')
-  const submissionModel = read('backend/src/main/scala/domains/submission/model/Submission.scala')
-  const userGroupModel = read('backend/src/main/scala/domains/usergroup/model/UserGroup.scala')
+  const problemFiles = {
+    CreateProblemRequest: read('backend/src/main/scala/domains/problem/model/CreateProblemRequest.scala'),
+    UpdateProblemRequest: read('backend/src/main/scala/domains/problem/model/UpdateProblemRequest.scala'),
+    ProblemSummary: read('backend/src/main/scala/domains/problem/model/ProblemSummary.scala'),
+    ProblemDetail: read('backend/src/main/scala/domains/problem/model/ProblemDetail.scala'),
+  }
+
+  const problemSetFiles = {
+    CreateProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/CreateProblemSetRequest.scala'),
+    UpdateProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/UpdateProblemSetRequest.scala'),
+    AddProblemToProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/AddProblemToProblemSetRequest.scala'),
+    ProblemSetProblemSummary: read('backend/src/main/scala/domains/problemset/model/ProblemSetProblemSummary.scala'),
+    ProblemSetSummary: read('backend/src/main/scala/domains/problemset/model/ProblemSetSummary.scala'),
+    ProblemSetDetail: read('backend/src/main/scala/domains/problemset/model/ProblemSetDetail.scala'),
+  }
+
+  const submissionFiles = {
+    SubmissionLanguage: read('backend/src/main/scala/domains/submission/model/SubmissionLanguage.scala'),
+    SubmissionStatus: read('backend/src/main/scala/domains/submission/model/SubmissionStatus.scala'),
+    SubmissionVerdict: read('backend/src/main/scala/domains/submission/model/SubmissionVerdict.scala'),
+    CreateSubmissionRequest: read('backend/src/main/scala/domains/submission/model/CreateSubmissionRequest.scala'),
+    SubmissionSummary: read('backend/src/main/scala/domains/submission/model/SubmissionSummary.scala'),
+    SubmissionDetail: read('backend/src/main/scala/domains/submission/model/SubmissionDetail.scala'),
+  }
+
+  const userGroupFiles = {
+    UserGroupRole: read('backend/src/main/scala/domains/usergroup/model/UserGroupRole.scala'),
+    AddUserGroupMemberRole: read('backend/src/main/scala/domains/usergroup/model/AddUserGroupMemberRole.scala'),
+    CreateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/model/CreateUserGroupRequest.scala'),
+    UpdateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/model/UpdateUserGroupRequest.scala'),
+    AddUserGroupMemberRequest: read('backend/src/main/scala/domains/usergroup/model/AddUserGroupMemberRequest.scala'),
+    UpdateUserGroupMemberRoleRequest: read('backend/src/main/scala/domains/usergroup/model/UpdateUserGroupMemberRoleRequest.scala'),
+    UserGroupMember: read('backend/src/main/scala/domains/usergroup/model/UserGroupMember.scala'),
+    UserGroupSummary: read('backend/src/main/scala/domains/usergroup/model/UserGroupSummary.scala'),
+    UserGroupDetail: read('backend/src/main/scala/domains/usergroup/model/UserGroupDetail.scala'),
+  }
 
   assertSameFields(
     'shared.ErrorResponse',
@@ -159,7 +192,7 @@ function run() {
     ['LoginRequest', 'LoginRequest'],
     ['LoginResponse', 'LoginResponse'],
     ['RegisterRequest', 'RegisterRequest'],
-    ['RegisterResponse', 'LoginResponse'],
+    ['RegisterResponse', 'RegisterResponse'],
     ['SessionResponse', 'SessionResponse'],
     ['UpdateOwnSettingsRequest', 'UpdateOwnSettingsRequest'],
     ['UpdateManagedUserSettingsRequest', 'UpdateManagedUserSettingsRequest'],
@@ -186,7 +219,7 @@ function run() {
     assertSameFields(
       `problem.${contractType}`,
       extractTsObjectTypeFields(contractProblem, contractType),
-      extractScalaCaseClassFields(problemModel, scalaType),
+      extractScalaCaseClassFields(problemFiles[scalaType], scalaType),
       errors,
     )
   }
@@ -204,7 +237,7 @@ function run() {
     assertSameFields(
       `problemset.${contractType}`,
       extractTsObjectTypeFields(contractProblemSet, contractType),
-      extractScalaCaseClassFields(problemSetModel, scalaType),
+      extractScalaCaseClassFields(problemSetFiles[scalaType], scalaType),
       errors,
     )
   }
@@ -212,21 +245,21 @@ function run() {
   assertSameFields(
     'submission.SubmissionLanguage',
     extractTsUnionLiterals(contractSubmission, 'SubmissionLanguage'),
-    extractScalaStringCases(submissionModel, 'SubmissionLanguage'),
+    extractScalaStringCases(submissionFiles.SubmissionLanguage, 'SubmissionLanguage'),
     errors,
   )
 
   assertSameFields(
     'submission.SubmissionStatus',
     extractTsUnionLiterals(contractSubmission, 'SubmissionStatus'),
-    extractScalaStringCases(submissionModel, 'SubmissionStatus'),
+    extractScalaStringCases(submissionFiles.SubmissionStatus, 'SubmissionStatus'),
     errors,
   )
 
   assertSameFields(
     'submission.SubmissionVerdict',
     extractTsUnionLiterals(contractSubmission, 'SubmissionVerdict'),
-    extractScalaStringCases(submissionModel, 'SubmissionVerdict'),
+    extractScalaStringCases(submissionFiles.SubmissionVerdict, 'SubmissionVerdict'),
     errors,
   )
 
@@ -240,7 +273,7 @@ function run() {
     assertSameFields(
       `submission.${contractType}`,
       extractTsObjectTypeFields(contractSubmission, contractType),
-      extractScalaCaseClassFields(submissionModel, scalaType),
+      extractScalaCaseClassFields(submissionFiles[scalaType], scalaType),
       errors,
     )
   }
@@ -248,14 +281,14 @@ function run() {
   assertSameFields(
     'usergroup.UserGroupRole',
     extractTsUnionLiterals(contractUserGroup, 'UserGroupRole'),
-    extractScalaStringCases(userGroupModel, 'UserGroupRole'),
+    extractScalaStringCases(userGroupFiles.UserGroupRole, 'UserGroupRole'),
     errors,
   )
 
   assertSameFields(
     'usergroup.AddUserGroupMemberRole',
     extractTsUnionLiterals(contractUserGroup, 'AddUserGroupMemberRole'),
-    extractScalaStringCases(userGroupModel, 'AddUserGroupMemberRole'),
+    extractScalaStringCases(userGroupFiles.AddUserGroupMemberRole, 'AddUserGroupMemberRole'),
     errors,
   )
 
@@ -273,7 +306,7 @@ function run() {
     assertSameFields(
       `usergroup.${contractType}`,
       extractTsObjectTypeFields(contractUserGroup, contractType),
-      extractScalaCaseClassFields(userGroupModel, scalaType),
+      extractScalaCaseClassFields(userGroupFiles[scalaType], scalaType),
       errors,
     )
   }

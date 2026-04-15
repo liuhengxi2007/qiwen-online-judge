@@ -1,80 +1,51 @@
 import type {
   AddUserGroupMemberRequest as AddUserGroupMemberRequestContract,
-  AddUserGroupMemberRole as AddUserGroupMemberRoleContract,
   CreateUserGroupRequest as CreateUserGroupRequestContract,
   UpdateUserGroupMemberRoleRequest as UpdateUserGroupMemberRoleRequestContract,
   UpdateUserGroupRequest as UpdateUserGroupRequestContract,
   UserGroupDetail as UserGroupDetailContract,
   UserGroupListResponse as UserGroupListResponseContract,
   UserGroupMember as UserGroupMemberContract,
-  UserGroupRole as UserGroupRoleContract,
   UserGroupSummary as UserGroupSummaryContract,
 } from '@contracts/usergroup'
-import type { Username, DisplayName } from '@/features/auth/domain/auth'
 import { parseDisplayName, parseUsername } from '@/features/auth/domain/auth'
-import type { PageResponse } from '@/shared/domain/pagination'
+import type {
+  AddUserGroupMemberRequest
+} from '@/features/usergroup/model/AddUserGroupMemberRequest'
+import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
+import type { CreateUserGroupRequest } from '@/features/usergroup/model/CreateUserGroupRequest'
+import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/model/UpdateUserGroupMemberRoleRequest'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/model/UpdateUserGroupRequest'
+import type { UserGroupDescription } from '@/features/usergroup/model/UserGroupDescription'
+import type { UserGroupDetail } from '@/features/usergroup/model/UserGroupDetail'
+import type { UserGroupId } from '@/features/usergroup/model/UserGroupId'
+import type { UserGroupListResponse } from '@/features/usergroup/model/UserGroupListResponse'
+import type { UserGroupMember } from '@/features/usergroup/model/UserGroupMember'
+import type { UserGroupName } from '@/features/usergroup/model/UserGroupName'
+import type { UserGroupRole } from '@/features/usergroup/model/UserGroupRole'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import type { UserGroupSummary } from '@/features/usergroup/model/UserGroupSummary'
 
-type Brand<T, Name extends string> = T & { readonly __brand: Name }
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
 type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
-export type UserGroupId = Brand<string, 'UserGroupId'>
-export type UserGroupSlug = Brand<string, 'UserGroupSlug'>
-export type UserGroupName = Brand<string, 'UserGroupName'>
-export type UserGroupDescription = Brand<string, 'UserGroupDescription'>
-export type UserGroupRole = UserGroupRoleContract
-export type AddUserGroupMemberRole = AddUserGroupMemberRoleContract
-
-export type UserGroupMember = {
-  username: Username
-  displayName: DisplayName
-  role: UserGroupRole
-  joinedAt: string
+export type {
+  AddUserGroupMemberRequest,
+  AddUserGroupMemberRole,
+  CreateUserGroupRequest,
+  UpdateUserGroupMemberRoleRequest,
+  UpdateUserGroupRequest,
+  UserGroupDescription,
+  UserGroupDetail,
+  UserGroupId,
+  UserGroupListResponse,
+  UserGroupMember,
+  UserGroupName,
+  UserGroupRole,
+  UserGroupSlug,
+  UserGroupSummary,
 }
-
-export type UserGroupSummary = {
-  id: UserGroupId
-  slug: UserGroupSlug
-  name: UserGroupName
-  description: UserGroupDescription
-  ownerUsername: Username
-  createdAt: string
-  updatedAt: string
-}
-
-export type UserGroupDetail = {
-  id: UserGroupId
-  slug: UserGroupSlug
-  name: UserGroupName
-  description: UserGroupDescription
-  ownerUsername: Username
-  members: UserGroupMember[]
-  createdAt: string
-  updatedAt: string
-}
-
-export type CreateUserGroupRequest = {
-  slug: UserGroupSlug
-  name: UserGroupName
-  description: UserGroupDescription
-}
-
-export type UpdateUserGroupRequest = {
-  name: UserGroupName
-  description: UserGroupDescription
-}
-
-export type AddUserGroupMemberRequest = {
-  username: Username
-  role: AddUserGroupMemberRole
-}
-
-export type UpdateUserGroupMemberRoleRequest = {
-  role: UserGroupRole
-}
-
-export type UserGroupListResponse = PageResponse<UserGroupSummary>
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
