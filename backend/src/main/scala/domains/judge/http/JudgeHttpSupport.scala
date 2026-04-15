@@ -2,8 +2,8 @@ package domains.judge.http
 
 import cats.effect.IO
 import domains.judge.application.JudgeConfig
+import domains.shared.http.InternalTokenHttpSupport
 import org.http4s.{Request, Response}
-import org.typelevel.ci.CIString
 
 object JudgeHttpSupport:
 
@@ -11,6 +11,4 @@ object JudgeHttpSupport:
     request: Request[IO],
     judgeConfig: JudgeConfig
   )(handle: => IO[Response[IO]]): IO[Response[IO]] =
-    val providedToken = request.headers.headers.find(_.name == CIString("x-judge-token")).map(_.value)
-    if providedToken.contains(judgeConfig.sharedToken) then handle
-    else JudgeHttpResponses.unauthorizedResponse
+    InternalTokenHttpSupport.withJudgeToken(request, judgeConfig.sharedToken, JudgeHttpResponses.unauthorizedResponse)(handle)

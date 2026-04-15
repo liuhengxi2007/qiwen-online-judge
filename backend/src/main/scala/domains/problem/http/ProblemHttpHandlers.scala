@@ -23,7 +23,7 @@ final class ProblemHttpHandlers(
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
       ProblemCommands
         .listProblems(databaseSession, actor, PageRequest())
-        .flatMap(response => Ok(ProblemHttpResponses.toProblemListResponse(response).asJson))
+        .flatMap(response => Ok(response.asJson))
     }
 
   def createProblem(request: Request[IO]): IO[Response[IO]] =

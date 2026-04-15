@@ -2,8 +2,8 @@ package domains.problemset.http
 
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
-import domains.problemset.model.{ProblemSet, ProblemSetDetail, ProblemSetProblemSummary, ProblemSetSummary}
-import domains.shared.model.{ErrorResponse, PageResponse}
+import domains.problemset.model.{ProblemSet, ProblemSetDetail}
+import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -11,10 +11,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object ProblemSetHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    errorResponse(Status.BadRequest, message)
-
-  def toProblemSetListResponse(response: PageResponse[ProblemSetSummary]): PageResponse[ProblemSetSummary] =
-    response
+    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =
     ProblemSetDetail(
@@ -41,9 +38,6 @@ object ProblemSetHttpResponses:
         errorResponse(Status.Conflict, "Problem set slug conflicts with an existing problem slug.")
       case ProblemSetCommands.CreateProblemSetResult.Created(problemSet) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toProblemSetDetail(problemSet).asJson))
-
-  private def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))
 
   def mapAddProblemResult(result: ProblemSetCommands.AddProblemResult): IO[Response[IO]] =
     result match

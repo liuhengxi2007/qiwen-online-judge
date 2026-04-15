@@ -24,7 +24,7 @@ final class ProblemSetHttpHandlers(
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
       ProblemSetCommands
         .listProblemSets(databaseSession, actor, PageRequest())
-        .flatMap(response => Ok(ProblemSetHttpResponses.toProblemSetListResponse(response).asJson))
+        .flatMap(response => Ok(response.asJson))
     }
 
   def getProblemSet(request: Request[IO], parsedProblemSetSlug: ProblemSetSlug): IO[Response[IO]] =

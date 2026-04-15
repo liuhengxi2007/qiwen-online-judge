@@ -24,7 +24,7 @@ final class UserGroupHttpHandlers(
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
       UserGroupCommands
         .listUserGroups(databaseSession, actor, PageRequest())
-        .flatMap(response => Ok(UserGroupHttpResponses.toUserGroupListResponse(response).asJson))
+        .flatMap(response => Ok(response.asJson))
     }
 
   def getUserGroup(request: Request[IO], parsedGroupSlug: UserGroupSlug): IO[Response[IO]] =

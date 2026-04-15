@@ -1,9 +1,10 @@
 package domains.usergroup.http
 
 import cats.effect.IO
-import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
+import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
+import domains.shared.model.SuccessResponse
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{UserGroup, UserGroupDetail, UserGroupMember, UserGroupSummary}
+import domains.usergroup.model.{UserGroup, UserGroupDetail}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -11,10 +12,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object UserGroupHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    errorResponse(Status.BadRequest, message)
-
-  def toUserGroupListResponse(response: PageResponse[UserGroupSummary]): PageResponse[UserGroupSummary] =
-    response
+    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =
     UserGroupDetail(
@@ -114,6 +112,3 @@ object UserGroupHttpResponses:
         errorResponse(Status.BadRequest, "The owner cannot be removed from the group.")
       case UserGroupCommands.RemoveUserGroupMemberResult.Removed(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
-
-  private def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))

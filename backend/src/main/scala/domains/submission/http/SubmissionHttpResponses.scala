@@ -1,7 +1,7 @@
 package domains.submission.http
 
 import cats.effect.IO
-import domains.shared.model.ErrorResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import domains.submission.application.SubmissionCommands
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -10,7 +10,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object SubmissionHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    errorResponse(Status.BadRequest, message)
+    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def mapListResult(result: SubmissionCommands.ListSubmissionsResult): IO[Response[IO]] =
     result match
@@ -36,6 +36,3 @@ object SubmissionHttpResponses:
         errorResponse(Status.Forbidden, "You do not have access to this submission.")
       case SubmissionCommands.GetSubmissionResult.Found(submission) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(submission.asJson))
-
-  private def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))

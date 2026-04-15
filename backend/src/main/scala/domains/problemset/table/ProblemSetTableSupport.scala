@@ -4,7 +4,8 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, Username}
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle}
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy, ResourceId}
+import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
+import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility}
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -72,32 +73,5 @@ object ProblemSetTableSupport:
     pageSize.foreach(statement.setInt(4, _))
     offset.foreach(statement.setInt(5, _))
 
-  def policyFrom(
-    baseAccess: BaseAccess,
-    viewerGrants: List[ResourceAccessGrant],
-    managerGrants: List[ResourceAccessGrant]
-  ): ResourceAccessPolicy =
-    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = viewerGrants.map(_.subject), managerGrants = managerGrants.map(_.subject))
-
-  def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
-    policy.copy(
-      viewerGrants = policy.viewerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
-      managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-    )
-
   def toResourceId(problemSetId: ProblemSetId): ResourceId =
     ResourceId(problemSetId.value)
-
-  def toLegacyVisibility(baseAccess: BaseAccess): String =
-    baseAccess match
-      case BaseAccess.Public => "public"
-      case BaseAccess.OwnerOnly => "private"
-
-  def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
-    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
-
-  def missingInsertResult(entityName: String): Nothing =
-    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")

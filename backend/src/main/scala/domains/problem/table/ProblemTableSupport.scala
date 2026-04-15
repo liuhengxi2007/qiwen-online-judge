@@ -2,7 +2,8 @@ package domains.problem.table
 
 import domains.auth.model.{AuthUser, Username}
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy, ResourceId}
+import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
+import domains.shared.access.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility, missingInsertResult}
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -102,38 +103,5 @@ object ProblemTableSupport:
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)
 
-  def policyFrom(
-    baseAccess: BaseAccess,
-    viewerGrants: List[ResourceAccessGrant],
-    managerGrants: List[ResourceAccessGrant]
-  ): ResourceAccessPolicy =
-    ResourceAccessPolicy(baseAccess = baseAccess, viewerGrants = viewerGrants.map(_.subject), managerGrants = managerGrants.map(_.subject))
-
-  def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
-    policy.copy(
-      viewerGrants = policy.viewerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
-      managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
-    )
-
   def toResourceId(problemId: ProblemId): ResourceId =
     ResourceId(problemId.value)
-
-  def toLegacyVisibility(baseAccess: BaseAccess): String =
-    baseAccess match
-      case BaseAccess.Public => "public"
-      case BaseAccess.OwnerOnly => "private"
-
-  def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  def parseColumn[A](columnName: String, rawValue: Int, parse: Int => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  def parseColumn[A](columnName: String, rawValue: Option[String], parse: Option[String] => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
-    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
-
-  def missingInsertResult(entityName: String): Nothing =
-    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")

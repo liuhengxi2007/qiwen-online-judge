@@ -3,6 +3,7 @@ package domains.auth.http
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
 import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse}
+import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import domains.shared.model.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
@@ -12,6 +13,9 @@ import org.http4s.dsl.Http4sDsl
 object AuthHttpResponses:
 
   private val sessionCookieName = "qiwen_session"
+
+  def validationErrorResponse(message: String): IO[Response[IO]] =
+    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def invalidCredentialsResponse: IO[Response[IO]] =
     errorResponse(Status.Unauthorized, "Invalid username or password.")
@@ -45,9 +49,6 @@ object AuthHttpResponses:
 
   def usernameConflictsWithUserGroupResponse: IO[Response[IO]] =
     errorResponse(Status.Conflict, "Username conflicts with an existing user group slug.")
-
-  def validationErrorResponse(message: String): IO[Response[IO]] =
-    errorResponse(Status.BadRequest, message)
 
   def loggedOutResponse(clearedSessionCookie: ResponseCookie)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
     import dsl.*
@@ -159,9 +160,3 @@ object AuthHttpResponses:
         userOwnsResourcesResponse
       case AuthUserCommands.DeleteUserResult.Deleted =>
         Ok(SuccessResponse("User deleted.").asJson)
-
-  private def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(
-      Response[IO](status = status)
-        .withEntity(ErrorResponse(message).asJson)
-    )

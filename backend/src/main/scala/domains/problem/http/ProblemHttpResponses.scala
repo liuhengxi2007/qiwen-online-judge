@@ -3,8 +3,9 @@ package domains.problem.http
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDetail, ProblemSlug, ProblemSummary}
-import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
+import domains.problem.model.{ProblemDataFilename, ProblemSlug}
+import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
+import domains.shared.model.SuccessResponse
 import fs2.Stream
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -15,10 +16,7 @@ import org.typelevel.ci.CIString
 object ProblemHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    errorResponse(Status.BadRequest, message)
-
-  def toProblemListResponse(response: PageResponse[ProblemSummary]): PageResponse[ProblemSummary] =
-    response
+    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def mapCreateResult(result: ProblemCommands.CreateProblemResult): IO[Response[IO]] =
     result match
@@ -32,9 +30,6 @@ object ProblemHttpResponses:
         errorResponse(Status.Conflict, "Problem slug conflicts with an existing problem set slug.")
       case ProblemCommands.CreateProblemResult.Created(problem) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(problem.asJson))
-
-  private def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))
 
   def mapGetResult(result: ProblemCommands.GetProblemResult): IO[Response[IO]] =
     result match
