@@ -4,9 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
 import org.http4s.{Request, Response}
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 
 final class ProblemHttpHandlers(
@@ -14,63 +12,78 @@ final class ProblemHttpHandlers(
   sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  private def runAuthenticatedPlan[Input](
+  private def runAuthenticatedPlan[Input, Output](
     request: Request[IO],
     input: Input,
-    plan: ProblemHttpPlan[Input]
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.Plain[Input, Output]
   ): IO[Response[IO]] =
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      plan.execute(databaseSession, actor, input)
+      registeredPlan.plan.execute(databaseSession, actor, input).flatMap(registeredPlan.toResponse)
     }
 
-  private def runDecodedAuthenticatedPlan[Body, Input](
+  private def runAuthenticatedPlan[Input, Output](
     request: Request[IO],
-    plan: ProblemHttpPlan[Input]
+    input: Input,
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.WithTransaction[Input, Output]
+  ): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      databaseSession.withTransactionConnection(connection =>
+        registeredPlan.plan.execute(connection, actor, input).flatMap(registeredPlan.toResponse)
+      )
+    }
+
+  def execute[Input, Output](
+    request: Request[IO],
+    input: Input,
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.Plain[Input, Output]
+  ): IO[Response[IO]] =
+    runAuthenticatedPlan(request, input, registeredPlan)
+
+  def execute[Input, Output](
+    request: Request[IO],
+    input: Input,
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.WithTransaction[Input, Output]
+  ): IO[Response[IO]] =
+    runAuthenticatedPlan(request, input, registeredPlan)
+
+  private def runDecodedAuthenticatedPlan[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.Plain[Input, Output]
   )(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      request.as[Body].flatMap(body => plan.execute(databaseSession, actor, toInput(body)))
+      request.as[Body].flatMap(body =>
+        registeredPlan.plan.execute(databaseSession, actor, toInput(body)).flatMap(registeredPlan.toResponse)
+      )
     }
 
-  def listProblems(request: Request[IO]): IO[Response[IO]] =
-    runAuthenticatedPlan(request, (), ProblemHttpPlans.ListProblems)
-
-  def createProblem(request: Request[IO]): IO[Response[IO]] =
-    runDecodedAuthenticatedPlan[CreateProblemRequest, CreateProblemRequest](request, ProblemHttpPlans.CreateProblem)(identity)
-
-  def getProblem(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runAuthenticatedPlan(request, parsedProblemSlug, ProblemHttpPlans.GetProblem)
-
-  def listProblemData(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runAuthenticatedPlan(request, parsedProblemSlug, ProblemHttpPlans.ListProblemData)
-
-  def downloadProblemData(
+  private def runDecodedAuthenticatedPlan[Body, Input, Output](
     request: Request[IO],
-    parsedProblemSlug: ProblemSlug,
-    parsedFilename: ProblemDataFilename
-  ): IO[Response[IO]] =
-    runAuthenticatedPlan(request, (parsedProblemSlug, parsedFilename), ProblemHttpPlans.DownloadProblemData)
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.WithTransaction[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      request.as[Body].flatMap(body =>
+        databaseSession.withTransactionConnection(connection =>
+          registeredPlan.plan.execute(connection, actor, toInput(body)).flatMap(registeredPlan.toResponse)
+        )
+      )
+    }
 
-  def deleteProblemData(
+  def executeDecoded[Body, Input, Output](
     request: Request[IO],
-    parsedProblemSlug: ProblemSlug,
-    parsedFilename: ProblemDataFilename
-  ): IO[Response[IO]] =
-    runAuthenticatedPlan(request, (parsedProblemSlug, parsedFilename), ProblemHttpPlans.DeleteProblemData)
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.Plain[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)
 
-  def clearProblemData(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runAuthenticatedPlan(request, parsedProblemSlug, ProblemHttpPlans.ClearProblemData)
-
-  def updateProblem(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runDecodedAuthenticatedPlan[UpdateProblemRequest, (ProblemSlug, UpdateProblemRequest)](request, ProblemHttpPlans.UpdateProblem) {
-      updateRequest => (parsedProblemSlug, updateRequest)
-    }
-
-  def updateProblemData(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runDecodedAuthenticatedPlan[UpdateProblemDataRequest, (ProblemSlug, UpdateProblemDataRequest)](request, ProblemHttpPlans.UpdateProblemData) {
-      updateDataRequest => (parsedProblemSlug, updateDataRequest)
-    }
-
-  def deleteProblem(request: Request[IO], parsedProblemSlug: ProblemSlug): IO[Response[IO]] =
-    runAuthenticatedPlan(request, parsedProblemSlug, ProblemHttpPlans.DeleteProblem)
+  def executeDecoded[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: ProblemHttpPlanRegistry.RegisteredPlan.WithTransaction[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)

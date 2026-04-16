@@ -4,6 +4,7 @@ import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataFilename, ProblemSlug}
+import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
 import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import domains.shared.model.SuccessResponse
 import fs2.Stream
@@ -17,6 +18,11 @@ object ProblemHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+
+  def listProblemsResponse(
+    response: domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]
+  ): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def mapCreateResult(result: ProblemCommands.CreateProblemResult): IO[Response[IO]] =
     result match
@@ -88,6 +94,13 @@ object ProblemHttpResponses:
         errorResponse(Status.NotFound, "Problem not found.")
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
         IO.pure(Response[IO](status = Status.Ok))
+
+  def downloadOutputResponse(output: DownloadProblemDataOutput): IO[Response[IO]] =
+    output.authorization match
+      case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
+        downloadDataResponse(output.problemSlug, output.filename)
+      case other =>
+        mapAuthorizeDownloadResult(other)
 
   def mapDeleteDataResult(result: ProblemCommands.DeleteProblemDataResult): IO[Response[IO]] =
     result match

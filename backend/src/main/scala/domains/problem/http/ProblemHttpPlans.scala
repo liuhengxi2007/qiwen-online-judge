@@ -7,12 +7,18 @@ import domains.problem.application.ProblemCommands
 import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.model.PageRequest
 import io.circe.syntax.*
-import org.http4s.{Response, Status}
-import org.http4s.circe.CirceEntityEncoder.*
+
+import java.sql.Connection
 
 object ProblemHttpPlans:
 
-  case object ListProblems extends ProblemHttpPlan[Unit]:
+  final case class DownloadProblemDataOutput(
+    problemSlug: ProblemSlug,
+    filename: ProblemDataFilename,
+    authorization: ProblemCommands.AuthorizeProblemDataDownloadResult
+  )
+
+  case object ListProblems extends PlainProblemHttpPlan[Unit, domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]]:
 
     override val name: String = "ListProblems"
 
@@ -20,25 +26,23 @@ object ProblemHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: Unit
-    ): IO[Response[IO]] =
+    ): IO[domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]] =
       ProblemCommands
         .listProblems(databaseSession, actor, PageRequest())
-        .map(response => Response[IO](status = Status.Ok).withEntity(response.asJson))
 
-  case object CreateProblem extends ProblemHttpPlan[CreateProblemRequest]:
+  case object CreateProblem extends TransactionProblemHttpPlan[CreateProblemRequest, ProblemCommands.CreateProblemResult]:
 
     override val name: String = "CreateProblem"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: CreateProblemRequest
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.CreateProblemResult] =
       ProblemCommands
-        .createProblem(databaseSession, actor, input)
-        .flatMap(ProblemHttpResponses.mapCreateResult)
+        .createProblem(connection, actor, input)
 
-  case object GetProblem extends ProblemHttpPlan[ProblemSlug]:
+  case object GetProblem extends PlainProblemHttpPlan[ProblemSlug, ProblemCommands.GetProblemResult]:
 
     override val name: String = "GetProblem"
 
@@ -46,12 +50,11 @@ object ProblemHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: ProblemSlug
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.GetProblemResult] =
       ProblemCommands
         .getProblemBySlug(databaseSession, actor, input)
-        .flatMap(ProblemHttpResponses.mapGetResult)
 
-  case object ListProblemData extends ProblemHttpPlan[ProblemSlug]:
+  case object ListProblemData extends PlainProblemHttpPlan[ProblemSlug, ProblemCommands.ListProblemDataResult]:
 
     override val name: String = "ListProblemData"
 
@@ -59,12 +62,11 @@ object ProblemHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: ProblemSlug
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.ListProblemDataResult] =
       ProblemCommands
         .listProblemData(databaseSession, actor, input)
-        .flatMap(ProblemHttpResponses.mapListDataResult)
 
-  case object DownloadProblemData extends ProblemHttpPlan[(ProblemSlug, ProblemDataFilename)]:
+  case object DownloadProblemData extends PlainProblemHttpPlan[(ProblemSlug, ProblemDataFilename), DownloadProblemDataOutput]:
 
     override val name: String = "DownloadProblemData"
 
@@ -72,81 +74,71 @@ object ProblemHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: (ProblemSlug, ProblemDataFilename)
-    ): IO[Response[IO]] =
+    ): IO[DownloadProblemDataOutput] =
       val (problemSlug, filename) = input
       ProblemCommands
         .authorizeProblemDataDownload(databaseSession, actor, problemSlug)
-        .flatMap {
-          case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
-            ProblemHttpResponses.downloadDataResponse(problemSlug, filename)
-          case other =>
-            ProblemHttpResponses.mapAuthorizeDownloadResult(other)
-        }
+        .map(authorization => DownloadProblemDataOutput(problemSlug, filename, authorization))
 
-  case object DeleteProblemData extends ProblemHttpPlan[(ProblemSlug, ProblemDataFilename)]:
+  case object DeleteProblemData extends TransactionProblemHttpPlan[(ProblemSlug, ProblemDataFilename), ProblemCommands.DeleteProblemDataResult]:
 
     override val name: String = "DeleteProblemData"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: (ProblemSlug, ProblemDataFilename)
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.DeleteProblemDataResult] =
       val (problemSlug, filename) = input
       ProblemCommands
-        .deleteProblemData(databaseSession, actor, problemSlug, filename)
-        .flatMap(ProblemHttpResponses.mapDeleteDataResult)
+        .deleteProblemData(connection, actor, problemSlug, filename)
 
-  case object ClearProblemData extends ProblemHttpPlan[ProblemSlug]:
+  case object ClearProblemData extends TransactionProblemHttpPlan[ProblemSlug, ProblemCommands.ClearProblemDataResult]:
 
     override val name: String = "ClearProblemData"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: ProblemSlug
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.ClearProblemDataResult] =
       ProblemCommands
-        .clearProblemData(databaseSession, actor, input)
-        .flatMap(ProblemHttpResponses.mapClearDataResult)
+        .clearProblemData(connection, actor, input)
 
-  case object UpdateProblem extends ProblemHttpPlan[(ProblemSlug, UpdateProblemRequest)]:
+  case object UpdateProblem extends TransactionProblemHttpPlan[(ProblemSlug, UpdateProblemRequest), ProblemCommands.UpdateProblemResult]:
 
     override val name: String = "UpdateProblem"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: (ProblemSlug, UpdateProblemRequest)
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.UpdateProblemResult] =
       val (problemSlug, request) = input
       ProblemCommands
-        .updateProblem(databaseSession, actor, problemSlug, request)
-        .flatMap(ProblemHttpResponses.mapUpdateResult)
+        .updateProblem(connection, actor, problemSlug, request)
 
-  case object UpdateProblemData extends ProblemHttpPlan[(ProblemSlug, UpdateProblemDataRequest)]:
+  case object UpdateProblemData extends TransactionProblemHttpPlan[(ProblemSlug, UpdateProblemDataRequest), ProblemCommands.UpdateProblemDataResult]:
 
     override val name: String = "UpdateProblemData"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: (ProblemSlug, UpdateProblemDataRequest)
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.UpdateProblemDataResult] =
       val (problemSlug, request) = input
       ProblemCommands
-        .updateProblemData(databaseSession, actor, problemSlug, request)
-        .flatMap(ProblemHttpResponses.mapUpdateDataResult)
+        .updateProblemData(connection, actor, problemSlug, request)
 
-  case object DeleteProblem extends ProblemHttpPlan[ProblemSlug]:
+  case object DeleteProblem extends TransactionProblemHttpPlan[ProblemSlug, ProblemCommands.DeleteProblemResult]:
 
     override val name: String = "DeleteProblem"
 
     override def execute(
-      databaseSession: DatabaseSession,
+      connection: Connection,
       actor: AuthUser,
       input: ProblemSlug
-    ): IO[Response[IO]] =
+    ): IO[ProblemCommands.DeleteProblemResult] =
       ProblemCommands
-        .deleteProblem(databaseSession, actor, input)
-        .flatMap(ProblemHttpResponses.mapDeleteResult)
+        .deleteProblem(connection, actor, input)
