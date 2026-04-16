@@ -1,31 +1,19 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Code2, Send } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
+import { ProblemSubmitEditorCard } from '@/features/problem/components/problem-submit-editor-card'
+import { ProblemSubmitHeaderCard } from '@/features/problem/components/problem-submit-header-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseProblemSlug,
-  problemSlugValue,
-  problemTitleValue,
 } from '@/features/problem/domain/problem'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { createSubmission } from '@/features/submission/api/submission-client'
 import {
   type SubmissionLanguage,
-  isSubmissionLanguage,
   parseSubmissionSourceCode,
   submissionIdValue,
 } from '@/features/submission/domain/submission'
@@ -101,129 +89,57 @@ export function ProblemSubmitPage() {
           </Card>
         ) : detailQuery.problem ? (
           <div className="space-y-6">
-            <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                    <Code2 className="size-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl text-slate-950">
-                      {problemTitleValue(detailQuery.problem.title)}
-                    </CardTitle>
-                    <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-                      {problemSlugValue(detailQuery.problem.slug)}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-7 text-slate-600">{t('problem.submit.description')}</p>
-              </CardContent>
-            </Card>
+            <ProblemSubmitHeaderCard detailQuery={detailQuery} />
+            <ProblemSubmitEditorCard
+              errorMessage={errorMessage}
+              isSubmitting={isSubmitting}
+              language={language}
+              onLanguageChange={(nextLanguage) => {
+                setLanguage(nextLanguage)
+                setStatusMessage('')
+                setErrorMessage('')
+              }}
+              onSourceCodeChange={(value) => {
+                setSourceCode(value)
+                setStatusMessage('')
+                setErrorMessage('')
+              }}
+              onSubmit={() => {
+                const sourceCodeResult = parseSubmissionSourceCode(sourceCode)
+                if (!sourceCodeResult.ok) {
+                  setErrorMessage(sourceCodeResult.error)
+                  setStatusMessage('')
+                  return
+                }
 
-            <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-950">{t('problem.submit.editorTitle')}</CardTitle>
-                <CardDescription>{t('problem.submit.editorDescription')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="problem-submit-language">{t('common.languageLabel')}</Label>
-                  <Select
-                    value={language}
-                    onValueChange={(nextLanguage) => {
-                      if (isSubmissionLanguage(nextLanguage)) {
-                        setLanguage(nextLanguage)
-                      }
-                      setStatusMessage('')
-                      setErrorMessage('')
-                    }}
-                  >
-                    <SelectTrigger id="problem-submit-language" className="h-11 rounded-2xl">
-                      <SelectValue placeholder={t('problem.submit.languagePlaceholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {supportedLanguages.map((supportedLanguage) => (
-                        <SelectItem key={supportedLanguage.value} value={supportedLanguage.value}>
-                          {supportedLanguage.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                setIsSubmitting(true)
+                setErrorMessage('')
+                setStatusMessage('')
 
-                <div className="space-y-2">
-                  <Label htmlFor="problem-submit-source">{t('problem.submit.sourceCode')}</Label>
-                  <Textarea
-                    id="problem-submit-source"
-                    value={sourceCode}
-                    className="min-h-[26rem] rounded-3xl !font-mono text-sm"
-                    placeholder={t('problem.submit.sourcePlaceholder')}
-                    onChange={(event) => {
-                      setSourceCode(event.target.value)
-                      setStatusMessage('')
-                      setErrorMessage('')
-                    }}
-                  />
-                </div>
+                void createSubmission({
+                  problemSlug: slugResult.value,
+                  language,
+                  sourceCode: sourceCodeResult.value,
+                })
+                  .then((submission) => {
+                    void navigate(`/submissions/${submissionIdValue(submission.id)}`)
+                  })
+                  .catch((error: unknown) => {
+                    if (error instanceof HttpClientError) {
+                      setErrorMessage(error.message)
+                      return
+                    }
 
-                {errorMessage ? (
-                  <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                    <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
-                  </Alert>
-                ) : null}
-
-                {statusMessage ? (
-                  <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                    <AlertDescription className="text-emerald-700">{statusMessage}</AlertDescription>
-                  </Alert>
-                ) : null}
-
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    type="button"
-                    disabled={isSubmitting}
-                    className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                    onClick={() => {
-                      const sourceCodeResult = parseSubmissionSourceCode(sourceCode)
-                      if (!sourceCodeResult.ok) {
-                        setErrorMessage(sourceCodeResult.error)
-                        setStatusMessage('')
-                        return
-                      }
-
-                      setIsSubmitting(true)
-                      setErrorMessage('')
-                      setStatusMessage('')
-
-                      void createSubmission({
-                        problemSlug: slugResult.value,
-                        language,
-                        sourceCode: sourceCodeResult.value,
-                      })
-                        .then((submission) => {
-                          void navigate(`/submissions/${submissionIdValue(submission.id)}`)
-                        })
-                        .catch((error: unknown) => {
-                          if (error instanceof HttpClientError) {
-                            setErrorMessage(error.message)
-                            return
-                          }
-
-                          setErrorMessage(t('problem.submit.createFailed'))
-                        })
-                        .finally(() => {
-                          setIsSubmitting(false)
-                        })
-                    }}
-                  >
-                    <Send className="size-4" />
-                    {isSubmitting ? t('problem.submit.submitting') : t('problem.submit.submit')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    setErrorMessage(t('problem.submit.createFailed'))
+                  })
+                  .finally(() => {
+                    setIsSubmitting(false)
+                  })
+              }}
+              sourceCode={sourceCode}
+              statusMessage={statusMessage}
+              supportedLanguages={supportedLanguages}
+            />
           </div>
         ) : null}
       </section>

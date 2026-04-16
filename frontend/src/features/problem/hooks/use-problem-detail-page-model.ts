@@ -4,19 +4,16 @@ import {
   emptySectionMessageState,
   reduceSectionMessageState,
 } from '@/features/problem/domain/problem-detail-page-state'
+import {
+  buildProblemAccessUpdateDraft,
+  buildProblemContentUpdateDraft,
+  buildProblemDetailAccessPolicy,
+} from '@/features/problem/domain/problem-detail-page-support'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
-import { problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
 import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-delete-action'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { useProblemEditorState } from '@/features/problem/hooks/use-problem-editor-state'
 import { useProblemUpdateAction } from '@/features/problem/hooks/use-problem-update-action'
-import {
-  buildResourceAccessPolicy,
-  grantedGroupsInputFromAccessPolicy,
-  grantedManagerGroupsInputFromAccessPolicy,
-  grantedManagerUsersInputFromAccessPolicy,
-  grantedUsersInputFromAccessPolicy,
-} from '@/shared/domain/resource-access-input'
 
 export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug)
@@ -34,16 +31,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     }
 
     const result = await updateAction.save({
-      title: editor.title,
-      statement: editor.statement,
-      timeLimitMs: editor.timeLimitMs,
-      spaceLimitMb: editor.spaceLimitMb,
-      baseAccess: currentProblem.accessPolicy.baseAccess,
-      grantedUsersInput: grantedUsersInputFromAccessPolicy(currentProblem.accessPolicy),
-      grantedGroupsInput: grantedGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
-      managerUsersInput: grantedManagerUsersInputFromAccessPolicy(currentProblem.accessPolicy),
-      managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(currentProblem.accessPolicy),
-      othersSubmissionAccess: currentProblem.othersSubmissionAccess,
+      ...buildProblemContentUpdateDraft(currentProblem, editor),
     })
 
     if (result.ok) {
@@ -62,16 +50,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     }
 
     const result = await updateAction.save({
-      title: problemTitleValue(currentProblem.title),
-      statement: problemStatementTextValue(currentProblem.statement),
-      timeLimitMs: currentProblem.timeLimitMs,
-      spaceLimitMb: currentProblem.spaceLimitMb,
-      baseAccess: editor.baseAccess,
-      grantedUsersInput: editor.grantedUsersInput,
-      grantedGroupsInput: editor.grantedGroupsInput,
-      managerUsersInput: editor.managerUsersInput,
-      managerGroupsInput: editor.managerGroupsInput,
-      othersSubmissionAccess: editor.othersSubmissionAccess,
+      ...buildProblemAccessUpdateDraft(currentProblem, editor),
     })
 
     if (result.ok) {
@@ -87,14 +66,6 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     return result.ok
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(
-    editor.baseAccess,
-    editor.grantedUsersInput,
-    editor.grantedGroupsInput,
-    editor.managerUsersInput,
-    editor.managerGroupsInput,
-  )
-
   return {
     problem: detailQuery.problem,
     loadErrorMessage: detailQuery.errorMessage,
@@ -105,9 +76,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
     statement: editor.statement,
     timeLimitMs: editor.timeLimitMs,
     spaceLimitMb: editor.spaceLimitMb,
-    accessPolicy: accessPolicyResult.ok
-      ? accessPolicyResult.value
-      : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] },
+    accessPolicy: buildProblemDetailAccessPolicy(editor),
     canManage: detailQuery.problem?.canManage ?? false,
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,

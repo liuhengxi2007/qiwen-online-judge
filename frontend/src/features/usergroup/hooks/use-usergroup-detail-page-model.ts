@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useReducer } from 'react'
 
 import type { Username } from '@/features/auth/domain/auth'
 import type { UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import {
-  canRemoveUserGroupMember,
-  resolveUserGroupViewerPermissions,
-} from '@/features/usergroup/domain/usergroup-permissions'
+  initialUserGroupDetailPageMessageState,
+  reduceUserGroupDetailPageMessageState,
+} from '@/features/usergroup/domain/usergroup-detail-page-state'
+import {
+  canViewerRemoveUserGroupMember,
+  resolveUserGroupDetailPermissions,
+} from '@/features/usergroup/domain/usergroup-detail-page-support'
 import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-usergroup-add-member-action'
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from '@/features/usergroup/hooks/use-usergroup-detail-query'
@@ -24,39 +28,22 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
   const addMemberAction = useUserGroupAddMemberAction(userGroupSlug)
   const updateMemberRoleAction = useUserGroupUpdateMemberRoleAction(userGroupSlug)
   const removeMemberAction = useUserGroupRemoveMemberAction(userGroupSlug)
-  const [messageState, setMessageState] = useState<{
-    generalErrorMessage: string
-    generalSuccessMessage: string
-    saveErrorMessage: string
-    saveSuccessMessage: string
-    addMemberErrorMessage: string
-    addMemberSuccessMessage: string
-  }>({
-    generalErrorMessage: '',
-    generalSuccessMessage: '',
-    saveErrorMessage: '',
-    saveSuccessMessage: '',
-    addMemberErrorMessage: '',
-    addMemberSuccessMessage: '',
-  })
+  const [messageState, dispatch] = useReducer(
+    reduceUserGroupDetailPageMessageState,
+    initialUserGroupDetailPageMessageState,
+  )
 
   const permissions = useMemo(() => {
-    const memberships = detailQuery.userGroup?.members ?? []
-    return resolveUserGroupViewerPermissions(memberships, viewerUsername, isSiteManager)
-  }, [detailQuery.userGroup?.members, isSiteManager, viewerUsername])
+    return resolveUserGroupDetailPermissions(detailQuery.userGroup, viewerUsername, isSiteManager)
+  }, [detailQuery.userGroup, isSiteManager, viewerUsername])
 
   function canRemoveMember(_targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
-    const memberships = detailQuery.userGroup?.members ?? []
-    return canRemoveUserGroupMember(memberships, viewerUsername, isSiteManager, targetRole)
+    return canViewerRemoveUserGroupMember(detailQuery.userGroup, viewerUsername, isSiteManager, targetRole)
   }
 
   async function save() {
     if (!permissions.canManage) {
-      setMessageState((current) => ({
-        ...current,
-        saveErrorMessage: t('userGroup.message.managePermissionRequired'),
-        saveSuccessMessage: '',
-      }))
+      dispatch({ type: 'save_forbidden', message: t('userGroup.message.managePermissionRequired') })
       return
     }
 
@@ -67,27 +54,15 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
 
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState((current) => ({
-        ...current,
-        saveErrorMessage: '',
-        saveSuccessMessage: result.message,
-      }))
+      dispatch({ type: 'save_succeeded', message: result.message })
     } else {
-      setMessageState((current) => ({
-        ...current,
-        saveErrorMessage: result.message,
-        saveSuccessMessage: '',
-      }))
+      dispatch({ type: 'save_failed', message: result.message })
     }
   }
 
   async function addMember() {
     if (!permissions.canManage) {
-      setMessageState((current) => ({
-        ...current,
-        addMemberErrorMessage: t('userGroup.message.managePermissionRequired'),
-        addMemberSuccessMessage: '',
-      }))
+      dispatch({ type: 'add_member_forbidden', message: t('userGroup.message.managePermissionRequired') })
       return
     }
 
@@ -95,103 +70,59 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
       editor.clearMemberDraft()
-      setMessageState((current) => ({
-        ...current,
-        addMemberErrorMessage: '',
-        addMemberSuccessMessage: result.message,
-      }))
+      dispatch({ type: 'add_member_succeeded', message: result.message })
     } else {
-      setMessageState((current) => ({
-        ...current,
-        addMemberErrorMessage: result.message,
-        addMemberSuccessMessage: '',
-      }))
+      dispatch({ type: 'add_member_failed', message: result.message })
     }
   }
 
   async function deleteCurrentUserGroup() {
     if (!permissions.canDelete) {
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: t('userGroup.message.ownerPermissionRequired'),
-        generalSuccessMessage: '',
-      }))
+      dispatch({ type: 'general_forbidden', message: t('userGroup.message.ownerPermissionRequired') })
       return false
     }
 
     const result = await deleteAction.deleteCurrentUserGroup()
     if (result.ok) {
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: '',
-        generalSuccessMessage: result.message,
-      }))
+      dispatch({ type: 'general_succeeded', message: result.message })
       return true
     }
 
-    setMessageState((current) => ({
-      ...current,
-      generalErrorMessage: result.message,
-      generalSuccessMessage: '',
-    }))
+    dispatch({ type: 'general_failed', message: result.message })
     return false
   }
 
   async function updateMemberRole(targetUsername: Username, role: 'owner' | 'manager' | 'member') {
     if (!permissions.canManageMemberRoles) {
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: t('userGroup.message.ownerPermissionRequired'),
-        generalSuccessMessage: '',
-      }))
+      dispatch({ type: 'general_forbidden', message: t('userGroup.message.ownerPermissionRequired') })
       return false
     }
 
     const result = await updateMemberRoleAction.updateRole(targetUsername, role)
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: '',
-        generalSuccessMessage: result.message,
-      }))
+      dispatch({ type: 'general_succeeded', message: result.message })
       return true
     }
 
-    setMessageState((current) => ({
-      ...current,
-      generalErrorMessage: result.message,
-      generalSuccessMessage: '',
-    }))
+    dispatch({ type: 'general_failed', message: result.message })
     return false
   }
 
   async function removeMember(targetUsername: Username) {
     if (!permissions.canManage) {
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: t('userGroup.message.managePermissionRequired'),
-        generalSuccessMessage: '',
-      }))
+      dispatch({ type: 'general_forbidden', message: t('userGroup.message.managePermissionRequired') })
       return false
     }
 
     const result = await removeMemberAction.removeMember(targetUsername)
     if (result.ok) {
       detailQuery.replaceUserGroup(result.userGroup)
-      setMessageState((current) => ({
-        ...current,
-        generalErrorMessage: '',
-        generalSuccessMessage: result.message,
-      }))
+      dispatch({ type: 'general_succeeded', message: result.message })
       return true
     }
 
-    setMessageState((current) => ({
-      ...current,
-      generalErrorMessage: result.message,
-      generalSuccessMessage: '',
-    }))
+    dispatch({ type: 'general_failed', message: result.message })
     return false
   }
 

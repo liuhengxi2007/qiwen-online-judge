@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 
 import {
   clearProblemData,
@@ -12,6 +12,10 @@ import {
   type ProblemDataFilename,
   type ProblemSlug,
 } from '@/features/problem/domain/problem'
+import {
+  initialProblemDataPageState,
+  reduceProblemDataPageState,
+} from '@/features/problem/domain/problem-data-page-state'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -23,60 +27,44 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug)
   const replaceProblem = detailQuery.replaceProblem
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isLoadingFiles, setIsLoadingFiles] = useState(true)
-  const [deletingFilename, setDeletingFilename] = useState<ProblemDataFilename | null>(null)
-  const [isClearingAll, setIsClearingAll] = useState(false)
-  const [dataFiles, setDataFiles] = useState<ProblemDataFilename[]>([])
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
 
   const loadFiles = useCallback(async () => {
-    setIsLoadingFiles(true)
+    dispatch({ type: 'load_started' })
     try {
       const files = await listProblemDataFiles(problemSlug)
-      setDataFiles(files.items)
+      dispatch({ type: 'load_succeeded', files: files.items })
       return { ok: true as const }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
-      setErrorMessage(message)
+      dispatch({ type: 'load_failed', message })
       return { ok: false as const, message }
-    } finally {
-      setIsLoadingFiles(false)
     }
-  }, [problemSlug])
+  }, [problemSlug, t])
 
   useEffect(() => {
     void loadFiles()
   }, [loadFiles])
 
   const uploadSelectedFile = useCallback(async (): Promise<UploadResult> => {
-    if (!selectedFile) {
+    if (!state.selectedFile) {
       const message = 'Please choose a file to upload.'
-      setErrorMessage(message)
-      setSuccessMessage('')
+      dispatch({ type: 'upload_failed', message })
       return { ok: false, message }
     }
 
-    const filenameResult = parseProblemDataFilename(selectedFile.name)
+    const filenameResult = parseProblemDataFilename(state.selectedFile.name)
     if (!filenameResult.ok) {
-      setErrorMessage(filenameResult.error)
-      setSuccessMessage('')
+      dispatch({ type: 'upload_failed', message: filenameResult.error })
       return { ok: false, message: filenameResult.error }
     }
 
-    setIsUploading(true)
-    setErrorMessage('')
-    setSuccessMessage('')
+    dispatch({ type: 'upload_started' })
 
     try {
-      const buffer = await selectedFile.arrayBuffer()
+      const buffer = await state.selectedFile.arrayBuffer()
       const bytes = new Uint8Array(buffer)
-      let binary = ''
-      bytes.forEach((byte) => {
-        binary += String.fromCharCode(byte)
-      })
+      const binary = Array.from(bytes).reduce((text, byte) => text + String.fromCharCode(byte), '')
 
       const updatedProblem = await updateProblemData(problemSlug, {
         filename: filenameResult.value,
@@ -84,61 +72,54 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       })
 
       replaceProblem(updatedProblem)
-      setSuccessMessage(
-        `Uploaded ${updatedProblem.data.value ?? problemDataFilenameValue(filenameResult.value)} successfully.`,
-      )
-      setSelectedFile(null)
+      dispatch({
+        type: 'upload_succeeded',
+        message: `Uploaded ${updatedProblem.data.value ?? problemDataFilenameValue(filenameResult.value)} successfully.`,
+      })
       await loadFiles()
       return { ok: true }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : 'Unable to upload problem data.'
-      setErrorMessage(message)
+      dispatch({ type: 'upload_failed', message })
       return { ok: false, message }
-    } finally {
-      setIsUploading(false)
     }
-  }, [loadFiles, problemSlug, replaceProblem, selectedFile])
+  }, [loadFiles, problemSlug, replaceProblem, state.selectedFile])
 
   const deleteDataFile = useCallback(
     async (filename: ProblemDataFilename): Promise<DeleteResult> => {
-      setDeletingFilename(filename)
-      setErrorMessage('')
-      setSuccessMessage('')
+      dispatch({ type: 'delete_started', filename })
 
       try {
         const updatedProblem = await deleteProblemData(problemSlug, filename)
         replaceProblem(updatedProblem)
-        setSuccessMessage(`Deleted ${problemDataFilenameValue(filename)} successfully.`)
+        dispatch({
+          type: 'delete_succeeded',
+          message: `Deleted ${problemDataFilenameValue(filename)} successfully.`,
+        })
         await loadFiles()
         return { ok: true }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem data.'
-        setErrorMessage(message)
+        dispatch({ type: 'delete_failed', message })
         return { ok: false, message }
-      } finally {
-        setDeletingFilename(null)
       }
     },
     [loadFiles, problemSlug, replaceProblem],
   )
 
   const clearAllDataFiles = useCallback(async (): Promise<DeleteResult> => {
-    setIsClearingAll(true)
-    setErrorMessage('')
-    setSuccessMessage('')
+    dispatch({ type: 'clear_started' })
 
     try {
       const updatedProblem = await clearProblemData(problemSlug)
       replaceProblem(updatedProblem)
-      setSuccessMessage('Cleared all data files successfully.')
+      dispatch({ type: 'clear_succeeded', message: 'Cleared all data files successfully.' })
       await loadFiles()
       return { ok: true }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : 'Unable to clear problem data.'
-      setErrorMessage(message)
+      dispatch({ type: 'clear_failed', message })
       return { ok: false, message }
-    } finally {
-      setIsClearingAll(false)
     }
   }, [loadFiles, problemSlug, replaceProblem])
 
@@ -146,17 +127,19 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     problem: detailQuery.problem,
     isProblemLoading: detailQuery.isLoading,
     problemErrorMessage: detailQuery.errorMessage,
-    selectedFile,
-    isUploading,
-    isLoadingFiles,
-    deletingFilename,
-    isClearingAll,
-    dataFiles,
-    errorMessage,
-    successMessage,
-    setSelectedFile,
-    setErrorMessage,
-    setSuccessMessage,
+    selectedFile: state.selectedFile,
+    isUploading: state.isUploading,
+    isLoadingFiles: state.isLoadingFiles,
+    deletingFilename: state.deletingFilename,
+    isClearingAll: state.isClearingAll,
+    dataFiles: state.dataFiles,
+    errorMessage: state.errorMessage,
+    successMessage: state.successMessage,
+    setSelectedFile: (file: File | null) => dispatch({ type: 'selected_file_set', file }),
+    setErrorMessage: (message: string) =>
+      dispatch(message ? { type: 'load_failed', message } : { type: 'error_cleared' }),
+    setSuccessMessage: (message: string) =>
+      dispatch(message ? { type: 'upload_succeeded', message } : { type: 'success_cleared' }),
     uploadSelectedFile,
     deleteDataFile,
     clearAllDataFiles,

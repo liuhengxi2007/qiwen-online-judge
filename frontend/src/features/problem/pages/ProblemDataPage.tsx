@@ -1,22 +1,14 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { ArrowDownToLine, Eraser, FileUp, HardDriveUpload, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
+import { ProblemDataFilesCard } from '@/features/problem/components/problem-data-files-card'
+import { ProblemDataHeaderCard } from '@/features/problem/components/problem-data-header-card'
+import { ProblemDataUploadCard } from '@/features/problem/components/problem-data-upload-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { problemDataDownloadUrl } from '@/features/problem/api/problem-client'
-import {
-  parseProblemSlug,
-  problemDataFilenameValue,
-  problemSlugValue,
-  problemTitleValue,
-} from '@/features/problem/domain/problem'
+import { parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
-import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -66,145 +58,11 @@ export function ProblemDataPage() {
             <CardContent className="py-10 text-sm text-slate-500">{t('problem.data.loading')}</CardContent>
           </Card>
         ) : model.problem ? (
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                  <HardDriveUpload className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{problemTitleValue(model.problem.title)}</CardTitle>
-                  <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-                    {problemSlugValue(model.problem.slug)}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">{t('problem.data.timeLimit')}</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">{t('problem.data.spaceLimit')}</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 px-5 py-4">
-                  <p className="text-sm text-slate-500">{t('problem.data.latestFile')}</p>
-                  <p className="mt-2 text-base font-medium text-slate-900">
-                    {model.problem.data.value
-                      ? problemDataFilenameValue(model.problem.data.value)
-                      : t('problem.data.noDataUploaded')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="problem-data-file">{t('problem.data.uploadFile')}</Label>
-                <Input
-                  id="problem-data-file"
-                  type="file"
-                  className="rounded-2xl"
-                  onChange={(event) => {
-                    model.setSelectedFile(event.target.files?.[0] ?? null)
-                    model.setErrorMessage('')
-                    model.setSuccessMessage('')
-                  }}
-                />
-              </div>
-
-              {model.errorMessage ? (
-                <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                  <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              {model.successMessage ? (
-                <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                  <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              <Button
-                type="button"
-                disabled={model.isUploading || model.selectedFile === null}
-                className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                onClick={() => {
-                  void model.uploadSelectedFile()
-                }}
-              >
-                <FileUp className="size-4" />
-                {model.isUploading ? t('problem.data.uploading') : t('problem.data.upload')}
-              </Button>
-
-              <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{t('problem.data.filesTitle')}</p>
-                  <p className="mt-1 text-sm text-slate-500">{t('problem.data.filesDescription')}</p>
-                </div>
-
-                {model.isLoadingFiles ? (
-                  <p className="text-sm text-slate-500">{t('problem.data.loadingFiles')}</p>
-                ) : model.dataFiles.length === 0 ? (
-                  <p className="text-sm text-slate-500">{t('problem.data.emptyFiles')}</p>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex justify-end">
-                      <ConfirmActionDialog
-                        title={t('problem.data.clearAllTitle')}
-                        description={t('problem.data.clearAllDescription')}
-                        confirmLabel={model.isClearingAll ? t('problem.data.clearing') : t('problem.data.clearAll')}
-                        destructive
-                        onConfirm={() => {
-                          void model.clearAllDataFiles()
-                        }}
-                        trigger={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={model.isClearingAll}
-                            className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                          >
-                            <Eraser className="size-4" />
-                            {model.isClearingAll ? t('problem.data.clearing') : t('problem.data.clearAll')}
-                          </Button>
-                        }
-                      />
-                    </div>
-                    {model.dataFiles.map((filename) => (
-                      <div
-                        key={problemDataFilenameValue(filename)}
-                        className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <p className="text-sm font-medium text-slate-900">{problemDataFilenameValue(filename)}</p>
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                          <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
-                            <a href={problemDataDownloadUrl(slugResult.value, filename)}>
-                              <ArrowDownToLine className="size-4" />
-                              {t('problem.data.download')}
-                            </a>
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={model.deletingFilename === filename}
-                            className="rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                            onClick={() => {
-                              void model.deleteDataFile(filename)
-                            }}
-                          >
-                            <Trash2 className="size-4" />
-                            {model.deletingFilename === filename ? t('problem.data.deleting') : t('problem.data.delete')}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <ProblemDataHeaderCard model={model} />
+            <ProblemDataUploadCard model={model} />
+            <ProblemDataFilesCard model={model} problemSlug={slugResult.value} />
+          </div>
         ) : (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">

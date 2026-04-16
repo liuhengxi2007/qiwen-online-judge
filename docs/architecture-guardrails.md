@@ -254,6 +254,56 @@ Avoid:
 - effects that depend on freshly created wrapper objects
 - broad dependency arrays that cause needless recomputation or callback churn
 
+### Frontend Feature File Templates
+
+Frontend feature modules should use one consistent split strategy instead of ad hoc large files.
+
+For `model`:
+
+- one mirrored cross-stack type per file
+- type definition files contain definitions only
+
+For `domain`:
+
+- `<feature>.ts`
+  facade-only file that re-exports the domain surface
+- `<feature>-parsers.ts`
+  parsing and value accessors
+- `<feature>-contract.ts`
+  contract-to-domain and domain-to-contract mapping
+- `<feature>-form.ts`
+  validation of create or update drafts
+- `<feature>-*-state.ts`
+  reducer state, actions, and pure transitions for page or editor state
+- `<feature>-*-support.ts`
+  pure helpers for building drafts, permissions, or derived decisions shared by hooks
+
+For `hooks`:
+
+- `use-*-query.ts`
+  one remote read flow
+- `use-*-action.ts` or `use-*-mutation.ts`
+  one remote write flow
+- `use-*-editor-state.ts`
+  thin wrapper around a reducer from `domain/*-state.ts`
+- `use-*-page-model.ts`
+  page orchestration only; compose queries, actions, and reducers, but keep pure helpers in `domain`
+
+For `pages`:
+
+- page files should primarily compose extracted components and page models
+- repeated or large visual sections should move into `components/`
+
+For `shared/i18n`:
+
+- `messages.ts`
+  locale registry only
+- `messages/<locale>/<domain>.ts`
+  one locale/domain message group per file
+- avoid one monolithic locale file once copy spans multiple business domains
+
+These templates exist to keep state transitions, contract mapping, and UI composition separate.
+
 ### Store Boundaries
 
 State stores are allowed only for real shared state containers. They must not become hidden query or workflow layers.

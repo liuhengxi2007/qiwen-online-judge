@@ -1,37 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer } from 'react'
 
 import type { AddUserGroupMemberRole, UserGroupDetail } from '@/features/usergroup/domain/usergroup'
-import { userGroupDescriptionValue, userGroupNameValue } from '@/features/usergroup/domain/usergroup'
+import {
+  initialUserGroupEditorState,
+  reduceUserGroupEditorState,
+} from '@/features/usergroup/domain/usergroup-editor-state'
 
 export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [memberUsername, setMemberUsername] = useState('')
-  const [memberRole, setMemberRole] = useState<AddUserGroupMemberRole>('member')
+  const [state, dispatch] = useReducer(reduceUserGroupEditorState, initialUserGroupEditorState)
 
   useEffect(() => {
-    if (!userGroup) {
-      return
-    }
-
-    setName(userGroupNameValue(userGroup.name))
-    setDescription(userGroupDescriptionValue(userGroup.description))
-  }, [userGroup])
-
-  function clearMemberDraft() {
-    setMemberUsername('')
-    setMemberRole('member')
-  }
+    dispatch({ type: 'hydrate', userGroup })
+  }, [userGroup?.id])
 
   return {
-    name,
-    description,
-    memberUsername,
-    memberRole,
-    setName,
-    setDescription,
-    setMemberUsername,
-    setMemberRole,
-    clearMemberDraft,
+    ...state,
+    setName: (value: string) => dispatch({ type: 'set_name', value }),
+    setDescription: (value: string) => dispatch({ type: 'set_description', value }),
+    setMemberUsername: (value: string) => dispatch({ type: 'set_member_username', value }),
+    setMemberRole: (value: AddUserGroupMemberRole) => dispatch({ type: 'set_member_role', value }),
+    clearMemberDraft: () => dispatch({ type: 'clear_member_draft' }),
   }
 }
