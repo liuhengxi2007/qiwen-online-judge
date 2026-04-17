@@ -9,6 +9,9 @@ import org.http4s.circe.CirceEntityEncoder.*
 
 object SubmissionHttpResponses:
 
+  private def hiddenSubmissionResponse: IO[Response[IO]] =
+    errorResponse(Status.NotFound, "Submission not found.")
+
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
@@ -24,15 +27,15 @@ object SubmissionHttpResponses:
       case SubmissionCommands.CreateSubmissionResult.ProblemNotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
       case SubmissionCommands.CreateSubmissionResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have access to submit to this problem.")
+        errorResponse(Status.NotFound, "Problem not found.")
       case SubmissionCommands.CreateSubmissionResult.Created(submission) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(submission.asJson))
 
   def mapGetResult(result: SubmissionCommands.GetSubmissionResult): IO[Response[IO]] =
     result match
       case SubmissionCommands.GetSubmissionResult.NotFound =>
-        errorResponse(Status.NotFound, "Submission not found.")
+        hiddenSubmissionResponse
       case SubmissionCommands.GetSubmissionResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have access to this submission.")
+        hiddenSubmissionResponse
       case SubmissionCommands.GetSubmissionResult.Found(submission) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(submission.asJson))

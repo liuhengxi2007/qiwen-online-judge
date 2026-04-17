@@ -1,4 +1,4 @@
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 import { LockKeyhole, Settings } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -16,15 +16,9 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function UserSettingsPage() {
   const { t } = useI18n()
   usePageTitle(t('userSettings.pageTitle'))
-  const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, setSession: setViewer, navigationIntent: guardNavigationIntent } =
     useSessionGuard()
-  const notice = searchParams.get('notice')
-  const noticeMessage =
-    notice === 'route-corrected'
-      ? t('userSettings.routeCorrected')
-      : null
 
   if (guardNavigationIntent) {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
@@ -85,7 +79,6 @@ export function UserSettingsPage() {
         fallbackUsername={targetUsername}
         icon={<Settings className="size-5" />}
         loadingMessage={t('userSettings.loadingSelected')}
-        noticeMessage={noticeMessage}
         title={t('userSettings.profileTitle')}
         user={displayedUser}
       >

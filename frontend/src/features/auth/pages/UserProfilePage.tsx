@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { Settings, UserRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -15,14 +15,8 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function UserProfilePage() {
   const { t } = useI18n()
   usePageTitle(t('userProfile.pageTitle'))
-  const [searchParams] = useSearchParams()
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, navigationIntent: guardNavigationIntent } = useSessionGuard()
-  const notice = searchParams.get('notice')
-  const noticeMessage =
-    notice === 'route-corrected'
-      ? t('userProfile.routeCorrected')
-      : null
 
   if (guardNavigationIntent) {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
@@ -75,7 +69,6 @@ export function UserProfilePage() {
         fallbackUsername={routePolicy.targetUsername}
         icon={<UserRound className="size-5" />}
         loadingMessage={t('userProfile.loadingSelected')}
-        noticeMessage={noticeMessage}
         title={t('userProfile.profileTitle')}
         user={displayedUser}
       >

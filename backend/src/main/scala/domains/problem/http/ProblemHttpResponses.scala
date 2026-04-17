@@ -16,6 +16,9 @@ import org.typelevel.ci.CIString
 
 object ProblemHttpResponses:
 
+  private def hiddenProblemResponse: IO[Response[IO]] =
+    errorResponse(Status.NotFound, "Problem not found.")
+
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
@@ -40,58 +43,58 @@ object ProblemHttpResponses:
   def mapGetResult(result: ProblemCommands.GetProblemResult): IO[Response[IO]] =
     result match
       case ProblemCommands.GetProblemResult.NotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.GetProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have access to this problem.")
+        hiddenProblemResponse
       case ProblemCommands.GetProblemResult.Found(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapUpdateResult(result: ProblemCommands.UpdateProblemResult): IO[Response[IO]] =
     result match
       case ProblemCommands.UpdateProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.UpdateProblemResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemCommands.UpdateProblemResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.UpdateProblemResult.Updated(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapDeleteResult(result: ProblemCommands.DeleteProblemResult): IO[Response[IO]] =
     result match
       case ProblemCommands.DeleteProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.DeleteProblemResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.DeleteProblemResult.Deleted =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Problem deleted.").asJson))
 
   def mapUpdateDataResult(result: ProblemCommands.UpdateProblemDataResult): IO[Response[IO]] =
     result match
       case ProblemCommands.UpdateProblemDataResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.UpdateProblemDataResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemCommands.UpdateProblemDataResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.UpdateProblemDataResult.Updated(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
   def mapListDataResult(result: ProblemCommands.ListProblemDataResult): IO[Response[IO]] =
     result match
       case ProblemCommands.ListProblemDataResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.ListProblemDataResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.ListProblemDataResult.Listed(response) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def mapAuthorizeDownloadResult(result: ProblemCommands.AuthorizeProblemDataDownloadResult): IO[Response[IO]] =
     result match
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.AuthorizeProblemDataDownloadResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
         IO.pure(Response[IO](status = Status.Ok))
 
@@ -105,9 +108,9 @@ object ProblemHttpResponses:
   def mapDeleteDataResult(result: ProblemCommands.DeleteProblemDataResult): IO[Response[IO]] =
     result match
       case ProblemCommands.DeleteProblemDataResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.DeleteProblemDataResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.DeleteProblemDataResult.DataFileNotFound =>
         errorResponse(Status.NotFound, "Problem data file not found.")
       case ProblemCommands.DeleteProblemDataResult.Deleted(problem) =>
@@ -116,9 +119,9 @@ object ProblemHttpResponses:
   def mapClearDataResult(result: ProblemCommands.ClearProblemDataResult): IO[Response[IO]] =
     result match
       case ProblemCommands.ClearProblemDataResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemResponse
       case ProblemCommands.ClearProblemDataResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        hiddenProblemResponse
       case ProblemCommands.ClearProblemDataResult.Cleared(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 

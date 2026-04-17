@@ -11,6 +11,9 @@ import org.http4s.circe.CirceEntityEncoder.*
 
 object UserGroupHttpResponses:
 
+  private def hiddenUserGroupResponse: IO[Response[IO]] =
+    errorResponse(Status.NotFound, "User group not found.")
+
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
@@ -45,40 +48,40 @@ object UserGroupHttpResponses:
   def mapGetResult(result: UserGroupCommands.GetUserGroupResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.GetUserGroupResult.NotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.GetUserGroupResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have access to this user group.")
+        hiddenUserGroupResponse
       case UserGroupCommands.GetUserGroupResult.Found(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   def mapUpdateResult(result: UserGroupCommands.UpdateUserGroupResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.UpdateUserGroupResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Owner, manager, or site manager permission required.")
+        hiddenUserGroupResponse
       case UserGroupCommands.UpdateUserGroupResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case UserGroupCommands.UpdateUserGroupResult.NotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.UpdateUserGroupResult.Updated(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
   def mapDeleteResult(result: UserGroupCommands.DeleteUserGroupResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.DeleteUserGroupResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Owner or site manager permission required.")
+        hiddenUserGroupResponse
       case UserGroupCommands.DeleteUserGroupResult.NotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.DeleteUserGroupResult.Deleted =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("User group deleted.").asJson))
 
   def mapAddMemberResult(result: UserGroupCommands.AddUserGroupMemberResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.AddUserGroupMemberResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Owner, manager, or site manager permission required.")
+        hiddenUserGroupResponse
       case UserGroupCommands.AddUserGroupMemberResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case UserGroupCommands.AddUserGroupMemberResult.UserGroupNotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.AddUserGroupMemberResult.UserNotFound =>
         errorResponse(Status.NotFound, "User not found.")
       case UserGroupCommands.AddUserGroupMemberResult.MemberAlreadyExists =>
@@ -89,11 +92,11 @@ object UserGroupHttpResponses:
   def mapUpdateMemberRoleResult(result: UserGroupCommands.UpdateUserGroupMemberRoleResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Owner or site manager permission required.")
+        hiddenUserGroupResponse
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.UserGroupNotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.MemberNotFound =>
         errorResponse(Status.NotFound, "Group member not found.")
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole =>
@@ -106,9 +109,9 @@ object UserGroupHttpResponses:
   def mapRemoveMemberResult(result: UserGroupCommands.RemoveUserGroupMemberResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.RemoveUserGroupMemberResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have permission to remove this member.")
+        hiddenUserGroupResponse
       case UserGroupCommands.RemoveUserGroupMemberResult.UserGroupNotFound =>
-        errorResponse(Status.NotFound, "User group not found.")
+        hiddenUserGroupResponse
       case UserGroupCommands.RemoveUserGroupMemberResult.MemberNotFound =>
         errorResponse(Status.NotFound, "Group member not found.")
       case UserGroupCommands.RemoveUserGroupMemberResult.CannotRemoveOwner =>

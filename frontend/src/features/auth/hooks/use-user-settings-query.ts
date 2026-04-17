@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AuthClientError, getUserSettings } from '@/features/auth/api/auth-client'
 import type { SessionResponse, Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
-import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
 
 type UseUserSettingsQueryArgs = {
   canLoadTarget: boolean
@@ -64,7 +64,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
 
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
           setSettingsLoadError('')
-          setNavigationIntent(toSiteManageDeniedRedirect())
+          setNavigationIntent(toForbiddenRedirect())
           return
         }
 

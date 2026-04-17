@@ -13,7 +13,7 @@ import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-qu
 import { useUserSettingsMutation } from '@/features/auth/hooks/use-user-settings-mutation'
 import {
   resolveUserSettingsRoutePolicy,
-  toSiteManageDeniedRedirect,
+  toForbiddenRedirect,
 } from '@/features/auth/lib/route-policy'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -124,7 +124,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
         case 'updated_and_signed_out':
           return
         case 'forbidden':
-          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
+          dispatch({ type: 'redirect_requested', intent: toForbiddenRedirect() })
           return
         case 'unauthorized':
           dispatch({ type: 'submit_failed', message: result.message })

@@ -1,4 +1,4 @@
-import { usernameValue, type Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type UserSettingsRoutePolicyArgs = {
@@ -31,18 +31,8 @@ export function toSiteManageDeniedRedirect(): NavigationIntent {
   return { to: '/?notice=site-manage-denied', replace: true }
 }
 
-export function toCorrectedUserSettingsRedirect(viewerUsername: Username): NavigationIntent {
-  return {
-    to: `/user/${usernameValue(viewerUsername)}/settings?notice=route-corrected`,
-    replace: true,
-  }
-}
-
-export function toCorrectedUserProfileRedirect(viewerUsername: Username): NavigationIntent {
-  return {
-    to: `/user/${usernameValue(viewerUsername)}?notice=route-corrected`,
-    replace: true,
-  }
+export function toForbiddenRedirect(): NavigationIntent {
+  return { to: '/forbidden', replace: true }
 }
 
 function resolveManagedUserRoutePolicy({
@@ -50,17 +40,14 @@ function resolveManagedUserRoutePolicy({
   routeUsername,
   hasRouteUsername,
   siteManagerViewer,
-  correctedRedirect,
-}: UserSettingsRoutePolicyArgs & {
-  correctedRedirect: (viewerUsername: Username) => NavigationIntent
-}): ManagedUserRoutePolicy {
+}: UserSettingsRoutePolicyArgs): ManagedUserRoutePolicy {
   const normalizedRouteUsername = routeUsername ?? viewerUsername
   const isEditingOwnSettings = normalizedRouteUsername === viewerUsername
   const canManageTarget = isEditingOwnSettings || siteManagerViewer
 
   if ((hasRouteUsername && !routeUsername) || (!hasRouteUsername && !siteManagerViewer)) {
     return {
-      navigationIntent: correctedRedirect(viewerUsername),
+      navigationIntent: toForbiddenRedirect(),
       targetUsername: normalizedRouteUsername,
       isEditingOwnSettings,
       canManageTarget,
@@ -69,7 +56,7 @@ function resolveManagedUserRoutePolicy({
 
   if (routeUsername && !siteManagerViewer && routeUsername !== viewerUsername) {
     return {
-      navigationIntent: correctedRedirect(viewerUsername),
+      navigationIntent: toForbiddenRedirect(),
       targetUsername: normalizedRouteUsername,
       isEditingOwnSettings,
       canManageTarget,
@@ -104,7 +91,6 @@ export function resolveUserSettingsRoutePolicy({
     routeUsername,
     hasRouteUsername,
     siteManagerViewer,
-    correctedRedirect: toCorrectedUserSettingsRedirect,
   })
 }
 
@@ -119,6 +105,5 @@ export function resolveUserProfileRoutePolicy({
     routeUsername,
     hasRouteUsername,
     siteManagerViewer,
-    correctedRedirect: toCorrectedUserProfileRedirect,
   })
 }

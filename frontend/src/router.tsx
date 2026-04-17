@@ -12,6 +12,7 @@ import { ProblemSubmitPage } from '@/features/problem/pages/ProblemSubmitPage'
 import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
+import { ForbiddenPage } from '@/shared/pages/ForbiddenPage'
 import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
 import { SubmissionDetailPage } from '@/features/submission/pages/SubmissionDetailPage'
 import { SubmissionPage } from '@/features/submission/pages/SubmissionPage'
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
   {
     path: '/register',
     element: <GuestOnlyRoute element={<RegisterPage />} />,
+  },
+  {
+    path: '/forbidden',
+    element: <ForbiddenPage />,
   },
   {
     path: '/site-manage',

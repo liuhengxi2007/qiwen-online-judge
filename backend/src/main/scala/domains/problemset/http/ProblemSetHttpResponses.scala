@@ -10,6 +10,9 @@ import org.http4s.circe.CirceEntityEncoder.*
 
 object ProblemSetHttpResponses:
 
+  private def hiddenProblemSetResponse: IO[Response[IO]] =
+    errorResponse(Status.NotFound, "Problem set not found.")
+
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
@@ -45,7 +48,7 @@ object ProblemSetHttpResponses:
   def mapAddProblemResult(result: ProblemSetCommands.AddProblemResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.AddProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.AddProblemResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemSetCommands.AddProblemResult.ProblemSetNotFound =>
@@ -60,38 +63,38 @@ object ProblemSetHttpResponses:
   def mapGetResult(result: ProblemSetCommands.GetProblemSetResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.GetProblemSetResult.NotFound =>
-        errorResponse(Status.NotFound, "Problem set not found.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.GetProblemSetResult.Forbidden =>
-        errorResponse(Status.Forbidden, "You do not have access to this problem set.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.GetProblemSetResult.Found(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
   def mapUpdateResult(result: ProblemSetCommands.UpdateProblemSetResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.UpdateProblemSetResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.UpdateProblemSetResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemSetCommands.UpdateProblemSetResult.ProblemSetNotFound =>
-        errorResponse(Status.NotFound, "Problem set not found.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.UpdateProblemSetResult.Updated(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
   def mapDeleteResult(result: ProblemSetCommands.DeleteProblemSetResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.DeleteProblemSetResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.DeleteProblemSetResult.ProblemSetNotFound =>
-        errorResponse(Status.NotFound, "Problem set not found.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.DeleteProblemSetResult.Deleted =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(domains.shared.model.SuccessResponse("Problem set deleted.").asJson))
 
   def mapRemoveProblemResult(result: ProblemSetCommands.RemoveProblemResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.RemoveProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.RemoveProblemResult.ProblemSetNotFound =>
-        errorResponse(Status.NotFound, "Problem set not found.")
+        hiddenProblemSetResponse
       case ProblemSetCommands.RemoveProblemResult.ProblemNotFound =>
         errorResponse(Status.NotFound, "Problem not found.")
       case ProblemSetCommands.RemoveProblemResult.ProblemNotLinked =>

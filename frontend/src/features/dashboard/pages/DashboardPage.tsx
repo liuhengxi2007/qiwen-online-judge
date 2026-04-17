@@ -19,9 +19,7 @@ export function DashboardPage() {
   const noticeMessage =
     notice === 'site-manage-denied'
       ? t('dashboard.notice.siteManageDenied')
-      : notice === 'settings-route-corrected'
-        ? t('dashboard.notice.settingsRouteCorrected')
-        : null
+      : null
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
