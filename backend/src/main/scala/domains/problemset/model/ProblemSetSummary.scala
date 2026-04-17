@@ -1,6 +1,6 @@
 package domains.problemset.model
 
-import domains.auth.model.Username
+import domains.auth.model.UserIdentity
 import domains.shared.access.ResourceAccessPolicy
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -14,7 +14,7 @@ final case class ProblemSetSummary(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   accessPolicy: ResourceAccessPolicy,
-  creatorUsername: Username,
+  creator: UserIdentity,
   createdAt: Instant,
   updatedAt: Instant
 )

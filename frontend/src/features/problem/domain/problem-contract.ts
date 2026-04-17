@@ -5,7 +5,7 @@ import type {
   ProblemSummary as ProblemSummaryContract,
   UpdateProblemRequest as UpdateProblemRequestContract,
 } from '@contracts/problem'
-import { parseUsername } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/auth/domain/auth'
 import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
@@ -37,7 +37,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
     accessPolicy: problem.accessPolicy,
     othersSubmissionAccess: problem.othersSubmissionAccess,
-    creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem summary creator username'),
+    creator: fromUserIdentityContract(problem.creator),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
   }
@@ -54,7 +54,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
     accessPolicy: problem.accessPolicy,
     othersSubmissionAccess: problem.othersSubmissionAccess,
-    creatorUsername: requireParsed(parseUsername(problem.creatorUsername), 'problem detail creator username'),
+    creator: fromUserIdentityContract(problem.creator),
     canManage: problem.canManage,
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,

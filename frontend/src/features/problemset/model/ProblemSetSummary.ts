@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/model/AuthValues'
+import type { UserIdentity } from '@/features/auth/model/UserIdentity'
 import type { ProblemSetDescription } from '@/features/problemset/model/ProblemSetDescription'
 import type { ProblemSetId } from '@/features/problemset/model/ProblemSetId'
 import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
@@ -12,5 +12,5 @@ export type ProblemSetSummary = AuditFields & {
   title: ProblemSetTitle
   description: ProblemSetDescription
   accessPolicy: ResourceAccessPolicy
-  creatorUsername: Username
+  creator: UserIdentity
 }

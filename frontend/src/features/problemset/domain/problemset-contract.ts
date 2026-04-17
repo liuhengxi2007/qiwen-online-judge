@@ -7,7 +7,7 @@ import type {
   ProblemSetSummary as ProblemSetSummaryContract,
   UpdateProblemSetRequest as UpdateProblemSetRequestContract,
 } from '@contracts/problemset'
-import { parseUsername } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/auth/domain/auth'
 import {
   parseProblemId,
   parseProblemSlug,
@@ -51,7 +51,7 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
     title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set summary title'),
     description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set summary description'),
     accessPolicy: problemSet.accessPolicy,
-    creatorUsername: requireParsed(parseUsername(problemSet.creatorUsername), 'problem set summary creator username'),
+    creator: fromUserIdentityContract(problemSet.creator),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
   }
@@ -65,7 +65,7 @@ export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContrac
     description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set detail description'),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
     accessPolicy: problemSet.accessPolicy,
-    creatorUsername: requireParsed(parseUsername(problemSet.creatorUsername), 'problem set detail creator username'),
+    creator: fromUserIdentityContract(problemSet.creator),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
   }

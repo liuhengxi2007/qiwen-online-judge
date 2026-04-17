@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { EditProblemSetDialog } from '@/features/problemset/components/edit-problem-set-dialog'
 import { ProblemSetAccessDialog } from '@/features/problemset/components/problem-set-access-dialog'
 import { ProblemSetDetailHeaderCard } from '@/features/problemset/components/problem-set-detail-header-card'
@@ -16,6 +15,7 @@ import {
   normalizeAccessSubjectInput,
 } from '@/shared/domain/resource-access-input'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -62,9 +62,7 @@ export function ProblemSetDetailPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.detail.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />

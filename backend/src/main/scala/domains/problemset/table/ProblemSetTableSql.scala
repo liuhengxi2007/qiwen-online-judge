@@ -1,11 +1,14 @@
 package domains.problemset.table
 
+import domains.shared.sql.UserIdentitySql
+
 object ProblemSetTableSql:
 
   val listSql: String =
-    """
-      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ps.creator_username, ps.created_at, ps.updated_at
+    s"""
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
       |from problem_sets ps
+      |${UserIdentitySql.joinAuthUsers("ps.creator_username", "au")}
       |where
       |  ? = true
       |  or ps.base_access = 'public'
@@ -63,17 +66,18 @@ object ProblemSetTableSql:
       |""".stripMargin
 
   val findBySlugSql: String =
-    """
-      |select id, slug, title, description, base_access, creator_username, created_at, updated_at
-      |from problem_sets
-      |where slug = ?
+    s"""
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
+      |from problem_sets ps
+      |${UserIdentitySql.joinAuthUsers("ps.creator_username", "au")}
+      |where ps.slug = ?
       |""".stripMargin
 
   val insertSql: String =
-    """
+    s"""
       |insert into problem_sets (id, slug, title, description, visibility, base_access, creator_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, description, base_access, creator_username, created_at, updated_at
+      |returning id, slug, title, description, base_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
       |""".stripMargin
 
   val listProblemsForSetSql: String =

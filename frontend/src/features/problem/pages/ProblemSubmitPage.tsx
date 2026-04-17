@@ -3,7 +3,6 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { ProblemSubmitEditorCard } from '@/features/problem/components/problem-submit-editor-card'
 import { ProblemSubmitHeaderCard } from '@/features/problem/components/problem-submit-header-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
@@ -19,6 +18,7 @@ import {
 } from '@/features/submission/domain/submission'
 import { HttpClientError } from '@/shared/api/http-client'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -69,9 +69,7 @@ export function ProblemSubmitPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.submit.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />

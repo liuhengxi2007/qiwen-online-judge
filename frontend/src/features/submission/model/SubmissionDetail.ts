@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/model/AuthValues'
+import type { UserIdentity } from '@/features/auth/model/UserIdentity'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
@@ -11,7 +11,7 @@ export type SubmissionDetail = {
   id: SubmissionId
   problemId: ProblemId
   problemSlug: ProblemSlug
-  submitterUsername: Username
+  submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null

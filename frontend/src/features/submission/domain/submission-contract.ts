@@ -4,7 +4,7 @@ import type {
   SubmissionListResponse as SubmissionListResponseContract,
   SubmissionSummary as SubmissionSummaryContract,
 } from '@contracts/submission'
-import { parseUsername } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/auth/domain/auth'
 import { parseProblemId, parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
 import type { CreateSubmissionRequest } from '@/features/submission/model/CreateSubmissionRequest'
 import type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'
@@ -22,7 +22,7 @@ export function fromSubmissionDetailContract(submission: SubmissionDetailContrac
     id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
     problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
     problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
-    submitterUsername: requireParsed(parseUsername(submission.submitterUsername), 'submission submitter username'),
+    submitter: fromUserIdentityContract(submission.submitter),
     language: submission.language,
     status: submission.status,
     verdict: submission.verdict,
@@ -39,7 +39,7 @@ export function fromSubmissionSummaryContract(submission: SubmissionSummaryContr
     id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
     problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
     problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
-    submitterUsername: requireParsed(parseUsername(submission.submitterUsername), 'submission submitter username'),
+    submitter: fromUserIdentityContract(submission.submitter),
     language: submission.language,
     status: submission.status,
     verdict: submission.verdict,

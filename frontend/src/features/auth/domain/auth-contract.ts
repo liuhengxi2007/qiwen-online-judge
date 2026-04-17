@@ -16,6 +16,7 @@ import type { LoginResponse } from '@/features/auth/model/LoginResponse'
 import type { RegisterRequest } from '@/features/auth/model/RegisterRequest'
 import type { RegisterResponse } from '@/features/auth/model/RegisterResponse'
 import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { UserIdentity } from '@/features/auth/model/UserIdentity'
 import type { UpdateManagedUserSettingsRequest } from '@/features/auth/model/UpdateManagedUserSettingsRequest'
 import type { UpdateOwnSettingsRequest } from '@/features/auth/model/UpdateOwnSettingsRequest'
 import type { UpdateUserPermissionsRequest } from '@/features/auth/model/UpdateUserPermissionsRequest'
@@ -69,6 +70,13 @@ export function fromSessionResponseContract(response: SessionResponseContract): 
     email: requireParsed(parseEmailAddress(response.email), 'session response email'),
     siteManager: response.siteManager,
     problemManager: response.problemManager,
+  }
+}
+
+export function fromUserIdentityContract(response: { username: string; displayName: string }): UserIdentity {
+  return {
+    username: requireParsed(parseUsername(response.username), 'user identity username'),
+    displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),
   }
 }
 

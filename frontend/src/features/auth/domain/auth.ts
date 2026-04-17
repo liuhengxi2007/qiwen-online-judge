@@ -26,6 +26,7 @@ export {
   fromRegisteredJudgerListItemContract,
   fromRegisterResponseContract,
   fromSessionResponseContract,
+  fromUserIdentityContract,
   toLoginRequestContract,
   toRegisterRequestContract,
   toUpdateManagedUserSettingsRequestContract,
@@ -40,6 +41,7 @@ export type { LoginResponse } from '@/features/auth/model/LoginResponse'
 export type { RegisterRequest } from '@/features/auth/model/RegisterRequest'
 export type { RegisterResponse } from '@/features/auth/model/RegisterResponse'
 export type { SessionResponse } from '@/features/auth/model/SessionResponse'
+export type { UserIdentity } from '@/features/auth/model/UserIdentity'
 export type { UpdateManagedUserSettingsRequest } from '@/features/auth/model/UpdateManagedUserSettingsRequest'
 export type { UpdateOwnSettingsRequest } from '@/features/auth/model/UpdateOwnSettingsRequest'
 export type { UpdateUserPermissionsRequest } from '@/features/auth/model/UpdateUserPermissionsRequest'

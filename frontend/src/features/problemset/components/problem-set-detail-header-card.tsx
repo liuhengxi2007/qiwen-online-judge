@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
+import type { DisplayName, Username } from '@/features/auth/domain/auth'
 import {
   problemSetDescriptionValue,
   problemSetSlugValue,
@@ -9,13 +9,15 @@ import {
   type ProblemSetDetail,
 } from '@/features/problemset/domain/problemset'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
+import { SignedInUser } from '@/shared/components/signed-in-user'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type ProblemSetDetailHeaderCardProps = {
   problemSet: ProblemSetDetail
-  signedInDisplayName: Parameters<typeof displayNameValue>[0]
-  signedInUsername: Parameters<typeof usernameValue>[0]
+  signedInDisplayName: DisplayName
+  signedInUsername: Username
   canManageProblems: boolean
   managementPanel: 'edit' | 'access' | null
   onTogglePanel: (panel: 'edit' | 'access') => void
@@ -39,12 +41,7 @@ export function ProblemSetDetailHeaderCard({
             <CardDescription className="mt-2 font-mono text-sm text-slate-500">
               {problemSetSlugValue(problemSet.slug)}
             </CardDescription>
-            <p className="mt-3 text-sm text-slate-600">
-              {t('common.signedInAs', {
-                displayName: displayNameValue(signedInDisplayName),
-                username: usernameValue(signedInUsername),
-              })}
-            </p>
+            <SignedInUser className="mt-3 text-sm text-slate-600" user={{ displayName: signedInDisplayName, username: signedInUsername }} />
           </div>
 
           {canManageProblems ? (
@@ -93,7 +90,8 @@ export function ProblemSetDetailHeaderCard({
           )}
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          {t('common.createdBy', { username: usernameValue(problemSet.creatorUsername) })}
+          <span>{t('common.createdByLabel')} </span>
+          <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problemSet.creator} />
         </p>
       </CardContent>
     </Card>

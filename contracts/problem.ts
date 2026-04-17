@@ -1,3 +1,4 @@
+import type { UserIdentity } from './auth'
 import type { PageResponse, ResourceAccessPolicy } from './shared'
 
 export type OthersSubmissionAccess = 'none' | 'summary' | 'detail'
@@ -11,7 +12,7 @@ export type ProblemSummary = {
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
   othersSubmissionAccess: OthersSubmissionAccess
-  creatorUsername: string
+  creator: UserIdentity
   createdAt: string
   updatedAt: string
 }
@@ -26,7 +27,7 @@ export type ProblemDetail = {
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
   othersSubmissionAccess: OthersSubmissionAccess
-  creatorUsername: string
+  creator: UserIdentity
   canManage: boolean
   createdAt: string
   updatedAt: string

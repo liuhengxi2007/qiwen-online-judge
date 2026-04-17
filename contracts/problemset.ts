@@ -1,3 +1,4 @@
+import type { UserIdentity } from './auth'
 import type { PageResponse, ResourceAccessPolicy } from './shared'
 
 export type ProblemSetProblemSummary = {
@@ -13,7 +14,7 @@ export type ProblemSetSummary = {
   title: string
   description: string
   accessPolicy: ResourceAccessPolicy
-  creatorUsername: string
+  creator: UserIdentity
   createdAt: string
   updatedAt: string
 }
@@ -25,7 +26,7 @@ export type ProblemSetDetail = {
   description: string
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  creatorUsername: string
+  creator: UserIdentity
   createdAt: string
   updatedAt: string
 }

@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   problemSetDescriptionValue,
@@ -15,6 +14,8 @@ import {
 import { useProblemSetPageModel } from '@/features/problemset/hooks/use-problemset-page-model'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -41,9 +42,7 @@ export function ProblemSetPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
@@ -100,7 +99,8 @@ export function ProblemSetPage() {
                       {problemSetDescriptionValue(problemSet.description) || t('common.noDescription')}
                     </p>
                     <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      {t('common.createdBy', { username: usernameValue(problemSet.creatorUsername) })}
+                      <span>{t('common.createdByLabel')} </span>
+                      <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problemSet.creator} />
                     </p>
                   </div>
                 ))

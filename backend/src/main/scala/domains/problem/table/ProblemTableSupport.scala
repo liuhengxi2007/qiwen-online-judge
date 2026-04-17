@@ -1,6 +1,7 @@
 package domains.problem.table
 
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
 import domains.shared.access.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility, missingInsertResult}
@@ -54,7 +55,7 @@ object ProblemTableSupport:
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       othersSubmissionAccess =
         parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
-      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
+      creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -72,7 +73,7 @@ object ProblemTableSupport:
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
       othersSubmissionAccess =
         parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
-      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
+      creator = readUserIdentity(resultSet, "creator"),
       canManage = false,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

@@ -3,9 +3,10 @@ import { Trash2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/auth/domain/auth'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
@@ -40,8 +41,7 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
           <div key={member.username} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-900">{displayNameValue(member.displayName)}</p>
-                <p className="font-mono text-xs text-slate-500">{usernameValue(member.username)}</p>
+                <UserProfileLink showUsername stacked user={member} />
               </div>
               <div className="flex flex-col items-stretch gap-3 sm:items-end">
                 <RadioGroup

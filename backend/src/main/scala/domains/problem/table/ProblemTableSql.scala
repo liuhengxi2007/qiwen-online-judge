@@ -1,11 +1,14 @@
 package domains.problem.table
 
+import domains.shared.sql.UserIdentitySql
+
 object ProblemTableSql:
 
   val listSql: String =
-    """
-      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, p.creator_username, p.created_at, p.updated_at
+    s"""
+      |select p.id, p.slug, p.title, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
       |from problems p
+      |${UserIdentitySql.joinAuthUsers("p.creator_username", "au")}
       |where
       |  ? = true
       |  or p.base_access = 'public'
@@ -123,17 +126,18 @@ object ProblemTableSql:
       |""".stripMargin
 
   val findBySlugSql: String =
-    """
-      |select id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, others_submission_access, creator_username, created_at, updated_at
-      |from problems
-      |where slug = ?
+    s"""
+      |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
+      |from problems p
+      |${UserIdentitySql.joinAuthUsers("p.creator_username", "au")}
+      |where p.slug = ?
       |""".stripMargin
 
   val insertSql: String =
-    """
+    s"""
       |insert into problems (id, slug, title, statement_text, data_name, data_bytes, time_limit_ms, space_limit_mb, visibility, base_access, others_submission_access, creator_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, others_submission_access, creator_username, created_at, updated_at
+      |returning id, slug, title, statement_text, data_name, time_limit_ms, space_limit_mb, base_access, others_submission_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
       |""".stripMargin
 
   val updateSql: String =

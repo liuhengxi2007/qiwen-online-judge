@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  displayNameValue,
   parseUsername,
   usernameValue,
   type Username,
@@ -22,6 +21,8 @@ import {
 } from '@/features/submission/domain/submission'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -49,9 +50,7 @@ export function SubmissionPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('submission.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
@@ -175,7 +174,9 @@ export function SubmissionPage() {
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.submitter')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{submission.submitterUsername}</dd>
+                      <dd className="mt-1">
+                        <UserProfileLink showUsername stacked user={submission.submitter} />
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.languageLabel')}</dt>

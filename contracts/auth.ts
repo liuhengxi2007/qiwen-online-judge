@@ -1,3 +1,8 @@
+export type UserIdentity = {
+  username: string
+  displayName: string
+}
+
 export type AuthUserListItem = {
   username: string
   displayName: string

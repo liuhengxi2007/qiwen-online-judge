@@ -3,7 +3,6 @@ import { Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseSubmissionId,
@@ -15,6 +14,8 @@ import {
 } from '@/features/submission/domain/submission'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -53,9 +54,7 @@ export function SubmissionDetailPage() {
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
               {t('submission.detail.heading')}
             </h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
@@ -92,7 +91,9 @@ export function SubmissionDetailPage() {
               <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-6">
                 <div>
                   <p className="text-slate-500">{t('submission.detail.submitter')}</p>
-                  <p className="mt-1 font-medium text-slate-900">{submissionQuery.submission.submitterUsername}</p>
+                  <div className="mt-1">
+                    <UserProfileLink showUsername stacked user={submissionQuery.submission.submitter} />
+                  </div>
                 </div>
                 <div>
                   <p className="text-slate-500">{t('common.languageLabel')}</p>

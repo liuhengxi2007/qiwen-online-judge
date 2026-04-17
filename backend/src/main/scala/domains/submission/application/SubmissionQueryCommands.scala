@@ -32,7 +32,7 @@ object SubmissionQueryCommands:
       SubmissionTable.findById(connection, submissionId).flatMap {
         case None =>
           IO.pure(GetSubmissionResult.NotFound)
-        case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitterUsername) =>
+        case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) =>
           IO.pure(GetSubmissionResult.Found(submission))
         case Some(submission) =>
           ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {

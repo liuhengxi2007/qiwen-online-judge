@@ -1,19 +1,22 @@
 package domains.submission.table
 
+import domains.shared.sql.UserIdentitySql
+
 object SubmissionTableSql:
 
   val insertSql: String =
-    """
+    s"""
       |insert into submissions (id, public_id, problem_id, submitter_username, language, status, verdict, judge_message, source_code, submitted_at, started_at, finished_at)
       |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning public_id, status, verdict, judge_message, submitted_at, started_at, finished_at
+      |returning public_id, status, verdict, judge_message, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
       |""".stripMargin
 
   val listSql: String =
-    """
-      |select s.public_id, s.problem_id, p.slug as problem_slug, s.submitter_username, s.language, s.status, s.verdict, s.submitted_at, s.started_at, s.finished_at
+    s"""
+      |select s.public_id, s.problem_id, p.slug as problem_slug, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
       |where
       |  (? = false or s.submitter_username = ?)
       |  and (
@@ -80,10 +83,11 @@ object SubmissionTableSql:
       |""".stripMargin
 
   val findByIdSql: String =
-    """
-      |select s.public_id, s.problem_id, p.slug as problem_slug, s.submitter_username, s.language, s.status, s.verdict, s.judge_message, s.source_code, s.submitted_at, s.started_at, s.finished_at
+    s"""
+      |select s.public_id, s.problem_id, p.slug as problem_slug, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.judge_message, s.source_code, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
       |where s.public_id = ?
       |""".stripMargin
 

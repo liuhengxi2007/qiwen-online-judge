@@ -1,6 +1,6 @@
 package domains.submission.table
 
-import domains.auth.model.Username
+import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug}
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
 
@@ -14,7 +14,7 @@ object SubmissionTableSupport:
       id = SubmissionId(resultSet.getLong("public_id")),
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
-      submitterUsername = Username.canonical(resultSet.getString("submitter_username")),
+      submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
       verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
@@ -28,7 +28,7 @@ object SubmissionTableSupport:
       id = SubmissionId(resultSet.getLong("public_id")),
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
-      submitterUsername = Username.canonical(resultSet.getString("submitter_username")),
+      submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
       verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),

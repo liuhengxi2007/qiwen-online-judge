@@ -2,7 +2,6 @@ import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { ProblemDataFilesCard } from '@/features/problem/components/problem-data-files-card'
 import { ProblemDataHeaderCard } from '@/features/problem/components/problem-data-header-card'
 import { ProblemDataUploadCard } from '@/features/problem/components/problem-data-upload-card'
@@ -10,6 +9,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -45,9 +45,7 @@ export function ProblemDataPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.data.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />

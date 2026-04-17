@@ -10,12 +10,12 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemPageModel } from '@/features/problem/hooks/use-create-problem-page-model'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { SignedInUser } from '@/shared/components/signed-in-user'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -62,12 +62,7 @@ export function CreateProblemPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.create.heading')}</h1>
-            <p className="text-sm text-slate-600">
-              {t('common.signedInAs', {
-                displayName: displayNameValue(user.displayName),
-                username: usernameValue(user.username),
-              })}
-            </p>
+            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />

@@ -1,7 +1,8 @@
 package domains.problemset.table
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
@@ -19,7 +20,7 @@ object ProblemSetTableSupport:
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
-      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
+      creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -33,7 +34,7 @@ object ProblemSetTableSupport:
       problems = Nil,
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
-      creatorUsername = Username.canonical(resultSet.getString("creator_username")),
+      creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )

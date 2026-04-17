@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router-dom'
 
-import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { SiteManageJudgersCard } from '@/features/site-management/components/site-manage-judgers-card'
 import { SiteManageUserCard } from '@/features/site-management/components/site-manage-user-card'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -8,6 +7,7 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useI18n } from '@/shared/i18n/i18n'
+import { SignedInUser } from '@/shared/components/signed-in-user'
 
 export function SiteManagePage() {
   const { t } = useI18n()
@@ -50,9 +50,7 @@ export function SiteManagePage() {
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-stone-950">
               {t('siteManage.heading')}
             </h1>
-            <p className="text-sm text-stone-600">
-              {t('common.signedInAs', { displayName: displayNameValue(user.displayName), username: usernameValue(user.username) })}
-            </p>
+            <SignedInUser className="text-sm text-stone-600" user={user} />
           </div>
 
           <AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />

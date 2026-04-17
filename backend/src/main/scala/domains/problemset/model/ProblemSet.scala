@@ -1,6 +1,6 @@
 package domains.problemset.model
 
-import domains.auth.model.Username
+import domains.auth.model.UserIdentity
 import domains.shared.access.ResourceAccessPolicy
 
 import java.time.Instant
@@ -12,7 +12,7 @@ final case class ProblemSet(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
-  creatorUsername: Username,
+  creator: UserIdentity,
   createdAt: Instant,
   updatedAt: Instant
 )

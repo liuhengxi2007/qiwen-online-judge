@@ -1,6 +1,6 @@
 package domains.problem.model
 
-import domains.auth.model.Username
+import domains.auth.model.UserIdentity
 import domains.shared.access.ResourceAccessPolicy
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -18,7 +18,7 @@ final case class ProblemDetail(
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   othersSubmissionAccess: OthersSubmissionAccess,
-  creatorUsername: Username,
+  creator: UserIdentity,
   canManage: Boolean,
   createdAt: Instant,
   updatedAt: Instant

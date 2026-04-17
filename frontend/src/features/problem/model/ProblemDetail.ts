@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/model/AuthValues'
+import type { UserIdentity } from '@/features/auth/model/UserIdentity'
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
 import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
@@ -20,6 +20,6 @@ export type ProblemDetail = AuditFields & {
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
   othersSubmissionAccess: OthersSubmissionAccess
-  creatorUsername: Username
+  creator: UserIdentity
   canManage: boolean
 }

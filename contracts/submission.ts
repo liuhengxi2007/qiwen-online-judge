@@ -1,3 +1,5 @@
+import type { UserIdentity } from './auth'
+
 export type SubmissionLanguage = 'cpp17' | 'python3'
 export type SubmissionStatus = 'queued' | 'running' | 'completed' | 'failed'
 export type SubmissionVerdict =
@@ -18,7 +20,7 @@ export type SubmissionSummary = {
   id: number
   problemId: string
   problemSlug: string
-  submitterUsername: string
+  submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null
@@ -31,7 +33,7 @@ export type SubmissionDetail = {
   id: number
   problemId: string
   problemSlug: string
-  submitterUsername: string
+  submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null

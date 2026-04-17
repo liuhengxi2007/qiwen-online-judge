@@ -4,9 +4,9 @@ import { Database, PencilLine, ScrollText, Send, ShieldCheck } from 'lucide-reac
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { usernameValue } from '@/features/auth/domain/auth'
 import { problemSlugValue, problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
+import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -114,7 +114,8 @@ export function ProblemDetailHeaderCard({
           <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
         </div>
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          {t('problem.createdBy', { username: usernameValue(model.problem.creatorUsername) })}
+          <span>{t('problem.createdByLabel')} </span>
+          <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={model.problem.creator} />
         </p>
       </CardContent>
     </Card>
