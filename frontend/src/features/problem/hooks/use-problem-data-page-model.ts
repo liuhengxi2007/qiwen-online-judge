@@ -4,10 +4,13 @@ import {
   clearProblemData,
   deleteProblemData,
   listProblemDataFiles,
+  updateProblem,
   updateProblemData,
 } from '@/features/problem/api/problem-client'
 import {
   parseProblemDataFilename,
+  parseProblemSpaceLimitMb,
+  parseProblemTimeLimitMs,
   problemDataFilenameValue,
   type ProblemDataFilename,
   type ProblemSlug,
@@ -28,6 +31,18 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug)
   const replaceProblem = detailQuery.replaceProblem
   const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
+
+  useEffect(() => {
+    if (!detailQuery.problem) {
+      return
+    }
+
+    dispatch({
+      type: 'problem_hydrated',
+      timeLimitMs: detailQuery.problem.timeLimitMs,
+      spaceLimitMb: detailQuery.problem.spaceLimitMb,
+    })
+  }, [detailQuery.problem?.id, detailQuery.problem?.spaceLimitMb, detailQuery.problem?.timeLimitMs])
 
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
@@ -123,10 +138,59 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     }
   }, [loadFiles, problemSlug, replaceProblem])
 
+  const saveLimits = useCallback(async (): Promise<DeleteResult> => {
+    const currentProblem = detailQuery.problem
+    if (!currentProblem) {
+      const message = t('problem.data.loadFailed')
+      dispatch({ type: 'limits_save_failed', message })
+      return { ok: false, message }
+    }
+
+    dispatch({ type: 'limits_save_started' })
+
+    const timeLimitResult = parseProblemTimeLimitMs(state.timeLimitMs)
+    if (!timeLimitResult.ok) {
+      dispatch({ type: 'limits_save_failed', message: timeLimitResult.error })
+      return { ok: false, message: timeLimitResult.error }
+    }
+
+    const spaceLimitResult = parseProblemSpaceLimitMb(state.spaceLimitMb)
+    if (!spaceLimitResult.ok) {
+      dispatch({ type: 'limits_save_failed', message: spaceLimitResult.error })
+      return { ok: false, message: spaceLimitResult.error }
+    }
+
+    try {
+      const updatedProblem = await updateProblem(problemSlug, {
+        title: currentProblem.title,
+        statement: currentProblem.statement,
+        timeLimitMs: timeLimitResult.value,
+        spaceLimitMb: spaceLimitResult.value,
+        accessPolicy: currentProblem.accessPolicy,
+        othersSubmissionAccess: currentProblem.othersSubmissionAccess,
+      })
+      replaceProblem(updatedProblem)
+      dispatch({
+        type: 'limits_save_succeeded',
+        timeLimitMs: updatedProblem.timeLimitMs,
+        spaceLimitMb: updatedProblem.spaceLimitMb,
+        message: t('problem.message.updateSuccess'),
+      })
+      return { ok: true }
+    } catch (error) {
+      const message = error instanceof HttpClientError ? error.message : t('problem.message.updateFailed')
+      dispatch({ type: 'limits_save_failed', message })
+      return { ok: false, message }
+    }
+  }, [detailQuery.problem, problemSlug, replaceProblem, state.spaceLimitMb, state.timeLimitMs, t])
+
   return {
     problem: detailQuery.problem,
     isProblemLoading: detailQuery.isLoading,
     problemErrorMessage: detailQuery.errorMessage,
+    timeLimitMs: state.timeLimitMs,
+    spaceLimitMb: state.spaceLimitMb,
+    isSavingLimits: state.isSavingLimits,
     selectedFile: state.selectedFile,
     isUploading: state.isUploading,
     isLoadingFiles: state.isLoadingFiles,
@@ -135,6 +199,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     dataFiles: state.dataFiles,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage,
+    setTimeLimitMs: (value: number) => dispatch({ type: 'time_limit_set', value }),
+    setSpaceLimitMb: (value: number) => dispatch({ type: 'space_limit_set', value }),
     setSelectedFile: (file: File | null) => dispatch({ type: 'selected_file_set', file }),
     setErrorMessage: (message: string) =>
       dispatch(message ? { type: 'load_failed', message } : { type: 'error_cleared' }),
@@ -143,5 +209,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     uploadSelectedFile,
     deleteDataFile,
     clearAllDataFiles,
+    saveLimits,
   }
 }

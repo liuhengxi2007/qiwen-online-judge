@@ -92,7 +92,7 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
     ]
   }
 
-  if (/^\/user\/[^/]+\/settings$/.test(pathname)) {
+  if (/^\/user\/[^/]+(\/settings)?$/.test(pathname)) {
     return [{ to: '/', labelKey: 'dashboard' }]
   }
 

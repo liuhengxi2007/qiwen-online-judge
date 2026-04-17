@@ -8,6 +8,13 @@ type UserSettingsRoutePolicyArgs = {
   siteManagerViewer: boolean
 }
 
+type ManagedUserRoutePolicy = {
+  navigationIntent: NavigationIntent | null
+  targetUsername: Username
+  isEditingOwnSettings: boolean
+  canManageTarget: boolean
+}
+
 export function toSessionExpiredRedirect(): NavigationIntent {
   return { to: '/login?notice=session-expired' }
 }
@@ -31,24 +38,29 @@ export function toCorrectedUserSettingsRedirect(viewerUsername: Username): Navig
   }
 }
 
-export function resolveUserSettingsRoutePolicy({
+export function toCorrectedUserProfileRedirect(viewerUsername: Username): NavigationIntent {
+  return {
+    to: `/user/${usernameValue(viewerUsername)}?notice=route-corrected`,
+    replace: true,
+  }
+}
+
+function resolveManagedUserRoutePolicy({
   viewerUsername,
   routeUsername,
   hasRouteUsername,
   siteManagerViewer,
-}: UserSettingsRoutePolicyArgs): {
-  navigationIntent: NavigationIntent | null
-  targetUsername: Username
-  isEditingOwnSettings: boolean
-  canManageTarget: boolean
-} {
+  correctedRedirect,
+}: UserSettingsRoutePolicyArgs & {
+  correctedRedirect: (viewerUsername: Username) => NavigationIntent
+}): ManagedUserRoutePolicy {
   const normalizedRouteUsername = routeUsername ?? viewerUsername
   const isEditingOwnSettings = normalizedRouteUsername === viewerUsername
   const canManageTarget = isEditingOwnSettings || siteManagerViewer
 
   if ((hasRouteUsername && !routeUsername) || (!hasRouteUsername && !siteManagerViewer)) {
     return {
-      navigationIntent: toCorrectedUserSettingsRedirect(viewerUsername),
+      navigationIntent: correctedRedirect(viewerUsername),
       targetUsername: normalizedRouteUsername,
       isEditingOwnSettings,
       canManageTarget,
@@ -57,7 +69,7 @@ export function resolveUserSettingsRoutePolicy({
 
   if (routeUsername && !siteManagerViewer && routeUsername !== viewerUsername) {
     return {
-      navigationIntent: toCorrectedUserSettingsRedirect(viewerUsername),
+      navigationIntent: correctedRedirect(viewerUsername),
       targetUsername: normalizedRouteUsername,
       isEditingOwnSettings,
       canManageTarget,
@@ -79,4 +91,34 @@ export function resolveUserSettingsRoutePolicy({
     isEditingOwnSettings,
     canManageTarget,
   }
+}
+
+export function resolveUserSettingsRoutePolicy({
+  viewerUsername,
+  routeUsername,
+  hasRouteUsername,
+  siteManagerViewer,
+}: UserSettingsRoutePolicyArgs): ManagedUserRoutePolicy {
+  return resolveManagedUserRoutePolicy({
+    viewerUsername,
+    routeUsername,
+    hasRouteUsername,
+    siteManagerViewer,
+    correctedRedirect: toCorrectedUserSettingsRedirect,
+  })
+}
+
+export function resolveUserProfileRoutePolicy({
+  viewerUsername,
+  routeUsername,
+  hasRouteUsername,
+  siteManagerViewer,
+}: UserSettingsRoutePolicyArgs): ManagedUserRoutePolicy {
+  return resolveManagedUserRoutePolicy({
+    viewerUsername,
+    routeUsername,
+    hasRouteUsername,
+    siteManagerViewer,
+    correctedRedirect: toCorrectedUserProfileRedirect,
+  })
 }

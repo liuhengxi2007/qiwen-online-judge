@@ -1,6 +1,9 @@
 import { HardDriveUpload } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { problemDataFilenameValue, problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -32,12 +35,34 @@ export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }
       <CardContent className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-slate-50 px-5 py-4">
-            <p className="text-sm text-slate-500">{t('problem.data.timeLimit')}</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.timeLimitMs} ms</p>
+            <Label className="text-sm text-slate-500" htmlFor="problem-data-time-limit">
+              {t('problem.data.timeLimit')}
+            </Label>
+            <Input
+              id="problem-data-time-limit"
+              className="mt-2 bg-white"
+              min={1}
+              type="number"
+              value={model.timeLimitMs}
+              onChange={(event) => {
+                model.setTimeLimitMs(Number(event.target.value))
+              }}
+            />
           </div>
           <div className="rounded-2xl bg-slate-50 px-5 py-4">
-            <p className="text-sm text-slate-500">{t('problem.data.spaceLimit')}</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{model.problem.spaceLimitMb} MB</p>
+            <Label className="text-sm text-slate-500" htmlFor="problem-data-space-limit">
+              {t('problem.data.spaceLimit')}
+            </Label>
+            <Input
+              id="problem-data-space-limit"
+              className="mt-2 bg-white"
+              min={1}
+              type="number"
+              value={model.spaceLimitMb}
+              onChange={(event) => {
+                model.setSpaceLimitMb(Number(event.target.value))
+              }}
+            />
           </div>
           <div className="rounded-2xl bg-slate-50 px-5 py-4">
             <p className="text-sm text-slate-500">{t('problem.data.latestFile')}</p>
@@ -48,6 +73,16 @@ export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }
             </p>
           </div>
         </div>
+        <Button
+          type="button"
+          className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+          disabled={model.isSavingLimits}
+          onClick={() => {
+            void model.saveLimits()
+          }}
+        >
+          {model.isSavingLimits ? t('problem.detail.savingContent') : t('problem.data.saveLimits')}
+        </Button>
       </CardContent>
     </Card>
   )

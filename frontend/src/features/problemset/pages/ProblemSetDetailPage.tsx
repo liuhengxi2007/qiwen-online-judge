@@ -82,8 +82,6 @@ export function ProblemSetDetailPage() {
           <div className="space-y-6">
             <ProblemSetDetailHeaderCard
               problemSet={model.problemSet}
-              signedInDisplayName={user.displayName}
-              signedInUsername={user.username}
               canManageProblems={canManageProblems}
               managementPanel={managementPanel}
               onTogglePanel={(panel) => {

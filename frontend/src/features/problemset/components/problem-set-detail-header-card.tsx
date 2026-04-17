@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { DisplayName, Username } from '@/features/auth/domain/auth'
 import {
   problemSetDescriptionValue,
   problemSetSlugValue,
@@ -9,15 +8,12 @@ import {
   type ProblemSetDetail,
 } from '@/features/problemset/domain/problemset'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type ProblemSetDetailHeaderCardProps = {
   problemSet: ProblemSetDetail
-  signedInDisplayName: DisplayName
-  signedInUsername: Username
   canManageProblems: boolean
   managementPanel: 'edit' | 'access' | null
   onTogglePanel: (panel: 'edit' | 'access') => void
@@ -25,8 +21,6 @@ type ProblemSetDetailHeaderCardProps = {
 
 export function ProblemSetDetailHeaderCard({
   problemSet,
-  signedInDisplayName,
-  signedInUsername,
   canManageProblems,
   managementPanel,
   onTogglePanel,
@@ -41,7 +35,6 @@ export function ProblemSetDetailHeaderCard({
             <CardDescription className="mt-2 font-mono text-sm text-slate-500">
               {problemSetSlugValue(problemSet.slug)}
             </CardDescription>
-            <SignedInUser className="mt-3 text-sm text-slate-600" user={{ displayName: signedInDisplayName, username: signedInUsername }} />
           </div>
 
           {canManageProblems ? (

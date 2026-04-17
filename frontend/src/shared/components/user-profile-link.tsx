@@ -16,7 +16,7 @@ export function UserProfileLink({
   stacked = false,
   className,
 }: UserProfileLinkProps) {
-  const profilePath = `/user/${usernameValue(user.username)}/settings`
+  const profilePath = `/user/${usernameValue(user.username)}`
   const wrapperClassName = stacked ? 'inline-flex flex-col gap-1' : 'inline-flex items-baseline gap-2'
 
   return (
