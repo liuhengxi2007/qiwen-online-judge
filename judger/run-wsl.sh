@@ -17,10 +17,6 @@ if [[ -z "${CXX:-}" ]]; then
   export CXX="g++"
 fi
 
-if [[ -z "${JUDGER_START_DELAY_SECONDS:-}" ]]; then
-  export JUDGER_START_DELAY_SECONDS="0"
-fi
-
 if ! command -v sbt >/dev/null 2>&1; then
   echo "sbt is required inside WSL." >&2
   exit 1
@@ -97,22 +93,29 @@ resolve_backend_base_url() {
   return 1
 }
 
+wait_for_backend_base_url() {
+  local attempts=0
+  local resolved=""
+  while true; do
+    if resolved="$(resolve_backend_base_url)"; then
+      echo "${resolved}"
+      return 0
+    fi
+
+    attempts=$((attempts + 1))
+    if (( attempts == 1 || attempts % 10 == 0 )); then
+      echo "Waiting for backend to become reachable at port 8080..." >&2
+    fi
+    sleep 1
+  done
+}
+
 echo "Compiling judger..."
 sbt compile
 
-if resolved_backend_base_url="$(resolve_backend_base_url)"; then
-  export BACKEND_BASE_URL="${resolved_backend_base_url}"
-else
-  echo "Unable to reach the backend from WSL." >&2
-  echo "Tried localhost and detected Windows host gateway addresses on port 8080." >&2
-  echo "Set BACKEND_BASE_URL manually if your backend is listening elsewhere." >&2
-  exit 1
-fi
+resolved_backend_base_url="$(wait_for_backend_base_url)"
+export BACKEND_BASE_URL="${resolved_backend_base_url}"
 
 echo "Starting WSL judger prefix ${JUDGER_ID_PREFIX} against ${BACKEND_BASE_URL}"
-if [[ "${JUDGER_START_DELAY_SECONDS}" != "0" ]]; then
-  echo "Waiting ${JUDGER_START_DELAY_SECONDS} seconds before running judger..."
-  sleep "${JUDGER_START_DELAY_SECONDS}"
-fi
 
 sbt run
