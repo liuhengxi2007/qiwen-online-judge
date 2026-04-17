@@ -5,6 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.auth.model.Username
+import domains.shared.http.AuthenticatedHttpExecutor
 import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupSlug}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -15,7 +16,7 @@ object UserGroupRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new UserGroupHttpHandlers(databaseSession, sessionStore)
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
         handlers.execute(request, (), UserGroupHttpPlanDefinitions.listUserGroups)

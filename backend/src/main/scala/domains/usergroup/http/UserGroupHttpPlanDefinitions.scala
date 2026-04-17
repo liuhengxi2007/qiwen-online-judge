@@ -1,8 +1,10 @@
 package domains.usergroup.http
 
+import domains.shared.http.AuthenticatedHttpPlanRegistry
+
 object UserGroupHttpPlanDefinitions:
 
-  import UserGroupHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
+  import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   val listUserGroups = Plain(UserGroupHttpPlans.ListUserGroups, UserGroupHttpResponses.listUserGroupsResponse)
   val getUserGroup = Plain(UserGroupHttpPlans.GetUserGroup, UserGroupHttpResponses.mapGetResult)
@@ -13,7 +15,7 @@ object UserGroupHttpPlanDefinitions:
   val updateMemberRole = WithTransaction(UserGroupHttpPlans.UpdateMemberRole, UserGroupHttpResponses.mapUpdateMemberRoleResult)
   val removeMember = WithTransaction(UserGroupHttpPlans.RemoveMember, UserGroupHttpResponses.mapRemoveMemberResult)
 
-  val plans: Map[String, UserGroupHttpPlanRegistry.RegisteredPlan] =
+  val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
     List(
       listUserGroups,
       getUserGroup,

@@ -5,6 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.problem.application.ProblemCommands
 import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -14,7 +15,7 @@ object ProblemRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new ProblemHttpHandlers(databaseSession, sessionStore)
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problems" =>
         handlers.execute(request, (), ProblemHttpPlanDefinitions.listProblems)

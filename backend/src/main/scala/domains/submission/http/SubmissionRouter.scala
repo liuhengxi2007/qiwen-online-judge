@@ -6,6 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.model.Username
 import domains.submission.application.SubmissionCommands
 import domains.submission.model.{CreateSubmissionRequest, SubmissionId}
+import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -15,7 +16,7 @@ object SubmissionRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new SubmissionHttpHandlers(databaseSession, sessionStore)
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
         handlers.execute(

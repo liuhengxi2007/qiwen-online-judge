@@ -1,19 +1,19 @@
-package domains.usergroup.http
+package domains.shared.http
 
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
-import domains.usergroup.http.UserGroupHttpPlanRegistry.RegisteredPlan
+import domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
 import org.http4s.dsl.Http4sDsl
 
-final class UserGroupHttpHandlers(
+final class AuthenticatedHttpExecutor(
   databaseSession: DatabaseSession,
   sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  private def runAuthenticatedPlan[Input, Output](
+  private def runPlan[Input, Output](
     request: Request[IO],
     input: Input,
     registeredPlan: RegisteredPlan.Plain[Input, Output]
@@ -22,7 +22,7 @@ final class UserGroupHttpHandlers(
       registeredPlan.plan.execute(databaseSession, actor, input).flatMap(registeredPlan.toResponse)
     }
 
-  private def runAuthenticatedPlan[Input, Output](
+  private def runPlan[Input, Output](
     request: Request[IO],
     input: Input,
     registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
@@ -38,16 +38,16 @@ final class UserGroupHttpHandlers(
     input: Input,
     registeredPlan: RegisteredPlan.Plain[Input, Output]
   ): IO[Response[IO]] =
-    runAuthenticatedPlan(request, input, registeredPlan)
+    runPlan(request, input, registeredPlan)
 
   def execute[Input, Output](
     request: Request[IO],
     input: Input,
     registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
   ): IO[Response[IO]] =
-    runAuthenticatedPlan(request, input, registeredPlan)
+    runPlan(request, input, registeredPlan)
 
-  private def runDecodedAuthenticatedPlan[Body, Input, Output](
+  private def runDecodedPlan[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.Plain[Input, Output]
   )(
@@ -59,7 +59,7 @@ final class UserGroupHttpHandlers(
       )
     }
 
-  private def runDecodedAuthenticatedPlan[Body, Input, Output](
+  private def runDecodedPlan[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
   )(
@@ -79,7 +79,7 @@ final class UserGroupHttpHandlers(
   )(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
-    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)
+    runDecodedPlan(request, registeredPlan)(toInput)
 
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
@@ -87,4 +87,4 @@ final class UserGroupHttpHandlers(
   )(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
-    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)
+    runDecodedPlan(request, registeredPlan)(toInput)

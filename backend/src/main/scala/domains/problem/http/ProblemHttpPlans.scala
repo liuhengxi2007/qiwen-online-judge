@@ -5,6 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.shared.model.PageRequest
 import io.circe.syntax.*
 
@@ -18,7 +19,7 @@ object ProblemHttpPlans:
     authorization: ProblemCommands.AuthorizeProblemDataDownloadResult
   )
 
-  case object ListProblems extends PlainProblemHttpPlan[Unit, domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]]:
+  case object ListProblems extends PlainAuthenticatedHttpPlan[Unit, domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]]:
 
     override val name: String = "ListProblems"
 
@@ -30,7 +31,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .listProblems(databaseSession, actor, PageRequest())
 
-  case object CreateProblem extends TransactionProblemHttpPlan[CreateProblemRequest, ProblemCommands.CreateProblemResult]:
+  case object CreateProblem extends TransactionAuthenticatedHttpPlan[CreateProblemRequest, ProblemCommands.CreateProblemResult]:
 
     override val name: String = "CreateProblem"
 
@@ -42,7 +43,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .createProblem(connection, actor, input)
 
-  case object GetProblem extends PlainProblemHttpPlan[ProblemSlug, ProblemCommands.GetProblemResult]:
+  case object GetProblem extends PlainAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.GetProblemResult]:
 
     override val name: String = "GetProblem"
 
@@ -54,7 +55,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .getProblemBySlug(databaseSession, actor, input)
 
-  case object ListProblemData extends PlainProblemHttpPlan[ProblemSlug, ProblemCommands.ListProblemDataResult]:
+  case object ListProblemData extends PlainAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.ListProblemDataResult]:
 
     override val name: String = "ListProblemData"
 
@@ -66,7 +67,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .listProblemData(databaseSession, actor, input)
 
-  case object DownloadProblemData extends PlainProblemHttpPlan[(ProblemSlug, ProblemDataFilename), DownloadProblemDataOutput]:
+  case object DownloadProblemData extends PlainAuthenticatedHttpPlan[(ProblemSlug, ProblemDataFilename), DownloadProblemDataOutput]:
 
     override val name: String = "DownloadProblemData"
 
@@ -80,7 +81,7 @@ object ProblemHttpPlans:
         .authorizeProblemDataDownload(databaseSession, actor, problemSlug)
         .map(authorization => DownloadProblemDataOutput(problemSlug, filename, authorization))
 
-  case object DeleteProblemData extends TransactionProblemHttpPlan[(ProblemSlug, ProblemDataFilename), ProblemCommands.DeleteProblemDataResult]:
+  case object DeleteProblemData extends TransactionAuthenticatedHttpPlan[(ProblemSlug, ProblemDataFilename), ProblemCommands.DeleteProblemDataResult]:
 
     override val name: String = "DeleteProblemData"
 
@@ -93,7 +94,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .deleteProblemData(connection, actor, problemSlug, filename)
 
-  case object ClearProblemData extends TransactionProblemHttpPlan[ProblemSlug, ProblemCommands.ClearProblemDataResult]:
+  case object ClearProblemData extends TransactionAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.ClearProblemDataResult]:
 
     override val name: String = "ClearProblemData"
 
@@ -105,7 +106,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .clearProblemData(connection, actor, input)
 
-  case object UpdateProblem extends TransactionProblemHttpPlan[(ProblemSlug, UpdateProblemRequest), ProblemCommands.UpdateProblemResult]:
+  case object UpdateProblem extends TransactionAuthenticatedHttpPlan[(ProblemSlug, UpdateProblemRequest), ProblemCommands.UpdateProblemResult]:
 
     override val name: String = "UpdateProblem"
 
@@ -118,7 +119,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .updateProblem(connection, actor, problemSlug, request)
 
-  case object UpdateProblemData extends TransactionProblemHttpPlan[(ProblemSlug, UpdateProblemDataRequest), ProblemCommands.UpdateProblemDataResult]:
+  case object UpdateProblemData extends TransactionAuthenticatedHttpPlan[(ProblemSlug, UpdateProblemDataRequest), ProblemCommands.UpdateProblemDataResult]:
 
     override val name: String = "UpdateProblemData"
 
@@ -131,7 +132,7 @@ object ProblemHttpPlans:
       ProblemCommands
         .updateProblemData(connection, actor, problemSlug, request)
 
-  case object DeleteProblem extends TransactionProblemHttpPlan[ProblemSlug, ProblemCommands.DeleteProblemResult]:
+  case object DeleteProblem extends TransactionAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.DeleteProblemResult]:
 
     override val name: String = "DeleteProblem"
 

@@ -1,8 +1,10 @@
 package domains.problem.http
 
+import domains.shared.http.AuthenticatedHttpPlanRegistry
+
 object ProblemHttpPlanDefinitions:
 
-  import ProblemHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
+  import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   val listProblems = Plain(ProblemHttpPlans.ListProblems, ProblemHttpResponses.listProblemsResponse)
   val createProblem = WithTransaction(ProblemHttpPlans.CreateProblem, ProblemHttpResponses.mapCreateResult)
@@ -15,7 +17,7 @@ object ProblemHttpPlanDefinitions:
   val updateProblemData = WithTransaction(ProblemHttpPlans.UpdateProblemData, ProblemHttpResponses.mapUpdateDataResult)
   val deleteProblem = WithTransaction(ProblemHttpPlans.DeleteProblem, ProblemHttpResponses.mapDeleteResult)
 
-  val plans: Map[String, ProblemHttpPlanRegistry.RegisteredPlan] =
+  val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
     List(
       listProblems,
       createProblem,
