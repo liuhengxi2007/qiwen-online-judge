@@ -4,8 +4,11 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.judge.application.JudgeConfig
-import domains.auth.model.Username
+import domains.auth.application.AuthUserCommands
+import domains.auth.model.{LoginRequest, RegisterRequest, UpdateUserPermissionsRequest, Username}
+import io.circe.Json
 import org.http4s.HttpRoutes
+import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 
@@ -17,32 +20,52 @@ object AuthRouter:
 
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "auth" / "session" =>
-        handlers.session(request)
+        handlers.execute(request, (), AuthHttpPlanDefinitions.session)
 
       case request @ POST -> Root / "api" / "auth" / "logout" =>
-        handlers.logout(request)
+        handlers.execute(request, AuthHttpSessionSupport.currentSessionToken(request), AuthHttpPlanDefinitions.logout)
 
       case request @ GET -> Root / "api" / "auth" / "users" =>
-        handlers.listUsers(request)
+        handlers.execute(request, (), AuthHttpPlanDefinitions.listUsers)
 
       case request @ GET -> Root / "api" / "auth" / "judgers" =>
-        handlers.listJudgers(request)
+        handlers.execute(request, (), AuthHttpPlanDefinitions.listJudgers)
 
       case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
-        handlers.getUserSettings(request, Username.canonical(targetUsername))
+        handlers.execute(request, Username.canonical(targetUsername), AuthHttpPlanDefinitions.getUserSettings)
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "permissions" =>
-        handlers.updateUserPermissions(request, Username.canonical(targetUsername))
+        handlers.executeDecoded[
+          UpdateUserPermissionsRequest,
+          (Username, UpdateUserPermissionsRequest),
+          AuthUserCommands.UpdateUserPermissionsResult
+        ](
+          request,
+          AuthHttpPlanDefinitions.updateUserPermissions
+        )(body => (Username.canonical(targetUsername), body))
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
-        handlers.updateUserSettings(request, Username.canonical(targetUsername))
+        handlers.executeDecoded[
+          Json,
+          (Username, Json),
+          AuthHttpPlans.UpdateUserSettingsOutput
+        ](
+          request,
+          AuthHttpPlanDefinitions.updateUserSettings
+        )(body => (Username.canonical(targetUsername), body))
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "delete" =>
-        handlers.deleteUser(request, Username.canonical(targetUsername))
+        handlers.execute(request, Username.canonical(targetUsername), AuthHttpPlanDefinitions.deleteUser)
 
       case request @ POST -> Root / "api" / "auth" / "login" =>
-        handlers.login(request)
+        handlers.executeDecoded[LoginRequest, LoginRequest, AuthHttpPlans.LoginOutput](
+          request,
+          AuthHttpPlanDefinitions.login
+        )(identity)
 
       case request @ POST -> Root / "api" / "auth" / "register" =>
-        handlers.register(request)
+        handlers.executeDecoded[RegisterRequest, RegisterRequest, AuthHttpPlans.RegisterOutput](
+          request,
+          AuthHttpPlanDefinitions.register
+        )(identity)
     }

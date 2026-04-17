@@ -12,10 +12,21 @@ import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetCommandSupport.*
 import domains.problemset.application.ProblemSetDecisions.*
 
+import java.sql.Connection
+
 object ProblemSetMutationCommands:
 
   def createProblemSet(
     databaseSession: DatabaseSession,
+    actor: AuthUser,
+    request: CreateProblemSetRequest
+  ): IO[CreateProblemSetResult] =
+    databaseSession.withTransactionConnection(connection =>
+      createProblemSet(connection, actor, request)
+    )
+
+  def createProblemSet(
+    connection: Connection,
     actor: AuthUser,
     request: CreateProblemSetRequest
   ): IO[CreateProblemSetResult] =
@@ -26,29 +37,37 @@ object ProblemSetMutationCommands:
         case Left(message) =>
           IO.pure(CreateProblemSetResult.ValidationFailed(message))
         case Right(validRequest) =>
-          databaseSession.withTransactionConnection { connection =>
-            for
-              existing <- ProblemSetTable.findBySlug(connection, validRequest.slug)
-              conflictingProblem <- ProblemSlug.parse(validRequest.slug.value) match
-                case Left(message) => IO.raiseError(IllegalStateException(s"Validated problem set slug became invalid: $message"))
-                case Right(problemSlug) => ProblemTable.findBySlug(connection, problemSlug)
-              accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- decideCreateProblemSet(existing, conflictingProblem, accessPolicyValidation) match
-                case CreateProblemSetDecision.SlugAlreadyExists =>
-                  IO.pure(CreateProblemSetResult.SlugAlreadyExists)
-                case CreateProblemSetDecision.SlugConflictsWithProblem =>
-                  IO.pure(CreateProblemSetResult.SlugConflictsWithProblem)
-                case CreateProblemSetDecision.ValidationFailed(message) =>
-                  IO.pure(CreateProblemSetResult.ValidationFailed(message))
-                case CreateProblemSetDecision.Create =>
-                  ProblemSetTable
-                    .insert(connection, actor.username, sanitizePolicy(validRequest))
-                    .map(problemSet => CreateProblemSetResult.Created(problemSet))
-            yield result
-          }
+          for
+            existing <- ProblemSetTable.findBySlug(connection, validRequest.slug)
+            conflictingProblem <- ProblemSlug.parse(validRequest.slug.value) match
+              case Left(message) => IO.raiseError(IllegalStateException(s"Validated problem set slug became invalid: $message"))
+              case Right(problemSlug) => ProblemTable.findBySlug(connection, problemSlug)
+            accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
+            result <- decideCreateProblemSet(existing, conflictingProblem, accessPolicyValidation) match
+              case CreateProblemSetDecision.SlugAlreadyExists =>
+                IO.pure(CreateProblemSetResult.SlugAlreadyExists)
+              case CreateProblemSetDecision.SlugConflictsWithProblem =>
+                IO.pure(CreateProblemSetResult.SlugConflictsWithProblem)
+              case CreateProblemSetDecision.ValidationFailed(message) =>
+                IO.pure(CreateProblemSetResult.ValidationFailed(message))
+              case CreateProblemSetDecision.Create =>
+                ProblemSetTable
+                  .insert(connection, actor.username, sanitizePolicy(validRequest))
+                  .map(problemSet => CreateProblemSetResult.Created(problemSet))
+          yield result
 
   def updateProblemSet(
     databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSetSlug: domains.problemset.model.ProblemSetSlug,
+    request: UpdateProblemSetRequest
+  ): IO[UpdateProblemSetResult] =
+    databaseSession.withTransactionConnection(connection =>
+      updateProblemSet(connection, actor, problemSetSlug, request)
+    )
+
+  def updateProblemSet(
+    connection: Connection,
     actor: AuthUser,
     problemSetSlug: domains.problemset.model.ProblemSetSlug,
     request: UpdateProblemSetRequest
@@ -60,45 +79,50 @@ object ProblemSetMutationCommands:
         case Left(message) =>
           IO.pure(UpdateProblemSetResult.ValidationFailed(message))
         case Right(validRequest) =>
-          databaseSession.withTransactionConnection { connection =>
-            for
-              maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
-              accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-              result <- decideUpdateProblemSet(maybeProblemSet, accessPolicyValidation) match
-                case UpdateProblemSetDecision.ProblemSetNotFound =>
-                  IO.pure(UpdateProblemSetResult.ProblemSetNotFound)
-                case UpdateProblemSetDecision.ValidationFailed(message) =>
-                  IO.pure(UpdateProblemSetResult.ValidationFailed(message))
-                case UpdateProblemSetDecision.Update(problemSet) =>
-                  ProblemSetTable
-                    .update(connection, problemSet.id, sanitizePolicy(validRequest))
-                    .flatMap(_ =>
-                      ProblemSetTable
-                        .findBySlug(connection, problemSet.slug)
-                        .map(updatedProblemSetOrError("Problem set disappeared after update"))
-                        .map(UpdateProblemSetResult.Updated(_))
-                    )
-            yield result
-          }
+          for
+            maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
+            accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
+            result <- decideUpdateProblemSet(maybeProblemSet, accessPolicyValidation) match
+              case UpdateProblemSetDecision.ProblemSetNotFound =>
+                IO.pure(UpdateProblemSetResult.ProblemSetNotFound)
+              case UpdateProblemSetDecision.ValidationFailed(message) =>
+                IO.pure(UpdateProblemSetResult.ValidationFailed(message))
+              case UpdateProblemSetDecision.Update(problemSet) =>
+                ProblemSetTable
+                  .update(connection, problemSet.id, sanitizePolicy(validRequest))
+                  .flatMap(_ =>
+                    ProblemSetTable
+                      .findBySlug(connection, problemSet.slug)
+                      .map(updatedProblemSetOrError("Problem set disappeared after update"))
+                      .map(UpdateProblemSetResult.Updated(_))
+                  )
+          yield result
 
   def deleteProblemSet(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSetSlug: domains.problemset.model.ProblemSetSlug
   ): IO[DeleteProblemSetResult] =
+    databaseSession.withTransactionConnection(connection =>
+      deleteProblemSet(connection, actor, problemSetSlug)
+    )
+
+  def deleteProblemSet(
+    connection: Connection,
+    actor: AuthUser,
+    problemSetSlug: domains.problemset.model.ProblemSetSlug
+  ): IO[DeleteProblemSetResult] =
     if !ProblemSetPolicy.canDelete(actor) then
       IO.pure(DeleteProblemSetResult.Forbidden)
     else
-      databaseSession.withTransactionConnection { connection =>
-        for
-          maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
-          result <- maybeProblemSet match
-            case None =>
-              IO.pure(DeleteProblemSetResult.ProblemSetNotFound)
-            case Some(problemSet) =>
-              ResourceAccessGrantTable
-                .deleteAllForResource(connection, ResourceKind.ProblemSet, ResourceId(problemSet.id.value))
-                .flatMap(_ => ProblemSetTable.delete(connection, problemSet.id))
-                .as(DeleteProblemSetResult.Deleted)
-        yield result
-      }
+      for
+        maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
+        result <- maybeProblemSet match
+          case None =>
+            IO.pure(DeleteProblemSetResult.ProblemSetNotFound)
+          case Some(problemSet) =>
+            ResourceAccessGrantTable
+              .deleteAllForResource(connection, ResourceKind.ProblemSet, ResourceId(problemSet.id.value))
+              .flatMap(_ => ProblemSetTable.delete(connection, problemSet.id))
+              .as(DeleteProblemSetResult.Deleted)
+      yield result

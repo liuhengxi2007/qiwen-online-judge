@@ -5,6 +5,8 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
 import domains.auth.table.AuthUserTable
 
+import java.sql.Connection
+
 object AuthUserCommands:
 
   private val protectedAdminUsername = "admin"
@@ -59,6 +61,16 @@ object AuthUserCommands:
     targetUsername: Username,
     permissionsRequest: UpdateUserPermissionsRequest
   ): IO[UpdateUserPermissionsResult] =
+    databaseSession.withTransactionConnection(connection =>
+      updateUserPermissions(connection, actor, targetUsername, permissionsRequest)
+    )
+
+  def updateUserPermissions(
+    connection: Connection,
+    actor: AuthUser,
+    targetUsername: Username,
+    permissionsRequest: UpdateUserPermissionsRequest
+  ): IO[UpdateUserPermissionsResult] =
     SiteManagerUser.from(actor) match
       case None =>
         IO.pure(UpdateUserPermissionsResult.Forbidden)
@@ -66,14 +78,12 @@ object AuthUserCommands:
         if targetUsername.value == protectedAdminUsername then
           IO.pure(UpdateUserPermissionsResult.ProtectedAdmin)
         else
-          databaseSession.withTransactionConnection(connection =>
-            AuthUserTable.updatePermissions(
-              connection,
-              siteManagerActor,
-              targetUsername,
-              siteManager = permissionsRequest.siteManager,
-              problemManager = permissionsRequest.problemManager
-            )
+          AuthUserTable.updatePermissions(
+            connection,
+            siteManagerActor,
+            targetUsername,
+            siteManager = permissionsRequest.siteManager,
+            problemManager = permissionsRequest.problemManager
           ).map {
             case Some(updatedUser) => UpdateUserPermissionsResult.Updated(updatedUser)
             case None => UpdateUserPermissionsResult.NotFound
@@ -84,21 +94,28 @@ object AuthUserCommands:
     targetUsername: Username,
     command: UpdateUserSettingsCommand
   ): IO[UpdateUserSettingsResult] =
+    databaseSession.withTransactionConnection(connection =>
+      updateUserSettings(connection, targetUsername, command)
+    )
+
+  def updateUserSettings(
+    connection: Connection,
+    targetUsername: Username,
+    command: UpdateUserSettingsCommand
+  ): IO[UpdateUserSettingsResult] =
     if !commandCanAccessTarget(command, targetUsername) then
       IO.pure(UpdateUserSettingsResult.Forbidden)
     else
-      databaseSession.withTransactionConnection(connection =>
-        AuthUserTable.findByUsername(connection, targetUsername)
-      ).flatMap {
+      AuthUserTable.findByUsername(connection, targetUsername).flatMap {
         case None =>
           IO.pure(UpdateUserSettingsResult.NotFound)
         case Some(targetUser) =>
           command match
             case UpdateUserSettingsCommand.UpdateOwn(actor, request) =>
-              updateOwnSettings(databaseSession, actor, targetUser, request)
+              updateOwnSettings(connection, actor, targetUser, request)
             case UpdateUserSettingsCommand.UpdateManaged(_, request) =>
               updateSettingsRecord(
-                databaseSession,
+                connection,
                 targetUser,
                 request.displayName,
                 request.email,
@@ -107,7 +124,7 @@ object AuthUserCommands:
       }
 
   private def updateOwnSettings(
-    databaseSession: DatabaseSession,
+    connection: Connection,
     actor: AuthUser,
     targetUser: AuthUser,
     request: UpdateOwnSettingsRequest
@@ -116,11 +133,11 @@ object AuthUserCommands:
       case false =>
         IO.pure(UpdateUserSettingsResult.InvalidCurrentPassword)
       case true =>
-        updateSettingsRecord(databaseSession, targetUser, request.displayName, request.email, request.newPassword)
+        updateSettingsRecord(connection, targetUser, request.displayName, request.email, request.newPassword)
     }
 
   private def updateSettingsRecord(
-    databaseSession: DatabaseSession,
+    connection: Connection,
     targetUser: AuthUser,
     displayName: domains.auth.model.DisplayName,
     email: domains.auth.model.EmailAddress,
@@ -131,14 +148,12 @@ object AuthUserCommands:
       nextPasswordHash <- newPassword match
         case Some(password) => PasswordHasher.hashPassword(password)
         case None => IO.pure(targetUser.passwordHash)
-      updatedUser <- databaseSession.withTransactionConnection(connection =>
-        AuthUserTable.updateSettings(
-          connection,
-          targetUser.username,
-          displayName = displayName,
-          email = email,
-          passwordHash = nextPasswordHash
-        )
+      updatedUser <- AuthUserTable.updateSettings(
+        connection,
+        targetUser.username,
+        displayName = displayName,
+        email = email,
+        passwordHash = nextPasswordHash
       )
     yield updatedUser match
       case Some(user) => UpdateUserSettingsResult.Updated(user, passwordChanged)
@@ -146,6 +161,15 @@ object AuthUserCommands:
 
   def deleteUser(
     databaseSession: DatabaseSession,
+    actor: AuthUser,
+    targetUsername: Username
+  ): IO[DeleteUserResult] =
+    databaseSession.withTransactionConnection(connection =>
+      deleteUser(connection, actor, targetUsername)
+    )
+
+  def deleteUser(
+    connection: Connection,
     actor: AuthUser,
     targetUsername: Username
   ): IO[DeleteUserResult] =
@@ -157,9 +181,7 @@ object AuthUserCommands:
       case Some(_) if targetUsername.value == actor.username.value =>
         IO.pure(DeleteUserResult.CannotDeleteSelf)
       case Some(_) =>
-        databaseSession.withTransactionConnection(connection =>
-          AuthUserTable.delete(connection, targetUsername)
-        ).map {
+        AuthUserTable.delete(connection, targetUsername).map {
           case AuthUserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
           case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
           case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted

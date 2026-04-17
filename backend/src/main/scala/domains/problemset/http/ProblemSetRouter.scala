@@ -3,15 +3,11 @@ package domains.problemset.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.AuthHttpSessionSupport
 import domains.problemset.application.ProblemSetCommands
 import domains.problem.model.ProblemSlug
 import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetSlug, UpdateProblemSetRequest}
-import domains.shared.model.PageRequest
-import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 
@@ -22,38 +18,55 @@ object ProblemSetRouter:
     val handlers = new ProblemSetHttpHandlers(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" =>
-        handlers.listProblemSets(request)
+        handlers.execute(request, (), ProblemSetHttpPlanDefinitions.listProblemSets)
 
       case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
         ProblemSetSlug.parse(problemSetSlug) match
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            handlers.getProblemSet(request, parsedProblemSetSlug)
+            handlers.execute(request, parsedProblemSetSlug, ProblemSetHttpPlanDefinitions.getProblemSet)
 
       case request @ POST -> Root / "api" / "problem-sets" =>
-        handlers.createProblemSet(request)
+        handlers.executeDecoded[CreateProblemSetRequest, CreateProblemSetRequest, ProblemSetCommands.CreateProblemSetResult](
+          request,
+          ProblemSetHttpPlanDefinitions.createProblemSet
+        )(identity)
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" =>
         ProblemSetSlug.parse(problemSetSlug) match
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            handlers.addProblem(request, parsedProblemSetSlug)
+            handlers.executeDecoded[
+              AddProblemToProblemSetRequest,
+              (ProblemSetSlug, AddProblemToProblemSetRequest),
+              ProblemSetCommands.AddProblemResult
+            ](
+              request,
+              ProblemSetHttpPlanDefinitions.addProblem
+            )(addRequest => (parsedProblemSetSlug, addRequest))
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug =>
         ProblemSetSlug.parse(problemSetSlug) match
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            handlers.updateProblemSet(request, parsedProblemSetSlug)
+            handlers.executeDecoded[
+              UpdateProblemSetRequest,
+              (ProblemSetSlug, UpdateProblemSetRequest),
+              ProblemSetCommands.UpdateProblemSetResult
+            ](
+              request,
+              ProblemSetHttpPlanDefinitions.updateProblemSet
+            )(updateRequest => (parsedProblemSetSlug, updateRequest))
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "delete" =>
         ProblemSetSlug.parse(problemSetSlug) match
           case Left(message) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            handlers.deleteProblemSet(request, parsedProblemSetSlug)
+            handlers.execute(request, parsedProblemSetSlug, ProblemSetHttpPlanDefinitions.deleteProblemSet)
 
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" / linkedProblemSlug / "remove" =>
         (ProblemSetSlug.parse(problemSetSlug), ProblemSlug.parse(linkedProblemSlug)) match
@@ -62,5 +75,5 @@ object ProblemSetRouter:
           case (_, Left(message)) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
-            handlers.removeProblem(request, parsedProblemSetSlug, parsedProblemSlug)
+            handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
     }

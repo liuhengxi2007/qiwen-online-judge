@@ -3,12 +3,12 @@ package domains.auth.http
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
 import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse}
+import domains.judger.model.RegisteredJudgerListItem
 import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import domains.shared.model.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*
-import org.http4s.dsl.Http4sDsl
 
 object AuthHttpResponses:
 
@@ -50,9 +50,8 @@ object AuthHttpResponses:
   def usernameConflictsWithUserGroupResponse: IO[Response[IO]] =
     errorResponse(Status.Conflict, "Username conflicts with an existing user group slug.")
 
-  def loggedOutResponse(clearedSessionCookie: ResponseCookie)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
-    import dsl.*
-    Ok(ErrorResponse("Logged out.").asJson).map(_.addCookie(clearedSessionCookie))
+  def loggedOutResponse(clearedSessionCookie: ResponseCookie): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(ErrorResponse("Logged out.").asJson).addCookie(clearedSessionCookie))
 
   def sessionCookie(token: String): ResponseCookie =
     ResponseCookie(
@@ -111,18 +110,64 @@ object AuthHttpResponses:
       message = message
     )
 
-  def mapGetUserSettingsResult(result: AuthUserCommands.GetUserSettingsResult)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
-    import dsl.*
+  def sessionResponse(response: SessionResponse): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
+  def listUsersResponse(users: List[AuthUserListItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
+
+  def listJudgersResponse(judgers: List[RegisteredJudgerListItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(judgers.asJson))
+
+  def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
+    loggedOutResponse(output.clearedSessionCookie)
+
+  def loginResponse(output: AuthHttpPlans.LoginOutput): IO[Response[IO]] =
+    output match
+      case AuthHttpPlans.LoginOutput.InvalidCredentials =>
+        invalidCredentialsResponse
+      case AuthHttpPlans.LoginOutput.LoggedIn(user, sessionToken) =>
+        IO.pure(
+          Response[IO](status = Status.Ok)
+            .withEntity(toLoginResponse(user, "Login successful").asJson)
+            .addCookie(sessionCookie(sessionToken))
+        )
+
+  def registerResponse(output: AuthHttpPlans.RegisterOutput): IO[Response[IO]] =
+    output match
+      case AuthHttpPlans.RegisterOutput.ValidationFailed(message) =>
+        validationErrorResponse(message)
+      case AuthHttpPlans.RegisterOutput.UsernameConflict =>
+        usernameConflictResponse
+      case AuthHttpPlans.RegisterOutput.UsernameConflictsWithUserGroup =>
+        usernameConflictsWithUserGroupResponse
+      case AuthHttpPlans.RegisterOutput.Registered(user, sessionToken) =>
+        IO.pure(
+          Response[IO](status = Status.Created)
+            .withEntity(toRegisterResponse(user, "Registration successful").asJson)
+            .addCookie(sessionCookie(sessionToken))
+        )
+
+  def updateUserSettingsResponse(output: AuthHttpPlans.UpdateUserSettingsOutput): IO[Response[IO]] =
+    output match
+      case AuthHttpPlans.UpdateUserSettingsOutput.ValidationFailed(message) =>
+        validationErrorResponse(message)
+      case AuthHttpPlans.UpdateUserSettingsOutput.Completed(result, clearCurrentSessionCookie) =>
+        mapUpdateUserSettingsResult(result).map { response =>
+          if clearCurrentSessionCookie then response.addCookie(clearedSessionCookie)
+          else response
+        }
+
+  def mapGetUserSettingsResult(result: AuthUserCommands.GetUserSettingsResult): IO[Response[IO]] =
     result match
       case AuthUserCommands.GetUserSettingsResult.Forbidden =>
         forbiddenResponse
       case AuthUserCommands.GetUserSettingsResult.NotFound =>
         userNotFoundResponse
       case AuthUserCommands.GetUserSettingsResult.Found(targetUser) =>
-        Ok(toSessionResponse(targetUser).asJson)
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toSessionResponse(targetUser).asJson))
 
-  def mapUpdateUserPermissionsResult(result: AuthUserCommands.UpdateUserPermissionsResult)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
-    import dsl.*
+  def mapUpdateUserPermissionsResult(result: AuthUserCommands.UpdateUserPermissionsResult): IO[Response[IO]] =
     result match
       case AuthUserCommands.UpdateUserPermissionsResult.Forbidden =>
         forbiddenResponse
@@ -131,10 +176,9 @@ object AuthHttpResponses:
       case AuthUserCommands.UpdateUserPermissionsResult.NotFound =>
         userNotFoundResponse
       case AuthUserCommands.UpdateUserPermissionsResult.Updated(user) =>
-        Ok(toUserListItem(user).asJson)
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toUserListItem(user).asJson))
 
-  def mapUpdateUserSettingsResult(result: AuthUserCommands.UpdateUserSettingsResult)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
-    import dsl.*
+  def mapUpdateUserSettingsResult(result: AuthUserCommands.UpdateUserSettingsResult): IO[Response[IO]] =
     result match
       case AuthUserCommands.UpdateUserSettingsResult.Forbidden =>
         forbiddenResponse
@@ -143,10 +187,9 @@ object AuthHttpResponses:
       case AuthUserCommands.UpdateUserSettingsResult.NotFound =>
         userNotFoundResponse
       case AuthUserCommands.UpdateUserSettingsResult.Updated(user, _) =>
-        Ok(toSessionResponse(user).asJson)
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toSessionResponse(user).asJson))
 
-  def mapDeleteUserResult(result: AuthUserCommands.DeleteUserResult)(using dsl: Http4sDsl[IO]): IO[Response[IO]] =
-    import dsl.*
+  def mapDeleteUserResult(result: AuthUserCommands.DeleteUserResult): IO[Response[IO]] =
     result match
       case AuthUserCommands.DeleteUserResult.Forbidden =>
         forbiddenResponse
@@ -159,4 +202,4 @@ object AuthHttpResponses:
       case AuthUserCommands.DeleteUserResult.HasOwnedResources =>
         userOwnsResourcesResponse
       case AuthUserCommands.DeleteUserResult.Deleted =>
-        Ok(SuccessResponse("User deleted.").asJson)
+        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("User deleted.").asJson))

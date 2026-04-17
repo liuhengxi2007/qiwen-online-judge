@@ -3,7 +3,6 @@ package domains.submission.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.AuthHttpSessionSupport
 import domains.auth.model.Username
 import domains.submission.application.SubmissionCommands
 import domains.submission.model.{CreateSubmissionRequest, SubmissionId}
@@ -19,15 +18,22 @@ object SubmissionRouter:
     val handlers = new SubmissionHttpHandlers(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
-        handlers.listSubmissions(request)
+        handlers.execute(
+          request,
+          request.uri.query.params.get("username").map(Username.canonical),
+          SubmissionHttpPlanDefinitions.listSubmissions
+        )
 
       case request @ POST -> Root / "api" / "submissions" =>
-        handlers.createSubmission(request)
+        handlers.executeDecoded[CreateSubmissionRequest, CreateSubmissionRequest, SubmissionCommands.CreateSubmissionResult](
+          request,
+          SubmissionHttpPlanDefinitions.createSubmission
+        )(identity)
 
       case request @ GET -> Root / "api" / "submissions" / rawSubmissionId =>
         SubmissionId.parse(rawSubmissionId) match
           case Left(message) =>
             SubmissionHttpResponses.validationErrorResponse(message)
           case Right(submissionId) =>
-            handlers.getSubmission(request, submissionId)
+            handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.getSubmission)
     }

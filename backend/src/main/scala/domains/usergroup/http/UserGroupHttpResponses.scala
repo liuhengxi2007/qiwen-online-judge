@@ -14,6 +14,9 @@ object UserGroupHttpResponses:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
+  def listUserGroupsResponse(response: domains.shared.model.PageResponse[domains.usergroup.model.UserGroupSummary]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =
     UserGroupDetail(
       id = group.id,

@@ -3,15 +3,11 @@ package domains.usergroup.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.AuthHttpSessionSupport
-import domains.shared.model.PageRequest
 import domains.usergroup.application.UserGroupCommands
 import domains.auth.model.Username
 import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupSlug}
-import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 
@@ -22,50 +18,78 @@ object UserGroupRouter:
     val handlers = new UserGroupHttpHandlers(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        handlers.listUserGroups(request)
+        handlers.execute(request, (), UserGroupHttpPlanDefinitions.listUserGroups)
 
       case request @ GET -> Root / "api" / "user-groups" / groupSlug =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.getUserGroup(request, parsedGroupSlug)
+            handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.getUserGroup)
 
       case request @ POST -> Root / "api" / "user-groups" =>
-        handlers.createUserGroup(request)
+        handlers.executeDecoded[CreateUserGroupRequest, CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult](
+          request,
+          UserGroupHttpPlanDefinitions.createUserGroup
+        )(identity)
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.updateUserGroup(request, parsedGroupSlug)
+            handlers.executeDecoded[
+              UpdateUserGroupRequest,
+              (UserGroupSlug, UpdateUserGroupRequest),
+              UserGroupCommands.UpdateUserGroupResult
+            ](
+              request,
+              UserGroupHttpPlanDefinitions.updateUserGroup
+            )(updateRequest => (parsedGroupSlug, updateRequest))
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "delete" =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.deleteUserGroup(request, parsedGroupSlug)
+            handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.addMember(request, parsedGroupSlug)
+            handlers.executeDecoded[
+              AddUserGroupMemberRequest,
+              (UserGroupSlug, AddUserGroupMemberRequest),
+              UserGroupCommands.AddUserGroupMemberResult
+            ](
+              request,
+              UserGroupHttpPlanDefinitions.addMember
+            )(addMemberRequest => (parsedGroupSlug, addMemberRequest))
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "role" =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.updateMemberRole(request, parsedGroupSlug, Username.canonical(memberUsername))
+            handlers.executeDecoded[
+              UpdateUserGroupMemberRoleRequest,
+              (UserGroupSlug, Username, UpdateUserGroupMemberRoleRequest),
+              UserGroupCommands.UpdateUserGroupMemberRoleResult
+            ](
+              request,
+              UserGroupHttpPlanDefinitions.updateMemberRole
+            )(updateRoleRequest => (parsedGroupSlug, Username.canonical(memberUsername), updateRoleRequest))
 
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" / memberUsername / "remove" =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.removeMember(request, parsedGroupSlug, Username.canonical(memberUsername))
+            handlers.execute(
+              request,
+              (parsedGroupSlug, Username.canonical(memberUsername)),
+              UserGroupHttpPlanDefinitions.removeMember
+            )
     }

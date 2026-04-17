@@ -9,6 +9,8 @@ import domains.submission.table.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
 import domains.submission.application.SubmissionCommandSupport.*
 
+import java.sql.Connection
+
 object SubmissionMutationCommands:
 
   def createSubmission(
@@ -16,29 +18,36 @@ object SubmissionMutationCommands:
     actor: AuthUser,
     request: CreateSubmissionRequest
   ): IO[CreateSubmissionResult] =
+    databaseSession.withTransactionConnection(connection =>
+      createSubmission(connection, actor, request)
+    )
+
+  def createSubmission(
+    connection: Connection,
+    actor: AuthUser,
+    request: CreateSubmissionRequest
+  ): IO[CreateSubmissionResult] =
     SubmissionValidation.validateCreate(request) match
       case Left(message) =>
         IO.pure(CreateSubmissionResult.ValidationFailed(message))
       case Right(validRequest) =>
-        databaseSession.withTransactionConnection { connection =>
-          ProblemTable.findBySlug(connection, validRequest.problemSlug).flatMap {
-            case None =>
-              IO.pure(CreateSubmissionResult.ProblemNotFound)
-            case Some(problem) =>
-              canSubmitToProblem(connection, actor, problem).flatMap {
-                case false =>
-                  IO.pure(CreateSubmissionResult.Forbidden)
-                case true =>
-                  SubmissionTable
-                    .insert(
-                      connection = connection,
-                      problemId = problem.id,
-                      problemSlug = problem.slug,
-                      submitterUsername = actor.username,
-                      language = validRequest.language,
-                      sourceCode = validRequest.sourceCode,
-                    )
-                    .map(submission => CreateSubmissionResult.Created(submission))
-              }
-          }
+        ProblemTable.findBySlug(connection, validRequest.problemSlug).flatMap {
+          case None =>
+            IO.pure(CreateSubmissionResult.ProblemNotFound)
+          case Some(problem) =>
+            canSubmitToProblem(connection, actor, problem).flatMap {
+              case false =>
+                IO.pure(CreateSubmissionResult.Forbidden)
+              case true =>
+                SubmissionTable
+                  .insert(
+                    connection = connection,
+                    problemId = problem.id,
+                    problemSlug = problem.slug,
+                    submitterUsername = actor.username,
+                    language = validRequest.language,
+                    sourceCode = validRequest.sourceCode,
+                  )
+                  .map(submission => CreateSubmissionResult.Created(submission))
+            }
         }

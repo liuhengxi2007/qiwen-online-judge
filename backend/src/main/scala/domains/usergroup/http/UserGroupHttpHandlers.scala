@@ -4,13 +4,8 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
-import domains.auth.model.Username
-import domains.shared.model.PageRequest
-import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupSlug}
-import io.circe.syntax.*
+import domains.usergroup.http.UserGroupHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 
 final class UserGroupHttpHandlers(
@@ -18,80 +13,78 @@ final class UserGroupHttpHandlers(
   sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  import dsl.*
-
-  def listUserGroups(request: Request[IO]): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      UserGroupCommands
-        .listUserGroups(databaseSession, actor, PageRequest())
-        .flatMap(response => Ok(response.asJson))
-    }
-
-  def getUserGroup(request: Request[IO], parsedGroupSlug: UserGroupSlug): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      UserGroupCommands
-        .getUserGroupBySlug(databaseSession, actor, parsedGroupSlug)
-        .flatMap(UserGroupHttpResponses.mapGetResult)
-    }
-
-  def createUserGroup(request: Request[IO]): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      for
-        createRequest <- request.as[CreateUserGroupRequest]
-        response <- UserGroupCommands
-          .createUserGroup(databaseSession, actor, createRequest)
-          .flatMap(UserGroupHttpResponses.mapCreateResult)
-      yield response
-    }
-
-  def updateUserGroup(request: Request[IO], parsedGroupSlug: UserGroupSlug): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      for
-        updateRequest <- request.as[UpdateUserGroupRequest]
-        response <- UserGroupCommands
-          .updateUserGroup(databaseSession, actor, parsedGroupSlug, updateRequest)
-          .flatMap(UserGroupHttpResponses.mapUpdateResult)
-      yield response
-    }
-
-  def deleteUserGroup(request: Request[IO], parsedGroupSlug: UserGroupSlug): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      UserGroupCommands
-        .deleteUserGroup(databaseSession, actor, parsedGroupSlug)
-        .flatMap(UserGroupHttpResponses.mapDeleteResult)
-    }
-
-  def addMember(request: Request[IO], parsedGroupSlug: UserGroupSlug): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      for
-        addMemberRequest <- request.as[AddUserGroupMemberRequest]
-        response <- UserGroupCommands
-          .addUserGroupMember(databaseSession, actor, parsedGroupSlug, addMemberRequest)
-          .flatMap(UserGroupHttpResponses.mapAddMemberResult)
-      yield response
-    }
-
-  def updateMemberRole(
+  private def runAuthenticatedPlan[Input, Output](
     request: Request[IO],
-    parsedGroupSlug: UserGroupSlug,
-    memberUsername: Username
+    input: Input,
+    registeredPlan: RegisteredPlan.Plain[Input, Output]
   ): IO[Response[IO]] =
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      for
-        updateRoleRequest <- request.as[UpdateUserGroupMemberRoleRequest]
-        response <- UserGroupCommands
-          .updateUserGroupMemberRole(databaseSession, actor, parsedGroupSlug, memberUsername, updateRoleRequest)
-          .flatMap(UserGroupHttpResponses.mapUpdateMemberRoleResult)
-      yield response
+      registeredPlan.plan.execute(databaseSession, actor, input).flatMap(registeredPlan.toResponse)
     }
 
-  def removeMember(
+  private def runAuthenticatedPlan[Input, Output](
     request: Request[IO],
-    parsedGroupSlug: UserGroupSlug,
-    memberUsername: Username
+    input: Input,
+    registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
   ): IO[Response[IO]] =
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      UserGroupCommands
-        .removeUserGroupMember(databaseSession, actor, parsedGroupSlug, memberUsername)
-        .flatMap(UserGroupHttpResponses.mapRemoveMemberResult)
+      databaseSession.withTransactionConnection(connection =>
+        registeredPlan.plan.execute(connection, actor, input).flatMap(registeredPlan.toResponse)
+      )
     }
+
+  def execute[Input, Output](
+    request: Request[IO],
+    input: Input,
+    registeredPlan: RegisteredPlan.Plain[Input, Output]
+  ): IO[Response[IO]] =
+    runAuthenticatedPlan(request, input, registeredPlan)
+
+  def execute[Input, Output](
+    request: Request[IO],
+    input: Input,
+    registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
+  ): IO[Response[IO]] =
+    runAuthenticatedPlan(request, input, registeredPlan)
+
+  private def runDecodedAuthenticatedPlan[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.Plain[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      request.as[Body].flatMap(body =>
+        registeredPlan.plan.execute(databaseSession, actor, toInput(body)).flatMap(registeredPlan.toResponse)
+      )
+    }
+
+  private def runDecodedAuthenticatedPlan[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      request.as[Body].flatMap(body =>
+        databaseSession.withTransactionConnection(connection =>
+          registeredPlan.plan.execute(connection, actor, toInput(body)).flatMap(registeredPlan.toResponse)
+        )
+      )
+    }
+
+  def executeDecoded[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.Plain[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)
+
+  def executeDecoded[Body, Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.WithTransaction[Input, Output]
+  )(
+    toInput: Body => Input
+  )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
+    runDecodedAuthenticatedPlan(request, registeredPlan)(toInput)

@@ -13,6 +13,9 @@ object ProblemSetHttpResponses:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
+  def listProblemSetsResponse(response: domains.shared.model.PageResponse[domains.problemset.model.ProblemSetSummary]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
   def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =
     ProblemSetDetail(
       id = problemSet.id,
