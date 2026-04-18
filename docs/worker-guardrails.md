@@ -1,0 +1,37 @@
+# Worker Guardrails
+
+Back to [Architecture Guardrails](./architecture-guardrails.md).
+
+## Workers
+
+- `judger`
+  - Independent worker process for claiming judge tasks, running code, and reporting results
+
+Worker processes are separate applications, not submodules of the backend runtime.
+
+Rules:
+
+- workers must not depend directly on the backend application project
+- workers must not import backend `application`, `http`, `table`, or database code
+- workers may call backend HTTP endpoints or other stable service boundaries
+- if backend and a worker need shared Scala types, extract a small dedicated shared protocol module
+- shared protocol modules may contain typed values, parsing, and codecs
+- shared protocol modules must not contain SQL, routers, command handlers, or service orchestration
+
+Prefer:
+
+- `backend -> shared-judge-protocol`
+- `judger -> shared-judge-protocol`
+
+Avoid:
+
+- `judger -> backend`
+- sharing backend internals just to reuse one model file
+- moving worker-specific execution code into backend `shared`
+
+See also:
+
+- [Backend Guardrails](./backend-guardrails.md)
+- [Backend Contract Alignment](./backend-contract-alignment.md)
+- [Contract Checks](./contract-checks.md)
+- [Resource Lifecycle Matrix](./resource-lifecycle-matrix.md)
