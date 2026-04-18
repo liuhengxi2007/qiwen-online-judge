@@ -60,3 +60,7 @@
 - When investigating UI copy or routing, search exact keys or route fragments first, for example:
   - `rg -n "site-manage-denied|toForbiddenRedirect" frontend/src`
   - `rg -n "common.cancel" frontend/src`
+
+## Collaboration Expectations
+
+- If a requested design or implementation looks technically unsound, say so clearly and explain why instead of forcing it through unchanged.
