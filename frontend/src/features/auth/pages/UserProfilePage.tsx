@@ -84,7 +84,7 @@ export function UserProfilePage() {
 
             <div className="flex flex-wrap gap-3">
               <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
-                <Link to={`/submission/${targetUsername}`}>
+                <Link to={`/submissions?username=${encodeURIComponent(targetUsername)}`}>
                   <Files className="size-4" />
                   {t('userProfile.openSubmissions')}
                 </Link>

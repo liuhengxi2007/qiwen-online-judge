@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowRight, Files } from 'lucide-react'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { ArrowRight, Files, Search } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -66,6 +66,7 @@ type SubmissionSort = 'submitted' | 'time' | 'memory' | 'code_length'
 type SortDirection = 'asc' | 'desc'
 
 const submissionsPerPage = 10
+const searchSuggestionLimit = 10
 
 const verdictFilterValues = [
   'all',
@@ -99,6 +100,7 @@ type UserFilterSuggestion = {
 }
 
 type ProblemFilterSuggestion = {
+  slug: string
   title: string
 }
 
@@ -145,7 +147,10 @@ function bestFuzzyScore(candidates: string[], input: string): number {
   return Math.max(...candidates.map((candidate) => fuzzyScore(candidate, input)))
 }
 
-function buildUserSuggestions(submissions: SubmissionSummary[], input: string): UserFilterSuggestion[] {
+function buildUserSuggestions(
+  submissions: SubmissionSummary[],
+  input: string,
+): UserFilterSuggestion[] {
   const normalizedInput = normalizeSearchText(input)
   if (!normalizedInput) {
     return []
@@ -169,11 +174,14 @@ function buildUserSuggestions(submissions: SubmissionSummary[], input: string): 
     }))
     .filter(({ score }) => score > 0)
     .sort((left, right) => right.score - left.score || usernameValue(left.suggestion.username).localeCompare(usernameValue(right.suggestion.username)))
-    .slice(0, 5)
+    .slice(0, searchSuggestionLimit)
     .map(({ suggestion }) => suggestion)
 }
 
-function buildProblemSuggestions(submissions: SubmissionSummary[], input: string): ProblemFilterSuggestion[] {
+function buildProblemSuggestions(
+  submissions: SubmissionSummary[],
+  input: string,
+): ProblemFilterSuggestion[] {
   const normalizedInput = normalizeSearchText(input)
   if (!normalizedInput) {
     return []
@@ -181,20 +189,23 @@ function buildProblemSuggestions(submissions: SubmissionSummary[], input: string
 
   const suggestions = new Map<string, ProblemFilterSuggestion>()
   for (const submission of submissions) {
-    const title = problemTitleValue(submission.problemTitle)
-    if (!suggestions.has(title)) {
-      suggestions.set(title, { title })
+    const slug = problemSlugValue(submission.problemSlug)
+    if (!suggestions.has(slug)) {
+      suggestions.set(slug, {
+        slug,
+        title: problemTitleValue(submission.problemTitle),
+      })
     }
   }
 
   return [...suggestions.values()]
     .map((suggestion) => ({
       suggestion,
-      score: fuzzyScore(suggestion.title, input),
+      score: bestFuzzyScore([suggestion.slug, suggestion.title], input),
     }))
     .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || left.suggestion.title.localeCompare(right.suggestion.title))
-    .slice(0, 5)
+    .sort((left, right) => right.score - left.score || left.suggestion.slug.localeCompare(right.suggestion.slug))
+    .slice(0, searchSuggestionLimit)
     .map(({ suggestion }) => suggestion)
 }
 
@@ -202,9 +213,9 @@ function matchesUsernameFilter(submission: SubmissionSummary, username: Username
   return username === null || usernameValue(submission.submitter.username) === usernameValue(username)
 }
 
-function matchesProblemTitleFilter(submission: SubmissionSummary, problemTitle: string): boolean {
-  const normalizedProblemTitle = normalizeSearchText(problemTitle)
-  return !normalizedProblemTitle || normalizeSearchText(problemTitleValue(submission.problemTitle)).includes(normalizedProblemTitle)
+function matchesProblemSlugTextFilter(submission: SubmissionSummary, problemSlug: string): boolean {
+  const normalizedProblemSlug = normalizeSearchText(problemSlug)
+  return !normalizedProblemSlug || normalizeSearchText(problemSlugValue(submission.problemSlug)) === normalizedProblemSlug
 }
 
 function matchesProblemSlugFilter(submission: SubmissionSummary, problemSlug: ProblemSlug | null): boolean {
@@ -280,18 +291,19 @@ function buildPageNumbers(currentPage: number, totalPages: number): number[] {
 }
 
 type SubmissionPageProps = {
-  fixedUsernameFilter?: Username
   fixedProblemSlugFilter?: ProblemSlug
 }
 
-export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: SubmissionPageProps = {}) {
+export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('submission.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const hasFixedUsernameFilter = fixedUsernameFilter !== undefined
+  const [searchParams, setSearchParams] = useSearchParams()
+  const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
+  const usernameQueryResult = usernameQueryParam ? parseUsername(usernameQueryParam) : null
+  const queryUsernameFilter = usernameQueryResult?.ok ? usernameQueryResult.value : null
   const [usernameFilterInput, setUsernameFilterInput] = useState('')
   const [problemFilterInput, setProblemFilterInput] = useState('')
-  const [activeUsernameFilter, setActiveUsernameFilter] = useState<Username | null>(null)
   const [activeProblemTitleFilter, setActiveProblemTitleFilter] = useState('')
   const [activeVerdictFilter, setActiveVerdictFilter] = useState<VerdictFilter>('all')
   const [activeSort, setActiveSort] = useState<SubmissionSort>('submitted')
@@ -300,22 +312,21 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
   const [filterErrorMessage, setFilterErrorMessage] = useState('')
   const [showUserSuggestions, setShowUserSuggestions] = useState(true)
   const [showProblemSuggestions, setShowProblemSuggestions] = useState(true)
+  const [userSearchEnabled, setUserSearchEnabled] = useState(false)
+  const [problemSearchEnabled, setProblemSearchEnabled] = useState(false)
   const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<Username | null>(null)
-  const submissionQuery = useSubmissionListQuery(fixedUsernameFilter ?? null)
-  const userSuggestions = buildUserSuggestions(submissionQuery.submissions, usernameFilterInput)
-  const problemSuggestions = buildProblemSuggestions(submissionQuery.submissions, problemFilterInput)
-  const effectiveUsernameFilter = fixedUsernameFilter ?? activeUsernameFilter
-  const effectiveUserDisplayName = effectiveUsernameFilter
-    ? (submissionQuery.submissions.find(
-        (submission) => usernameValue(submission.submitter.username) === usernameValue(effectiveUsernameFilter),
-      )?.submitter.displayName ?? null)
-    : null
+  const submissionQuery = useSubmissionListQuery(queryUsernameFilter)
+  const userSuggestions = userSearchEnabled ? buildUserSuggestions(submissionQuery.submissions, usernameFilterInput) : []
+  const problemSuggestions = problemSearchEnabled
+    ? buildProblemSuggestions(submissionQuery.submissions, problemFilterInput)
+    : []
+  const effectiveUsernameFilter = queryUsernameFilter
   const hasFixedProblemFilter = fixedProblemSlugFilter !== undefined
   const visibleSubmissions = submissionQuery.submissions.filter(
     (submission) =>
       matchesUsernameFilter(submission, effectiveUsernameFilter) &&
       matchesProblemSlugFilter(submission, fixedProblemSlugFilter ?? null) &&
-      (hasFixedProblemFilter || matchesProblemTitleFilter(submission, activeProblemTitleFilter)) &&
+      (hasFixedProblemFilter || matchesProblemSlugTextFilter(submission, activeProblemTitleFilter)) &&
       matchesVerdictFilter(submission, activeVerdictFilter),
   )
   const sortedSubmissions = [...visibleSubmissions].sort((left, right) => compareSubmissions(left, right, activeSort, sortDirection))
@@ -359,7 +370,14 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [activeUsernameFilter, activeProblemTitleFilter, activeVerdictFilter, activeSort, sortDirection, fixedUsernameFilter, fixedProblemSlugFilter])
+  }, [queryUsernameFilter, activeProblemTitleFilter, activeVerdictFilter, activeSort, sortDirection, fixedProblemSlugFilter])
+
+  useEffect(() => {
+    setUsernameFilterInput(queryUsernameFilter ? usernameValue(queryUsernameFilter) : '')
+    setSelectedUsernameSuggestion(queryUsernameFilter)
+    setShowUserSuggestions(true)
+    setUserSearchEnabled(false)
+  }, [queryUsernameFilter])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -400,70 +418,123 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
             <CardDescription>{t('submission.filter.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className={`grid gap-4 ${hasFixedUsernameFilter || hasFixedProblemFilter ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
-              {hasFixedUsernameFilter ? null : (
-                <div className="space-y-2">
-                  <Label htmlFor="submission-username-filter">{t('common.displayName')}</Label>
+            <div className={`grid gap-4 ${hasFixedProblemFilter ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+              <div className="space-y-2">
+                <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     id="submission-username-filter"
+                    className="min-w-0"
                     value={usernameFilterInput}
-                    placeholder={t('submission.filter.usernamePlaceholder')}
+                    placeholder={
+                      userSearchEnabled
+                        ? t('submission.filter.userSearchPlaceholder')
+                        : t('submission.filter.usernamePlaceholder')
+                    }
                     onChange={(event) => {
                       setUsernameFilterInput(event.target.value)
                       setSelectedUsernameSuggestion(null)
-                      setShowUserSuggestions(true)
+                      setShowUserSuggestions(userSearchEnabled)
                       setFilterErrorMessage('')
                     }}
                   />
-                  {showUserSuggestions && userSuggestions.length > 0 ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                      {userSuggestions.map((suggestion) => (
-                        <button
-                          key={usernameValue(suggestion.username)}
-                          type="button"
-                          className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
-                          onClick={() => {
-                            setUsernameFilterInput(suggestion.displayName)
-                            setSelectedUsernameSuggestion(suggestion.username)
-                            setShowUserSuggestions(false)
-                            setFilterErrorMessage('')
-                          }}
-                        >
-                          <span className="font-medium text-slate-900">{suggestion.displayName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={
+                      userSearchEnabled
+                        ? 'shrink-0 rounded-xl border-slate-950 bg-slate-950 px-2.5 text-white hover:bg-slate-800'
+                        : 'shrink-0 rounded-xl border-slate-300 bg-white px-2.5'
+                    }
+                    title={t('submission.filter.toggleUserSearch')}
+                    aria-label={t('submission.filter.toggleUserSearch')}
+                    onClick={() => {
+                      setUserSearchEnabled((enabled) => !enabled)
+                      setShowUserSuggestions(!userSearchEnabled)
+                      setSelectedUsernameSuggestion(null)
+                    }}
+                  >
+                    <Search className="size-4" />
+                  </Button>
                 </div>
-              )}
+                {showUserSuggestions && userSuggestions.length > 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                    {userSuggestions.map((suggestion) => (
+                      <button
+                        key={usernameValue(suggestion.username)}
+                        type="button"
+                        className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                        onClick={() => {
+                          setUsernameFilterInput(usernameValue(suggestion.username))
+                          setSelectedUsernameSuggestion(suggestion.username)
+                          setUserSearchEnabled(false)
+                          setShowUserSuggestions(false)
+                          setFilterErrorMessage('')
+                        }}
+                      >
+                        <span className="font-medium text-slate-900">{suggestion.displayName}</span>
+                        <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
 
               {hasFixedProblemFilter ? null : (
                 <div className="space-y-2">
-                  <Label htmlFor="submission-problem-filter">{t('submission.filter.problemTitle')}</Label>
-                  <Input
-                    id="submission-problem-filter"
-                    value={problemFilterInput}
-                    placeholder={t('submission.filter.problemPlaceholder')}
-                    onChange={(event) => {
-                      setProblemFilterInput(event.target.value)
-                      setShowProblemSuggestions(true)
-                      setFilterErrorMessage('')
-                    }}
-                  />
+                  <Label htmlFor="submission-problem-filter">{t('submission.filter.problemSlug')}</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="submission-problem-filter"
+                      className="min-w-0"
+                      value={problemFilterInput}
+                      placeholder={
+                        problemSearchEnabled
+                          ? t('submission.filter.problemSearchPlaceholder')
+                          : t('submission.filter.problemSlugPlaceholder')
+                      }
+                      onChange={(event) => {
+                        setProblemFilterInput(event.target.value)
+                        setShowProblemSuggestions(problemSearchEnabled)
+                        setFilterErrorMessage('')
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={
+                        problemSearchEnabled
+                          ? 'shrink-0 rounded-xl border-slate-950 bg-slate-950 px-2.5 text-white hover:bg-slate-800'
+                          : 'shrink-0 rounded-xl border-slate-300 bg-white px-2.5'
+                      }
+                      title={t('submission.filter.toggleProblemSearch')}
+                      aria-label={t('submission.filter.toggleProblemSearch')}
+                      onClick={() => {
+                        setProblemSearchEnabled((enabled) => !enabled)
+                        setShowProblemSuggestions(!problemSearchEnabled)
+                      }}
+                    >
+                      <Search className="size-4" />
+                    </Button>
+                  </div>
                   {showProblemSuggestions && problemSuggestions.length > 0 ? (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
                       {problemSuggestions.map((suggestion) => (
                         <button
-                          key={suggestion.title}
+                          key={suggestion.slug}
                           type="button"
-                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-900 hover:bg-white"
+                          className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
                           onClick={() => {
-                            setProblemFilterInput(suggestion.title)
+                            setProblemFilterInput(suggestion.slug)
+                            setProblemSearchEnabled(false)
                             setShowProblemSuggestions(false)
                             setFilterErrorMessage('')
                           }}
                         >
-                          {suggestion.title}
+                          <span className="font-medium text-slate-900">{suggestion.title}</span>
+                          <span className="text-slate-500">{suggestion.slug}</span>
                         </button>
                       ))}
                     </div>
@@ -539,27 +610,34 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
                 type="button"
                 className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                 onClick={() => {
-                  if (!hasFixedUsernameFilter) {
-                    const trimmedUsernameInput = usernameFilterInput.trim()
-                    if (!trimmedUsernameInput) {
-                      setActiveUsernameFilter(null)
-                    } else {
-                      if (selectedUsernameSuggestion !== null) {
-                        setActiveUsernameFilter(selectedUsernameSuggestion)
-                      } else {
-                        const usernameResult = parseUsername(trimmedUsernameInput)
-                        if (!usernameResult.ok) {
-                          setFilterErrorMessage(usernameResult.error)
-                          return
-                        }
+                  const trimmedUsernameInput = usernameFilterInput.trim()
+                  const nextSearchParams = new URLSearchParams(searchParams)
+                  if (!trimmedUsernameInput) {
+                    nextSearchParams.delete('username')
+                  } else {
+                    const nextUsername =
+                      selectedUsernameSuggestion !== null
+                        ? selectedUsernameSuggestion
+                        : (() => {
+                            const usernameResult = parseUsername(trimmedUsernameInput)
+                            if (!usernameResult.ok) {
+                              setFilterErrorMessage(usernameResult.error)
+                              return null
+                            }
 
-                        setActiveUsernameFilter(usernameResult.value)
-                      }
+                            return usernameResult.value
+                          })()
+
+                    if (nextUsername === null) {
+                      return
                     }
+
+                    nextSearchParams.set('username', usernameValue(nextUsername))
                   }
 
                   setActiveProblemTitleFilter(problemFilterInput.trim())
                   setFilterErrorMessage('')
+                  setSearchParams(nextSearchParams)
                 }}
               >
                 {t('submission.filter.apply')}
@@ -574,9 +652,10 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
                   setProblemFilterInput('')
                   setShowUserSuggestions(true)
                   setShowProblemSuggestions(true)
-                  if (!hasFixedUsernameFilter) {
-                    setActiveUsernameFilter(null)
-                  }
+                  setUserSearchEnabled(false)
+                  setProblemSearchEnabled(false)
+                  const nextSearchParams = new URLSearchParams(searchParams)
+                  nextSearchParams.delete('username')
                   if (!hasFixedProblemFilter) {
                     setActiveProblemTitleFilter('')
                   }
@@ -584,6 +663,7 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
                   setActiveSort('submitted')
                   setSortDirection('desc')
                   setFilterErrorMessage('')
+                  setSearchParams(nextSearchParams)
                 }}
               >
                 {t('submission.filter.clear')}
@@ -593,7 +673,7 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
             {effectiveUsernameFilter ? (
               <p className="text-sm text-slate-600">
                 {t('submission.filter.showingUser', {
-                  username: effectiveUserDisplayName ? displayNameValue(effectiveUserDisplayName) : t('common.loading'),
+                  username: usernameValue(effectiveUsernameFilter),
                 })}
               </p>
             ) : (
@@ -710,17 +790,6 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
       </section>
     </main>
   )
-}
-
-export function UserSubmissionPage() {
-  const { username } = useParams<{ username: string }>()
-  const usernameResult = parseUsername(username ?? '')
-
-  if (!usernameResult.ok) {
-    return <Navigate replace to="/submissions" />
-  }
-
-  return <SubmissionPage fixedUsernameFilter={usernameResult.value} />
 }
 
 export function ProblemSubmissionPage() {

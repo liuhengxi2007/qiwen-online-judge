@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react'
 
 import {
   toAuthSession,
-  displayNameValue,
   type SessionResponse,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
@@ -69,10 +68,7 @@ export function useUserSettingsMutation() {
           return { kind: 'updated_and_signed_out' }
         }
 
-        const message =
-          params.kind === 'own'
-            ? t('userGroup.message.updateSuccess')
-            : `${t('userSettings.save')} ${displayNameValue(updatedUser.displayName)}.`
+        const message = t('userSettings.updateSuccess')
 
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }
@@ -86,12 +82,12 @@ export function useUserSettingsMutation() {
         if (error instanceof AuthClientError && error.kind === 'unauthorized') {
           const message =
             error.message ||
-            (params.kind === 'own' ? t('userSettings.currentPasswordTitle') : t('userGroup.message.updateFailed'))
+            (params.kind === 'own' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))
           setIsSubmitting(false)
           return { kind: 'unauthorized', message }
         }
 
-        const message = t('userGroup.message.updateFailed')
+        const message = t('userSettings.updateFailed')
         setIsSubmitting(false)
         return { kind: 'failed', message }
       }
