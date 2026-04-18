@@ -16,6 +16,8 @@ object SubmissionTableSchema:
       |  status varchar(32) not null default 'queued',
       |  verdict varchar(64),
       |  judge_message text,
+      |  time_used_ms bigint,
+      |  memory_used_kb bigint,
       |  source_code text not null,
       |  submitted_at timestamp not null,
       |  started_at timestamp,
@@ -27,6 +29,26 @@ object SubmissionTableSchema:
     """
       |do $$
       |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'time_used_ms'
+      |  ) then
+      |    alter table submissions add column time_used_ms bigint;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'memory_used_kb'
+      |  ) then
+      |    alter table submissions add column memory_used_kb bigint;
+      |  end if;
+      |
       |  if not exists (
       |    select 1
       |    from information_schema.columns

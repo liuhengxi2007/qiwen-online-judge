@@ -17,10 +17,26 @@ if [[ -z "${CXX:-}" ]]; then
   export CXX="g++"
 fi
 
-if ! command -v sbt >/dev/null 2>&1; then
-  echo "sbt is required inside WSL." >&2
+if ! command -v java >/dev/null 2>&1; then
+  echo "Java is required inside WSL." >&2
+  echo "Install it in WSL, for example: sudo apt update && sudo apt install -y openjdk-21-jdk" >&2
   exit 1
 fi
+
+if ! command -v sbt >/dev/null 2>&1; then
+  echo "sbt is required inside WSL." >&2
+  echo "Install a Linux sbt inside WSL instead of relying on the Windows sbt path." >&2
+  exit 1
+fi
+
+SBT_BIN="$(command -v sbt)"
+case "${SBT_BIN}" in
+  /mnt/c/*)
+    echo "The sbt found in WSL is the Windows executable: ${SBT_BIN}" >&2
+    echo "Install a native Linux sbt inside WSL and ensure it appears before Windows paths in PATH." >&2
+    exit 1
+    ;;
+esac
 
 if ! command -v "${CXX}" >/dev/null 2>&1; then
   echo "C++ compiler '${CXX}' was not found inside WSL." >&2

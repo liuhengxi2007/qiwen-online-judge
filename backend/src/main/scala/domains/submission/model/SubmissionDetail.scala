@@ -1,7 +1,7 @@
 package domains.submission.model
 
 import domains.auth.model.UserIdentity
-import domains.problem.model.{ProblemId, ProblemSlug}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -12,11 +12,15 @@ final case class SubmissionDetail(
   id: SubmissionId,
   problemId: ProblemId,
   problemSlug: ProblemSlug,
+  problemTitle: ProblemTitle,
   submitter: UserIdentity,
   language: SubmissionLanguage,
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
   judgeMessage: Option[String],
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long],
+  codeLength: Int,
   sourceCode: SubmissionSourceCode,
   submittedAt: Instant,
   startedAt: Option[Instant],

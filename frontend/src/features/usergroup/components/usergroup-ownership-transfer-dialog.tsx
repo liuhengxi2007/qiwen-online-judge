@@ -1,4 +1,4 @@
-import { usernameValue } from '@/features/auth/domain/auth'
+import { displayNameValue } from '@/features/auth/domain/auth'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -26,7 +26,7 @@ export function UserGroupOwnershipTransferDialog({
       description={
         ownershipTargetMember
           ? t('userGroup.detail.transferOwnershipDescription', {
-              username: usernameValue(ownershipTargetMember.username),
+              username: displayNameValue(ownershipTargetMember.displayName),
             })
           : ''
       }

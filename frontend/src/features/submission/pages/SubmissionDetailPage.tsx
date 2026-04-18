@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -8,16 +8,40 @@ import {
   parseSubmissionId,
   submissionIdValue,
   submissionLanguageLabel,
-  submissionStatusLabel,
   submissionVerdictLabel,
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission'
+import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
+
+function formatOptionalDurationMs(value: number | null): string {
+  if (value === null) {
+    return '--'
+  }
+
+  return `${value} ms`
+}
+
+function formatOptionalMemoryKb(value: number | null): string {
+  if (value === null) {
+    return '--'
+  }
+
+  if (value < 1024) {
+    return `${value} KB`
+  }
+
+  return `${(value / 1024).toFixed(1)} MB`
+}
+
+function formatCodeLength(value: number): string {
+  return `${value} B`
+}
 
 export function SubmissionDetailPage() {
   const { t } = useI18n()
@@ -82,29 +106,32 @@ export function SubmissionDetailPage() {
                     <CardTitle className="text-2xl text-slate-950">
                       Submission {submissionIdValue(submissionQuery.submission.id)}
                     </CardTitle>
-                    <CardDescription className="mt-2 text-sm text-slate-500">
-                      {t('submission.detail.problem', { slug: submissionQuery.submission.problemSlug })}
-                    </CardDescription>
+                    <CardDescription className="mt-2 text-sm text-slate-500">{t('submission.detail.heading')}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-6">
+              <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">
+                <div>
+                  <p className="text-slate-500">{t('submission.list.problem')}</p>
+                  <p className="mt-1">
+                    <Link
+                      className="font-medium text-slate-900 hover:underline"
+                      to={`/problems/${problemSlugValue(submissionQuery.submission.problemSlug)}`}
+                    >
+                      {problemTitleValue(submissionQuery.submission.problemTitle)}
+                    </Link>
+                  </p>
+                </div>
                 <div>
                   <p className="text-slate-500">{t('submission.detail.submitter')}</p>
                   <div className="mt-1">
-                    <UserProfileLink showUsername stacked user={submissionQuery.submission.submitter} />
+                    <UserProfileLink user={submissionQuery.submission.submitter} />
                   </div>
                 </div>
                 <div>
                   <p className="text-slate-500">{t('common.languageLabel')}</p>
                   <p className="mt-1 font-medium text-slate-900">
                     {submissionLanguageLabel(submissionQuery.submission.language)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-500">{t('common.status')}</p>
-                  <p className="mt-1 font-medium text-slate-900">
-                    {submissionStatusLabel(submissionQuery.submission.status)}
                   </p>
                 </div>
                 <div>
@@ -120,8 +147,20 @@ export function SubmissionDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">{t('submission.detail.problemSlug')}</p>
-                  <p className="mt-1 font-medium text-slate-900">{submissionQuery.submission.problemSlug}</p>
+                  <p className="text-slate-500">{t('submission.list.timeUsed')}</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {formatOptionalDurationMs(submissionQuery.submission.timeUsedMs)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">{t('submission.list.spaceUsed')}</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {formatOptionalMemoryKb(submissionQuery.submission.memoryUsedKb)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">{t('submission.list.codeLength')}</p>
+                  <p className="mt-1 font-medium text-slate-900">{formatCodeLength(submissionQuery.submission.codeLength)}</p>
                 </div>
               </CardContent>
             </Card>

@@ -6,6 +6,8 @@ final case class SubmissionJudgeState(
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
   judgeMessage: Option[String],
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long],
   startedAt: Option[Instant],
   finishedAt: Option[Instant]
 )
@@ -16,6 +18,8 @@ object SubmissionJudgeState:
       status = SubmissionStatus.Queued,
       verdict = None,
       judgeMessage = None,
+      timeUsedMs = None,
+      memoryUsedKb = None,
       startedAt = None,
       finishedAt = None
     )
@@ -25,6 +29,8 @@ object SubmissionJudgeState:
       status = submission.status,
       verdict = submission.verdict,
       judgeMessage = submission.judgeMessage,
+      timeUsedMs = submission.timeUsedMs,
+      memoryUsedKb = submission.memoryUsedKb,
       startedAt = submission.startedAt,
       finishedAt = submission.finishedAt
     )
@@ -32,7 +38,9 @@ object SubmissionJudgeState:
 final case class SubmissionJudgeCompletion(
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
-  judgeMessage: Option[String]
+  judgeMessage: Option[String],
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long]
 )
 
 object SubmissionLifecycle:
@@ -45,6 +53,8 @@ object SubmissionLifecycle:
             status = SubmissionStatus.Running,
             verdict = None,
             judgeMessage = None,
+            timeUsedMs = None,
+            memoryUsedKb = None,
             startedAt = Some(startedAt),
             finishedAt = None
           )
@@ -66,6 +76,8 @@ object SubmissionLifecycle:
                 status = completion.status,
                 verdict = completion.verdict,
                 judgeMessage = completion.judgeMessage,
+                timeUsedMs = completion.timeUsedMs,
+                memoryUsedKb = completion.memoryUsedKb,
                 finishedAt = Some(finishedAt)
               )
             )

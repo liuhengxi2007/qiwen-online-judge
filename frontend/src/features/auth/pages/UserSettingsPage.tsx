@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { UserAccountPageShell } from '@/features/auth/components/user-account-page-shell'
 import { UserPermissionsCard } from '@/features/auth/components/user-permissions-card'
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
+import { displayNameValue } from '@/features/auth/domain/auth'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/features/auth/hooks/use-user-settings-model'
@@ -64,14 +65,12 @@ export function UserSettingsPage() {
         displayedUser
           ? isEditingOwnSettings
             ? t('userSettings.managingOwn', {
-                displayName: displayedUser.displayName,
-                username: displayedUser.username,
+                displayName: displayNameValue(displayedUser.displayName),
               })
             : t('userSettings.managingOther', {
-                displayName: displayedUser.displayName,
-                username: displayedUser.username,
+                displayName: displayNameValue(displayedUser.displayName),
               })
-          : t('userSettings.loadingFor', { username: targetUsername })
+          : t('userSettings.loadingFor', { username: t('common.loading') })
       }
     >
       <UserProfileOverviewCard

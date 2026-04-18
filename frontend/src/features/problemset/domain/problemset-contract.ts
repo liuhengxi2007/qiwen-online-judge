@@ -1,6 +1,6 @@
 import type {
+  AddProblemToProblemSetRequest as AddProblemToProblemSetRequestContract,
   CreateProblemSetRequest as CreateProblemSetRequestContract,
-  LinkProblemRequest as LinkProblemRequestContract,
   ProblemSetDetail as ProblemSetDetailContract,
   ProblemSetListResponse as ProblemSetListResponseContract,
   ProblemSetProblemSummary as ProblemSetProblemSummaryContract,
@@ -103,9 +103,9 @@ export function toUpdateProblemSetRequestContract(
   }
 }
 
-export function toLinkProblemRequestContract(
+export function toAddProblemToProblemSetRequestContract(
   request: AddProblemToProblemSetRequest,
-): LinkProblemRequestContract {
+): AddProblemToProblemSetRequestContract {
   return {
     problemSlug: problemSlugValue(request.problemSlug),
   }

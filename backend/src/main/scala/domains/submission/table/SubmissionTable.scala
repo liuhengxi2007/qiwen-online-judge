@@ -2,13 +2,14 @@ package domains.submission.table
 
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, UserIdentity, Username}
-import domains.problem.model.{ProblemId, ProblemSlug}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
 import domains.submission.table.SubmissionTableSchema.*
 import domains.submission.table.SubmissionTableSql.*
 import domains.submission.table.SubmissionTableSupport.*
 
+import java.nio.charset.StandardCharsets
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
@@ -32,6 +33,7 @@ object SubmissionTable:
     connection: Connection,
     problemId: ProblemId,
     problemSlug: ProblemSlug,
+    problemTitle: ProblemTitle,
     submitterUsername: Username,
     language: SubmissionLanguage,
     sourceCode: SubmissionSourceCode
@@ -47,10 +49,12 @@ object SubmissionTable:
         statement.setString(5, SubmissionStatus.toDatabase(SubmissionStatus.Queued))
         statement.setNull(6, java.sql.Types.VARCHAR)
         statement.setNull(7, java.sql.Types.LONGVARCHAR)
-        statement.setString(8, sourceCode.value)
-        statement.setTimestamp(9, Timestamp.from(now))
-        statement.setNull(10, java.sql.Types.TIMESTAMP)
-        statement.setNull(11, java.sql.Types.TIMESTAMP)
+        statement.setNull(8, java.sql.Types.BIGINT)
+        statement.setNull(9, java.sql.Types.BIGINT)
+        statement.setString(10, sourceCode.value)
+        statement.setTimestamp(11, Timestamp.from(now))
+        statement.setNull(12, java.sql.Types.TIMESTAMP)
+        statement.setNull(13, java.sql.Types.TIMESTAMP)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -58,11 +62,15 @@ object SubmissionTable:
               id = SubmissionId(resultSet.getLong("public_id")),
               problemId = problemId,
               problemSlug = problemSlug,
+              problemTitle = problemTitle,
               submitter = UserIdentity(submitterUsername, DisplayName(resultSet.getString("submitter_display_name"))),
               language = language,
               status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
               verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
               judgeMessage = Option(resultSet.getString("judge_message")),
+              timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
+              memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+              codeLength = sourceCode.value.getBytes(StandardCharsets.UTF_8).length,
               sourceCode = sourceCode,
               submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
               startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
@@ -147,9 +155,11 @@ object SubmissionTable:
         statement.setString(1, SubmissionStatus.toDatabase(judgeState.status))
         setOptionalVerdict(statement, 2, judgeState.verdict)
         setOptionalJudgeMessage(statement, 3, judgeState.judgeMessage)
-        setOptionalTimestamp(statement, 4, judgeState.startedAt)
-        setOptionalTimestamp(statement, 5, judgeState.finishedAt)
-        statement.setLong(6, submissionId.value)
+        setOptionalLong(statement, 4, judgeState.timeUsedMs)
+        setOptionalLong(statement, 5, judgeState.memoryUsedKb)
+        setOptionalTimestamp(statement, 6, judgeState.startedAt)
+        setOptionalTimestamp(statement, 7, judgeState.finishedAt)
+        statement.setLong(8, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

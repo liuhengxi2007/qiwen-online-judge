@@ -65,7 +65,6 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('common.username')}</TableHead>
                 <TableHead>{t('common.displayName')}</TableHead>
                 <TableHead>{t('common.email')}</TableHead>
                 <TableHead>{t('common.settings')}</TableHead>
@@ -77,8 +76,7 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
             <TableBody>
               {model.users.map((listedUser) => (
                 <TableRow key={usernameValue(listedUser.username)}>
-                  <TableCell className="font-medium text-stone-900">{usernameValue(listedUser.username)}</TableCell>
-                  <TableCell>{displayNameValue(listedUser.displayName)}</TableCell>
+                  <TableCell className="font-medium text-stone-900">{displayNameValue(listedUser.displayName)}</TableCell>
                   <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
                   <TableCell>
                     <Button asChild variant="outline" size="sm" className="rounded-full border-stone-300 bg-white">
@@ -118,7 +116,7 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
                   <TableCell className="text-right">
                     <ConfirmActionDialog
                       title={t('siteManage.deleteUserTitle')}
-                      description={t('siteManage.deleteUserDescription', { username: usernameValue(listedUser.username) })}
+                      description={t('siteManage.deleteUserDescription', { username: displayNameValue(listedUser.displayName) })}
                       confirmLabel={t('siteManage.deleteUserAction')}
                       destructive
                       onConfirm={() => {
@@ -130,7 +128,7 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
                           variant="outline"
                           size="sm"
                           className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                          aria-label={`Delete ${usernameValue(listedUser.username)}`}
+                          aria-label={`Delete ${displayNameValue(listedUser.displayName)}`}
                           disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
                         >
                           <Trash2 className="size-4" />

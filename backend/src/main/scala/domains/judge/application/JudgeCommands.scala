@@ -41,7 +41,9 @@ object JudgeCommands:
                       SubmissionJudgeCompletion(
                         status = SubmissionStatus.Failed,
                         verdict = Some(SubmissionVerdict.SystemError),
-                        judgeMessage = Some(s"${judgerId.value}: $message")
+                        judgeMessage = Some(s"${judgerId.value}: $message"),
+                        timeUsedMs = None,
+                        memoryUsedKb = None
                       ),
                       Instant.now()
                     )
@@ -76,7 +78,9 @@ object JudgeCommands:
                   SubmissionJudgeCompletion(
                     status = fromProtocolStatus(request.status),
                     verdict = request.verdict.map(fromProtocolVerdict),
-                    judgeMessage = request.judgeMessage
+                    judgeMessage = request.judgeMessage,
+                    timeUsedMs = request.timeUsedMs,
+                    memoryUsedKb = request.memoryUsedKb
                   ),
                   Instant.now()
                 )

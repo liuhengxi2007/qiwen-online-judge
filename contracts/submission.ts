@@ -20,10 +20,14 @@ export type SubmissionSummary = {
   id: number
   problemId: string
   problemSlug: string
+  problemTitle: string
   submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  codeLength: number
   submittedAt: string
   startedAt: string | null
   finishedAt: string | null
@@ -33,11 +37,15 @@ export type SubmissionDetail = {
   id: number
   problemId: string
   problemSlug: string
+  problemTitle: string
   submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null
   judgeMessage: string | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  codeLength: number
   sourceCode: string
   submittedAt: string
   startedAt: string | null

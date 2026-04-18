@@ -41,7 +41,9 @@ final class JudgerService(
             ReportJudgeResultRequest(
               status = SubmissionStatus.Failed,
               verdict = Some(SubmissionVerdict.SystemError),
-              judgeMessage = Some(s"Unsupported language on this judger: ${SubmissionLanguage.render(other)}.")
+              judgeMessage = Some(s"Unsupported language on this judger: ${SubmissionLanguage.render(other)}."),
+              timeUsedMs = None,
+              memoryUsedKb = None
             )
           )
 

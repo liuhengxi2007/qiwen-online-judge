@@ -12,7 +12,6 @@ type UserProfileLinkProps = {
 
 export function UserProfileLink({
   user,
-  showUsername = false,
   stacked = false,
   className,
 }: UserProfileLinkProps) {
@@ -24,7 +23,6 @@ export function UserProfileLink({
       <Link className="font-medium text-slate-900 hover:underline" to={profilePath}>
         {displayNameValue(user.displayName)}
       </Link>
-      {showUsername ? <span className="font-mono text-xs text-slate-500">{usernameValue(user.username)}</span> : null}
     </span>
   )
 }

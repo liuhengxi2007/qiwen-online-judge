@@ -3,7 +3,7 @@ import { Trash2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { usernameValue } from '@/features/auth/domain/auth'
+import { displayNameValue } from '@/features/auth/domain/auth'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
@@ -53,7 +53,7 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
               return (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <UserProfileLink showUsername stacked user={member} />
+                    <UserProfileLink stacked user={member} />
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <RadioGroup
@@ -97,7 +97,7 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
                         variant="outline"
                         size="sm"
                         className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                        aria-label={`Remove ${usernameValue(member.username)} from the group`}
+                        aria-label={`Remove ${displayNameValue(member.displayName)} from the group`}
                         disabled
                       >
                         <Trash2 className="size-4" />
@@ -105,7 +105,7 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
                     ) : (
                       <ConfirmActionDialog
                         title={t('userGroup.detail.removeMemberTitle')}
-                        description={t('userGroup.detail.removeMemberDescription', { username: usernameValue(member.username) })}
+                        description={t('userGroup.detail.removeMemberDescription', { username: displayNameValue(member.displayName) })}
                         confirmLabel={t('userGroup.detail.removeMemberAction')}
                         destructive
                         onConfirm={() => {
@@ -117,7 +117,7 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
                             variant="outline"
                             size="sm"
                             className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                            aria-label={`Remove ${usernameValue(member.username)} from the group`}
+                            aria-label={`Remove ${displayNameValue(member.displayName)} from the group`}
                           >
                             <Trash2 className="size-4" />
                           </Button>
