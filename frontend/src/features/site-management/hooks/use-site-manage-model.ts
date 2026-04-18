@@ -5,6 +5,7 @@ import {
   initialSiteManageState,
   reduceSiteManageState,
 } from '@/features/site-management/domain/site-manage-state'
+import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useSiteManageQuery } from '@/features/site-management/hooks/use-site-manage-query'
 import { useUserDeleteMutation } from '@/features/site-management/hooks/use-user-delete-mutation'
 import { useUserPermissionsMutation } from '@/features/site-management/hooks/use-user-permissions-mutation'
@@ -35,7 +36,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
           dispatch({ type: 'update_succeeded', user: result.user })
           return
         case 'forbidden':
-          dispatch({ type: 'redirect_requested', intent: { to: '/?notice=site-manage-denied', replace: true } })
+          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
           return
         case 'failed':
           dispatch({ type: 'update_failed', message: result.message })
@@ -62,7 +63,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
           dispatch({ type: 'delete_succeeded', message: result.message })
           return
         case 'forbidden':
-          dispatch({ type: 'redirect_requested', intent: { to: '/?notice=site-manage-denied', replace: true } })
+          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
           return
         case 'failed':
           dispatch({ type: 'update_failed', message: result.message })

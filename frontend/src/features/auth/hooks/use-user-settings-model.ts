@@ -47,15 +47,6 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
   const submitSettings = mutation.submitSettings
 
   useEffect(() => {
-    if (routePolicy.navigationIntent) {
-      dispatch({
-        type: 'redirect_requested',
-        intent: routePolicy.navigationIntent,
-      })
-    }
-  }, [routePolicy.navigationIntent])
-
-  useEffect(() => {
     dispatch({
       type: 'target_changed',
       editedUser: isEditingOwnSettings ? viewer : null,
@@ -154,7 +145,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     targetUsername,
     isSubmitting: state.isSubmitting || mutation.isSubmitting,
     isLoadingSettings: query.isLoadingSettings,
-    navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
+    navigationIntent: routePolicy.navigationIntent ?? state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
     setDisplayName: (value: string) => dispatch({ type: 'set_display_name', value }),
     setEmail: (value: string) => dispatch({ type: 'set_email', value }),
     setCurrentPassword: (value: string) => dispatch({ type: 'set_current_password', value }),

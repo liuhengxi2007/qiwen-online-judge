@@ -6,6 +6,7 @@ import {
   initialProblemDetailQueryState,
   reduceProblemDetailQueryState,
 } from '@/features/problem/domain/problem-query-state'
+import { HttpClientError } from '@/shared/api/http-client'
 
 export function useProblemDetailQuery(problemSlug: ProblemSlug) {
   const [state, dispatch] = useReducer(reduceProblemDetailQueryState, initialProblemDetailQueryState)
@@ -20,11 +21,17 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug) {
         }
         dispatch({ type: 'load_succeeded', problem })
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) {
           return
         }
-        dispatch({ type: 'load_failed', message: 'Unable to load problem details.' })
+        dispatch({
+          type: 'load_failed',
+          message:
+            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+              ? '404 Not Found.'
+              : 'Unable to load problem details.',
+        })
       })
 
     return () => {

@@ -2,6 +2,7 @@ import { useEffect, useReducer } from 'react'
 
 import { getProblemSet } from '@/features/problemset/api/problemset-client'
 import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { HttpClientError } from '@/shared/api/http-client'
 
 type ProblemSetDetailQueryState = {
   problemSet: ProblemSetDetail | null
@@ -47,11 +48,17 @@ export function useProblemSetDetailQuery(problemSetSlug: ProblemSetSlug) {
         }
         dispatch({ type: 'load_succeeded', problemSet })
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) {
           return
         }
-        dispatch({ type: 'load_failed', message: 'Unable to load problem set details.' })
+        dispatch({
+          type: 'load_failed',
+          message:
+            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+              ? '404 Not Found.'
+              : 'Unable to load problem set details.',
+        })
       })
 
     return () => {

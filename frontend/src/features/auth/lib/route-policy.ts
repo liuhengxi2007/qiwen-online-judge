@@ -28,7 +28,7 @@ export function toPasswordChangedRedirect(): NavigationIntent {
 }
 
 export function toSiteManageDeniedRedirect(): NavigationIntent {
-  return { to: '/?notice=site-manage-denied', replace: true }
+  return toForbiddenRedirect()
 }
 
 export function toForbiddenRedirect(): NavigationIntent {
@@ -100,10 +100,23 @@ export function resolveUserProfileRoutePolicy({
   hasRouteUsername,
   siteManagerViewer,
 }: UserSettingsRoutePolicyArgs): ManagedUserRoutePolicy {
-  return resolveManagedUserRoutePolicy({
-    viewerUsername,
-    routeUsername,
-    hasRouteUsername,
-    siteManagerViewer,
-  })
+  const normalizedRouteUsername = routeUsername ?? viewerUsername
+  const isEditingOwnSettings = normalizedRouteUsername === viewerUsername
+  const canManageTarget = isEditingOwnSettings || siteManagerViewer
+
+  if (hasRouteUsername && !routeUsername) {
+    return {
+      navigationIntent: toForbiddenRedirect(),
+      targetUsername: normalizedRouteUsername,
+      isEditingOwnSettings,
+      canManageTarget,
+    }
+  }
+
+  return {
+    navigationIntent: null,
+    targetUsername: normalizedRouteUsername,
+    isEditingOwnSettings,
+    canManageTarget,
+  }
 }

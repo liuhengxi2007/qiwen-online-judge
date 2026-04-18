@@ -1,7 +1,6 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { BookCopy, FileText, Files, LogOut, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
@@ -13,13 +12,7 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function DashboardPage() {
   const { t } = useI18n()
   usePageTitle(t('dashboard.title'))
-  const [searchParams] = useSearchParams()
   const { session: user, siteManagerSession, signOut, navigationIntent } = useSessionGuard()
-  const notice = searchParams.get('notice')
-  const noticeMessage =
-    notice === 'site-manage-denied'
-      ? t('dashboard.notice.siteManageDenied')
-      : null
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -41,12 +34,6 @@ export function DashboardPage() {
           </div>
           <AncestorNavigation />
         </div>
-
-        {noticeMessage ? (
-          <Alert className="mb-8 rounded-3xl border-sky-200 bg-sky-50 text-sky-800">
-            <AlertDescription>{noticeMessage}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>

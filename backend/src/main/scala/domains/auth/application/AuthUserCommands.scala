@@ -45,15 +45,12 @@ object AuthUserCommands:
     actor: AuthUser,
     targetUsername: Username
   ): IO[GetUserSettingsResult] =
-    if !canAccessTarget(actor, targetUsername) then
-      IO.pure(GetUserSettingsResult.Forbidden)
-    else
-      databaseSession.withTransactionConnection(connection =>
-        AuthUserTable.findByUsername(connection, targetUsername)
-      ).map {
-        case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
-        case None => GetUserSettingsResult.NotFound
-      }
+    databaseSession.withTransactionConnection(connection =>
+      AuthUserTable.findByUsername(connection, targetUsername)
+    ).map {
+      case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
+      case None => GetUserSettingsResult.NotFound
+    }
 
   def updateUserPermissions(
     databaseSession: DatabaseSession,
@@ -186,9 +183,6 @@ object AuthUserCommands:
           case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
           case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
         }
-
-  private def canAccessTarget(actor: AuthUser, targetUsername: Username): Boolean =
-    targetUsername.value == actor.username.value || actor.siteManager
 
   private def commandCanAccessTarget(command: UpdateUserSettingsCommand, targetUsername: Username): Boolean =
     command match

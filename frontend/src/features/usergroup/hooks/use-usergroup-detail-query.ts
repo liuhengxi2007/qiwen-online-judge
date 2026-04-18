@@ -6,6 +6,7 @@ import {
   initialUserGroupDetailQueryState,
   reduceUserGroupDetailQueryState,
 } from '@/features/usergroup/domain/usergroup-page-state'
+import { HttpClientError } from '@/shared/api/http-client'
 
 export function useUserGroupDetailQuery(userGroupSlug: UserGroupSlug) {
   const [state, dispatch] = useReducer(reduceUserGroupDetailQueryState, initialUserGroupDetailQueryState)
@@ -20,11 +21,17 @@ export function useUserGroupDetailQuery(userGroupSlug: UserGroupSlug) {
         }
         dispatch({ type: 'load_succeeded', userGroup })
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) {
           return
         }
-        dispatch({ type: 'load_failed', message: 'Unable to load user group details.' })
+        dispatch({
+          type: 'load_failed',
+          message:
+            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+              ? '404 Not Found.'
+              : 'Unable to load user group details.',
+        })
       })
 
     return () => {

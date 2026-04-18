@@ -39,104 +39,95 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
       <CardContent className="space-y-4">
         {model.userGroup.members.map((member) => (
           <div key={member.username} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <UserProfileLink showUsername stacked user={member} />
-              </div>
-              <div className="flex flex-col items-stretch gap-3 sm:items-end">
-                <RadioGroup
-                  value={member.role}
-                  disabled={
-                    !model.canManageMemberRoles ||
-                    member.role === 'owner' ||
-                    model.activeUpdatingUsername === member.username ||
-                    model.activeRemovingUsername === member.username
-                  }
-                  onValueChange={(value) => {
-                    if (value !== 'owner' && value !== 'manager' && value !== 'member') {
-                      return
-                    }
+            {(() => {
+              const roleControlsDisabled =
+                !model.canManageMemberRoles ||
+                member.role === 'owner' ||
+                model.activeUpdatingUsername === member.username ||
+                model.activeRemovingUsername === member.username
+              const removeDisabled =
+                !model.canRemoveMember(member.username, member.role) ||
+                model.activeUpdatingUsername !== null ||
+                model.activeRemovingUsername !== null
 
-                    if (value === member.role) {
-                      return
-                    }
+              return (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <UserProfileLink showUsername stacked user={member} />
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <RadioGroup
+                      value={member.role}
+                      disabled={roleControlsDisabled}
+                      onValueChange={(value) => {
+                        if (value !== 'owner' && value !== 'manager' && value !== 'member') {
+                          return
+                        }
 
-                    if (value === 'owner') {
-                      setOwnershipTargetUsername(member.username)
-                      return
-                    }
+                        if (value === member.role) {
+                          return
+                        }
 
-                    void model.updateMemberRole(member.username, value)
-                  }}
-                  className="grid gap-2 sm:grid-cols-3"
-                >
-                  <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                    <RadioGroupItem
-                      value="owner"
-                      disabled={
-                        !model.canManageMemberRoles ||
-                        member.role === 'owner' ||
-                        model.activeUpdatingUsername === member.username ||
-                        model.activeRemovingUsername === member.username
-                      }
-                    />
-                    <span>{t('userGroup.detail.role.owner')}</span>
-                  </label>
-                  <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                    <RadioGroupItem
-                      value="manager"
-                      disabled={
-                        !model.canManageMemberRoles ||
-                        member.role === 'owner' ||
-                        model.activeUpdatingUsername === member.username ||
-                        model.activeRemovingUsername === member.username
-                      }
-                    />
-                    <span>{t('userGroup.detail.role.manager')}</span>
-                  </label>
-                  <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                    <RadioGroupItem
-                      value="member"
-                      disabled={
-                        !model.canManageMemberRoles ||
-                        member.role === 'owner' ||
-                        model.activeUpdatingUsername === member.username ||
-                        model.activeRemovingUsername === member.username
-                      }
-                    />
-                    <span>{t('userGroup.detail.role.member')}</span>
-                  </label>
-                </RadioGroup>
+                        if (value === 'owner') {
+                          setOwnershipTargetUsername(member.username)
+                          return
+                        }
 
-                {member.role !== 'owner' ? (
-                  <ConfirmActionDialog
-                    title={t('userGroup.detail.removeMemberTitle')}
-                    description={t('userGroup.detail.removeMemberDescription', { username: usernameValue(member.username) })}
-                    confirmLabel={t('userGroup.detail.removeMemberAction')}
-                    destructive
-                    onConfirm={() => {
-                      void model.removeMember(member.username)
-                    }}
-                    trigger={
+                        void model.updateMemberRole(member.username, value)
+                      }}
+                      className="grid gap-2 sm:grid-cols-3"
+                    >
+                      <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        <RadioGroupItem value="owner" disabled={roleControlsDisabled} />
+                        <span>{t('userGroup.detail.role.owner')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        <RadioGroupItem value="manager" disabled={roleControlsDisabled} />
+                        <span>{t('userGroup.detail.role.manager')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        <RadioGroupItem value="member" disabled={roleControlsDisabled} />
+                        <span>{t('userGroup.detail.role.member')}</span>
+                      </label>
+                    </RadioGroup>
+
+                    {removeDisabled ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                         aria-label={`Remove ${usernameValue(member.username)} from the group`}
-                        disabled={
-                          !model.canRemoveMember(member.username, member.role) ||
-                          model.activeUpdatingUsername !== null ||
-                          model.activeRemovingUsername !== null
-                        }
+                        disabled
                       >
                         <Trash2 className="size-4" />
                       </Button>
-                    }
-                  />
-                ) : null}
-              </div>
-            </div>
+                    ) : (
+                      <ConfirmActionDialog
+                        title={t('userGroup.detail.removeMemberTitle')}
+                        description={t('userGroup.detail.removeMemberDescription', { username: usernameValue(member.username) })}
+                        confirmLabel={t('userGroup.detail.removeMemberAction')}
+                        destructive
+                        onConfirm={() => {
+                          void model.removeMember(member.username)
+                        }}
+                        trigger={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                            aria-label={`Remove ${usernameValue(member.username)} from the group`}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         ))}
       </CardContent>

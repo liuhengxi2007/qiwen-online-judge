@@ -34,7 +34,7 @@ export function UserProfilePage() {
     siteManagerViewer: viewer.siteManager,
   })
   const query = useUserSettingsQuery({
-    canLoadTarget: routePolicy.canManageTarget,
+    canLoadTarget: true,
     targetUsername: routePolicy.targetUsername,
   })
   const displayedUser = routePolicy.isEditingOwnSettings ? viewer : query.editedUser
@@ -72,12 +72,14 @@ export function UserProfilePage() {
         title={t('userProfile.profileTitle')}
         user={displayedUser}
       >
-        <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
-          <Link to={`/user/${usernameValue(routePolicy.targetUsername)}/settings`}>
-            <Settings className="size-4" />
-            {t('userProfile.openSettings')}
-          </Link>
-        </Button>
+        {routePolicy.canManageTarget ? (
+          <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
+            <Link to={`/user/${usernameValue(routePolicy.targetUsername)}/settings`}>
+              <Settings className="size-4" />
+              {t('userProfile.openSettings')}
+            </Link>
+          </Button>
+        ) : null}
       </UserProfileOverviewCard>
 
       <UserPermissionsCard

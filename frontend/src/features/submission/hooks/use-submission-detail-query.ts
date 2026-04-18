@@ -2,6 +2,7 @@ import { useEffect, useReducer } from 'react'
 
 import { getSubmission } from '@/features/submission/api/submission-client'
 import { isTerminalSubmissionStatus, type SubmissionDetail, type SubmissionId } from '@/features/submission/domain/submission'
+import { HttpClientError } from '@/shared/api/http-client'
 
 type SubmissionDetailQueryState = {
   submission: SubmissionDetail | null
@@ -52,12 +53,18 @@ export function useSubmissionDetailQuery(submissionId: SubmissionId) {
             intervalId = null
           }
         })
-        .catch(() => {
+        .catch((error: unknown) => {
           if (cancelled) {
             return
           }
 
-          dispatch({ type: 'load_failed', message: 'Unable to load submission details.' })
+          dispatch({
+            type: 'load_failed',
+            message:
+              error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+                ? '404 Not Found.'
+                : 'Unable to load submission details.',
+          })
         })
     }
 
