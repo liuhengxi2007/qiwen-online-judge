@@ -1,6 +1,7 @@
 import {
   parseDisplayName,
   parseEmailAddress,
+  parseUserDisplayMode,
   parseUsername,
 } from '@/features/auth/domain/auth'
 import type { SessionResponse } from '@/features/auth/model/SessionResponse'
@@ -32,8 +33,9 @@ export function readAuthSession(): SessionResponse | null {
     const displayNameResult = parseDisplayName(parsed.displayName)
     const usernameResult = parseUsername(parsed.username)
     const emailResult = parseEmailAddress(parsed.email)
+    const displayModeResult = parseUserDisplayMode(parsed.preferences.displayMode)
 
-    if (!displayNameResult.ok || !usernameResult.ok || !emailResult.ok) {
+    if (!displayNameResult.ok || !usernameResult.ok || !emailResult.ok || !displayModeResult.ok) {
       clearAuthSession()
       return null
     }
@@ -42,6 +44,9 @@ export function readAuthSession(): SessionResponse | null {
       displayName: displayNameResult.value,
       username: usernameResult.value,
       email: emailResult.value,
+      preferences: {
+        displayMode: displayModeResult.value,
+      },
       siteManager: parsed.siteManager,
       problemManager: parsed.problemManager,
     }
@@ -57,6 +62,9 @@ function isStoredAuthSessionValue(
   displayName: string
   username: string
   email: string
+  preferences: {
+    displayMode: string
+  }
   siteManager: boolean
   problemManager: boolean
 } {
@@ -70,6 +78,9 @@ function isStoredAuthSessionValue(
     typeof record.displayName === 'string' &&
     typeof record.username === 'string' &&
     typeof record.email === 'string' &&
+    typeof record.preferences === 'object' &&
+    record.preferences !== null &&
+    typeof (record.preferences as { displayMode?: unknown }).displayMode === 'string' &&
     typeof record.siteManager === 'boolean' &&
     typeof record.problemManager === 'boolean'
   )

@@ -4,6 +4,7 @@ import type {
   PlaintextPassword,
   Username,
 } from '@/features/auth/model/AuthValues'
+import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
 
 type ParseSuccess<T> = { ok: true; value: T }
 type ParseFailure = { ok: false; error: string }
@@ -28,6 +29,10 @@ function createPlaintextPassword(value: string): PlaintextPassword {
   return value as PlaintextPassword
 }
 
+function createUserDisplayMode(value: UserDisplayMode): UserDisplayMode {
+  return value
+}
+
 export function requireParsed<T>(result: ParseResult<T>, label: string): T {
   if (!result.ok) {
     throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
@@ -50,6 +55,10 @@ export function emailAddressValue(emailAddress: EmailAddress): string {
 
 export function plaintextPasswordValue(password: PlaintextPassword): string {
   return password
+}
+
+export function userDisplayModeValue(displayMode: UserDisplayMode): UserDisplayMode {
+  return displayMode
 }
 
 export function parseUsername(rawUsername: string): ParseResult<Username> {
@@ -110,4 +119,20 @@ export function parsePlaintextPassword(rawPassword: string): ParseResult<Plainte
   }
 
   return { ok: true, value: createPlaintextPassword(normalized) }
+}
+
+export function parseUserDisplayMode(rawDisplayMode: string): ParseResult<UserDisplayMode> {
+  const normalized = rawDisplayMode.trim()
+
+  switch (normalized) {
+    case 'display_name':
+    case 'username':
+    case 'display_name_with_username':
+      return { ok: true, value: createUserDisplayMode(normalized) }
+    default:
+      return {
+        ok: false,
+        error: 'Display mode must be one of: display_name, username, display_name_with_username.',
+      }
+  }
 }

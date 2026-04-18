@@ -2,6 +2,7 @@ import {
   parseDisplayName,
   parseEmailAddress,
   parsePlaintextPassword,
+  parseUserDisplayMode,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
 } from '@/features/auth/domain/auth'
@@ -9,6 +10,7 @@ import {
 export type UserSettingsDraft = {
   displayName: string
   email: string
+  displayMode: string
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
@@ -40,6 +42,11 @@ export function validateUserSettingsDraft(
   const emailResult = parseEmailAddress(draft.email)
   if (!emailResult.ok) {
     return { ok: false, message: emailResult.error }
+  }
+
+  const displayModeResult = parseUserDisplayMode(draft.displayMode)
+  if (!displayModeResult.ok) {
+    return { ok: false, message: displayModeResult.error }
   }
 
   const currentPasswordResult =
@@ -90,6 +97,9 @@ export function validateUserSettingsDraft(
         request: {
           displayName: displayNameResult.value,
           email: emailResult.value,
+          preferences: {
+            displayMode: displayModeResult.value,
+          },
           currentPassword,
           newPassword: newPasswordResult ? newPasswordResult.value : null,
         },
@@ -104,6 +114,9 @@ export function validateUserSettingsDraft(
       request: {
         displayName: displayNameResult.value,
         email: emailResult.value,
+        preferences: {
+          displayMode: displayModeResult.value,
+        },
         newPassword: newPasswordResult ? newPasswordResult.value : null,
       },
     },

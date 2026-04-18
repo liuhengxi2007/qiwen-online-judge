@@ -7,6 +7,7 @@ final case class SessionResponse(
   displayName: DisplayName,
   username: Username,
   email: EmailAddress,
+  preferences: UserPreferences,
   siteManager: Boolean,
   problemManager: Boolean
 )

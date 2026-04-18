@@ -1,7 +1,7 @@
 package domains.blog.table
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, UserIdentity, Username}
+import domains.auth.model.{DisplayName, UserDisplayMode, UserIdentity, UserPreferences, Username}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogSummary, BlogTitle, BlogType, BlogVisibility, BlogVote}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*
@@ -49,7 +49,13 @@ object BlogTable:
               content = content,
               author = UserIdentity(
                 authorUsername,
-                DisplayName(resultSet.getString("author_display_name"))
+                DisplayName(resultSet.getString("author_display_name")),
+                UserPreferences(
+                  displayMode =
+                    UserDisplayMode
+                      .fromDatabase(resultSet.getString("author_display_mode"))
+                      .getOrElse(throw new IllegalStateException("Invalid author_display_mode."))
+                )
               ),
               visibility = visibility,
               blogType = blogType,

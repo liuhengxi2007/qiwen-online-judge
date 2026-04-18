@@ -1,7 +1,7 @@
 package domains.submission.table
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, UserIdentity, Username}
+import domains.auth.model.{AuthUser, DisplayName, UserDisplayMode, UserIdentity, UserPreferences, Username}
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
@@ -63,7 +63,16 @@ object SubmissionTable:
               problemId = problemId,
               problemSlug = problemSlug,
               problemTitle = problemTitle,
-              submitter = UserIdentity(submitterUsername, DisplayName(resultSet.getString("submitter_display_name"))),
+              submitter = UserIdentity(
+                submitterUsername,
+                DisplayName(resultSet.getString("submitter_display_name")),
+                UserPreferences(
+                  displayMode =
+                    UserDisplayMode
+                      .fromDatabase(resultSet.getString("submitter_display_mode"))
+                      .getOrElse(throw new IllegalStateException("Invalid submitter_display_mode."))
+                )
+              ),
               language = language,
               status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
               verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),

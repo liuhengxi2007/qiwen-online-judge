@@ -24,9 +24,11 @@ import {
   emailAddressValue,
   parseDisplayName,
   parseEmailAddress,
+  parseUserDisplayMode,
   parseUsername,
   plaintextPasswordValue,
   requireParsed,
+  userDisplayModeValue,
   usernameValue,
 } from '@/features/auth/domain/auth-parsers'
 
@@ -42,6 +44,9 @@ export function fromLoginResponseContract(response: LoginResponseContract): Logi
     displayName: requireParsed(parseDisplayName(response.displayName), 'login response display name'),
     username: requireParsed(parseUsername(response.username), 'login response username'),
     email: requireParsed(parseEmailAddress(response.email), 'login response email'),
+    preferences: {
+      displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'login response display mode'),
+    },
     siteManager: response.siteManager,
     problemManager: response.problemManager,
     message: response.message,
@@ -66,15 +71,27 @@ export function fromSessionResponseContract(response: SessionResponseContract): 
     displayName: requireParsed(parseDisplayName(response.displayName), 'session response display name'),
     username: requireParsed(parseUsername(response.username), 'session response username'),
     email: requireParsed(parseEmailAddress(response.email), 'session response email'),
+    preferences: {
+      displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'session response display mode'),
+    },
     siteManager: response.siteManager,
     problemManager: response.problemManager,
   }
 }
 
-export function fromUserIdentityContract(response: { username: string; displayName: string }): UserIdentity {
+export function fromUserIdentityContract(response: {
+  username: string
+  displayName: string
+  preferences: {
+    displayMode: string
+  }
+}): UserIdentity {
   return {
     username: requireParsed(parseUsername(response.username), 'user identity username'),
     displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),
+    preferences: {
+      displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'user identity display mode'),
+    },
   }
 }
 
@@ -100,6 +117,9 @@ export function toUpdateOwnSettingsRequestContract(
   return {
     displayName: displayNameValue(request.displayName),
     email: emailAddressValue(request.email),
+    preferences: {
+      displayMode: userDisplayModeValue(request.preferences.displayMode),
+    },
     currentPassword: plaintextPasswordValue(request.currentPassword),
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
   }
@@ -111,6 +131,9 @@ export function toUpdateManagedUserSettingsRequestContract(
   return {
     displayName: displayNameValue(request.displayName),
     email: emailAddressValue(request.email),
+    preferences: {
+      displayMode: userDisplayModeValue(request.preferences.displayMode),
+    },
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
   }
 }

@@ -1,3 +1,4 @@
+import type { UserPreferences } from './auth'
 import type { PageResponse } from './shared'
 
 export type UserGroupRole = 'owner' | 'manager' | 'member'
@@ -6,6 +7,7 @@ export type AddUserGroupMemberRole = 'manager' | 'member'
 export type UserGroupMember = {
   username: string
   displayName: string
+  preferences: UserPreferences
   role: UserGroupRole
   joinedAt: string
 }

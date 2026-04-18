@@ -54,7 +54,7 @@ object UserGroupTableSql:
 
   val listMembersSql: String =
     """
-      |select ugm.username, au.display_name, ugm.role, ugm.joined_at
+      |select ugm.username, au.display_name, au.display_mode, ugm.role, ugm.joined_at
       |from user_group_memberships ugm
       |join auth_users au on au.username = ugm.username
       |where ugm.user_group_id = ?

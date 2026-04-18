@@ -18,6 +18,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   submissionIdValue,
   submissionLanguageLabel,
+  submissionStatusLabel,
   submissionVerdictLabel,
   type SubmissionSummary,
   type SubmissionVerdict,
@@ -52,6 +53,12 @@ function formatOptionalMemoryKb(value: number | null): string {
 
 function formatCodeLength(value: number): string {
   return `${value} B`
+}
+
+function submissionOverviewStatus(submission: SubmissionSummary): string {
+  return submission.status !== 'completed'
+    ? submissionStatusLabel(submission.status)
+    : submissionVerdictLabel(submission.verdict)
 }
 
 type VerdictFilter = 'all' | 'pending' | SubmissionVerdict
@@ -664,7 +671,7 @@ export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: 
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.verdict')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{submissionVerdictLabel(submission.verdict)}</dd>
+                      <dd className="mt-1 font-medium text-slate-900">{submissionOverviewStatus(submission)}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.submittedAt')}</dt>

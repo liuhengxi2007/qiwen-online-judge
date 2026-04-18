@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { UserAccountPageShell } from '@/features/auth/components/user-account-page-shell'
 import { UserPermissionsCard } from '@/features/auth/components/user-permissions-card'
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
@@ -33,6 +34,7 @@ export function UserSettingsPage() {
     displayedUser,
     displayName,
     email,
+    displayMode,
     currentPassword,
     newPassword,
     confirmNewPassword,
@@ -44,6 +46,7 @@ export function UserSettingsPage() {
     navigationIntent: modelNavigationIntent,
     setDisplayName,
     setEmail,
+    setDisplayMode,
     setCurrentPassword,
     setNewPassword,
     setConfirmNewPassword,
@@ -97,6 +100,23 @@ export function UserSettingsPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="settings-display-mode">{t('userSettings.displayMode')}</Label>
+          <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as typeof displayMode)}>
+            <SelectTrigger id="settings-display-mode" className="rounded-2xl border-slate-300 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="display_name">{t('userSettings.displayMode.displayName')}</SelectItem>
+              <SelectItem value="username">{t('userSettings.displayMode.username')}</SelectItem>
+              <SelectItem value="display_name_with_username">
+                {t('userSettings.displayMode.displayNameWithUsername')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-slate-500">{t('userSettings.displayModeHelp')}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

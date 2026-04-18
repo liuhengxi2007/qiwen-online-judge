@@ -2,7 +2,7 @@ package domains.auth.table
 
 import cats.effect.IO
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, Username}
+import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, UserDisplayMode, Username}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.ResultSet
@@ -33,9 +33,10 @@ object AuthUserTableSupport:
           statement.setString(1, seedAdminUser.username.value)
           statement.setString(2, seedAdminUser.displayName.value)
           statement.setString(3, seedAdminUser.email.value)
-          statement.setString(4, passwordHash.value)
-          statement.setBoolean(5, seedAdminUser.siteManager)
-          statement.setBoolean(6, seedAdminUser.problemManager)
+          statement.setString(4, UserDisplayMode.toDatabase(UserDisplayMode.DisplayName))
+          statement.setString(5, passwordHash.value)
+          statement.setBoolean(6, seedAdminUser.siteManager)
+          statement.setBoolean(7, seedAdminUser.problemManager)
           statement.executeUpdate()
         finally statement.close()
       }
@@ -47,6 +48,10 @@ object AuthUserTableSupport:
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
+      displayMode =
+        UserDisplayMode
+          .fromDatabase(resultSet.getString("display_mode"))
+          .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")

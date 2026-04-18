@@ -2,12 +2,13 @@ import type { LoginResponse } from '@/features/auth/model/LoginResponse'
 import type { SessionResponse } from '@/features/auth/model/SessionResponse'
 
 export function toAuthSession(
-  response: Pick<LoginResponse, 'displayName' | 'username' | 'email' | 'siteManager' | 'problemManager'>,
+  response: Pick<LoginResponse, 'displayName' | 'username' | 'email' | 'preferences' | 'siteManager' | 'problemManager'>,
 ): SessionResponse {
   return {
     displayName: response.displayName,
     username: response.username,
     email: response.email,
+    preferences: response.preferences,
     siteManager: response.siteManager,
     problemManager: response.problemManager,
   }

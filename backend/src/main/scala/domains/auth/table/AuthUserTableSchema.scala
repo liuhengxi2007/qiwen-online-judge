@@ -12,6 +12,7 @@ object AuthUserTableSchema:
       |  username varchar(120) primary key,
       |  display_name varchar(120) not null,
       |  email varchar(255) not null,
+      |  display_mode varchar(64) not null default 'display_name',
       |  password_hash varchar(255) not null,
       |  site_manager boolean not null default false,
       |  problem_manager boolean not null default false
@@ -68,6 +69,22 @@ object AuthUserTableSchema:
       |      and column_name = 'email'
       |  ) then
       |    alter table auth_users add column email varchar(255);
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val addDisplayModeColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'display_mode'
+      |  ) then
+      |    alter table auth_users add column display_mode varchar(64) not null default 'display_name';
       |  end if;
       |end $$;
       |""".stripMargin
@@ -131,6 +148,7 @@ object AuthUserTableSchema:
         statement.execute(migratePasswordColumnSql)
         statement.execute(initTableSql)
         statement.execute(addEmailColumnSql)
+        statement.execute(addDisplayModeColumnSql)
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
         statement.executeUpdate(backfillEmailSql)

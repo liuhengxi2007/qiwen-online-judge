@@ -95,7 +95,7 @@ export function UserProfilePage() {
                   {t('userProfile.openBlogs')}
                 </Link>
               </Button>
-              {routePolicy.isEditingOwnSettings ? (
+              {routePolicy.canManageTarget ? (
                 <Button asChild variant="outline" className="rounded-2xl border-violet-300 bg-white text-violet-950">
                   <Link to={`/user/${targetUsername}/settings`}>
                     <Settings className="size-4" />

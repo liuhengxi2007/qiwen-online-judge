@@ -2,7 +2,7 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, Username}
 import domains.auth.table.AuthUserTable
 
 import java.sql.Connection
@@ -116,6 +116,7 @@ object AuthUserCommands:
                 targetUser,
                 request.displayName,
                 request.email,
+                request.preferences.displayMode,
                 request.newPassword
               )
       }
@@ -130,7 +131,14 @@ object AuthUserCommands:
       case false =>
         IO.pure(UpdateUserSettingsResult.InvalidCurrentPassword)
       case true =>
-        updateSettingsRecord(connection, targetUser, request.displayName, request.email, request.newPassword)
+        updateSettingsRecord(
+          connection,
+          targetUser,
+          request.displayName,
+          request.email,
+          request.preferences.displayMode,
+          request.newPassword
+        )
     }
 
   private def updateSettingsRecord(
@@ -138,6 +146,7 @@ object AuthUserCommands:
     targetUser: AuthUser,
     displayName: domains.auth.model.DisplayName,
     email: domains.auth.model.EmailAddress,
+    displayMode: UserDisplayMode,
     newPassword: Option[domains.auth.model.PlaintextPassword]
   ): IO[UpdateUserSettingsResult] =
     val passwordChanged = newPassword.nonEmpty
@@ -150,6 +159,7 @@ object AuthUserCommands:
         targetUser.username,
         displayName = displayName,
         email = email,
+        displayMode = displayMode,
         passwordHash = nextPasswordHash
       )
     yield updatedUser match

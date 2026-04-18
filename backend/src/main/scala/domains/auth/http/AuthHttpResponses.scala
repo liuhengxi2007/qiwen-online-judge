@@ -2,7 +2,7 @@ package domains.auth.http
 
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
-import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse}
+import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse, UserPreferences}
 import domains.judger.model.RegisteredJudgerListItem
 import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
 import domains.shared.model.{ErrorResponse, SuccessResponse}
@@ -77,6 +77,7 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
+      preferences = UserPreferences(displayMode = user.displayMode),
       siteManager = user.siteManager,
       problemManager = user.problemManager
     )
@@ -95,6 +96,7 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
+      preferences = UserPreferences(displayMode = user.displayMode),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
       message = message
@@ -105,6 +107,7 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
+      preferences = UserPreferences(displayMode = user.displayMode),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
       message = message

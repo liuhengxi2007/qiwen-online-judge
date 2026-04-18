@@ -1,14 +1,17 @@
 import {
   displayNameValue,
   emailAddressValue,
+  userDisplayModeValue,
   type SessionResponse,
 } from '@/features/auth/domain/auth'
+import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 export type UserSettingsState = {
   editedUser: SessionResponse | null
   displayName: string
   email: string
+  displayMode: UserDisplayMode
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
@@ -24,6 +27,7 @@ export type UserSettingsAction =
   | { type: 'query_failed'; message: string }
   | { type: 'set_display_name'; value: string }
   | { type: 'set_email'; value: string }
+  | { type: 'set_display_mode'; value: UserDisplayMode }
   | { type: 'set_current_password'; value: string }
   | { type: 'set_new_password'; value: string }
   | { type: 'set_confirm_new_password'; value: string }
@@ -36,6 +40,7 @@ export const initialUserSettingsState: UserSettingsState = {
   editedUser: null,
   displayName: '',
   email: '',
+  displayMode: 'display_name',
   currentPassword: '',
   newPassword: '',
   confirmNewPassword: '',
@@ -56,6 +61,7 @@ export function reduceUserSettingsState(
         editedUser: action.editedUser,
         displayName: '',
         email: '',
+        displayMode: action.editedUser ? userDisplayModeValue(action.editedUser.preferences.displayMode) : 'display_name',
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
@@ -70,6 +76,7 @@ export function reduceUserSettingsState(
         editedUser: action.user,
         displayName: displayNameValue(action.user.displayName),
         email: emailAddressValue(action.user.email),
+        displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         errorMessage: '',
       }
     case 'query_failed':
@@ -82,6 +89,8 @@ export function reduceUserSettingsState(
       return { ...state, displayName: action.value }
     case 'set_email':
       return { ...state, email: action.value }
+    case 'set_display_mode':
+      return { ...state, displayMode: action.value }
     case 'set_current_password':
       return { ...state, currentPassword: action.value }
     case 'set_new_password':
@@ -101,6 +110,7 @@ export function reduceUserSettingsState(
         editedUser: action.user,
         displayName: displayNameValue(action.user.displayName),
         email: emailAddressValue(action.user.email),
+        displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',

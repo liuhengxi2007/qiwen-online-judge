@@ -6,6 +6,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class UpdateManagedUserSettingsRequest(
   displayName: DisplayName,
   email: EmailAddress,
+  preferences: UserPreferences,
   newPassword: Option[PlaintextPassword]
 )
 

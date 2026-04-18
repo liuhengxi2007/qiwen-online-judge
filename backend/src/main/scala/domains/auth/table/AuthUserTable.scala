@@ -11,6 +11,7 @@ import domains.auth.model.{
   PasswordHash,
   PlaintextPassword,
   SiteManagerUser,
+  UserDisplayMode,
   Username
 }
 import domains.auth.table.AuthUserTableSchema.*
@@ -53,6 +54,7 @@ object AuthUserTable:
     username: Username,
     displayName: DisplayName,
     email: EmailAddress,
+    displayMode: UserDisplayMode,
     password: PlaintextPassword
   ): IO[AuthUser] =
     for
@@ -63,9 +65,10 @@ object AuthUserTable:
           statement.setString(1, username.value.trim)
           statement.setString(2, displayName.value.trim)
           statement.setString(3, email.value.trim)
-          statement.setString(4, passwordHash.value)
-          statement.setBoolean(5, false)
+          statement.setString(4, UserDisplayMode.toDatabase(displayMode))
+          statement.setString(5, passwordHash.value)
           statement.setBoolean(6, false)
+          statement.setBoolean(7, false)
 
           val resultSet = statement.executeQuery()
           try
@@ -143,6 +146,7 @@ object AuthUserTable:
     username: Username,
     displayName: DisplayName,
     email: EmailAddress,
+    displayMode: UserDisplayMode,
     passwordHash: PasswordHash
   ): IO[Option[AuthUser]] =
     IO.blocking {
@@ -150,8 +154,9 @@ object AuthUserTable:
       try
         statement.setString(1, displayName.value.trim)
         statement.setString(2, email.value.trim)
-        statement.setString(3, passwordHash.value)
-        statement.setString(4, username.value.trim)
+        statement.setString(3, UserDisplayMode.toDatabase(displayMode))
+        statement.setString(4, passwordHash.value)
+        statement.setString(5, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try

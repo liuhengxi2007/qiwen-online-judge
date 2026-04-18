@@ -220,6 +220,7 @@ object AuthHttpPlans:
                         username = input.username,
                         displayName = input.displayName,
                         email = input.email,
+                        displayMode = domains.auth.model.UserDisplayMode.DisplayName,
                         password = input.password
                       )
                       .flatMap(createdUser =>
