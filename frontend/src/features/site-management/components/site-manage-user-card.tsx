@@ -65,6 +65,7 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>{t('common.username')}</TableHead>
                 <TableHead>{t('common.displayName')}</TableHead>
                 <TableHead>{t('common.email')}</TableHead>
                 <TableHead>{t('common.settings')}</TableHead>
@@ -76,6 +77,7 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
             <TableBody>
               {model.users.map((listedUser) => (
                 <TableRow key={usernameValue(listedUser.username)}>
+                  <TableCell className="text-stone-700">{usernameValue(listedUser.username)}</TableCell>
                   <TableCell className="font-medium text-stone-900">{displayNameValue(listedUser.displayName)}</TableCell>
                   <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
                   <TableCell>

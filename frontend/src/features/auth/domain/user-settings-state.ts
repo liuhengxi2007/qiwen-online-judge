@@ -145,6 +145,7 @@ export function reduceUserSettingsState(
         ...state,
         isSubmitting: false,
         errorMessage: action.message,
+        successMessage: '',
       }
     case 'redirect_requested':
       return {
