@@ -14,7 +14,9 @@ final case class ProcessResult(
   isolateMessage: Option[String],
   stdout: String,
   stderr: String,
-  timedOut: Boolean
+  timedOut: Boolean,
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long]
 )
 
 final case class SandboxExecutionRequest(
@@ -90,7 +92,9 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
         isolateMessage = meta.get("message"),
         stdout = stdout,
         stderr = stderr,
-        timedOut = !completed || meta.get("status").contains("TO")
+        timedOut = !completed || meta.get("status").contains("TO"),
+        timeUsedMs = IsolateSandbox.timeUsedMs(meta),
+        memoryUsedKb = IsolateSandbox.memoryUsedKb(meta)
       )
     }
 
@@ -154,6 +158,16 @@ object IsolateSandbox:
             case _ => None
         }
         .toMap
+
+  private[judger] def timeUsedMs(meta: Map[String, String]): Option[Long] =
+    meta
+      .get("time")
+      .orElse(meta.get("time-wall"))
+      .flatMap(value => scala.util.Try(BigDecimal(value)).toOption)
+      .map(seconds => math.max(0L, (seconds * BigDecimal(1000)).setScale(0, BigDecimal.RoundingMode.HALF_UP).toLong))
+
+  private[judger] def memoryUsedKb(meta: Map[String, String]): Option[Long] =
+    meta.get("max-rss").flatMap(_.toLongOption).map(value => math.max(0L, value))
 
   private[judger] def readStream(stream: java.io.InputStream): String =
     val buffer = ByteArrayOutputStream()

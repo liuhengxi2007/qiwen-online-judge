@@ -5,7 +5,7 @@ import type {
   SubmissionSummary as SubmissionSummaryContract,
 } from '@contracts/submission'
 import { fromUserIdentityContract } from '@/features/auth/domain/auth'
-import { parseProblemId, parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
+import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
 import type { CreateSubmissionRequest } from '@/features/submission/model/CreateSubmissionRequest'
 import type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'
 import type { SubmissionListResponse } from '@/features/submission/model/SubmissionListResponse'
@@ -22,11 +22,15 @@ export function fromSubmissionDetailContract(submission: SubmissionDetailContrac
     id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
     problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
     problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
+    problemTitle: requireParsed(parseProblemTitle(submission.problemTitle), 'submission problem title'),
     submitter: fromUserIdentityContract(submission.submitter),
     language: submission.language,
     status: submission.status,
     verdict: submission.verdict,
     judgeMessage: submission.judgeMessage,
+    timeUsedMs: submission.timeUsedMs,
+    memoryUsedKb: submission.memoryUsedKb,
+    codeLength: submission.codeLength,
     sourceCode: requireParsed(parseSubmissionSourceCode(submission.sourceCode), 'submission source code'),
     submittedAt: submission.submittedAt,
     startedAt: submission.startedAt,
@@ -39,10 +43,14 @@ export function fromSubmissionSummaryContract(submission: SubmissionSummaryContr
     id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
     problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
     problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
+    problemTitle: requireParsed(parseProblemTitle(submission.problemTitle), 'submission problem title'),
     submitter: fromUserIdentityContract(submission.submitter),
     language: submission.language,
     status: submission.status,
     verdict: submission.verdict,
+    timeUsedMs: submission.timeUsedMs,
+    memoryUsedKb: submission.memoryUsedKb,
+    codeLength: submission.codeLength,
     submittedAt: submission.submittedAt,
     startedAt: submission.startedAt,
     finishedAt: submission.finishedAt,

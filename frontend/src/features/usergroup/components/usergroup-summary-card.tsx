@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { usernameValue } from '@/features/auth/domain/auth'
 import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
@@ -32,9 +31,9 @@ export function UserGroupSummaryCard({ model }: { model: UserGroupDetailPageMode
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
           <span>{t('userGroup.detail.ownerLabel')} </span>
           {owner ? (
-            <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={owner} />
+            <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" user={owner} />
           ) : (
-            <span className="normal-case tracking-normal">{usernameValue(userGroup.ownerUsername)}</span>
+            <span className="normal-case tracking-normal">{t('common.loading')}</span>
           )}
         </p>
       </CardContent>

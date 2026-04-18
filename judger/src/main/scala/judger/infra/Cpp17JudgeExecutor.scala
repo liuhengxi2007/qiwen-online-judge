@@ -52,10 +52,11 @@ object Cpp17JudgeExecutor:
     workingDirectory: Path,
     sandbox: IsolateSandbox
   ): IO[ReportJudgeResultRequest] =
-    task.testcases.foldLeft(IO.pure(Option.empty[ReportJudgeResultRequest])) { (accIo, testcase) =>
+    task.testcases.foldLeft(IO.pure(TestcaseAccumulator.empty)) { (accIo, testcase) =>
       accIo.flatMap {
-        case some @ Some(_) => IO.pure(some)
-        case None =>
+        case accumulator if accumulator.result.nonEmpty =>
+          IO.pure(accumulator)
+        case accumulator =>
           val input = Base64.getDecoder.decode(testcase.inputBase64)
           val expectedOutput = new String(Base64.getDecoder.decode(testcase.expectedOutputBase64), StandardCharsets.UTF_8)
 
@@ -70,17 +71,18 @@ object Cpp17JudgeExecutor:
             ),
             workingDirectory
           ).map { runResult =>
+            val nextAccumulator = accumulator.record(runResult)
             if runResult.timedOut then
-              Some(completed(SubmissionVerdict.TimeLimitExceeded, s"Time limit exceeded on testcase ${testcase.name.value}."))
+              nextAccumulator.finish(completed(SubmissionVerdict.TimeLimitExceeded, s"Time limit exceeded on testcase ${testcase.name.value}."))
             else if runResult.exitCode.getOrElse(-1) != 0 then
-              Some(completed(SubmissionVerdict.RuntimeError, formatRuntimeError(testcase.name.value, runResult)))
+              nextAccumulator.finish(completed(SubmissionVerdict.RuntimeError, formatRuntimeError(testcase.name.value, runResult)))
             else if normalizeOutput(runResult.stdout) != normalizeOutput(expectedOutput) then
-              Some(completed(SubmissionVerdict.WrongAnswer, s"Wrong answer on testcase ${testcase.name.value}."))
-            else None
+              nextAccumulator.finish(completed(SubmissionVerdict.WrongAnswer, s"Wrong answer on testcase ${testcase.name.value}."))
+            else nextAccumulator
           }
       }
     }.map(
-      _.getOrElse(completed(SubmissionVerdict.Accepted))
+      accumulator => accumulator.result.getOrElse(accumulator.attachUsage(completed(SubmissionVerdict.Accepted)))
     )
 
   private def withWorkingDirectory[A](workRoot: Path, prefix: String)(use: Path => IO[A]): IO[A] =
@@ -186,7 +188,9 @@ object Cpp17JudgeExecutor:
         isolateMessage = None,
         stdout = readStream(process.getInputStream),
         stderr = readStream(process.getErrorStream),
-        timedOut = !completed
+        timedOut = !completed,
+        timeUsedMs = None,
+        memoryUsedKb = None
       )
     }
 
@@ -212,14 +216,18 @@ object Cpp17JudgeExecutor:
     ReportJudgeResultRequest(
       status = SubmissionStatus.Completed,
       verdict = Some(verdict),
-      judgeMessage = Option.when(message.nonEmpty)(message)
+      judgeMessage = Option.when(message.nonEmpty)(message),
+      timeUsedMs = None,
+      memoryUsedKb = None
     )
 
   private def systemError(message: String): ReportJudgeResultRequest =
     ReportJudgeResultRequest(
       status = SubmissionStatus.Failed,
       verdict = Some(SubmissionVerdict.SystemError),
-      judgeMessage = Some(message)
+      judgeMessage = Some(message),
+      timeUsedMs = None,
+      memoryUsedKb = None
     )
 
   private def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =
@@ -247,3 +255,30 @@ object Cpp17JudgeExecutor:
     else
       val second = secondary.trim
       if second.nonEmpty then second else fallback
+
+  private final case class TestcaseAccumulator(
+    maxTimeUsedMs: Option[Long],
+    maxMemoryUsedKb: Option[Long],
+    result: Option[ReportJudgeResultRequest]
+  ):
+    def record(runResult: ProcessResult): TestcaseAccumulator =
+      copy(
+        maxTimeUsedMs = maxOptional(maxTimeUsedMs, runResult.timeUsedMs),
+        maxMemoryUsedKb = maxOptional(maxMemoryUsedKb, runResult.memoryUsedKb)
+      )
+
+    def finish(result: ReportJudgeResultRequest): TestcaseAccumulator =
+      copy(result = Some(attachUsage(result)))
+
+    def attachUsage(result: ReportJudgeResultRequest): ReportJudgeResultRequest =
+      result.copy(timeUsedMs = maxTimeUsedMs, memoryUsedKb = maxMemoryUsedKb)
+
+    private def maxOptional(left: Option[Long], right: Option[Long]): Option[Long] =
+      (left, right) match
+        case (Some(a), Some(b)) => Some(math.max(a, b))
+        case (some @ Some(_), None) => some
+        case (None, some @ Some(_)) => some
+        case (None, None) => None
+
+  private object TestcaseAccumulator:
+    val empty: TestcaseAccumulator = TestcaseAccumulator(None, None, None)

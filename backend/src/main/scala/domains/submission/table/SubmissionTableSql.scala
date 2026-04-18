@@ -6,14 +6,27 @@ object SubmissionTableSql:
 
   val insertSql: String =
     s"""
-      |insert into submissions (id, public_id, problem_id, submitter_username, language, status, verdict, judge_message, source_code, submitted_at, started_at, finished_at)
-      |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning public_id, status, verdict, judge_message, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
+      |insert into submissions (id, public_id, problem_id, submitter_username, language, status, verdict, judge_message, time_used_ms, memory_used_kb, source_code, submitted_at, started_at, finished_at)
+      |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |returning public_id, status, verdict, judge_message, time_used_ms, memory_used_kb, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
       |""".stripMargin
 
   val listSql: String =
     s"""
-      |select s.public_id, s.problem_id, p.slug as problem_slug, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.submitted_at, s.started_at, s.finished_at
+      |select s.public_id,
+      |       s.problem_id,
+      |       p.slug as problem_slug,
+      |       p.title as problem_title,
+      |       ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")},
+      |       s.language,
+      |       s.status,
+      |       s.verdict,
+      |       s.time_used_ms,
+      |       s.memory_used_kb,
+      |       octet_length(s.source_code) as code_length,
+      |       s.submitted_at,
+      |       s.started_at,
+      |       s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
       |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
@@ -84,7 +97,7 @@ object SubmissionTableSql:
 
   val findByIdSql: String =
     s"""
-      |select s.public_id, s.problem_id, p.slug as problem_slug, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.judge_message, s.source_code, s.submitted_at, s.started_at, s.finished_at
+      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.judge_message, s.time_used_ms, s.memory_used_kb, octet_length(s.source_code) as code_length, s.source_code, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
       |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
@@ -107,7 +120,9 @@ object SubmissionTableSql:
       |    started_at = ?,
       |    finished_at = ?,
       |    verdict = ?,
-      |    judge_message = ?
+      |    judge_message = ?,
+      |    time_used_ms = null,
+      |    memory_used_kb = null
       |from next_submission ns, problems p
       |where s.id = ns.id
       |  and p.id = s.problem_id
@@ -117,6 +132,6 @@ object SubmissionTableSql:
   val updateJudgeStateSql: String =
     """
       |update submissions
-      |set status = ?, verdict = ?, judge_message = ?, started_at = ?, finished_at = ?
+      |set status = ?, verdict = ?, judge_message = ?, time_used_ms = ?, memory_used_kb = ?, started_at = ?, finished_at = ?
       |where public_id = ?
       |""".stripMargin

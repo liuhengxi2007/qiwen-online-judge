@@ -206,7 +206,9 @@ object JudgeTask:
 final case class ReportJudgeResultRequest(
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
-  judgeMessage: Option[String]
+  judgeMessage: Option[String],
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long]
 )
 
 object ReportJudgeResultRequest:

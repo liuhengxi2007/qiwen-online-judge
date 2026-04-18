@@ -14,8 +14,8 @@ export {
   fromProblemSetListResponseContract,
   fromProblemSetProblemSummaryContract,
   fromProblemSetSummaryContract,
+  toAddProblemToProblemSetRequestContract,
   toCreateProblemSetRequestContract,
-  toLinkProblemRequestContract,
   toUpdateProblemSetRequestContract,
 } from '@/features/problemset/domain/problemset-contract'
 

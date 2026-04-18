@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Database, PencilLine, ScrollText, Send, ShieldCheck } from 'lucide-react'
+import { Database, Files, PencilLine, ScrollText, Send, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -57,6 +57,16 @@ export function ProblemDetailHeaderCard({
               <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submit`}>
                 <Send className="size-4" />
                 {t('problem.detail.submitCode')}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
+            >
+              <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submissions`}>
+                <Files className="size-4" />
+                {t('problem.detail.viewSubmissions')}
               </Link>
             </Button>
             {canManageProblem ? (

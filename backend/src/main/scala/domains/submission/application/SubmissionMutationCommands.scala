@@ -44,6 +44,7 @@ object SubmissionMutationCommands:
                     connection = connection,
                     problemId = problem.id,
                     problemSlug = problem.slug,
+                    problemTitle = problem.title,
                     submitterUsername = actor.username,
                     language = validRequest.language,
                     sourceCode = validRequest.sourceCode,

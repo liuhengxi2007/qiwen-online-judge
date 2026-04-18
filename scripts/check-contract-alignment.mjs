@@ -92,6 +92,7 @@ function run() {
 
   const contractShared = read('contracts/shared.ts')
   const contractAuth = read('contracts/auth.ts')
+  const contractJudger = read('contracts/judger.ts')
   const contractProblem = read('contracts/problem.ts')
   const contractProblemSet = read('contracts/problemset.ts')
   const contractSubmission = read('contracts/submission.ts')
@@ -113,6 +114,10 @@ function run() {
     UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateOwnSettingsRequest.scala'),
     UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateManagedUserSettingsRequest.scala'),
     UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/auth/model/UpdateUserPermissionsRequest.scala'),
+  }
+
+  const judgerFiles = {
+    RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/model/RegisteredJudgerListItem.scala'),
   }
 
   const problemFiles = {
@@ -208,6 +213,13 @@ function run() {
     )
   }
 
+  assertSameFields(
+    'judger.RegisteredJudgerListItem',
+    extractTsObjectTypeFields(contractJudger, 'RegisteredJudgerListItem'),
+    extractScalaCaseClassFields(judgerFiles.RegisteredJudgerListItem, 'RegisteredJudgerListItem'),
+    errors,
+  )
+
   const problemMappings = [
     ['CreateProblemRequest', 'CreateProblemRequest'],
     ['UpdateProblemRequest', 'UpdateProblemRequest'],
@@ -227,7 +239,7 @@ function run() {
   const problemSetMappings = [
     ['CreateProblemSetRequest', 'CreateProblemSetRequest'],
     ['UpdateProblemSetRequest', 'UpdateProblemSetRequest'],
-    ['LinkProblemRequest', 'AddProblemToProblemSetRequest'],
+    ['AddProblemToProblemSetRequest', 'AddProblemToProblemSetRequest'],
     ['ProblemSetProblemSummary', 'ProblemSetProblemSummary'],
     ['ProblemSetSummary', 'ProblemSetSummary'],
     ['ProblemSetDetail', 'ProblemSetDetail'],

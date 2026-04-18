@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { ArrowRight, Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
+  displayNameValue,
   parseUsername,
   usernameValue,
   type Username,
@@ -16,9 +18,11 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   submissionIdValue,
   submissionLanguageLabel,
-  submissionStatusLabel,
   submissionVerdictLabel,
+  type SubmissionSummary,
+  type SubmissionVerdict,
 } from '@/features/submission/domain/submission'
+import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { SignedInUser } from '@/shared/components/signed-in-user'
@@ -26,14 +30,335 @@ import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
-export function SubmissionPage() {
+function formatOptionalDurationMs(value: number | null): string {
+  if (value === null) {
+    return '--'
+  }
+
+  return `${value} ms`
+}
+
+function formatOptionalMemoryKb(value: number | null): string {
+  if (value === null) {
+    return '--'
+  }
+
+  if (value < 1024) {
+    return `${value} KB`
+  }
+
+  return `${(value / 1024).toFixed(1)} MB`
+}
+
+function formatCodeLength(value: number): string {
+  return `${value} B`
+}
+
+type VerdictFilter = 'all' | 'pending' | SubmissionVerdict
+type SubmissionSort = 'submitted' | 'time' | 'memory' | 'code_length'
+type SortDirection = 'asc' | 'desc'
+
+const submissionsPerPage = 10
+
+const verdictFilterValues = [
+  'all',
+  'pending',
+  'accepted',
+  'wrong_answer',
+  'compile_error',
+  'runtime_error',
+  'time_limit_exceeded',
+  'system_error',
+] as const satisfies readonly VerdictFilter[]
+
+const submissionSortValues = [
+  'time',
+  'memory',
+  'code_length',
+  'submitted',
+] as const satisfies readonly SubmissionSort[]
+
+function isVerdictFilter(value: string): value is VerdictFilter {
+  return (verdictFilterValues as readonly string[]).includes(value)
+}
+
+function isSubmissionSort(value: string): value is SubmissionSort {
+  return (submissionSortValues as readonly string[]).includes(value)
+}
+
+type UserFilterSuggestion = {
+  username: Username
+  displayName: string
+}
+
+type ProblemFilterSuggestion = {
+  title: string
+}
+
+function normalizeSearchText(value: string): string {
+  return value.trim().toLocaleLowerCase()
+}
+
+function fuzzyScore(candidate: string, input: string): number {
+  const normalizedCandidate = normalizeSearchText(candidate)
+  const normalizedInput = normalizeSearchText(input)
+
+  if (!normalizedInput) {
+    return 1
+  }
+
+  if (normalizedCandidate === normalizedInput) {
+    return 1000
+  }
+
+  if (normalizedCandidate.startsWith(normalizedInput)) {
+    return 800 - normalizedCandidate.length
+  }
+
+  const index = normalizedCandidate.indexOf(normalizedInput)
+  if (index >= 0) {
+    return 600 - index - normalizedCandidate.length
+  }
+
+  let candidateIndex = 0
+  let matched = 0
+  for (const character of normalizedInput) {
+    const foundIndex = normalizedCandidate.indexOf(character, candidateIndex)
+    if (foundIndex < 0) {
+      return 0
+    }
+    matched += 1
+    candidateIndex = foundIndex + 1
+  }
+
+  return 300 + matched - normalizedCandidate.length
+}
+
+function bestFuzzyScore(candidates: string[], input: string): number {
+  return Math.max(...candidates.map((candidate) => fuzzyScore(candidate, input)))
+}
+
+function buildUserSuggestions(submissions: SubmissionSummary[], input: string): UserFilterSuggestion[] {
+  const normalizedInput = normalizeSearchText(input)
+  if (!normalizedInput) {
+    return []
+  }
+
+  const suggestions = new Map<string, UserFilterSuggestion>()
+  for (const submission of submissions) {
+    const username = usernameValue(submission.submitter.username)
+    if (!suggestions.has(username)) {
+      suggestions.set(username, {
+        username: submission.submitter.username,
+        displayName: displayNameValue(submission.submitter.displayName),
+      })
+    }
+  }
+
+  return [...suggestions.values()]
+    .map((suggestion) => ({
+      suggestion,
+      score: bestFuzzyScore([usernameValue(suggestion.username), suggestion.displayName], input),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score || usernameValue(left.suggestion.username).localeCompare(usernameValue(right.suggestion.username)))
+    .slice(0, 5)
+    .map(({ suggestion }) => suggestion)
+}
+
+function buildProblemSuggestions(submissions: SubmissionSummary[], input: string): ProblemFilterSuggestion[] {
+  const normalizedInput = normalizeSearchText(input)
+  if (!normalizedInput) {
+    return []
+  }
+
+  const suggestions = new Map<string, ProblemFilterSuggestion>()
+  for (const submission of submissions) {
+    const title = problemTitleValue(submission.problemTitle)
+    if (!suggestions.has(title)) {
+      suggestions.set(title, { title })
+    }
+  }
+
+  return [...suggestions.values()]
+    .map((suggestion) => ({
+      suggestion,
+      score: fuzzyScore(suggestion.title, input),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score || left.suggestion.title.localeCompare(right.suggestion.title))
+    .slice(0, 5)
+    .map(({ suggestion }) => suggestion)
+}
+
+function matchesUsernameFilter(submission: SubmissionSummary, username: Username | null): boolean {
+  return username === null || usernameValue(submission.submitter.username) === usernameValue(username)
+}
+
+function matchesProblemTitleFilter(submission: SubmissionSummary, problemTitle: string): boolean {
+  const normalizedProblemTitle = normalizeSearchText(problemTitle)
+  return !normalizedProblemTitle || normalizeSearchText(problemTitleValue(submission.problemTitle)).includes(normalizedProblemTitle)
+}
+
+function matchesProblemSlugFilter(submission: SubmissionSummary, problemSlug: ProblemSlug | null): boolean {
+  return problemSlug === null || problemSlugValue(submission.problemSlug) === problemSlugValue(problemSlug)
+}
+
+function matchesVerdictFilter(submission: SubmissionSummary, verdict: VerdictFilter): boolean {
+  if (verdict === 'all') {
+    return true
+  }
+
+  if (verdict === 'pending') {
+    return submission.verdict === null
+  }
+
+  return submission.verdict === verdict
+}
+
+function compareNullableNumber(left: number | null, right: number | null): number {
+  if (left === null && right === null) {
+    return 0
+  }
+
+  if (left === null) {
+    return 1
+  }
+
+  if (right === null) {
+    return -1
+  }
+
+  return left - right
+}
+
+function compareSubmissions(left: SubmissionSummary, right: SubmissionSummary, sort: SubmissionSort, direction: SortDirection): number {
+  const directionMultiplier = direction === 'asc' ? 1 : -1
+
+  switch (sort) {
+    case 'submitted':
+      return (
+        directionMultiplier * (new Date(left.submittedAt).getTime() - new Date(right.submittedAt).getTime()) ||
+        directionMultiplier * (submissionIdValue(left.id) - submissionIdValue(right.id))
+      )
+    case 'time':
+      return directionMultiplier * compareNullableNumber(left.timeUsedMs, right.timeUsedMs) || compareSubmissions(left, right, 'submitted', 'desc')
+    case 'memory':
+      return directionMultiplier * compareNullableNumber(left.memoryUsedKb, right.memoryUsedKb) || compareSubmissions(left, right, 'submitted', 'desc')
+    case 'code_length':
+      return directionMultiplier * (left.codeLength - right.codeLength) || compareSubmissions(left, right, 'submitted', 'desc')
+  }
+}
+
+function verdictFilterLabel(verdict: VerdictFilter, allVerdictsLabel: string): string {
+  if (verdict === 'all') {
+    return allVerdictsLabel
+  }
+
+  if (verdict === 'pending') {
+    return submissionVerdictLabel(null)
+  }
+
+  return submissionVerdictLabel(verdict)
+}
+
+function buildPageNumbers(currentPage: number, totalPages: number): number[] {
+  const firstPage = Math.max(1, currentPage - 2)
+  const lastPage = Math.min(totalPages, currentPage + 2)
+  const pages: number[] = []
+  for (let page = firstPage; page <= lastPage; page += 1) {
+    pages.push(page)
+  }
+  return pages
+}
+
+type SubmissionPageProps = {
+  fixedUsernameFilter?: Username
+  fixedProblemSlugFilter?: ProblemSlug
+}
+
+export function SubmissionPage({ fixedUsernameFilter, fixedProblemSlugFilter }: SubmissionPageProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('submission.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const [filterInput, setFilterInput] = useState('')
+  const hasFixedUsernameFilter = fixedUsernameFilter !== undefined
+  const [usernameFilterInput, setUsernameFilterInput] = useState('')
+  const [problemFilterInput, setProblemFilterInput] = useState('')
   const [activeUsernameFilter, setActiveUsernameFilter] = useState<Username | null>(null)
+  const [activeProblemTitleFilter, setActiveProblemTitleFilter] = useState('')
+  const [activeVerdictFilter, setActiveVerdictFilter] = useState<VerdictFilter>('all')
+  const [activeSort, setActiveSort] = useState<SubmissionSort>('submitted')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
   const [filterErrorMessage, setFilterErrorMessage] = useState('')
-  const submissionQuery = useSubmissionListQuery(activeUsernameFilter)
+  const [showUserSuggestions, setShowUserSuggestions] = useState(true)
+  const [showProblemSuggestions, setShowProblemSuggestions] = useState(true)
+  const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<Username | null>(null)
+  const submissionQuery = useSubmissionListQuery(fixedUsernameFilter ?? null)
+  const userSuggestions = buildUserSuggestions(submissionQuery.submissions, usernameFilterInput)
+  const problemSuggestions = buildProblemSuggestions(submissionQuery.submissions, problemFilterInput)
+  const effectiveUsernameFilter = fixedUsernameFilter ?? activeUsernameFilter
+  const effectiveUserDisplayName = effectiveUsernameFilter
+    ? (submissionQuery.submissions.find(
+        (submission) => usernameValue(submission.submitter.username) === usernameValue(effectiveUsernameFilter),
+      )?.submitter.displayName ?? null)
+    : null
+  const hasFixedProblemFilter = fixedProblemSlugFilter !== undefined
+  const visibleSubmissions = submissionQuery.submissions.filter(
+    (submission) =>
+      matchesUsernameFilter(submission, effectiveUsernameFilter) &&
+      matchesProblemSlugFilter(submission, fixedProblemSlugFilter ?? null) &&
+      (hasFixedProblemFilter || matchesProblemTitleFilter(submission, activeProblemTitleFilter)) &&
+      matchesVerdictFilter(submission, activeVerdictFilter),
+  )
+  const sortedSubmissions = [...visibleSubmissions].sort((left, right) => compareSubmissions(left, right, activeSort, sortDirection))
+  const totalPages = Math.max(1, Math.ceil(sortedSubmissions.length / submissionsPerPage))
+  const currentPageSubmissions = sortedSubmissions.slice((currentPage - 1) * submissionsPerPage, currentPage * submissionsPerPage)
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
+  const paginationControls =
+    totalPages > 1 ? (
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-2xl border-slate-300 bg-white"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+        >
+          {t('submission.pagination.previous')}
+        </Button>
+        {pageNumbers.map((page) => (
+          <Button
+            key={page}
+            type="button"
+            variant={page === currentPage ? 'default' : 'outline'}
+            className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'}
+            onClick={() => setCurrentPage(page)}
+          >
+            {page}
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-2xl border-slate-300 bg-white"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+        >
+          {t('submission.pagination.next')}
+        </Button>
+      </div>
+    ) : null
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeUsernameFilter, activeProblemTitleFilter, activeVerdictFilter, activeSort, sortDirection, fixedUsernameFilter, fixedProblemSlugFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -68,17 +393,132 @@ export function SubmissionPage() {
             <CardDescription>{t('submission.filter.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
-              <Input
-                id="submission-username-filter"
-                value={filterInput}
-                placeholder={t('submission.filter.placeholder')}
-                onChange={(event) => {
-                  setFilterInput(event.target.value)
-                  setFilterErrorMessage('')
-                }}
-              />
+            <div className={`grid gap-4 ${hasFixedUsernameFilter || hasFixedProblemFilter ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+              {hasFixedUsernameFilter ? null : (
+                <div className="space-y-2">
+                  <Label htmlFor="submission-username-filter">{t('common.displayName')}</Label>
+                  <Input
+                    id="submission-username-filter"
+                    value={usernameFilterInput}
+                    placeholder={t('submission.filter.usernamePlaceholder')}
+                    onChange={(event) => {
+                      setUsernameFilterInput(event.target.value)
+                      setSelectedUsernameSuggestion(null)
+                      setShowUserSuggestions(true)
+                      setFilterErrorMessage('')
+                    }}
+                  />
+                  {showUserSuggestions && userSuggestions.length > 0 ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {userSuggestions.map((suggestion) => (
+                        <button
+                          key={usernameValue(suggestion.username)}
+                          type="button"
+                          className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                          onClick={() => {
+                            setUsernameFilterInput(suggestion.displayName)
+                            setSelectedUsernameSuggestion(suggestion.username)
+                            setShowUserSuggestions(false)
+                            setFilterErrorMessage('')
+                          }}
+                        >
+                          <span className="font-medium text-slate-900">{suggestion.displayName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {hasFixedProblemFilter ? null : (
+                <div className="space-y-2">
+                  <Label htmlFor="submission-problem-filter">{t('submission.filter.problemTitle')}</Label>
+                  <Input
+                    id="submission-problem-filter"
+                    value={problemFilterInput}
+                    placeholder={t('submission.filter.problemPlaceholder')}
+                    onChange={(event) => {
+                      setProblemFilterInput(event.target.value)
+                      setShowProblemSuggestions(true)
+                      setFilterErrorMessage('')
+                    }}
+                  />
+                  {showProblemSuggestions && problemSuggestions.length > 0 ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                      {problemSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.title}
+                          type="button"
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-900 hover:bg-white"
+                          onClick={() => {
+                            setProblemFilterInput(suggestion.title)
+                            setShowProblemSuggestions(false)
+                            setFilterErrorMessage('')
+                          }}
+                        >
+                          {suggestion.title}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="submission-verdict-filter">{t('submission.filter.verdict')}</Label>
+                <Select
+                  value={activeVerdictFilter}
+                  onValueChange={(value) => {
+                    if (isVerdictFilter(value)) {
+                      setActiveVerdictFilter(value)
+                    }
+                  }}
+                >
+                  <SelectTrigger id="submission-verdict-filter" className="rounded-2xl border-slate-300 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {verdictFilterValues.map((verdict) => (
+                      <SelectItem key={verdict} value={verdict}>
+                        {verdictFilterLabel(verdict, t('submission.filter.allVerdicts'))}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="submission-sort">{t('submission.filter.sort')}</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={activeSort}
+                    onValueChange={(value) => {
+                      if (isSubmissionSort(value)) {
+                        setActiveSort(value)
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="submission-sort" className="rounded-2xl border-slate-300 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {submissionSortValues.map((sort) => (
+                        <SelectItem key={sort} value={sort}>
+                          {t(`submission.sort.${sort}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="shrink-0 rounded-2xl border-slate-300 bg-white"
+                    onClick={() => setSortDirection((currentDirection) => (currentDirection === 'asc' ? 'desc' : 'asc'))}
+                  >
+                    {sortDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {filterErrorMessage ? (
@@ -92,21 +532,26 @@ export function SubmissionPage() {
                 type="button"
                 className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
                 onClick={() => {
-                  const trimmedInput = filterInput.trim()
-                  if (!trimmedInput) {
-                    setActiveUsernameFilter(null)
-                    setFilterErrorMessage('')
-                    return
+                  if (!hasFixedUsernameFilter) {
+                    const trimmedUsernameInput = usernameFilterInput.trim()
+                    if (!trimmedUsernameInput) {
+                      setActiveUsernameFilter(null)
+                    } else {
+                      if (selectedUsernameSuggestion !== null) {
+                        setActiveUsernameFilter(selectedUsernameSuggestion)
+                      } else {
+                        const usernameResult = parseUsername(trimmedUsernameInput)
+                        if (!usernameResult.ok) {
+                          setFilterErrorMessage(usernameResult.error)
+                          return
+                        }
+
+                        setActiveUsernameFilter(usernameResult.value)
+                      }
+                    }
                   }
 
-                  const usernameResult = parseUsername(trimmedInput)
-                  if (!usernameResult.ok) {
-                    setFilterErrorMessage(usernameResult.error)
-                    return
-                  }
-
-                  setActiveUsernameFilter(usernameResult.value)
-                  setFilterInput(usernameValue(usernameResult.value))
+                  setActiveProblemTitleFilter(problemFilterInput.trim())
                   setFilterErrorMessage('')
                 }}
               >
@@ -117,8 +562,20 @@ export function SubmissionPage() {
                 variant="outline"
                 className="rounded-2xl border-slate-300 bg-white"
                 onClick={() => {
-                  setFilterInput('')
-                  setActiveUsernameFilter(null)
+                  setUsernameFilterInput('')
+                  setSelectedUsernameSuggestion(null)
+                  setProblemFilterInput('')
+                  setShowUserSuggestions(true)
+                  setShowProblemSuggestions(true)
+                  if (!hasFixedUsernameFilter) {
+                    setActiveUsernameFilter(null)
+                  }
+                  if (!hasFixedProblemFilter) {
+                    setActiveProblemTitleFilter('')
+                  }
+                  setActiveVerdictFilter('all')
+                  setActiveSort('submitted')
+                  setSortDirection('desc')
                   setFilterErrorMessage('')
                 }}
               >
@@ -126,27 +583,41 @@ export function SubmissionPage() {
               </Button>
             </div>
 
-            {activeUsernameFilter ? (
+            {effectiveUsernameFilter ? (
               <p className="text-sm text-slate-600">
-                {t('submission.filter.showingUser', { username: usernameValue(activeUsernameFilter) })}
+                {t('submission.filter.showingUser', {
+                  username: effectiveUserDisplayName ? displayNameValue(effectiveUserDisplayName) : t('common.loading'),
+                })}
               </p>
             ) : (
               <p className="text-sm text-slate-600">{t('submission.filter.showingAll')}</p>
             )}
+            <p className="text-sm text-slate-600">
+              {t('submission.filter.activeSummary', {
+                problem: hasFixedProblemFilter
+                  ? problemSlugValue(fixedProblemSlugFilter)
+                  : activeProblemTitleFilter || t('submission.filter.anyProblem'),
+                verdict: verdictFilterLabel(activeVerdictFilter, t('submission.filter.allVerdicts')),
+              })}
+            </p>
           </CardContent>
         </Card>
+
+        {!submissionQuery.isLoading && visibleSubmissions.length > 0 ? (
+          <div className="mb-6">{paginationControls}</div>
+        ) : null}
 
         {submissionQuery.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.loading')}</CardContent>
           </Card>
-        ) : submissionQuery.submissions.length === 0 ? (
+        ) : visibleSubmissions.length === 0 ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.empty')}</CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {submissionQuery.submissions.map((submission) => (
+            {currentPageSubmissions.map((submission) => (
               <Card
                 key={submissionIdValue(submission.id)}
                 className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
@@ -167,15 +638,22 @@ export function SubmissionPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <dl className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-6">
+                  <dl className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">
                     <div>
                       <dt className="text-slate-500">{t('submission.list.problem')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{submission.problemSlug}</dd>
+                      <dd className="mt-1">
+                        <Link
+                          className="font-medium text-slate-900 hover:underline"
+                          to={`/problems/${problemSlugValue(submission.problemSlug)}`}
+                        >
+                          {problemTitleValue(submission.problemTitle)}
+                        </Link>
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.submitter')}</dt>
                       <dd className="mt-1">
-                        <UserProfileLink showUsername stacked user={submission.submitter} />
+                        <UserProfileLink user={submission.submitter} />
                       </dd>
                     </div>
                     <div>
@@ -183,10 +661,6 @@ export function SubmissionPage() {
                       <dd className="mt-1 font-medium text-slate-900">
                         {submissionLanguageLabel(submission.language)}
                       </dd>
-                    </div>
-                    <div>
-                      <dt className="text-slate-500">{t('common.status')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{submissionStatusLabel(submission.status)}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.verdict')}</dt>
@@ -197,6 +671,20 @@ export function SubmissionPage() {
                       <dd className="mt-1 font-medium text-slate-900">
                         {new Date(submission.submittedAt).toLocaleString()}
                       </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t('submission.list.timeUsed')}</dt>
+                      <dd className="mt-1 font-medium text-slate-900">{formatOptionalDurationMs(submission.timeUsedMs)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t('submission.list.spaceUsed')}</dt>
+                      <dd className="mt-1 font-medium text-slate-900">
+                        {formatOptionalMemoryKb(submission.memoryUsedKb)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">{t('submission.list.codeLength')}</dt>
+                      <dd className="mt-1 font-medium text-slate-900">{formatCodeLength(submission.codeLength)}</dd>
                     </div>
                   </dl>
 
@@ -209,9 +697,32 @@ export function SubmissionPage() {
                 </CardContent>
               </Card>
             ))}
+            {paginationControls}
           </div>
         )}
       </section>
     </main>
   )
+}
+
+export function UserSubmissionPage() {
+  const { username } = useParams<{ username: string }>()
+  const usernameResult = parseUsername(username ?? '')
+
+  if (!usernameResult.ok) {
+    return <Navigate replace to="/submissions" />
+  }
+
+  return <SubmissionPage fixedUsernameFilter={usernameResult.value} />
+}
+
+export function ProblemSubmissionPage() {
+  const { slug } = useParams<{ slug: string }>()
+  const slugResult = parseProblemSlug(slug ?? '')
+
+  if (!slugResult.ok) {
+    return <Navigate replace to="/problems" />
+  }
+
+  return <SubmissionPage fixedProblemSlugFilter={slugResult.value} />
 }

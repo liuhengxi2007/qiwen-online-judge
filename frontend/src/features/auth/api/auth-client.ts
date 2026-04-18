@@ -14,7 +14,6 @@ import type { RegisteredJudgerListItem } from '@/features/judger/model/Registere
 import {
   fromAuthUserListItemContract,
   fromLoginResponseContract,
-  fromRegisteredJudgerListItemContract,
   fromRegisterResponseContract,
   fromSessionResponseContract,
   toLoginRequestContract,
@@ -24,6 +23,7 @@ import {
   toUpdateUserPermissionsRequestContract,
   usernameValue,
 } from '@/features/auth/domain/auth'
+import { fromRegisteredJudgerListItemContract } from '@/features/judger/domain/judger'
 import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
 import type { SuccessResponse } from '@contracts/shared'
 

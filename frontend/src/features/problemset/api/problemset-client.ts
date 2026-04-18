@@ -14,8 +14,8 @@ import {
   fromProblemSetListResponseContract,
   fromProblemSetSummaryContract,
   problemSetSlugValue,
+  toAddProblemToProblemSetRequestContract,
   toCreateProblemSetRequestContract,
-  toLinkProblemRequestContract,
   toUpdateProblemSetRequestContract,
 } from '@/features/problemset/domain/problemset'
 import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
@@ -46,7 +46,7 @@ async function addProblemToProblemSetInternal(
   return postJson(
     `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/problems`,
     fromProblemSetDetailContract,
-    toLinkProblemRequestContract(request),
+    toAddProblemToProblemSetRequestContract(request),
   )
 }
 

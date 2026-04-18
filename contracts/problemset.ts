@@ -44,7 +44,7 @@ export type UpdateProblemSetRequest = {
   accessPolicy: ResourceAccessPolicy
 }
 
-export type LinkProblemRequest = {
+export type AddProblemToProblemSetRequest = {
   problemSlug: string
 }
 

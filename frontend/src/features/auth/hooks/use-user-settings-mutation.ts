@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 import {
   toAuthSession,
-  usernameValue,
+  displayNameValue,
   type SessionResponse,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
@@ -72,7 +72,7 @@ export function useUserSettingsMutation() {
         const message =
           params.kind === 'own'
             ? t('userGroup.message.updateSuccess')
-            : `${t('userSettings.save')} ${usernameValue(updatedUser.username)}.`
+            : `${t('userSettings.save')} ${displayNameValue(updatedUser.displayName)}.`
 
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }

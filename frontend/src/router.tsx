@@ -15,7 +15,7 @@ import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { ForbiddenPage } from '@/shared/pages/ForbiddenPage'
 import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
 import { SubmissionDetailPage } from '@/features/submission/pages/SubmissionDetailPage'
-import { SubmissionPage } from '@/features/submission/pages/SubmissionPage'
+import { ProblemSubmissionPage, SubmissionPage, UserSubmissionPage } from '@/features/submission/pages/SubmissionPage'
 import { UserProfilePage } from '@/features/auth/pages/UserProfilePage'
 import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/features/usergroup/pages/CreateUserGroupPage'
@@ -76,6 +76,10 @@ export const router = createBrowserRouter([
     element: <AuthenticatedRoute element={<ProblemSubmitPage />} />,
   },
   {
+    path: '/problems/:slug/submissions',
+    element: <AuthenticatedRoute element={<ProblemSubmissionPage />} />,
+  },
+  {
     path: '/problems/:slug/data',
     element: <AuthenticatedRoute element={<ProblemDataPage />} />,
   },
@@ -94,6 +98,10 @@ export const router = createBrowserRouter([
   {
     path: '/submissions',
     element: <AuthenticatedRoute element={<SubmissionPage />} />,
+  },
+  {
+    path: '/submission/:username',
+    element: <AuthenticatedRoute element={<UserSubmissionPage />} />,
   },
   {
     path: '/submissions/:submissionId',

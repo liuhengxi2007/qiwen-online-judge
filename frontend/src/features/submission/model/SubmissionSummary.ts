@@ -1,6 +1,7 @@
 import type { UserIdentity } from '@/features/auth/model/UserIdentity'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import type { ProblemTitle } from '@/features/problem/model/ProblemTitle'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
 import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
@@ -10,10 +11,14 @@ export type SubmissionSummary = {
   id: SubmissionId
   problemId: ProblemId
   problemSlug: ProblemSlug
+  problemTitle: ProblemTitle
   submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  codeLength: number
   submittedAt: string
   startedAt: string | null
   finishedAt: string | null

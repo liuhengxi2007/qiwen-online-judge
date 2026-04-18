@@ -1,12 +1,11 @@
 import { Link, Navigate } from 'react-router-dom'
-import { BookCopy, FileText, Files, LogOut, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
+import { BookCopy, FileText, Files, LogOut, Users, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { displayNameValue, usernameValue } from '@/features/auth/domain/auth'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useI18n } from '@/shared/i18n/i18n'
 
 export function DashboardPage() {
@@ -32,72 +31,25 @@ export function DashboardPage() {
               {t('dashboard.welcome', { displayName: displayNameValue(user.displayName) })}
             </h1>
           </div>
-          <AncestorNavigation />
+          <div className="flex flex-wrap items-center gap-3">
+            <Link className="text-sm font-semibold text-slate-900 hover:underline" to={`/user/${usernameValue(user.username)}`}>
+              {displayNameValue(user.displayName)}
+            </Link>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-slate-300 bg-white"
+              onClick={() => {
+                void signOut()
+              }}
+            >
+              <LogOut className="size-4" />
+              {t('dashboard.signOut')}
+            </Button>
+          </div>
         </div>
 
-        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <CardHeader>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                  <ShieldCheck className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{t('dashboard.console.title')}</CardTitle>
-                  <CardDescription>
-                    {t('dashboard.console.description')}
-                  </CardDescription>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full border-slate-300 bg-white"
-                onClick={() => {
-                  void signOut()
-                }}
-              >
-                <LogOut className="size-4" />
-                {t('dashboard.signOut')}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">{t('dashboard.displayName')}</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">
-                {displayNameValue(user.displayName)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">{t('dashboard.username')}</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{usernameValue(user.username)}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                  <Settings className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{t('dashboard.userSettings.title')}</CardTitle>
-                  <CardDescription>
-                    {t('dashboard.userSettings.description')}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
-                <Link to={`/user/${usernameValue(user.username)}/settings`}>{t('dashboard.userSettings.open')}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">

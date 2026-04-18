@@ -1,4 +1,4 @@
-import { usernameValue, type AuthUserListItem, type Username } from '@/features/auth/domain/auth'
+import { displayNameValue, type AuthUserListItem, type Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 export type SiteManageState = {
@@ -39,7 +39,7 @@ export function reduceSiteManageState(
       return {
         ...state,
         updatingUsername: null,
-        statusMessage: `Permissions updated for ${usernameValue(action.user.username)}.`,
+        statusMessage: `Permissions updated for ${displayNameValue(action.user.displayName)}.`,
         actionErrorMessage: '',
       }
     case 'delete_started':

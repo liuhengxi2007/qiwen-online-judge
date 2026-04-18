@@ -36,7 +36,7 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
     ]
   }
 
-  if (/^\/problems\/[^/]+\/(submit|data)$/.test(pathname)) {
+  if (/^\/problems\/[^/]+\/(submit|data|submissions)$/.test(pathname)) {
     const slug = pathname.split('/')[2]
     return [
       { to: '/', labelKey: 'dashboard' },
@@ -65,6 +65,13 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
 
   if (pathname === '/submissions') {
     return [{ to: '/', labelKey: 'dashboard' }]
+  }
+
+  if (/^\/submission\/[^/]+$/.test(pathname)) {
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/submissions', labelKey: 'submissions' },
+    ]
   }
 
   if (/^\/submissions\/[^/]+$/.test(pathname)) {
