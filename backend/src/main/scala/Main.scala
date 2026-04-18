@@ -8,6 +8,7 @@ import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
+import domains.blog.table.BlogTable
 import domains.judge.application.JudgeConfig
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
@@ -43,6 +44,7 @@ object Main extends IOApp.Simple:
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
             _ <- SubmissionTable.initialize(connection)
+            _ <- BlogTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
             _ <- ResourceAccessGrantTable.initialize(connection)

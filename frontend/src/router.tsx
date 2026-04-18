@@ -1,7 +1,11 @@
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
+import { AuthenticatedUserBar } from '@/shared/components/authenticated-user-bar'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
+import { BlogPage, ProblemBlogPage, UserBlogPage } from '@/features/blog/pages/BlogPage'
+import { BlogDetailPage } from '@/features/blog/pages/BlogDetailPage'
+import { CreateBlogPage } from '@/features/blog/pages/CreateBlogPage'
 import { CreateProblemPage } from '@/features/problem/pages/CreateProblemPage'
 import { ProblemDataPage } from '@/features/problem/pages/ProblemDataPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
@@ -25,7 +29,14 @@ import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 
 function RootRedirect() {
   const session = useAuthStore((state) => state.session)
-  return session ? <DashboardPage /> : <Navigate replace to="/login" />
+  return session ? (
+    <>
+      <AuthenticatedUserBar />
+      <DashboardPage />
+    </>
+  ) : (
+    <Navigate replace to="/login" />
+  )
 }
 
 function GuestOnlyRoute({ element }: { element: ReactElement }) {
@@ -35,7 +46,14 @@ function GuestOnlyRoute({ element }: { element: ReactElement }) {
 
 function AuthenticatedRoute({ element }: { element: ReactElement }) {
   const session = useAuthStore((state) => state.session)
-  return session ? element : <Navigate replace to="/login" />
+  return session ? (
+    <>
+      <AuthenticatedUserBar />
+      {element}
+    </>
+  ) : (
+    <Navigate replace to="/login" />
+  )
 }
 
 export const router = createBrowserRouter([
@@ -60,6 +78,22 @@ export const router = createBrowserRouter([
     element: <AuthenticatedRoute element={<SiteManagePage />} />,
   },
   {
+    path: '/blogs',
+    element: <AuthenticatedRoute element={<BlogPage />} />,
+  },
+  {
+    path: '/blogs/new',
+    element: <AuthenticatedRoute element={<CreateBlogPage />} />,
+  },
+  {
+    path: '/blogs/:blogId',
+    element: <AuthenticatedRoute element={<BlogDetailPage />} />,
+  },
+  {
+    path: '/blog/:username',
+    element: <AuthenticatedRoute element={<UserBlogPage />} />,
+  },
+  {
     path: '/problems',
     element: <AuthenticatedRoute element={<ProblemPage />} />,
   },
@@ -78,6 +112,10 @@ export const router = createBrowserRouter([
   {
     path: '/problems/:slug/submissions',
     element: <AuthenticatedRoute element={<ProblemSubmissionPage />} />,
+  },
+  {
+    path: '/problems/:slug/blogs',
+    element: <AuthenticatedRoute element={<ProblemBlogPage />} />,
   },
   {
     path: '/problems/:slug/data',

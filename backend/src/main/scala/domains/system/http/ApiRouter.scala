@@ -20,6 +20,7 @@ object ApiRouter:
         domains.problem.http.ProblemRouter.routes(databaseSession, sessionStore) <+>
         domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
         domains.submission.http.SubmissionRouter.routes(databaseSession, sessionStore) <+>
+        domains.blog.http.BlogRouter.routes(databaseSession, sessionStore) <+>
         domains.usergroup.http.UserGroupRouter.routes(databaseSession, sessionStore)
 
     allRoutes.orNotFound

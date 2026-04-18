@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Files, Settings, UserRound } from 'lucide-react'
+import { Files, NotebookPen, Settings, UserRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { displayNameValue, parseUsername, usernameValue } from '@/features/auth/domain/auth'
@@ -87,6 +87,12 @@ export function UserProfilePage() {
                 <Link to={`/submission/${targetUsername}`}>
                   <Files className="size-4" />
                   {t('userProfile.openSubmissions')}
+                </Link>
+              </Button>
+              <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
+                <Link to={`/blog/${targetUsername}`}>
+                  <NotebookPen className="size-4" />
+                  {t('userProfile.openBlogs')}
                 </Link>
               </Button>
               {routePolicy.isEditingOwnSettings ? (
