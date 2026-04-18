@@ -92,6 +92,7 @@ function run() {
 
   const contractShared = read('contracts/shared.ts')
   const contractAuth = read('contracts/auth.ts')
+  const contractBlog = read('contracts/blog.ts')
   const contractJudger = read('contracts/judger.ts')
   const contractProblem = read('contracts/problem.ts')
   const contractProblemSet = read('contracts/problemset.ts')
@@ -118,6 +119,18 @@ function run() {
 
   const judgerFiles = {
     RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/model/RegisteredJudgerListItem.scala'),
+  }
+
+  const blogFiles = {
+    CreateBlogRequest: read('backend/src/main/scala/domains/blog/model/CreateBlogRequest.scala'),
+    UpdateBlogRequest: read('backend/src/main/scala/domains/blog/model/UpdateBlogRequest.scala'),
+    VoteBlogRequest: read('backend/src/main/scala/domains/blog/model/VoteBlogRequest.scala'),
+    CreateBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/CreateBlogCommentRequest.scala'),
+    UpdateBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/UpdateBlogCommentRequest.scala'),
+    VoteBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/VoteBlogCommentRequest.scala'),
+    BlogCommentSummary: read('backend/src/main/scala/domains/blog/model/BlogCommentSummary.scala'),
+    BlogSummary: read('backend/src/main/scala/domains/blog/model/BlogSummary.scala'),
+    BlogDetail: read('backend/src/main/scala/domains/blog/model/BlogDetail.scala'),
   }
 
   const problemFiles = {
@@ -219,6 +232,27 @@ function run() {
     extractScalaCaseClassFields(judgerFiles.RegisteredJudgerListItem, 'RegisteredJudgerListItem'),
     errors,
   )
+
+  const blogMappings = [
+    ['CreateBlogRequest', 'CreateBlogRequest'],
+    ['UpdateBlogRequest', 'UpdateBlogRequest'],
+    ['VoteBlogRequest', 'VoteBlogRequest'],
+    ['CreateBlogCommentRequest', 'CreateBlogCommentRequest'],
+    ['UpdateBlogCommentRequest', 'UpdateBlogCommentRequest'],
+    ['VoteBlogCommentRequest', 'VoteBlogCommentRequest'],
+    ['BlogCommentSummary', 'BlogCommentSummary'],
+    ['BlogSummary', 'BlogSummary'],
+    ['BlogDetail', 'BlogDetail'],
+  ]
+
+  for (const [contractType, scalaType] of blogMappings) {
+    assertSameFields(
+      `blog.${contractType}`,
+      extractTsObjectTypeFields(contractBlog, contractType),
+      extractScalaCaseClassFields(blogFiles[scalaType], scalaType),
+      errors,
+    )
+  }
 
   const problemMappings = [
     ['CreateProblemRequest', 'CreateProblemRequest'],

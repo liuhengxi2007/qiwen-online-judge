@@ -1,0 +1,1 @@
+export type BlogVisibility = 'public' | 'private'
