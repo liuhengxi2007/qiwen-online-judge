@@ -2,7 +2,9 @@ import {
   parseDisplayName,
   parseEmailAddress,
   parsePlaintextPassword,
+  parseProblemTitleDisplayMode,
   parseUserDisplayMode,
+  parseUserLocale,
   type UpdateManagedUserSettingsRequest,
   type UpdateOwnSettingsRequest,
 } from '@/features/auth/domain/auth'
@@ -11,6 +13,8 @@ export type UserSettingsDraft = {
   displayName: string
   email: string
   displayMode: string
+  locale: string
+  problemTitleDisplayMode: string
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
@@ -47,6 +51,16 @@ export function validateUserSettingsDraft(
   const displayModeResult = parseUserDisplayMode(draft.displayMode)
   if (!displayModeResult.ok) {
     return { ok: false, message: displayModeResult.error }
+  }
+
+  const localeResult = parseUserLocale(draft.locale)
+  if (!localeResult.ok) {
+    return { ok: false, message: localeResult.error }
+  }
+
+  const problemTitleDisplayModeResult = parseProblemTitleDisplayMode(draft.problemTitleDisplayMode)
+  if (!problemTitleDisplayModeResult.ok) {
+    return { ok: false, message: problemTitleDisplayModeResult.error }
   }
 
   const currentPasswordResult =
@@ -99,6 +113,8 @@ export function validateUserSettingsDraft(
           email: emailResult.value,
           preferences: {
             displayMode: displayModeResult.value,
+            locale: localeResult.value,
+            problemTitleDisplayMode: problemTitleDisplayModeResult.value,
           },
           currentPassword,
           newPassword: newPasswordResult ? newPasswordResult.value : null,
@@ -116,6 +132,8 @@ export function validateUserSettingsDraft(
         email: emailResult.value,
         preferences: {
           displayMode: displayModeResult.value,
+          locale: localeResult.value,
+          problemTitleDisplayMode: problemTitleDisplayModeResult.value,
         },
         newPassword: newPasswordResult ? newPasswordResult.value : null,
       },

@@ -17,6 +17,8 @@ import {
 } from '@/features/auth/lib/route-policy'
 import { useI18n } from '@/shared/i18n/i18n'
 import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
+import type { UserLocale } from '@/features/auth/model/UserLocale'
+import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse
@@ -76,6 +78,8 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
         displayName: state.displayName,
         email: state.email,
         displayMode: state.displayMode,
+        locale: state.locale,
+        problemTitleDisplayMode: state.problemTitleDisplayMode,
         currentPassword: state.currentPassword,
         newPassword: state.newPassword,
         confirmNewPassword: state.confirmNewPassword,
@@ -135,7 +139,9 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     state.displayMode,
     state.displayName,
     state.email,
+    state.locale,
     state.newPassword,
+    state.problemTitleDisplayMode,
     submitSettings,
     targetUsername,
     t,
@@ -152,6 +158,9 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     setDisplayName: (value: string) => dispatch({ type: 'set_display_name', value }),
     setEmail: (value: string) => dispatch({ type: 'set_email', value }),
     setDisplayMode: (value: UserDisplayMode) => dispatch({ type: 'set_display_mode', value }),
+    setLocale: (value: UserLocale) => dispatch({ type: 'set_locale', value }),
+    setProblemTitleDisplayMode: (value: ProblemTitleDisplayMode) =>
+      dispatch({ type: 'set_problem_title_display_mode', value }),
     setCurrentPassword: (value: string) => dispatch({ type: 'set_current_password', value }),
     setNewPassword: (value: string) => dispatch({ type: 'set_new_password', value }),
     setConfirmNewPassword: (value: string) => dispatch({ type: 'set_confirm_new_password', value }),

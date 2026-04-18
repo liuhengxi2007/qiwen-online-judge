@@ -5,9 +5,13 @@ export type UserIdentity = {
 }
 
 export type UserDisplayMode = 'display_name' | 'username' | 'display_name_with_username'
+export type UserLocale = 'en' | 'zh-CN'
+export type ProblemTitleDisplayMode = 'title' | 'slug' | 'title_with_slug'
 
 export type UserPreferences = {
   displayMode: UserDisplayMode
+  locale: UserLocale
+  problemTitleDisplayMode: ProblemTitleDisplayMode
 }
 
 export type AuthUserListItem = {

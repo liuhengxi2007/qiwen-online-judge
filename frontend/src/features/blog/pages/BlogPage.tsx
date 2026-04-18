@@ -8,7 +8,13 @@ import { parseUsername, usernameValue, type Username } from '@/features/auth/dom
 import { blogIdValue, blogTitleValue } from '@/features/blog/domain/blog'
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
+import {
+  formatProblemTitleDisplay,
+  parseProblemSlug,
+  problemSlugValue,
+  useProblemTitleDisplayMode,
+  type ProblemSlug,
+} from '@/features/problem/domain/problem'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
@@ -42,6 +48,7 @@ type BlogPageProps = {
 export function BlogPage({ authorUsernameFilter, problemSlugFilter }: BlogPageProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('blog.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
   const model = useBlogListQuery(authorUsernameFilter ?? null, problemSlugFilter ?? null)
 
@@ -124,7 +131,7 @@ export function BlogPage({ authorUsernameFilter, problemSlugFilter }: BlogPagePr
                             <p className="mt-2 text-sm text-slate-600">
                               {t('blog.problem.linkedTo')}{' '}
                               <Link className="font-semibold text-orange-700 hover:underline" to={`/problems/${problemSlugValue(blog.problemSlug)}`}>
-                                {problemTitleValue(blog.problemTitle)}
+                                {formatProblemTitleDisplay(blog.problemTitle, blog.problemSlug, problemTitleDisplayMode)}
                               </Link>
                             </p>
                           ) : null}

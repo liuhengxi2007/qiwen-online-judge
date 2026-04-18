@@ -1,7 +1,9 @@
 import {
   parseDisplayName,
   parseEmailAddress,
+  parseProblemTitleDisplayMode,
   parseUserDisplayMode,
+  parseUserLocale,
   parseUsername,
 } from '@/features/auth/domain/auth'
 import type { SessionResponse } from '@/features/auth/model/SessionResponse'
@@ -34,8 +36,17 @@ export function readAuthSession(): SessionResponse | null {
     const usernameResult = parseUsername(parsed.username)
     const emailResult = parseEmailAddress(parsed.email)
     const displayModeResult = parseUserDisplayMode(parsed.preferences.displayMode)
+    const localeResult = parseUserLocale(parsed.preferences.locale)
+    const problemTitleDisplayModeResult = parseProblemTitleDisplayMode(parsed.preferences.problemTitleDisplayMode)
 
-    if (!displayNameResult.ok || !usernameResult.ok || !emailResult.ok || !displayModeResult.ok) {
+    if (
+      !displayNameResult.ok ||
+      !usernameResult.ok ||
+      !emailResult.ok ||
+      !displayModeResult.ok ||
+      !localeResult.ok ||
+      !problemTitleDisplayModeResult.ok
+    ) {
       clearAuthSession()
       return null
     }
@@ -46,6 +57,8 @@ export function readAuthSession(): SessionResponse | null {
       email: emailResult.value,
       preferences: {
         displayMode: displayModeResult.value,
+        locale: localeResult.value,
+        problemTitleDisplayMode: problemTitleDisplayModeResult.value,
       },
       siteManager: parsed.siteManager,
       problemManager: parsed.problemManager,
@@ -64,6 +77,8 @@ function isStoredAuthSessionValue(
   email: string
   preferences: {
     displayMode: string
+    locale: string
+    problemTitleDisplayMode: string
   }
   siteManager: boolean
   problemManager: boolean
@@ -81,6 +96,8 @@ function isStoredAuthSessionValue(
     typeof record.preferences === 'object' &&
     record.preferences !== null &&
     typeof (record.preferences as { displayMode?: unknown }).displayMode === 'string' &&
+    typeof (record.preferences as { locale?: unknown }).locale === 'string' &&
+    typeof (record.preferences as { problemTitleDisplayMode?: unknown }).problemTitleDisplayMode === 'string' &&
     typeof record.siteManager === 'boolean' &&
     typeof record.problemManager === 'boolean'
   )

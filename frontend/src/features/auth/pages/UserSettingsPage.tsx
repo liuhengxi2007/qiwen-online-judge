@@ -35,6 +35,8 @@ export function UserSettingsPage() {
     displayName,
     email,
     displayMode,
+    locale,
+    problemTitleDisplayMode,
     currentPassword,
     newPassword,
     confirmNewPassword,
@@ -47,6 +49,8 @@ export function UserSettingsPage() {
     setDisplayName,
     setEmail,
     setDisplayMode,
+    setLocale,
+    setProblemTitleDisplayMode,
     setCurrentPassword,
     setNewPassword,
     setConfirmNewPassword,
@@ -117,6 +121,43 @@ export function UserSettingsPage() {
             </SelectContent>
           </Select>
           <p className="text-sm text-slate-500">{t('userSettings.displayModeHelp')}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="settings-locale">{t('userSettings.locale')}</Label>
+          <Select value={locale} onValueChange={(value) => setLocale(value as typeof locale)}>
+            <SelectTrigger id="settings-locale" className="rounded-2xl border-slate-300 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">{t('common.language.en')}</SelectItem>
+              <SelectItem value="zh-CN">{t('common.language.zh-CN')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-slate-500">{t('userSettings.localeHelp')}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="settings-problem-title-display-mode">{t('userSettings.problemTitleDisplayMode')}</Label>
+          <Select
+            value={problemTitleDisplayMode}
+            onValueChange={(value) => setProblemTitleDisplayMode(value as typeof problemTitleDisplayMode)}
+          >
+            <SelectTrigger
+              id="settings-problem-title-display-mode"
+              className="rounded-2xl border-slate-300 bg-white"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">{t('userSettings.problemTitleDisplayMode.title')}</SelectItem>
+              <SelectItem value="slug">{t('userSettings.problemTitleDisplayMode.slug')}</SelectItem>
+              <SelectItem value="title_with_slug">
+                {t('userSettings.problemTitleDisplayMode.titleWithSlug')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-slate-500">{t('userSettings.problemTitleDisplayModeHelp')}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

@@ -11,7 +11,7 @@ import {
   submissionVerdictLabel,
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission'
-import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { SignedInUser } from '@/shared/components/signed-in-user'
@@ -46,6 +46,7 @@ function formatCodeLength(value: number): string {
 export function SubmissionDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('submission.detail.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
   const { submissionId } = useParams<{ submissionId: string }>()
 
@@ -118,7 +119,11 @@ export function SubmissionDetailPage() {
                       className="font-medium text-slate-900 hover:underline"
                       to={`/problems/${problemSlugValue(submissionQuery.submission.problemSlug)}`}
                     >
-                      {problemTitleValue(submissionQuery.submission.problemTitle)}
+                      {formatProblemTitleDisplay(
+                        submissionQuery.submission.problemTitle,
+                        submissionQuery.submission.problemSlug,
+                        problemTitleDisplayMode,
+                      )}
                     </Link>
                   </p>
                 </div>

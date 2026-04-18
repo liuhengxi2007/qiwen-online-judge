@@ -14,7 +14,13 @@ import { createBlogComment, deleteBlog, deleteBlogComment, updateBlog, updateBlo
 import { useBlogDetailQuery } from '@/features/blog/hooks/use-blog-detail-query'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { listProblems } from '@/features/problem/api/problem-client'
-import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSummary } from '@/features/problem/domain/problem'
+import {
+  formatProblemTitleDisplay,
+  parseProblemSlug,
+  problemSlugValue,
+  useProblemTitleDisplayMode,
+  type ProblemSummary,
+} from '@/features/problem/domain/problem'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { SignedInUser } from '@/shared/components/signed-in-user'
@@ -44,6 +50,7 @@ function scoreClassName(score: number): string {
 export function BlogDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.detail.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const navigate = useNavigate()
   const { blogId: rawBlogId } = useParams()
   const parsedBlogId = rawBlogId ? parseBlogId(Number(rawBlogId)) : { ok: false as const, error: 'Blog id is required.' }
@@ -485,7 +492,7 @@ export function BlogDetailPage() {
                         <SelectContent>
                           {problems.map((problem) => (
                             <SelectItem key={problemSlugValue(problem.slug)} value={problemSlugValue(problem.slug)}>
-                              {problemTitleValue(problem.title)}
+                              {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -512,7 +519,7 @@ export function BlogDetailPage() {
                       <p className="mt-2 text-sm text-slate-600">
                         {t('blog.problem.linkedTo')}{' '}
                         <Link className="font-semibold text-orange-700 hover:underline" to={`/problems/${problemSlugValue(model.blog.problemSlug)}`}>
-                          {problemTitleValue(model.blog.problemTitle)}
+                          {formatProblemTitleDisplay(model.blog.problemTitle, model.blog.problemSlug, problemTitleDisplayMode)}
                         </Link>
                       </p>
                     ) : null}

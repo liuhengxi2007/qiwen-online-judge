@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
+import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { fallbackLocale, messages, type Locale } from '@/shared/i18n/messages'
 
 type TranslateValues = Record<string, string | number>
@@ -37,7 +38,14 @@ function interpolate(template: string, values: TranslateValues = {}): string {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
+  const sessionLocale = useAuthStore((state) => state.session?.preferences.locale ?? null)
   const [locale, setLocale] = useState<Locale>(detectInitialLocale)
+
+  useEffect(() => {
+    if (sessionLocale && sessionLocale !== locale) {
+      setLocale(sessionLocale)
+    }
+  }, [locale, sessionLocale])
 
   useEffect(() => {
     document.documentElement.lang = locale

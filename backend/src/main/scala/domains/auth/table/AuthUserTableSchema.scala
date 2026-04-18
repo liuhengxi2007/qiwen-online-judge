@@ -13,6 +13,8 @@ object AuthUserTableSchema:
       |  display_name varchar(120) not null,
       |  email varchar(255) not null,
       |  display_mode varchar(64) not null default 'display_name',
+      |  locale varchar(32) not null default 'en',
+      |  problem_title_display_mode varchar(64) not null default 'title',
       |  password_hash varchar(255) not null,
       |  site_manager boolean not null default false,
       |  problem_manager boolean not null default false
@@ -89,6 +91,38 @@ object AuthUserTableSchema:
       |end $$;
       |""".stripMargin
 
+  val addLocaleColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'locale'
+      |  ) then
+      |    alter table auth_users add column locale varchar(32) not null default 'en';
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val addProblemTitleDisplayModeColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'problem_title_display_mode'
+      |  ) then
+      |    alter table auth_users add column problem_title_display_mode varchar(64) not null default 'title';
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
   val backfillEmailSql: String =
     """
       |update auth_users
@@ -149,6 +183,8 @@ object AuthUserTableSchema:
         statement.execute(initTableSql)
         statement.execute(addEmailColumnSql)
         statement.execute(addDisplayModeColumnSql)
+        statement.execute(addLocaleColumnSql)
+        statement.execute(addProblemTitleDisplayModeColumnSql)
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
         statement.executeUpdate(backfillEmailSql)

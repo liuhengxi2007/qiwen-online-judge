@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   problemSlugValue,
-  problemTitleValue,
+  useProblemTitleDisplay,
+  useProblemTitleDisplayMode,
+  shouldShowProblemSlugSupplement,
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
@@ -21,6 +23,7 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function ProblemPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
 
   if (navigationIntent) {
@@ -90,19 +93,11 @@ export function ProblemPage() {
                 </div>
               ) : (
                 model.problems.map((problem) => (
-                  <div key={problem.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Link className="text-lg font-semibold text-slate-950 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
-                        {problemTitleValue(problem.title)}
-                      </Link>
-                      <Badge variant="secondary">{resourceAccessBadgeLabel(problem.accessPolicy)}</Badge>
-                    </div>
-                    <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p>
-                    <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      <span>{t('problem.createdByLabel')} </span>
-                      <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problem.creator} />
-                    </p>
-                  </div>
+                  <ProblemListItem
+                    key={problem.id}
+                    problem={problem}
+                    showSlugSupplement={shouldShowProblemSlugSupplement(problemTitleDisplayMode)}
+                  />
                 ))
               )}
             </CardContent>
@@ -110,5 +105,32 @@ export function ProblemPage() {
         </div>
       </section>
     </main>
+  )
+}
+
+function ProblemListItem({
+  problem,
+  showSlugSupplement,
+}: {
+  problem: (ReturnType<typeof useProblemPageModel>)['problems'][number]
+  showSlugSupplement: boolean
+}) {
+  const { t } = useI18n()
+  const titleText = useProblemTitleDisplay(problem.title, problem.slug)
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <Link className="text-lg font-semibold text-slate-950 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
+          {titleText}
+        </Link>
+        <Badge variant="secondary">{resourceAccessBadgeLabel(problem.accessPolicy)}</Badge>
+      </div>
+      {showSlugSupplement ? <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p> : null}
+      <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
+        <span>{t('problem.createdByLabel')} </span>
+        <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problem.creator} />
+      </p>
+    </div>
   )
 }

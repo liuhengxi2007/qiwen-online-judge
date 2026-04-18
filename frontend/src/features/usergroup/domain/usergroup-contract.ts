@@ -8,7 +8,7 @@ import type {
   UserGroupMember as UserGroupMemberContract,
   UserGroupSummary as UserGroupSummaryContract,
 } from '@contracts/usergroup'
-import { parseDisplayName, parseUserDisplayMode, parseUsername } from '@/features/auth/domain/auth'
+import { parseDisplayName, parseProblemTitleDisplayMode, parseUserDisplayMode, parseUserLocale, parseUsername } from '@/features/auth/domain/auth'
 import {
   parseUserGroupDescription,
   parseUserGroupId,
@@ -43,6 +43,11 @@ export function fromUserGroupMemberContract(member: UserGroupMemberContract): Us
     displayName: requireParsed(parseDisplayName(member.displayName), 'user group member display name'),
     preferences: {
       displayMode: requireParsed(parseUserDisplayMode(member.preferences.displayMode), 'user group member display mode'),
+      locale: requireParsed(parseUserLocale(member.preferences.locale), 'user group member locale'),
+      problemTitleDisplayMode: requireParsed(
+        parseProblemTitleDisplayMode(member.preferences.problemTitleDisplayMode),
+        'user group member problem title display mode',
+      ),
     },
     role: requireParsed(parseUserGroupRole(member.role), 'user group member role'),
     joinedAt: member.joinedAt,

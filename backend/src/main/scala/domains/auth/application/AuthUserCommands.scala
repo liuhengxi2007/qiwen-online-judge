@@ -2,8 +2,9 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale, Username}
 import domains.auth.table.AuthUserTable
+import domains.problem.model.ProblemTitleDisplayMode
 
 import java.sql.Connection
 
@@ -117,6 +118,8 @@ object AuthUserCommands:
                 request.displayName,
                 request.email,
                 request.preferences.displayMode,
+                request.preferences.locale,
+                request.preferences.problemTitleDisplayMode,
                 request.newPassword
               )
       }
@@ -137,6 +140,8 @@ object AuthUserCommands:
           request.displayName,
           request.email,
           request.preferences.displayMode,
+          request.preferences.locale,
+          request.preferences.problemTitleDisplayMode,
           request.newPassword
         )
     }
@@ -147,6 +152,8 @@ object AuthUserCommands:
     displayName: domains.auth.model.DisplayName,
     email: domains.auth.model.EmailAddress,
     displayMode: UserDisplayMode,
+    locale: UserLocale,
+    problemTitleDisplayMode: ProblemTitleDisplayMode,
     newPassword: Option[domains.auth.model.PlaintextPassword]
   ): IO[UpdateUserSettingsResult] =
     val passwordChanged = newPassword.nonEmpty
@@ -160,6 +167,8 @@ object AuthUserCommands:
         displayName = displayName,
         email = email,
         displayMode = displayMode,
+        locale = locale,
+        problemTitleDisplayMode = problemTitleDisplayMode,
         passwordHash = nextPasswordHash
       )
     yield updatedUser match

@@ -9,10 +9,14 @@ export {
   parseDisplayName,
   parseEmailAddress,
   parsePlaintextPassword,
+  parseProblemTitleDisplayMode,
   parseUserDisplayMode,
+  parseUserLocale,
   parseUsername,
   plaintextPasswordValue,
+  problemTitleDisplayModeValue,
   userDisplayModeValue,
+  userLocaleValue,
   usernameValue,
 } from '@/features/auth/domain/auth-parsers'
 export {
@@ -37,8 +41,10 @@ export {
 
 export type { AuthUserListItem } from '@/features/auth/model/AuthUserListItem'
 export type { DisplayName, EmailAddress, PlaintextPassword, Username } from '@/features/auth/model/AuthValues'
+export type { UserLocale } from '@/features/auth/model/UserLocale'
 export type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
 export type { UserPreferences } from '@/features/auth/model/UserPreferences'
+export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { LoginRequest } from '@/features/auth/model/LoginRequest'
 export type { LoginResponse } from '@/features/auth/model/LoginResponse'
 export type { RegisterRequest } from '@/features/auth/model/RegisterRequest'

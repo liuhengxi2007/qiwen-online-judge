@@ -14,7 +14,13 @@ import { createBlog } from '@/features/blog/api/blog-client'
 import { blogIdValue, parseBlogContent, parseBlogTitle, type BlogType, type BlogVisibility } from '@/features/blog/domain/blog'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { listProblems } from '@/features/problem/api/problem-client'
-import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSummary } from '@/features/problem/domain/problem'
+import {
+  formatProblemTitleDisplay,
+  parseProblemSlug,
+  problemSlugValue,
+  useProblemTitleDisplayMode,
+  type ProblemSummary,
+} from '@/features/problem/domain/problem'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { SignedInUser } from '@/shared/components/signed-in-user'
@@ -25,6 +31,7 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function CreateBlogPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.create.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const navigate = useNavigate()
   const { session: user, navigationIntent } = useSessionGuard()
   const [title, setTitle] = useState('')
@@ -220,7 +227,7 @@ export function CreateBlogPage() {
                   <SelectContent>
                     {problems.map((problem) => (
                       <SelectItem key={problemSlugValue(problem.slug)} value={problemSlugValue(problem.slug)}>
-                        {problemTitleValue(problem.title)}
+                        {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
                       </SelectItem>
                     ))}
                   </SelectContent>

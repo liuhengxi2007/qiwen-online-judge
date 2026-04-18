@@ -77,7 +77,12 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
-      preferences = UserPreferences(displayMode = user.displayMode),
+      preferences =
+        UserPreferences(
+          displayMode = user.displayMode,
+          locale = user.locale,
+          problemTitleDisplayMode = user.problemTitleDisplayMode
+        ),
       siteManager = user.siteManager,
       problemManager = user.problemManager
     )
@@ -96,7 +101,12 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
-      preferences = UserPreferences(displayMode = user.displayMode),
+      preferences =
+        UserPreferences(
+          displayMode = user.displayMode,
+          locale = user.locale,
+          problemTitleDisplayMode = user.problemTitleDisplayMode
+        ),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
       message = message
@@ -107,7 +117,12 @@ object AuthHttpResponses:
       displayName = user.displayName,
       username = user.username,
       email = user.email,
-      preferences = UserPreferences(displayMode = user.displayMode),
+      preferences =
+        UserPreferences(
+          displayMode = user.displayMode,
+          locale = user.locale,
+          problemTitleDisplayMode = user.problemTitleDisplayMode
+        ),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
       message = message

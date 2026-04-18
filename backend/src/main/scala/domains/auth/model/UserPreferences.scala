@@ -1,10 +1,13 @@
 package domains.auth.model
 
+import domains.problem.model.ProblemTitleDisplayMode
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class UserPreferences(
-  displayMode: UserDisplayMode
+  displayMode: UserDisplayMode,
+  locale: UserLocale,
+  problemTitleDisplayMode: ProblemTitleDisplayMode
 )
 
 object UserPreferences:

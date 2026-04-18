@@ -1,10 +1,14 @@
 import {
   displayNameValue,
   emailAddressValue,
+  problemTitleDisplayModeValue,
   userDisplayModeValue,
+  userLocaleValue,
   type SessionResponse,
 } from '@/features/auth/domain/auth'
+import type { UserLocale } from '@/features/auth/model/UserLocale'
 import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
+import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 export type UserSettingsState = {
@@ -12,6 +16,8 @@ export type UserSettingsState = {
   displayName: string
   email: string
   displayMode: UserDisplayMode
+  locale: UserLocale
+  problemTitleDisplayMode: ProblemTitleDisplayMode
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
@@ -28,6 +34,8 @@ export type UserSettingsAction =
   | { type: 'set_display_name'; value: string }
   | { type: 'set_email'; value: string }
   | { type: 'set_display_mode'; value: UserDisplayMode }
+  | { type: 'set_locale'; value: UserLocale }
+  | { type: 'set_problem_title_display_mode'; value: ProblemTitleDisplayMode }
   | { type: 'set_current_password'; value: string }
   | { type: 'set_new_password'; value: string }
   | { type: 'set_confirm_new_password'; value: string }
@@ -41,6 +49,8 @@ export const initialUserSettingsState: UserSettingsState = {
   displayName: '',
   email: '',
   displayMode: 'display_name',
+  locale: 'en',
+  problemTitleDisplayMode: 'title',
   currentPassword: '',
   newPassword: '',
   confirmNewPassword: '',
@@ -62,6 +72,10 @@ export function reduceUserSettingsState(
         displayName: '',
         email: '',
         displayMode: action.editedUser ? userDisplayModeValue(action.editedUser.preferences.displayMode) : 'display_name',
+        locale: action.editedUser ? userLocaleValue(action.editedUser.preferences.locale) : 'en',
+        problemTitleDisplayMode: action.editedUser
+          ? problemTitleDisplayModeValue(action.editedUser.preferences.problemTitleDisplayMode)
+          : 'title',
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
@@ -77,6 +91,8 @@ export function reduceUserSettingsState(
         displayName: displayNameValue(action.user.displayName),
         email: emailAddressValue(action.user.email),
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
+        locale: userLocaleValue(action.user.preferences.locale),
+        problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
         errorMessage: '',
       }
     case 'query_failed':
@@ -91,6 +107,10 @@ export function reduceUserSettingsState(
       return { ...state, email: action.value }
     case 'set_display_mode':
       return { ...state, displayMode: action.value }
+    case 'set_locale':
+      return { ...state, locale: action.value }
+    case 'set_problem_title_display_mode':
+      return { ...state, problemTitleDisplayMode: action.value }
     case 'set_current_password':
       return { ...state, currentPassword: action.value }
     case 'set_new_password':
@@ -111,6 +131,8 @@ export function reduceUserSettingsState(
         displayName: displayNameValue(action.user.displayName),
         email: emailAddressValue(action.user.email),
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
+        locale: userLocaleValue(action.user.preferences.locale),
+        problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',

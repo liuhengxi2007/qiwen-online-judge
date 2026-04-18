@@ -24,11 +24,15 @@ import {
   emailAddressValue,
   parseDisplayName,
   parseEmailAddress,
+  parseProblemTitleDisplayMode,
   parseUserDisplayMode,
+  parseUserLocale,
   parseUsername,
   plaintextPasswordValue,
+  problemTitleDisplayModeValue,
   requireParsed,
   userDisplayModeValue,
+  userLocaleValue,
   usernameValue,
 } from '@/features/auth/domain/auth-parsers'
 
@@ -46,6 +50,11 @@ export function fromLoginResponseContract(response: LoginResponseContract): Logi
     email: requireParsed(parseEmailAddress(response.email), 'login response email'),
     preferences: {
       displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'login response display mode'),
+      locale: requireParsed(parseUserLocale(response.preferences.locale), 'login response locale'),
+      problemTitleDisplayMode: requireParsed(
+        parseProblemTitleDisplayMode(response.preferences.problemTitleDisplayMode),
+        'login response problem title display mode',
+      ),
     },
     siteManager: response.siteManager,
     problemManager: response.problemManager,
@@ -73,6 +82,11 @@ export function fromSessionResponseContract(response: SessionResponseContract): 
     email: requireParsed(parseEmailAddress(response.email), 'session response email'),
     preferences: {
       displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'session response display mode'),
+      locale: requireParsed(parseUserLocale(response.preferences.locale), 'session response locale'),
+      problemTitleDisplayMode: requireParsed(
+        parseProblemTitleDisplayMode(response.preferences.problemTitleDisplayMode),
+        'session response problem title display mode',
+      ),
     },
     siteManager: response.siteManager,
     problemManager: response.problemManager,
@@ -84,6 +98,8 @@ export function fromUserIdentityContract(response: {
   displayName: string
   preferences: {
     displayMode: string
+    locale: string
+    problemTitleDisplayMode: string
   }
 }): UserIdentity {
   return {
@@ -91,6 +107,11 @@ export function fromUserIdentityContract(response: {
     displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),
     preferences: {
       displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'user identity display mode'),
+      locale: requireParsed(parseUserLocale(response.preferences.locale), 'user identity locale'),
+      problemTitleDisplayMode: requireParsed(
+        parseProblemTitleDisplayMode(response.preferences.problemTitleDisplayMode),
+        'user identity problem title display mode',
+      ),
     },
   }
 }
@@ -119,6 +140,8 @@ export function toUpdateOwnSettingsRequestContract(
     email: emailAddressValue(request.email),
     preferences: {
       displayMode: userDisplayModeValue(request.preferences.displayMode),
+      locale: userLocaleValue(request.preferences.locale),
+      problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
     },
     currentPassword: plaintextPasswordValue(request.currentPassword),
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
@@ -133,6 +156,8 @@ export function toUpdateManagedUserSettingsRequestContract(
     email: emailAddressValue(request.email),
     preferences: {
       displayMode: userDisplayModeValue(request.preferences.displayMode),
+      locale: userLocaleValue(request.preferences.locale),
+      problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
     },
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
   }

@@ -2,7 +2,8 @@ package domains.auth.table
 
 import cats.effect.IO
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, UserDisplayMode, Username}
+import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, UserDisplayMode, UserLocale, Username}
+import domains.problem.model.ProblemTitleDisplayMode
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.ResultSet
@@ -34,9 +35,11 @@ object AuthUserTableSupport:
           statement.setString(2, seedAdminUser.displayName.value)
           statement.setString(3, seedAdminUser.email.value)
           statement.setString(4, UserDisplayMode.toDatabase(UserDisplayMode.DisplayName))
-          statement.setString(5, passwordHash.value)
-          statement.setBoolean(6, seedAdminUser.siteManager)
-          statement.setBoolean(7, seedAdminUser.problemManager)
+          statement.setString(5, UserLocale.toDatabase(UserLocale.En))
+          statement.setString(6, ProblemTitleDisplayMode.toDatabase(ProblemTitleDisplayMode.Title))
+          statement.setString(7, passwordHash.value)
+          statement.setBoolean(8, seedAdminUser.siteManager)
+          statement.setBoolean(9, seedAdminUser.problemManager)
           statement.executeUpdate()
         finally statement.close()
       }
@@ -52,6 +55,14 @@ object AuthUserTableSupport:
         UserDisplayMode
           .fromDatabase(resultSet.getString("display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
+      locale =
+        UserLocale
+          .fromDatabase(resultSet.getString("locale"))
+          .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
+      problemTitleDisplayMode =
+        ProblemTitleDisplayMode
+          .fromDatabase(resultSet.getString("problem_title_display_mode"))
+          .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")

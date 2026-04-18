@@ -1,8 +1,8 @@
 package domains.submission.table
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, UserDisplayMode, UserIdentity, UserPreferences, Username}
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.auth.model.{AuthUser, DisplayName, UserDisplayMode, UserIdentity, UserLocale, UserPreferences, Username}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
 import domains.submission.table.SubmissionTableSchema.*
@@ -70,7 +70,15 @@ object SubmissionTable:
                   displayMode =
                     UserDisplayMode
                       .fromDatabase(resultSet.getString("submitter_display_mode"))
-                      .getOrElse(throw new IllegalStateException("Invalid submitter_display_mode."))
+                      .getOrElse(throw new IllegalStateException("Invalid submitter_display_mode.")),
+                  locale =
+                    UserLocale
+                      .fromDatabase(resultSet.getString("submitter_locale"))
+                      .getOrElse(throw new IllegalStateException("Invalid submitter_locale.")),
+                  problemTitleDisplayMode =
+                    ProblemTitleDisplayMode
+                      .fromDatabase(resultSet.getString("submitter_problem_title_display_mode"))
+                      .getOrElse(throw new IllegalStateException("Invalid submitter_problem_title_display_mode."))
                 )
               ),
               language = language,

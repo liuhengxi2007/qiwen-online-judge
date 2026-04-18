@@ -5,6 +5,8 @@ final case class AuthUser(
   displayName: DisplayName,
   email: EmailAddress,
   displayMode: UserDisplayMode,
+  locale: UserLocale,
+  problemTitleDisplayMode: domains.problem.model.ProblemTitleDisplayMode,
   passwordHash: PasswordHash,
   siteManager: Boolean,
   problemManager: Boolean

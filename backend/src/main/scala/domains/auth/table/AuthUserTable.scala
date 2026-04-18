@@ -12,8 +12,10 @@ import domains.auth.model.{
   PlaintextPassword,
   SiteManagerUser,
   UserDisplayMode,
+  UserLocale,
   Username
 }
+import domains.problem.model.ProblemTitleDisplayMode
 import domains.auth.table.AuthUserTableSchema.*
 import domains.auth.table.AuthUserTableSql.*
 import domains.auth.table.AuthUserTableSupport.*
@@ -55,6 +57,8 @@ object AuthUserTable:
     displayName: DisplayName,
     email: EmailAddress,
     displayMode: UserDisplayMode,
+    locale: UserLocale,
+    problemTitleDisplayMode: ProblemTitleDisplayMode,
     password: PlaintextPassword
   ): IO[AuthUser] =
     for
@@ -66,9 +70,11 @@ object AuthUserTable:
           statement.setString(2, displayName.value.trim)
           statement.setString(3, email.value.trim)
           statement.setString(4, UserDisplayMode.toDatabase(displayMode))
-          statement.setString(5, passwordHash.value)
-          statement.setBoolean(6, false)
-          statement.setBoolean(7, false)
+          statement.setString(5, UserLocale.toDatabase(locale))
+          statement.setString(6, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
+          statement.setString(7, passwordHash.value)
+          statement.setBoolean(8, false)
+          statement.setBoolean(9, false)
 
           val resultSet = statement.executeQuery()
           try
@@ -147,6 +153,8 @@ object AuthUserTable:
     displayName: DisplayName,
     email: EmailAddress,
     displayMode: UserDisplayMode,
+    locale: UserLocale,
+    problemTitleDisplayMode: ProblemTitleDisplayMode,
     passwordHash: PasswordHash
   ): IO[Option[AuthUser]] =
     IO.blocking {
@@ -155,8 +163,10 @@ object AuthUserTable:
         statement.setString(1, displayName.value.trim)
         statement.setString(2, email.value.trim)
         statement.setString(3, UserDisplayMode.toDatabase(displayMode))
-        statement.setString(4, passwordHash.value)
-        statement.setString(5, username.value.trim)
+        statement.setString(4, UserLocale.toDatabase(locale))
+        statement.setString(5, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
+        statement.setString(6, passwordHash.value)
+        statement.setString(7, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try

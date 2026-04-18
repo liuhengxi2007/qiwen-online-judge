@@ -4,7 +4,13 @@ import { Database, Files, MessageSquareText, PencilLine, ScrollText, Send, Shiel
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { problemSlugValue, problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
+import {
+  problemSlugValue,
+  problemStatementTextValue,
+  shouldShowProblemSlugSupplement,
+  useProblemTitleDisplay,
+  useProblemTitleDisplayMode,
+} from '@/features/problem/domain/problem'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
@@ -27,10 +33,13 @@ export function ProblemDetailHeaderCard({
   setManagementPanel,
 }: ProblemDetailHeaderCardProps) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
+
+  const titleText = useProblemTitleDisplay(model.problem.title, model.problem.slug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -39,12 +48,14 @@ export function ProblemDetailHeaderCard({
           <div className="flex items-center gap-3">
             <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
               <ScrollText className="size-5" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl text-slate-950">{problemTitleValue(model.problem.title)}</CardTitle>
-              <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-                {problemSlugValue(model.problem.slug)}
-              </CardDescription>
+          </div>
+          <div>
+              <CardTitle className="text-2xl text-slate-950">{titleText}</CardTitle>
+              {shouldShowProblemSlugSupplement(problemTitleDisplayMode) ? (
+                <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+                  {problemSlugValue(model.problem.slug)}
+                </CardDescription>
+              ) : null}
             </div>
           </div>
 

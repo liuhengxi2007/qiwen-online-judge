@@ -16,6 +16,12 @@ export {
   problemTitleValue,
 } from '@/features/problem/domain/problem-parsers'
 export {
+  formatProblemTitleDisplay,
+  shouldShowProblemSlugSupplement,
+  useProblemTitleDisplay,
+  useProblemTitleDisplayMode,
+} from '@/features/problem/domain/problem-display'
+export {
   fromProblemDetailContract,
   fromProblemListResponseContract,
   fromProblemSummaryContract,
@@ -28,6 +34,7 @@ export type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubm
 export type { ProblemData } from '@/features/problem/model/ProblemData'
 export type { ProblemDataFileListResponse } from '@/features/problem/model/ProblemDataFileListResponse'
 export type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'
 export type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'

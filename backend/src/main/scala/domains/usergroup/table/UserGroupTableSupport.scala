@@ -1,7 +1,8 @@
 package domains.usergroup.table
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, UserDisplayMode, UserPreferences, Username}
+import domains.auth.model.{DisplayName, UserDisplayMode, UserLocale, UserPreferences, Username}
+import domains.problem.model.ProblemTitleDisplayMode
 import domains.usergroup.model.{UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
 
 import java.sql.ResultSet
@@ -51,7 +52,15 @@ object UserGroupTableSupport:
           displayMode =
             UserDisplayMode
               .fromDatabase(resultSet.getString("display_mode"))
-              .getOrElse(throw new IllegalStateException("Invalid user_groups.display_mode."))
+              .getOrElse(throw new IllegalStateException("Invalid user_groups.display_mode.")),
+          locale =
+            UserLocale
+              .fromDatabase(resultSet.getString("locale"))
+              .getOrElse(throw new IllegalStateException("Invalid user_groups.locale.")),
+          problemTitleDisplayMode =
+            ProblemTitleDisplayMode
+              .fromDatabase(resultSet.getString("problem_title_display_mode"))
+              .getOrElse(throw new IllegalStateException("Invalid user_groups.problem_title_display_mode."))
         ),
       role = parseOptionalColumn("user_group_memberships.role", resultSet.getString("role"), UserGroupRole.fromDatabase),
       joinedAt = resultSet.getTimestamp("joined_at").toInstant

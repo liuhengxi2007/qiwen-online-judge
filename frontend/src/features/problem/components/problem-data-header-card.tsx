@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { problemDataFilenameValue, problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
+import {
+  problemDataFilenameValue,
+  problemSlugValue,
+  shouldShowProblemSlugSupplement,
+  useProblemTitleDisplay,
+  useProblemTitleDisplayMode,
+} from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -12,10 +18,13 @@ type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
+
+  const titleText = useProblemTitleDisplay(model.problem.title, model.problem.slug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -25,10 +34,12 @@ export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }
             <HardDriveUpload className="size-5" />
           </div>
           <div>
-            <CardTitle className="text-xl text-slate-950">{problemTitleValue(model.problem.title)}</CardTitle>
-            <CardDescription className="mt-2 font-mono text-sm text-slate-500">
-              {problemSlugValue(model.problem.slug)}
-            </CardDescription>
+            <CardTitle className="text-xl text-slate-950">{titleText}</CardTitle>
+            {shouldShowProblemSlugSupplement(problemTitleDisplayMode) ? (
+              <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+                {problemSlugValue(model.problem.slug)}
+              </CardDescription>
+            ) : null}
           </div>
         </div>
       </CardHeader>

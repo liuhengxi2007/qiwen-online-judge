@@ -1,11 +1,11 @@
 package domains.blog.table
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, UserDisplayMode, UserIdentity, UserPreferences, Username}
+import domains.auth.model.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, UserPreferences, Username}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogSummary, BlogTitle, BlogType, BlogVisibility, BlogVote}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*
-import domains.problem.model.{ProblemId, ProblemSlug}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitleDisplayMode}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -54,7 +54,15 @@ object BlogTable:
                   displayMode =
                     UserDisplayMode
                       .fromDatabase(resultSet.getString("author_display_mode"))
-                      .getOrElse(throw new IllegalStateException("Invalid author_display_mode."))
+                      .getOrElse(throw new IllegalStateException("Invalid author_display_mode.")),
+                  locale =
+                    UserLocale
+                      .fromDatabase(resultSet.getString("author_locale"))
+                      .getOrElse(throw new IllegalStateException("Invalid author_locale.")),
+                  problemTitleDisplayMode =
+                    ProblemTitleDisplayMode
+                      .fromDatabase(resultSet.getString("author_problem_title_display_mode"))
+                      .getOrElse(throw new IllegalStateException("Invalid author_problem_title_display_mode."))
                 )
               ),
               visibility = visibility,
