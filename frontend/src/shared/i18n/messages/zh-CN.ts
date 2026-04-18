@@ -9,6 +9,7 @@ export const zhCnMessages: Record<string, string> = {
     'common.language.en': 'English',
     'common.language.zh-CN': '简体中文',
     'common.loading': '加载中...',
+    'common.cancel': '取消',
     'common.noDescription': '暂无描述。',
     'common.createdBy': '创建者：{{username}}',
     'common.createdByLabel': '创建者',

@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { useI18n } from '@/shared/i18n/i18n'
 
 type ConfirmActionDialogProps = {
   open?: boolean
@@ -31,10 +32,12 @@ export function ConfirmActionDialog({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   onConfirm,
   destructive = false,
 }: ConfirmActionDialogProps) {
+  const { t } = useI18n()
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
@@ -47,7 +50,7 @@ export function ConfirmActionDialog({
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-3">
           <AlertDialogCancel className="rounded-full border-slate-300 bg-white px-5">{
-            cancelLabel
+            cancelLabel ?? t('common.cancel')
           }</AlertDialogCancel>
           <AlertDialogAction
             className={

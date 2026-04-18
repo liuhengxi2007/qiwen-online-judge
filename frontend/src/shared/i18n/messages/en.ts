@@ -9,6 +9,7 @@ export const enMessages: Record<string, string> = {
     'common.language.en': 'English',
     'common.language.zh-CN': '简体中文',
     'common.loading': 'Loading...',
+    'common.cancel': 'Cancel',
     'common.noDescription': 'No description provided.',
     'common.createdBy': 'Created by {{username}}',
     'common.createdByLabel': 'Created by',
