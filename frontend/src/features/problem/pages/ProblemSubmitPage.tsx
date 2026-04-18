@@ -17,8 +17,8 @@ import {
   submissionIdValue,
 } from '@/features/submission/domain/submission'
 import { HttpClientError } from '@/shared/api/http-client'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -69,11 +69,12 @@ export function ProblemSubmitPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.submit.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         {detailQuery.errorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">

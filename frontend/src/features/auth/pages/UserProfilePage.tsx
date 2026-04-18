@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-query'
 import { resolveUserProfileRoutePolicy } from '@/features/auth/lib/route-policy'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -63,6 +64,8 @@ export function UserProfilePage() {
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         <Card className="max-w-2xl border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>

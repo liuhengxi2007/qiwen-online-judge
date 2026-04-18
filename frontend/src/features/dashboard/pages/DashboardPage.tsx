@@ -4,6 +4,7 @@ import { BookCopy, FileText, Files, NotebookPen, Users, UsersRound } from 'lucid
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { displayNameValue } from '@/features/auth/domain/auth'
+import { AccountActions } from '@/shared/components/account-actions'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -31,47 +32,10 @@ export function DashboardPage() {
               {t('dashboard.welcome', { displayName: displayNameValue(user.displayName) })}
             </h1>
           </div>
+          <AccountActions />
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                  <BookCopy className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{t('dashboard.problemSets.title')}</CardTitle>
-                  <CardDescription>{t('dashboard.problemSets.description')}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400">
-                <Link to="/problem-sets">{t('dashboard.problemSets.open')}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
-                  <NotebookPen className="size-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{t('dashboard.blogs.title')}</CardTitle>
-                  <CardDescription>{t('dashboard.blogs.description')}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
-                <Link to="/blogs">{t('dashboard.blogs.open')}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -94,6 +58,25 @@ export function DashboardPage() {
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
               <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                  <BookCopy className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.problemSets.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.problemSets.description')}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-rose-300 text-rose-950 hover:bg-rose-400">
+                <Link to="/problem-sets">{t('dashboard.problemSets.open')}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
                 <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
                   <Files className="size-5" />
                 </div>
@@ -106,6 +89,25 @@ export function DashboardPage() {
             <CardContent>
               <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
                 <Link to="/submissions">{t('dashboard.submissions.open')}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                  <NotebookPen className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.blogs.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.blogs.description')}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
+                <Link to="/blogs">{t('dashboard.blogs.open')}</Link>
               </Button>
             </CardContent>
           </Card>

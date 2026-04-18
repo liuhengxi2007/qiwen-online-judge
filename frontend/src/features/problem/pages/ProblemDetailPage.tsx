@@ -9,8 +9,8 @@ import { ProblemAccessDialog } from '@/features/problem/components/problem-acces
 import { ProblemDetailHeaderCard } from '@/features/problem/components/problem-detail-header-card'
 import { ProblemEditDialog } from '@/features/problem/components/problem-edit-dialog'
 import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedManagerGroupsInputFromAccessPolicy,
@@ -76,11 +76,12 @@ export function ProblemDetailPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.detail.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         {!model.isLoading && !model.problem && model.loadErrorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

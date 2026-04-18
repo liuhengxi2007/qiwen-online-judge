@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type UserAccountPageShellProps = {
@@ -30,6 +31,8 @@ export function UserAccountPageShell({
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">{children}</div>
       </section>

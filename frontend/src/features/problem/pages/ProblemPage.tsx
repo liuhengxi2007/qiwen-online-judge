@@ -13,9 +13,9 @@ import {
   shouldShowProblemSlugSupplement,
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -44,11 +44,12 @@ export function ProblemPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.list.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         <div className="space-y-6">
           {model.errorMessage ? (

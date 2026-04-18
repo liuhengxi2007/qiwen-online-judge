@@ -13,8 +13,8 @@ import {
 } from '@/features/submission/domain/submission'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -79,11 +79,12 @@ export function SubmissionDetailPage() {
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
               {t('submission.detail.heading')}
             </h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         {submissionQuery.errorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">

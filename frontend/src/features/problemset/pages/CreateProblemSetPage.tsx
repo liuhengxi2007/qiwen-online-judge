@@ -11,10 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useCreateProblemSetPageModel } from '@/features/problemset/hooks/use-create-problemset-page-model'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -53,11 +53,12 @@ export function CreateProblemSetPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.create.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>

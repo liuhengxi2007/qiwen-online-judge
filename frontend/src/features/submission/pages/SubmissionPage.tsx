@@ -25,8 +25,8 @@ import {
 } from '@/features/submission/domain/submission'
 import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -400,11 +400,12 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('submission.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         {submissionQuery.errorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">

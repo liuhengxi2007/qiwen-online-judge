@@ -8,8 +8,8 @@ import { ProblemDataUploadCard } from '@/features/problem/components/problem-dat
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
+import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { SignedInUser } from '@/shared/components/signed-in-user'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -45,11 +45,12 @@ export function ProblemDataPage() {
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.data.heading')}</h1>
-            <SignedInUser user={user} />
           </div>
 
           <AncestorNavigation />
         </div>
+
+        <AppSectionBar />
 
         {model.isProblemLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
