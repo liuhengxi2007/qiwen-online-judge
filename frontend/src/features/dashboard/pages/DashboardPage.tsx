@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { BookCopy, FileText, Files, NotebookPen, Users, UsersRound } from 'lucide-react'
+import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -108,6 +108,25 @@ export function DashboardPage() {
             <CardContent>
               <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
                 <Link to="/blogs">{t('dashboard.blogs.open')}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <Trophy className="size-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-slate-950">{t('dashboard.ranklist.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.ranklist.description')}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="rounded-2xl bg-amber-300 text-amber-950 hover:bg-amber-400">
+                <Link to="/ranklist">{t('dashboard.ranklist.open')}</Link>
               </Button>
             </CardContent>
           </Card>

@@ -6,6 +6,7 @@ import domains.auth.application.SessionStore
 import domains.judge.application.JudgeConfig
 import domains.auth.application.AuthUserCommands
 import domains.auth.model.{LoginRequest, RegisterRequest, UpdateUserPermissionsRequest, Username}
+import domains.shared.model.PageRequest
 import io.circe.Json
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -31,8 +32,17 @@ object AuthRouter:
       case request @ GET -> Root / "api" / "auth" / "judgers" =>
         handlers.execute(request, (), AuthHttpPlanDefinitions.listJudgers)
 
+      case request @ GET -> Root / "api" / "auth" / "ranklist" =>
+        handlers.execute(request, PageRequest(page = parsePage(request.uri.query.params.get("page"))), AuthHttpPlanDefinitions.listContributionRanklist)
+
+      case request @ GET -> Root / "api" / "auth" / "ranklist" / "accepted" =>
+        handlers.execute(request, PageRequest(page = parsePage(request.uri.query.params.get("page"))), AuthHttpPlanDefinitions.listAcceptedRanklist)
+
       case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "settings" =>
         handlers.execute(request, Username.canonical(targetUsername), AuthHttpPlanDefinitions.getUserSettings)
+
+      case request @ GET -> Root / "api" / "auth" / "users" / targetUsername / "profile" =>
+        handlers.execute(request, Username.canonical(targetUsername), AuthHttpPlanDefinitions.getUserProfile)
 
       case request @ POST -> Root / "api" / "auth" / "users" / targetUsername / "permissions" =>
         handlers.executeDecoded[
@@ -69,3 +79,6 @@ object AuthRouter:
           AuthHttpPlanDefinitions.register
         )(identity)
     }
+
+  private def parsePage(rawPage: Option[String]): Int =
+    rawPage.flatMap(_.toIntOption).getOrElse(1)

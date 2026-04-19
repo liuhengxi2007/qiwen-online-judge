@@ -55,6 +55,30 @@ export type SessionResponse = {
   problemManager: boolean
 }
 
+export type UserProfileResponse = {
+  username: string
+  displayName: string
+  preferences: UserPreferences
+  contribution: number
+  acceptedProblems: UserAcceptedProblem[]
+}
+
+export type UserAcceptedProblem = {
+  slug: string
+  title: string
+  acceptedAt: string
+}
+
+export type UserRanklistItem = {
+  user: UserIdentity
+  contribution: number
+}
+
+export type UserAcceptedRanklistItem = {
+  user: UserIdentity
+  acceptedCount: number
+}
+
 export type UpdateUserPermissionsRequest = {
   siteManager: boolean
   problemManager: boolean

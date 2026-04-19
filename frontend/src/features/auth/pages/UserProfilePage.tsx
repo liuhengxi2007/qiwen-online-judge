@@ -1,19 +1,27 @@
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Files, NotebookPen, Settings, UserRound } from 'lucide-react'
+import { Files, NotebookPen, Settings, Sparkles, UserRound } from 'lucide-react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { displayNameValue, parseUsername, usernameValue } from '@/features/auth/domain/auth'
+import { contributionTextClassName } from '@/features/auth/domain/contribution-style'
+import { displayNameValue, parseUsername, userContributionValue, usernameValue } from '@/features/auth/domain/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-query'
+import { useUserProfileQuery } from '@/features/auth/hooks/use-user-profile-query'
 import { resolveUserProfileRoutePolicy } from '@/features/auth/lib/route-policy'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
+const acceptedProblemsPerPage = 10
+
 export function UserProfilePage() {
   const { t } = useI18n()
+  const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
+  const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
   usePageTitle(t('userProfile.pageTitle'))
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, navigationIntent: guardNavigationIntent } = useSessionGuard()
@@ -34,13 +42,21 @@ export function UserProfilePage() {
     siteManagerViewer: viewer.siteManager,
   })
 
-  const query = useUserSettingsQuery({
-    canLoadTarget: true,
+  const query = useUserProfileQuery({
     targetUsername: routePolicy.targetUsername,
   })
-  const displayedUser = routePolicy.isEditingOwnSettings ? viewer : query.editedUser
+  const displayedUser = query.profile
+  const displayedContribution = displayedUser ? Math.round(userContributionValue(displayedUser.contribution)) : null
+  const acceptedProblems = displayedUser?.acceptedProblems ?? []
+  const acceptedProblemsTotalPages = Math.max(1, Math.ceil(acceptedProblems.length / acceptedProblemsPerPage))
+  const normalizedAcceptedProblemsPage = Math.min(acceptedProblemsPage, acceptedProblemsTotalPages)
+  const acceptedProblemsPageItems = acceptedProblems.slice(
+    (normalizedAcceptedProblemsPage - 1) * acceptedProblemsPerPage,
+    normalizedAcceptedProblemsPage * acceptedProblemsPerPage,
+  )
   const targetUsername = usernameValue(routePolicy.targetUsername)
-  const profileName = displayedUser ? displayNameValue(displayedUser.displayName) : t('common.loading')
+  const profileUnavailable = !query.isLoadingProfile && !displayedUser
+  const profileName = displayedUser ? displayNameValue(displayedUser.displayName) : profileUnavailable ? '--' : t('common.loading')
 
   if (routePolicy.navigationIntent) {
     return <Navigate replace={routePolicy.navigationIntent.replace} to={routePolicy.navigationIntent.to} />
@@ -67,7 +83,13 @@ export function UserProfilePage() {
 
         <AppSectionBar />
 
-        <Card className="max-w-2xl border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        {query.profileLoadError ? (
+          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{query.profileLoadError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
@@ -79,33 +101,126 @@ export function UserProfilePage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">{t('common.displayName')}</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{query.isLoadingSettings ? t('common.loading') : profileName}</p>
-            </div>
+          <CardContent>
+            <div className="grid gap-5 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.45fr)]">
+              <div className="space-y-5">
+                <div className="rounded-3xl bg-slate-50 p-6">
+                  <p className="text-sm text-slate-500">{t('common.displayName')}</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">{query.isLoadingProfile ? t('common.loading') : profileName}</p>
+                </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
-                <Link to={`/submissions?username=${encodeURIComponent(targetUsername)}`}>
-                  <Files className="size-4" />
-                  {t('userProfile.openSubmissions')}
-                </Link>
-              </Button>
-              <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
-                <Link to={`/blog/${targetUsername}`}>
-                  <NotebookPen className="size-4" />
-                  {t('userProfile.openBlogs')}
-                </Link>
-              </Button>
-              {routePolicy.canManageTarget ? (
-                <Button asChild variant="outline" className="rounded-2xl border-violet-300 bg-white text-violet-950">
-                  <Link to={`/user/${targetUsername}/settings`}>
-                    <Settings className="size-4" />
-                    {t('userProfile.openSettings')}
-                  </Link>
-                </Button>
-              ) : null}
+                <div className="flex flex-wrap gap-3 rounded-3xl border border-slate-100 bg-slate-50 p-6">
+                  <Button asChild className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400">
+                    <Link to={`/submissions?username=${encodeURIComponent(targetUsername)}`}>
+                      <Files className="size-4" />
+                      {t('userProfile.openSubmissions')}
+                    </Link>
+                  </Button>
+                  <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
+                    <Link to={`/blog/${targetUsername}`}>
+                      <NotebookPen className="size-4" />
+                      {t('userProfile.openBlogs')}
+                    </Link>
+                  </Button>
+                  {routePolicy.canManageTarget ? (
+                    <Button asChild variant="outline" className="rounded-2xl border-violet-300 bg-white text-violet-950">
+                      <Link to={`/user/${targetUsername}/settings`}>
+                        <Settings className="size-4" />
+                        {t('userProfile.openSettings')}
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-3xl bg-violet-50 p-6">
+                  <div className="flex items-center gap-2 text-violet-800">
+                    <Sparkles className="size-4" />
+                    <p className="text-sm font-medium">{t('userProfile.contribution')}</p>
+                  </div>
+                  <p className={`mt-2 text-3xl font-semibold ${displayedContribution === null ? 'text-violet-950' : contributionTextClassName(displayedContribution)}`}>
+                    {displayedContribution === null ? (query.isLoadingProfile ? t('common.loading') : '--') : String(displayedContribution)}
+                  </p>
+                  <p className="mt-1 text-sm text-violet-700">{t('userProfile.contributionDescription')}</p>
+                </div>
+
+                <div className="rounded-3xl bg-emerald-50 p-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-emerald-800">{t('userProfile.acceptedProblems')}</p>
+                      <p className="mt-2 text-3xl font-semibold text-emerald-700">
+                        {displayedUser ? String(acceptedProblems.length) : query.isLoadingProfile ? t('common.loading') : '--'}
+                      </p>
+                    </div>
+                    <Button
+                      disabled={!displayedUser || acceptedProblems.length === 0}
+                      type="button"
+                      variant="outline"
+                      className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+                      onClick={() => {
+                        setAcceptedProblemsExpanded((isExpanded) => !isExpanded)
+                        setAcceptedProblemsPage(1)
+                      }}
+                    >
+                      {acceptedProblemsExpanded ? t('userProfile.hideAcceptedProblems') : t('userProfile.showAcceptedProblems')}
+                    </Button>
+                  </div>
+
+                  {acceptedProblemsExpanded ? (
+                    acceptedProblems.length > 0 ? (
+                      <div className="mt-4 space-y-2">
+                        {acceptedProblemsPageItems.map((problem) => (
+                          <div
+                            key={problemSlugValue(problem.slug)}
+                            className="rounded-2xl border border-emerald-100 bg-white px-4 py-3"
+                          >
+                            <Link
+                              className="font-medium text-slate-900 hover:underline"
+                              to={`/problems/${problemSlugValue(problem.slug)}`}
+                            >
+                              {problemTitleValue(problem.title)}
+                            </Link>
+                            <p className="mt-1 text-sm text-emerald-700">
+                              {t('userProfile.acceptedAt', { acceptedAt: new Date(problem.acceptedAt).toLocaleString() })}
+                            </p>
+                          </div>
+                        ))}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                          <p className="text-sm text-emerald-700">
+                            {t('userProfile.acceptedProblemsPageStatus', {
+                              page: String(normalizedAcceptedProblemsPage),
+                              totalPages: String(acceptedProblemsTotalPages),
+                            })}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              disabled={normalizedAcceptedProblemsPage <= 1}
+                              type="button"
+                              variant="outline"
+                              className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+                              onClick={() => setAcceptedProblemsPage((page) => Math.max(1, page - 1))}
+                            >
+                              {t('submission.pagination.previous')}
+                            </Button>
+                            <Button
+                              disabled={normalizedAcceptedProblemsPage >= acceptedProblemsTotalPages}
+                              type="button"
+                              variant="outline"
+                              className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+                              onClick={() => setAcceptedProblemsPage((page) => Math.min(acceptedProblemsTotalPages, page + 1))}
+                            >
+                              {t('submission.pagination.next')}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-emerald-700">{t('userProfile.acceptedProblemsEmpty')}</p>
+                    )
+                  ) : null}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

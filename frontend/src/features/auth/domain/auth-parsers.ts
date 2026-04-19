@@ -4,6 +4,7 @@ import type {
   PlaintextPassword,
   Username,
 } from '@/features/auth/model/AuthValues'
+import type { UserContribution } from '@/features/auth/model/UserContribution'
 import type { UserLocale } from '@/features/auth/model/UserLocale'
 import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
@@ -43,6 +44,10 @@ function createProblemTitleDisplayMode(value: ProblemTitleDisplayMode): ProblemT
   return value
 }
 
+function createUserContribution(value: number): UserContribution {
+  return value as UserContribution
+}
+
 export function requireParsed<T>(result: ParseResult<T>, label: string): T {
   if (!result.ok) {
     throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
@@ -77,6 +82,10 @@ export function userLocaleValue(locale: UserLocale): UserLocale {
 
 export function problemTitleDisplayModeValue(displayMode: ProblemTitleDisplayMode): ProblemTitleDisplayMode {
   return displayMode
+}
+
+export function userContributionValue(contribution: UserContribution): number {
+  return contribution
 }
 
 export function parseUsername(rawUsername: string): ParseResult<Username> {
@@ -184,4 +193,12 @@ export function parseProblemTitleDisplayMode(rawDisplayMode: string): ParseResul
         error: 'Problem title display mode must be one of: title, slug, title_with_slug.',
       }
   }
+}
+
+export function parseUserContribution(rawContribution: number): ParseResult<UserContribution> {
+  if (!Number.isFinite(rawContribution)) {
+    return { ok: false, error: 'User contribution must be a finite number.' }
+  }
+
+  return { ok: true, value: createUserContribution(rawContribution) }
 }

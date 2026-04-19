@@ -90,26 +90,57 @@ These backend HTTP-facing models must stay aligned with `contracts/`.
 - `LoginRequest`
 - `LoginResponse`
 - `RegisterRequest`
+- `RegisterResponse`
 - `SessionResponse`
 - `UpdateOwnSettingsRequest`
 - `UpdateManagedUserSettingsRequest`
 - `UpdateUserPermissionsRequest`
 - `AuthUserListItem`
+- `UserProfileResponse`
+
+### Blog
+
+- `CreateBlogRequest`
+- `UpdateBlogRequest`
+- `VoteBlogRequest`
+- `CreateBlogCommentRequest`
+- `UpdateBlogCommentRequest`
+- `VoteBlogCommentRequest`
+- `BlogCommentSummary`
+- `BlogSummary`
+- `BlogDetail`
+- `BlogType`
+- `BlogVisibility`
+- `BlogVote`
+
+### Judger
+
+- `RegisteredJudgerListItem`
 
 ### Problem
 
 - `CreateProblemRequest`
 - `UpdateProblemRequest`
-- `ProblemListItem` / `ProblemDetail` JSON shape
+- `ProblemSummary`
+- `ProblemDetail`
 
 ### Problem Set
 
 - `CreateProblemSetRequest`
 - `UpdateProblemSetRequest`
-- `LinkProblemRequest`
+- `AddProblemToProblemSetRequest`
 - `ProblemSetSummary`
 - `ProblemSetDetail`
 - `ProblemSetProblemSummary`
+
+### Submission
+
+- `CreateSubmissionRequest`
+- `SubmissionSummary`
+- `SubmissionDetail`
+- `SubmissionLanguage`
+- `SubmissionStatus`
+- `SubmissionVerdict`
 
 ### User Group
 
@@ -233,9 +264,12 @@ Use this order when aligning existing backend code:
 
 1. shared transport primitives
 2. auth request/response models
-3. problem request/response models
-4. problemset request/response models
-5. future domains such as contest, submission, usergroup, and hack
+3. blog request/response models
+4. problem request/response models
+5. problemset request/response models
+6. submission request/response models
+7. usergroup request/response models
+8. future domains such as contest and hack
 
 ## Enforcement Direction
 

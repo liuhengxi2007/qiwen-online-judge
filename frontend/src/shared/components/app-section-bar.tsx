@@ -12,8 +12,8 @@ type NavItem = {
     | 'rose'
     | 'indigo'
     | 'orange'
-    | 'sky'
     | 'amber'
+    | 'sky'
 }
 
 function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
@@ -34,13 +34,13 @@ function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
       active: 'bg-orange-300 text-orange-950 hover:bg-orange-400',
       idle: 'text-orange-800 hover:bg-orange-50',
     },
-    sky: {
-      active: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
-      idle: 'text-sky-800 hover:bg-sky-50',
-    },
     amber: {
       active: 'bg-amber-300 text-amber-950 hover:bg-amber-400',
       idle: 'text-amber-800 hover:bg-amber-50',
+    },
+    sky: {
+      active: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
+      idle: 'text-sky-800 hover:bg-sky-50',
     },
   }
 
@@ -62,6 +62,7 @@ export function AppSectionBar() {
     { to: '/problem-sets', label: t('nav.problemSets'), tone: 'rose' },
     { to: '/submissions', label: t('nav.submissions'), tone: 'indigo' },
     { to: '/blogs', label: t('nav.blogs'), tone: 'orange' },
+    { to: '/ranklist', label: t('nav.ranklist'), tone: 'amber' },
     { to: '/user-groups', label: t('nav.userGroups'), tone: 'sky' },
   ]
 

@@ -2,10 +2,10 @@ package domains.auth.http
 
 import cats.effect.IO
 import domains.auth.application.AuthUserCommands
-import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse, UserPreferences}
+import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse, UserAcceptedRanklistItem, UserPreferences, UserRanklistItem}
 import domains.judger.model.RegisteredJudgerListItem
 import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.{ErrorResponse, SuccessResponse}
+import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -137,6 +137,12 @@ object AuthHttpResponses:
   def listJudgersResponse(judgers: List[RegisteredJudgerListItem]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(judgers.asJson))
 
+  def listContributionRanklistResponse(response: PageResponse[UserRanklistItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
+  def listAcceptedRanklistResponse(response: PageResponse[UserAcceptedRanklistItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
   def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
     loggedOutResponse(output.clearedSessionCookie)
 
@@ -184,6 +190,13 @@ object AuthHttpResponses:
         userNotFoundResponse
       case AuthUserCommands.GetUserSettingsResult.Found(targetUser) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toSessionResponse(targetUser).asJson))
+
+  def mapGetUserProfileResult(result: AuthUserCommands.GetUserProfileResult): IO[Response[IO]] =
+    result match
+      case AuthUserCommands.GetUserProfileResult.NotFound =>
+        userNotFoundResponse
+      case AuthUserCommands.GetUserProfileResult.Found(profile) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(profile.asJson))
 
   def mapUpdateUserPermissionsResult(result: AuthUserCommands.UpdateUserPermissionsResult): IO[Response[IO]] =
     result match

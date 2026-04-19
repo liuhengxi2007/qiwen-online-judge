@@ -20,6 +20,7 @@ import { SiteManagePage } from '@/features/site-management/pages/SiteManagePage'
 import { SubmissionDetailPage } from '@/features/submission/pages/SubmissionDetailPage'
 import { ProblemSubmissionPage, SubmissionPage } from '@/features/submission/pages/SubmissionPage'
 import { UserProfilePage } from '@/features/auth/pages/UserProfilePage'
+import { RanklistPage } from '@/features/auth/pages/RanklistPage'
 import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/features/usergroup/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/features/usergroup/pages/UserGroupDetailPage'
@@ -125,6 +126,10 @@ export const router = createBrowserRouter([
   {
     path: '/submissions/:submissionId',
     element: <AuthenticatedRoute element={<SubmissionDetailPage />} />,
+  },
+  {
+    path: '/ranklist',
+    element: <AuthenticatedRoute element={<RanklistPage />} />,
   },
   {
     path: '/user-groups',

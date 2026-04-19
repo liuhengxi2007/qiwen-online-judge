@@ -11,8 +11,11 @@ Current checks cover:
 - shared transport models
 - shared lifecycle enum values
 - auth transport models
+- blog transport models
+- judger transport models
 - problem transport models
 - problemset transport models
+- submission transport models
 - usergroup transport models
 
 The check is intentionally structural:

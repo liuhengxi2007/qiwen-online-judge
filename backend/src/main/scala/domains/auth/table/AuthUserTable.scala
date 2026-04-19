@@ -11,11 +11,18 @@ import domains.auth.model.{
   PasswordHash,
   PlaintextPassword,
   SiteManagerUser,
+  UserAcceptedProblem,
+  UserAcceptedRanklistItem,
+  UserContribution,
   UserDisplayMode,
+  UserIdentity,
   UserLocale,
+  UserPreferences,
+  UserRanklistItem,
   Username
 }
-import domains.problem.model.ProblemTitleDisplayMode
+import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
+import domains.shared.model.{PageRequest, PageResponse}
 import domains.auth.table.AuthUserTableSchema.*
 import domains.auth.table.AuthUserTableSql.*
 import domains.auth.table.AuthUserTableSupport.*
@@ -109,6 +116,80 @@ object AuthUserTable:
       finally statement.close()
     }
 
+  def listContributionRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserRanklistItem]] =
+    IO.blocking {
+      val normalizedPageRequest = pageRequest.normalized
+      val totalItems = countUsers(connection)
+      val statement = connection.prepareStatement(listContributionRanklistSql)
+      try
+        statement.setInt(1, normalizedPageRequest.pageSize)
+        statement.setInt(2, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+        val resultSet = statement.executeQuery()
+        try
+          val items = Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readRanklistItem(resultSet))
+            .toList
+
+          PageResponse(
+            items = items,
+            page = normalizedPageRequest.page,
+            pageSize = normalizedPageRequest.pageSize,
+            totalItems = totalItems
+          )
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listAcceptedRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
+    IO.blocking {
+      val normalizedPageRequest = pageRequest.normalized
+      val totalItems = countUsers(connection)
+      val statement = connection.prepareStatement(listAcceptedRanklistSql)
+      try
+        statement.setInt(1, normalizedPageRequest.pageSize)
+        statement.setInt(2, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+        val resultSet = statement.executeQuery()
+        try
+          val items = Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readAcceptedRanklistItem(resultSet))
+            .toList
+
+          PageResponse(
+            items = items,
+            page = normalizedPageRequest.page,
+            pageSize = normalizedPageRequest.pageSize,
+            totalItems = totalItems
+          )
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listAcceptedProblems(connection: Connection, username: Username): IO[List[UserAcceptedProblem]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listAcceptedProblemsSql)
+      try
+        statement.setString(1, username.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ =>
+              UserAcceptedProblem(
+                slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+                title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
+                acceptedAt = resultSet.getTimestamp("accepted_at").toInstant
+              )
+            )
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   def delete(connection: Connection, username: Username): IO[DeleteUserTableResult] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteSql)
@@ -175,3 +256,49 @@ object AuthUserTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private def countUsers(connection: Connection): Long =
+    val statement = connection.prepareStatement(countUsersSql)
+    try
+      val resultSet = statement.executeQuery()
+      try
+        if resultSet.next() then resultSet.getLong("total_items")
+        else 0L
+      finally resultSet.close()
+    finally statement.close()
+
+  private def readRanklistItem(resultSet: ResultSet): UserRanklistItem =
+    UserRanklistItem(
+      user = readUserIdentity(resultSet),
+      contribution = UserContribution(BigDecimal(resultSet.getBigDecimal("contribution")))
+    )
+
+  private def readAcceptedRanklistItem(resultSet: ResultSet): UserAcceptedRanklistItem =
+    UserAcceptedRanklistItem(
+      user = readUserIdentity(resultSet),
+      acceptedCount = resultSet.getInt("accepted_count")
+    )
+
+  private def readUserIdentity(resultSet: ResultSet): UserIdentity =
+    UserIdentity(
+      username = Username.canonical(resultSet.getString("username")),
+      displayName = DisplayName(resultSet.getString("display_name")),
+      preferences =
+        UserPreferences(
+          displayMode =
+            UserDisplayMode
+              .fromDatabase(resultSet.getString("display_mode"))
+              .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
+          locale =
+            UserLocale
+              .fromDatabase(resultSet.getString("locale"))
+              .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
+          problemTitleDisplayMode =
+            ProblemTitleDisplayMode
+              .fromDatabase(resultSet.getString("problem_title_display_mode"))
+              .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode."))
+        )
+    )
+
+  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

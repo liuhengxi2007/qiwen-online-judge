@@ -2,9 +2,11 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserLocale, UserPreferences, UserProfileResponse, UserRanklistItem, Username}
 import domains.auth.table.AuthUserTable
+import domains.blog.table.BlogTable
 import domains.problem.model.ProblemTitleDisplayMode
+import domains.shared.model.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
@@ -16,6 +18,12 @@ object AuthUserCommands:
     case Forbidden
     case NotFound
     case Found(user: AuthUser)
+
+  enum GetUserProfileResult:
+    case NotFound
+    case Found(profile: UserProfileResponse)
+
+  private val ranklistPageSize = 10
 
   enum UpdateUserPermissionsResult:
     case Forbidden
@@ -51,6 +59,64 @@ object AuthUserCommands:
     ).map {
       case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
       case None => GetUserSettingsResult.NotFound
+    }
+
+  def getUserProfile(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    targetUsername: Username
+  ): IO[GetUserProfileResult] =
+    val _ = actor
+    databaseSession.withTransactionConnection { connection =>
+      AuthUserTable.findByUsername(connection, targetUsername).flatMap {
+        case None =>
+          IO.pure(GetUserProfileResult.NotFound)
+        case Some(targetUser) =>
+          for
+            contribution <- BlogTable.contributionByAuthor(connection, targetUsername)
+            acceptedProblems <- AuthUserTable.listAcceptedProblems(connection, targetUsername)
+          yield
+            GetUserProfileResult.Found(
+              UserProfileResponse(
+                username = targetUser.username,
+                displayName = targetUser.displayName,
+                preferences =
+                  UserPreferences(
+                    displayMode = targetUser.displayMode,
+                    locale = targetUser.locale,
+                    problemTitleDisplayMode = targetUser.problemTitleDisplayMode
+                  ),
+                contribution = UserContribution(contribution),
+                acceptedProblems = acceptedProblems
+              )
+            )
+      }
+    }
+
+  def listContributionRanklist(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    pageRequest: PageRequest
+  ): IO[PageResponse[UserRanklistItem]] =
+    val _ = actor
+    databaseSession.withTransactionConnection { connection =>
+      AuthUserTable.listContributionRanklist(
+        connection,
+        PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
+      )
+    }
+
+  def listAcceptedRanklist(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    pageRequest: PageRequest
+  ): IO[PageResponse[UserAcceptedRanklistItem]] =
+    val _ = actor
+    databaseSession.withTransactionConnection { connection =>
+      AuthUserTable.listAcceptedRanklist(
+        connection,
+        PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
+      )
     }
 
   def updateUserPermissions(

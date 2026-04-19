@@ -115,6 +115,7 @@ function run() {
     UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateOwnSettingsRequest.scala'),
     UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateManagedUserSettingsRequest.scala'),
     UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/auth/model/UpdateUserPermissionsRequest.scala'),
+    UserProfileResponse: read('backend/src/main/scala/domains/auth/model/UserProfileResponse.scala'),
   }
 
   const judgerFiles = {
@@ -215,6 +216,7 @@ function run() {
     ['UpdateOwnSettingsRequest', 'UpdateOwnSettingsRequest'],
     ['UpdateManagedUserSettingsRequest', 'UpdateManagedUserSettingsRequest'],
     ['UpdateUserPermissionsRequest', 'UpdateUserPermissionsRequest'],
+    ['UserProfileResponse', 'UserProfileResponse'],
   ]
 
   for (const [contractType, scalaType] of authMappings) {

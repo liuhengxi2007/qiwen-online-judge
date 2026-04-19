@@ -6,22 +6,14 @@ object AuthUserTableSql:
     """
       |insert into auth_users (username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |on conflict (username) do update
-      |set display_name = excluded.display_name,
-      |    email = excluded.email,
-      |    display_mode = excluded.display_mode,
-      |    locale = excluded.locale,
-      |    problem_title_display_mode = excluded.problem_title_display_mode,
-      |    password_hash = excluded.password_hash,
-      |    site_manager = excluded.site_manager,
-      |    problem_manager = excluded.problem_manager
+      |on conflict (username) do nothing
       |""".stripMargin
 
   val findByUsernameSql: String =
     """
       |select username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager
       |from auth_users
-      |where username = ?
+      |where lower(username) = lower(?)
       |""".stripMargin
 
   val insertSql: String =
@@ -36,6 +28,75 @@ object AuthUserTableSql:
       |select username, display_name, email, display_mode, locale, problem_title_display_mode, site_manager, problem_manager
       |from auth_users
       |order by username asc
+      |""".stripMargin
+
+  val countUsersSql: String =
+    """
+      |select count(*) as total_items
+      |from auth_users
+      |""".stripMargin
+
+  val listContributionRanklistSql: String =
+    """
+      |with blog_scores as (
+      |  select b.author_username,
+      |         sum(case when bv.vote = 'up' then 1 when bv.vote = 'down' then -1 else 0 end)::numeric as blog_score
+      |  from blogs b
+      |  left join blog_votes bv on bv.blog_id = b.id
+      |  group by b.author_username
+      |),
+      |comment_scores as (
+      |  select c.author_username,
+      |         sum(case when bcv.vote = 'up' then 1 when bcv.vote = 'down' then -1 else 0 end)::numeric as comment_score
+      |  from blog_comments c
+      |  left join blog_comment_votes bcv on bcv.comment_id = c.id
+      |  group by c.author_username
+      |)
+      |select au.username,
+      |       au.display_name,
+      |       au.display_mode,
+      |       au.locale,
+      |       au.problem_title_display_mode,
+      |       round(coalesce(blog_scores.blog_score, 0)::numeric + coalesce(comment_scores.comment_score, 0)::numeric * 0.1) as contribution
+      |from auth_users au
+      |left join blog_scores on blog_scores.author_username = au.username
+      |left join comment_scores on comment_scores.author_username = au.username
+      |order by contribution desc, lower(au.display_name) asc, lower(au.username) asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val listAcceptedRanklistSql: String =
+    """
+      |with accepted_counts as (
+      |  select lower(s.submitter_username) as submitter_username,
+      |         count(distinct s.problem_id)::int as accepted_count
+      |  from submissions s
+      |  where s.verdict = 'accepted'
+      |  group by lower(s.submitter_username)
+      |)
+      |select au.username,
+      |       au.display_name,
+      |       au.display_mode,
+      |       au.locale,
+      |       au.problem_title_display_mode,
+      |       coalesce(accepted_counts.accepted_count, 0) as accepted_count
+      |from auth_users au
+      |left join accepted_counts on accepted_counts.submitter_username = lower(au.username)
+      |order by accepted_count desc, lower(au.display_name) asc, lower(au.username) asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val listAcceptedProblemsSql: String =
+    """
+      |select p.slug,
+      |       p.title,
+      |       max(coalesce(s.finished_at, s.submitted_at)) as accepted_at
+      |from submissions s
+      |join problems p on p.id = s.problem_id
+      |where lower(s.submitter_username) = lower(?)
+      |  and s.verdict = 'accepted'
+      |group by p.slug, p.title
+      |order by accepted_at desc, p.slug asc
       |""".stripMargin
 
   val updatePermissionsSql: String =
