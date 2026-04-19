@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { NotebookPen } from 'lucide-react'
 
@@ -11,16 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { createBlog } from '@/features/blog/api/blog-client'
-import { blogIdValue, parseBlogContent, parseBlogTitle, type BlogType, type BlogVisibility } from '@/features/blog/domain/blog'
+import { blogIdValue, parseBlogContent, parseBlogTitle, type BlogVisibility } from '@/features/blog/domain/blog'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { listProblems } from '@/features/problem/api/problem-client'
-import {
-  formatProblemTitleDisplay,
-  parseProblemSlug,
-  problemSlugValue,
-  useProblemTitleDisplayMode,
-  type ProblemSummary,
-} from '@/features/problem/domain/problem'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
@@ -31,41 +23,18 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function CreateBlogPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.create.pageTitle'))
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const navigate = useNavigate()
   const { session: user, navigationIntent } = useSessionGuard()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [visibility, setVisibility] = useState<BlogVisibility>('public')
-  const [blogType, setBlogType] = useState<BlogType>('general')
-  const [selectedProblemSlug, setSelectedProblemSlug] = useState('')
-  const [problems, setProblems] = useState<ProblemSummary[]>([])
   const [contentTab, setContentTab] = useState<'write' | 'preview'>('write')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const deferredContent = useDeferredValue(content)
-  const hasUnsavedChanges = title.trim().length > 0 || content.trim().length > 0 || blogType !== 'general'
+  const hasUnsavedChanges = title.trim().length > 0 || content.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
-
-  useEffect(() => {
-    let isActive = true
-    listProblems()
-      .then((response) => {
-        if (isActive) {
-          setProblems(response.items)
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setProblems([])
-        }
-      })
-
-    return () => {
-      isActive = false
-    }
-  }, [])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -88,15 +57,6 @@ export function CreateBlogPage() {
       return
     }
 
-    const problemSlug =
-      blogType === 'problem'
-        ? parseProblemSlug(selectedProblemSlug)
-        : { ok: true as const, value: null }
-    if (!problemSlug.ok) {
-      setErrorMessage(problemSlug.error)
-      return
-    }
-
     setIsSubmitting(true)
     setErrorMessage('')
     try {
@@ -104,8 +64,6 @@ export function CreateBlogPage() {
         title: parsedTitle.value,
         content: parsedContent.value,
         visibility,
-        blogType,
-        problemSlug: problemSlug.value,
       })
       navigate(`/blogs/${blogIdValue(createdBlog.id)}`)
     } catch {
@@ -194,48 +152,6 @@ export function CreateBlogPage() {
               </Select>
               <p className="text-xs text-slate-500">{t('blog.create.visibilityHelp')}</p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="blog-type">{t('blog.create.typeLabel')}</Label>
-              <Select
-                value={blogType}
-                onValueChange={(value) => {
-                  const nextType = value as BlogType
-                  setBlogType(nextType)
-                  if (nextType === 'general') {
-                    setSelectedProblemSlug('')
-                  }
-                }}
-              >
-                <SelectTrigger id="blog-type" className="rounded-2xl border-slate-300 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">{t('blog.type.general')}</SelectItem>
-                  <SelectItem value="problem">{t('blog.type.problem')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500">{t('blog.create.typeHelp')}</p>
-            </div>
-
-            {blogType === 'problem' ? (
-              <div className="space-y-2">
-                <Label htmlFor="blog-problem">{t('blog.create.problemLabel')}</Label>
-                <Select value={selectedProblemSlug} onValueChange={setSelectedProblemSlug}>
-                  <SelectTrigger id="blog-problem" className="rounded-2xl border-slate-300 bg-white">
-                    <SelectValue placeholder={t('blog.create.problemPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {problems.map((problem) => (
-                      <SelectItem key={problemSlugValue(problem.slug)} value={problemSlugValue(problem.slug)}>
-                        {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-slate-500">{t('blog.create.problemHelp')}</p>
-              </div>
-            ) : null}
 
             {errorMessage ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

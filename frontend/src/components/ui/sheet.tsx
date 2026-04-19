@@ -107,6 +107,10 @@ function SheetDescription({
   className,
   ...props
 }: ComponentProps<typeof DialogPrimitive.Description>) {
+  if (!props.children) {
+    return null
+  }
+
   return (
     <DialogPrimitive.Description
       data-slot="sheet-description"

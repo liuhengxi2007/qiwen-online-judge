@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { NotebookPen, ThumbsDown, ThumbsUp } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -9,17 +9,15 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { usernameValue, type Username } from '@/features/auth/domain/auth'
-import { blogCommentContentValue, blogCommentIdValue, blogContentValue, blogTitleValue, parseBlogCommentContent, parseBlogContent, parseBlogId, parseBlogTitle, type BlogCommentId, type BlogCommentSummary, type BlogType, type BlogVisibility, type BlogVote } from '@/features/blog/domain/blog'
-import { createBlogComment, deleteBlog, deleteBlogComment, updateBlog, updateBlogComment, voteBlog, voteBlogComment } from '@/features/blog/api/blog-client'
+import { blogCommentContentValue, blogCommentIdValue, blogContentValue, blogTitleValue, parseBlogCommentContent, parseBlogContent, parseBlogId, parseBlogTitle, type BlogCommentId, type BlogCommentSummary, type BlogVisibility, type BlogVote } from '@/features/blog/domain/blog'
+import { createBlogComment, deleteBlog, deleteBlogComment, submitBlogToProblem, updateBlog, updateBlogComment, voteBlog, voteBlogComment } from '@/features/blog/api/blog-client'
 import { useBlogDetailQuery } from '@/features/blog/hooks/use-blog-detail-query'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { listProblems } from '@/features/problem/api/problem-client'
 import {
   formatProblemTitleDisplay,
   parseProblemSlug,
   problemSlugValue,
   useProblemTitleDisplayMode,
-  type ProblemSummary,
 } from '@/features/problem/domain/problem'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -68,30 +66,11 @@ export function BlogDetailPage() {
   const [editBlogTitle, setEditBlogTitle] = useState('')
   const [editBlogContent, setEditBlogContent] = useState('')
   const [editBlogVisibility, setEditBlogVisibility] = useState<BlogVisibility>('public')
-  const [editBlogType, setEditBlogType] = useState<BlogType>('general')
-  const [editProblemSlug, setEditProblemSlug] = useState('')
-  const [problems, setProblems] = useState<ProblemSummary[]>([])
   const [editingCommentId, setEditingCommentId] = useState<BlogCommentId | null>(null)
   const [editingCommentContent, setEditingCommentContent] = useState('')
-
-  useEffect(() => {
-    let isActive = true
-    listProblems()
-      .then((response) => {
-        if (isActive) {
-          setProblems(response.items)
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setProblems([])
-        }
-      })
-
-    return () => {
-      isActive = false
-    }
-  }, [])
+  const [submitProblemSlug, setSubmitProblemSlug] = useState('')
+  const [isSubmittingToProblem, setIsSubmittingToProblem] = useState(false)
+  const [submitProblemMessage, setSubmitProblemMessage] = useState('')
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -128,8 +107,6 @@ export function BlogDetailPage() {
     setEditBlogTitle(blogTitleValue(model.blog.title))
     setEditBlogContent(blogContentValue(model.blog.content))
     setEditBlogVisibility(model.blog.visibility)
-    setEditBlogType(model.blog.blogType)
-    setEditProblemSlug(model.blog.problemSlug === null ? '' : problemSlugValue(model.blog.problemSlug))
     setIsEditingBlog(true)
   }
 
@@ -147,20 +124,10 @@ export function BlogDetailPage() {
       setCommentErrorMessage(parsedContent.error)
       return
     }
-    const problemSlug =
-      editBlogType === 'problem'
-        ? parseProblemSlug(editProblemSlug)
-        : { ok: true as const, value: null }
-    if (!problemSlug.ok) {
-      setCommentErrorMessage(problemSlug.error)
-      return
-    }
     const updatedBlog = await updateBlog(model.blog.id, {
       title: parsedTitle.value,
       content: parsedContent.value,
       visibility: editBlogVisibility,
-      blogType: editBlogType,
-      problemSlug: problemSlug.value,
     })
     model.setBlog(updatedBlog)
     setIsEditingBlog(false)
@@ -172,6 +139,30 @@ export function BlogDetailPage() {
     }
     await deleteBlog(model.blog.id)
     navigate('/blogs')
+  }
+
+  async function submitToProblem() {
+    if (!model.blog) {
+      return
+    }
+
+    const parsedProblemSlug = parseProblemSlug(submitProblemSlug)
+    if (!parsedProblemSlug.ok) {
+      setSubmitProblemMessage(parsedProblemSlug.error)
+      return
+    }
+
+    setIsSubmittingToProblem(true)
+    setSubmitProblemMessage('')
+    try {
+      await submitBlogToProblem(parsedProblemSlug.value, model.blog.id)
+      setSubmitProblemSlug('')
+      setSubmitProblemMessage(t('blog.problem.submitCreated'))
+    } catch {
+      setSubmitProblemMessage(t('blog.problem.submitFailed'))
+    } finally {
+      setIsSubmittingToProblem(false)
+    }
   }
 
   async function submitComment() {
@@ -431,9 +422,6 @@ export function BlogDetailPage() {
                       <span className="ml-3 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">
                         {t(`blog.visibility.${model.blog.visibility}`)}
                       </span>
-                      <span className="ml-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                        {t(`blog.type.${model.blog.blogType}`)}
-                      </span>
                     </>
                   ) : null}
                 </CardDescription>
@@ -446,13 +434,43 @@ export function BlogDetailPage() {
             ) : model.blog ? (
               <article>
                 {isOwnUsername(model.blog.author.username) ? (
-                  <div className="mb-5 flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" onClick={startEditingBlog}>
-                      {t('common.edit')}
-                    </Button>
-                    <Button type="button" variant="outline" className="rounded-2xl border-rose-200 bg-white text-rose-700" onClick={() => void removeBlog()}>
-                      {t('common.delete')}
-                    </Button>
+                  <div className="mb-5 space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" onClick={startEditingBlog}>
+                        {t('common.edit')}
+                      </Button>
+                      <Button type="button" variant="outline" className="rounded-2xl border-rose-200 bg-white text-rose-700" onClick={() => void removeBlog()}>
+                        {t('common.delete')}
+                      </Button>
+                    </div>
+                    {model.blog.visibility === 'public' ? (
+                      <div className="rounded-3xl border border-orange-100 bg-orange-50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                          <div className="space-y-2 sm:max-w-xs">
+                            <label className="text-sm font-medium text-orange-950" htmlFor="submit-blog-problem-slug">
+                              {t('blog.problem.submitToProblem')}
+                            </label>
+                            <Input
+                              id="submit-blog-problem-slug"
+                              value={submitProblemSlug}
+                              placeholder={t('blog.problem.submitPlaceholder')}
+                              onChange={(event) => setSubmitProblemSlug(event.target.value)}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            disabled={isSubmittingToProblem}
+                            className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400"
+                            onClick={() => {
+                              void submitToProblem()
+                            }}
+                          >
+                            {isSubmittingToProblem ? t('common.loading') : t('blog.problem.submit')}
+                          </Button>
+                        </div>
+                        {submitProblemMessage ? <p className="mt-2 text-sm text-orange-800">{submitProblemMessage}</p> : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {isEditingBlog ? (
@@ -467,38 +485,6 @@ export function BlogDetailPage() {
                         <SelectItem value="private">{t('blog.visibility.private')}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Select
-                      value={editBlogType}
-                      onValueChange={(value) => {
-                        const nextType = value as BlogType
-                        setEditBlogType(nextType)
-                        if (nextType === 'general') {
-                          setEditProblemSlug('')
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="rounded-2xl border-slate-300 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">{t('blog.type.general')}</SelectItem>
-                        <SelectItem value="problem">{t('blog.type.problem')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {editBlogType === 'problem' ? (
-                      <Select value={editProblemSlug} onValueChange={setEditProblemSlug}>
-                        <SelectTrigger className="rounded-2xl border-slate-300 bg-white">
-                          <SelectValue placeholder={t('blog.create.problemPlaceholder')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {problems.map((problem) => (
-                            <SelectItem key={problemSlugValue(problem.slug)} value={problemSlugValue(problem.slug)}>
-                              {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : null}
                     <Textarea className="min-h-56" value={editBlogContent} onChange={(event) => setEditBlogContent(event.target.value)} />
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" className="rounded-2xl bg-slate-950 text-white" onClick={() => void submitBlogEdit()}>
@@ -516,13 +502,15 @@ export function BlogDetailPage() {
                       <span>{t('common.createdByLabel')} </span>
                       <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" user={model.blog.author} />
                     </p>
-                    {model.blog.problemSlug !== null && model.blog.problemTitle !== null ? (
-                      <p className="mt-2 text-sm text-slate-600">
-                        {t('blog.problem.linkedTo')}{' '}
-                        <Link className="font-semibold text-orange-700 hover:underline" to={`/problems/${problemSlugValue(model.blog.problemSlug)}`}>
-                          {formatProblemTitleDisplay(model.blog.problemTitle, model.blog.problemSlug, problemTitleDisplayMode)}
-                        </Link>
-                      </p>
+                    {model.blog.relatedProblems.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-600">
+                        <span>{t('blog.problem.linkedTo')}</span>
+                        {model.blog.relatedProblems.map((problem) => (
+                          <Link key={problemSlugValue(problem.slug)} className="font-semibold text-orange-700 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
+                            {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
+                          </Link>
+                        ))}
+                      </div>
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-3 sm:items-end">

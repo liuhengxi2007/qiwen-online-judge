@@ -54,9 +54,6 @@ object AuthUserTableSql:
       |)
       |select au.username,
       |       au.display_name,
-      |       au.display_mode,
-      |       au.locale,
-      |       au.problem_title_display_mode,
       |       round(coalesce(blog_scores.blog_score, 0)::numeric + coalesce(comment_scores.comment_score, 0)::numeric * 0.1) as contribution
       |from auth_users au
       |left join blog_scores on blog_scores.author_username = au.username
@@ -76,9 +73,6 @@ object AuthUserTableSql:
       |)
       |select au.username,
       |       au.display_name,
-      |       au.display_mode,
-      |       au.locale,
-      |       au.problem_title_display_mode,
       |       coalesce(accepted_counts.accepted_count, 0) as accepted_count
       |from auth_users au
       |left join accepted_counts on accepted_counts.submitter_username = lower(au.username)

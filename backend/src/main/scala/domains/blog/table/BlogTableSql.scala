@@ -6,9 +6,9 @@ object BlogTableSql:
 
   val insertSql: String =
     s"""
-      |insert into blogs (id, public_id, author_username, title, content, visibility, blog_type, problem_id, created_at, updated_at)
-      |values (?, nextval('blog_public_id_seq'), ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning public_id, title, content, visibility, blog_type, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
+      |insert into blogs (id, public_id, author_username, title, content, visibility, created_at, updated_at)
+      |values (?, nextval('blog_public_id_seq'), ?, ?, ?, ?, ?, ?)
+      |returning public_id, title, content, visibility, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
   private val blogSelectColumns: String =
@@ -17,9 +17,6 @@ object BlogTableSql:
       |       b.title,
       |       b.content,
       |       b.visibility,
-      |       b.blog_type,
-      |       p.slug as problem_slug,
-      |       p.title as problem_title,
       |       ${UserIdentitySql.selectColumns("b.author_username", "author", "au")},
       |       coalesce(vs.score, 0) as score,
       |       viewer_vote.vote as viewer_vote,
@@ -41,7 +38,6 @@ object BlogTableSql:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |left join problems p on p.id = b.problem_id
       |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
       |$blogScoreJoinSql
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
@@ -53,7 +49,6 @@ object BlogTableSql:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |left join problems p on p.id = b.problem_id
       |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
       |$blogScoreJoinSql
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
@@ -66,12 +61,13 @@ object BlogTableSql:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |join problems p on p.id = b.problem_id
+      |join blog_problem_links bpl on bpl.blog_id = b.id
+      |join problems p on p.id = bpl.problem_id
       |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
       |$blogScoreJoinSql
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
-      |where b.blog_type = 'problem'
-      |  and p.slug = ?
+      |where p.slug = ?
+      |  and bpl.status = 'accepted'
       |  and (b.visibility = 'public' or b.author_username = ?)
       |order by b.created_at desc, b.public_id desc
       |""".stripMargin
@@ -103,7 +99,6 @@ object BlogTableSql:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |left join problems p on p.id = b.problem_id
       |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
       |$blogScoreJoinSql
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
@@ -117,11 +112,84 @@ object BlogTableSql:
       |set title = ?,
       |    content = ?,
       |    visibility = ?,
-      |    blog_type = ?,
-      |    problem_id = ?,
       |    updated_at = ?
       |where public_id = ?
       |  and author_username = ?
+      |""".stripMargin
+
+  val listRelatedProblemsSql: String =
+    """
+      |select p.slug, p.title
+      |from blog_problem_links bpl
+      |join blogs b on b.id = bpl.blog_id
+      |join problems p on p.id = bpl.problem_id
+      |where b.public_id = ?
+      |  and bpl.status = 'accepted'
+      |order by bpl.linked_at desc, p.slug asc
+      |""".stripMargin
+
+  val listPendingByProblemSql: String =
+    s"""
+      |select $blogSelectColumns
+      |from blogs b
+      |join blog_problem_links bpl on bpl.blog_id = b.id
+      |join problems p on p.id = bpl.problem_id
+      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |$blogScoreJoinSql
+      |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
+      |where p.slug = ?
+      |  and bpl.status = 'pending'
+      |order by bpl.linked_at asc, b.public_id asc
+      |""".stripMargin
+
+  val linkProblemSql: String =
+    """
+      |insert into blog_problem_links (blog_id, problem_id, linked_by, linked_at, status)
+      |select b.id, p.id, ?, ?, 'accepted'
+      |from blogs b
+      |join problems p on p.slug = ?
+      |where b.public_id = ?
+      |  and b.visibility = 'public'
+      |on conflict (blog_id, problem_id)
+      |do update set status = 'accepted',
+      |              linked_by = excluded.linked_by,
+      |              linked_at = excluded.linked_at
+      |""".stripMargin
+
+  val submitProblemLinkSql: String =
+    """
+      |insert into blog_problem_links (blog_id, problem_id, linked_by, linked_at, status)
+      |select b.id, p.id, ?, ?, 'pending'
+      |from blogs b
+      |join problems p on p.slug = ?
+      |where b.public_id = ?
+      |  and b.visibility = 'public'
+      |  and b.author_username = ?
+      |on conflict (blog_id, problem_id) do nothing
+      |""".stripMargin
+
+  val acceptProblemLinkSql: String =
+    """
+      |update blog_problem_links bpl
+      |set status = 'accepted',
+      |    linked_by = ?,
+      |    linked_at = ?
+      |from blogs b, problems p
+      |where bpl.blog_id = b.id
+      |  and bpl.problem_id = p.id
+      |  and b.public_id = ?
+      |  and p.slug = ?
+      |  and bpl.status = 'pending'
+      |""".stripMargin
+
+  val deleteProblemLinkSql: String =
+    """
+      |delete from blog_problem_links bpl
+      |using blogs b, problems p
+      |where bpl.blog_id = b.id
+      |  and bpl.problem_id = p.id
+      |  and b.public_id = ?
+      |  and p.slug = ?
       |""".stripMargin
 
   val deleteBlogSql: String =

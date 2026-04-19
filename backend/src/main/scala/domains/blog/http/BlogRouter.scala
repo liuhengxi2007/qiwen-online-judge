@@ -33,6 +33,49 @@ object BlogRouter:
           case Right(problemSlug) =>
             handlers.execute(request, problemSlug, BlogHttpPlanDefinitions.listProblemBlogs)
 
+      case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" =>
+        ProblemSlug.parse(rawProblemSlug) match
+          case Left(message) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case Right(problemSlug) =>
+            handlers.execute(request, problemSlug, BlogHttpPlanDefinitions.listPendingProblemBlogs)
+
+      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId =>
+        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
+          case (Left(message), _) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (Right(problemSlug), Right(blogId)) =>
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.submitBlogToProblem)
+
+      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId / "accept" =>
+        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
+          case (Left(message), _) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (Right(problemSlug), Right(blogId)) =>
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.acceptBlogProblemSubmission)
+
+      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId =>
+        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
+          case (Left(message), _) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (Right(problemSlug), Right(blogId)) =>
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.linkBlogToProblem)
+
+      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId / "delete" =>
+        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
+          case (Left(message), _) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+          case (Right(problemSlug), Right(blogId)) =>
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.unlinkBlogFromProblem)
+
       case request @ POST -> Root / "api" / "blogs" =>
         handlers.executeDecoded[CreateBlogRequest, CreateBlogRequest, BlogCommands.CreateBlogResult](
           request,

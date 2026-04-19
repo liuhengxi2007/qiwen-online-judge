@@ -32,6 +32,16 @@ object BlogQueryCommands:
       BlogTable.listByProblem(connection, problemSlug, actor.username).map(blogs => ListBlogsResult.Listed(blogs))
     }
 
+  def listPendingProblemBlogs(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: ProblemSlug
+  ): IO[ListBlogsResult] =
+    databaseSession.withTransactionConnection { connection =>
+      if !domains.problem.application.ProblemPolicy.canEdit(actor) then IO.pure(ListBlogsResult.Listed(Nil))
+      else BlogTable.listPendingByProblem(connection, problemSlug, actor.username).map(blogs => ListBlogsResult.Listed(blogs))
+    }
+
   def getBlog(
     databaseSession: DatabaseSession,
     actor: AuthUser,

@@ -33,6 +33,10 @@ export async function listProblemBlogs(problemSlug: ProblemSlug): Promise<BlogLi
   return requestJson(`/api/problems/${problemSlugValue(problemSlug)}/blogs`, fromBlogListResponseContract)
 }
 
+export async function listPendingProblemBlogs(problemSlug: ProblemSlug): Promise<BlogListResponse> {
+  return requestJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-submissions`, fromBlogListResponseContract)
+}
+
 export async function createBlog(request: CreateBlogRequest): Promise<BlogSummary> {
   return postJson('/api/blogs', fromBlogSummaryContract, toCreateBlogRequestContract(request))
 }
@@ -51,6 +55,22 @@ export async function updateBlog(blogId: BlogId, request: UpdateBlogRequest): Pr
 
 export async function deleteBlog(blogId: BlogId): Promise<void> {
   await postJson(`/api/blogs/${blogIdValue(blogId)}/delete`, decodeSuccessResponse, {})
+}
+
+export async function linkBlogToProblem(problemSlug: ProblemSlug, blogId: BlogId): Promise<void> {
+  await postJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-links/${blogIdValue(blogId)}`, decodeSuccessResponse, {})
+}
+
+export async function submitBlogToProblem(problemSlug: ProblemSlug, blogId: BlogId): Promise<void> {
+  await postJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-submissions/${blogIdValue(blogId)}`, decodeSuccessResponse, {})
+}
+
+export async function acceptBlogProblemSubmission(problemSlug: ProblemSlug, blogId: BlogId): Promise<void> {
+  await postJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-submissions/${blogIdValue(blogId)}/accept`, decodeSuccessResponse, {})
+}
+
+export async function unlinkBlogFromProblem(problemSlug: ProblemSlug, blogId: BlogId): Promise<void> {
+  await postJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-links/${blogIdValue(blogId)}/delete`, decodeSuccessResponse, {})
 }
 
 export async function createBlogComment(

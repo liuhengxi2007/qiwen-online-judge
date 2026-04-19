@@ -1,7 +1,7 @@
 package domains.blog.table
 
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogId, BlogSummary, BlogTitle, BlogType, BlogVisibility, BlogVote}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
 import domains.problem.model.{ProblemSlug, ProblemTitle}
 
 import java.sql.ResultSet
@@ -15,13 +15,17 @@ object BlogTableSupport:
       content = parseColumn("blogs.content", resultSet.getString("content"), BlogContent.parse),
       author = readUserIdentity(resultSet, "author"),
       visibility = parseColumn("blogs.visibility", resultSet.getString("visibility"), BlogVisibility.parse),
-      blogType = parseColumn("blogs.blog_type", resultSet.getString("blog_type"), BlogType.parse),
-      problemSlug = Option(resultSet.getString("problem_slug")).map(raw => parseColumn("blogs.problem_slug", raw, ProblemSlug.parse)),
-      problemTitle = Option(resultSet.getString("problem_title")).map(raw => parseColumn("blogs.problem_title", raw, ProblemTitle.parse)),
+      relatedProblems = Nil,
       score = resultSet.getInt("score"),
       viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(BlogVote.fromDatabase),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
+    )
+
+  def readBlogProblemReference(resultSet: ResultSet): BlogProblemReference =
+    BlogProblemReference(
+      slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+      title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse)
     )
 
   def readBlogCommentSummary(resultSet: ResultSet): BlogCommentSummary =

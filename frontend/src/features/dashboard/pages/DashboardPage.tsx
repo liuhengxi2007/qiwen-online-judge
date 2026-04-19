@@ -154,7 +154,7 @@ export function DashboardPage() {
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-fuchsia-100 text-fuchsia-700">
                     <Users className="size-5" />
                   </div>
                   <div>
@@ -164,7 +164,7 @@ export function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button asChild className="rounded-2xl bg-amber-300 text-amber-950 hover:bg-amber-400">
+                <Button asChild className="rounded-2xl bg-fuchsia-300 text-fuchsia-950 hover:bg-fuchsia-400">
                   <Link to="/site-manage">{t('dashboard.siteManage.open')}</Link>
                 </Button>
               </CardContent>

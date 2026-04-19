@@ -1,7 +1,6 @@
 package domains.blog.model
 
 import domains.auth.model.UserIdentity
-import domains.problem.model.{ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -14,9 +13,7 @@ final case class BlogDetail(
   content: BlogContent,
   author: UserIdentity,
   visibility: BlogVisibility,
-  blogType: BlogType,
-  problemSlug: Option[ProblemSlug],
-  problemTitle: Option[ProblemTitle],
+  relatedProblems: List[BlogProblemReference],
   score: Int,
   viewerVote: Option[BlogVote],
   comments: List[BlogCommentSummary],

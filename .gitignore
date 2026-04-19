@@ -10,6 +10,8 @@ backend/.bsp/
 .codex
 backend/problems/
 judger/target/
+judger/node_modules/
+judger/dist/
 judger/project/target/
 judger/project/.sbt-boot/
 judger/project/.sbt-global/

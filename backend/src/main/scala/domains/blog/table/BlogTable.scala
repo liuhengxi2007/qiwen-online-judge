@@ -1,11 +1,11 @@
 package domains.blog.table
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, UserPreferences, Username}
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogSummary, BlogTitle, BlogType, BlogVisibility, BlogVote}
+import domains.auth.model.{DisplayName, UserIdentity, Username}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitleDisplayMode}
+import domains.problem.model.ProblemSlug
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -21,9 +21,7 @@ object BlogTable:
     authorUsername: Username,
     title: BlogTitle,
     content: BlogContent,
-    visibility: BlogVisibility,
-    blogType: BlogType,
-    problemId: Option[ProblemId]
+    visibility: BlogVisibility
   ): IO[BlogSummary] =
     IO.blocking {
       val now = Instant.now()
@@ -34,12 +32,8 @@ object BlogTable:
         statement.setString(3, title.value)
         statement.setString(4, content.value)
         statement.setString(5, BlogVisibility.toDatabase(visibility))
-        statement.setString(6, BlogType.toDatabase(blogType))
-        problemId match
-          case Some(value) => statement.setObject(7, value.value)
-          case None => statement.setNull(7, java.sql.Types.OTHER)
-        statement.setTimestamp(8, Timestamp.from(now))
-        statement.setTimestamp(9, Timestamp.from(now))
+        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setTimestamp(7, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -49,26 +43,10 @@ object BlogTable:
               content = content,
               author = UserIdentity(
                 authorUsername,
-                DisplayName(resultSet.getString("author_display_name")),
-                UserPreferences(
-                  displayMode =
-                    UserDisplayMode
-                      .fromDatabase(resultSet.getString("author_display_mode"))
-                      .getOrElse(throw new IllegalStateException("Invalid author_display_mode.")),
-                  locale =
-                    UserLocale
-                      .fromDatabase(resultSet.getString("author_locale"))
-                      .getOrElse(throw new IllegalStateException("Invalid author_locale.")),
-                  problemTitleDisplayMode =
-                    ProblemTitleDisplayMode
-                      .fromDatabase(resultSet.getString("author_problem_title_display_mode"))
-                      .getOrElse(throw new IllegalStateException("Invalid author_problem_title_display_mode."))
-                )
+                DisplayName(resultSet.getString("author_display_name"))
               ),
               visibility = visibility,
-              blogType = blogType,
-              problemSlug = None,
-              problemTitle = None,
+              relatedProblems = Nil,
               score = 0,
               viewerVote = None,
               createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -87,11 +65,12 @@ object BlogTable:
         statement.setString(2, viewerUsername.value)
         val resultSet = statement.executeQuery()
         try
-          Iterator
+          val summaries = Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
     }
@@ -105,11 +84,12 @@ object BlogTable:
         statement.setString(3, viewerUsername.value)
         val resultSet = statement.executeQuery()
         try
-          Iterator
+          val summaries = Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
     }
@@ -123,11 +103,30 @@ object BlogTable:
         statement.setString(3, viewerUsername.value)
         val resultSet = statement.executeQuery()
         try
-          Iterator
+          val summaries = Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          enrichSummaries(connection)(summaries)
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listPendingByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username): IO[List[BlogSummary]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listPendingByProblemSql)
+      try
+        statement.setString(1, viewerUsername.value)
+        statement.setString(2, problemSlug.value)
+        val resultSet = statement.executeQuery()
+        try
+          val summaries = Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readBlogSummary(resultSet))
+            .toList
+          enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
     }
@@ -158,6 +157,9 @@ object BlogTable:
         try if resultSet.next() then Some(readBlogSummary(resultSet)) else None
         finally resultSet.close()
       finally statement.close()
+    }.flatMap {
+      case Some(summary) => enrichSummary(connection, summary).map(Some(_))
+      case None => IO.pure(None)
     }
 
   def findById(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[Option[BlogDetail]] =
@@ -173,9 +175,7 @@ object BlogTable:
         content = blog.content,
         author = blog.author,
         visibility = blog.visibility,
-        blogType = blog.blogType,
-        problemSlug = blog.problemSlug,
-        problemTitle = blog.problemTitle,
+        relatedProblems = blog.relatedProblems,
         score = blog.score,
         viewerVote = blog.viewerVote,
         comments = comments,
@@ -219,9 +219,7 @@ object BlogTable:
     actorUsername: Username,
     title: BlogTitle,
     content: BlogContent,
-    visibility: BlogVisibility,
-    blogType: BlogType,
-    problemId: Option[ProblemId]
+    visibility: BlogVisibility
   ): IO[Option[BlogDetail]] =
     IO.blocking {
       val statement = connection.prepareStatement(updateBlogSql)
@@ -229,18 +227,80 @@ object BlogTable:
         statement.setString(1, title.value)
         statement.setString(2, content.value)
         statement.setString(3, BlogVisibility.toDatabase(visibility))
-        statement.setString(4, BlogType.toDatabase(blogType))
-        problemId match
-          case Some(value) => statement.setObject(5, value.value)
-          case None => statement.setNull(5, java.sql.Types.OTHER)
-        statement.setTimestamp(6, Timestamp.from(Instant.now()))
-        statement.setLong(7, blogId.value)
-        statement.setString(8, actorUsername.value)
+        statement.setTimestamp(4, Timestamp.from(Instant.now()))
+        statement.setLong(5, blogId.value)
+        statement.setString(6, actorUsername.value)
         statement.executeUpdate() > 0
       finally statement.close()
     }.flatMap {
       case true => findById(connection, blogId, actorUsername)
       case false => IO.pure(None)
+    }
+
+  def linkProblem(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    blogId: BlogId,
+    actorUsername: Username
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(linkProblemSql)
+      try
+        statement.setString(1, actorUsername.value)
+        statement.setTimestamp(2, Timestamp.from(Instant.now()))
+        statement.setString(3, problemSlug.value)
+        statement.setLong(4, blogId.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }
+
+  def submitProblem(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    blogId: BlogId,
+    actorUsername: Username
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(submitProblemLinkSql)
+      try
+        statement.setString(1, actorUsername.value)
+        statement.setTimestamp(2, Timestamp.from(Instant.now()))
+        statement.setString(3, problemSlug.value)
+        statement.setLong(4, blogId.value)
+        statement.setString(5, actorUsername.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }
+
+  def acceptProblem(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    blogId: BlogId,
+    actorUsername: Username
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(acceptProblemLinkSql)
+      try
+        statement.setString(1, actorUsername.value)
+        statement.setTimestamp(2, Timestamp.from(Instant.now()))
+        statement.setLong(3, blogId.value)
+        statement.setString(4, problemSlug.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }
+
+  def unlinkProblem(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    blogId: BlogId
+  ): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteProblemLinkSql)
+      try
+        statement.setLong(1, blogId.value)
+        statement.setString(2, problemSlug.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
     }
 
   def delete(connection: Connection, blogId: BlogId, actorUsername: Username): IO[Boolean] =
@@ -380,6 +440,26 @@ object BlogTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private def enrichSummaries(connection: Connection)(summaries: List[BlogSummary]): List[BlogSummary] =
+    summaries.map(summary => summary.copy(relatedProblems = listRelatedProblemsBlocking(connection, summary.id)))
+
+  private def enrichSummary(connection: Connection, summary: BlogSummary): IO[BlogSummary] =
+    IO.blocking(summary.copy(relatedProblems = listRelatedProblemsBlocking(connection, summary.id)))
+
+  private def listRelatedProblemsBlocking(connection: Connection, blogId: BlogId): List[BlogProblemReference] =
+    val statement = connection.prepareStatement(listRelatedProblemsSql)
+    try
+      statement.setLong(1, blogId.value)
+      val resultSet = statement.executeQuery()
+      try
+        Iterator
+          .continually(resultSet.next())
+          .takeWhile(identity)
+          .map(_ => readBlogProblemReference(resultSet))
+          .toList
+      finally resultSet.close()
+    finally statement.close()
 
   private def findCurrentVote(connection: Connection, blogId: BlogId, username: Username): IO[Option[BlogVote]] =
     IO.blocking {

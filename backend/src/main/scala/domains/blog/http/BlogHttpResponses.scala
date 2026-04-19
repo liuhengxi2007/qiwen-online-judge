@@ -47,6 +47,29 @@ object BlogHttpResponses:
       case BlogCommands.DeleteBlogResult.NotFound => errorResponse(Status.NotFound, "Blog not found.")
       case BlogCommands.DeleteBlogResult.Deleted => IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Blog deleted.").asJson))
 
+  def mapSubmitBlogToProblemResult(result: BlogCommands.SubmitBlogToProblemResult): IO[Response[IO]] =
+    result match
+      case BlogCommands.SubmitBlogToProblemResult.NotFound => errorResponse(Status.NotFound, "Problem or owned public blog not found.")
+      case BlogCommands.SubmitBlogToProblemResult.Submitted => IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Blog submitted to problem.").asJson))
+
+  def mapLinkBlogToProblemResult(result: BlogCommands.LinkBlogToProblemResult): IO[Response[IO]] =
+    result match
+      case BlogCommands.LinkBlogToProblemResult.Forbidden => errorResponse(Status.Forbidden, "You cannot manage this problem's blog links.")
+      case BlogCommands.LinkBlogToProblemResult.NotFound => errorResponse(Status.NotFound, "Problem or public blog not found.")
+      case BlogCommands.LinkBlogToProblemResult.Linked => IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Blog linked to problem.").asJson))
+
+  def mapAcceptBlogProblemSubmissionResult(result: BlogCommands.AcceptBlogProblemSubmissionResult): IO[Response[IO]] =
+    result match
+      case BlogCommands.AcceptBlogProblemSubmissionResult.Forbidden => errorResponse(Status.Forbidden, "You cannot manage this problem's blog links.")
+      case BlogCommands.AcceptBlogProblemSubmissionResult.NotFound => errorResponse(Status.NotFound, "Pending problem blog submission not found.")
+      case BlogCommands.AcceptBlogProblemSubmissionResult.Accepted => IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Problem blog submission accepted.").asJson))
+
+  def mapUnlinkBlogFromProblemResult(result: BlogCommands.UnlinkBlogFromProblemResult): IO[Response[IO]] =
+    result match
+      case BlogCommands.UnlinkBlogFromProblemResult.Forbidden => errorResponse(Status.Forbidden, "You cannot manage this problem's blog links.")
+      case BlogCommands.UnlinkBlogFromProblemResult.NotFound => errorResponse(Status.NotFound, "Problem blog link not found.")
+      case BlogCommands.UnlinkBlogFromProblemResult.Unlinked => IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Blog unlinked from problem.").asJson))
+
   def mapCreateCommentResult(result: BlogCommands.CreateBlogCommentResult): IO[Response[IO]] =
     result match
       case BlogCommands.CreateBlogCommentResult.ValidationFailed(message) =>

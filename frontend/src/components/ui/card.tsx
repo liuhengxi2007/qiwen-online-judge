@@ -33,6 +33,10 @@ function CardTitle({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 }
 
 function CardDescription({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  if (!props.children) {
+    return null
+  }
+
   return (
     <div
       data-slot="card-description"

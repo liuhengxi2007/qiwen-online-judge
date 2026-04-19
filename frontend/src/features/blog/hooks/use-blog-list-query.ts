@@ -9,6 +9,7 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
   const [blogs, setBlogs] = useState<BlogSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -39,11 +40,12 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
     return () => {
       cancelled = true
     }
-  }, [authorUsername, problemSlug])
+  }, [authorUsername, problemSlug, reloadToken])
 
   return {
     blogs,
     isLoading,
     errorMessage,
+    reload: () => setReloadToken((value) => value + 1),
   }
 }

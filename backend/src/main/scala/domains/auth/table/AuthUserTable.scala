@@ -17,7 +17,6 @@ import domains.auth.model.{
   UserDisplayMode,
   UserIdentity,
   UserLocale,
-  UserPreferences,
   UserRanklistItem,
   Username
 }
@@ -282,22 +281,7 @@ object AuthUserTable:
   private def readUserIdentity(resultSet: ResultSet): UserIdentity =
     UserIdentity(
       username = Username.canonical(resultSet.getString("username")),
-      displayName = DisplayName(resultSet.getString("display_name")),
-      preferences =
-        UserPreferences(
-          displayMode =
-            UserDisplayMode
-              .fromDatabase(resultSet.getString("display_mode"))
-              .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
-          locale =
-            UserLocale
-              .fromDatabase(resultSet.getString("locale"))
-              .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
-          problemTitleDisplayMode =
-            ProblemTitleDisplayMode
-              .fromDatabase(resultSet.getString("problem_title_display_mode"))
-              .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode."))
-        )
+      displayName = DisplayName(resultSet.getString("display_name"))
     )
 
   private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =

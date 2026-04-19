@@ -4,21 +4,21 @@ export type CreateBlogRequest = {
   title: string
   content: string
   visibility: BlogVisibility
-  blogType: BlogType
-  problemSlug: string | null
 }
 
 export type UpdateBlogRequest = {
   title: string
   content: string
   visibility: BlogVisibility
-  blogType: BlogType
-  problemSlug: string | null
 }
 
-export type BlogType = 'general' | 'problem'
 export type BlogVisibility = 'public' | 'private'
 export type BlogVote = 'up' | 'down'
+
+export type BlogProblemReference = {
+  slug: string
+  title: string
+}
 
 export type VoteBlogRequest = {
   vote: BlogVote
@@ -53,9 +53,7 @@ export type BlogSummary = {
   content: string
   author: UserIdentity
   visibility: BlogVisibility
-  blogType: BlogType
-  problemSlug: string | null
-  problemTitle: string | null
+  relatedProblems: BlogProblemReference[]
   score: number
   viewerVote: BlogVote | null
   createdAt: string
@@ -68,9 +66,7 @@ export type BlogDetail = {
   content: string
   author: UserIdentity
   visibility: BlogVisibility
-  blogType: BlogType
-  problemSlug: string | null
-  problemTitle: string | null
+  relatedProblems: BlogProblemReference[]
   score: number
   viewerVote: BlogVote | null
   comments: BlogCommentSummary[]
