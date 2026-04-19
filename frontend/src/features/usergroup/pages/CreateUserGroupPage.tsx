@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { Users } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import { useCreateUserGroupPageModel } from '@/features/usergroup/hooks/use-create-usergroup-page-model'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -19,6 +20,7 @@ export function CreateUserGroupPage() {
   const { t } = useI18n()
   usePageTitle(t('userGroup.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
+  const navigate = useNavigate()
   const model = useCreateUserGroupPageModel()
   const hasUnsavedChanges =
     model.slug.trim().length > 0 || model.name.trim().length > 0 || model.description.trim().length > 0
@@ -102,7 +104,11 @@ export function CreateUserGroupPage() {
               disabled={model.isSubmitting}
               className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
               onClick={() => {
-                void model.submit()
+                void model.submit().then((createdGroup) => {
+                  if (createdGroup) {
+                    void navigate(`/user-groups/${userGroupSlugValue(createdGroup.slug)}`)
+                  }
+                })
               }}
             >
               {model.isSubmitting ? t('userGroup.create.submitting') : t('userGroup.create.submit')}

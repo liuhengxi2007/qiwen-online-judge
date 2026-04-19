@@ -2,6 +2,7 @@ import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblemSet } from '@/features/problemset/api/problemset-client'
+import type { ProblemSetSummary } from '@/features/problemset/domain/problemset'
 import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
@@ -85,10 +86,10 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     state.grantedGroupsInput,
   )
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (): Promise<ProblemSetSummary | null> => {
     if (!canCreate) {
       dispatch({ type: 'submit_failed', message: t('problemSet.message.managerPermissionRequired') })
-      return
+      return null
     }
 
     const validation = validateProblemSetDraft({
@@ -101,17 +102,19 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
-      return
+      return null
     }
 
     dispatch({ type: 'submit_started' })
 
     try {
-      await createProblemSet(validation.request)
+      const createdProblemSet = await createProblemSet(validation.request)
       dispatch({ type: 'submit_succeeded' })
+      return createdProblemSet
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problemSet.message.createFailed')
       dispatch({ type: 'submit_failed', message })
+      return null
     }
   }, [canCreate, state.baseAccess, state.description, state.grantedGroupsInput, state.grantedUsersInput, state.slug, state.title, t])
 

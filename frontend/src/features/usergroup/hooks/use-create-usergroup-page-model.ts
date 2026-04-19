@@ -1,6 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { createUserGroup } from '@/features/usergroup/api/usergroup-client'
+import type { UserGroupDetail } from '@/features/usergroup/domain/usergroup'
 import {
   initialCreateUserGroupPageState,
   reduceCreateUserGroupPageState,
@@ -13,7 +14,7 @@ export function useCreateUserGroupPageModel() {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reduceCreateUserGroupPageState, initialCreateUserGroupPageState)
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (): Promise<UserGroupDetail | null> => {
     const validation = validateUserGroupDraft({
       slug: state.slug,
       name: state.name,
@@ -21,17 +22,19 @@ export function useCreateUserGroupPageModel() {
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
-      return
+      return null
     }
 
     dispatch({ type: 'submit_started' })
 
     try {
-      await createUserGroup(validation.request)
+      const createdGroup = await createUserGroup(validation.request)
       dispatch({ type: 'submit_succeeded', message: t('userGroup.message.createSuccess') })
+      return createdGroup
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('userGroup.message.createFailed')
       dispatch({ type: 'submit_failed', message })
+      return null
     }
   }, [state.description, state.name, state.slug, t])
 

@@ -6,7 +6,7 @@ import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
 } from '@/features/problem/domain/create-problem-page-state'
-import type { OthersSubmissionAccess } from '@/features/problem/domain/problem'
+import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -23,10 +23,10 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     state.managerGroupsInput,
   )
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (): Promise<ProblemDetail | null> => {
     if (!canCreate) {
       dispatch({ type: 'submit_failed', message: t('problem.message.managerPermissionRequired') })
-      return
+      return null
     }
 
     const validation = validateProblemDraft({
@@ -44,17 +44,19 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
-      return
+      return null
     }
 
     dispatch({ type: 'submit_started' })
 
     try {
-      await createProblem(validation.request)
+      const createdProblem = await createProblem(validation.request)
       dispatch({ type: 'submit_succeeded', message: t('problem.message.createSuccess') })
+      return createdProblem
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problem.message.createFailed')
       dispatch({ type: 'submit_failed', message })
+      return null
     }
   }, [canCreate, state.baseAccess, state.grantedGroupsInput, state.grantedUsersInput, state.managerGroupsInput, state.managerUsersInput, state.othersSubmissionAccess, state.slug, state.spaceLimitMb, state.statement, state.timeLimitMs, state.title, t])
 

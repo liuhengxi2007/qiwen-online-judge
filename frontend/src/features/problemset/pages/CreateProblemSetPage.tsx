@@ -1,5 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { BookPlus } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
 import { useCreateProblemSetPageModel } from '@/features/problemset/hooks/use-create-problemset-page-model'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
@@ -23,6 +25,7 @@ export function CreateProblemSetPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
+  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -150,7 +153,11 @@ export function CreateProblemSetPage() {
               disabled={model.isSubmitting || !canCreate}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
-                void model.submit()
+                void model.submit().then((createdProblemSet) => {
+                  if (createdProblemSet) {
+                    void navigate(`/problem-sets/${problemSetSlugValue(createdProblemSet.slug)}`)
+                  }
+                })
               }}
             >
               {model.isSubmitting ? t('problemSet.create.submitting') : t('problemSet.create.submit')}

@@ -1,5 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { FilePlus2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { problemSlugValue } from '@/features/problem/domain/problem'
 import { useCreateProblemPageModel } from '@/features/problem/hooks/use-create-problem-page-model'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
@@ -29,6 +31,7 @@ export function CreateProblemPage() {
   ] as const
   usePageTitle(t('problem.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
+  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -187,7 +190,11 @@ export function CreateProblemPage() {
               disabled={model.isSubmitting || !canCreate}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
-                void model.submit()
+                void model.submit().then((createdProblem) => {
+                  if (createdProblem) {
+                    void navigate(`/problems/${problemSlugValue(createdProblem.slug)}`)
+                  }
+                })
               }}
             >
               {model.isSubmitting ? t('problem.create.submitting') : t('problem.create.submit')}
