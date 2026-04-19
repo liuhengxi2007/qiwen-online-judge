@@ -1,41 +1,109 @@
-# TypeSafe Project: Online Judge
+# Qiwen Online Judge
 
-## Name
-Choose a self-explaining name for your project.
+Qiwen Online Judge is a type-safe online judge project with a React frontend, a Scala/http4s backend, PostgreSQL persistence, and an independent judge worker.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+The project is organized by business domain rather than by technical layer. HTTP contracts live in `contracts/`, frontend and backend domain models mirror those contracts where appropriate, and worker processes communicate with the backend through stable network protocols instead of importing backend internals.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Features
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Account registration, login, logout, profile pages, and user settings.
+- Site management for user records and permission flags.
+- Problem management with Markdown statements, visibility/access control, time limit, space limit, and data file management.
+- Problem set management with linked problems and access control.
+- Submissions with globally increasing numeric ids, source-code detail pages, filtering, sorting, pagination, and visible judge results.
+- A distributed judging direction: backend stores and exposes judge tasks, while `judger/` claims tasks, runs C++17 code in an isolate sandbox, and reports verdict plus runtime metrics.
+- Blog support with public/private posts, general/problem blog types, per-user blog lists, per-problem blog areas, comments, replies, edit/delete, likes, and dislikes.
+- User groups with membership and ownership management.
+- Chinese and English UI copy for the current frontend pages.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Repository Layout
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+- `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Feature code lives under `frontend/src/features/<domain>`.
+- `backend/`: Scala 3, Cats Effect, http4s, Circe, PostgreSQL. Domain code lives under `backend/src/main/scala/domains/<domain>`.
+- `contracts/`: cross-stack HTTP transport contracts.
+- `judger/`: independent judge worker process.
+- `judge-protocol-scala/`: shared Scala protocol module used across backend and worker boundaries.
+- `docs/`: architecture, type-safety, contract-alignment, lifecycle, and worker guardrails.
+- `scripts/`: maintenance checks such as contract alignment.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Architecture Principles
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own model/application/http/table or frontend model/domain/api/hooks/pages code.
+- Keep mirrored model files type-only and name-aligned across frontend and backend.
+- Parse raw JSON, route params, and form input at the boundary, then use named domain types such as `Username`, `ProblemSlug`, `SubmissionId`, and `BlogId`.
+- Keep business decisions in pure domain/application code when possible; push database, HTTP, file, clock, and process effects to the edges.
+- Keep workers independent from backend internals. Workers use HTTP/protocol boundaries, not backend application/table imports.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Start with [docs/architecture-guardrails.md](docs/architecture-guardrails.md) before making structural changes.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Requirements
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+- Node.js and npm for the frontend and maintenance scripts.
+- Java and sbt for the Scala backend and judger.
+- PostgreSQL for backend persistence.
+- WSL/Linux with `g++` and `isolate` for sandboxed local judging.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Running Locally
 
-## License
-For open source projects, say how it is licensed.
+Install frontend dependencies:
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+cd frontend
+npm install
+```
+
+Start PostgreSQL and create the configured database/user. The backend defaults can be overridden with:
+
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_MAX_POOL_SIZE`
+- `DB_CONNECTION_TIMEOUT_MS`
+
+Start the backend:
+
+```bash
+cd backend
+sbt run
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Start the judger in WSL when judging is needed:
+
+```bash
+cd judger
+./run-wsl.sh
+```
+
+The frontend development server proxies API requests to the backend. If the frontend reports `ECONNREFUSED 127.0.0.1:8080`, start or restart the backend first.
+
+## Validation Commands
+
+Run these before committing related changes:
+
+```bash
+node scripts/check-contract-alignment.mjs
+npm --prefix frontend run typecheck
+cd backend && sbt compile
+```
+
+Use the contract check whenever a file in `contracts/`, backend `model/`, or frontend `model/` changes.
+
+## Current Development Direction
+
+The stable direction is to keep extending features by domain:
+
+- New backend domains should use `model`, `application`, `http`, and `table`.
+- New frontend domains should use `model`, `domain`, `api`, `hooks`, and `pages`.
+- New cross-process judge behavior should go through `judge-protocol-scala` or HTTP contracts, not backend internals.
+- New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).
+
+Generated dependency/build output such as `node_modules/`, `dist/`, and `target/` should not be committed.

@@ -132,6 +132,21 @@ object BlogTable:
       finally statement.close()
     }
 
+  def contributionByAuthor(connection: Connection, authorUsername: Username): IO[BigDecimal] =
+    IO.blocking {
+      val statement = connection.prepareStatement(contributionByAuthorSql)
+      try
+        statement.setString(1, authorUsername.value)
+        statement.setString(2, authorUsername.value)
+        statement.setString(3, authorUsername.value)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then BigDecimal(resultSet.getBigDecimal("contribution")).setScale(0, BigDecimal.RoundingMode.HALF_UP)
+          else BigDecimal(0)
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   def findSummaryById(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[Option[BlogSummary]] =
     IO.blocking {
       val statement = connection.prepareStatement(findByIdSql)

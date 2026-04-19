@@ -76,6 +76,29 @@ object BlogTableSql:
       |order by b.created_at desc, b.public_id desc
       |""".stripMargin
 
+  val contributionByAuthorSql: String =
+    """
+      |select coalesce(blog_scores.blog_score, 0)::numeric +
+      |       coalesce(comment_scores.comment_score, 0)::numeric * 0.1 as contribution
+      |from (select ?::varchar as username) target
+      |left join (
+      |  select b.author_username,
+      |         sum(case when bv.vote = 'up' then 1 when bv.vote = 'down' then -1 else 0 end)::numeric as blog_score
+      |  from blogs b
+      |  left join blog_votes bv on bv.blog_id = b.id
+      |  where lower(b.author_username) = lower(?)
+      |  group by b.author_username
+      |) blog_scores on blog_scores.author_username = target.username
+      |left join (
+      |  select c.author_username,
+      |         sum(case when bcv.vote = 'up' then 1 when bcv.vote = 'down' then -1 else 0 end)::numeric as comment_score
+      |  from blog_comments c
+      |  left join blog_comment_votes bcv on bcv.comment_id = c.id
+      |  where lower(c.author_username) = lower(?)
+      |  group by c.author_username
+      |) comment_scores on comment_scores.author_username = target.username
+      |""".stripMargin
+
   val findByIdSql: String =
     s"""
       |select $blogSelectColumns

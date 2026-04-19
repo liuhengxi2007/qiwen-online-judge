@@ -8,6 +8,9 @@ import type {
   UpdateManagedUserSettingsRequest,
   UpdateOwnSettingsRequest,
   UpdateUserPermissionsRequest,
+  UserAcceptedRanklistResponse,
+  UserProfileResponse,
+  UserRanklistResponse,
   Username,
 } from '@/features/auth/domain/auth'
 import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
@@ -16,6 +19,9 @@ import {
   fromLoginResponseContract,
   fromRegisterResponseContract,
   fromSessionResponseContract,
+  fromUserAcceptedRanklistResponseContract,
+  fromUserProfileResponseContract,
+  fromUserRanklistResponseContract,
   toLoginRequestContract,
   toRegisterRequestContract,
   toUpdateManagedUserSettingsRequestContract,
@@ -90,6 +96,24 @@ export async function getUserSettings(username: Username): Promise<SessionRespon
   return requestJson(
     `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
     fromSessionResponseContract,
+  )
+}
+
+export async function getUserProfile(username: Username): Promise<UserProfileResponse> {
+  return requestJson(
+    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/profile`,
+    fromUserProfileResponseContract,
+  )
+}
+
+export async function listContributionRanklist(page: number): Promise<UserRanklistResponse> {
+  return requestJson(`/api/auth/ranklist?page=${encodeURIComponent(String(page))}`, fromUserRanklistResponseContract)
+}
+
+export async function listAcceptedRanklist(page: number): Promise<UserAcceptedRanklistResponse> {
+  return requestJson(
+    `/api/auth/ranklist/accepted?page=${encodeURIComponent(String(page))}`,
+    fromUserAcceptedRanklistResponseContract,
   )
 }
 

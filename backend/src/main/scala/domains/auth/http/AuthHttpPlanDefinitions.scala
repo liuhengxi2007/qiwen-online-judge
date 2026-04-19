@@ -16,6 +16,11 @@ object AuthHttpPlanDefinitions:
   val listUsers = SiteManagerPlain(AuthHttpPlans.ListUsers, AuthHttpResponses.listUsersResponse)
   val listJudgers = SiteManagerPlain(AuthHttpPlans.ListJudgers, AuthHttpResponses.listJudgersResponse)
   val getUserSettings = AuthenticatedPlain(AuthHttpPlans.GetUserSettings, AuthHttpResponses.mapGetUserSettingsResult)
+  val getUserProfile = AuthenticatedPlain(AuthHttpPlans.GetUserProfile, AuthHttpResponses.mapGetUserProfileResult)
+  val listContributionRanklist =
+    AuthenticatedPlain(AuthHttpPlans.ListContributionRanklist, AuthHttpResponses.listContributionRanklistResponse)
+  val listAcceptedRanklist =
+    AuthenticatedPlain(AuthHttpPlans.ListAcceptedRanklist, AuthHttpResponses.listAcceptedRanklistResponse)
   val updateUserPermissions =
     SiteManagerWithTransaction(AuthHttpPlans.UpdateUserPermissions, AuthHttpResponses.mapUpdateUserPermissionsResult)
   val updateUserSettings =
@@ -31,6 +36,9 @@ object AuthHttpPlanDefinitions:
       listUsers,
       listJudgers,
       getUserSettings,
+      getUserProfile,
+      listContributionRanklist,
+      listAcceptedRanklist,
       updateUserPermissions,
       updateUserSettings,
       deleteUser,

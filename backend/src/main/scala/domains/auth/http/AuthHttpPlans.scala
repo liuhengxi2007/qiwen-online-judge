@@ -7,6 +7,7 @@ import domains.auth.model.*
 import domains.auth.table.AuthUserTable
 import domains.judger.model.RegisteredJudgerListItem
 import domains.judger.table.JudgerTable
+import domains.shared.model.{PageRequest, PageResponse}
 import domains.usergroup.model.UserGroupSlug
 import domains.usergroup.table.UserGroupTable
 
@@ -95,6 +96,39 @@ object AuthHttpPlans:
       input: Username
     ): IO[AuthUserCommands.GetUserSettingsResult] =
       AuthUserCommands.getUserSettings(context.databaseSession, actor, input)
+
+  case object GetUserProfile extends AuthenticatedPlainAuthHttpPlan[Username, AuthUserCommands.GetUserProfileResult]:
+
+    override val name: String = "GetUserProfile"
+
+    override def execute(
+      context: AuthHttpContext,
+      actor: AuthUser,
+      input: Username
+    ): IO[AuthUserCommands.GetUserProfileResult] =
+      AuthUserCommands.getUserProfile(context.databaseSession, actor, input)
+
+  case object ListContributionRanklist extends AuthenticatedPlainAuthHttpPlan[PageRequest, PageResponse[UserRanklistItem]]:
+
+    override val name: String = "ListContributionRanklist"
+
+    override def execute(
+      context: AuthHttpContext,
+      actor: AuthUser,
+      input: PageRequest
+    ): IO[PageResponse[UserRanklistItem]] =
+      AuthUserCommands.listContributionRanklist(context.databaseSession, actor, input)
+
+  case object ListAcceptedRanklist extends AuthenticatedPlainAuthHttpPlan[PageRequest, PageResponse[UserAcceptedRanklistItem]]:
+
+    override val name: String = "ListAcceptedRanklist"
+
+    override def execute(
+      context: AuthHttpContext,
+      actor: AuthUser,
+      input: PageRequest
+    ): IO[PageResponse[UserAcceptedRanklistItem]] =
+      AuthUserCommands.listAcceptedRanklist(context.databaseSession, actor, input)
 
   case object UpdateUserPermissions
       extends SiteManagerTransactionAuthHttpPlan[(Username, UpdateUserPermissionsRequest), AuthUserCommands.UpdateUserPermissionsResult]:
