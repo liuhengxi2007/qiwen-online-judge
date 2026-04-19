@@ -17,6 +17,66 @@ object SubmissionTableSql:
       |       s.problem_id,
       |       p.slug as problem_slug,
       |       p.title as problem_title,
+      |       (
+      |         ? = true
+      |         or s.submitter_username = ?
+      |         or (
+      |           p.others_submission_access = 'detail'
+      |           and (
+      |             p.base_access = 'public'
+      |             or exists (
+      |               select 1
+      |               from resource_access_grants rag
+      |               where rag.resource_kind = 'problem'
+      |                 and rag.resource_id = p.id
+      |                 and rag.grant_role = 'viewer'
+      |                 and rag.subject_kind = 'user'
+      |                 and rag.subject_key = ?
+      |             )
+      |             or exists (
+      |               select 1
+      |               from resource_access_grants rag
+      |               join user_groups ug on ug.slug = rag.subject_key
+      |               join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |               where rag.resource_kind = 'problem'
+      |                 and rag.resource_id = p.id
+      |                 and rag.grant_role = 'viewer'
+      |                 and rag.subject_kind = 'user_group'
+      |                 and ugm.username = ?
+      |             )
+      |             or exists (
+      |               select 1
+      |               from problem_set_problems psp
+      |               join problem_sets ps on ps.id = psp.problem_set_id
+      |               where psp.problem_id = p.id
+      |                 and (
+      |                   ? = true
+      |                   or ps.base_access = 'public'
+      |                   or exists (
+      |                     select 1
+      |                     from resource_access_grants rag
+      |                     where rag.resource_kind = 'problem_set'
+      |                       and rag.resource_id = ps.id
+      |                       and rag.grant_role = 'viewer'
+      |                       and rag.subject_kind = 'user'
+      |                       and rag.subject_key = ?
+      |                   )
+      |                   or exists (
+      |                     select 1
+      |                     from resource_access_grants rag
+      |                     join user_groups ug on ug.slug = rag.subject_key
+      |                     join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |                     where rag.resource_kind = 'problem_set'
+      |                       and rag.resource_id = ps.id
+      |                       and rag.grant_role = 'viewer'
+      |                       and rag.subject_kind = 'user_group'
+      |                       and ugm.username = ?
+      |                   )
+      |                 )
+      |             )
+      |           )
+      |         )
+      |       ) as can_view_detail,
       |       ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")},
       |       s.language,
       |       s.status,

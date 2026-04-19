@@ -45,6 +45,7 @@ export function fromSubmissionSummaryContract(submission: SubmissionSummaryContr
     problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
     problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
     problemTitle: requireParsed(parseProblemTitle(submission.problemTitle), 'submission problem title'),
+    canViewDetail: submission.canViewDetail,
     submitter: fromUserIdentityContract(submission.submitter),
     language: submission.language,
     status: submission.status,

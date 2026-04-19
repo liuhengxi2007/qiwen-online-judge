@@ -769,12 +769,14 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     </div>
                   </dl>
 
-                  <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
-                    <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
-                      {t('submission.list.viewSource')}
-                      <ArrowRight className="size-4" />
-                    </Link>
-                  </Button>
+                  {submission.canViewDetail || usernameValue(submission.submitter.username) === usernameValue(user.username) ? (
+                    <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
+                      <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
+                        {t('submission.list.viewSource')}
+                        <ArrowRight className="size-4" />
+                      </Link>
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
             ))}

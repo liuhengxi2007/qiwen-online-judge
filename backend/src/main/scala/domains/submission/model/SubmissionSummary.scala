@@ -13,6 +13,7 @@ final case class SubmissionSummary(
   problemId: ProblemId,
   problemSlug: ProblemSlug,
   problemTitle: ProblemTitle,
+  canViewDetail: Boolean,
   submitter: UserIdentity,
   language: SubmissionLanguage,
   status: SubmissionStatus,

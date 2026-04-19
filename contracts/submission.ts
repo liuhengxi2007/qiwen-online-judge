@@ -21,6 +21,7 @@ export type SubmissionSummary = {
   problemId: string
   problemSlug: string
   problemTitle: string
+  canViewDetail: boolean
   submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus
