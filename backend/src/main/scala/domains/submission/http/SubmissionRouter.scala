@@ -37,4 +37,18 @@ object SubmissionRouter:
             SubmissionHttpResponses.validationErrorResponse(message)
           case Right(submissionId) =>
             handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.getSubmission)
+
+      case request @ POST -> Root / "api" / "submissions" / rawSubmissionId / "delete" =>
+        SubmissionId.parse(rawSubmissionId) match
+          case Left(message) =>
+            SubmissionHttpResponses.validationErrorResponse(message)
+          case Right(submissionId) =>
+            handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.deleteSubmission)
+
+      case request @ POST -> Root / "api" / "submissions" / rawSubmissionId / "rejudge" =>
+        SubmissionId.parse(rawSubmissionId) match
+          case Left(message) =>
+            SubmissionHttpResponses.validationErrorResponse(message)
+          case Right(submissionId) =>
+            handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.rejudgeSubmission)
     }

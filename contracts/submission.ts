@@ -38,6 +38,7 @@ export type SubmissionDetail = {
   problemId: string
   problemSlug: string
   problemTitle: string
+  canManage: boolean
   submitter: UserIdentity
   language: SubmissionLanguage
   status: SubmissionStatus

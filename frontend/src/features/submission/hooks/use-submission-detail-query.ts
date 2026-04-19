@@ -14,6 +14,7 @@ type SubmissionDetailQueryAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; submission: SubmissionDetail }
   | { type: 'load_failed'; message: string }
+  | { type: 'replace_submission'; submission: SubmissionDetail }
 
 const initialState: SubmissionDetailQueryState = {
   submission: null,
@@ -29,6 +30,8 @@ function reducer(state: SubmissionDetailQueryState, action: SubmissionDetailQuer
       return { submission: action.submission, isLoading: false, errorMessage: '' }
     case 'load_failed':
       return { submission: null, isLoading: false, errorMessage: action.message }
+    case 'replace_submission':
+      return { submission: action.submission, isLoading: false, errorMessage: '' }
   }
 }
 
@@ -79,5 +82,8 @@ export function useSubmissionDetailQuery(submissionId: SubmissionId) {
     }
   }, [submissionId])
 
-  return state
+  return {
+    ...state,
+    replaceSubmission: (submission: SubmissionDetail) => dispatch({ type: 'replace_submission', submission }),
+  }
 }

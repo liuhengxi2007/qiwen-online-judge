@@ -12,7 +12,8 @@ import {
   submissionIdValue,
   toCreateSubmissionRequestContract,
 } from '@/features/submission/domain/submission'
-import { postJson, requestJson } from '@/shared/api/http-client'
+import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
+import type { SuccessResponse } from '@contracts/shared'
 import type { CreateSubmissionRequest as CreateSubmissionRequestContract } from '@contracts/submission'
 
 export async function createSubmission(request: CreateSubmissionRequest): Promise<SubmissionDetail> {
@@ -34,4 +35,12 @@ export async function listSubmissions(submitterUsername?: Username | null): Prom
 
 export async function getSubmission(submissionId: SubmissionId): Promise<SubmissionDetail> {
   return requestJson(`/api/submissions/${submissionIdValue(submissionId)}`, fromSubmissionDetailContract)
+}
+
+export async function rejudgeSubmission(submissionId: SubmissionId): Promise<SubmissionDetail> {
+  return postJson(`/api/submissions/${submissionIdValue(submissionId)}/rejudge`, fromSubmissionDetailContract, {})
+}
+
+export async function deleteSubmission(submissionId: SubmissionId): Promise<SuccessResponse> {
+  return postJson(`/api/submissions/${submissionIdValue(submissionId)}/delete`, decodeSuccessResponse, {})
 }

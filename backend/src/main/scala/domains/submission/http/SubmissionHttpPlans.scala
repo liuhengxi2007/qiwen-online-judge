@@ -43,3 +43,25 @@ object SubmissionHttpPlans:
       input: SubmissionId
     ): IO[SubmissionCommands.GetSubmissionResult] =
       SubmissionCommands.getSubmission(databaseSession, actor, input)
+
+  case object DeleteSubmission extends TransactionAuthenticatedHttpPlan[SubmissionId, SubmissionCommands.DeleteSubmissionResult]:
+
+    override val name: String = "DeleteSubmission"
+
+    override def execute(
+      connection: Connection,
+      actor: AuthUser,
+      input: SubmissionId
+    ): IO[SubmissionCommands.DeleteSubmissionResult] =
+      SubmissionCommands.deleteSubmission(connection, actor, input)
+
+  case object RejudgeSubmission extends TransactionAuthenticatedHttpPlan[SubmissionId, SubmissionCommands.RejudgeSubmissionResult]:
+
+    override val name: String = "RejudgeSubmission"
+
+    override def execute(
+      connection: Connection,
+      actor: AuthUser,
+      input: SubmissionId
+    ): IO[SubmissionCommands.RejudgeSubmissionResult] =
+      SubmissionCommands.rejudgeSubmission(connection, actor, input)

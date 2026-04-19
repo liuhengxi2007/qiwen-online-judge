@@ -63,6 +63,7 @@ object SubmissionTable:
               problemId = problemId,
               problemSlug = problemSlug,
               problemTitle = problemTitle,
+              canManage = false,
               submitter = UserIdentity(
                 submitterUsername,
                 DisplayName(resultSet.getString("submitter_display_name"))
@@ -163,6 +164,16 @@ object SubmissionTable:
         setOptionalTimestamp(statement, 6, judgeState.startedAt)
         setOptionalTimestamp(statement, 7, judgeState.finishedAt)
         statement.setLong(8, submissionId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def deleteById(connection: Connection, submissionId: SubmissionId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteByIdSql)
+      try
+        statement.setLong(1, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

@@ -17,3 +17,14 @@ object SubmissionCommandResults:
     case NotFound
     case Forbidden
     case Found(submission: SubmissionDetail)
+
+  enum DeleteSubmissionResult:
+    case NotFound
+    case Forbidden
+    case Deleted
+
+  enum RejudgeSubmissionResult:
+    case NotFound
+    case Forbidden
+    case ValidationFailed(message: String)
+    case Rejudged(submission: SubmissionDetail)

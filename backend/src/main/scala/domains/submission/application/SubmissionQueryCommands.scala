@@ -4,6 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.problem.model.OthersSubmissionAccess
+import domains.problem.application.ProblemCommandSupport.canManageProblem
 import domains.problem.table.ProblemTable
 import domains.submission.model.SubmissionId
 import domains.submission.table.SubmissionTable
@@ -33,15 +34,26 @@ object SubmissionQueryCommands:
         case None =>
           IO.pure(GetSubmissionResult.NotFound)
         case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) =>
-          IO.pure(GetSubmissionResult.Found(submission))
+          ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {
+            case None =>
+              IO.pure(GetSubmissionResult.NotFound)
+            case Some(problem) =>
+              canManageProblem(connection, actor, problem).map(manageable =>
+                GetSubmissionResult.Found(submission.copy(canManage = manageable))
+              )
+          }
         case Some(submission) =>
           ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {
             case None =>
               IO.pure(GetSubmissionResult.NotFound)
             case Some(problem) =>
-              canViewOthersSubmission(connection, actor, problem, OthersSubmissionAccess.Detail).map {
-                case true => GetSubmissionResult.Found(submission)
-                case false => GetSubmissionResult.Forbidden
+              canViewOthersSubmission(connection, actor, problem, OthersSubmissionAccess.Detail).flatMap {
+                case false =>
+                  IO.pure(GetSubmissionResult.Forbidden)
+                case true =>
+                  canManageProblem(connection, actor, problem).map(manageable =>
+                    GetSubmissionResult.Found(submission.copy(canManage = manageable))
+                  )
               }
           }
       }

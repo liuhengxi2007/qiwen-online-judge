@@ -1,10 +1,14 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Files } from 'lucide-react'
+import { useState } from 'react'
+import { Files, RotateCcw, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { deleteSubmission, rejudgeSubmission } from '@/features/submission/api/submission-client'
 import {
+  isTerminalSubmissionStatus,
   parseSubmissionId,
   submissionIdValue,
   submissionLanguageLabel,
@@ -13,8 +17,10 @@ import {
 } from '@/features/submission/domain/submission'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
+import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -49,6 +55,10 @@ export function SubmissionDetailPage() {
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
   const { submissionId } = useParams<{ submissionId: string }>()
+  const [actionErrorMessage, setActionErrorMessage] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isRejudging, setIsRejudging] = useState(false)
+  const [deleted, setDeleted] = useState(false)
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -63,11 +73,42 @@ export function SubmissionDetailPage() {
   if (!submissionIdResult.ok) {
     return <Navigate replace to="/submissions" />
   }
+  const currentSubmissionId = submissionIdResult.value
 
-  const submissionQuery = useSubmissionDetailQuery(submissionIdResult.value)
+  const submissionQuery = useSubmissionDetailQuery(currentSubmissionId)
+
+  if (deleted) {
+    return <Navigate replace to="/submissions" />
+  }
 
   if (!submissionQuery.isLoading && !submissionQuery.submission) {
     return <Navigate replace to="/submissions" />
+  }
+
+  async function handleRejudge() {
+    setActionErrorMessage('')
+    setIsRejudging(true)
+    try {
+      const submission = await rejudgeSubmission(currentSubmissionId)
+      submissionQuery.replaceSubmission(submission)
+    } catch (error) {
+      setActionErrorMessage(error instanceof HttpClientError ? error.message : 'Unable to rejudge submission.')
+    } finally {
+      setIsRejudging(false)
+    }
+  }
+
+  async function handleDelete() {
+    setActionErrorMessage('')
+    setIsDeleting(true)
+    try {
+      await deleteSubmission(currentSubmissionId)
+      setDeleted(true)
+    } catch (error) {
+      setActionErrorMessage(error instanceof HttpClientError ? error.message : 'Unable to delete submission.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -92,6 +133,12 @@ export function SubmissionDetailPage() {
           </Alert>
         ) : null}
 
+        {actionErrorMessage ? (
+          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{actionErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
         {submissionQuery.isLoading ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardContent className="py-10 text-sm text-slate-500">{t('submission.detail.loading')}</CardContent>
@@ -100,16 +147,56 @@ export function SubmissionDetailPage() {
           <div className="space-y-6">
             <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
-                    <Files className="size-5" />
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+                      <Files className="size-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl text-slate-950">
+                        Submission {submissionIdValue(submissionQuery.submission.id)}
+                      </CardTitle>
+                      <CardDescription className="mt-2 text-sm text-slate-500">{t('submission.detail.heading')}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl text-slate-950">
-                      Submission {submissionIdValue(submissionQuery.submission.id)}
-                    </CardTitle>
-                    <CardDescription className="mt-2 text-sm text-slate-500">{t('submission.detail.heading')}</CardDescription>
-                  </div>
+
+                  {submissionQuery.submission.canManage ? (
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-2xl border-slate-300 bg-white"
+                        disabled={isRejudging || isDeleting || !isTerminalSubmissionStatus(submissionQuery.submission.status)}
+                        onClick={() => {
+                          void handleRejudge()
+                        }}
+                      >
+                        <RotateCcw className="mr-2 size-4" />
+                        {isRejudging ? t('submission.detail.rejudgingAction') : t('submission.detail.rejudgeAction')}
+                      </Button>
+
+                      <ConfirmActionDialog
+                        title={t('submission.detail.deleteConfirmTitle')}
+                        description={t('submission.detail.deleteConfirmDescription')}
+                        confirmLabel={isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
+                        destructive
+                        onConfirm={() => {
+                          void handleDelete()
+                        }}
+                        trigger={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                            disabled={isDeleting || isRejudging}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            {isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
+                          </Button>
+                        }
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">

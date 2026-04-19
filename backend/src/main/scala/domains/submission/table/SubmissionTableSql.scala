@@ -135,3 +135,9 @@ object SubmissionTableSql:
       |set status = ?, verdict = ?, judge_message = ?, time_used_ms = ?, memory_used_kb = ?, started_at = ?, finished_at = ?
       |where public_id = ?
       |""".stripMargin
+
+  val deleteByIdSql: String =
+    """
+      |delete from submissions
+      |where public_id = ?
+      |""".stripMargin

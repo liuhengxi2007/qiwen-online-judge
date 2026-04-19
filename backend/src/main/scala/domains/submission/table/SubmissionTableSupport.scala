@@ -33,6 +33,7 @@ object SubmissionTableSupport:
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      canManage = false,
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),

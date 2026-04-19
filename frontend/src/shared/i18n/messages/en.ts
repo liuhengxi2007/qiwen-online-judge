@@ -375,6 +375,13 @@ export const enMessages: Record<string, string> = {
     'submission.detail.pageTitle': 'Qiwen Online Judge - Submission Detail',
     'submission.detail.heading': 'Submission Detail',
     'submission.detail.loading': 'Loading submission details...',
+    'submission.detail.rejudgeAction': 'Rejudge',
+    'submission.detail.rejudgingAction': 'Rejudging...',
+    'submission.detail.deleteAction': 'Delete submission',
+    'submission.detail.deletingAction': 'Deleting...',
+    'submission.detail.deleteConfirmTitle': 'Delete submission?',
+    'submission.detail.deleteConfirmDescription':
+      'Delete this submission record. This action cannot be undone.',
     'submission.detail.problem': 'Problem {{slug}}',
     'submission.detail.submitter': 'Submitter',
     'submission.detail.judgeMessage': 'Judge message',
