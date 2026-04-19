@@ -6,9 +6,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class UpdateBlogRequest(
   title: BlogTitle,
   content: BlogContent,
-  visibility: BlogVisibility,
-  blogType: BlogType,
-  problemSlug: Option[domains.problem.model.ProblemSlug]
+  visibility: BlogVisibility
 )
 
 object UpdateBlogRequest:

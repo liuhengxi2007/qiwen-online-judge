@@ -37,6 +37,11 @@ function interpolate(template: string, values: TranslateValues = {}): string {
   )
 }
 
+function isHiddenDescriptionKey(key: string): boolean {
+  return /(^|\.)(description)$/i.test(key) ||
+    /(?:Description|Help|Hint|Subheading)$/.test(key)
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const sessionLocale = useAuthStore((state) => state.session?.preferences.locale ?? null)
   const [locale, setLocale] = useState<Locale>(detectInitialLocale)
@@ -53,6 +58,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [locale])
 
   function t(key: string, values?: TranslateValues): string {
+    if (isHiddenDescriptionKey(key)) {
+      return ''
+    }
+
     const template = messages[locale][key] ?? messages[fallbackLocale][key] ?? key
     return interpolate(template, values)
   }

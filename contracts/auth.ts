@@ -1,7 +1,6 @@
 export type UserIdentity = {
   username: string
   displayName: string
-  preferences: UserPreferences
 }
 
 export type UserDisplayMode = 'display_name' | 'username' | 'display_name_with_username'
@@ -58,7 +57,6 @@ export type SessionResponse = {
 export type UserProfileResponse = {
   username: string
   displayName: string
-  preferences: UserPreferences
   contribution: number
   acceptedProblems: UserAcceptedProblem[]
 }

@@ -28,6 +28,25 @@ object BlogCommandResults:
     case NotFound
     case Deleted
 
+  enum SubmitBlogToProblemResult:
+    case NotFound
+    case Submitted
+
+  enum LinkBlogToProblemResult:
+    case Forbidden
+    case NotFound
+    case Linked
+
+  enum AcceptBlogProblemSubmissionResult:
+    case Forbidden
+    case NotFound
+    case Accepted
+
+  enum UnlinkBlogFromProblemResult:
+    case Forbidden
+    case NotFound
+    case Unlinked
+
   enum CreateBlogCommentResult:
     case ValidationFailed(message: String)
     case BlogNotFound

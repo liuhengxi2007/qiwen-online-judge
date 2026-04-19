@@ -14,6 +14,7 @@ type NavItem = {
     | 'orange'
     | 'amber'
     | 'sky'
+    | 'fuchsia'
 }
 
 function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
@@ -42,6 +43,10 @@ function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
       active: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
       idle: 'text-sky-800 hover:bg-sky-50',
     },
+    fuchsia: {
+      active: 'bg-fuchsia-300 text-fuchsia-950 hover:bg-fuchsia-400',
+      idle: 'text-fuchsia-800 hover:bg-fuchsia-50',
+    },
   }
 
   return isActive
@@ -67,7 +72,7 @@ export function AppSectionBar() {
   ]
 
   if (session.siteManager) {
-    items.push({ to: '/site-manage', label: t('dashboard.siteManage.title'), tone: 'amber' })
+    items.push({ to: '/site-manage', label: t('dashboard.siteManage.title'), tone: 'fuchsia' })
   }
 
   return (

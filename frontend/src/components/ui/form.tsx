@@ -103,6 +103,10 @@ function FormControl({ ...props }: ComponentProps<typeof Slot>) {
 function FormDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   const { formDescriptionId } = useFormField()
 
+  if (!props.children) {
+    return null
+  }
+
   return (
     <p
       id={formDescriptionId}

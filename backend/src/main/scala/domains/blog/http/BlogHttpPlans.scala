@@ -34,6 +34,17 @@ object BlogHttpPlans:
     ): IO[BlogCommands.ListBlogsResult] =
       BlogCommands.listProblemBlogs(databaseSession, actor, input)
 
+  case object ListPendingProblemBlogs extends PlainAuthenticatedHttpPlan[ProblemSlug, BlogCommands.ListBlogsResult]:
+
+    override val name: String = "ListPendingProblemBlogs"
+
+    override def execute(
+      databaseSession: DatabaseSession,
+      actor: AuthUser,
+      input: ProblemSlug
+    ): IO[BlogCommands.ListBlogsResult] =
+      BlogCommands.listPendingProblemBlogs(databaseSession, actor, input)
+
   case object CreateBlog extends TransactionAuthenticatedHttpPlan[CreateBlogRequest, BlogCommands.CreateBlogResult]:
 
     override val name: String = "CreateBlog"
@@ -80,6 +91,28 @@ object BlogHttpPlans:
     override val name: String = "DeleteBlog"
     override def execute(connection: Connection, actor: AuthUser, input: BlogId): IO[BlogCommands.DeleteBlogResult] =
       BlogCommands.deleteBlog(connection, actor, input)
+
+  final case class BlogProblemLinkInput(problemSlug: ProblemSlug, blogId: BlogId)
+
+  case object SubmitBlogToProblem extends TransactionAuthenticatedHttpPlan[BlogProblemLinkInput, BlogCommands.SubmitBlogToProblemResult]:
+    override val name: String = "SubmitBlogToProblem"
+    override def execute(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[BlogCommands.SubmitBlogToProblemResult] =
+      BlogCommands.submitBlogToProblem(connection, actor, input.problemSlug, input.blogId)
+
+  case object LinkBlogToProblem extends TransactionAuthenticatedHttpPlan[BlogProblemLinkInput, BlogCommands.LinkBlogToProblemResult]:
+    override val name: String = "LinkBlogToProblem"
+    override def execute(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[BlogCommands.LinkBlogToProblemResult] =
+      BlogCommands.linkBlogToProblem(connection, actor, input.problemSlug, input.blogId)
+
+  case object AcceptBlogProblemSubmission extends TransactionAuthenticatedHttpPlan[BlogProblemLinkInput, BlogCommands.AcceptBlogProblemSubmissionResult]:
+    override val name: String = "AcceptBlogProblemSubmission"
+    override def execute(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[BlogCommands.AcceptBlogProblemSubmissionResult] =
+      BlogCommands.acceptBlogProblemSubmission(connection, actor, input.problemSlug, input.blogId)
+
+  case object UnlinkBlogFromProblem extends TransactionAuthenticatedHttpPlan[BlogProblemLinkInput, BlogCommands.UnlinkBlogFromProblemResult]:
+    override val name: String = "UnlinkBlogFromProblem"
+    override def execute(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[BlogCommands.UnlinkBlogFromProblemResult] =
+      BlogCommands.unlinkBlogFromProblem(connection, actor, input.problemSlug, input.blogId)
 
   final case class CreateBlogCommentInput(blogId: BlogId, parentCommentId: Option[BlogCommentId], request: CreateBlogCommentRequest)
 

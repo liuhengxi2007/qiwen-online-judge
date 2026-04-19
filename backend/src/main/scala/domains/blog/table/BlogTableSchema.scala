@@ -15,8 +15,6 @@ object BlogTableSchema:
       |  title varchar(160) not null,
       |  content text not null,
       |  visibility varchar(16) not null default 'public',
-      |  blog_type varchar(16) not null default 'general',
-      |  problem_id uuid references problems(id) on delete set null,
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
@@ -52,42 +50,95 @@ object BlogTableSchema:
       |end $$;
       |""".stripMargin
 
-  val addBlogTypeColumnsSql: String =
+  val initProblemLinkTableSql: String =
+    """
+      |create table if not exists blog_problem_links (
+      |  blog_id uuid not null references blogs(id) on delete cascade,
+      |  problem_id uuid not null references problems(id) on delete cascade,
+      |  linked_by varchar(120) not null references auth_users(username),
+      |  linked_at timestamp not null,
+      |  status varchar(16) not null default 'accepted',
+      |  primary key (blog_id, problem_id)
+      |);
+      |""".stripMargin
+
+  val addProblemLinkStatusColumnSql: String =
     """
       |do $$
       |begin
       |  if not exists (
-      |    select 1 from information_schema.columns
+      |    select 1
+      |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'blogs'
-      |      and column_name = 'blog_type'
+      |      and table_name = 'blog_problem_links'
+      |      and column_name = 'status'
       |  ) then
-      |    alter table blogs add column blog_type varchar(16) not null default 'general';
-      |  end if;
-      |
-      |  if not exists (
-      |    select 1 from information_schema.columns
-      |    where table_schema = 'public'
-      |      and table_name = 'blogs'
-      |      and column_name = 'problem_id'
-      |  ) then
-      |    alter table blogs add column problem_id uuid references problems(id) on delete set null;
+      |    alter table blog_problem_links add column status varchar(16) not null default 'accepted';
       |  end if;
       |end $$;
       |""".stripMargin
 
-  val addBlogTypeCheckSql: String =
+  val addProblemLinkStatusCheckSql: String =
     """
       |do $$
       |begin
       |  if not exists (
       |    select 1
       |    from pg_constraint
-      |    where conname = 'blogs_blog_type_check'
+      |    where conname = 'blog_problem_links_status_check'
       |  ) then
-      |    alter table blogs add constraint blogs_blog_type_check check (blog_type in ('general', 'problem'));
+      |    alter table blog_problem_links add constraint blog_problem_links_status_check check (status in ('pending', 'accepted'));
       |  end if;
       |end $$;
+      |""".stripMargin
+
+  val migrateLegacyProblemLinksSql: String =
+    """
+      |do $$
+      |begin
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'blogs'
+      |      and column_name = 'problem_id'
+      |  ) then
+      |    insert into blog_problem_links (blog_id, problem_id, linked_by, linked_at, status)
+      |    select id, problem_id, author_username, created_at, 'accepted'
+      |    from blogs
+      |    where problem_id is not null
+      |    on conflict (blog_id, problem_id) do nothing;
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val dropLegacyProblemColumnsSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.tables
+      |    where table_schema = 'public'
+      |      and table_name = 'blogs'
+      |  ) then
+      |    return;
+      |  end if;
+      |
+      |  alter table blogs drop constraint if exists blogs_blog_type_check;
+      |  alter table blogs drop column if exists problem_id;
+      |  alter table blogs drop column if exists blog_type;
+      |end $$;
+      |""".stripMargin
+
+  val createProblemLinkProblemIndexSql: String =
+    """
+      |create index if not exists blog_problem_links_problem_id_idx on blog_problem_links(problem_id, linked_at desc)
+      |""".stripMargin
+
+  val createProblemLinkBlogIndexSql: String =
+    """
+      |create index if not exists blog_problem_links_blog_id_idx on blog_problem_links(blog_id)
       |""".stripMargin
 
   val createPublicIdSequenceSql: String =
@@ -185,8 +236,13 @@ object BlogTableSchema:
         statement.execute(initTableSql)
         statement.execute(addVisibilityColumnSql)
         statement.execute(addVisibilityCheckSql)
-        statement.execute(addBlogTypeColumnsSql)
-        statement.execute(addBlogTypeCheckSql)
+        statement.execute(initProblemLinkTableSql)
+        statement.execute(addProblemLinkStatusColumnSql)
+        statement.execute(addProblemLinkStatusCheckSql)
+        statement.execute(migrateLegacyProblemLinksSql)
+        statement.execute(dropLegacyProblemColumnsSql)
+        statement.execute(createProblemLinkProblemIndexSql)
+        statement.execute(createProblemLinkBlogIndexSql)
         statement.execute(addPublicIdDefaultSql)
         statement.execute(createCreatedAtIndexSql)
         statement.execute(initVoteTableSql)

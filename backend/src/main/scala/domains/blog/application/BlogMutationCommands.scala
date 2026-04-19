@@ -4,9 +4,10 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.blog.application.BlogCommandResults.*
-import domains.blog.model.{BlogCommentId, BlogId, BlogType, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.blog.table.BlogTable
-import domains.problem.model.ProblemId
+import domains.problem.application.ProblemPolicy
+import domains.problem.model.ProblemSlug
 import domains.problem.table.ProblemTable
 
 import java.sql.Connection
@@ -29,21 +30,15 @@ object BlogMutationCommands:
       case Left(message) =>
         IO.pure(CreateBlogResult.ValidationFailed(message))
       case Right(validRequest) =>
-        resolveProblemId(connection, validRequest.blogType, validRequest.problemSlug).flatMap {
-          case Left(message) => IO.pure(CreateBlogResult.ValidationFailed(message))
-          case Right(problemId) =>
-            BlogTable
-              .insert(
-                connection,
-                actor.username,
-                validRequest.title,
-                validRequest.content,
-                validRequest.visibility,
-                validRequest.blogType,
-                problemId
-              )
-              .map(blog => CreateBlogResult.Created(blog))
-        }
+        BlogTable
+          .insert(
+            connection,
+            actor.username,
+            validRequest.title,
+            validRequest.content,
+            validRequest.visibility
+          )
+          .map(blog => CreateBlogResult.Created(blog))
 
   def voteBlog(
     connection: Connection,
@@ -66,25 +61,19 @@ object BlogMutationCommands:
       case Left(message) =>
         IO.pure(UpdateBlogResult.ValidationFailed(message))
       case Right(validRequest) =>
-        resolveProblemId(connection, validRequest.blogType, validRequest.problemSlug).flatMap {
-          case Left(message) => IO.pure(UpdateBlogResult.ValidationFailed(message))
-          case Right(problemId) =>
-            BlogTable
-              .update(
-                connection,
-                blogId,
-                actor.username,
-                validRequest.title,
-                validRequest.content,
-                validRequest.visibility,
-                validRequest.blogType,
-                problemId
-              )
-              .map {
-                case Some(blog) => UpdateBlogResult.Updated(blog)
-                case None => UpdateBlogResult.NotFound
-              }
-        }
+        BlogTable
+          .update(
+            connection,
+            blogId,
+            actor.username,
+            validRequest.title,
+            validRequest.content,
+            validRequest.visibility
+          )
+          .map {
+            case Some(blog) => UpdateBlogResult.Updated(blog)
+            case None => UpdateBlogResult.NotFound
+          }
 
   def deleteBlog(
     connection: Connection,
@@ -94,6 +83,17 @@ object BlogMutationCommands:
     BlogTable.delete(connection, blogId, actor.username).map {
       case true => DeleteBlogResult.Deleted
       case false => DeleteBlogResult.NotFound
+    }
+
+  def submitBlogToProblem(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug,
+    blogId: BlogId
+  ): IO[SubmitBlogToProblemResult] =
+    BlogTable.submitProblem(connection, problemSlug, blogId, actor.username).map {
+      case true => SubmitBlogToProblemResult.Submitted
+      case false => SubmitBlogToProblemResult.NotFound
     }
 
   def createBlogComment(
@@ -143,18 +143,45 @@ object BlogMutationCommands:
       case None => DeleteBlogCommentResult.NotFound
     }
 
-  private def resolveProblemId(
+  def linkBlogToProblem(
     connection: Connection,
-    blogType: BlogType,
-    problemSlug: Option[domains.problem.model.ProblemSlug]
-  ): IO[Either[String, Option[ProblemId]]] =
-    blogType match
-      case BlogType.General => IO.pure(Right(None))
-      case BlogType.Problem =>
-        problemSlug match
-          case None => IO.pure(Left("Problem blog requires a linked problem."))
-          case Some(slug) =>
-            ProblemTable.findBySlug(connection, slug).map {
-              case Some(problem) => Right(Some(problem.id))
-              case None => Left("Linked problem was not found.")
-            }
+    actor: AuthUser,
+    problemSlug: ProblemSlug,
+    blogId: BlogId
+  ): IO[LinkBlogToProblemResult] =
+    if !ProblemPolicy.canEdit(actor) then IO.pure(LinkBlogToProblemResult.Forbidden)
+    else
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None => IO.pure(LinkBlogToProblemResult.NotFound)
+        case Some(_) =>
+          BlogTable.linkProblem(connection, problemSlug, blogId, actor.username).map {
+            case true => LinkBlogToProblemResult.Linked
+            case false => LinkBlogToProblemResult.NotFound
+          }
+      }
+
+  def acceptBlogProblemSubmission(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug,
+    blogId: BlogId
+  ): IO[AcceptBlogProblemSubmissionResult] =
+    if !ProblemPolicy.canEdit(actor) then IO.pure(AcceptBlogProblemSubmissionResult.Forbidden)
+    else
+      BlogTable.acceptProblem(connection, problemSlug, blogId, actor.username).map {
+        case true => AcceptBlogProblemSubmissionResult.Accepted
+        case false => AcceptBlogProblemSubmissionResult.NotFound
+      }
+
+  def unlinkBlogFromProblem(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug,
+    blogId: BlogId
+  ): IO[UnlinkBlogFromProblemResult] =
+    if !ProblemPolicy.canEdit(actor) then IO.pure(UnlinkBlogFromProblemResult.Forbidden)
+    else
+      BlogTable.unlinkProblem(connection, problemSlug, blogId).map {
+        case true => UnlinkBlogFromProblemResult.Unlinked
+        case false => UnlinkBlogFromProblemResult.NotFound
+      }

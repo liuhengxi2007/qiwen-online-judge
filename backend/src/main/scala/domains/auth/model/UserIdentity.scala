@@ -5,8 +5,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class UserIdentity(
   username: Username,
-  displayName: DisplayName,
-  preferences: UserPreferences
+  displayName: DisplayName
 )
 
 object UserIdentity:

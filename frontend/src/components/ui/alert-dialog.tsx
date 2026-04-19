@@ -78,6 +78,10 @@ function AlertDialogDescription({
   className,
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Description>) {
+  if (!props.children) {
+    return null
+  }
+
   return (
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"

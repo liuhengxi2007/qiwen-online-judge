@@ -14,6 +14,7 @@ import { fromUserIdentityContract } from '@/features/auth/domain/auth'
 import type { BlogCommentSummary } from '@/features/blog/model/BlogCommentSummary'
 import type { BlogDetail } from '@/features/blog/model/BlogDetail'
 import type { BlogListResponse } from '@/features/blog/model/BlogListResponse'
+import type { BlogProblemReference } from '@/features/blog/model/BlogProblemReference'
 import type { BlogSummary } from '@/features/blog/model/BlogSummary'
 import type { CreateBlogCommentRequest } from '@/features/blog/model/CreateBlogCommentRequest'
 import type { CreateBlogRequest } from '@/features/blog/model/CreateBlogRequest'
@@ -24,7 +25,6 @@ import type { VoteBlogRequest } from '@/features/blog/model/VoteBlogRequest'
 import {
   parseProblemSlug,
   parseProblemTitle,
-  problemSlugValue,
   requireParsed as requireParsedProblem,
 } from '@/features/problem/domain/problem-parsers'
 import {
@@ -46,9 +46,7 @@ export function fromBlogSummaryContract(blog: BlogSummaryContract): BlogSummary 
     content: requireParsed(parseBlogContent(blog.content), 'blog content'),
     author: fromUserIdentityContract(blog.author),
     visibility: blog.visibility,
-    blogType: blog.blogType,
-    problemSlug: blog.problemSlug === null ? null : requireParsedProblem(parseProblemSlug(blog.problemSlug), 'blog problem slug'),
-    problemTitle: blog.problemTitle === null ? null : requireParsedProblem(parseProblemTitle(blog.problemTitle), 'blog problem title'),
+    relatedProblems: parseRelatedProblems(blog.relatedProblems),
     score: blog.score,
     viewerVote: blog.viewerVote,
     createdAt: blog.createdAt,
@@ -76,9 +74,7 @@ export function fromBlogDetailContract(blog: BlogDetailContract): BlogDetail {
     content: requireParsed(parseBlogContent(blog.content), 'blog content'),
     author: fromUserIdentityContract(blog.author),
     visibility: blog.visibility,
-    blogType: blog.blogType,
-    problemSlug: blog.problemSlug === null ? null : requireParsedProblem(parseProblemSlug(blog.problemSlug), 'blog problem slug'),
-    problemTitle: blog.problemTitle === null ? null : requireParsedProblem(parseProblemTitle(blog.problemTitle), 'blog problem title'),
+    relatedProblems: parseRelatedProblems(blog.relatedProblems),
     score: blog.score,
     viewerVote: blog.viewerVote,
     comments: blog.comments.map(fromBlogCommentSummaryContract),
@@ -96,8 +92,6 @@ export function toCreateBlogRequestContract(request: CreateBlogRequest): CreateB
     title: blogTitleValue(request.title),
     content: blogContentValue(request.content),
     visibility: request.visibility,
-    blogType: request.blogType,
-    problemSlug: request.problemSlug === null ? null : problemSlugValue(request.problemSlug),
   }
 }
 
@@ -106,9 +100,14 @@ export function toUpdateBlogRequestContract(request: UpdateBlogRequest): UpdateB
     title: blogTitleValue(request.title),
     content: blogContentValue(request.content),
     visibility: request.visibility,
-    blogType: request.blogType,
-    problemSlug: request.problemSlug === null ? null : problemSlugValue(request.problemSlug),
   }
+}
+
+function parseRelatedProblems(relatedProblems: BlogSummaryContract['relatedProblems']): BlogProblemReference[] {
+  return relatedProblems.map((problem, index) => ({
+    slug: requireParsedProblem(parseProblemSlug(problem.slug), `blog related problem slug ${index}`),
+    title: requireParsedProblem(parseProblemTitle(problem.title), `blog related problem title ${index}`),
+  }))
 }
 
 export function toVoteBlogRequestContract(request: VoteBlogRequest): VoteBlogRequestContract {

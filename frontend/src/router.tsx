@@ -76,10 +76,6 @@ export const router = createBrowserRouter([
     element: <AuthenticatedRoute element={<BlogDetailPage />} />,
   },
   {
-    path: '/blog/:username',
-    element: <AuthenticatedRoute element={<UserBlogPage />} />,
-  },
-  {
     path: '/problems',
     element: <AuthenticatedRoute element={<ProblemPage />} />,
   },
@@ -146,6 +142,10 @@ export const router = createBrowserRouter([
   {
     path: '/user/:username',
     element: <AuthenticatedRoute element={<UserProfilePage />} />,
+  },
+  {
+    path: '/user/:username/blogs',
+    element: <AuthenticatedRoute element={<UserBlogPage />} />,
   },
   {
     path: '/user/:username/settings',

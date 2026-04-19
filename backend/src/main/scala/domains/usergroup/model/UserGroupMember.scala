@@ -1,6 +1,6 @@
 package domains.usergroup.model
 
-import domains.auth.model.{DisplayName, UserPreferences, Username}
+import domains.auth.model.{DisplayName, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -10,7 +10,6 @@ import scala.util.Try
 final case class UserGroupMember(
   username: Username,
   displayName: DisplayName,
-  preferences: UserPreferences,
   role: UserGroupRole,
   joinedAt: Instant
 )

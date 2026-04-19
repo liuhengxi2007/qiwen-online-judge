@@ -6,7 +6,6 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class UserProfileResponse(
   username: Username,
   displayName: DisplayName,
-  preferences: UserPreferences,
   contribution: UserContribution,
   acceptedProblems: List[UserAcceptedProblem]
 )

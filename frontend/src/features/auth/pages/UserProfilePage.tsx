@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { contributionTextClassName } from '@/features/auth/domain/contribution-style'
 import { displayNameValue, parseUsername, userContributionValue, usernameValue } from '@/features/auth/domain/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
+import { problemSlugValue } from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay, useProblemTitleDisplayMode } from '@/features/problem/domain/problem-display'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserProfileQuery } from '@/features/auth/hooks/use-user-profile-query'
 import { resolveUserProfileRoutePolicy } from '@/features/auth/lib/route-policy'
@@ -22,6 +23,7 @@ export function UserProfilePage() {
   const { t } = useI18n()
   const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
   const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   usePageTitle(t('userProfile.pageTitle'))
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, navigationIntent: guardNavigationIntent } = useSessionGuard()
@@ -57,6 +59,7 @@ export function UserProfilePage() {
   const targetUsername = usernameValue(routePolicy.targetUsername)
   const profileUnavailable = !query.isLoadingProfile && !displayedUser
   const profileName = displayedUser ? displayNameValue(displayedUser.displayName) : profileUnavailable ? '--' : t('common.loading')
+  const profileUsername = displayedUser ? usernameValue(displayedUser.username) : targetUsername
 
   if (routePolicy.navigationIntent) {
     return <Navigate replace={routePolicy.navigationIntent.replace} to={routePolicy.navigationIntent.to} />
@@ -75,7 +78,7 @@ export function UserProfilePage() {
             <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
               {t('userProfile.heading')}
             </h1>
-            <p className="text-sm text-slate-600">{t('userProfile.description', { username: profileName })}</p>
+            <p className="text-sm text-slate-600">{t('userProfile.description', { username: profileUsername })}</p>
           </div>
 
           <AncestorNavigation />
@@ -117,7 +120,7 @@ export function UserProfilePage() {
                     </Link>
                   </Button>
                   <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
-                    <Link to={`/blog/${targetUsername}`}>
+                    <Link to={`/user/${targetUsername}/blogs`}>
                       <NotebookPen className="size-4" />
                       {t('userProfile.openBlogs')}
                     </Link>
@@ -179,7 +182,7 @@ export function UserProfilePage() {
                               className="font-medium text-slate-900 hover:underline"
                               to={`/problems/${problemSlugValue(problem.slug)}`}
                             >
-                              {problemTitleValue(problem.title)}
+                              {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
                             </Link>
                             <p className="mt-1 text-sm text-emerald-700">
                               {t('userProfile.acceptedAt', { acceptedAt: new Date(problem.acceptedAt).toLocaleString() })}

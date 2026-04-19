@@ -107,23 +107,10 @@ export function fromSessionResponseContract(response: SessionResponseContract): 
 export function fromUserIdentityContract(response: {
   username: string
   displayName: string
-  preferences: {
-    displayMode: string
-    locale: string
-    problemTitleDisplayMode: string
-  }
 }): UserIdentity {
   return {
     username: requireParsed(parseUsername(response.username), 'user identity username'),
     displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),
-    preferences: {
-      displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'user identity display mode'),
-      locale: requireParsed(parseUserLocale(response.preferences.locale), 'user identity locale'),
-      problemTitleDisplayMode: requireParsed(
-        parseProblemTitleDisplayMode(response.preferences.problemTitleDisplayMode),
-        'user identity problem title display mode',
-      ),
-    },
   }
 }
 
@@ -133,14 +120,6 @@ export function fromUserProfileResponseContract(response: UserProfileResponseCon
   return {
     username: requireParsed(parseUsername(response.username), 'user profile username'),
     displayName: requireParsed(parseDisplayName(response.displayName), 'user profile display name'),
-    preferences: {
-      displayMode: requireParsed(parseUserDisplayMode(response.preferences.displayMode), 'user profile display mode'),
-      locale: requireParsed(parseUserLocale(response.preferences.locale), 'user profile locale'),
-      problemTitleDisplayMode: requireParsed(
-        parseProblemTitleDisplayMode(response.preferences.problemTitleDisplayMode),
-        'user profile problem title display mode',
-      ),
-    },
     contribution: requireParsed(parseUserContribution(response.contribution), 'user profile contribution'),
     acceptedProblems: acceptedProblems.map((problem, index) => ({
       slug: requireParsed(parseProblemSlug(problem.slug), `user profile accepted problem slug ${index}`),

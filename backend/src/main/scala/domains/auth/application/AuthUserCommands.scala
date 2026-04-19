@@ -2,7 +2,7 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserLocale, UserPreferences, UserProfileResponse, UserRanklistItem, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserLocale, UserProfileResponse, UserRanklistItem, Username}
 import domains.auth.table.AuthUserTable
 import domains.blog.table.BlogTable
 import domains.problem.model.ProblemTitleDisplayMode
@@ -80,12 +80,6 @@ object AuthUserCommands:
               UserProfileResponse(
                 username = targetUser.username,
                 displayName = targetUser.displayName,
-                preferences =
-                  UserPreferences(
-                    displayMode = targetUser.displayMode,
-                    locale = targetUser.locale,
-                    problemTitleDisplayMode = targetUser.problemTitleDisplayMode
-                  ),
                 contribution = UserContribution(contribution),
                 acceptedProblems = acceptedProblems
               )

@@ -1,7 +1,6 @@
 package domains.blog.application
 
-import domains.blog.model.{BlogType, CreateBlogRequest, UpdateBlogRequest}
-import domains.problem.model.ProblemSlug
+import domains.blog.model.{CreateBlogRequest, UpdateBlogRequest}
 
 object BlogValidation:
 
@@ -13,8 +12,7 @@ object BlogValidation:
       content <- request.content.value match
         case value if value.trim.nonEmpty => Right(request.content)
         case _ => Left("Blog content is required.")
-      problemSlug <- validateProblemLink(request.blogType, request.problemSlug)
-    yield CreateBlogRequest(title, content, request.visibility, request.blogType, problemSlug)
+    yield CreateBlogRequest(title, content, request.visibility)
 
   def validateUpdate(request: UpdateBlogRequest): Either[String, UpdateBlogRequest] =
     for
@@ -24,13 +22,4 @@ object BlogValidation:
       content <- request.content.value match
         case value if value.trim.nonEmpty => Right(request.content)
         case _ => Left("Blog content is required.")
-      problemSlug <- validateProblemLink(request.blogType, request.problemSlug)
-    yield UpdateBlogRequest(title, content, request.visibility, request.blogType, problemSlug)
-
-  def validateProblemLink(blogType: BlogType, problemSlug: Option[ProblemSlug]): Either[String, Option[ProblemSlug]] =
-    blogType match
-      case BlogType.General => Right(None)
-      case BlogType.Problem =>
-        problemSlug match
-          case Some(slug) => Right(Some(slug))
-          case None => Left("Problem blog requires a linked problem.")
+    yield UpdateBlogRequest(title, content, request.visibility)
