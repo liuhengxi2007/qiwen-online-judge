@@ -38,11 +38,17 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
     IO.blocking {
       val safePhase = IsolateSandbox.sanitizeFilename(request.phase)
       val metaPath = hostWorkingDirectory.resolve(s"$safePhase.meta")
+      val stdinPath = hostWorkingDirectory.resolve(s"$safePhase.stdin")
       val stdoutPath = hostWorkingDirectory.resolve(s"$safePhase.stdout")
       val stderrPath = hostWorkingDirectory.resolve(s"$safePhase.stderr")
       Files.deleteIfExists(metaPath)
+      Files.deleteIfExists(stdinPath)
       Files.deleteIfExists(stdoutPath)
       Files.deleteIfExists(stderrPath)
+      request.stdin.foreach(bytes => Files.write(stdinPath, bytes))
+      val stdinArgs =
+        if request.stdin.nonEmpty then List(s"--stdin=${stdinPath.getFileName}")
+        else Nil
 
       val isolateArgs =
         List(
@@ -56,21 +62,17 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
           s"--time=${IsolateSandbox.secondsCeil(request.limits.timeLimit.value)}",
           s"--wall-time=${IsolateSandbox.secondsCeil(request.limits.wallTimeLimit.value)}",
           s"--mem=${request.limits.memoryLimitKb.value}"
-        ) ++
+        ) ++ stdinArgs ++
+          (
           (if state.useCgroups then List("--cg") else Nil) ++
           List(s"--processes=${math.max(request.processLimit, 1)}") ++
           List("--run", "--", request.command) ++ request.args
+          )
 
       val builder = new ProcessBuilder(isolateArgs*)
       builder.directory(hostWorkingDirectory.toFile)
       val process = builder.start()
-
-      request.stdin.foreach { bytes =>
-        val stream = process.getOutputStream
-        try stream.write(bytes)
-        finally stream.close()
-      }
-      if request.stdin.isEmpty then process.getOutputStream.close()
+      process.getOutputStream.close()
 
       val completed = process.waitFor(request.limits.wallTimeLimit.value + 5000L, TimeUnit.MILLISECONDS)
       if !completed then
