@@ -10,22 +10,23 @@ type UseUserProfileQueryArgs = {
 }
 
 export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs) {
-  const [activeTargetUsername, setActiveTargetUsername] = useState<Username | null>(null)
-  const [profile, setProfile] = useState<UserProfileResponse | null>(null)
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
-  const [profileLoadError, setProfileLoadError] = useState('')
-  const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
+  const [profileState, setProfileState] = useState<{
+    username: Username | null
+    profile: UserProfileResponse | null
+    profileLoadError: string
+    navigationIntent: NavigationIntent | null
+  }>({
+    username: null,
+    profile: null,
+    profileLoadError: '',
+    navigationIntent: null,
+  })
   const requestIdRef = useRef(0)
 
   useEffect(() => {
     let isCancelled = false
     requestIdRef.current += 1
     const nextRequestId = requestIdRef.current
-    setActiveTargetUsername(targetUsername)
-    setProfile(null)
-    setIsLoadingProfile(true)
-    setProfileLoadError('')
-    setNavigationIntent(null)
 
     void getUserProfile(targetUsername)
       .then((loadedProfile) => {
@@ -33,29 +34,44 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           return
         }
 
-        setProfile(loadedProfile)
-        setIsLoadingProfile(false)
+        setProfileState({
+          username: targetUsername,
+          profile: loadedProfile,
+          profileLoadError: '',
+          navigationIntent: null,
+        })
       })
       .catch((error: unknown) => {
         if (isCancelled || requestIdRef.current !== nextRequestId) {
           return
         }
 
-        setProfile(null)
-        setIsLoadingProfile(false)
-
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          setProfileLoadError('')
-          setNavigationIntent(toForbiddenRedirect())
+          setProfileState({
+            username: targetUsername,
+            profile: null,
+            profileLoadError: '',
+            navigationIntent: toForbiddenRedirect(),
+          })
           return
         }
 
         if (error instanceof AuthClientError && error.kind === 'not-found') {
-          setProfileLoadError('User not found.')
+          setProfileState({
+            username: targetUsername,
+            profile: null,
+            profileLoadError: 'User not found.',
+            navigationIntent: null,
+          })
           return
         }
 
-        setProfileLoadError('Unable to load profile.')
+        setProfileState({
+          username: targetUsername,
+          profile: null,
+          profileLoadError: 'Unable to load profile.',
+          navigationIntent: null,
+        })
       })
 
     return () => {
@@ -64,9 +80,9 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
   }, [targetUsername])
 
   return {
-    profile: activeTargetUsername === targetUsername ? profile : null,
-    isLoadingProfile,
-    profileLoadError,
-    navigationIntent,
+    profile: profileState.username === targetUsername ? profileState.profile : null,
+    isLoadingProfile: profileState.username !== targetUsername,
+    profileLoadError: profileState.username === targetUsername ? profileState.profileLoadError : '',
+    navigationIntent: profileState.username === targetUsername ? profileState.navigationIntent : null,
   }
 }

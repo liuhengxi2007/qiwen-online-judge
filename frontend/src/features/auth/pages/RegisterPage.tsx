@@ -80,8 +80,7 @@ export function RegisterPage() {
                       type="text"
                       autoComplete="username"
                       value={username}
-                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder={t('auth.register.usernamePlaceholder')}
+                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900"
                       onChange={(event) => setUsername(event.target.value.toLowerCase())}
                     />
                   </div>
@@ -97,8 +96,7 @@ export function RegisterPage() {
                       id="register-display-name"
                       type="text"
                       value={displayName}
-                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder={t('auth.register.displayNamePlaceholder')}
+                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900"
                       onChange={(event) => setDisplayName(event.target.value)}
                     />
                   </div>
@@ -115,8 +113,7 @@ export function RegisterPage() {
                       type="text"
                       autoComplete="email"
                       value={email}
-                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                      placeholder={t('auth.register.emailPlaceholder')}
+                      className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900"
                       onChange={(event) => setEmail(event.target.value)}
                     />
                   </div>
@@ -134,8 +131,7 @@ export function RegisterPage() {
                         type="password"
                       autoComplete="new-password"
                       value={password}
-                        className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                        placeholder={t('auth.register.passwordPlaceholder')}
+                        className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900"
                       onChange={(event) => setPassword(event.target.value)}
                       />
                     </div>
@@ -152,8 +148,7 @@ export function RegisterPage() {
                         type="password"
                       autoComplete="new-password"
                       value={confirmPassword}
-                        className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400"
-                        placeholder={t('auth.register.confirmPasswordPlaceholder')}
+                        className="h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900"
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       />
                     </div>

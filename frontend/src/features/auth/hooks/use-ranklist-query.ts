@@ -9,12 +9,24 @@ type UseRanklistQueryArgs = {
 }
 
 export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklistQueryArgs) {
-  const [contributionRanklist, setContributionRanklist] = useState<UserRanklistResponse | null>(null)
-  const [acceptedRanklist, setAcceptedRanklist] = useState<UserAcceptedRanklistResponse | null>(null)
-  const [isLoadingContributionRanklist, setIsLoadingContributionRanklist] = useState(false)
-  const [isLoadingAcceptedRanklist, setIsLoadingAcceptedRanklist] = useState(false)
-  const [contributionRanklistLoadError, setContributionRanklistLoadError] = useState('')
-  const [acceptedRanklistLoadError, setAcceptedRanklistLoadError] = useState('')
+  const [contributionState, setContributionState] = useState<{
+    page: number | null
+    response: UserRanklistResponse | null
+    errorMessage: string
+  }>({
+    page: null,
+    response: null,
+    errorMessage: '',
+  })
+  const [acceptedState, setAcceptedState] = useState<{
+    page: number | null
+    response: UserAcceptedRanklistResponse | null
+    errorMessage: string
+  }>({
+    page: null,
+    response: null,
+    errorMessage: '',
+  })
   const contributionRequestIdRef = useRef(0)
   const acceptedRequestIdRef = useRef(0)
 
@@ -22,9 +34,6 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
     let isCancelled = false
     contributionRequestIdRef.current += 1
     const nextRequestId = contributionRequestIdRef.current
-    setContributionRanklist(null)
-    setIsLoadingContributionRanklist(true)
-    setContributionRanklistLoadError('')
 
     void listContributionRanklist(contributionPage)
       .then((response) => {
@@ -32,17 +41,22 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
           return
         }
 
-        setContributionRanklist(response)
-        setIsLoadingContributionRanklist(false)
+        setContributionState({
+          page: contributionPage,
+          response,
+          errorMessage: '',
+        })
       })
       .catch(() => {
         if (isCancelled || contributionRequestIdRef.current !== nextRequestId) {
           return
         }
 
-        setContributionRanklist(null)
-        setIsLoadingContributionRanklist(false)
-        setContributionRanklistLoadError('Unable to load contribution ranklist.')
+        setContributionState({
+          page: contributionPage,
+          response: null,
+          errorMessage: 'Unable to load contribution ranklist.',
+        })
       })
 
     return () => {
@@ -54,9 +68,6 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
     let isCancelled = false
     acceptedRequestIdRef.current += 1
     const nextRequestId = acceptedRequestIdRef.current
-    setAcceptedRanklist(null)
-    setIsLoadingAcceptedRanklist(true)
-    setAcceptedRanklistLoadError('')
 
     void listAcceptedRanklist(acceptedPage)
       .then((response) => {
@@ -64,17 +75,22 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
           return
         }
 
-        setAcceptedRanklist(response)
-        setIsLoadingAcceptedRanklist(false)
+        setAcceptedState({
+          page: acceptedPage,
+          response,
+          errorMessage: '',
+        })
       })
       .catch(() => {
         if (isCancelled || acceptedRequestIdRef.current !== nextRequestId) {
           return
         }
 
-        setAcceptedRanklist(null)
-        setIsLoadingAcceptedRanklist(false)
-        setAcceptedRanklistLoadError('Unable to load accepted problem ranklist.')
+        setAcceptedState({
+          page: acceptedPage,
+          response: null,
+          errorMessage: 'Unable to load accepted problem ranklist.',
+        })
       })
 
     return () => {
@@ -83,11 +99,11 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
   }, [acceptedPage])
 
   return {
-    acceptedRanklist,
-    acceptedRanklistLoadError,
-    contributionRanklist,
-    contributionRanklistLoadError,
-    isLoadingAcceptedRanklist,
-    isLoadingContributionRanklist,
+    acceptedRanklist: acceptedState.page === acceptedPage ? acceptedState.response : null,
+    acceptedRanklistLoadError: acceptedState.page === acceptedPage ? acceptedState.errorMessage : '',
+    contributionRanklist: contributionState.page === contributionPage ? contributionState.response : null,
+    contributionRanklistLoadError: contributionState.page === contributionPage ? contributionState.errorMessage : '',
+    isLoadingAcceptedRanklist: acceptedState.page !== acceptedPage,
+    isLoadingContributionRanklist: contributionState.page !== contributionPage,
   }
 }

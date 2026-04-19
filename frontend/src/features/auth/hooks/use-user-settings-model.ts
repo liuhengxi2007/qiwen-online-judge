@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 
 import {
   parseUsername,
@@ -54,7 +54,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
       type: 'target_changed',
       editedUser: isEditingOwnSettings ? viewer : null,
     })
-  }, [isEditingOwnSettings, targetUsername])
+  }, [isEditingOwnSettings, targetUsername, viewer])
 
   useEffect(() => {
     if (query.editedUser) {
@@ -67,7 +67,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     }
   }, [query.editedUser, query.settingsLoadError])
 
-  const submit = useCallback(async () => {
+  async function submit() {
     if (!displayedUser) {
       dispatch({ type: 'submit_failed', message: t('userSettings.loadingSelected') })
       return
@@ -130,22 +130,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
           dispatch({ type: 'submit_failed', message: result.message })
           return
       }
-  }, [
-    displayedUser,
-    isEditingOwnSettings,
-    setViewer,
-    state.confirmNewPassword,
-    state.currentPassword,
-    state.displayMode,
-    state.displayName,
-    state.email,
-    state.locale,
-    state.newPassword,
-    state.problemTitleDisplayMode,
-    submitSettings,
-    targetUsername,
-    t,
-  ])
+  }
 
   return {
     ...state,

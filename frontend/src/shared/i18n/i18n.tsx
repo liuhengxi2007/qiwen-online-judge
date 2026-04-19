@@ -44,13 +44,8 @@ function isHiddenDescriptionKey(key: string): boolean {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const sessionLocale = useAuthStore((state) => state.session?.preferences.locale ?? null)
-  const [locale, setLocale] = useState<Locale>(detectInitialLocale)
-
-  useEffect(() => {
-    if (sessionLocale && sessionLocale !== locale) {
-      setLocale(sessionLocale)
-    }
-  }, [locale, sessionLocale])
+  const [persistedLocale, setPersistedLocale] = useState<Locale>(detectInitialLocale)
+  const locale = sessionLocale ?? persistedLocale
 
   useEffect(() => {
     document.documentElement.lang = locale

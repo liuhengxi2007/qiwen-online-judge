@@ -54,7 +54,6 @@ export function ResourceAccessEditor({
         <Textarea
           id="resource-granted-groups"
           value={grantedGroupsInput}
-          placeholder={'round-123-testers\ngraph-team'}
           className="min-h-24"
           spellCheck={false}
           onChange={(event) => onGrantedGroupsInputChange(event.target.value.toLowerCase())}
@@ -67,7 +66,6 @@ export function ResourceAccessEditor({
         <Textarea
           id="resource-granted-users"
           value={grantedUsersInput}
-          placeholder={'alice\nbob'}
           className="min-h-24"
           spellCheck={false}
           onChange={(event) => onGrantedUsersInputChange(event.target.value.toLowerCase())}
@@ -81,7 +79,6 @@ export function ResourceAccessEditor({
           <Textarea
             id="resource-manager-groups"
             value={grantedManagerGroupsInput}
-            placeholder={'round-123-testers\ngraph-team'}
             className="min-h-24"
             spellCheck={false}
             onChange={(event) => onGrantedManagerGroupsInputChange(event.target.value.toLowerCase())}
@@ -96,7 +93,6 @@ export function ResourceAccessEditor({
           <Textarea
             id="resource-manager-users"
             value={grantedManagerUsersInput}
-            placeholder={'alice\nbob'}
             className="min-h-24"
             spellCheck={false}
             onChange={(event) => onGrantedManagerUsersInputChange(event.target.value.toLowerCase())}

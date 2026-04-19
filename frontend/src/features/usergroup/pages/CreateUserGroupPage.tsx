@@ -65,7 +65,6 @@ export function CreateUserGroupPage() {
               <Input
                 id="user-group-slug"
                 value={model.slug}
-                placeholder={t('userGroup.create.slugPlaceholder')}
                 onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
@@ -75,7 +74,6 @@ export function CreateUserGroupPage() {
               <Input
                 id="user-group-name"
                 value={model.name}
-                placeholder={t('userGroup.create.namePlaceholder')}
                 onChange={(event) => model.setName(event.target.value)}
               />
             </div>
@@ -85,7 +83,6 @@ export function CreateUserGroupPage() {
               <Textarea
                 id="user-group-description"
                 value={model.description}
-                placeholder={t('userGroup.create.descriptionPlaceholder')}
                 onChange={(event) => model.setDescription(event.target.value)}
               />
             </div>

@@ -85,7 +85,6 @@ export function CreateProblemSetPage() {
               <Input
                 id="problem-set-slug"
                 value={model.slug}
-                placeholder={t('problemSet.create.slugPlaceholder')}
                 onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
@@ -95,7 +94,6 @@ export function CreateProblemSetPage() {
               <Input
                 id="problem-set-title"
                 value={model.title}
-                placeholder={t('problemSet.create.titlePlaceholder')}
                 onChange={(event) => model.setTitle(event.target.value)}
               />
             </div>
@@ -112,7 +110,6 @@ export function CreateProblemSetPage() {
                     id="problem-set-description"
                     value={model.description}
                     className="min-h-48 !font-mono"
-                    placeholder={t('problemSet.create.descriptionPlaceholder')}
                     onChange={(event) => model.setDescription(event.target.value)}
                   />
                 </TabsContent>

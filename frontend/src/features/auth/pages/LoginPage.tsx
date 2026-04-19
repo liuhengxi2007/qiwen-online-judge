@@ -77,8 +77,7 @@ export function LoginPage() {
                       type="text"
                       autoComplete="username"
                       value={username}
-                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
-                      placeholder={t('auth.login.usernamePlaceholder')}
+                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 focus-visible:ring-orange-300"
                       onChange={(event) => setUsername(event.target.value.toLowerCase())}
                     />
                   </div>
@@ -95,8 +94,7 @@ export function LoginPage() {
                       type="password"
                       autoComplete="current-password"
                       value={password}
-                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 placeholder:text-stone-400 focus-visible:ring-orange-300"
-                      placeholder={t('auth.login.passwordPlaceholder')}
+                      className="h-12 rounded-2xl border-stone-200 bg-white pl-10 text-stone-900 focus-visible:ring-orange-300"
                       onChange={(event) => setPassword(event.target.value)}
                     />
                   </div>

@@ -483,7 +483,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     id="submission-username-filter"
                     className="min-w-0"
                     value={usernameFilterInput}
-                    placeholder={t('submission.filter.usernamePlaceholder')}
                     onChange={(event) => {
                       updateUsernameFilterInput(event.target.value)
                     }}
@@ -529,7 +528,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                       id="submission-problem-filter"
                       className="min-w-0"
                       value={problemFilterInput}
-                      placeholder={t('submission.filter.problemSlugPlaceholder')}
                       onChange={(event) => {
                         updateProblemFilterInput(event.target.value)
                       }}

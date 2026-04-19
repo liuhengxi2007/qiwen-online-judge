@@ -3,8 +3,8 @@ import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } fro
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { displayNameValue } from '@/features/auth/domain/auth'
 import { AccountActions } from '@/shared/components/account-actions'
+import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -29,7 +29,9 @@ export function DashboardPage() {
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
             <h1 className="mt-2 font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              {t('dashboard.welcome', { displayName: displayNameValue(user.displayName) })}
+              {t('dashboard.welcome', {
+                displayName: formatUserDisplayLabel(user, user.preferences.displayMode),
+              })}
             </h1>
           </div>
           <AccountActions />

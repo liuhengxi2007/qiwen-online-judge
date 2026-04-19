@@ -105,7 +105,6 @@ export function CreateBlogPage() {
               <Input
                 id="blog-title"
                 value={title}
-                placeholder={t('blog.create.titlePlaceholder')}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
@@ -122,7 +121,6 @@ export function CreateBlogPage() {
                     id="blog-content"
                     value={content}
                     className="min-h-72 !font-mono"
-                    placeholder={t('blog.create.contentPlaceholder')}
                     onChange={(event) => setContent(event.target.value)}
                   />
                 </TabsContent>

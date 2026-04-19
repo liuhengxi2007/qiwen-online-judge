@@ -59,7 +59,7 @@ export function ProblemSubmitEditorCard({
             }}
           >
             <SelectTrigger id="problem-submit-language" className="h-11 rounded-2xl">
-              <SelectValue placeholder={t('problem.submit.languagePlaceholder')} />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {supportedLanguages.map((supportedLanguage) => (
@@ -77,7 +77,6 @@ export function ProblemSubmitEditorCard({
             id="problem-submit-source"
             value={sourceCode}
             className="min-h-[26rem] rounded-3xl !font-mono text-sm"
-            placeholder={t('problem.submit.sourcePlaceholder')}
             onChange={(event) => {
               onSourceCodeChange(event.target.value)
             }}

@@ -344,7 +344,6 @@ export function BlogDetailPage() {
             <Textarea
               value={replyContent}
               className="min-h-24"
-              placeholder={t('blog.comment.replyPlaceholder')}
               onChange={(event) => setReplyContent(event.target.value)}
             />
             <div className="flex flex-wrap gap-2">
@@ -453,7 +452,6 @@ export function BlogDetailPage() {
                             <Input
                               id="submit-blog-problem-slug"
                               value={submitProblemSlug}
-                              placeholder={t('blog.problem.submitPlaceholder')}
                               onChange={(event) => setSubmitProblemSlug(event.target.value)}
                             />
                           </div>
@@ -558,7 +556,6 @@ export function BlogDetailPage() {
                     <Textarea
                       value={commentContent}
                       className="min-h-28"
-                      placeholder={t('blog.comment.placeholder')}
                       onChange={(event) => setCommentContent(event.target.value)}
                     />
                     {commentErrorMessage ? (

@@ -11,31 +11,27 @@ type UseUserSettingsQueryArgs = {
 }
 
 export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserSettingsQueryArgs) {
-  const [activeTargetUsername, setActiveTargetUsername] = useState<Username | null>(null)
-  const [editedUser, setEditedUser] = useState<SessionResponse | null>(null)
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
-  const [settingsLoadError, setSettingsLoadError] = useState('')
-  const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
+  const [settingsState, setSettingsState] = useState<{
+    username: Username | null
+    editedUser: SessionResponse | null
+    settingsLoadError: string
+    navigationIntent: NavigationIntent | null
+  }>({
+    username: null,
+    editedUser: null,
+    settingsLoadError: '',
+    navigationIntent: null,
+  })
   const requestIdRef = useRef(0)
 
   useEffect(() => {
     if (!canLoadTarget) {
-      setActiveTargetUsername(null)
-      setEditedUser(null)
-      setIsLoadingSettings(false)
-      setSettingsLoadError('')
-      setNavigationIntent(null)
       return
     }
 
     let isCancelled = false
     requestIdRef.current += 1
     const nextRequestId = requestIdRef.current
-    setActiveTargetUsername(targetUsername)
-    setEditedUser(null)
-    setIsLoadingSettings(true)
-    setSettingsLoadError('')
-    setNavigationIntent(null)
 
     void getUserSettings(targetUsername)
       .then((loadedUser) => {
@@ -47,8 +43,12 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        setEditedUser(loadedUser)
-        setIsLoadingSettings(false)
+        setSettingsState({
+          username: targetUsername,
+          editedUser: loadedUser,
+          settingsLoadError: '',
+          navigationIntent: null,
+        })
       })
       .catch((error: unknown) => {
         if (isCancelled) {
@@ -59,21 +59,32 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        setEditedUser(null)
-        setIsLoadingSettings(false)
-
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          setSettingsLoadError('')
-          setNavigationIntent(toForbiddenRedirect())
+          setSettingsState({
+            username: targetUsername,
+            editedUser: null,
+            settingsLoadError: '',
+            navigationIntent: toForbiddenRedirect(),
+          })
           return
         }
 
         if (error instanceof AuthClientError && error.kind === 'not-found') {
-          setSettingsLoadError('User not found.')
+          setSettingsState({
+            username: targetUsername,
+            editedUser: null,
+            settingsLoadError: 'User not found.',
+            navigationIntent: null,
+          })
           return
         }
 
-        setSettingsLoadError('Unable to load settings.')
+        setSettingsState({
+          username: targetUsername,
+          editedUser: null,
+          settingsLoadError: 'Unable to load settings.',
+          navigationIntent: null,
+        })
       })
 
     return () => {
@@ -82,17 +93,21 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
   }, [canLoadTarget, targetUsername])
 
   return {
-    editedUser: activeTargetUsername === targetUsername ? editedUser : null,
-    isLoadingSettings,
-    settingsLoadError,
-    navigationIntent,
+    editedUser: settingsState.username === targetUsername ? settingsState.editedUser : null,
+    isLoadingSettings: canLoadTarget && settingsState.username !== targetUsername,
+    settingsLoadError: settingsState.username === targetUsername ? settingsState.settingsLoadError : '',
+    navigationIntent: settingsState.username === targetUsername ? settingsState.navigationIntent : null,
     replaceEditedUser(username: Username, nextUser: SessionResponse) {
-      if (activeTargetUsername !== username) {
+      if (settingsState.username !== username) {
         return
       }
 
-      setEditedUser(nextUser)
-      setSettingsLoadError('')
+      setSettingsState({
+        username,
+        editedUser: nextUser,
+        settingsLoadError: '',
+        navigationIntent: null,
+      })
     },
   }
 }

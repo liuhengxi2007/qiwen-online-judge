@@ -96,7 +96,6 @@ export function CreateProblemPage() {
               <Input
                 id="problem-slug"
                 value={model.slug}
-                placeholder="two-sum-intro"
                 onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
               />
             </div>
@@ -106,7 +105,6 @@ export function CreateProblemPage() {
               <Input
                 id="problem-title"
                 value={model.title}
-                placeholder="Two Sum Intro"
                 onChange={(event) => model.setTitle(event.target.value)}
               />
             </div>
@@ -126,7 +124,6 @@ export function CreateProblemPage() {
                   <Textarea
                     id="problem-statement"
                     value={model.statement}
-                    placeholder={t('problem.create.statementPlaceholder')}
                     className="min-h-64 !font-mono"
                     onChange={(event) => model.setStatement(event.target.value)}
                   />

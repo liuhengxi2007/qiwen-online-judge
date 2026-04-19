@@ -37,7 +37,6 @@ export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageMo
           <Input
             id="member-username"
             value={model.memberUsername}
-            placeholder={t('userGroup.detail.memberUsernamePlaceholder')}
             onChange={(event) => model.setMemberUsername(event.target.value.toLowerCase())}
           />
         </div>
@@ -45,7 +44,7 @@ export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageMo
           <Label>{t('userGroup.detail.roleLabel')}</Label>
           <Select value={model.memberRole} onValueChange={(value) => model.setMemberRole(value as 'manager' | 'member')}>
             <SelectTrigger>
-              <SelectValue placeholder={t('userGroup.detail.rolePlaceholder')} />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="member">{t('userGroup.detail.role.member')}</SelectItem>

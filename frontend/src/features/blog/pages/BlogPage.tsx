@@ -233,7 +233,6 @@ export function BlogPage({ authorUsernameFilter, problemSlugFilter }: BlogPagePr
                       <Input
                         id="blog-link-id"
                         value={linkBlogId}
-                        placeholder={t('blog.problem.linkPlaceholder')}
                         onChange={(event) => setLinkBlogId(event.target.value)}
                       />
                     </div>

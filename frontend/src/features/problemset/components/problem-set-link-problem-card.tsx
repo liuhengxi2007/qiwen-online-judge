@@ -52,7 +52,6 @@ export function ProblemSetLinkProblemCard({
           <Input
             id="link-problem-slug"
             value={linkProblemSlug}
-            placeholder={t('problemSet.detail.linkProblemPlaceholder')}
             onChange={(event) => {
               onLinkProblemSlugChange(event.target.value)
             }}
