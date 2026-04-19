@@ -3,10 +3,12 @@ import { Code2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import {
+  formatProblemTitleDisplay,
   problemSlugValue,
   shouldShowProblemSlugSupplement,
-  useProblemTitleDisplay,
   useProblemTitleDisplayMode,
+  type ProblemSlug,
+  type ProblemTitle,
 } from '@/features/problem/domain/problem'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -15,12 +17,15 @@ type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
 export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemDetailQuery }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
+  const titleText = formatProblemTitleDisplay(
+    (detailQuery.problem?.title ?? 'Problem') as ProblemTitle,
+    (detailQuery.problem?.slug ?? 'problem') as ProblemSlug,
+    problemTitleDisplayMode,
+  )
 
   if (!detailQuery.problem) {
     return null
   }
-
-  const titleText = useProblemTitleDisplay(detailQuery.problem.title, detailQuery.problem.slug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

@@ -16,7 +16,7 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          a: ({ node: _node, ...props }) => (
+          a: ({ ...props }) => (
             <a
               {...props}
               className="font-medium text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
@@ -24,7 +24,7 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
               target="_blank"
             />
           ),
-          img: ({ node: _node, alt = '', ...props }) => (
+          img: ({ alt = '', ...props }) => (
             <img
               {...props}
               alt={alt}
@@ -32,12 +32,12 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
               loading="lazy"
             />
           ),
-          table: ({ node: _node, ...props }) => (
+          table: ({ ...props }) => (
             <div className="overflow-x-auto">
               <table {...props} className="min-w-full border-collapse text-sm" />
             </div>
           ),
-          code: ({ node: _node, className: codeClassName, children, ...props }) => {
+          code: ({ className: codeClassName, children, ...props }) => {
             const isBlock = Boolean(codeClassName)
 
             if (!isBlock) {
@@ -57,7 +57,7 @@ export function MarkdownDocument({ content, className = '' }: MarkdownDocumentPr
               </code>
             )
           },
-          pre: ({ node: _node, ...props }) => (
+          pre: ({ ...props }) => (
             <pre
               {...props}
               className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 px-5 py-4 text-sm leading-7"

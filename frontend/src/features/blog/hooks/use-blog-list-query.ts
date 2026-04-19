@@ -6,16 +6,20 @@ import type { BlogSummary } from '@/features/blog/domain/blog'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null) {
-  const [blogs, setBlogs] = useState<BlogSummary[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [queryState, setQueryState] = useState<{
+    key: string | null
+    blogs: BlogSummary[]
+    errorMessage: string
+  }>({
+    key: null,
+    blogs: [],
+    errorMessage: '',
+  })
   const [reloadToken, setReloadToken] = useState(0)
+  const queryKey = `${authorUsername ?? ''}:${problemSlug ?? ''}:${reloadToken}`
 
   useEffect(() => {
     let cancelled = false
-    setIsLoading(true)
-    setErrorMessage('')
-
     const loadBlogs = problemSlug === null ? listBlogs(authorUsername) : listProblemBlogs(problemSlug)
 
     void loadBlogs
@@ -24,28 +28,33 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
           return
         }
 
-        setBlogs(loadedBlogs)
-        setIsLoading(false)
+        setQueryState({
+          key: queryKey,
+          blogs: loadedBlogs,
+          errorMessage: '',
+        })
       })
       .catch(() => {
         if (cancelled) {
           return
         }
 
-        setBlogs([])
-        setIsLoading(false)
-        setErrorMessage('Unable to load blogs.')
+        setQueryState({
+          key: queryKey,
+          blogs: [],
+          errorMessage: 'Unable to load blogs.',
+        })
       })
 
     return () => {
       cancelled = true
     }
-  }, [authorUsername, problemSlug, reloadToken])
+  }, [authorUsername, problemSlug, queryKey])
 
   return {
-    blogs,
-    isLoading,
-    errorMessage,
+    blogs: queryState.key === queryKey ? queryState.blogs : [],
+    isLoading: queryState.key !== queryKey,
+    errorMessage: queryState.key === queryKey ? queryState.errorMessage : '',
     reload: () => setReloadToken((value) => value + 1),
   }
 }

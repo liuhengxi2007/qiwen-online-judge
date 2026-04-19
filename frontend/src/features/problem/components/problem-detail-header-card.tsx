@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  formatProblemTitleDisplay,
   problemSlugValue,
   problemStatementTextValue,
   shouldShowProblemSlugSupplement,
-  useProblemTitleDisplay,
   useProblemTitleDisplayMode,
+  type ProblemSlug,
+  type ProblemTitle,
 } from '@/features/problem/domain/problem'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
@@ -34,12 +36,15 @@ export function ProblemDetailHeaderCard({
 }: ProblemDetailHeaderCardProps) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
+  const titleText = formatProblemTitleDisplay(
+    (model.problem?.title ?? 'Problem') as ProblemTitle,
+    (model.problem?.slug ?? 'problem') as ProblemSlug,
+    problemTitleDisplayMode,
+  )
 
   if (!model.problem) {
     return null
   }
-
-  const titleText = useProblemTitleDisplay(model.problem.title, model.problem.slug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

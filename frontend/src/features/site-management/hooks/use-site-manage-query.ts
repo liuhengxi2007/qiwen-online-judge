@@ -7,34 +7,32 @@ import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean) {
-  const [users, setUsers] = useState<AuthUserListItem[]>([])
-  const [judgers, setJudgers] = useState<RegisteredJudgerListItem[]>([])
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-  const [isLoadingJudgers, setIsLoadingJudgers] = useState(false)
-  const [userListError, setUserListError] = useState('')
-  const [judgerListError, setJudgerListError] = useState('')
-  const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
+  const [queryState, setQueryState] = useState<{
+    enabled: boolean | null
+    users: AuthUserListItem[]
+    judgers: RegisteredJudgerListItem[]
+    userListError: string
+    judgerListError: string
+    navigationIntent: NavigationIntent | null
+    usersLoaded: boolean
+    judgersLoaded: boolean
+  }>({
+    enabled: null,
+    users: [],
+    judgers: [],
+    userListError: '',
+    judgerListError: '',
+    navigationIntent: null,
+    usersLoaded: false,
+    judgersLoaded: false,
+  })
 
   useEffect(() => {
     if (!siteManagerEnabled) {
-      setUsers([])
-      setJudgers([])
-      setIsLoadingUsers(false)
-      setIsLoadingJudgers(false)
-      setUserListError('')
-      setJudgerListError('')
-      setNavigationIntent(null)
       return
     }
 
     let isCancelled = false
-    setUsers([])
-    setJudgers([])
-    setIsLoadingUsers(true)
-    setIsLoadingJudgers(true)
-    setUserListError('')
-    setJudgerListError('')
-    setNavigationIntent(null)
 
     void listUsers()
       .then((loadedUsers) => {
@@ -42,24 +40,38 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
           return
         }
 
-        setUsers(loadedUsers)
-        setIsLoadingUsers(false)
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          users: loadedUsers,
+          userListError: '',
+          usersLoaded: true,
+        }))
       })
       .catch((error: unknown) => {
         if (isCancelled) {
           return
         }
 
-        setUsers([])
-        setIsLoadingUsers(false)
-
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          setUserListError('')
-          setNavigationIntent(toSiteManageDeniedRedirect())
+          setQueryState((currentState) => ({
+            ...currentState,
+            enabled: siteManagerEnabled,
+            users: [],
+            userListError: '',
+            navigationIntent: toSiteManageDeniedRedirect(),
+            usersLoaded: true,
+          }))
           return
         }
 
-        setUserListError('Unable to load the user list.')
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          users: [],
+          userListError: 'Unable to load the user list.',
+          usersLoaded: true,
+        }))
       })
 
     void listRegisteredJudgers()
@@ -68,24 +80,38 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
           return
         }
 
-        setJudgers(loadedJudgers)
-        setIsLoadingJudgers(false)
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          judgers: loadedJudgers,
+          judgerListError: '',
+          judgersLoaded: true,
+        }))
       })
       .catch((error: unknown) => {
         if (isCancelled) {
           return
         }
 
-        setJudgers([])
-        setIsLoadingJudgers(false)
-
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
-          setJudgerListError('')
-          setNavigationIntent(toSiteManageDeniedRedirect())
+          setQueryState((currentState) => ({
+            ...currentState,
+            enabled: siteManagerEnabled,
+            judgers: [],
+            judgerListError: '',
+            navigationIntent: toSiteManageDeniedRedirect(),
+            judgersLoaded: true,
+          }))
           return
         }
 
-        setJudgerListError('Unable to load the registered judgers.')
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          judgers: [],
+          judgerListError: 'Unable to load the registered judgers.',
+          judgersLoaded: true,
+        }))
       })
 
     return () => {
@@ -94,20 +120,27 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
   }, [siteManagerEnabled])
 
   return {
-    users,
-    judgers,
-    isLoadingUsers,
-    isLoadingJudgers,
-    userListError,
-    judgerListError,
-    navigationIntent,
+    users: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.users : [],
+    judgers: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.judgers : [],
+    isLoadingUsers: siteManagerEnabled && (!queryState.usersLoaded || queryState.enabled !== siteManagerEnabled),
+    isLoadingJudgers: siteManagerEnabled && (!queryState.judgersLoaded || queryState.enabled !== siteManagerEnabled),
+    userListError: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.userListError : '',
+    judgerListError: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.judgerListError : '',
+    navigationIntent:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.navigationIntent : null,
     replaceUser(updatedUser: AuthUserListItem) {
-      setUsers((currentUsers) =>
-        currentUsers.map((currentUser) => (currentUser.username === updatedUser.username ? updatedUser : currentUser)),
-      )
+      setQueryState((currentState) => ({
+        ...currentState,
+        users: currentState.users.map((currentUser) =>
+          currentUser.username === updatedUser.username ? updatedUser : currentUser,
+        ),
+      }))
     },
     removeUser(targetUsername: AuthUserListItem['username']) {
-      setUsers((currentUsers) => currentUsers.filter((currentUser) => currentUser.username !== targetUsername))
+      setQueryState((currentState) => ({
+        ...currentState,
+        users: currentState.users.filter((currentUser) => currentUser.username !== targetUsername),
+      }))
     },
   }
 }

@@ -4,22 +4,27 @@ import { getBlog } from '@/features/blog/api/blog-client'
 import type { BlogDetail, BlogId } from '@/features/blog/domain/blog'
 
 export function useBlogDetailQuery(blogId: BlogId | null) {
-  const [blog, setBlog] = useState<BlogDetail | null>(null)
-  const [isLoading, setIsLoading] = useState(Boolean(blogId))
-  const [errorMessage, setErrorMessage] = useState('')
+  const [queryState, setQueryState] = useState<{
+    blogId: BlogId | null
+    blog: BlogDetail | null
+    errorMessage: string
+  }>({
+    blogId: null,
+    blog: null,
+    errorMessage: '',
+  })
 
   useEffect(() => {
     if (!blogId) {
-      setBlog(null)
-      setIsLoading(false)
-      setErrorMessage('invalid')
+      setQueryState({
+        blogId: null,
+        blog: null,
+        errorMessage: 'invalid',
+      })
       return
     }
 
     let cancelled = false
-    setBlog(null)
-    setIsLoading(true)
-    setErrorMessage('')
 
     void getBlog(blogId)
       .then((loadedBlog) => {
@@ -27,17 +32,22 @@ export function useBlogDetailQuery(blogId: BlogId | null) {
           return
         }
 
-        setBlog(loadedBlog)
-        setIsLoading(false)
+        setQueryState({
+          blogId,
+          blog: loadedBlog,
+          errorMessage: '',
+        })
       })
       .catch(() => {
         if (cancelled) {
           return
         }
 
-        setBlog(null)
-        setIsLoading(false)
-        setErrorMessage('loadFailed')
+        setQueryState({
+          blogId,
+          blog: null,
+          errorMessage: 'loadFailed',
+        })
       })
 
     return () => {
@@ -46,9 +56,14 @@ export function useBlogDetailQuery(blogId: BlogId | null) {
   }, [blogId])
 
   return {
-    blog,
-    setBlog,
-    isLoading,
-    errorMessage,
+    blog: queryState.blogId === blogId ? queryState.blog : null,
+    setBlog: (blog: BlogDetail | null) =>
+      setQueryState((currentState) => ({
+        ...currentState,
+        blogId,
+        blog,
+      })),
+    isLoading: blogId !== null && queryState.blogId !== blogId,
+    errorMessage: blogId === null ? 'invalid' : queryState.blogId === blogId ? queryState.errorMessage : '',
   }
 }

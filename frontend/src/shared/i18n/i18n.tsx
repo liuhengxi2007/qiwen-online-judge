@@ -46,6 +46,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const sessionLocale = useAuthStore((state) => state.session?.preferences.locale ?? null)
   const [persistedLocale, setPersistedLocale] = useState<Locale>(detectInitialLocale)
   const locale = sessionLocale ?? persistedLocale
+  const setLocale = (nextLocale: Locale) => {
+    setPersistedLocale(nextLocale)
+  }
 
   useEffect(() => {
     document.documentElement.lang = locale

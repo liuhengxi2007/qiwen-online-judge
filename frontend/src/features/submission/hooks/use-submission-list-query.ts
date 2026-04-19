@@ -5,16 +5,19 @@ import { listSubmissions } from '@/features/submission/api/submission-client'
 import { isTerminalSubmissionStatus, type SubmissionSummary } from '@/features/submission/domain/submission'
 
 export function useSubmissionListQuery(submitterUsername: Username | null) {
-  const [submissions, setSubmissions] = useState<SubmissionSummary[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [queryState, setQueryState] = useState<{
+    username: Username | null
+    submissions: SubmissionSummary[]
+    errorMessage: string
+  }>({
+    username: null,
+    submissions: [],
+    errorMessage: '',
+  })
 
   useEffect(() => {
     let cancelled = false
     let intervalId: number | null = null
-    setSubmissions([])
-    setIsLoading(true)
-    setErrorMessage('')
 
     const load = () => {
       void listSubmissions(submitterUsername)
@@ -23,9 +26,11 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
             return
           }
 
-          setSubmissions(loadedSubmissions)
-          setIsLoading(false)
-          setErrorMessage('')
+          setQueryState({
+            username: submitterUsername,
+            submissions: loadedSubmissions,
+            errorMessage: '',
+          })
           if (!loadedSubmissions.some((submission) => !isTerminalSubmissionStatus(submission.status)) && intervalId !== null) {
             window.clearInterval(intervalId)
             intervalId = null
@@ -36,9 +41,11 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
             return
           }
 
-          setSubmissions([])
-          setIsLoading(false)
-          setErrorMessage('Unable to load submissions.')
+          setQueryState({
+            username: submitterUsername,
+            submissions: [],
+            errorMessage: 'Unable to load submissions.',
+          })
         })
     }
 
@@ -54,8 +61,8 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
   }, [submitterUsername])
 
   return {
-    submissions,
-    isLoading,
-    errorMessage,
+    submissions: queryState.username === submitterUsername ? queryState.submissions : [],
+    isLoading: queryState.username !== submitterUsername,
+    errorMessage: queryState.username === submitterUsername ? queryState.errorMessage : '',
   }
 }

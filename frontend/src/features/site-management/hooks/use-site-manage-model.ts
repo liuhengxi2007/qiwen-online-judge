@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from 'react'
+import { useReducer } from 'react'
 
 import { type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/features/auth/domain/auth'
 import {
@@ -20,57 +20,51 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
   const saveUserPermissions = mutation.savePermissions
   const deleteTargetUser = deleteMutation.deleteTargetUser
 
-  const savePermissions = useCallback(
-    async (listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) => {
-      if (currentUpdatingUsername) {
+  async function savePermissions(listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) {
+    if (currentUpdatingUsername) {
+      return
+    }
+
+    dispatch({ type: 'update_started', username: listedUser.username })
+
+    const result = await saveUserPermissions(listedUser.username, nextPermissions)
+
+    switch (result.kind) {
+      case 'updated':
+        query.replaceUser(result.user)
+        dispatch({ type: 'update_succeeded', user: result.user })
         return
-      }
-
-      dispatch({ type: 'update_started', username: listedUser.username })
-
-      const result = await saveUserPermissions(listedUser.username, nextPermissions)
-
-      switch (result.kind) {
-        case 'updated':
-          query.replaceUser(result.user)
-          dispatch({ type: 'update_succeeded', user: result.user })
-          return
-        case 'forbidden':
-          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
-          return
-        case 'failed':
-          dispatch({ type: 'update_failed', message: result.message })
-          return
-      }
-    },
-    [currentUpdatingUsername, saveUserPermissions],
-  )
-
-  const deleteUser = useCallback(
-    async (listedUser: AuthUserListItem) => {
-      if (currentUpdatingUsername || currentDeletingUsername) {
+      case 'forbidden':
+        dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
         return
-      }
+      case 'failed':
+        dispatch({ type: 'update_failed', message: result.message })
+        return
+    }
+  }
 
-      const username = listedUser.username
-      dispatch({ type: 'delete_started', username })
+  async function deleteUser(listedUser: AuthUserListItem) {
+    if (currentUpdatingUsername || currentDeletingUsername) {
+      return
+    }
 
-      const result = await deleteTargetUser(listedUser.username)
+    const username = listedUser.username
+    dispatch({ type: 'delete_started', username })
 
-      switch (result.kind) {
-        case 'deleted':
-          query.removeUser(username)
-          dispatch({ type: 'delete_succeeded', message: result.message })
-          return
-        case 'forbidden':
-          dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
-          return
-        case 'failed':
-          dispatch({ type: 'update_failed', message: result.message })
-      }
-    },
-    [currentDeletingUsername, currentUpdatingUsername, deleteTargetUser],
-  )
+    const result = await deleteTargetUser(listedUser.username)
+
+    switch (result.kind) {
+      case 'deleted':
+        query.removeUser(username)
+        dispatch({ type: 'delete_succeeded', message: result.message })
+        return
+      case 'forbidden':
+        dispatch({ type: 'redirect_requested', intent: toSiteManageDeniedRedirect() })
+        return
+      case 'failed':
+        dispatch({ type: 'update_failed', message: result.message })
+    }
+  }
 
   return {
     users: query.users,
