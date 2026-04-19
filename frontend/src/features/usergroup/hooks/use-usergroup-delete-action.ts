@@ -13,7 +13,7 @@ export function useUserGroupDeleteAction(userGroupSlug: UserGroupSlug) {
     setIsDeleting(true)
     try {
       const response = await deleteUserGroup(userGroupSlug)
-      return { ok: true, message: response.message }
+      return { ok: true, message: response.message ?? t('common.success.generic') }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('userGroup.message.deleteFailed')
       return { ok: false, message }

@@ -5,6 +5,7 @@ import {
   initialUserGroupPageState,
   reduceUserGroupPageState,
 } from '@/features/usergroup/domain/usergroup-page-state'
+import { translateMessage } from '@/shared/i18n/messages'
 
 export function useUserGroupPageModel() {
   const [state, dispatch] = useReducer(reduceUserGroupPageState, initialUserGroupPageState)
@@ -23,7 +24,7 @@ export function useUserGroupPageModel() {
         if (cancelled) {
           return
         }
-        dispatch({ type: 'load_failed', message: 'Unable to load user groups.' })
+        dispatch({ type: 'load_failed', message: translateMessage('userGroup.listLoadFailed') })
       })
 
     return () => {

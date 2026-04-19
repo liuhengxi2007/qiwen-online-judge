@@ -4,6 +4,7 @@ import { AuthClientError, getUserSettings } from '@/features/auth/api/auth-clien
 import type { SessionResponse, Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
+import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserSettingsQueryArgs = {
   canLoadTarget: boolean
@@ -73,7 +74,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           setSettingsState({
             username: targetUsername,
             editedUser: null,
-            settingsLoadError: 'User not found.',
+            settingsLoadError: translateMessage('api.error.user.not_found'),
             navigationIntent: null,
           })
           return
@@ -82,7 +83,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
         setSettingsState({
           username: targetUsername,
           editedUser: null,
-          settingsLoadError: 'Unable to load settings.',
+          settingsLoadError: translateMessage('userSettings.loadFailed'),
           navigationIntent: null,
         })
       })

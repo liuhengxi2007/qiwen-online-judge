@@ -4,6 +4,7 @@ import { AuthClientError, getUserProfile } from '@/features/auth/api/auth-client
 import type { UserProfileResponse, Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
+import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserProfileQueryArgs = {
   targetUsername: Username
@@ -60,7 +61,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           setProfileState({
             username: targetUsername,
             profile: null,
-            profileLoadError: 'User not found.',
+            profileLoadError: translateMessage('api.error.user.not_found'),
             navigationIntent: null,
           })
           return
@@ -69,7 +70,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
         setProfileState({
           username: targetUsername,
           profile: null,
-          profileLoadError: 'Unable to load profile.',
+          profileLoadError: translateMessage('userProfile.loadFailed'),
           navigationIntent: null,
         })
       })

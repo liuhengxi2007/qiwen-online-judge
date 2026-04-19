@@ -92,7 +92,9 @@ export function SubmissionDetailPage() {
       const submission = await rejudgeSubmission(currentSubmissionId)
       submissionQuery.replaceSubmission(submission)
     } catch (error) {
-      setActionErrorMessage(error instanceof HttpClientError ? error.message : 'Unable to rejudge submission.')
+      setActionErrorMessage(
+        error instanceof HttpClientError ? error.message : t('submission.detail.rejudgeFailed'),
+      )
     } finally {
       setIsRejudging(false)
     }
@@ -105,7 +107,7 @@ export function SubmissionDetailPage() {
       await deleteSubmission(currentSubmissionId)
       setDeleted(true)
     } catch (error) {
-      setActionErrorMessage(error instanceof HttpClientError ? error.message : 'Unable to delete submission.')
+      setActionErrorMessage(error instanceof HttpClientError ? error.message : t('submission.detail.deleteFailed'))
     } finally {
       setIsDeleting(false)
     }

@@ -5,6 +5,7 @@ import {
   initialProblemPageState,
   reduceProblemPageState,
 } from '@/features/problem/domain/problem-query-state'
+import { translateMessage } from '@/shared/i18n/messages'
 
 export function useProblemPageModel() {
   const [state, dispatch] = useReducer(reduceProblemPageState, initialProblemPageState)
@@ -23,7 +24,7 @@ export function useProblemPageModel() {
         if (cancelled) {
           return
         }
-        dispatch({ type: 'load_failed', message: 'Unable to load problems.' })
+        dispatch({ type: 'load_failed', message: translateMessage('problem.list.loadFailed') })
       })
 
     return () => {

@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 
 import { cn } from '@/lib/utils'
+import { translateMessage } from '@/shared/i18n/messages'
 
 function Sheet(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="sheet" {...props} />
@@ -72,7 +73,7 @@ function SheetContent({
         {children}
         <DialogPrimitive.Close className="absolute top-4 right-4 rounded-full p-1 text-muted-foreground transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <X className="size-4" />
-          <span className="sr-only">关闭</span>
+          <span className="sr-only">{translateMessage('common.close')}</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </SheetPortal>

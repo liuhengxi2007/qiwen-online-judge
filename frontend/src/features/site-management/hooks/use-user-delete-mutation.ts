@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { AuthClientError, deleteUser } from '@/features/auth/api/auth-client'
 import type { Username } from '@/features/auth/domain/auth'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { translateMessage } from '@/shared/i18n/messages'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type DeleteUserResult =
@@ -22,7 +23,7 @@ export function useUserDeleteMutation() {
       try {
         const response = await deleteUser(targetUsername)
         setDeletingUsername(null)
-        return { kind: 'deleted', message: response.message }
+        return { kind: 'deleted', message: response.message ?? translateMessage('common.success.generic') }
       } catch (error) {
         if (error instanceof AuthClientError && error.kind === 'forbidden') {
           setDeletingUsername(null)
@@ -30,7 +31,8 @@ export function useUserDeleteMutation() {
           return { kind: 'forbidden' }
         }
 
-        const message = error instanceof AuthClientError ? error.message : 'Unable to delete user.'
+        const message =
+          error instanceof AuthClientError ? error.message : translateMessage('siteManage.message.deleteUserFailed')
         setDeletingUsername(null)
         return { kind: 'failed', message }
       }

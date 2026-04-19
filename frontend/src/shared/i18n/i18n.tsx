@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
-import { fallbackLocale, messages, type Locale } from '@/shared/i18n/messages'
+import { resolveLocale, translateMessage, type Locale } from '@/shared/i18n/messages'
 
 type TranslateValues = Record<string, string | number>
 
@@ -16,25 +16,7 @@ const localeStorageKey = 'qiwen-online-judge.locale'
 const I18nContext = createContext<I18nContextValue | null>(null)
 
 function detectInitialLocale(): Locale {
-  if (typeof window !== 'undefined') {
-    const persistedLocale = window.localStorage.getItem(localeStorageKey)
-    if (persistedLocale === 'en' || persistedLocale === 'zh-CN') {
-      return persistedLocale
-    }
-  }
-
-  if (typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('zh')) {
-    return 'zh-CN'
-  }
-
-  return fallbackLocale
-}
-
-function interpolate(template: string, values: TranslateValues = {}): string {
-  return Object.entries(values).reduce(
-    (result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)),
-    template,
-  )
+  return resolveLocale()
 }
 
 function isHiddenDescriptionKey(key: string): boolean {
@@ -60,8 +42,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       return ''
     }
 
-    const template = messages[locale][key] ?? messages[fallbackLocale][key] ?? key
-    return interpolate(template, values)
+    return translateMessage(key, values, locale)
   }
 
   return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>

@@ -1,32 +1,45 @@
+import { messages, fallbackLocale, resolveLocale, translateMessage } from '@/shared/i18n/messages'
+
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
 export type JsonDecoder<T> = {
   bivarianceHack(value: unknown): T
 }['bivarianceHack']
 
-type ErrorResponse = {
+type ApiMessageResponse = {
+  code?: string
   message?: string
+  params?: Record<string, string>
 }
 
 type SuccessResponse = {
   message: string
+  code?: string
+  params?: Record<string, string>
 }
 
 export class HttpClientError extends Error {
   readonly kind: HttpClientErrorKind
+  readonly code?: string
+  readonly params?: Record<string, string>
 
-  constructor(kind: HttpClientErrorKind, message: string) {
+  constructor(kind: HttpClientErrorKind, message: string, code?: string, params?: Record<string, string>) {
     super(message)
     this.kind = kind
+    this.code = code
+    this.params = params
   }
 }
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const jsonResponse = response.clone()
   const textResponse = response.clone()
-  const errorData = parseErrorResponse(await jsonResponse.json().catch(() => null))
+  const errorData = parseApiMessageResponse(await jsonResponse.json().catch(() => null))
 
-  if (errorData?.message) {
-    return errorData.message
+  if (errorData) {
+    const translated = translateApiMessage(errorData)
+    if (translated) {
+      return translated
+    }
   }
 
   const text = (await textResponse.text().catch(() => '')).trim()
@@ -37,12 +50,23 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return `${fallback} (HTTP ${response.status})`
 }
 
-function parseErrorResponse(value: unknown): ErrorResponse | null {
+function parseApiMessageResponse(value: unknown): ApiMessageResponse | null {
   if (!isRecord(value)) {
     return null
   }
 
-  return typeof value.message === 'string' ? { message: value.message } : null
+  const code = typeof value.code === 'string' ? value.code : undefined
+  const message = typeof value.message === 'string' ? value.message : undefined
+  const params =
+    isRecord(value.params) && Object.values(value.params).every((entry) => typeof entry === 'string')
+      ? (value.params as Record<string, string>)
+      : undefined
+
+  if (!code && !message) {
+    return null
+  }
+
+  return { code, message, params }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -50,11 +74,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function decodeSuccessResponse(value: unknown): SuccessResponse {
-  if (!isRecord(value) || typeof value.message !== 'string') {
-    throw new Error('Invalid success response payload.')
+  const data = parseApiMessageResponse(value)
+  if (!data) {
+    throw new Error(translateMessage('common.error.invalidSuccessPayload'))
   }
 
-  return { message: value.message }
+  return {
+    message: translateApiMessage(data) ?? data.message ?? translateMessage('common.success.generic'),
+    code: data.code,
+    params: data.params,
+  }
+}
+
+function hasTranslation(key: string): boolean {
+  const locale = resolveLocale()
+  return key in messages[locale] || key in messages[fallbackLocale]
+}
+
+function translateApiMessage(data: ApiMessageResponse): string | null {
+  if (data.code && hasTranslation(data.code)) {
+    return translateMessage(data.code, data.params ?? {})
+  }
+
+  if (data.message) {
+    return data.message
+  }
+
+  return null
 }
 
 export async function requestJson<T>(input: RequestInfo, decode: JsonDecoder<T>, init?: RequestInit): Promise<T> {
@@ -64,19 +110,27 @@ export async function requestJson<T>(input: RequestInfo, decode: JsonDecoder<T>,
   })
 
   if (response.status === 401) {
-    throw new HttpClientError('unauthorized', await readErrorMessage(response, 'Authentication required.'))
+    const message = await readErrorMessage(response, translateMessage('common.error.authRequired'))
+    const data = parseApiMessageResponse(await response.clone().json().catch(() => null))
+    throw new HttpClientError('unauthorized', message, data?.code, data?.params)
   }
 
   if (response.status === 403) {
-    throw new HttpClientError('forbidden', await readErrorMessage(response, 'Forbidden.'))
+    const message = await readErrorMessage(response, translateMessage('common.error.forbidden'))
+    const data = parseApiMessageResponse(await response.clone().json().catch(() => null))
+    throw new HttpClientError('forbidden', message, data?.code, data?.params)
   }
 
   if (response.status === 404) {
-    throw new HttpClientError('not-found', await readErrorMessage(response, 'Not found.'))
+    const message = await readErrorMessage(response, translateMessage('common.error.notFound'))
+    const data = parseApiMessageResponse(await response.clone().json().catch(() => null))
+    throw new HttpClientError('not-found', message, data?.code, data?.params)
   }
 
   if (!response.ok) {
-    throw new HttpClientError('http', await readErrorMessage(response, 'Request failed.'))
+    const message = await readErrorMessage(response, translateMessage('common.error.requestFailed'))
+    const data = parseApiMessageResponse(await response.clone().json().catch(() => null))
+    throw new HttpClientError('http', message, data?.code, data?.params)
   }
 
   return decode(await response.json())

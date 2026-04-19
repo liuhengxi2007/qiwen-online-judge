@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { listAcceptedRanklist, listContributionRanklist } from '@/features/auth/api/auth-client'
 import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/auth/domain/auth'
+import { translateMessage } from '@/shared/i18n/messages'
 
 type UseRanklistQueryArgs = {
   acceptedPage: number
@@ -55,7 +56,7 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
         setContributionState({
           page: contributionPage,
           response: null,
-          errorMessage: 'Unable to load contribution ranklist.',
+          errorMessage: translateMessage('ranklist.contributionLoadFailed'),
         })
       })
 
@@ -89,7 +90,7 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
         setAcceptedState({
           page: acceptedPage,
           response: null,
-          errorMessage: 'Unable to load accepted problem ranklist.',
+          errorMessage: translateMessage('ranklist.acceptedLoadFailed'),
         })
       })
 

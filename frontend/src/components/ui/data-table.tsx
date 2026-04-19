@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { translateMessage } from '@/shared/i18n/messages'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -23,7 +24,7 @@ interface DataTableProps<TData, TValue> {
 function DataTable<TData, TValue>({
   columns,
   data,
-  emptyText = '暂无数据',
+  emptyText = translateMessage('common.emptyData'),
 }: DataTableProps<TData, TValue>) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({

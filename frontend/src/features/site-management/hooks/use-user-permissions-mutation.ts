@@ -4,6 +4,7 @@ import { type AuthUserListItem, type UpdateUserPermissionsRequest, type Username
 import { AuthClientError, updateUserPermissions } from '@/features/auth/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { translateMessage } from '@/shared/i18n/messages'
 
 type SavePermissionsResult =
   | { kind: 'updated'; user: AuthUserListItem }
@@ -30,7 +31,7 @@ export function useUserPermissionsMutation() {
           return { kind: 'forbidden' }
         }
 
-        const message = 'Unable to update user permissions.'
+        const message = translateMessage('siteManage.message.updatePermissionsFailed')
         setUpdatingUsername(null)
         return { kind: 'failed', message }
       }

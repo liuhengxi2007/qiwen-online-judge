@@ -5,6 +5,7 @@ import type { AuthUserListItem } from '@/features/auth/domain/auth'
 import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
+import { translateMessage } from '@/shared/i18n/messages'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean) {
   const [queryState, setQueryState] = useState<{
@@ -69,7 +70,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
           ...currentState,
           enabled: siteManagerEnabled,
           users: [],
-          userListError: 'Unable to load the user list.',
+          userListError: translateMessage('siteManage.usersLoadFailed'),
           usersLoaded: true,
         }))
       })
@@ -109,7 +110,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
           ...currentState,
           enabled: siteManagerEnabled,
           judgers: [],
-          judgerListError: 'Unable to load the registered judgers.',
+          judgerListError: translateMessage('siteManage.judgersLoadFailed'),
           judgersLoaded: true,
         }))
       })
