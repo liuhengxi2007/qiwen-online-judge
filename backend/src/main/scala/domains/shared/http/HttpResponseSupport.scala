@@ -12,7 +12,7 @@ object HttpResponseSupport:
     IO.pure(Response[IO](status = status).withEntity(ErrorResponse(apiMessage).asJson))
 
   def errorResponse(status: Status, message: String): IO[Response[IO]] =
-    IO.pure(Response[IO](status = status).withEntity(ErrorResponse.legacy(message).asJson))
+    IO.pure(Response[IO](status = status).withEntity(ErrorResponse(message).asJson))
 
   def successResponse(status: Status, apiMessage: ApiMessage): IO[Response[IO]] =
     IO.pure(Response[IO](status = status).withEntity(SuccessResponse(apiMessage).asJson))

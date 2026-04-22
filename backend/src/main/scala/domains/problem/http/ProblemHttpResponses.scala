@@ -128,7 +128,7 @@ object ProblemHttpResponses:
   def downloadDataResponse(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
     ProblemDataStorage.readFile(problemSlug, filename).flatMap {
       case None =>
-        errorResponse(Status.NotFound, "Problem data file not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
       case Some((sanitizedFilename, bytes)) =>
         IO.pure(
           Response[IO](status = Status.Ok)
