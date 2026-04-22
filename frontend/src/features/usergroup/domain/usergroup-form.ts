@@ -1,6 +1,5 @@
 import { parseUsername, type Username } from '@/features/auth/domain/auth'
 import {
-  parseAddUserGroupMemberRole,
   parseUserGroupDescription,
   parseUserGroupName,
   parseUserGroupSlug,
@@ -72,23 +71,18 @@ export function validateUserGroupUpdateDraft(
 
 export function validateAddUserGroupMemberDraft(
   username: string,
-  role: string,
+  role: AddUserGroupMemberRole,
 ): { ok: true; request: { username: Username; role: AddUserGroupMemberRole } } | { ok: false; message: string } {
   const usernameResult = parseUsername(username)
   if (!usernameResult.ok) {
     return { ok: false, message: usernameResult.error }
   }
 
-  const roleResult = parseAddUserGroupMemberRole(role)
-  if (!roleResult.ok) {
-    return { ok: false, message: roleResult.error }
-  }
-
   return {
     ok: true,
     request: {
       username: usernameResult.value,
-      role: roleResult.value,
+      role,
     },
   }
 }
