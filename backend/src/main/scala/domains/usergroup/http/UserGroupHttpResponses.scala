@@ -1,8 +1,8 @@
 package domains.usergroup.http
 
 import cats.effect.IO
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.SuccessResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import domains.usergroup.application.UserGroupCommands
 import domains.usergroup.model.{UserGroup, UserGroupDetail}
 import io.circe.syntax.*
@@ -12,7 +12,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object UserGroupHttpResponses:
 
   private def hiddenUserGroupResponse: IO[Response[IO]] =
-    errorResponse(Status.NotFound, "User group not found.")
+    errorResponse(Status.NotFound, ApiMessages.userGroupNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
@@ -35,13 +35,13 @@ object UserGroupHttpResponses:
   def mapCreateResult(result: UserGroupCommands.CreateUserGroupResult): IO[Response[IO]] =
     result match
       case UserGroupCommands.CreateUserGroupResult.Forbidden =>
-        errorResponse(Status.Forbidden, "User group creation is not allowed.")
+        errorResponse(Status.Forbidden, ApiMessages.userGroupCreationForbidden)
       case UserGroupCommands.CreateUserGroupResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case UserGroupCommands.CreateUserGroupResult.SlugAlreadyExists =>
-        errorResponse(Status.Conflict, "User group slug already exists.")
+        errorResponse(Status.Conflict, ApiMessages.userGroupSlugExists)
       case UserGroupCommands.CreateUserGroupResult.SlugConflictsWithUsername =>
-        errorResponse(Status.Conflict, "User group slug conflicts with an existing username.")
+        errorResponse(Status.Conflict, ApiMessages.userGroupSlugConflictsWithUsername)
       case UserGroupCommands.CreateUserGroupResult.Created(group) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toUserGroupDetail(group).asJson))
 
@@ -72,7 +72,7 @@ object UserGroupHttpResponses:
       case UserGroupCommands.DeleteUserGroupResult.NotFound =>
         hiddenUserGroupResponse
       case UserGroupCommands.DeleteUserGroupResult.Deleted =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("User group deleted.").asJson))
+        successResponse(Status.Ok, ApiMessages.userGroupDeleted)
 
   def mapAddMemberResult(result: UserGroupCommands.AddUserGroupMemberResult): IO[Response[IO]] =
     result match
@@ -83,9 +83,9 @@ object UserGroupHttpResponses:
       case UserGroupCommands.AddUserGroupMemberResult.UserGroupNotFound =>
         hiddenUserGroupResponse
       case UserGroupCommands.AddUserGroupMemberResult.UserNotFound =>
-        errorResponse(Status.NotFound, "User not found.")
+        errorResponse(Status.NotFound, ApiMessages.userNotFound)
       case UserGroupCommands.AddUserGroupMemberResult.MemberAlreadyExists =>
-        errorResponse(Status.Conflict, "User is already a member of this group.")
+        errorResponse(Status.Conflict, ApiMessages.userAlreadyMemberOfGroup)
       case UserGroupCommands.AddUserGroupMemberResult.Added(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
@@ -98,11 +98,11 @@ object UserGroupHttpResponses:
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.UserGroupNotFound =>
         hiddenUserGroupResponse
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.MemberNotFound =>
-        errorResponse(Status.NotFound, "Group member not found.")
+        errorResponse(Status.NotFound, ApiMessages.groupMemberNotFound)
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.CannotModifyOwnerRole =>
-        errorResponse(Status.BadRequest, "The current owner cannot be modified directly. Transfer ownership instead.")
+        errorResponse(Status.BadRequest, ApiMessages.userGroupOwnerModifyForbidden)
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.OwnershipTransferRequired =>
-        errorResponse(Status.BadRequest, "Ownership transfer is required.")
+        errorResponse(Status.BadRequest, ApiMessages.ownershipTransferRequired)
       case UserGroupCommands.UpdateUserGroupMemberRoleResult.Updated(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))
 
@@ -113,8 +113,8 @@ object UserGroupHttpResponses:
       case UserGroupCommands.RemoveUserGroupMemberResult.UserGroupNotFound =>
         hiddenUserGroupResponse
       case UserGroupCommands.RemoveUserGroupMemberResult.MemberNotFound =>
-        errorResponse(Status.NotFound, "Group member not found.")
+        errorResponse(Status.NotFound, ApiMessages.groupMemberNotFound)
       case UserGroupCommands.RemoveUserGroupMemberResult.CannotRemoveOwner =>
-        errorResponse(Status.BadRequest, "The owner cannot be removed from the group.")
+        errorResponse(Status.BadRequest, ApiMessages.userGroupOwnerRemoveForbidden)
       case UserGroupCommands.RemoveUserGroupMemberResult.Removed(group) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toUserGroupDetail(group).asJson))

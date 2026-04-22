@@ -18,16 +18,22 @@ export type ResourceAccessPolicy = {
   managerGrants: AccessSubject[]
 }
 
+export type ApiMessageParam =
+  | { kind: 'text'; value: string }
+  | { kind: 'int'; value: number }
+  | { kind: 'long'; value: number }
+  | { kind: 'bool'; value: boolean }
+
 export type ErrorResponse = {
   code: string | null
   message: string | null
-  params: Record<string, string>
+  params: Record<string, ApiMessageParam>
 }
 
 export type SuccessResponse = {
   code: string | null
   message: string | null
-  params: Record<string, string>
+  params: Record<string, ApiMessageParam>
 }
 
 export type PageResponse<TItem> = {

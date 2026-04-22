@@ -638,6 +638,7 @@ export const enMessages: Record<string, string> = {
     'api.error.blog.comment_not_found': 'Blog comment not found.',
     'api.error.judge.token_invalid': 'Judge token is invalid.',
     'api.error.judger.not_found_or_expired': 'Judger not found or lease expired.',
+    'api.success.auth.logged_out': 'Logged out.',
     'api.success.user.deleted': 'User deleted.',
     'api.success.problem.deleted': 'Problem deleted.',
     'api.success.problem_set.deleted': 'Problem set deleted.',

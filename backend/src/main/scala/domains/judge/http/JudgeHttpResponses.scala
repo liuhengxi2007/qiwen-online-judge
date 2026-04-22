@@ -2,8 +2,8 @@ package domains.judge.http
 
 import cats.effect.IO
 import domains.judge.application.JudgeCommands
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.SuccessResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -14,7 +14,7 @@ object JudgeHttpResponses:
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def unauthorizedResponse: IO[Response[IO]] =
-    errorResponse(Status.Unauthorized, "Judge token is invalid.")
+    errorResponse(Status.Unauthorized, ApiMessages.judgeTokenInvalid)
 
   def noTaskResponse: IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.NoContent))
@@ -33,6 +33,6 @@ object JudgeHttpResponses:
       case JudgeCommands.ReportJudgeResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case JudgeCommands.ReportJudgeResult.SubmissionNotFound =>
-        errorResponse(Status.NotFound, "Submission not found.")
+        errorResponse(Status.NotFound, ApiMessages.submissionNotFound)
       case JudgeCommands.ReportJudgeResult.Updated =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Judge result recorded.").asJson))
+        successResponse(Status.Ok, ApiMessages.judgeResultRecorded)

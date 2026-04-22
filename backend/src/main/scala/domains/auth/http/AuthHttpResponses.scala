@@ -4,8 +4,8 @@ import cats.effect.IO
 import domains.auth.application.AuthUserCommands
 import domains.auth.model.{AuthUser, AuthUserListItem, LoginResponse, RegisterResponse, SessionResponse, UserAcceptedRanklistItem, UserPreferences, UserRanklistItem}
 import domains.judger.model.RegisteredJudgerListItem
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.{ErrorResponse, PageResponse, SuccessResponse}
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.{ApiMessages, PageResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -18,40 +18,40 @@ object AuthHttpResponses:
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def invalidCredentialsResponse: IO[Response[IO]] =
-    errorResponse(Status.Unauthorized, "Invalid username or password.")
+    errorResponse(Status.Unauthorized, ApiMessages.invalidCredentials)
 
   def invalidCurrentPasswordResponse: IO[Response[IO]] =
-    errorResponse(Status.Unauthorized, "Current password is incorrect.")
+    errorResponse(Status.Unauthorized, ApiMessages.invalidCurrentPassword)
 
   def unauthorizedResponse: IO[Response[IO]] =
-    errorResponse(Status.Unauthorized, "Authentication required.")
+    errorResponse(Status.Unauthorized, ApiMessages.authenticationRequired)
 
   def forbiddenResponse: IO[Response[IO]] =
-    errorResponse(Status.Forbidden, "Site manager permission required.")
+    errorResponse(Status.Forbidden, ApiMessages.siteManagerRequired)
 
   def protectedAdminResponse: IO[Response[IO]] =
-    errorResponse(Status.Forbidden, "The admin account permissions cannot be modified.")
+    errorResponse(Status.Forbidden, ApiMessages.adminPermissionsImmutable)
 
   def protectedAdminDeletionResponse: IO[Response[IO]] =
-    errorResponse(Status.Forbidden, "The admin account cannot be deleted.")
+    errorResponse(Status.Forbidden, ApiMessages.adminDeleteForbidden)
 
   def selfDeletionResponse: IO[Response[IO]] =
-    errorResponse(Status.BadRequest, "You cannot delete your own account.")
+    errorResponse(Status.BadRequest, ApiMessages.cannotDeleteSelf)
 
   def userNotFoundResponse: IO[Response[IO]] =
-    errorResponse(Status.NotFound, "User not found.")
+    errorResponse(Status.NotFound, ApiMessages.userNotFound)
 
   def userOwnsResourcesResponse: IO[Response[IO]] =
-    errorResponse(Status.Conflict, "User owns existing resources and cannot be deleted.")
+    errorResponse(Status.Conflict, ApiMessages.userHasOwnedResources)
 
   def usernameConflictResponse: IO[Response[IO]] =
-    errorResponse(Status.Conflict, "Username already exists, including case-only variations.")
+    errorResponse(Status.Conflict, ApiMessages.usernameExists)
 
   def usernameConflictsWithUserGroupResponse: IO[Response[IO]] =
-    errorResponse(Status.Conflict, "Username conflicts with an existing user group slug.")
+    errorResponse(Status.Conflict, ApiMessages.usernameConflictsWithGroup)
 
   def loggedOutResponse(clearedSessionCookie: ResponseCookie): IO[Response[IO]] =
-    IO.pure(Response[IO](status = Status.Ok).withEntity(ErrorResponse("Logged out.").asJson).addCookie(clearedSessionCookie))
+    successResponse(Status.Ok, ApiMessages.loggedOut).map(_.addCookie(clearedSessionCookie))
 
   def sessionCookie(token: String): ResponseCookie =
     ResponseCookie(
@@ -233,4 +233,4 @@ object AuthHttpResponses:
       case AuthUserCommands.DeleteUserResult.HasOwnedResources =>
         userOwnsResourcesResponse
       case AuthUserCommands.DeleteUserResult.Deleted =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("User deleted.").asJson))
+        successResponse(Status.Ok, ApiMessages.userDeleted)

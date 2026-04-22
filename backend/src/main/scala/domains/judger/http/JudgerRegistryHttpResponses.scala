@@ -2,8 +2,8 @@ package domains.judger.http
 
 import cats.effect.IO
 import domains.judger.application.JudgerRegistryCommands
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.SuccessResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -14,7 +14,7 @@ object JudgerRegistryHttpResponses:
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
 
   def unauthorizedResponse: IO[Response[IO]] =
-    errorResponse(Status.Unauthorized, "Judge token is invalid.")
+    errorResponse(Status.Unauthorized, ApiMessages.judgeTokenInvalid)
 
   def mapRegisterResult(result: JudgerRegistryCommands.RegisterResult): IO[Response[IO]] =
     result match
@@ -28,6 +28,6 @@ object JudgerRegistryHttpResponses:
       case JudgerRegistryCommands.HeartbeatResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case JudgerRegistryCommands.HeartbeatResult.JudgerNotFound =>
-        errorResponse(Status.NotFound, "Judger not found or lease expired.")
+        errorResponse(Status.NotFound, ApiMessages.judgerNotFoundOrExpired)
       case JudgerRegistryCommands.HeartbeatResult.Updated =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Judger heartbeat recorded.").asJson))
+        successResponse(Status.Ok, ApiMessages.judgerHeartbeatRecorded)

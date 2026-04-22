@@ -1,8 +1,8 @@
 package domains.submission.http
 
 import cats.effect.IO
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.SuccessResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import domains.submission.application.SubmissionCommands
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -11,7 +11,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object SubmissionHttpResponses:
 
   private def hiddenSubmissionResponse: IO[Response[IO]] =
-    errorResponse(Status.NotFound, "Submission not found.")
+    errorResponse(Status.NotFound, ApiMessages.submissionNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
@@ -26,9 +26,9 @@ object SubmissionHttpResponses:
       case SubmissionCommands.CreateSubmissionResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case SubmissionCommands.CreateSubmissionResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemNotFound)
       case SubmissionCommands.CreateSubmissionResult.Forbidden =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemNotFound)
       case SubmissionCommands.CreateSubmissionResult.Created(submission) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(submission.asJson))
 
@@ -48,7 +48,7 @@ object SubmissionHttpResponses:
       case SubmissionCommands.DeleteSubmissionResult.Forbidden =>
         hiddenSubmissionResponse
       case SubmissionCommands.DeleteSubmissionResult.Deleted =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Submission deleted.").asJson))
+        successResponse(Status.Ok, ApiMessages.submissionDeleted)
 
   def mapRejudgeResult(result: SubmissionCommands.RejudgeSubmissionResult): IO[Response[IO]] =
     result match

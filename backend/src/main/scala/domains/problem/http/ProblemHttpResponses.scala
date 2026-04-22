@@ -5,8 +5,8 @@ import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataFilename, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
-import domains.shared.model.SuccessResponse
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import fs2.Stream
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -17,7 +17,7 @@ import org.typelevel.ci.CIString
 object ProblemHttpResponses:
 
   private def hiddenProblemResponse: IO[Response[IO]] =
-    errorResponse(Status.NotFound, "Problem not found.")
+    errorResponse(Status.NotFound, ApiMessages.problemNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
@@ -30,13 +30,13 @@ object ProblemHttpResponses:
   def mapCreateResult(result: ProblemCommands.CreateProblemResult): IO[Response[IO]] =
     result match
       case ProblemCommands.CreateProblemResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        errorResponse(Status.Forbidden, ApiMessages.problemManagerRequired)
       case ProblemCommands.CreateProblemResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemCommands.CreateProblemResult.SlugAlreadyExists =>
-        errorResponse(Status.Conflict, "Problem slug already exists.")
+        errorResponse(Status.Conflict, ApiMessages.problemSlugExists)
       case ProblemCommands.CreateProblemResult.SlugConflictsWithProblemSet =>
-        errorResponse(Status.Conflict, "Problem slug conflicts with an existing problem set slug.")
+        errorResponse(Status.Conflict, ApiMessages.problemSlugConflictsWithProblemSet)
       case ProblemCommands.CreateProblemResult.Created(problem) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(problem.asJson))
 
@@ -67,7 +67,7 @@ object ProblemHttpResponses:
       case ProblemCommands.DeleteProblemResult.ProblemNotFound =>
         hiddenProblemResponse
       case ProblemCommands.DeleteProblemResult.Deleted =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(SuccessResponse("Problem deleted.").asJson))
+        successResponse(Status.Ok, ApiMessages.problemDeleted)
 
   def mapUpdateDataResult(result: ProblemCommands.UpdateProblemDataResult): IO[Response[IO]] =
     result match
@@ -112,7 +112,7 @@ object ProblemHttpResponses:
       case ProblemCommands.DeleteProblemDataResult.ProblemNotFound =>
         hiddenProblemResponse
       case ProblemCommands.DeleteProblemDataResult.DataFileNotFound =>
-        errorResponse(Status.NotFound, "Problem data file not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
       case ProblemCommands.DeleteProblemDataResult.Deleted(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 

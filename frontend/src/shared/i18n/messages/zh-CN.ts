@@ -637,6 +637,7 @@ export const zhCnMessages: Record<string, string> = {
     'api.error.blog.comment_not_found': '博客评论不存在。',
     'api.error.judge.token_invalid': '评测 token 无效。',
     'api.error.judger.not_found_or_expired': '评测机不存在或租约已过期。',
+    'api.success.auth.logged_out': '已退出登录。',
     'api.success.user.deleted': '用户已删除。',
     'api.success.problem.deleted': '题目已删除。',
     'api.success.problem_set.deleted': '题单已删除。',

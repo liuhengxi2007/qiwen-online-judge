@@ -1,4 +1,5 @@
 import { messages, fallbackLocale, resolveLocale, translateMessage } from '@/shared/i18n/messages'
+import type { ApiMessageParam } from '@contracts/shared'
 
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
 export type JsonDecoder<T> = {
@@ -8,21 +9,21 @@ export type JsonDecoder<T> = {
 type ApiMessageResponse = {
   code?: string
   message?: string
-  params?: Record<string, string>
+  params?: Record<string, ApiMessageParam>
 }
 
 type SuccessResponse = {
   code: string | null
   message: string | null
-  params: Record<string, string>
+  params: Record<string, ApiMessageParam>
 }
 
 export class HttpClientError extends Error {
   readonly kind: HttpClientErrorKind
   readonly code?: string
-  readonly params?: Record<string, string>
+  readonly params?: Record<string, ApiMessageParam>
 
-  constructor(kind: HttpClientErrorKind, message: string, code?: string, params?: Record<string, string>) {
+  constructor(kind: HttpClientErrorKind, message: string, code?: string, params?: Record<string, ApiMessageParam>) {
     super(message)
     this.kind = kind
     this.code = code
@@ -58,8 +59,8 @@ function parseApiMessageResponse(value: unknown): ApiMessageResponse | null {
   const code = typeof value.code === 'string' ? value.code : undefined
   const message = typeof value.message === 'string' ? value.message : undefined
   const params =
-    isRecord(value.params) && Object.values(value.params).every((entry) => typeof entry === 'string')
-      ? (value.params as Record<string, string>)
+    isRecord(value.params) && Object.values(value.params).every(isApiMessageParam)
+      ? (value.params as Record<string, ApiMessageParam>)
       : undefined
 
   if (!code && !message) {
@@ -71,6 +72,39 @@ function parseApiMessageResponse(value: unknown): ApiMessageResponse | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+function isApiMessageParam(value: unknown): value is ApiMessageParam {
+  if (!isRecord(value) || typeof value.kind !== 'string' || !('value' in value)) {
+    return false
+  }
+
+  switch (value.kind) {
+    case 'text':
+      return typeof value.value === 'string'
+    case 'int':
+    case 'long':
+      return typeof value.value === 'number'
+    case 'bool':
+      return typeof value.value === 'boolean'
+    default:
+      return false
+  }
+}
+
+function toTranslationParams(params: Record<string, ApiMessageParam>): Record<string, string | number> {
+  return Object.fromEntries(
+    Object.entries(params).map(([key, value]) => {
+      switch (value.kind) {
+        case 'text':
+        case 'int':
+        case 'long':
+          return [key, value.value]
+        case 'bool':
+          return [key, String(value.value)]
+      }
+    }),
+  )
 }
 
 export function decodeSuccessResponse(value: unknown): SuccessResponse {
@@ -93,7 +127,7 @@ function hasTranslation(key: string): boolean {
 
 function translateApiMessage(data: ApiMessageResponse): string | null {
   if (data.code && hasTranslation(data.code)) {
-    return translateMessage(data.code, data.params ?? {})
+    return translateMessage(data.code, toTranslationParams(data.params ?? {}))
   }
 
   if (data.message) {

@@ -3,7 +3,8 @@ package domains.problemset.http
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
 import domains.problemset.model.{ProblemSet, ProblemSetDetail}
-import domains.shared.http.HttpResponseSupport.{errorResponse, validationErrorResponse}
+import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.model.ApiMessages
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -11,7 +12,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object ProblemSetHttpResponses:
 
   private def hiddenProblemSetResponse: IO[Response[IO]] =
-    errorResponse(Status.NotFound, "Problem set not found.")
+    errorResponse(Status.NotFound, ApiMessages.problemSetNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
     domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
@@ -35,13 +36,13 @@ object ProblemSetHttpResponses:
   def mapCreateResult(result: ProblemSetCommands.CreateProblemSetResult): IO[Response[IO]] =
     result match
       case ProblemSetCommands.CreateProblemSetResult.Forbidden =>
-        errorResponse(Status.Forbidden, "Problem manager permission required.")
+        errorResponse(Status.Forbidden, ApiMessages.problemManagerRequired)
       case ProblemSetCommands.CreateProblemSetResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemSetCommands.CreateProblemSetResult.SlugAlreadyExists =>
-        errorResponse(Status.Conflict, "Problem set slug already exists.")
+        errorResponse(Status.Conflict, ApiMessages.problemSetSlugExists)
       case ProblemSetCommands.CreateProblemSetResult.SlugConflictsWithProblem =>
-        errorResponse(Status.Conflict, "Problem set slug conflicts with an existing problem slug.")
+        errorResponse(Status.Conflict, ApiMessages.problemSetSlugConflictsWithProblem)
       case ProblemSetCommands.CreateProblemSetResult.Created(problemSet) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(toProblemSetDetail(problemSet).asJson))
 
@@ -52,11 +53,11 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.AddProblemResult.ValidationFailed(message) =>
         errorResponse(Status.BadRequest, message)
       case ProblemSetCommands.AddProblemResult.ProblemSetNotFound =>
-        errorResponse(Status.NotFound, "Problem set not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemSetNotFound)
       case ProblemSetCommands.AddProblemResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemNotFound)
       case ProblemSetCommands.AddProblemResult.ProblemAlreadyLinked =>
-        errorResponse(Status.Conflict, "Problem is already linked to this problem set.")
+        errorResponse(Status.Conflict, ApiMessages.problemAlreadyLinkedToProblemSet)
       case ProblemSetCommands.AddProblemResult.Linked(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
 
@@ -87,7 +88,7 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.DeleteProblemSetResult.ProblemSetNotFound =>
         hiddenProblemSetResponse
       case ProblemSetCommands.DeleteProblemSetResult.Deleted =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(domains.shared.model.SuccessResponse("Problem set deleted.").asJson))
+        successResponse(Status.Ok, ApiMessages.problemSetDeleted)
 
   def mapRemoveProblemResult(result: ProblemSetCommands.RemoveProblemResult): IO[Response[IO]] =
     result match
@@ -96,8 +97,8 @@ object ProblemSetHttpResponses:
       case ProblemSetCommands.RemoveProblemResult.ProblemSetNotFound =>
         hiddenProblemSetResponse
       case ProblemSetCommands.RemoveProblemResult.ProblemNotFound =>
-        errorResponse(Status.NotFound, "Problem not found.")
+        errorResponse(Status.NotFound, ApiMessages.problemNotFound)
       case ProblemSetCommands.RemoveProblemResult.ProblemNotLinked =>
-        errorResponse(Status.NotFound, "Problem is not linked to this problem set.")
+        errorResponse(Status.NotFound, ApiMessages.problemNotLinkedToProblemSet)
       case ProblemSetCommands.RemoveProblemResult.Removed(problemSet) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toProblemSetDetail(problemSet).asJson))
