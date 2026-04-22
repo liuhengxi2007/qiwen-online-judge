@@ -1,3 +1,5 @@
 export type ErrorResponse = {
-  message: string
+  code: string | null
+  message: string | null
+  params: Record<string, string>
 }

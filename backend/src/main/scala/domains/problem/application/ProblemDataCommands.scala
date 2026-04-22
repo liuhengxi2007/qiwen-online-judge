@@ -8,6 +8,8 @@ import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
 
+import java.time.Instant
+
 object ProblemDataCommands:
 
   def updateProblemData(
@@ -49,7 +51,7 @@ object ProblemDataCommands:
                         result <- ProblemDataStorage
                           .writeFile(problem.slug, validRequest.filename, decodedBytes)
                           .flatMap(savedFilename =>
-                            ProblemTable.updateData(connection, problem.id, savedFilename)
+                            ProblemTable.updateData(connection, problem.id, Instant.now(), savedFilename)
                               .flatMap(_ =>
                                 ProblemTable
                                   .findBySlug(connection, problem.slug)
@@ -135,7 +137,7 @@ object ProblemDataCommands:
                 case true =>
                   ProblemDataStorage
                     .listFiles(problem.slug)
-                    .flatMap(files => ProblemTable.updateData(connection, problem.id, files.lastOption))
+                    .flatMap(files => ProblemTable.updateData(connection, problem.id, Instant.now(), files.lastOption))
                     .flatMap(_ =>
                       ProblemTable
                         .findBySlug(connection, problem.slug)
@@ -177,7 +179,7 @@ object ProblemDataCommands:
               snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
               result <- ProblemDataStorage
                 .deleteAllFiles(problem.slug)
-                .flatMap(_ => ProblemTable.updateData(connection, problem.id, None))
+                .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
                 .flatMap(_ =>
                   ProblemTable
                     .findBySlug(connection, problem.slug)

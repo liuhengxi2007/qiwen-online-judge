@@ -19,15 +19,15 @@ export type ResourceAccessPolicy = {
 }
 
 export type ErrorResponse = {
-  code?: string
-  message?: string
-  params?: Record<string, string>
+  code: string | null
+  message: string | null
+  params: Record<string, string>
 }
 
 export type SuccessResponse = {
-  code?: string
-  message?: string
-  params?: Record<string, string>
+  code: string | null
+  message: string | null
+  params: Record<string, string>
 }
 
 export type PageResponse<TItem> = {

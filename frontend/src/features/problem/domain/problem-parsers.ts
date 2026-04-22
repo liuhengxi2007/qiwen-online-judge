@@ -12,6 +12,7 @@ type ParseFailure = { ok: false; error: string }
 export type ParseResult<T> = ParseSuccess<T> | ParseFailure
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function createProblemId(value: string): ProblemId {
   return value as ProblemId
@@ -101,6 +102,9 @@ export function parseProblemId(rawId: string): ParseResult<ProblemId> {
   const normalized = rawId.trim()
   if (!normalized) {
     return { ok: false, error: 'Problem id is required.' }
+  }
+  if (!uuidPattern.test(normalized)) {
+    return { ok: false, error: 'Problem id must be a valid UUID.' }
   }
   return { ok: true, value: createProblemId(normalized) }
 }

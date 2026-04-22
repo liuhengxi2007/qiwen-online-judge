@@ -20,7 +20,9 @@ object SessionTableSupport:
               .map(_ =>
                 (
                   resultSet.getString("token"),
-                  Option(resultSet.getTimestamp("created_at")).map(_.toInstant).getOrElse(Instant.now()),
+                  Option(resultSet.getTimestamp("created_at"))
+                    .map(_.toInstant)
+                    .getOrElse(throw new IllegalStateException(s"auth_sessions.created_at is missing for token ${resultSet.getString("token")}")),
                   Option(resultSet.getTimestamp("last_active_at")).map(_.toInstant),
                   Option(resultSet.getTimestamp("expires_at")).map(_.toInstant),
                 )
@@ -32,7 +34,7 @@ object SessionTableSupport:
         try
           rows.foreach { (token, createdAt, maybeLastActiveAt, maybeExpiresAt) =>
             val lastActiveAt = maybeLastActiveAt.getOrElse(createdAt)
-            val expiresAt = maybeExpiresAt.getOrElse(createdAt.plus(sessionTtl))
+            val expiresAt = maybeExpiresAt.getOrElse(lastActiveAt.plus(sessionTtl))
             updateStatement.setTimestamp(1, Timestamp.from(lastActiveAt))
             updateStatement.setTimestamp(2, Timestamp.from(expiresAt))
             updateStatement.setString(3, token)

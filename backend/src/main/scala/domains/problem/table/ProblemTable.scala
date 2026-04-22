@@ -86,12 +86,17 @@ object ProblemTable:
       finally statement.close()
     }
 
-  def insert(connection: Connection, creatorUsername: Username, request: CreateProblemRequest): IO[ProblemDetail] =
+  def insert(
+    connection: Connection,
+    problemId: ProblemId,
+    createdAt: Instant,
+    creatorUsername: Username,
+    request: CreateProblemRequest
+  ): IO[ProblemDetail] =
     IO.blocking {
-      val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
       try
-        statement.setObject(1, ProblemId.random().value)
+        statement.setObject(1, problemId.value)
         statement.setString(2, request.slug.value)
         statement.setString(3, request.title.value)
         statement.setString(4, request.statement.value)
@@ -103,8 +108,8 @@ object ProblemTable:
         statement.setString(10, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
         statement.setString(11, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
         statement.setString(12, creatorUsername.value)
-        statement.setTimestamp(13, Timestamp.from(now))
-        statement.setTimestamp(14, Timestamp.from(now))
+        statement.setTimestamp(13, Timestamp.from(createdAt))
+        statement.setTimestamp(14, Timestamp.from(createdAt))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
@@ -127,10 +132,9 @@ object ProblemTable:
         .as(problem.copy(accessPolicy = sanitizedPolicy))
     }
 
-  def update(connection: Connection, problemId: ProblemId, request: UpdateProblemRequest): IO[Unit] =
+  def update(connection: Connection, problemId: ProblemId, updatedAt: Instant, request: UpdateProblemRequest): IO[Unit] =
     for
       _ <- IO.blocking {
-      val now = Instant.now()
       val statement = connection.prepareStatement(updateSql)
       try
         statement.setString(1, request.title.value)
@@ -140,7 +144,7 @@ object ProblemTable:
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
         statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
         statement.setString(7, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
-        statement.setTimestamp(8, Timestamp.from(now))
+        statement.setTimestamp(8, Timestamp.from(updatedAt))
         statement.setObject(9, problemId.value)
         statement.executeUpdate()
         ()
@@ -150,18 +154,22 @@ object ProblemTable:
       _ <- ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), GrantRole.Manager, request.accessPolicy.managerGrants)
     yield ()
 
-  def updateData(connection: Connection, problemId: ProblemId, filename: ProblemDataFilename): IO[Unit] =
-    updateData(connection, problemId, Some(filename))
+  def updateData(connection: Connection, problemId: ProblemId, updatedAt: Instant, filename: ProblemDataFilename): IO[Unit] =
+    updateData(connection, problemId, updatedAt, Some(filename))
 
-  def updateData(connection: Connection, problemId: ProblemId, filename: Option[ProblemDataFilename]): IO[Unit] =
+  def updateData(
+    connection: Connection,
+    problemId: ProblemId,
+    updatedAt: Instant,
+    filename: Option[ProblemDataFilename]
+  ): IO[Unit] =
     IO.blocking {
-      val now = Instant.now()
       val statement = connection.prepareStatement(updateDataSql)
       try
         filename match
           case Some(value) => statement.setString(1, value.value)
           case None => statement.setNull(1, java.sql.Types.VARCHAR)
-        statement.setTimestamp(2, Timestamp.from(now))
+        statement.setTimestamp(2, Timestamp.from(updatedAt))
         statement.setObject(3, problemId.value)
         statement.executeUpdate()
         ()

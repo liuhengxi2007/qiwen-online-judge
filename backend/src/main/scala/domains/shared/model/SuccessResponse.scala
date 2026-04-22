@@ -3,10 +3,12 @@ package domains.shared.model
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
+type SuccessResponseParams = Map[String, String]
+
 final case class SuccessResponse(
   code: Option[String],
   message: Option[String],
-  params: Map[String, String]
+  params: SuccessResponseParams
 )
 
 object SuccessResponse:

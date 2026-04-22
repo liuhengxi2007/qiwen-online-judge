@@ -1,6 +1,6 @@
 package domains.judge.http
 
-import cats.effect.IO
+import cats.effect.{Clock, IO}
 import database.DatabaseSession
 import domains.judge.application.{JudgeCommands, JudgeConfig}
 import domains.submission.model.SubmissionId
@@ -20,8 +20,9 @@ final class JudgeHttpHandlers(
     JudgeHttpSupport.withJudgeToken(request, judgeConfig) {
       for
         claimRequest <- request.as[ClaimJudgeTaskRequest]
+        claimedAt <- Clock[IO].realTimeInstant
         response <- JudgeCommands
-          .claimCpp17Task(databaseSession, claimRequest.judgerId)
+          .claimCpp17Task(databaseSession, claimRequest.judgerId, claimedAt)
           .flatMap(JudgeHttpResponses.mapClaimResult)
       yield response
     }
@@ -34,8 +35,9 @@ final class JudgeHttpHandlers(
         case Right(submissionId) =>
           for
             resultRequest <- request.as[ReportJudgeResultRequest]
+            completedAt <- Clock[IO].realTimeInstant
             response <- JudgeCommands
-              .reportJudgeResult(databaseSession, submissionId, resultRequest)
+              .reportJudgeResult(databaseSession, submissionId, resultRequest, completedAt)
               .flatMap(JudgeHttpResponses.mapReportResult)
           yield response
     }

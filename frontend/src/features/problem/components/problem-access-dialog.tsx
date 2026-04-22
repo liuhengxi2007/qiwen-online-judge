@@ -48,7 +48,7 @@ export function ProblemAccessDialog({
         </DialogHeader>
 
         <div className="space-y-5 px-7 py-7 sm:px-8">
-          <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem?.accessPolicy ?? model.accessPolicy)}</p>
+          <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem?.accessPolicy ?? model.accessPolicy, t)}</p>
           <ResourceAccessEditor
             accessPolicy={model.accessPolicy}
             grantedUsersInput={model.grantedUsersInput}

@@ -22,9 +22,10 @@ object JudgeCommands:
 
   def claimCpp17Task(
     databaseSession: DatabaseSession,
-    judgerId: JudgerId
+    judgerId: JudgerId,
+    claimedAt: Instant
   ): IO[ClaimJudgeTaskResult] =
-    SubmissionLifecycle.beginJudging(SubmissionJudgeState.queued, Instant.now()) match
+    SubmissionLifecycle.beginJudging(SubmissionJudgeState.queued, claimedAt) match
       case Left(message) =>
         IO.pure(ClaimJudgeTaskResult.ValidationFailed(message))
       case Right(runningState) =>
@@ -45,7 +46,7 @@ object JudgeCommands:
                         timeUsedMs = None,
                         memoryUsedKb = None
                       ),
-                      Instant.now()
+                      claimedAt
                     )
                     .fold(
                       lifecycleMessage => IO.pure(ClaimJudgeTaskResult.ValidationFailed(lifecycleMessage)),
@@ -63,7 +64,8 @@ object JudgeCommands:
   def reportJudgeResult(
     databaseSession: DatabaseSession,
     submissionId: SubmissionId,
-    request: ReportJudgeResultRequest
+    request: ReportJudgeResultRequest,
+    completedAt: Instant
   ): IO[ReportJudgeResult] =
     request.status match
       case judgeprotocol.model.SubmissionStatus.Completed | judgeprotocol.model.SubmissionStatus.Failed =>
@@ -82,7 +84,7 @@ object JudgeCommands:
                     timeUsedMs = request.timeUsedMs,
                     memoryUsedKb = request.memoryUsedKb
                   ),
-                  Instant.now()
+                  completedAt
                 )
                 .fold(
                   message => IO.pure(ReportJudgeResult.ValidationFailed(message)),

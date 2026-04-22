@@ -10,6 +10,8 @@ import domains.problem.application.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
 import domains.shared.access.{ResourceAccessGrantTable, ResourceId, ResourceKind}
 
+import java.time.Instant
+
 object ProblemMutationCommands:
 
   def createProblem(
@@ -45,8 +47,10 @@ object ProblemMutationCommands:
               case CreateProblemDecision.ValidationFailed(message) =>
                 IO.pure(CreateProblemResult.ValidationFailed(message))
               case CreateProblemDecision.Create =>
+                val problemId = domains.problem.model.ProblemId.random()
+                val now = Instant.now()
                 ProblemTable
-                  .insert(connection, actor.username, sanitizePolicy(validRequest))
+                  .insert(connection, problemId, now, actor.username, sanitizePolicy(validRequest))
                   .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
           yield result
 
@@ -85,7 +89,7 @@ object ProblemMutationCommands:
                       IO.pure(UpdateProblemResult.ValidationFailed(message))
                     case None =>
                       ProblemTable
-                        .update(connection, problem.id, sanitizePolicy(validRequest))
+                        .update(connection, problem.id, Instant.now(), sanitizePolicy(validRequest))
                         .flatMap(_ =>
                           ProblemTable
                             .findBySlug(connection, problem.slug)

@@ -12,9 +12,9 @@ type ApiMessageResponse = {
 }
 
 type SuccessResponse = {
-  message: string
-  code?: string
-  params?: Record<string, string>
+  code: string | null
+  message: string | null
+  params: Record<string, string>
 }
 
 export class HttpClientError extends Error {
@@ -81,8 +81,8 @@ export function decodeSuccessResponse(value: unknown): SuccessResponse {
 
   return {
     message: translateApiMessage(data) ?? data.message ?? translateMessage('common.success.generic'),
-    code: data.code,
-    params: data.params,
+    code: data.code ?? null,
+    params: data.params ?? {},
   }
 }
 
