@@ -2,8 +2,9 @@ package domains.auth.table
 
 import cats.effect.IO
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, UserDisplayMode, UserLocale, Username}
+import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, Username}
 import domains.problem.model.ProblemTitleDisplayMode
+import domains.user.model.{UserDisplayMode, UserLocale}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.ResultSet

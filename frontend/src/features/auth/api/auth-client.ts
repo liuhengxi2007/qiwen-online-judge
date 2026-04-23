@@ -1,37 +1,20 @@
 import type {
-  AuthUserListItem,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
   SessionResponse,
-  UpdateManagedUserSettingsRequest,
-  UpdateOwnSettingsRequest,
-  UpdateUserPermissionsRequest,
-  UserAcceptedRanklistResponse,
-  UserProfileResponse,
-  UserRanklistResponse,
-  Username,
 } from '@/features/auth/domain/auth'
 import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 import {
-  fromAuthUserListItemContract,
   fromLoginResponseContract,
   fromRegisterResponseContract,
   fromSessionResponseContract,
-  fromUserAcceptedRanklistResponseContract,
-  fromUserProfileResponseContract,
-  fromUserRanklistResponseContract,
   toLoginRequestContract,
   toRegisterRequestContract,
-  toUpdateManagedUserSettingsRequestContract,
-  toUpdateOwnSettingsRequestContract,
-  toUpdateUserPermissionsRequestContract,
-  usernameValue,
 } from '@/features/auth/domain/auth'
 import { fromRegisteredJudgerListItemContract } from '@/features/judger/domain/judger'
-import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
-import type { SuccessResponse } from '@contracts/shared'
+import { postJson, requestJson } from '@/shared/api/http-client'
 
 export { HttpClientError as AuthClientError } from '@/shared/api/http-client'
 
@@ -54,16 +37,6 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
   return postJson('/api/auth/register', fromRegisterResponseContract, toRegisterRequestContract(request))
 }
 
-export async function listUsers(): Promise<AuthUserListItem[]> {
-  return requestJson('/api/users', (value) => {
-    if (!Array.isArray(value)) {
-      throw new Error('Invalid auth user list payload.')
-    }
-
-    return value.map(fromAuthUserListItemContract)
-  })
-}
-
 export async function listRegisteredJudgers(): Promise<RegisteredJudgerListItem[]> {
   return requestJson('/api/auth/judgers', (value) => {
     if (!Array.isArray(value)) {
@@ -72,87 +45,4 @@ export async function listRegisteredJudgers(): Promise<RegisteredJudgerListItem[
 
     return value.map(fromRegisteredJudgerListItemContract)
   })
-}
-
-export function updateUserPermissions(
-  username: Username,
-  request: UpdateUserPermissionsRequest,
-): Promise<AuthUserListItem> {
-  return updateUserPermissionsInternal(username, request)
-}
-
-async function updateUserPermissionsInternal(
-  username: Username,
-  request: UpdateUserPermissionsRequest,
-): Promise<AuthUserListItem> {
-  return postJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/permissions`,
-    fromAuthUserListItemContract,
-    toUpdateUserPermissionsRequestContract(request),
-  )
-}
-
-export async function getUserSettings(username: Username): Promise<SessionResponse> {
-  return requestJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
-    fromSessionResponseContract,
-  )
-}
-
-export async function getUserProfile(username: Username): Promise<UserProfileResponse> {
-  return requestJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/profile`,
-    fromUserProfileResponseContract,
-  )
-}
-
-export async function listContributionRanklist(page: number): Promise<UserRanklistResponse> {
-  return requestJson(`/api/users/ranklist?page=${encodeURIComponent(String(page))}`, fromUserRanklistResponseContract)
-}
-
-export async function listAcceptedRanklist(page: number): Promise<UserAcceptedRanklistResponse> {
-  return requestJson(
-    `/api/users/ranklist/accepted?page=${encodeURIComponent(String(page))}`,
-    fromUserAcceptedRanklistResponseContract,
-  )
-}
-
-export function deleteUser(username: Username): Promise<SuccessResponse> {
-  return postJson(`/api/users/${encodeURIComponent(usernameValue(username))}/delete`, decodeSuccessResponse, {})
-}
-
-export function updateOwnUserSettings(
-  username: Username,
-  request: UpdateOwnSettingsRequest,
-): Promise<SessionResponse> {
-  return updateOwnUserSettingsInternal(username, request)
-}
-
-async function updateOwnUserSettingsInternal(
-  username: Username,
-  request: UpdateOwnSettingsRequest,
-): Promise<SessionResponse> {
-  return postJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
-    fromSessionResponseContract,
-    toUpdateOwnSettingsRequestContract(request),
-  )
-}
-
-export function updateManagedUserSettings(
-  username: Username,
-  request: UpdateManagedUserSettingsRequest,
-): Promise<SessionResponse> {
-  return updateManagedUserSettingsInternal(username, request)
-}
-
-async function updateManagedUserSettingsInternal(
-  username: Username,
-  request: UpdateManagedUserSettingsRequest,
-): Promise<SessionResponse> {
-  return postJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
-    fromSessionResponseContract,
-    toUpdateManagedUserSettingsRequestContract(request),
-  )
 }

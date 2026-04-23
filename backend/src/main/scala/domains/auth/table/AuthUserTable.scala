@@ -10,8 +10,6 @@ import domains.auth.model.{
   PasswordHash,
   PlaintextPassword,
   SiteManagerUser,
-  UserDisplayMode,
-  UserLocale,
   Username
 }
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
@@ -19,7 +17,7 @@ import domains.shared.model.{PageRequest, PageResponse}
 import domains.auth.table.AuthUserTableSchema.*
 import domains.auth.table.AuthUserTableSql.*
 import domains.auth.table.AuthUserTableSupport.*
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserContribution, UserIdentity, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}

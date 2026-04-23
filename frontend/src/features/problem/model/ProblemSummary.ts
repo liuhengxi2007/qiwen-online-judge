@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/auth/model/UserIdentity'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
 import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemId } from '@/features/problem/model/ProblemId'

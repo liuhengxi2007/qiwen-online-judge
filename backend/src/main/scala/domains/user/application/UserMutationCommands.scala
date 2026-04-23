@@ -3,10 +3,10 @@ package domains.user.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthUser, SiteManagerUser, UserDisplayMode, UserLocale, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.auth.table.AuthUserTable
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest}
+import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale}
 
 import java.sql.Connection
 

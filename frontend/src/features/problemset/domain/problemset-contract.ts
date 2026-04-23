@@ -7,7 +7,7 @@ import type {
   ProblemSetSummary as ProblemSetSummaryContract,
   UpdateProblemSetRequest as UpdateProblemSetRequestContract,
 } from '@contracts/problemset'
-import { fromUserIdentityContract } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/user/domain/user'
 import {
   parseProblemId,
   parseProblemSlug,

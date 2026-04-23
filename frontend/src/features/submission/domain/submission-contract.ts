@@ -4,7 +4,7 @@ import type {
   SubmissionListResponse as SubmissionListResponseContract,
   SubmissionSummary as SubmissionSummaryContract,
 } from '@contracts/submission'
-import { fromUserIdentityContract } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/user/domain/user'
 import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
 import type { CreateSubmissionRequest } from '@/features/submission/model/CreateSubmissionRequest'
 import type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'

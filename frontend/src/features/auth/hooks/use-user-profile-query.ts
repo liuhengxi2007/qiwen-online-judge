@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { AuthClientError, getUserProfile } from '@/features/auth/api/auth-client'
-import type { UserProfileResponse, Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
+import { UserClientError, getUserProfile } from '@/features/user/api/user-client'
+import type { UserProfileResponse } from '@/features/user/domain/user'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserProfileQueryArgs = {
@@ -47,7 +48,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        if (error instanceof UserClientError && error.kind === 'forbidden') {
           setProfileState({
             username: targetUsername,
             profile: null,
@@ -57,7 +58,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'not-found') {
+        if (error instanceof UserClientError && error.kind === 'not-found') {
           setProfileState({
             username: targetUsername,
             profile: null,

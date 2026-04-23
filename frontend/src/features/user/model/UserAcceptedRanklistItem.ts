@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/auth/model/UserIdentity'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 
 export type UserAcceptedRanklistItem = {
   user: UserIdentity

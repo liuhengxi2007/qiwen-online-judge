@@ -1,5 +1,5 @@
 import type { DisplayName, EmailAddress, PlaintextPassword } from '@/features/auth/model/AuthValues'
-import type { UserPreferences } from '@/features/auth/model/UserPreferences'
+import type { UserPreferences } from '@/features/user/model/UserPreferences'
 
 export type UpdateOwnSettingsRequest = {
   displayName: DisplayName

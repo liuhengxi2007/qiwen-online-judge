@@ -1,5 +1,6 @@
 package domains.auth.model
 
+import domains.user.model.UserPreferences
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

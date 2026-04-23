@@ -6,8 +6,8 @@ import {
   userLocaleValue,
   type SessionResponse,
 } from '@/features/auth/domain/auth'
-import type { UserLocale } from '@/features/auth/model/UserLocale'
-import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
+import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
+import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 

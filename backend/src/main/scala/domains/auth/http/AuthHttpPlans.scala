@@ -119,8 +119,8 @@ object AuthHttpPlans:
                         username = input.username,
                         displayName = input.displayName,
                         email = input.email,
-                        displayMode = domains.auth.model.UserDisplayMode.DisplayName,
-                        locale = domains.auth.model.UserLocale.En,
+                        displayMode = domains.user.model.UserDisplayMode.DisplayName,
+                        locale = domains.user.model.UserLocale.En,
                         problemTitleDisplayMode = domains.problem.model.ProblemTitleDisplayMode.Title,
                         password = input.password
                       )

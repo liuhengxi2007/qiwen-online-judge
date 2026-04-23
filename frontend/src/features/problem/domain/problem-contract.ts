@@ -5,7 +5,7 @@ import type {
   ProblemSummary as ProblemSummaryContract,
   UpdateProblemRequest as UpdateProblemRequestContract,
 } from '@contracts/problem'
-import { fromUserIdentityContract } from '@/features/auth/domain/auth'
+import { fromUserIdentityContract } from '@/features/user/domain/user'
 import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'

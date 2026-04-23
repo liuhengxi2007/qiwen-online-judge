@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/auth/model/UserIdentity'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/i18n'
 

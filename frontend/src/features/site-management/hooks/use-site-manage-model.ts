@@ -1,6 +1,6 @@
 import { useReducer } from 'react'
 
-import { type AuthUserListItem, type UpdateUserPermissionsRequest } from '@/features/auth/domain/auth'
+import type { AuthUserListItem, UpdateUserPermissionsRequest } from '@/features/user/domain/user'
 import {
   initialSiteManageState,
   reduceSiteManageState,

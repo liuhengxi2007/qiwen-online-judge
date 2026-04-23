@@ -1,5 +1,5 @@
 import { displayNameValue, usernameValue, type UserDisplayMode } from '@/features/auth/domain/auth'
-import type { UserIdentity } from '@/features/auth/model/UserIdentity'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 
 type UserDisplayIdentity = Pick<UserIdentity, 'displayName' | 'username'>
 

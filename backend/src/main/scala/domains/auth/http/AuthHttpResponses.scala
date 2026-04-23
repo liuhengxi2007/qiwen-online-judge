@@ -1,11 +1,11 @@
 package domains.auth.http
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, LoginResponse, RegisterResponse, SessionResponse, UserPreferences}
+import domains.auth.model.{AuthUser, LoginResponse, RegisterResponse, SessionResponse}
 import domains.judger.model.RegisteredJudgerListItem
 import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.user.model.AuthUserListItem
+import domains.user.model.{AuthUserListItem, UserPreferences}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*

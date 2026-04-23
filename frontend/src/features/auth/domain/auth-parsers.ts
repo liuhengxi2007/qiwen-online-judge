@@ -4,9 +4,9 @@ import type {
   PlaintextPassword,
   Username,
 } from '@/features/auth/model/AuthValues'
-import type { UserContribution } from '@/features/auth/model/UserContribution'
-import type { UserLocale } from '@/features/auth/model/UserLocale'
-import type { UserDisplayMode } from '@/features/auth/model/UserDisplayMode'
+import type { UserContribution } from '@/features/user/model/UserContribution'
+import type { UserLocale } from '@/features/user/model/UserLocale'
+import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 
 type ParseSuccess<T> = { ok: true; value: T }

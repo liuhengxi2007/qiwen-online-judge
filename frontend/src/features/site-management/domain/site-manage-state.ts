@@ -1,4 +1,5 @@
-import { displayNameValue, type AuthUserListItem, type Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/auth/domain/auth'
+import { displayNameValue, type AuthUserListItem } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 export type SiteManageState = {

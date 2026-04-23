@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { AuthClientError, listRegisteredJudgers, listUsers } from '@/features/auth/api/auth-client'
-import type { AuthUserListItem } from '@/features/auth/domain/auth'
+import { AuthClientError, listRegisteredJudgers } from '@/features/auth/api/auth-client'
+import { UserClientError, listUsers } from '@/features/user/api/user-client'
+import type { AuthUserListItem } from '@/features/user/domain/user'
 import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
@@ -54,7 +55,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean) {
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        if (error instanceof UserClientError && error.kind === 'forbidden') {
           setQueryState((currentState) => ({
             ...currentState,
             enabled: siteManagerEnabled,

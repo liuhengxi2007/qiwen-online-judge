@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { listAcceptedRanklist, listContributionRanklist } from '@/features/auth/api/auth-client'
-import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/auth/domain/auth'
+import { listAcceptedRanklist, listContributionRanklist } from '@/features/user/api/user-client'
+import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseRanklistQueryArgs = {

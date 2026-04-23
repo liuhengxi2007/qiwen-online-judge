@@ -3,16 +3,15 @@ import { useCallback, useState } from 'react'
 import {
   toAuthSession,
   type SessionResponse,
-  type UpdateManagedUserSettingsRequest,
-  type UpdateOwnSettingsRequest,
   type Username,
 } from '@/features/auth/domain/auth'
+import { logout } from '@/features/auth/api/auth-client'
 import {
-  AuthClientError,
-  logout,
+  UserClientError,
   updateManagedUserSettings,
   updateOwnUserSettings,
-} from '@/features/auth/api/auth-client'
+} from '@/features/user/api/user-client'
+import type { UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -73,13 +72,13 @@ export function useUserSettingsMutation() {
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }
       } catch (error) {
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        if (error instanceof UserClientError && error.kind === 'forbidden') {
           setIsSubmitting(false)
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }
         }
 
-        if (error instanceof AuthClientError && error.kind === 'unauthorized') {
+        if (error instanceof UserClientError && error.kind === 'unauthorized') {
           const message =
             error.message ||
             (params.kind === 'own' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))

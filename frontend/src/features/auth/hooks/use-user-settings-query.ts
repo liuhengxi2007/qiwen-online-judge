@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { AuthClientError, getUserSettings } from '@/features/auth/api/auth-client'
 import type { SessionResponse, Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
+import { UserClientError, getUserSettings } from '@/features/user/api/user-client'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserSettingsQueryArgs = {
@@ -60,7 +60,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        if (error instanceof UserClientError && error.kind === 'forbidden') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,
@@ -70,7 +70,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'not-found') {
+        if (error instanceof UserClientError && error.kind === 'not-found') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,
