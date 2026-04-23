@@ -1,6 +1,6 @@
 package domains.problemset.model
 
-import domains.auth.model.UserIdentity
+import domains.user.model.UserIdentity
 import domains.shared.access.ResourceAccessPolicy
 
 import java.time.Instant

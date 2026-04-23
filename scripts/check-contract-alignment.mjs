@@ -103,19 +103,23 @@ function run() {
   const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
   const backendSharedPagination = read('backend/src/main/scala/domains/shared/model/Pagination.scala')
   const backendSharedLifecycle = read('backend/src/main/scala/domains/shared/model/ResourceLifecycle.scala')
-  const backendSharedAccess = read('backend/src/main/scala/domains/shared/access/AccessPolicy.scala')
+  const backendSharedBaseAccess = read('backend/src/main/scala/domains/shared/access/BaseAccess.scala')
+  const backendSharedResourceAccessPolicy = read('backend/src/main/scala/domains/shared/access/ResourceAccessPolicy.scala')
 
   const authFiles = {
-    AuthUserListItem: read('backend/src/main/scala/domains/auth/model/AuthUserListItem.scala'),
     LoginRequest: read('backend/src/main/scala/domains/auth/model/LoginRequest.scala'),
     LoginResponse: read('backend/src/main/scala/domains/auth/model/LoginResponse.scala'),
     RegisterRequest: read('backend/src/main/scala/domains/auth/model/RegisterRequest.scala'),
     RegisterResponse: read('backend/src/main/scala/domains/auth/model/RegisterResponse.scala'),
     SessionResponse: read('backend/src/main/scala/domains/auth/model/SessionResponse.scala'),
-    UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateOwnSettingsRequest.scala'),
-    UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/auth/model/UpdateManagedUserSettingsRequest.scala'),
-    UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/auth/model/UpdateUserPermissionsRequest.scala'),
-    UserProfileResponse: read('backend/src/main/scala/domains/auth/model/UserProfileResponse.scala'),
+  }
+
+  const userFiles = {
+    AuthUserListItem: read('backend/src/main/scala/domains/user/model/AuthUserListItem.scala'),
+    UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnSettingsRequest.scala'),
+    UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserSettingsRequest.scala'),
+    UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/user/model/UpdateUserPermissionsRequest.scala'),
+    UserProfileResponse: read('backend/src/main/scala/domains/user/model/UserProfileResponse.scala'),
   }
 
   const judgerFiles = {
@@ -195,28 +199,23 @@ function run() {
   assertSameFields(
     'shared.BaseAccess',
     extractTsUnionLiterals(contractShared, 'BaseAccess'),
-    extractScalaStringCases(backendSharedAccess, 'BaseAccess'),
+    extractScalaStringCases(backendSharedBaseAccess, 'BaseAccess'),
     errors,
   )
 
   assertSameFields(
     'shared.ResourceAccessPolicy',
     extractTsObjectTypeFields(contractShared, 'ResourceAccessPolicy'),
-    extractScalaCaseClassFields(backendSharedAccess, 'ResourceAccessPolicy'),
+    extractScalaCaseClassFields(backendSharedResourceAccessPolicy, 'ResourceAccessPolicy'),
     errors,
   )
 
   const authMappings = [
-    ['AuthUserListItem', 'AuthUserListItem'],
     ['LoginRequest', 'LoginRequest'],
     ['LoginResponse', 'LoginResponse'],
     ['RegisterRequest', 'RegisterRequest'],
     ['RegisterResponse', 'RegisterResponse'],
     ['SessionResponse', 'SessionResponse'],
-    ['UpdateOwnSettingsRequest', 'UpdateOwnSettingsRequest'],
-    ['UpdateManagedUserSettingsRequest', 'UpdateManagedUserSettingsRequest'],
-    ['UpdateUserPermissionsRequest', 'UpdateUserPermissionsRequest'],
-    ['UserProfileResponse', 'UserProfileResponse'],
   ]
 
   for (const [contractType, scalaType] of authMappings) {
@@ -224,6 +223,23 @@ function run() {
       `auth.${contractType}`,
       extractTsObjectTypeFields(contractAuth, contractType),
       extractScalaCaseClassFields(authFiles[scalaType], scalaType),
+      errors,
+    )
+  }
+
+  const userMappings = [
+    ['AuthUserListItem', 'AuthUserListItem'],
+    ['UpdateOwnSettingsRequest', 'UpdateOwnSettingsRequest'],
+    ['UpdateManagedUserSettingsRequest', 'UpdateManagedUserSettingsRequest'],
+    ['UpdateUserPermissionsRequest', 'UpdateUserPermissionsRequest'],
+    ['UserProfileResponse', 'UserProfileResponse'],
+  ]
+
+  for (const [contractType, scalaType] of userMappings) {
+    assertSameFields(
+      `user.${contractType}`,
+      extractTsObjectTypeFields(contractAuth, contractType),
+      extractScalaCaseClassFields(userFiles[scalaType], scalaType),
       errors,
     )
   }

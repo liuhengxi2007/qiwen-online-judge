@@ -24,7 +24,7 @@ That means:
 - backend domain objects may remain richer or stricter than contract objects
 - if a backend model is mirrored by the frontend model layer, the mirrored type name must match exactly
 - if a backend model is mirrored by the frontend model layer, the mirrored file basename must match exactly
-- mirrored model files on both sides must contain definitions only
+- mirrored model files on both sides must stay focused on that mirrored type instead of accumulating mapping, persistence, or workflow responsibilities
 
 ## Layer Split
 
@@ -189,13 +189,15 @@ Required mappings:
 - `backend/src/main/scala/domains/shared/access/<Name>.scala`
   mirrors
   `frontend/src/shared/access/<Name>.ts`
+  only when that access type is part of the shared frontend-backend contract surface
 
 Rules:
 
 - do not merge multiple mirrored types into one file on one side only
 - do not split one mirrored type into multiple files on one side only
 - do not rename a mirrored type on one side without renaming the corresponding file and type on the other side
-- keep mapping, validation, and codec behavior out of mirrored model files
+- keep transport-to-domain mapping, multi-field validation, persistence support, and workflow behavior out of mirrored model files
+- lightweight codec or parse support that belongs only to that one mirrored type is allowed when it does not blur layer ownership
 
 ## Alignment Check Checklist
 
@@ -209,7 +211,7 @@ Whenever a contract-shaped backend model changes, check all of the following:
 6. backend HTTP decoders still accept contract-shaped JSON
 7. mirrored frontend and backend filenames still match exactly
 8. mirrored frontend and backend type names still match exactly
-9. mirrored model files still contain definitions only
+9. mirrored model files have not accreted transport mapping, persistence helpers, reducers, or workflow logic
 
 ## Required Review Discipline
 

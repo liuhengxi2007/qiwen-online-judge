@@ -5,8 +5,8 @@ import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataFilename, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
+import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.shared.model.ApiMessages
 import fs2.Stream
 import io.circe.syntax.*
 import org.http4s.{Response, Status}

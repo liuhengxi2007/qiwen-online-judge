@@ -88,8 +88,17 @@ Allow only:
 - generic transport models
 - lifecycle and pagination primitives
 - small utility types with no business ownership
+- cross-domain platform primitives whose ownership is genuinely shared
+  examples: shared HTTP execution support, reusable access-control primitives used by multiple resource domains
 
-Do not move commands, policies, SQL, or domain workflows into `shared`.
+Do not move these into `shared`:
+
+- business-domain-specific commands or workflows
+- policies that belong clearly to one business domain
+- feature-specific SQL added only to avoid choosing an owning domain
+- large mixed-responsibility utility modules
+
+If code in `shared` starts reading like a hidden `problem`, `problemset`, or `usergroup` subdomain, it is in the wrong place.
 
 ## Backend HTTP Planner Protocol
 

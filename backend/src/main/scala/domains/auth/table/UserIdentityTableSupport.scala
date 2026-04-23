@@ -1,6 +1,7 @@
 package domains.auth.table
 
-import domains.auth.model.{DisplayName, UserIdentity, Username}
+import domains.auth.model.{DisplayName, Username}
+import domains.user.model.UserIdentity
 
 import java.sql.ResultSet
 

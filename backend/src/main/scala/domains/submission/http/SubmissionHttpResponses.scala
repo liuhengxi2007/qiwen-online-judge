@@ -1,8 +1,8 @@
 package domains.submission.http
 
 import cats.effect.IO
+import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.shared.model.ApiMessages
 import domains.submission.application.SubmissionCommands
 import io.circe.syntax.*
 import org.http4s.{Response, Status}

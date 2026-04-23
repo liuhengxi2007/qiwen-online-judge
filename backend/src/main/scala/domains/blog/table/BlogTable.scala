@@ -1,7 +1,8 @@
 package domains.blog.table
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, UserIdentity, Username}
+import domains.auth.model.{DisplayName, Username}
+import domains.user.model.UserIdentity
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*

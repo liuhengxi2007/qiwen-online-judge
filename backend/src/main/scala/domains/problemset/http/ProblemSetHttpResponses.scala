@@ -3,8 +3,8 @@ package domains.problemset.http
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
 import domains.problemset.model.{ProblemSet, ProblemSetDetail}
+import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.shared.model.ApiMessages
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*

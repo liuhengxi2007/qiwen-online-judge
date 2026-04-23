@@ -1,16 +1,16 @@
-package domains.auth.application
+package domains.user.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserLocale, UserProfileResponse, UserRanklistItem, Username}
+import domains.auth.application.PasswordHasher
+import domains.auth.model.{AuthUser, SiteManagerUser, UserDisplayMode, UserLocale, Username}
 import domains.auth.table.AuthUserTable
-import domains.blog.table.BlogTable
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.shared.model.{PageRequest, PageResponse}
+import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest}
 
 import java.sql.Connection
 
-object AuthUserCommands:
+object UserMutationCommands:
 
   private val protectedAdminUsername = "admin"
 
@@ -18,12 +18,6 @@ object AuthUserCommands:
     case Forbidden
     case NotFound
     case Found(user: AuthUser)
-
-  enum GetUserProfileResult:
-    case NotFound
-    case Found(profile: UserProfileResponse)
-
-  private val ranklistPageSize = 10
 
   enum UpdateUserPermissionsResult:
     case Forbidden
@@ -54,6 +48,7 @@ object AuthUserCommands:
     actor: AuthUser,
     targetUsername: Username
   ): IO[GetUserSettingsResult] =
+    val _ = actor
     databaseSession.withTransactionConnection(connection =>
       AuthUserTable.findByUsername(connection, targetUsername)
     ).map {
@@ -61,66 +56,12 @@ object AuthUserCommands:
       case None => GetUserSettingsResult.NotFound
     }
 
-  def getUserProfile(
+  def listUsers(
     databaseSession: DatabaseSession,
-    actor: AuthUser,
-    targetUsername: Username
-  ): IO[GetUserProfileResult] =
-    val _ = actor
-    databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.findByUsername(connection, targetUsername).flatMap {
-        case None =>
-          IO.pure(GetUserProfileResult.NotFound)
-        case Some(targetUser) =>
-          for
-            contribution <- BlogTable.contributionByAuthor(connection, targetUsername)
-            acceptedProblems <- AuthUserTable.listAcceptedProblems(connection, targetUsername)
-          yield
-            GetUserProfileResult.Found(
-              UserProfileResponse(
-                username = targetUser.username,
-                displayName = targetUser.displayName,
-                contribution = UserContribution(contribution),
-                acceptedProblems = acceptedProblems
-              )
-            )
-      }
-    }
-
-  def listContributionRanklist(
-    databaseSession: DatabaseSession,
-    actor: AuthUser,
-    pageRequest: PageRequest
-  ): IO[PageResponse[UserRanklistItem]] =
-    val _ = actor
-    databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.listContributionRanklist(
-        connection,
-        PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
-      )
-    }
-
-  def listAcceptedRanklist(
-    databaseSession: DatabaseSession,
-    actor: AuthUser,
-    pageRequest: PageRequest
-  ): IO[PageResponse[UserAcceptedRanklistItem]] =
-    val _ = actor
-    databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.listAcceptedRanklist(
-        connection,
-        PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
-      )
-    }
-
-  def updateUserPermissions(
-    databaseSession: DatabaseSession,
-    actor: AuthUser,
-    targetUsername: Username,
-    permissionsRequest: UpdateUserPermissionsRequest
-  ): IO[UpdateUserPermissionsResult] =
+    actor: SiteManagerUser
+  ): IO[List[AuthUserListItem]] =
     databaseSession.withTransactionConnection(connection =>
-      updateUserPermissions(connection, actor, targetUsername, permissionsRequest)
+      AuthUserTable.listUsers(connection, actor)
     )
 
   def updateUserPermissions(
@@ -146,15 +87,6 @@ object AuthUserCommands:
             case Some(updatedUser) => UpdateUserPermissionsResult.Updated(updatedUser)
             case None => UpdateUserPermissionsResult.NotFound
           }
-
-  def updateUserSettings(
-    databaseSession: DatabaseSession,
-    targetUsername: Username,
-    command: UpdateUserSettingsCommand
-  ): IO[UpdateUserSettingsResult] =
-    databaseSession.withTransactionConnection(connection =>
-      updateUserSettings(connection, targetUsername, command)
-    )
 
   def updateUserSettings(
     connection: Connection,
@@ -183,6 +115,25 @@ object AuthUserCommands:
                 request.newPassword
               )
       }
+
+  def deleteUser(
+    connection: Connection,
+    actor: AuthUser,
+    targetUsername: Username
+  ): IO[DeleteUserResult] =
+    SiteManagerUser.from(actor) match
+      case None =>
+        IO.pure(DeleteUserResult.Forbidden)
+      case Some(_) if targetUsername.value == protectedAdminUsername =>
+        IO.pure(DeleteUserResult.ProtectedAdmin)
+      case Some(_) if targetUsername.value == actor.username.value =>
+        IO.pure(DeleteUserResult.CannotDeleteSelf)
+      case Some(_) =>
+        AuthUserTable.delete(connection, targetUsername).map {
+          case AuthUserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
+          case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
+          case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
+        }
 
   private def updateOwnSettings(
     connection: Connection,
@@ -234,34 +185,6 @@ object AuthUserCommands:
     yield updatedUser match
       case Some(user) => UpdateUserSettingsResult.Updated(user, passwordChanged)
       case None => UpdateUserSettingsResult.NotFound
-
-  def deleteUser(
-    databaseSession: DatabaseSession,
-    actor: AuthUser,
-    targetUsername: Username
-  ): IO[DeleteUserResult] =
-    databaseSession.withTransactionConnection(connection =>
-      deleteUser(connection, actor, targetUsername)
-    )
-
-  def deleteUser(
-    connection: Connection,
-    actor: AuthUser,
-    targetUsername: Username
-  ): IO[DeleteUserResult] =
-    SiteManagerUser.from(actor) match
-      case None =>
-        IO.pure(DeleteUserResult.Forbidden)
-      case Some(_) if targetUsername.value == protectedAdminUsername =>
-        IO.pure(DeleteUserResult.ProtectedAdmin)
-      case Some(_) if targetUsername.value == actor.username.value =>
-        IO.pure(DeleteUserResult.CannotDeleteSelf)
-      case Some(_) =>
-        AuthUserTable.delete(connection, targetUsername).map {
-          case AuthUserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
-          case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
-          case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
-        }
 
   private def commandCanAccessTarget(command: UpdateUserSettingsCommand, targetUsername: Username): Boolean =
     command match

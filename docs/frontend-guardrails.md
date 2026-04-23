@@ -153,8 +153,11 @@ Rules:
 
 - if frontend and backend represent the same stable type, the type name must match exactly
 - if frontend and backend represent the same stable type, the file basename must match exactly
-- mirrored type files must contain type definitions only
-- parsing, mapping, validation, reducers, codecs, and other behavior must live outside mirrored type files
+- do not mix mirrored type definitions with unrelated orchestration, reducers, HTTP clients, or UI state
+- lightweight per-type boundary support may stay local to the mirrored file when it remains tightly coupled to that type
+  examples: codec instances, enum string conversion, branded-type helpers, tiny parse helpers
+- mapping between transport, domain, and UI state should still live outside mirrored type files
+- validation that combines multiple fields or encodes business workflow should still live outside mirrored type files
 - do not keep one large aggregate model file on one side while splitting the same mirrored types into many files on the other side
 - do not introduce frontend-only or backend-only aliases for a mirrored type
 
@@ -187,7 +190,7 @@ Avoid:
 
 - `Problem.scala` on one side and `ProblemTypes.ts` on the other
 - one side using `ProblemListItem` while the other uses `ProblemSummary`
-- type definitions mixed into parser, mapper, or codec files
+- one mirrored type file quietly becoming a feature-level dumping ground for unrelated helpers
 
 See also:
 
@@ -266,7 +269,8 @@ Frontend feature modules should use one consistent split strategy instead of ad 
 For `model`:
 
 - one mirrored cross-stack type per file
-- type definition files contain definitions only
+- type definition files stay focused on the mirrored type itself
+  lightweight per-type helpers are allowed, but reducers, API clients, and feature orchestration do not belong here
 
 For `domain`:
 

@@ -55,7 +55,7 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
 }
 
 export async function listUsers(): Promise<AuthUserListItem[]> {
-  return requestJson('/api/auth/users', (value) => {
+  return requestJson('/api/users', (value) => {
     if (!Array.isArray(value)) {
       throw new Error('Invalid auth user list payload.')
     }
@@ -86,7 +86,7 @@ async function updateUserPermissionsInternal(
   request: UpdateUserPermissionsRequest,
 ): Promise<AuthUserListItem> {
   return postJson(
-    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/permissions`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/permissions`,
     fromAuthUserListItemContract,
     toUpdateUserPermissionsRequestContract(request),
   )
@@ -94,31 +94,31 @@ async function updateUserPermissionsInternal(
 
 export async function getUserSettings(username: Username): Promise<SessionResponse> {
   return requestJson(
-    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
     fromSessionResponseContract,
   )
 }
 
 export async function getUserProfile(username: Username): Promise<UserProfileResponse> {
   return requestJson(
-    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/profile`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/profile`,
     fromUserProfileResponseContract,
   )
 }
 
 export async function listContributionRanklist(page: number): Promise<UserRanklistResponse> {
-  return requestJson(`/api/auth/ranklist?page=${encodeURIComponent(String(page))}`, fromUserRanklistResponseContract)
+  return requestJson(`/api/users/ranklist?page=${encodeURIComponent(String(page))}`, fromUserRanklistResponseContract)
 }
 
 export async function listAcceptedRanklist(page: number): Promise<UserAcceptedRanklistResponse> {
   return requestJson(
-    `/api/auth/ranklist/accepted?page=${encodeURIComponent(String(page))}`,
+    `/api/users/ranklist/accepted?page=${encodeURIComponent(String(page))}`,
     fromUserAcceptedRanklistResponseContract,
   )
 }
 
 export function deleteUser(username: Username): Promise<SuccessResponse> {
-  return postJson(`/api/auth/users/${encodeURIComponent(usernameValue(username))}/delete`, decodeSuccessResponse, {})
+  return postJson(`/api/users/${encodeURIComponent(usernameValue(username))}/delete`, decodeSuccessResponse, {})
 }
 
 export function updateOwnUserSettings(
@@ -133,7 +133,7 @@ async function updateOwnUserSettingsInternal(
   request: UpdateOwnSettingsRequest,
 ): Promise<SessionResponse> {
   return postJson(
-    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
     fromSessionResponseContract,
     toUpdateOwnSettingsRequestContract(request),
   )
@@ -151,7 +151,7 @@ async function updateManagedUserSettingsInternal(
   request: UpdateManagedUserSettingsRequest,
 ): Promise<SessionResponse> {
   return postJson(
-    `/api/auth/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
     fromSessionResponseContract,
     toUpdateManagedUserSettingsRequestContract(request),
   )

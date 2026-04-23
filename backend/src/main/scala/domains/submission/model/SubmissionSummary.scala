@@ -1,6 +1,6 @@
 package domains.submission.model
 
-import domains.auth.model.UserIdentity
+import domains.user.model.UserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

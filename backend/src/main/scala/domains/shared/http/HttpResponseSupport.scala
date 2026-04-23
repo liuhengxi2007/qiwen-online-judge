@@ -1,7 +1,7 @@
 package domains.shared.http
 
 import cats.effect.IO
-import domains.shared.model.{ApiMessage, ErrorResponse, SuccessResponse}
+import domains.shared.model.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*

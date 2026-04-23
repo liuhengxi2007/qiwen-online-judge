@@ -1,8 +1,8 @@
 package domains.usergroup.http
 
 import cats.effect.IO
+import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.shared.model.ApiMessages
 import domains.usergroup.application.UserGroupCommands
 import domains.usergroup.model.{UserGroup, UserGroupDetail}
 import io.circe.syntax.*

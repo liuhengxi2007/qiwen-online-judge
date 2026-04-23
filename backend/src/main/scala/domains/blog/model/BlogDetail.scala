@@ -1,6 +1,6 @@
 package domains.blog.model
 
-import domains.auth.model.UserIdentity
+import domains.user.model.UserIdentity
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

@@ -1,33 +1,7 @@
-export type ResourceId = string & { readonly __brand: 'ResourceId' }
-
-export type ResourceKind = 'problem' | 'problem_set'
-
-export type BaseAccess = 'owner_only' | 'public'
-
-export type UserAccessSubject = {
-  kind: 'user'
-  username: string
-}
-
-export type UserGroupAccessSubject = {
-  kind: 'user_group'
-  slug: string
-}
-
-export type AccessSubject = UserAccessSubject | UserGroupAccessSubject
-
-export type ResourceAccessPolicy = {
-  baseAccess: BaseAccess
-  viewerGrants: AccessSubject[]
-  managerGrants: AccessSubject[]
-}
-
-export type GrantRole = 'viewer' | 'manager'
-
-export type ResourceAccessGrant = {
-  resourceKind: ResourceKind
-  resourceId: ResourceId
-  grantRole: GrantRole
-  subject: AccessSubject
-  createdAt: string
-}
+export type { AccessSubject, UserAccessSubject, UserGroupAccessSubject } from './AccessSubject'
+export type { BaseAccess } from './BaseAccess'
+export type { GrantRole } from './GrantRole'
+export type { ResourceAccessGrant } from './ResourceAccessGrant'
+export type { ResourceAccessPolicy } from './ResourceAccessPolicy'
+export type { ResourceId } from './ResourceId'
+export type { ResourceKind } from './ResourceKind'

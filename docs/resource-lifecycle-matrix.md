@@ -32,7 +32,7 @@ Do not force symmetry when:
 | Add problem to problem set | Remove problem from problem set | Covered | The relation is explicitly reversible. |
 | Add member to user group | Remove member from user group | Partial | Members can be removed, but the current owner cannot be removed directly. Ownership must be transferred first. |
 | Transfer user group ownership | Transfer ownership again | Covered | Ownership transfer is modeled as an explicit governance action rather than member removal. |
-| Create submission | Delete submission | Not supported | Submissions are durable judge records. They are corrected by status/result updates rather than user deletion. |
+| Create submission | Delete submission | Covered | Submissions currently support authorized deletion. This is a product choice, not an architectural requirement for all judge records. |
 | Claim judge task | Report judge result | Covered | Judgers claim tasks through the backend judge API and complete the lifecycle by reporting results. |
 | Create blog | Delete blog | Covered | Blog authors can edit or delete their own blogs. Visibility and general/problem type are updates. |
 | Link blog to problem | Change blog type or linked problem | Covered | A problem blog remains visible in global and user blog lists while also appearing in the problem blog area. |

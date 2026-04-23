@@ -1,4 +1,4 @@
-package domains.shared.model
+package domains.shared.http
 
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 

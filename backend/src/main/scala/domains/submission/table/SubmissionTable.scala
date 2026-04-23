@@ -1,7 +1,8 @@
 package domains.submission.table
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, UserIdentity, Username}
+import domains.auth.model.{AuthUser, DisplayName, Username}
+import domains.user.model.UserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}

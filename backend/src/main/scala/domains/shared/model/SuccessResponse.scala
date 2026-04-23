@@ -1,5 +1,6 @@
 package domains.shared.model
 
+import domains.shared.http.{ApiMessage, ApiMessageParams}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
