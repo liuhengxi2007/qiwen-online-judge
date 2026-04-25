@@ -1,5 +1,8 @@
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
+import type { SubmissionSort } from '@/features/submission/model/SubmissionSort'
+import type { SubmissionSortDirection } from '@/features/submission/model/SubmissionSortDirection'
+import type { SubmissionVerdictFilter } from '@/features/submission/model/SubmissionVerdictFilter'
 import type { SubmissionSourceCode } from '@/features/submission/model/SubmissionSourceCode'
 import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
 import type { SubmissionVerdict } from '@/features/submission/model/SubmissionVerdict'
@@ -18,6 +21,18 @@ const supportedSubmissionVerdicts = [
   'time_limit_exceeded',
   'system_error',
 ] as const satisfies readonly SubmissionVerdict[]
+const supportedSubmissionVerdictFilters = [
+  'all',
+  'pending',
+  'accepted',
+  'wrong_answer',
+  'compile_error',
+  'runtime_error',
+  'time_limit_exceeded',
+  'system_error',
+] as const satisfies readonly SubmissionVerdictFilter[]
+const supportedSubmissionSorts = ['submitted', 'time', 'memory', 'code_length'] as const satisfies readonly SubmissionSort[]
+const supportedSubmissionSortDirections = ['asc', 'desc'] as const satisfies readonly SubmissionSortDirection[]
 
 function createSubmissionId(value: number): SubmissionId {
   return value as SubmissionId
@@ -86,6 +101,18 @@ export function isTerminalSubmissionStatus(status: SubmissionStatus): boolean {
 
 export function isSubmissionVerdict(value: string): value is SubmissionVerdict {
   return supportedSubmissionVerdicts.includes(value as SubmissionVerdict)
+}
+
+export function isSubmissionVerdictFilter(value: string): value is SubmissionVerdictFilter {
+  return supportedSubmissionVerdictFilters.includes(value as SubmissionVerdictFilter)
+}
+
+export function isSubmissionSort(value: string): value is SubmissionSort {
+  return supportedSubmissionSorts.includes(value as SubmissionSort)
+}
+
+export function isSubmissionSortDirection(value: string): value is SubmissionSortDirection {
+  return supportedSubmissionSortDirections.includes(value as SubmissionSortDirection)
 }
 
 export function submissionVerdictLabel(verdict: SubmissionVerdict | null): string {

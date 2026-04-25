@@ -5,6 +5,7 @@ import domains.user.http.UserHttpPlanRegistry.RegisteredPlan.{AuthenticatedPlain
 object UserHttpPlanDefinitions:
 
   val listUsers = SiteManagerPlain(UserHttpPlans.ListUsers, UserHttpResponses.listUsersResponse)
+  val listUserSuggestions = AuthenticatedPlain(UserHttpPlans.ListUserSuggestions, UserHttpResponses.listUserSuggestionsResponse)
   val getUserProfile = AuthenticatedPlain(UserHttpPlans.GetUserProfile, UserHttpResponses.mapGetUserProfileResult)
   val getUserSettings = AuthenticatedPlain(UserHttpPlans.GetUserSettings, UserHttpResponses.mapGetUserSettingsResult)
   val listContributionRanklist = AuthenticatedPlain(UserHttpPlans.ListContributionRanklist, UserHttpResponses.listContributionRanklistResponse)
@@ -17,6 +18,7 @@ object UserHttpPlanDefinitions:
   val plans: Map[String, UserHttpPlanRegistry.RegisteredPlan] =
     List(
       listUsers,
+      listUserSuggestions,
       getUserProfile,
       getUserSettings,
       listContributionRanklist,

@@ -3,9 +3,10 @@ package domains.submission.table
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.user.model.UserIdentity
+import domains.shared.model.{PageRequest, PageResponse}
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.SubmissionPolicy
-import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
+import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionListRequest, SubmissionListResponse, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict, SubmissionVerdictFilter}
 import domains.submission.table.SubmissionTableSchema.*
 import domains.submission.table.SubmissionTableSql.*
 import domains.submission.table.SubmissionTableSupport.*
@@ -86,36 +87,41 @@ object SubmissionTable:
       finally statement.close()
     }
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, submitterUsername: Option[Username]): IO[List[SubmissionSummary]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(listSql)
-      try
-        statement.setBoolean(1, SubmissionPolicy.hasGlobalViewOverride(actor))
-        statement.setString(2, actor.username.value)
-        statement.setString(3, actor.username.value)
-        statement.setString(4, actor.username.value)
-        statement.setBoolean(5, SubmissionPolicy.hasGlobalViewOverride(actor))
-        statement.setString(6, actor.username.value)
-        statement.setString(7, actor.username.value)
-        statement.setBoolean(8, submitterUsername.nonEmpty)
-        statement.setString(9, submitterUsername.map(_.value).getOrElse(""))
-        statement.setBoolean(10, SubmissionPolicy.hasGlobalViewOverride(actor))
-        statement.setString(11, actor.username.value)
-        statement.setString(12, actor.username.value)
-        statement.setString(13, actor.username.value)
-        statement.setBoolean(14, SubmissionPolicy.hasGlobalViewOverride(actor))
-        statement.setString(15, actor.username.value)
-        statement.setString(16, actor.username.value)
-        val resultSet = statement.executeQuery()
+  def listVisibleTo(connection: Connection, actor: AuthUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
+    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
+    val normalizedRequest = request.copy(page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize)
+    for
+      totalItems <- IO.blocking {
+        val statement = connection.prepareStatement(countSql)
         try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map(_ => readSubmissionSummary(resultSet))
-            .toList
-        finally resultSet.close()
-      finally statement.close()
-    }
+          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = false)
+          val resultSet = statement.executeQuery()
+          try if resultSet.next() then resultSet.getLong("total_items") else 0L
+          finally resultSet.close()
+        finally statement.close()
+      }
+      items <- IO.blocking {
+        val statement = connection.prepareStatement(listSql(normalizedRequest.sort, normalizedRequest.direction))
+        try
+          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true)
+          statement.setInt(24, normalizedRequest.pageSize)
+          statement.setInt(25, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
+          val resultSet = statement.executeQuery()
+          try
+            Iterator
+              .continually(resultSet.next())
+              .takeWhile(identity)
+              .map(_ => readSubmissionSummary(resultSet))
+              .toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield PageResponse(
+      items = items,
+      page = normalizedRequest.page,
+      pageSize = normalizedRequest.pageSize,
+      totalItems = totalItems
+    )
 
   def findById(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionDetail]] =
     IO.blocking {
@@ -186,3 +192,55 @@ object SubmissionTable:
         ()
       finally statement.close()
     }
+
+  private def bindListFilterStatement(
+    statement: java.sql.PreparedStatement,
+    actor: AuthUser,
+    request: SubmissionListRequest,
+    includeDetailVisibility: Boolean
+  ): Unit =
+    val afterDetailVisibility =
+      if includeDetailVisibility then bindVisibility(statement, 1, actor)
+      else 1
+
+    val afterSummaryVisibility = bindVisibility(statement, afterDetailVisibility, actor)
+
+    statement.setBoolean(afterSummaryVisibility, request.username.nonEmpty)
+    statement.setString(afterSummaryVisibility + 1, request.username.map(_.value).getOrElse(""))
+
+    val problemQuery = request.problemQuery.map(_.trim).filter(_.nonEmpty)
+    statement.setBoolean(afterSummaryVisibility + 2, problemQuery.nonEmpty)
+    statement.setString(afterSummaryVisibility + 3, problemQuery.getOrElse(""))
+    statement.setString(afterSummaryVisibility + 4, problemQuery.getOrElse(""))
+
+    val isAllVerdict = request.verdict == SubmissionVerdictFilter.All
+    val isPendingVerdict = request.verdict == SubmissionVerdictFilter.Pending
+    val specificVerdict = request.verdict match
+      case SubmissionVerdictFilter.Accepted => Some(SubmissionVerdict.Accepted)
+      case SubmissionVerdictFilter.WrongAnswer => Some(SubmissionVerdict.WrongAnswer)
+      case SubmissionVerdictFilter.CompileError => Some(SubmissionVerdict.CompileError)
+      case SubmissionVerdictFilter.RuntimeError => Some(SubmissionVerdict.RuntimeError)
+      case SubmissionVerdictFilter.TimeLimitExceeded => Some(SubmissionVerdict.TimeLimitExceeded)
+      case SubmissionVerdictFilter.SystemError => Some(SubmissionVerdict.SystemError)
+      case SubmissionVerdictFilter.All | SubmissionVerdictFilter.Pending => None
+
+    statement.setBoolean(afterSummaryVisibility + 5, isAllVerdict)
+    statement.setBoolean(afterSummaryVisibility + 6, isPendingVerdict)
+    statement.setBoolean(afterSummaryVisibility + 7, specificVerdict.nonEmpty)
+    specificVerdict match
+      case Some(value) => statement.setString(afterSummaryVisibility + 8, SubmissionVerdict.toDatabase(value))
+      case None => statement.setNull(afterSummaryVisibility + 8, java.sql.Types.VARCHAR)
+
+  private def bindVisibility(
+    statement: java.sql.PreparedStatement,
+    startIndex: Int,
+    actor: AuthUser
+  ): Int =
+    statement.setBoolean(startIndex, SubmissionPolicy.hasGlobalViewOverride(actor))
+    statement.setString(startIndex + 1, actor.username.value)
+    statement.setString(startIndex + 2, actor.username.value)
+    statement.setString(startIndex + 3, actor.username.value)
+    statement.setBoolean(startIndex + 4, SubmissionPolicy.hasGlobalViewOverride(actor))
+    statement.setString(startIndex + 5, actor.username.value)
+    statement.setString(startIndex + 6, actor.username.value)
+    startIndex + 7

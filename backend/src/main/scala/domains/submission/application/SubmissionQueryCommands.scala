@@ -2,11 +2,11 @@ package domains.submission.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
 import domains.problem.model.OthersSubmissionAccess
 import domains.problem.application.ProblemCommandSupport.canManageProblem
 import domains.problem.table.ProblemTable
-import domains.submission.model.SubmissionId
+import domains.submission.model.{SubmissionId, SubmissionListRequest}
 import domains.submission.table.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
 import domains.submission.application.SubmissionCommandSupport.*
@@ -16,11 +16,11 @@ object SubmissionQueryCommands:
   def listSubmissions(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    submitterUsername: Option[Username]
+    request: SubmissionListRequest
   ): IO[ListSubmissionsResult] =
     databaseSession.withTransactionConnection { connection =>
       SubmissionTable
-        .listVisibleTo(connection, actor, submitterUsername)
+        .listVisibleTo(connection, actor, request)
         .map(submissions => ListSubmissionsResult.Listed(submissions))
     }
 

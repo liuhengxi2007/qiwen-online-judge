@@ -2,23 +2,23 @@ package domains.submission.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.submission.application.SubmissionCommands
-import domains.submission.model.{CreateSubmissionRequest, SubmissionId}
+import domains.submission.model.{CreateSubmissionRequest, SubmissionId, SubmissionListRequest}
 
 import java.sql.Connection
 
 object SubmissionHttpPlans:
 
-  case object ListSubmissions extends PlainAuthenticatedHttpPlan[Option[Username], SubmissionCommands.ListSubmissionsResult]:
+  case object ListSubmissions extends PlainAuthenticatedHttpPlan[SubmissionListRequest, SubmissionCommands.ListSubmissionsResult]:
 
     override val name: String = "ListSubmissions"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: Option[Username]
+      input: SubmissionListRequest
     ): IO[SubmissionCommands.ListSubmissionsResult] =
       SubmissionCommands.listSubmissions(databaseSession, actor, input)
 

@@ -1,6 +1,6 @@
 package domains.submission.application
 
-import domains.submission.model.{SubmissionDetail, SubmissionSummary}
+import domains.submission.model.{SubmissionDetail, SubmissionListResponse}
 
 object SubmissionCommandResults:
 
@@ -11,7 +11,7 @@ object SubmissionCommandResults:
     case Created(submission: SubmissionDetail)
 
   enum ListSubmissionsResult:
-    case Listed(submissions: List[SubmissionSummary])
+    case Listed(submissions: SubmissionListResponse)
 
   enum GetSubmissionResult:
     case NotFound

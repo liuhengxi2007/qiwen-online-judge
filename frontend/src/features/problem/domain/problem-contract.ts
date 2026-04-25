@@ -2,6 +2,7 @@ import type {
   CreateProblemRequest as CreateProblemRequestContract,
   ProblemDetail as ProblemDetailContract,
   ProblemListResponse as ProblemListResponseContract,
+  ProblemSuggestion as ProblemSuggestionContract,
   ProblemSummary as ProblemSummaryContract,
   UpdateProblemRequest as UpdateProblemRequestContract,
 } from '@contracts/problem'
@@ -9,6 +10,7 @@ import { fromUserIdentityContract } from '@/features/user/domain/user'
 import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
+import type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
 import type { ProblemSummary } from '@/features/problem/model/ProblemSummary'
 import type { UpdateProblemRequest } from '@/features/problem/model/UpdateProblemRequest'
 import {
@@ -67,6 +69,13 @@ export function fromProblemListResponseContract(response: ProblemListResponseCon
     page: response.page,
     pageSize: response.pageSize,
     totalItems: response.totalItems,
+  }
+}
+
+export function fromProblemSuggestionContract(problem: ProblemSuggestionContract): ProblemSuggestion {
+  return {
+    slug: requireParsed(parseProblemSlug(problem.slug), 'problem suggestion slug'),
+    title: requireParsed(parseProblemTitle(problem.title), 'problem suggestion title'),
   }
 }
 

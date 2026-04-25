@@ -1,6 +1,7 @@
 package domains.user.table
 
 object UserTableSql:
+  val suggestionLimit: Int = 5
 
   val findByUsernameSql: String =
     """
@@ -14,6 +15,25 @@ object UserTableSql:
       |select username, display_name, email, display_mode, locale, problem_title_display_mode, site_manager, problem_manager
       |from auth_users
       |order by username asc
+      |""".stripMargin
+
+  val listSuggestionsSql: String =
+    s"""
+      |select username as submitter_username,
+      |       display_name as submitter_display_name
+      |from auth_users
+      |where lower(username) like lower(?)
+      |   or lower(display_name) like lower(?)
+      |order by
+      |  case
+      |    when lower(username) = lower(?) then 0
+      |    when lower(username) like lower(?) then 1
+      |    when lower(display_name) like lower(?) then 2
+      |    when position(lower(?) in lower(username)) > 0 then 3
+      |    else 4
+      |  end,
+      |  lower(username) asc
+      |limit $suggestionLimit
       |""".stripMargin
 
   val countUsersSql: String =

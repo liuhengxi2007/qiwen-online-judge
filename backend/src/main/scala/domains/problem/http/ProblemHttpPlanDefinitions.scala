@@ -7,6 +7,7 @@ object ProblemHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   val listProblems = Plain(ProblemHttpPlans.ListProblems, ProblemHttpResponses.listProblemsResponse)
+  val listProblemSuggestions = Plain(ProblemHttpPlans.ListProblemSuggestions, ProblemHttpResponses.listProblemSuggestionsResponse)
   val createProblem = WithTransaction(ProblemHttpPlans.CreateProblem, ProblemHttpResponses.mapCreateResult)
   val getProblem = Plain(ProblemHttpPlans.GetProblem, ProblemHttpResponses.mapGetResult)
   val listProblemData = Plain(ProblemHttpPlans.ListProblemData, ProblemHttpResponses.mapListDataResult)
@@ -20,6 +21,7 @@ object ProblemHttpPlanDefinitions:
   val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
     List(
       listProblems,
+      listProblemSuggestions,
       createProblem,
       getProblem,
       listProblemData,

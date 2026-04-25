@@ -17,6 +17,11 @@ export type ProblemSummary = {
   updatedAt: string
 }
 
+export type ProblemSuggestion = {
+  slug: string
+  title: string
+}
+
 export type ProblemDetail = {
   id: string
   slug: string

@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemDetail, ProblemSummary}
+import domains.problem.model.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.table.ProblemTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.problem.application.ProblemCommandResults.*
@@ -37,3 +37,15 @@ object ProblemQueryCommands:
           IO.pure(GetProblemResult.NotFound)
       }
     }
+
+  def listProblemSuggestions(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    query: String
+  ): IO[List[ProblemSuggestion]] =
+    val trimmedQuery = query.trim
+    if trimmedQuery.isEmpty then IO.pure(List.empty)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        ProblemTable.listSuggestions(connection, actor, trimmedQuery)
+      }

@@ -6,7 +6,7 @@ import domains.auth.model.{AuthUser, SessionResponse}
 import domains.shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
-import domains.user.model.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedRanklistItem, UserIdentity, UserRanklistItem}
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Response, Status}
@@ -44,6 +44,9 @@ object UserHttpResponses:
     AuthHttpResponses.toUserListItem(user)
 
   def listUsersResponse(users: List[AuthUserListItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
+
+  def listUserSuggestionsResponse(users: List[UserIdentity]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
 
   def listContributionRanklistResponse(response: PageResponse[UserRanklistItem]): IO[Response[IO]] =

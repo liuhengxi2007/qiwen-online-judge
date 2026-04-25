@@ -1,3 +1,5 @@
 package domains.submission.model
 
-type SubmissionListResponse = List[SubmissionSummary]
+import domains.shared.model.PageResponse
+
+type SubmissionListResponse = PageResponse[SubmissionSummary]

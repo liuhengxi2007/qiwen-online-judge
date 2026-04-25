@@ -6,7 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.model.Username
 import domains.shared.model.PageRequest
 import domains.user.application.UserMutationCommands
-import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUsers, updateUserPermissions}
+import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}
 import domains.user.model.UpdateUserPermissionsRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -22,6 +22,9 @@ object UserRouter:
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" =>
         handlers.execute(request, (), listUsers)
+
+      case request @ GET -> Root / "api" / "users" / "suggestions" =>
+        handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), listUserSuggestions)
 
       case request @ GET -> Root / "api" / "users" / targetUsername / "profile" =>
         handlers.execute(request, Username.canonical(targetUsername), getUserProfile)

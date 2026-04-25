@@ -24,6 +24,7 @@ export {
 export {
   fromProblemDetailContract,
   fromProblemListResponseContract,
+  fromProblemSuggestionContract,
   fromProblemSummaryContract,
   toCreateProblemRequestContract,
   toUpdateProblemRequestContract,
@@ -38,6 +39,7 @@ export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTi
 export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'
 export type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
+export type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
 export type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 export type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'
 export type { ProblemStatementText } from '@/features/problem/model/ProblemStatementText'

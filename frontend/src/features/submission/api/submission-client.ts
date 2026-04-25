@@ -2,15 +2,15 @@ import type {
   CreateSubmissionRequest,
   SubmissionDetail,
   SubmissionId,
+  SubmissionListRequest,
   SubmissionListResponse,
 } from '@/features/submission/domain/submission'
-import type { Username } from '@/features/auth/domain/auth'
-import { usernameValue } from '@/features/auth/domain/auth'
 import {
   fromSubmissionDetailContract,
   fromSubmissionListResponseContract,
   submissionIdValue,
   toCreateSubmissionRequestContract,
+  toSubmissionListRequestContract,
 } from '@/features/submission/domain/submission'
 import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
 import type { SuccessResponse } from '@contracts/shared'
@@ -24,11 +24,21 @@ export async function createSubmission(request: CreateSubmissionRequest): Promis
   )
 }
 
-export async function listSubmissions(submitterUsername?: Username | null): Promise<SubmissionListResponse> {
+export async function listSubmissions(request: SubmissionListRequest): Promise<SubmissionListResponse> {
   const url = new URL('/api/submissions', window.location.origin)
-  if (submitterUsername) {
-    url.searchParams.set('username', usernameValue(submitterUsername))
+  const contractRequest = toSubmissionListRequestContract(request)
+
+  if (contractRequest.username !== null) {
+    url.searchParams.set('username', contractRequest.username)
   }
+  if (contractRequest.problemQuery !== null && contractRequest.problemQuery.trim()) {
+    url.searchParams.set('problem', contractRequest.problemQuery)
+  }
+  url.searchParams.set('verdict', contractRequest.verdict)
+  url.searchParams.set('sort', contractRequest.sort)
+  url.searchParams.set('direction', contractRequest.direction)
+  url.searchParams.set('page', String(contractRequest.page))
+  url.searchParams.set('pageSize', String(contractRequest.pageSize))
 
   return requestJson(url.pathname + url.search, fromSubmissionListResponseContract)
 }

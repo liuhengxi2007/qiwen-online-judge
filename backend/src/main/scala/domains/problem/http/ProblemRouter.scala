@@ -20,6 +20,9 @@ object ProblemRouter:
       case request @ GET -> Root / "api" / "problems" =>
         handlers.execute(request, (), ProblemHttpPlanDefinitions.listProblems)
 
+      case request @ GET -> Root / "api" / "problems" / "suggestions" =>
+        handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), ProblemHttpPlanDefinitions.listProblemSuggestions)
+
       case request @ POST -> Root / "api" / "problems" =>
         handlers.executeDecoded[CreateProblemRequest, CreateProblemRequest, ProblemCommands.CreateProblemResult](
           request,

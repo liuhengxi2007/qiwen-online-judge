@@ -6,6 +6,7 @@ import type {
   UpdateOwnSettingsRequest,
   UpdateUserPermissionsRequest,
   UserAcceptedRanklistResponse,
+  UserIdentity,
   UserProfileResponse,
   UserRanklistResponse,
   Username,
@@ -13,6 +14,7 @@ import type {
 import {
   fromAuthUserListItemContract,
   fromUserAcceptedRanklistResponseContract,
+  fromUserIdentityContract,
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
   toUpdateManagedUserSettingsRequestContract,
@@ -58,6 +60,18 @@ export async function getUserProfile(username: Username): Promise<UserProfileRes
     `/api/users/${encodeURIComponent(usernameValue(username))}/profile`,
     fromUserProfileResponseContract,
   )
+}
+
+export async function listUserSuggestions(query: string): Promise<UserIdentity[]> {
+  const url = new URL('/api/users/suggestions', window.location.origin)
+  url.searchParams.set('q', query)
+  return requestJson(url.pathname + url.search, (value) => {
+    if (!Array.isArray(value)) {
+      throw new Error('Invalid user suggestion payload.')
+    }
+
+    return value.map(fromUserIdentityContract)
+  })
 }
 
 export async function listContributionRanklist(page: number): Promise<UserRanklistResponse> {

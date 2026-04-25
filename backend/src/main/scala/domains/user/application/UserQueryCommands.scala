@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserProfileResponse, UserRanklistItem}
+import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserProfileResponse, UserRanklistItem}
 import domains.user.table.UserTable
 
 object UserQueryCommands:
@@ -15,6 +15,7 @@ object UserQueryCommands:
     case Found(profile: UserProfileResponse)
 
   private val ranklistPageSize = 10
+  private val minSuggestionQueryLength = 1
 
   def getUserProfile(
     databaseSession: DatabaseSession,
@@ -67,3 +68,16 @@ object UserQueryCommands:
         PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
       )
     }
+
+  def listSuggestions(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    query: String
+  ): IO[List[UserIdentity]] =
+    val _ = actor
+    val trimmedQuery = query.trim
+    if trimmedQuery.length < minSuggestionQueryLength then IO.pure(List.empty)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        UserTable.listSuggestions(connection, trimmedQuery)
+      }

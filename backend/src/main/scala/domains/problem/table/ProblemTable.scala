@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import domains.shared.model.PageResponse
@@ -69,6 +69,30 @@ object ProblemTable:
         yield Some(problem.copy(accessPolicy = policyFrom(problem.accessPolicy.baseAccess, viewerGrants, managerGrants)))
       case None =>
         IO.pure(None)
+    }
+
+  def listSuggestions(connection: Connection, actor: domains.auth.model.AuthUser, query: String): IO[List[ProblemSuggestion]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listSuggestionsSql)
+      try
+        val containsPattern = s"%$query%"
+        val prefixPattern = s"$query%"
+        bindVisibilityQuery(statement, actor, pageSize = None, offset = None)
+        statement.setString(7, containsPattern)
+        statement.setString(8, containsPattern)
+        statement.setString(9, query)
+        statement.setString(10, prefixPattern)
+        statement.setString(11, prefixPattern)
+        statement.setString(12, query)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readProblemSuggestion(resultSet))
+            .toList
+        finally resultSet.close()
+      finally statement.close()
     }
 
   def hasVisibleContainingProblemSet(

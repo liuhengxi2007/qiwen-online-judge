@@ -27,6 +27,11 @@ object ProblemHttpResponses:
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
+  def listProblemSuggestionsResponse(
+    response: List[domains.problem.model.ProblemSuggestion]
+  ): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
   def mapCreateResult(result: ProblemCommands.CreateProblemResult): IO[Response[IO]] =
     result match
       case ProblemCommands.CreateProblemResult.Forbidden =>

@@ -6,12 +6,14 @@ import type {
   ProblemDetail,
   ProblemListResponse,
   ProblemSlug,
+  ProblemSuggestion,
   UpdateProblemDataRequest,
   UpdateProblemRequest,
 } from '@/features/problem/domain/problem'
 import {
   fromProblemDetailContract,
   fromProblemListResponseContract,
+  fromProblemSuggestionContract,
   parseProblemDataFilename,
   problemSlugValue,
   toCreateProblemRequestContract,
@@ -21,6 +23,18 @@ import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-
 
 export async function listProblems(): Promise<ProblemListResponse> {
   return requestJson('/api/problems', fromProblemListResponseContract)
+}
+
+export async function listProblemSuggestions(query: string): Promise<ProblemSuggestion[]> {
+  const url = new URL('/api/problems/suggestions', window.location.origin)
+  url.searchParams.set('q', query)
+  return requestJson(url.pathname + url.search, (value) => {
+    if (!Array.isArray(value)) {
+      throw new Error('Invalid problem suggestion payload.')
+    }
+
+    return value.map(fromProblemSuggestionContract)
+  })
 }
 
 export async function createProblem(request: CreateProblemRequest): Promise<ProblemDetail> {

@@ -1,17 +1,38 @@
 import { useEffect, useState } from 'react'
 
-import type { Username } from '@/features/auth/domain/auth'
 import { listSubmissions } from '@/features/submission/api/submission-client'
-import { isTerminalSubmissionStatus, type SubmissionSummary } from '@/features/submission/domain/submission'
+import {
+  isTerminalSubmissionStatus,
+  type SubmissionListRequest,
+  type SubmissionListResponse,
+} from '@/features/submission/domain/submission'
 
-export function useSubmissionListQuery(submitterUsername: Username | null) {
+function requestKey(request: SubmissionListRequest): string {
+  return JSON.stringify({
+    username: request.username,
+    problemQuery: request.problemQuery,
+    verdict: request.verdict,
+    sort: request.sort,
+    direction: request.direction,
+    page: request.page,
+    pageSize: request.pageSize,
+  })
+}
+
+export function useSubmissionListQuery(request: SubmissionListRequest) {
+  const key = requestKey(request)
   const [queryState, setQueryState] = useState<{
-    username: Username | null
-    submissions: SubmissionSummary[]
+    key: string
+    response: SubmissionListResponse
     errorMessage: string
   }>({
-    username: null,
-    submissions: [],
+    key: '',
+    response: {
+      items: [],
+      page: request.page,
+      pageSize: request.pageSize,
+      totalItems: 0,
+    },
     errorMessage: '',
   })
 
@@ -20,18 +41,18 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
     let intervalId: number | null = null
 
     const load = () => {
-      void listSubmissions(submitterUsername)
-        .then((loadedSubmissions) => {
+      void listSubmissions(request)
+        .then((loadedResponse) => {
           if (cancelled) {
             return
           }
 
           setQueryState({
-            username: submitterUsername,
-            submissions: loadedSubmissions,
+            key,
+            response: loadedResponse,
             errorMessage: '',
           })
-          if (!loadedSubmissions.some((submission) => !isTerminalSubmissionStatus(submission.status)) && intervalId !== null) {
+          if (!loadedResponse.items.some((submission) => !isTerminalSubmissionStatus(submission.status)) && intervalId !== null) {
             window.clearInterval(intervalId)
             intervalId = null
           }
@@ -42,8 +63,13 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
           }
 
           setQueryState({
-            username: submitterUsername,
-            submissions: [],
+            key,
+            response: {
+              items: [],
+              page: request.page,
+              pageSize: request.pageSize,
+              totalItems: 0,
+            },
             errorMessage: 'Unable to load submissions.',
           })
         })
@@ -58,11 +84,19 @@ export function useSubmissionListQuery(submitterUsername: Username | null) {
         window.clearInterval(intervalId)
       }
     }
-  }, [submitterUsername])
+  }, [key])
 
   return {
-    submissions: queryState.username === submitterUsername ? queryState.submissions : [],
-    isLoading: queryState.username !== submitterUsername,
-    errorMessage: queryState.username === submitterUsername ? queryState.errorMessage : '',
+    response:
+      queryState.key === key
+        ? queryState.response
+        : {
+            items: [],
+            page: request.page,
+            pageSize: request.pageSize,
+            totalItems: 0,
+          },
+    isLoading: queryState.key !== key,
+    errorMessage: queryState.key === key ? queryState.errorMessage : '',
   }
 }

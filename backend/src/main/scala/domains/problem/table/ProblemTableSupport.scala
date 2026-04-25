@@ -2,7 +2,7 @@ package domains.problem.table
 
 import domains.auth.model.AuthUser
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
-import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
 import domains.shared.access.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility, missingInsertResult}
 
@@ -58,6 +58,12 @@ object ProblemTableSupport:
       creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
+    )
+
+  def readProblemSuggestion(resultSet: ResultSet): ProblemSuggestion =
+    ProblemSuggestion(
+      slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
+      title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse)
     )
 
   def readProblemDetailBase(resultSet: ResultSet): ProblemDetail =

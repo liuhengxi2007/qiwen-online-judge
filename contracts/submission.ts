@@ -1,4 +1,5 @@
 import type { UserIdentity } from './auth'
+import type { PageResponse } from './shared'
 
 export type SubmissionLanguage = 'cpp17' | 'python3'
 export type SubmissionStatus = 'queued' | 'running' | 'completed' | 'failed'
@@ -10,10 +11,29 @@ export type SubmissionVerdict =
   | 'time_limit_exceeded'
   | 'system_error'
 
+export type SubmissionVerdictFilter =
+  | 'all'
+  | 'pending'
+  | SubmissionVerdict
+
+export type SubmissionSort = 'submitted' | 'time' | 'memory' | 'code_length'
+
+export type SubmissionSortDirection = 'asc' | 'desc'
+
 export type CreateSubmissionRequest = {
   problemSlug: string
   language: SubmissionLanguage
   sourceCode: string
+}
+
+export type SubmissionListRequest = {
+  username: string | null
+  problemQuery: string | null
+  verdict: SubmissionVerdictFilter
+  sort: SubmissionSort
+  direction: SubmissionSortDirection
+  page: number
+  pageSize: number
 }
 
 export type SubmissionSummary = {
@@ -54,4 +74,4 @@ export type SubmissionDetail = {
   finishedAt: string | null
 }
 
-export type SubmissionListResponse = SubmissionSummary[]
+export type SubmissionListResponse = PageResponse<SubmissionSummary>

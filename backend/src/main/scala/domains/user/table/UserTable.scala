@@ -1,10 +1,11 @@
 package domains.user.table
 
 import cats.effect.IO
+import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserLocale, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem}
 import domains.user.table.UserTableSql.*
 import domains.user.table.UserTableSupport.*
 
@@ -41,6 +42,30 @@ object UserTable:
             .continually(resultSet.next())
             .takeWhile(identity)
             .map(_ => readUserListItem(resultSet))
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listSuggestions(connection: Connection, query: String): IO[List[UserIdentity]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listSuggestionsSql)
+      try
+        val trimmedQuery = query.trim
+        val containsPattern = s"%$trimmedQuery%"
+        val prefixPattern = s"$trimmedQuery%"
+        statement.setString(1, containsPattern)
+        statement.setString(2, containsPattern)
+        statement.setString(3, trimmedQuery)
+        statement.setString(4, prefixPattern)
+        statement.setString(5, prefixPattern)
+        statement.setString(6, trimmedQuery)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readUserIdentity(resultSet, "submitter"))
             .toList
         finally resultSet.close()
       finally statement.close()

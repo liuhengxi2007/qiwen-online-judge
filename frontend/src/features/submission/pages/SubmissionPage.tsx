@@ -8,23 +8,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  displayNameValue,
-  parseUsername,
-  usernameValue,
-  type Username,
-} from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { listProblemSuggestions } from '@/features/problem/api/problem-client'
+import type { ProblemSuggestion } from '@/features/problem/domain/problem'
+import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import {
+  isSubmissionSort,
+  isSubmissionSortDirection,
+  isSubmissionVerdictFilter,
   submissionIdValue,
   submissionLanguageLabel,
   submissionStatusLabel,
   submissionVerdictLabel,
+  type SubmissionListRequest,
+  type SubmissionSort,
+  type SubmissionSortDirection,
   type SubmissionSummary,
-  type SubmissionVerdict,
+  type SubmissionVerdictFilter,
 } from '@/features/submission/domain/submission'
-import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
+import { listUserSuggestions } from '@/features/user/api/user-client'
+import {
+  displayNameValue,
+  parseUsername,
+  usernameValue,
+  type UserIdentity,
+  type Username,
+} from '@/features/user/domain/user'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
@@ -61,12 +71,7 @@ function submissionOverviewStatus(submission: SubmissionSummary): string {
     : submissionVerdictLabel(submission.verdict)
 }
 
-type VerdictFilter = 'all' | 'pending' | SubmissionVerdict
-type SubmissionSort = 'submitted' | 'time' | 'memory' | 'code_length'
-type SortDirection = 'asc' | 'desc'
-
 const submissionsPerPage = 10
-const searchSuggestionLimit = 5
 
 const verdictFilterValues = [
   'all',
@@ -77,198 +82,27 @@ const verdictFilterValues = [
   'runtime_error',
   'time_limit_exceeded',
   'system_error',
-] as const satisfies readonly VerdictFilter[]
+] as const satisfies readonly SubmissionVerdictFilter[]
 
 const submissionSortValues = [
+  'submitted',
   'time',
   'memory',
   'code_length',
-  'submitted',
 ] as const satisfies readonly SubmissionSort[]
 
-function isVerdictFilter(value: string): value is VerdictFilter {
-  return (verdictFilterValues as readonly string[]).includes(value)
-}
-
-function isSubmissionSort(value: string): value is SubmissionSort {
-  return (submissionSortValues as readonly string[]).includes(value)
-}
-
-type UserFilterSuggestion = {
-  username: Username
-  displayName: string
-}
-
-type ProblemFilterSuggestion = {
-  slug: string
-  title: string
-}
-
-function normalizeSearchText(value: string): string {
-  return value.trim().toLocaleLowerCase()
-}
-
-function fuzzyScore(candidate: string, input: string): number {
-  const normalizedCandidate = normalizeSearchText(candidate)
-  const normalizedInput = normalizeSearchText(input)
-
-  if (!normalizedInput) {
-    return 1
-  }
-
-  if (normalizedCandidate === normalizedInput) {
-    return 1000
-  }
-
-  if (normalizedCandidate.startsWith(normalizedInput)) {
-    return 800 - normalizedCandidate.length
-  }
-
-  const index = normalizedCandidate.indexOf(normalizedInput)
-  if (index >= 0) {
-    return 600 - index - normalizedCandidate.length
-  }
-
-  let candidateIndex = 0
-  let matched = 0
-  for (const character of normalizedInput) {
-    const foundIndex = normalizedCandidate.indexOf(character, candidateIndex)
-    if (foundIndex < 0) {
-      return 0
-    }
-    matched += 1
-    candidateIndex = foundIndex + 1
-  }
-
-  return 300 + matched - normalizedCandidate.length
-}
-
-function bestFuzzyScore(candidates: string[], input: string): number {
-  return Math.max(...candidates.map((candidate) => fuzzyScore(candidate, input)))
-}
-
-function buildUserSuggestions(
-  submissions: SubmissionSummary[],
-  input: string,
-): UserFilterSuggestion[] {
-  const normalizedInput = normalizeSearchText(input)
-  if (!normalizedInput) {
-    return []
-  }
-
-  const suggestions = new Map<string, UserFilterSuggestion>()
-  for (const submission of submissions) {
-    const username = usernameValue(submission.submitter.username)
-    if (!suggestions.has(username)) {
-      suggestions.set(username, {
-        username: submission.submitter.username,
-        displayName: displayNameValue(submission.submitter.displayName),
-      })
-    }
-  }
-
-  return [...suggestions.values()]
-    .map((suggestion) => ({
-      suggestion,
-      score: bestFuzzyScore([usernameValue(suggestion.username), suggestion.displayName], input),
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || usernameValue(left.suggestion.username).localeCompare(usernameValue(right.suggestion.username)))
-    .slice(0, searchSuggestionLimit)
-    .map(({ suggestion }) => suggestion)
-}
-
-function buildProblemSuggestions(
-  submissions: SubmissionSummary[],
-  input: string,
-): ProblemFilterSuggestion[] {
-  const normalizedInput = normalizeSearchText(input)
-  if (!normalizedInput) {
-    return []
-  }
-
-  const suggestions = new Map<string, ProblemFilterSuggestion>()
-  for (const submission of submissions) {
-    const slug = problemSlugValue(submission.problemSlug)
-    if (!suggestions.has(slug)) {
-      suggestions.set(slug, {
-        slug,
-        title: problemTitleValue(submission.problemTitle),
-      })
-    }
-  }
-
-  return [...suggestions.values()]
-    .map((suggestion) => ({
-      suggestion,
-      score: bestFuzzyScore([suggestion.slug, suggestion.title], input),
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || left.suggestion.slug.localeCompare(right.suggestion.slug))
-    .slice(0, searchSuggestionLimit)
-    .map(({ suggestion }) => suggestion)
-}
-
-function matchesUsernameFilter(submission: SubmissionSummary, username: Username | null): boolean {
-  return username === null || usernameValue(submission.submitter.username) === usernameValue(username)
-}
-
-function matchesProblemSlugTextFilter(submission: SubmissionSummary, problemSlug: string): boolean {
-  const normalizedProblemSlug = normalizeSearchText(problemSlug)
-  return !normalizedProblemSlug || normalizeSearchText(problemSlugValue(submission.problemSlug)) === normalizedProblemSlug
-}
-
-function matchesProblemSlugFilter(submission: SubmissionSummary, problemSlug: ProblemSlug | null): boolean {
-  return problemSlug === null || problemSlugValue(submission.problemSlug) === problemSlugValue(problemSlug)
-}
-
-function matchesVerdictFilter(submission: SubmissionSummary, verdict: VerdictFilter): boolean {
-  if (verdict === 'all') {
-    return true
-  }
-
-  if (verdict === 'pending') {
-    return submission.verdict === null
-  }
-
-  return submission.verdict === verdict
-}
-
-function compareNullableNumber(left: number | null, right: number | null): number {
-  if (left === null && right === null) {
-    return 0
-  }
-
-  if (left === null) {
-    return 1
-  }
-
-  if (right === null) {
-    return -1
-  }
-
-  return left - right
-}
-
-function compareSubmissions(left: SubmissionSummary, right: SubmissionSummary, sort: SubmissionSort, direction: SortDirection): number {
-  const directionMultiplier = direction === 'asc' ? 1 : -1
-
+function defaultSortDirection(sort: SubmissionSort): SubmissionSortDirection {
   switch (sort) {
     case 'submitted':
-      return (
-        directionMultiplier * (new Date(left.submittedAt).getTime() - new Date(right.submittedAt).getTime()) ||
-        directionMultiplier * (submissionIdValue(left.id) - submissionIdValue(right.id))
-      )
+      return 'desc'
     case 'time':
-      return directionMultiplier * compareNullableNumber(left.timeUsedMs, right.timeUsedMs) || compareSubmissions(left, right, 'submitted', 'desc')
     case 'memory':
-      return directionMultiplier * compareNullableNumber(left.memoryUsedKb, right.memoryUsedKb) || compareSubmissions(left, right, 'submitted', 'desc')
     case 'code_length':
-      return directionMultiplier * (left.codeLength - right.codeLength) || compareSubmissions(left, right, 'submitted', 'desc')
+      return 'asc'
   }
 }
 
-function verdictFilterLabel(verdict: VerdictFilter, allVerdictsLabel: string): string {
+function verdictFilterLabel(verdict: SubmissionVerdictFilter, allVerdictsLabel: string): string {
   if (verdict === 'all') {
     return allVerdictsLabel
   }
@@ -294,6 +128,11 @@ function shouldShowTypingSuggestions(value: string): boolean {
   return value.trim().length > 0
 }
 
+function parsePositivePage(value: string | null): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
 type SubmissionPageProps = {
   fixedProblemSlugFilter?: ProblemSlug
 }
@@ -304,37 +143,61 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const { session: user, navigationIntent } = useSessionGuard()
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
+  const problemQueryParam = searchParams.get('problem')?.trim() ?? ''
   const usernameQueryResult = usernameQueryParam ? parseUsername(usernameQueryParam) : null
   const queryUsernameFilter = usernameQueryResult?.ok ? usernameQueryResult.value : null
   const [usernameFilterInput, setUsernameFilterInput] = useState('')
   const [problemFilterInput, setProblemFilterInput] = useState('')
-  const [activeProblemTitleFilter, setActiveProblemTitleFilter] = useState('')
-  const [activeVerdictFilter, setActiveVerdictFilter] = useState<VerdictFilter>('all')
-  const [activeSort, setActiveSort] = useState<SubmissionSort>('submitted')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [currentPage, setCurrentPage] = useState(1)
   const [filterErrorMessage, setFilterErrorMessage] = useState('')
   const [isUsernameFilterFocused, setIsUsernameFilterFocused] = useState(false)
   const [isProblemFilterFocused, setIsProblemFilterFocused] = useState(false)
   const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<Username | null>(null)
-  const submissionQuery = useSubmissionListQuery(queryUsernameFilter)
-  const userSuggestions = buildUserSuggestions(submissionQuery.submissions, usernameFilterInput)
-  const problemSuggestions = buildProblemSuggestions(submissionQuery.submissions, problemFilterInput)
-  const showUserSuggestions = isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput) && userSuggestions.length > 0
-  const showProblemSuggestions = isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput) && problemSuggestions.length > 0
-  const effectiveUsernameFilter = queryUsernameFilter
+  const [userSuggestions, setUserSuggestions] = useState<UserIdentity[]>([])
+  const [problemSuggestions, setProblemSuggestions] = useState<ProblemSuggestion[]>([])
   const hasFixedProblemFilter = fixedProblemSlugFilter !== undefined
-  const visibleSubmissions = submissionQuery.submissions.filter(
-    (submission) =>
-      matchesUsernameFilter(submission, effectiveUsernameFilter) &&
-      matchesProblemSlugFilter(submission, fixedProblemSlugFilter ?? null) &&
-      (hasFixedProblemFilter || matchesProblemSlugTextFilter(submission, activeProblemTitleFilter)) &&
-      matchesVerdictFilter(submission, activeVerdictFilter),
-  )
-  const sortedSubmissions = [...visibleSubmissions].sort((left, right) => compareSubmissions(left, right, activeSort, sortDirection))
-  const totalPages = Math.max(1, Math.ceil(sortedSubmissions.length / submissionsPerPage))
-  const currentPageSubmissions = sortedSubmissions.slice((currentPage - 1) * submissionsPerPage, currentPage * submissionsPerPage)
+  const activeProblemQuery = hasFixedProblemFilter ? problemSlugValue(fixedProblemSlugFilter) : problemQueryParam
+  const activeSort = (() => {
+    const rawSort = searchParams.get('sort')
+    return rawSort && isSubmissionSort(rawSort) ? rawSort : 'submitted'
+  })()
+  const activeDirection = (() => {
+    const rawDirection = searchParams.get('direction')
+    return rawDirection && isSubmissionSortDirection(rawDirection) ? rawDirection : defaultSortDirection(activeSort)
+  })()
+  const activeVerdictFilter = (() => {
+    const rawVerdict = searchParams.get('verdict')
+    return rawVerdict && isSubmissionVerdictFilter(rawVerdict) ? rawVerdict : 'all'
+  })()
+  const currentPage = parsePositivePage(searchParams.get('page'))
+  const request: SubmissionListRequest = {
+    username: queryUsernameFilter,
+    problemQuery: activeProblemQuery || null,
+    verdict: activeVerdictFilter,
+    sort: activeSort,
+    direction: activeDirection,
+    page: currentPage,
+    pageSize: submissionsPerPage,
+  }
+  const submissionQuery = useSubmissionListQuery(request)
+  const currentPageSubmissions = submissionQuery.response.items
+  const totalPages = Math.max(1, Math.ceil(submissionQuery.response.totalItems / submissionQuery.response.pageSize))
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
+  const showUserSuggestions =
+    isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput) && userSuggestions.length > 0
+  const showProblemSuggestions =
+    isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput) && problemSuggestions.length > 0
+
+  function updateSearchFilter(name: string, value: string | null) {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (value === null || !value.trim()) {
+      nextSearchParams.delete(name)
+    } else {
+      nextSearchParams.set(name, value)
+    }
+    nextSearchParams.delete('page')
+    setSearchParams(nextSearchParams)
+  }
+
   const paginationControls =
     totalPages > 1 ? (
       <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
@@ -343,7 +206,11 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
           variant="outline"
           className="rounded-2xl border-slate-300 bg-white"
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          onClick={() => {
+            const nextSearchParams = new URLSearchParams(searchParams)
+            nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
+            setSearchParams(nextSearchParams)
+          }}
         >
           {t('submission.pagination.previous')}
         </Button>
@@ -353,7 +220,11 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
             type="button"
             variant={page === currentPage ? 'default' : 'outline'}
             className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'}
-            onClick={() => setCurrentPage(page)}
+            onClick={() => {
+              const nextSearchParams = new URLSearchParams(searchParams)
+              nextSearchParams.set('page', String(page))
+              setSearchParams(nextSearchParams)
+            }}
           >
             {page}
           </Button>
@@ -363,7 +234,11 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
           variant="outline"
           className="rounded-2xl border-slate-300 bg-white"
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          onClick={() => {
+            const nextSearchParams = new URLSearchParams(searchParams)
+            nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
+            setSearchParams(nextSearchParams)
+          }}
         >
           {t('submission.pagination.next')}
         </Button>
@@ -371,14 +246,83 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     ) : null
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [queryUsernameFilter, activeProblemTitleFilter, activeVerdictFilter, activeSort, sortDirection, fixedProblemSlugFilter])
-
-  useEffect(() => {
     setUsernameFilterInput(queryUsernameFilter ? usernameValue(queryUsernameFilter) : '')
     setSelectedUsernameSuggestion(queryUsernameFilter)
     setIsUsernameFilterFocused(false)
   }, [queryUsernameFilter])
+
+  useEffect(() => {
+    if (!hasFixedProblemFilter) {
+      setProblemFilterInput(activeProblemQuery)
+    }
+    setIsProblemFilterFocused(false)
+  }, [activeProblemQuery, hasFixedProblemFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (totalPages <= 1) {
+        nextSearchParams.delete('page')
+      } else {
+        nextSearchParams.set('page', String(totalPages))
+      }
+      setSearchParams(nextSearchParams)
+    }
+  }, [currentPage, searchParams, setSearchParams, totalPages])
+
+  useEffect(() => {
+    if (!isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {
+      setUserSuggestions([])
+      return
+    }
+
+    let cancelled = false
+    const timeoutId = window.setTimeout(() => {
+      void listUserSuggestions(usernameFilterInput.trim())
+        .then((suggestions) => {
+          if (!cancelled) {
+            setUserSuggestions(suggestions)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setUserSuggestions([])
+          }
+        })
+    }, 150)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+    }
+  }, [isUsernameFilterFocused, usernameFilterInput])
+
+  useEffect(() => {
+    if (!isProblemFilterFocused || !shouldShowTypingSuggestions(problemFilterInput) || hasFixedProblemFilter) {
+      setProblemSuggestions([])
+      return
+    }
+
+    let cancelled = false
+    const timeoutId = window.setTimeout(() => {
+      void listProblemSuggestions(problemFilterInput.trim())
+        .then((suggestions) => {
+          if (!cancelled) {
+            setProblemSuggestions(suggestions)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setProblemSuggestions([])
+          }
+        })
+    }, 150)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+    }
+  }, [hasFixedProblemFilter, isProblemFilterFocused, problemFilterInput])
 
   function updateUsernameFilterInput(value: string) {
     setUsernameFilterInput(value)
@@ -396,6 +340,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   function applyFilters() {
     const trimmedUsernameInput = usernameFilterInput.trim()
     const nextSearchParams = new URLSearchParams(searchParams)
+
     if (!trimmedUsernameInput) {
       nextSearchParams.delete('username')
     } else {
@@ -419,7 +364,16 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
       nextSearchParams.set('username', usernameValue(nextUsername))
     }
 
-    setActiveProblemTitleFilter(problemFilterInput.trim())
+    if (!hasFixedProblemFilter) {
+      const trimmedProblemInput = problemFilterInput.trim()
+      if (!trimmedProblemInput) {
+        nextSearchParams.delete('problem')
+      } else {
+        nextSearchParams.set('problem', trimmedProblemInput)
+      }
+    }
+
+    nextSearchParams.delete('page')
     setIsUsernameFilterFocused(false)
     setIsProblemFilterFocused(false)
     setFilterErrorMessage('')
@@ -434,12 +388,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     event.preventDefault()
     applyFilters()
   }
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -512,7 +460,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                           setFilterErrorMessage('')
                         }}
                       >
-                        <span className="font-medium text-slate-900">{suggestion.displayName}</span>
+                        <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
                         <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
                       </button>
                     ))}
@@ -544,20 +492,20 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
                       {problemSuggestions.map((suggestion) => (
                         <button
-                          key={suggestion.slug}
+                          key={problemSlugValue(suggestion.slug)}
                           type="button"
                           className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
                           onMouseDown={(event) => {
                             event.preventDefault()
                           }}
                           onClick={() => {
-                            setProblemFilterInput(suggestion.slug)
+                            setProblemFilterInput(problemSlugValue(suggestion.slug))
                             setIsProblemFilterFocused(false)
                             setFilterErrorMessage('')
                           }}
                         >
-                          <span className="font-medium text-slate-900">{suggestion.title}</span>
-                          <span className="text-slate-500">{suggestion.slug}</span>
+                          <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
+                          <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
                         </button>
                       ))}
                     </div>
@@ -570,8 +518,8 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                 <Select
                   value={activeVerdictFilter}
                   onValueChange={(value) => {
-                    if (isVerdictFilter(value)) {
-                      setActiveVerdictFilter(value)
+                    if (isSubmissionVerdictFilter(value)) {
+                      updateSearchFilter('verdict', value === 'all' ? null : value)
                     }
                   }}
                 >
@@ -595,7 +543,20 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     value={activeSort}
                     onValueChange={(value) => {
                       if (isSubmissionSort(value)) {
-                        setActiveSort(value)
+                        const nextSearchParams = new URLSearchParams(searchParams)
+                        if (value === 'submitted') {
+                          nextSearchParams.delete('sort')
+                        } else {
+                          nextSearchParams.set('sort', value)
+                        }
+                        const nextDirection = defaultSortDirection(value)
+                        if (nextDirection === defaultSortDirection(value)) {
+                          nextSearchParams.delete('direction')
+                        } else {
+                          nextSearchParams.set('direction', nextDirection)
+                        }
+                        nextSearchParams.delete('page')
+                        setSearchParams(nextSearchParams)
                       }
                     }}
                   >
@@ -614,9 +575,12 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     type="button"
                     variant="outline"
                     className="shrink-0 rounded-2xl border-slate-300 bg-white"
-                    onClick={() => setSortDirection((currentDirection) => (currentDirection === 'asc' ? 'desc' : 'asc'))}
+                    onClick={() => {
+                      const nextDirection: SubmissionSortDirection = activeDirection === 'asc' ? 'desc' : 'asc'
+                      updateSearchFilter('direction', nextDirection === defaultSortDirection(activeSort) ? null : nextDirection)
+                    }}
                   >
-                    {sortDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
+                    {activeDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
                   </Button>
                 </div>
               </div>
@@ -648,15 +612,14 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                   setProblemFilterInput('')
                   setIsUsernameFilterFocused(false)
                   setIsProblemFilterFocused(false)
+                  setFilterErrorMessage('')
                   const nextSearchParams = new URLSearchParams(searchParams)
                   nextSearchParams.delete('username')
-                  if (!hasFixedProblemFilter) {
-                    setActiveProblemTitleFilter('')
-                  }
-                  setActiveVerdictFilter('all')
-                  setActiveSort('submitted')
-                  setSortDirection('desc')
-                  setFilterErrorMessage('')
+                  nextSearchParams.delete('problem')
+                  nextSearchParams.delete('verdict')
+                  nextSearchParams.delete('sort')
+                  nextSearchParams.delete('direction')
+                  nextSearchParams.delete('page')
                   setSearchParams(nextSearchParams)
                 }}
               >
@@ -664,10 +627,10 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
               </Button>
             </div>
 
-            {effectiveUsernameFilter ? (
+            {queryUsernameFilter ? (
               <p className="text-sm text-slate-600">
                 {t('submission.filter.showingUser', {
-                  username: usernameValue(effectiveUsernameFilter),
+                  username: usernameValue(queryUsernameFilter),
                 })}
               </p>
             ) : (
@@ -675,16 +638,14 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
             )}
             <p className="text-sm text-slate-600">
               {t('submission.filter.activeSummary', {
-                problem: hasFixedProblemFilter
-                  ? problemSlugValue(fixedProblemSlugFilter)
-                  : activeProblemTitleFilter || t('submission.filter.anyProblem'),
+                problem: activeProblemQuery || t('submission.filter.anyProblem'),
                 verdict: verdictFilterLabel(activeVerdictFilter, t('submission.filter.allVerdicts')),
               })}
             </p>
           </CardContent>
         </Card>
 
-        {!submissionQuery.isLoading && visibleSubmissions.length > 0 ? (
+        {!submissionQuery.isLoading && currentPageSubmissions.length > 0 ? (
           <div className="mb-6">{paginationControls}</div>
         ) : null}
 
@@ -692,7 +653,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.loading')}</CardContent>
           </Card>
-        ) : visibleSubmissions.length === 0 ? (
+        ) : currentPageSubmissions.length === 0 ? (
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardContent className="py-10 text-sm text-slate-500">{t('submission.list.empty')}</CardContent>
           </Card>
