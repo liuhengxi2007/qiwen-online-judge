@@ -7,7 +7,7 @@ import domains.auth.model.Username
 import domains.shared.model.PageRequest
 import domains.user.application.UserMutationCommands
 import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}
-import domains.user.model.UpdateUserPermissionsRequest
+import domains.user.model.{UpdateUserPermissionsRequest, UserListRequest}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -21,7 +21,15 @@ object UserRouter:
 
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" =>
-        handlers.execute(request, (), listUsers)
+        handlers.execute(
+          request,
+          UserListRequest(
+            query = request.uri.query.params.get("q").map(_.trim).filter(_.nonEmpty),
+            page = parsePage(request.uri.query.params.get("page")),
+            pageSize = parsePageSize(request.uri.query.params.get("pageSize"))
+          ),
+          listUsers
+        )
 
       case request @ GET -> Root / "api" / "users" / "suggestions" =>
         handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), listUserSuggestions)
@@ -53,3 +61,6 @@ object UserRouter:
 
   private def parsePage(rawPage: Option[String]): Int =
     rawPage.flatMap(_.toIntOption).getOrElse(1)
+
+  private def parsePageSize(rawPageSize: Option[String]): Int =
+    rawPageSize.flatMap(_.toIntOption).filter(_ > 0).getOrElse(10)

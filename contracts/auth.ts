@@ -1,3 +1,5 @@
+import type { PageResponse } from './shared'
+
 export type UserIdentity = {
   username: string
   displayName: string
@@ -19,6 +21,12 @@ export type AuthUserListItem = {
   email: string
   siteManager: boolean
   problemManager: boolean
+}
+
+export type UserListRequest = {
+  query: string | null
+  page: number
+  pageSize: number
 }
 
 export type LoginRequest = {
@@ -76,6 +84,8 @@ export type UserAcceptedRanklistItem = {
   user: UserIdentity
   acceptedCount: number
 }
+
+export type UserListResponse = PageResponse<AuthUserListItem>
 
 export type UpdateUserPermissionsRequest = {
   siteManager: boolean

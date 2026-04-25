@@ -4,7 +4,7 @@ import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Us
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem}
 
-import java.sql.ResultSet
+import java.sql.{PreparedStatement, ResultSet}
 
 object UserTableSupport:
 
@@ -63,6 +63,18 @@ object UserTableSupport:
       title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
       acceptedAt = resultSet.getTimestamp("accepted_at").toInstant
     )
+
+  def bindUserSearchQuery(
+    statement: PreparedStatement,
+    query: Option[String],
+    startIndex: Int
+  ): Int =
+    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
+    val likeQuery = normalizedQuery.map(value => s"%$value%").getOrElse("")
+    statement.setBoolean(startIndex, normalizedQuery.nonEmpty)
+    statement.setString(startIndex + 1, likeQuery)
+    statement.setString(startIndex + 2, likeQuery)
+    startIndex + 3
 
   private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

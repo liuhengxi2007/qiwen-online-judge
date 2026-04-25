@@ -1,5 +1,7 @@
 import type {
   AuthUserListItem as AuthUserListItemContract,
+  UserListRequest as UserListRequestContract,
+  UserListResponse as UserListResponseContract,
   UpdateManagedUserSettingsRequest as UpdateManagedUserSettingsRequestContract,
   UpdateOwnSettingsRequest as UpdateOwnSettingsRequestContract,
   UpdateUserPermissionsRequest as UpdateUserPermissionsRequestContract,
@@ -9,6 +11,8 @@ import type {
 } from '@contracts/auth'
 import type { PageResponse as PageResponseContract } from '@contracts/shared'
 import type { AuthUserListItem } from '@/features/user/model/AuthUserListItem'
+import type { UserListRequest } from '@/features/user/model/UserListRequest'
+import type { UserListResponse } from '@/features/user/model/UserListResponse'
 import type { UpdateManagedUserSettingsRequest } from '@/features/user/model/UpdateManagedUserSettingsRequest'
 import type { UpdateOwnSettingsRequest } from '@/features/user/model/UpdateOwnSettingsRequest'
 import type { UpdateUserPermissionsRequest } from '@/features/user/model/UpdateUserPermissionsRequest'
@@ -108,6 +112,27 @@ export function fromAuthUserListItemContract(response: AuthUserListItemContract)
     email: requireParsed(parseEmailAddress(response.email), 'auth user email'),
     siteManager: response.siteManager,
     problemManager: response.problemManager,
+  }
+}
+
+export function fromUserListResponseContract(response: UserListResponseContract): UserListResponse {
+  if (!Array.isArray(response.items)) {
+    throw new Error('Invalid user list payload.')
+  }
+
+  return {
+    items: response.items.map(fromAuthUserListItemContract),
+    page: response.page,
+    pageSize: response.pageSize,
+    totalItems: response.totalItems,
+  }
+}
+
+export function toUserListRequestContract(request: UserListRequest): UserListRequestContract {
+  return {
+    query: request.query,
+    page: request.page,
+    pageSize: request.pageSize,
   }
 }
 

@@ -2,6 +2,8 @@ import type { SessionResponse } from '@/features/auth/domain/auth'
 import { fromSessionResponseContract } from '@/features/auth/domain/auth'
 import type {
   AuthUserListItem,
+  UserListRequest,
+  UserListResponse,
   UpdateManagedUserSettingsRequest,
   UpdateOwnSettingsRequest,
   UpdateUserPermissionsRequest,
@@ -13,10 +15,12 @@ import type {
 } from '@/features/user/domain/user'
 import {
   fromAuthUserListItemContract,
+  fromUserListResponseContract,
   fromUserAcceptedRanklistResponseContract,
   fromUserIdentityContract,
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
+  toUserListRequestContract,
   toUpdateManagedUserSettingsRequestContract,
   toUpdateOwnSettingsRequestContract,
   toUpdateUserPermissionsRequestContract,
@@ -27,14 +31,15 @@ import type { SuccessResponse } from '@contracts/shared'
 
 export { HttpClientError as UserClientError } from '@/shared/api/http-client'
 
-export async function listUsers(): Promise<AuthUserListItem[]> {
-  return requestJson('/api/users', (value) => {
-    if (!Array.isArray(value)) {
-      throw new Error('Invalid user list payload.')
-    }
-
-    return value.map(fromAuthUserListItemContract)
-  })
+export async function listUsers(request: UserListRequest): Promise<UserListResponse> {
+  const url = new URL('/api/users', window.location.origin)
+  const contractRequest = toUserListRequestContract(request)
+  if (contractRequest.query !== null && contractRequest.query.trim()) {
+    url.searchParams.set('q', contractRequest.query)
+  }
+  url.searchParams.set('page', String(contractRequest.page))
+  url.searchParams.set('pageSize', String(contractRequest.pageSize))
+  return requestJson(url.pathname + url.search, fromUserListResponseContract)
 }
 
 export function updateUserPermissions(

@@ -1,4 +1,5 @@
-import { Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { SiteManageJudgersCard } from '@/features/site-management/components/site-manage-judgers-card'
 import { SiteManageUserCard } from '@/features/site-management/components/site-manage-user-card'
@@ -12,6 +13,10 @@ import { useI18n } from '@/shared/i18n/i18n'
 export function SiteManagePage() {
   const { t } = useI18n()
   usePageTitle(t('siteManage.pageTitle'))
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeQuery = searchParams.get('q')?.trim() ?? ''
+  const [queryInput, setQueryInput] = useState(activeQuery)
+  const currentPage = parsePositivePage(searchParams.get('page'))
   const { session: user, siteManagerSession, navigationIntent: guardNavigationIntent } =
     useSessionGuard({ requireSiteManager: true })
   const {
@@ -22,12 +27,36 @@ export function SiteManagePage() {
     statusMessage,
     isLoadingUsers,
     isLoadingJudgers,
+    userPage,
+    userPageSize,
+    totalUsers,
     updatingUsername,
     deletingUsername,
     navigationIntent: modelNavigationIntent,
     savePermissions,
     deleteUser,
-  } = useSiteManageModel(Boolean(siteManagerSession))
+  } = useSiteManageModel(Boolean(siteManagerSession), {
+    query: activeQuery || null,
+    page: currentPage,
+    pageSize: 10,
+  })
+  const totalPages = Math.max(1, Math.ceil(totalUsers / userPageSize))
+
+  useEffect(() => {
+    setQueryInput(activeQuery)
+  }, [activeQuery])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (totalPages <= 1) {
+        nextSearchParams.delete('page')
+      } else {
+        nextSearchParams.set('page', String(totalPages))
+      }
+      setSearchParams(nextSearchParams)
+    }
+  }, [currentPage, searchParams, setSearchParams, totalPages])
 
   if (guardNavigationIntent) {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
@@ -63,17 +92,46 @@ export function SiteManagePage() {
             judgers,
             userListError,
             judgerListError,
-            statusMessage,
-            isLoadingUsers,
-            isLoadingJudgers,
-            updatingUsername,
-            deletingUsername,
-            navigationIntent: modelNavigationIntent,
-            savePermissions,
-            deleteUser,
-          }}
-          siteManagerSession={Boolean(siteManagerSession)}
-        />
+          statusMessage,
+          isLoadingUsers,
+          isLoadingJudgers,
+          userPage,
+          userPageSize,
+          totalUsers,
+          updatingUsername,
+          deletingUsername,
+          navigationIntent: modelNavigationIntent,
+          savePermissions,
+          deleteUser,
+        }}
+        siteManagerSession={Boolean(siteManagerSession)}
+        queryInput={queryInput}
+        onQueryInputChange={setQueryInput}
+        onApplyQuery={() => {
+          const nextSearchParams = new URLSearchParams(searchParams)
+          if (!queryInput.trim()) {
+            nextSearchParams.delete('q')
+          } else {
+            nextSearchParams.set('q', queryInput.trim())
+          }
+          nextSearchParams.delete('page')
+          setSearchParams(nextSearchParams)
+        }}
+        onClearQuery={() => {
+          setQueryInput('')
+          const nextSearchParams = new URLSearchParams(searchParams)
+          nextSearchParams.delete('q')
+          nextSearchParams.delete('page')
+          setSearchParams(nextSearchParams)
+        }}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          const nextSearchParams = new URLSearchParams(searchParams)
+          nextSearchParams.set('page', String(page))
+          setSearchParams(nextSearchParams)
+        }}
+      />
         <SiteManageJudgersCard
           model={{
             users,
@@ -83,6 +141,9 @@ export function SiteManagePage() {
             statusMessage,
             isLoadingUsers,
             isLoadingJudgers,
+            userPage,
+            userPageSize,
+            totalUsers,
             updatingUsername,
             deletingUsername,
             navigationIntent: modelNavigationIntent,
@@ -93,4 +154,9 @@ export function SiteManagePage() {
       </section>
     </main>
   )
+}
+
+function parsePositivePage(value: string | null): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
 }

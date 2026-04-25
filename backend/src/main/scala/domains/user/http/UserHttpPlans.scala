@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
-import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserIdentity, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserIdentity, UserListRequest, UserListResponse, UserRanklistItem}
 
 import java.sql.Connection
 
@@ -15,17 +15,16 @@ object UserHttpPlans:
     clearSessionCookie: Boolean
   )
 
-  case object ListUsers extends SiteManagerPlainUserHttpPlan[Unit, List[AuthUserListItem]]:
+  case object ListUsers extends SiteManagerPlainUserHttpPlan[UserListRequest, UserListResponse]:
 
     override val name: String = "ListUsers"
 
     override def execute(
       context: UserHttpContext,
       actor: SiteManagerUser,
-      input: Unit
-    ): IO[List[AuthUserListItem]] =
-      val _ = input
-      UserMutationCommands.listUsers(context.databaseSession, actor)
+      input: UserListRequest
+    ): IO[UserListResponse] =
+      UserQueryCommands.listUsers(context.databaseSession, actor, input)
 
   case object GetUserProfile extends AuthenticatedPlainUserHttpPlan[Username, UserQueryCommands.GetUserProfileResult]:
 

@@ -14,6 +14,8 @@ export type { UserRanklistItem } from '@/features/user/model/UserRanklistItem'
 export type { DisplayName, EmailAddress, PlaintextPassword, Username } from '@/features/auth/model/AuthValues'
 export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
+export type { UserListRequest } from '@/features/user/model/UserListRequest'
+export type { UserListResponse } from '@/features/user/model/UserListResponse'
 
 export {
   displayNameValue,
@@ -34,10 +36,12 @@ export {
 } from '@/features/user/domain/user-parsers'
 export {
   fromAuthUserListItemContract,
+  fromUserListResponseContract,
   fromUserAcceptedRanklistResponseContract,
   fromUserIdentityContract,
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
+  toUserListRequestContract,
   toUpdateManagedUserSettingsRequestContract,
   toUpdateOwnSettingsRequestContract,
   toUpdateUserPermissionsRequestContract,

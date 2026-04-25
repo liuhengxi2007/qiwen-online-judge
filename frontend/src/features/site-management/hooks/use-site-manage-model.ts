@@ -1,6 +1,6 @@
 import { useReducer } from 'react'
 
-import type { AuthUserListItem, UpdateUserPermissionsRequest } from '@/features/user/domain/user'
+import type { AuthUserListItem, UpdateUserPermissionsRequest, UserListRequest } from '@/features/user/domain/user'
 import {
   initialSiteManageState,
   reduceSiteManageState,
@@ -10,8 +10,8 @@ import { useSiteManageQuery } from '@/features/site-management/hooks/use-site-ma
 import { useUserDeleteMutation } from '@/features/site-management/hooks/use-user-delete-mutation'
 import { useUserPermissionsMutation } from '@/features/site-management/hooks/use-user-permissions-mutation'
 
-export function useSiteManageModel(siteManagerEnabled: boolean) {
-  const query = useSiteManageQuery(siteManagerEnabled)
+export function useSiteManageModel(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
+  const query = useSiteManageQuery(siteManagerEnabled, userListRequest)
   const [state, dispatch] = useReducer(reduceSiteManageState, initialSiteManageState)
   const mutation = useUserPermissionsMutation()
   const deleteMutation = useUserDeleteMutation()
@@ -68,6 +68,9 @@ export function useSiteManageModel(siteManagerEnabled: boolean) {
 
   return {
     users: query.users,
+    userPage: query.userPage,
+    userPageSize: query.userPageSize,
+    totalUsers: query.totalUsers,
     judgers: query.judgers,
     userListError: state.actionErrorMessage || query.userListError,
     judgerListError: query.judgerListError,

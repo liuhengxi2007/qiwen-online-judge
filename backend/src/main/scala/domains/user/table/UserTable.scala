@@ -5,7 +5,7 @@ import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserListRequest, UserListResponse, UserLocale, UserRanklistItem}
 import domains.user.table.UserTableSql.*
 import domains.user.table.UserTableSupport.*
 
@@ -31,21 +31,44 @@ object UserTable:
       finally statement.close()
     }
 
-  def listUsers(connection: Connection, actor: SiteManagerUser): IO[List[AuthUserListItem]] =
-    IO.blocking {
-      val _ = actor
-      val statement = connection.prepareStatement(listUsersSql)
-      try
-        val resultSet = statement.executeQuery()
+  def listUsers(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
+    val _ = actor
+    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
+    val normalizedRequest = request.copy(page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize)
+    for
+      totalItems <- IO.blocking {
+        val statement = connection.prepareStatement(countUsersSql)
         try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map(_ => readUserListItem(resultSet))
-            .toList
-        finally resultSet.close()
-      finally statement.close()
-    }
+          bindUserSearchQuery(statement, normalizedRequest.query, startIndex = 1)
+          val resultSet = statement.executeQuery()
+          try
+            if resultSet.next() then resultSet.getLong("total_items")
+            else 0L
+          finally resultSet.close()
+        finally statement.close()
+      }
+      items <- IO.blocking {
+        val statement = connection.prepareStatement(listUsersSql)
+        try
+          val nextIndex = bindUserSearchQuery(statement, normalizedRequest.query, startIndex = 1)
+          statement.setInt(nextIndex, normalizedRequest.pageSize)
+          statement.setInt(nextIndex + 1, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
+          val resultSet = statement.executeQuery()
+          try
+            Iterator
+              .continually(resultSet.next())
+              .takeWhile(identity)
+              .map(_ => readUserListItem(resultSet))
+              .toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield PageResponse(
+      items = items,
+      page = normalizedRequest.page,
+      pageSize = normalizedRequest.pageSize,
+      totalItems = totalItems
+    )
 
   def listSuggestions(connection: Connection, query: String): IO[List[UserIdentity]] =
     IO.blocking {

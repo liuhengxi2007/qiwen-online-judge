@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.PasswordHasher
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale}
+import domains.user.model.{UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale}
 import domains.user.table.UserTable
 
 import java.sql.Connection
@@ -55,14 +55,6 @@ object UserMutationCommands:
       case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
       case None => GetUserSettingsResult.NotFound
     }
-
-  def listUsers(
-    databaseSession: DatabaseSession,
-    actor: SiteManagerUser
-  ): IO[List[AuthUserListItem]] =
-    databaseSession.withTransactionConnection(connection =>
-      UserTable.listUsers(connection, actor)
-    )
 
   def updateUserPermissions(
     connection: Connection,

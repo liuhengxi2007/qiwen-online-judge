@@ -3,6 +3,11 @@ package domains.user.table
 object UserTableSql:
   val suggestionLimit: Int = 5
 
+  private val searchPredicate: String =
+    """
+      |(? = false or lower(username) like lower(?) or lower(display_name) like lower(?))
+      |""".stripMargin
+
   val findByUsernameSql: String =
     """
       |select username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager
@@ -11,10 +16,12 @@ object UserTableSql:
       |""".stripMargin
 
   val listUsersSql: String =
-    """
+    s"""
       |select username, display_name, email, display_mode, locale, problem_title_display_mode, site_manager, problem_manager
       |from auth_users
+      |where $searchPredicate
       |order by username asc
+      |limit ? offset ?
       |""".stripMargin
 
   val listSuggestionsSql: String =
@@ -37,9 +44,10 @@ object UserTableSql:
       |""".stripMargin
 
   val countUsersSql: String =
-    """
+    s"""
       |select count(*) as total_items
       |from auth_users
+      |where $searchPredicate
       |""".stripMargin
 
   val listContributionRanklistSql: String =

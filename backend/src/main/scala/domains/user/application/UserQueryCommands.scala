@@ -2,10 +2,10 @@ package domains.user.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserProfileResponse, UserRanklistItem}
+import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserListRequest, UserListResponse, UserProfileResponse, UserRanklistItem}
 import domains.user.table.UserTable
 
 object UserQueryCommands:
@@ -16,6 +16,16 @@ object UserQueryCommands:
 
   private val ranklistPageSize = 10
   private val minSuggestionQueryLength = 1
+
+  def listUsers(
+    databaseSession: DatabaseSession,
+    actor: SiteManagerUser,
+    request: UserListRequest
+  ): IO[UserListResponse] =
+    val normalizedRequest = request.copy(query = normalizeSearchQuery(request.query))
+    databaseSession.withTransactionConnection { connection =>
+      UserTable.listUsers(connection, actor, normalizedRequest)
+    }
 
   def getUserProfile(
     databaseSession: DatabaseSession,
@@ -75,9 +85,13 @@ object UserQueryCommands:
     query: String
   ): IO[List[UserIdentity]] =
     val _ = actor
-    val trimmedQuery = query.trim
-    if trimmedQuery.length < minSuggestionQueryLength then IO.pure(List.empty)
-    else
-      databaseSession.withTransactionConnection { connection =>
-        UserTable.listSuggestions(connection, trimmedQuery)
-      }
+    normalizeSearchQuery(Some(query)) match
+      case None => IO.pure(List.empty)
+      case Some(trimmedQuery) if trimmedQuery.length < minSuggestionQueryLength => IO.pure(List.empty)
+      case Some(trimmedQuery) =>
+        databaseSession.withTransactionConnection { connection =>
+          UserTable.listSuggestions(connection, trimmedQuery)
+        }
+
+  private def normalizeSearchQuery(rawQuery: Option[String]): Option[String] =
+    rawQuery.map(_.trim).filter(_.nonEmpty)

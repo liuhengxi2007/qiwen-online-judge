@@ -1,3 +1,4 @@
+import { type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Settings2, Trash2 } from 'lucide-react'
 
@@ -5,6 +6,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   displayNameValue,
@@ -21,11 +24,48 @@ type SiteManageModel = ReturnType<typeof useSiteManageModel>
 type SiteManageUserCardProps = {
   model: SiteManageModel
   siteManagerSession: boolean
+  queryInput: string
+  onQueryInputChange: (value: string) => void
+  onApplyQuery: () => void
+  onClearQuery: () => void
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
 }
 
-export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUserCardProps) {
+function buildPageNumbers(currentPage: number, totalPages: number): number[] {
+  const firstPage = Math.max(1, currentPage - 2)
+  const lastPage = Math.min(totalPages, currentPage + 2)
+  const pages: number[] = []
+  for (let page = firstPage; page <= lastPage; page += 1) {
+    pages.push(page)
+  }
+  return pages
+}
+
+export function SiteManageUserCard({
+  model,
+  siteManagerSession,
+  queryInput,
+  onQueryInputChange,
+  onApplyQuery,
+  onClearQuery,
+  currentPage,
+  totalPages,
+  onPageChange,
+}: SiteManageUserCardProps) {
   const { t } = useI18n()
   const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username) === 'admin'
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
+
+  function applyQueryOnEnter(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    event.preventDefault()
+    onApplyQuery()
+  }
 
   return (
     <Card className="border-stone-200 bg-white shadow-[0_24px_60px_rgba(28,25,23,0.08)]">
@@ -51,6 +91,33 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
             <AlertDescription className="text-rose-700">{model.userListError}</AlertDescription>
           </Alert>
         ) : null}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="site-manage-user-search">{t('siteManage.userSearchLabel')}</Label>
+            <Input
+              id="site-manage-user-search"
+              value={queryInput}
+              placeholder={t('siteManage.userSearchPlaceholder')}
+              onChange={(event) => {
+                onQueryInputChange(event.target.value)
+              }}
+              onKeyDown={applyQueryOnEnter}
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button type="button" className="rounded-2xl bg-stone-950 text-white hover:bg-stone-800" onClick={onApplyQuery}>
+              {t('siteManage.userSearchApply')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl border-stone-300 bg-white"
+              onClick={onClearQuery}
+            >
+              {t('siteManage.userSearchClear')}
+            </Button>
+          </div>
+        </div>
         {model.isLoadingUsers ? (
           <p className="text-sm text-stone-500">{t('siteManage.loadingUsers')}</p>
         ) : model.users.length === 0 ? (
@@ -141,8 +208,47 @@ export function SiteManageUserCard({ model, siteManagerSession }: SiteManageUser
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
         )}
+        {!model.isLoadingUsers && model.users.length > 0 && totalPages > 1 ? (
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl border-stone-300 bg-white"
+              disabled={currentPage === 1}
+              onClick={() => {
+                onPageChange(Math.max(1, currentPage - 1))
+              }}
+            >
+              {t('common.pagination.previous')}
+            </Button>
+            {pageNumbers.map((page) => (
+              <Button
+                key={page}
+                type="button"
+                variant={page === currentPage ? 'default' : 'outline'}
+                className={page === currentPage ? 'rounded-2xl bg-stone-950 text-white' : 'rounded-2xl border-stone-300 bg-white'}
+                onClick={() => {
+                  onPageChange(page)
+                }}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl border-stone-300 bg-white"
+              disabled={currentPage === totalPages}
+              onClick={() => {
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }}
+            >
+              {t('common.pagination.next')}
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )
