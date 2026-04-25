@@ -379,6 +379,7 @@ export const enMessages: Record<string, string> = {
     'submission.list.id': 'ID',
     'submission.list.problem': 'Problem',
     'submission.list.submitter': 'Submitter',
+    'submission.list.language': 'Lang',
     'submission.list.timeUsed': 'Time',
     'submission.list.spaceUsed': 'Memory',
     'submission.list.codeLength': 'Code length',
