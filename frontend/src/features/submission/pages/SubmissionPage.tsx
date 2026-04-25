@@ -1,6 +1,6 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Files } from 'lucide-react'
+import { Files } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -388,8 +388,15 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
 
         <Card className="mb-6 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <CardTitle className="text-xl text-slate-950">{t('submission.filter.title')}</CardTitle>
-            <CardDescription>{t('submission.filter.description')}</CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+                <Files className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-slate-950">{t('submission.filter.title')}</CardTitle>
+                <CardDescription>{t('submission.filter.description')}</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div
@@ -678,28 +685,28 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                 key={submissionIdValue(submission.id)}
                 className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
               >
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
-                      <Files className="size-5" />
-                    </div>
+                <CardContent className="py-5">
+                  <dl className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-9">
                     <div>
-                      <CardTitle className="text-xl text-slate-950">
-                        Submission #{submissionIdValue(submission.id)}
-                      </CardTitle>
-                      <CardDescription className="mt-2 text-sm font-medium text-slate-700">
-                        {submissionIdValue(submission.id)}
-                      </CardDescription>
+                      <dt className="text-slate-500">{t('submission.list.id')}</dt>
+                      <dd className="mt-1 font-medium text-slate-900">
+                        {submission.canViewDetail || usernameValue(submission.submitter.username) === usernameValue(user.username) ? (
+                          <Link
+                            className="-mx-2 block min-h-8 w-full rounded-lg px-2 py-1.5 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
+                            to={`/submissions/${submissionIdValue(submission.id)}`}
+                          >
+                            {submissionIdValue(submission.id)}
+                          </Link>
+                        ) : (
+                          <span className="block min-h-8 w-full px-2 py-1.5">{submissionIdValue(submission.id)}</span>
+                        )}
+                      </dd>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <dl className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">
                     <div>
                       <dt className="text-slate-500">{t('submission.list.problem')}</dt>
-                      <dd className="mt-1">
+                      <dd className="mt-1 font-medium text-slate-900">
                         <Link
-                          className="font-medium text-slate-900 hover:underline"
+                          className="-mx-2 block min-h-8 w-full rounded-lg px-2 py-1.5 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
                           to={`/problems/${problemSlugValue(submission.problemSlug)}`}
                         >
                           {problemTitleValue(submission.problemTitle)}
@@ -708,50 +715,51 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.submitter')}</dt>
-                      <dd className="mt-1">
-                        <UserProfileLink user={submission.submitter} />
+                      <dd className="mt-1 font-medium text-slate-900">
+                        <UserProfileLink
+                          className="block"
+                          linkClassName="-mx-2 block min-h-8 w-full rounded-lg px-2 py-1.5 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
+                          user={submission.submitter}
+                        />
                       </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.languageLabel')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">
-                        {submissionLanguageLabel(submission.language)}
+                        <span className="block min-h-8 w-full py-1.5">{submissionLanguageLabel(submission.language)}</span>
                       </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.verdict')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{submissionOverviewStatus(submission)}</dd>
+                      <dd className="mt-1 font-medium text-slate-900">
+                        <span className="block min-h-8 w-full py-1.5">{submissionOverviewStatus(submission)}</span>
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('common.submittedAt')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">
-                        {new Date(submission.submittedAt).toLocaleString()}
+                        <span className="block min-h-8 w-full py-1.5">{new Date(submission.submittedAt).toLocaleString()}</span>
                       </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.timeUsed')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{formatOptionalDurationMs(submission.timeUsedMs)}</dd>
+                      <dd className="mt-1 font-medium text-slate-900">
+                        <span className="block min-h-8 w-full py-1.5">{formatOptionalDurationMs(submission.timeUsedMs)}</span>
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.spaceUsed')}</dt>
                       <dd className="mt-1 font-medium text-slate-900">
-                        {formatOptionalMemoryKb(submission.memoryUsedKb)}
+                        <span className="block min-h-8 w-full py-1.5">{formatOptionalMemoryKb(submission.memoryUsedKb)}</span>
                       </dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">{t('submission.list.codeLength')}</dt>
-                      <dd className="mt-1 font-medium text-slate-900">{formatCodeLength(submission.codeLength)}</dd>
+                      <dd className="mt-1 font-medium text-slate-900">
+                        <span className="block min-h-8 w-full py-1.5">{formatCodeLength(submission.codeLength)}</span>
+                      </dd>
                     </div>
                   </dl>
-
-                  {submission.canViewDetail || usernameValue(submission.submitter.username) === usernameValue(user.username) ? (
-                    <Button asChild className="rounded-2xl bg-indigo-300 text-indigo-950 hover:bg-indigo-400">
-                      <Link to={`/submissions/${submissionIdValue(submission.id)}`}>
-                        {t('submission.list.viewSource')}
-                        <ArrowRight className="size-4" />
-                      </Link>
-                    </Button>
-                  ) : null}
                 </CardContent>
               </Card>
             ))}

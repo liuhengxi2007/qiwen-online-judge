@@ -10,12 +10,14 @@ type UserProfileLinkProps = {
   showUsername?: boolean
   stacked?: boolean
   className?: string
+  linkClassName?: string
 }
 
 export function UserProfileLink({
   user,
   stacked = false,
   className,
+  linkClassName,
 }: UserProfileLinkProps) {
   const viewerDisplayMode = useAuthStore((state) => state.session?.preferences.displayMode ?? 'display_name')
   const profilePath = `/user/${usernameValue(user.username)}`
@@ -23,7 +25,7 @@ export function UserProfileLink({
 
   return (
     <span className={className ?? wrapperClassName}>
-      <Link className="font-medium text-slate-900 hover:underline" to={profilePath}>
+      <Link className={linkClassName ?? 'font-medium text-slate-900 hover:underline'} to={profilePath}>
         {formatUserDisplayLabel(user, viewerDisplayMode)}
       </Link>
     </span>
