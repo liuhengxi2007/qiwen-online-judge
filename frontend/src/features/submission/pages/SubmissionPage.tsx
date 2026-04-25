@@ -13,6 +13,9 @@ import { listProblemSuggestions } from '@/features/problem/api/problem-client'
 import type { ProblemSuggestion } from '@/features/problem/domain/problem'
 import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import {
+  formatCodeLength,
+  formatOptionalDurationMs,
+  formatOptionalMemoryKb,
   isSubmissionSort,
   isSubmissionSortDirection,
   isSubmissionVerdictFilter,
@@ -40,30 +43,6 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
-
-function formatOptionalDurationMs(value: number | null): string {
-  if (value === null) {
-    return '--'
-  }
-
-  return `${value} ms`
-}
-
-function formatOptionalMemoryKb(value: number | null): string {
-  if (value === null) {
-    return '--'
-  }
-
-  if (value < 1024) {
-    return `${value} KB`
-  }
-
-  return `${(value / 1024).toFixed(1)} MB`
-}
-
-function formatCodeLength(value: number): string {
-  return `${value} B`
-}
 
 function submissionOverviewStatus(submission: SubmissionSummary): string {
   return submission.status !== 'completed'
