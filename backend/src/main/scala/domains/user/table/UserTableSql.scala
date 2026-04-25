@@ -29,8 +29,7 @@ object UserTableSql:
       |select username as submitter_username,
       |       display_name as submitter_display_name
       |from auth_users
-      |where lower(username) like lower(?) escape '\'
-      |   or lower(display_name) like lower(?) escape '\'
+      |where $searchPredicate
       |order by
       |  case
       |    when lower(username) = lower(?) then 0
@@ -48,6 +47,12 @@ object UserTableSql:
       |select count(*) as total_items
       |from auth_users
       |where $searchPredicate
+      |""".stripMargin
+
+  val countAllUsersSql: String =
+    """
+      |select count(*) as total_items
+      |from auth_users
       |""".stripMargin
 
   val listContributionRanklistSql: String =

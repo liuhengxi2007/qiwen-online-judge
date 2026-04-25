@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { listProblemSuggestions } from '@/features/problem/api/problem-client'
 import type { ProblemSuggestion } from '@/features/problem/domain/problem'
@@ -125,6 +126,8 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const [problemFilterInput, setProblemFilterInput] = useState('')
   const [isUsernameFilterFocused, setIsUsernameFilterFocused] = useState(false)
   const [isProblemFilterFocused, setIsProblemFilterFocused] = useState(false)
+  const [isUserSuggestionEnabled, setIsUserSuggestionEnabled] = useState(false)
+  const [isProblemSuggestionEnabled, setIsProblemSuggestionEnabled] = useState(false)
   const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<string | null>(null)
   const [userSuggestions, setUserSuggestions] = useState<UserIdentity[]>([])
   const [problemSuggestions, setProblemSuggestions] = useState<ProblemSuggestion[]>([])
@@ -157,9 +160,9 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const totalPages = Math.max(1, Math.ceil(submissionQuery.response.totalItems / submissionQuery.response.pageSize))
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
   const showUserSuggestions =
-    isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput) && userSuggestions.length > 0
+    isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput) && userSuggestions.length > 0
   const showProblemSuggestions =
-    isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput) && problemSuggestions.length > 0
+    isProblemSuggestionEnabled && isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput) && problemSuggestions.length > 0
 
   function updateSearchFilter(name: string, value: string | null) {
     const nextSearchParams = new URLSearchParams(searchParams)
@@ -245,7 +248,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   }, [currentPage, searchParams, setSearchParams, totalPages])
 
   useEffect(() => {
-    if (!isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {
+    if (!isUserSuggestionEnabled || !isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {
       setUserSuggestions([])
       return
     }
@@ -269,10 +272,10 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [isUsernameFilterFocused, usernameFilterInput])
+  }, [isUserSuggestionEnabled, isUsernameFilterFocused, usernameFilterInput])
 
   useEffect(() => {
-    if (!isProblemFilterFocused || !shouldShowTypingSuggestions(problemFilterInput) || hasFixedProblemFilter) {
+    if (!isProblemSuggestionEnabled || !isProblemFilterFocused || !shouldShowTypingSuggestions(problemFilterInput) || hasFixedProblemFilter) {
       setProblemSuggestions([])
       return
     }
@@ -296,7 +299,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [hasFixedProblemFilter, isProblemFilterFocused, problemFilterInput])
+  }, [hasFixedProblemFilter, isProblemSuggestionEnabled, isProblemFilterFocused, problemFilterInput])
 
   function updateUsernameFilterInput(value: string) {
     setUsernameFilterInput(value)
@@ -379,7 +382,24 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
           <CardContent className="space-y-4">
             <div className={`grid gap-4 ${hasFixedProblemFilter ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
               <div className="space-y-2">
-                <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="submission-user-suggestion-toggle" className="text-xs text-slate-500">
+                      {t('submission.filter.toggleUserSearch')}
+                    </Label>
+                    <Switch
+                      id="submission-user-suggestion-toggle"
+                      checked={isUserSuggestionEnabled}
+                      onCheckedChange={(checked) => {
+                        setIsUserSuggestionEnabled(checked)
+                        if (!checked) {
+                          setUserSuggestions([])
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
                 <div>
                   <Input
                     id="submission-username-filter"
@@ -423,7 +443,24 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
 
               {hasFixedProblemFilter ? null : (
                 <div className="space-y-2">
-                  <Label htmlFor="submission-problem-filter">{t('submission.filter.problemSlug')}</Label>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="submission-problem-filter">{t('submission.filter.problemSlug')}</Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="submission-problem-suggestion-toggle" className="text-xs text-slate-500">
+                        {t('submission.filter.toggleProblemSearch')}
+                      </Label>
+                      <Switch
+                        id="submission-problem-suggestion-toggle"
+                        checked={isProblemSuggestionEnabled}
+                        onCheckedChange={(checked) => {
+                          setIsProblemSuggestionEnabled(checked)
+                          if (!checked) {
+                            setProblemSuggestions([])
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                   <div>
                     <Input
                       id="submission-problem-filter"

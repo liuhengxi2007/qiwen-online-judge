@@ -76,12 +76,11 @@ object UserTable:
       val statement = connection.prepareStatement(listSuggestionsSql)
       try
         val searchPattern = LikePatternSql.fromRaw(query)
-        statement.setString(1, searchPattern.containsPattern)
-        statement.setString(2, searchPattern.containsPattern)
-        statement.setString(3, searchPattern.raw)
-        statement.setString(4, searchPattern.prefixPattern)
-        statement.setString(5, searchPattern.prefixPattern)
-        statement.setString(6, searchPattern.containsPattern)
+        val nextIndex = bindUserSearchQuery(statement, Some(query), startIndex = 1)
+        statement.setString(nextIndex, searchPattern.raw)
+        statement.setString(nextIndex + 1, searchPattern.prefixPattern)
+        statement.setString(nextIndex + 2, searchPattern.prefixPattern)
+        statement.setString(nextIndex + 3, searchPattern.containsPattern)
         val resultSet = statement.executeQuery()
         try
           Iterator
@@ -229,7 +228,7 @@ object UserTable:
     }
 
   private def countUsers(connection: Connection): Long =
-    val statement = connection.prepareStatement(countUsersSql)
+    val statement = connection.prepareStatement(countAllUsersSql)
     try
       val resultSet = statement.executeQuery()
       try
