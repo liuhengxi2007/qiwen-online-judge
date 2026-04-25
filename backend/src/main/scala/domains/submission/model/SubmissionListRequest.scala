@@ -1,11 +1,10 @@
 package domains.submission.model
 
-import domains.auth.model.Username
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class SubmissionListRequest(
-  username: Option[Username],
+  userQuery: Option[String],
   problemQuery: Option[String],
   verdict: SubmissionVerdictFilter,
   sort: SubmissionSort,

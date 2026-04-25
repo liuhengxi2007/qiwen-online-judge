@@ -65,16 +65,16 @@ object ProblemTableSql:
 
   private val searchPredicate: String =
     """
-      |(? = false or lower(p.slug) like lower(?) or lower(p.title) like lower(?))
+      |(? = false or lower(p.slug) like lower(?) escape '\' or lower(p.title) like lower(?) escape '\')
       |""".stripMargin
 
   private val suggestionOrderClause: String =
     """
       |case
       |  when lower(p.slug) = lower(?) then 0
-      |  when lower(p.slug) like lower(?) then 1
-      |  when lower(p.title) like lower(?) then 2
-      |  when position(lower(?) in lower(p.slug)) > 0 then 3
+      |  when lower(p.slug) like lower(?) escape '\' then 1
+      |  when lower(p.title) like lower(?) escape '\' then 2
+      |  when lower(p.slug) like lower(?) escape '\' then 3
       |  else 4
       |end,
       |p.slug asc

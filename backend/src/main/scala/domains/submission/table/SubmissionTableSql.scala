@@ -135,12 +135,12 @@ object SubmissionTableSql:
 
   private val usernameFilterPredicate: String =
     """
-      |(? = false or s.submitter_username = ?)
+      |(? = false or lower(s.submitter_username) like lower(?) escape '\' or lower(au.display_name) like lower(?) escape '\')
       |""".stripMargin
 
   private val problemQueryFilterPredicate: String =
     """
-      |(? = false or lower(p.slug) = lower(?) or position(lower(?) in lower(p.title)) > 0)
+      |(? = false or lower(p.slug) like lower(?) escape '\' or lower(p.title) like lower(?) escape '\')
       |""".stripMargin
 
   private val verdictFilterPredicate: String =
@@ -164,6 +164,7 @@ object SubmissionTableSql:
       |select count(*) as total_items
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
       |where
       |  $summaryVisibilityPredicate
       |  and $usernameFilterPredicate

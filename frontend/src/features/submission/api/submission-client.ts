@@ -28,8 +28,8 @@ export async function listSubmissions(request: SubmissionListRequest): Promise<S
   const url = new URL('/api/submissions', window.location.origin)
   const contractRequest = toSubmissionListRequestContract(request)
 
-  if (contractRequest.username !== null) {
-    url.searchParams.set('username', contractRequest.username)
+  if (contractRequest.userQuery !== null && contractRequest.userQuery.trim()) {
+    url.searchParams.set('username', contractRequest.userQuery)
   }
   if (contractRequest.problemQuery !== null && contractRequest.problemQuery.trim()) {
     url.searchParams.set('problem', contractRequest.problemQuery)

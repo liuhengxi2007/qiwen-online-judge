@@ -5,7 +5,7 @@ object UserTableSql:
 
   private val searchPredicate: String =
     """
-      |(? = false or lower(username) like lower(?) or lower(display_name) like lower(?))
+      |(? = false or lower(username) like lower(?) escape '\' or lower(display_name) like lower(?) escape '\')
       |""".stripMargin
 
   val findByUsernameSql: String =
@@ -29,14 +29,14 @@ object UserTableSql:
       |select username as submitter_username,
       |       display_name as submitter_display_name
       |from auth_users
-      |where lower(username) like lower(?)
-      |   or lower(display_name) like lower(?)
+      |where lower(username) like lower(?) escape '\'
+      |   or lower(display_name) like lower(?) escape '\'
       |order by
       |  case
       |    when lower(username) = lower(?) then 0
-      |    when lower(username) like lower(?) then 1
-      |    when lower(display_name) like lower(?) then 2
-      |    when position(lower(?) in lower(username)) > 0 then 3
+      |    when lower(username) like lower(?) escape '\' then 1
+      |    when lower(display_name) like lower(?) escape '\' then 2
+      |    when lower(username) like lower(?) escape '\' then 3
       |    else 4
       |  end,
       |  lower(username) asc

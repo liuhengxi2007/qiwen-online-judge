@@ -9,7 +9,7 @@ import {
 
 function requestKey(request: SubmissionListRequest): string {
   return JSON.stringify({
-    username: request.username,
+    userQuery: request.userQuery,
     problemQuery: request.problemQuery,
     verdict: request.verdict,
     sort: request.sort,

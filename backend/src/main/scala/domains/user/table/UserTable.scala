@@ -5,6 +5,7 @@ import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
+import domains.shared.sql.LikePatternSql
 import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserListRequest, UserListResponse, UserLocale, UserRanklistItem}
 import domains.user.table.UserTableSql.*
 import domains.user.table.UserTableSupport.*
@@ -74,15 +75,13 @@ object UserTable:
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSql)
       try
-        val trimmedQuery = query.trim
-        val containsPattern = s"%$trimmedQuery%"
-        val prefixPattern = s"$trimmedQuery%"
-        statement.setString(1, containsPattern)
-        statement.setString(2, containsPattern)
-        statement.setString(3, trimmedQuery)
-        statement.setString(4, prefixPattern)
-        statement.setString(5, prefixPattern)
-        statement.setString(6, trimmedQuery)
+        val searchPattern = LikePatternSql.fromRaw(query)
+        statement.setString(1, searchPattern.containsPattern)
+        statement.setString(2, searchPattern.containsPattern)
+        statement.setString(3, searchPattern.raw)
+        statement.setString(4, searchPattern.prefixPattern)
+        statement.setString(5, searchPattern.prefixPattern)
+        statement.setString(6, searchPattern.containsPattern)
         val resultSet = statement.executeQuery()
         try
           Iterator

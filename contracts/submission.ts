@@ -27,7 +27,7 @@ export type CreateSubmissionRequest = {
 }
 
 export type SubmissionListRequest = {
-  username: string | null
+  userQuery: string | null
   problemQuery: string | null
   verdict: SubmissionVerdictFilter
   sort: SubmissionSort

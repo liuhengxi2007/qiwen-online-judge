@@ -4,6 +4,7 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.user.model.UserIdentity
 import domains.shared.model.{PageRequest, PageResponse}
+import domains.shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionListRequest, SubmissionListResponse, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict, SubmissionVerdictFilter}
@@ -12,7 +13,7 @@ import domains.submission.table.SubmissionTableSql.*
 import domains.submission.table.SubmissionTableSupport.*
 
 import java.nio.charset.StandardCharsets
-import java.sql.{Connection, Timestamp}
+import java.sql.{Connection, PreparedStatement, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
@@ -103,9 +104,9 @@ object SubmissionTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSql(normalizedRequest.sort, normalizedRequest.direction))
         try
-          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true)
-          statement.setInt(24, normalizedRequest.pageSize)
-          statement.setInt(25, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
+          val nextIndex = bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true)
+          statement.setInt(nextIndex, normalizedRequest.pageSize)
+          statement.setInt(nextIndex + 1, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
           val resultSet = statement.executeQuery()
           try
             Iterator
@@ -194,24 +195,18 @@ object SubmissionTable:
     }
 
   private def bindListFilterStatement(
-    statement: java.sql.PreparedStatement,
+    statement: PreparedStatement,
     actor: AuthUser,
     request: SubmissionListRequest,
     includeDetailVisibility: Boolean
-  ): Unit =
+  ): Int =
     val afterDetailVisibility =
       if includeDetailVisibility then bindVisibility(statement, 1, actor)
       else 1
 
     val afterSummaryVisibility = bindVisibility(statement, afterDetailVisibility, actor)
-
-    statement.setBoolean(afterSummaryVisibility, request.username.nonEmpty)
-    statement.setString(afterSummaryVisibility + 1, request.username.map(_.value).getOrElse(""))
-
-    val problemQuery = request.problemQuery.map(_.trim).filter(_.nonEmpty)
-    statement.setBoolean(afterSummaryVisibility + 2, problemQuery.nonEmpty)
-    statement.setString(afterSummaryVisibility + 3, problemQuery.getOrElse(""))
-    statement.setString(afterSummaryVisibility + 4, problemQuery.getOrElse(""))
+    val afterUserQuery = bindUserQuery(statement, afterSummaryVisibility, request.userQuery)
+    val afterProblemQuery = bindProblemQuery(statement, afterUserQuery, request.problemQuery)
 
     val isAllVerdict = request.verdict == SubmissionVerdictFilter.All
     val isPendingVerdict = request.verdict == SubmissionVerdictFilter.Pending
@@ -224,23 +219,56 @@ object SubmissionTable:
       case SubmissionVerdictFilter.SystemError => Some(SubmissionVerdict.SystemError)
       case SubmissionVerdictFilter.All | SubmissionVerdictFilter.Pending => None
 
-    statement.setBoolean(afterSummaryVisibility + 5, isAllVerdict)
-    statement.setBoolean(afterSummaryVisibility + 6, isPendingVerdict)
-    statement.setBoolean(afterSummaryVisibility + 7, specificVerdict.nonEmpty)
-    specificVerdict match
-      case Some(value) => statement.setString(afterSummaryVisibility + 8, SubmissionVerdict.toDatabase(value))
-      case None => statement.setNull(afterSummaryVisibility + 8, java.sql.Types.VARCHAR)
+    val afterAllVerdict = bindBoolean(statement, afterProblemQuery, isAllVerdict)
+    val afterPendingVerdict = bindBoolean(statement, afterAllVerdict, isPendingVerdict)
+    val afterSpecificVerdict = bindBoolean(statement, afterPendingVerdict, specificVerdict.nonEmpty)
+    bindNullableString(statement, afterSpecificVerdict, specificVerdict.map(SubmissionVerdict.toDatabase), java.sql.Types.VARCHAR)
 
   private def bindVisibility(
-    statement: java.sql.PreparedStatement,
+    statement: PreparedStatement,
     startIndex: Int,
     actor: AuthUser
   ): Int =
-    statement.setBoolean(startIndex, SubmissionPolicy.hasGlobalViewOverride(actor))
-    statement.setString(startIndex + 1, actor.username.value)
-    statement.setString(startIndex + 2, actor.username.value)
-    statement.setString(startIndex + 3, actor.username.value)
-    statement.setBoolean(startIndex + 4, SubmissionPolicy.hasGlobalViewOverride(actor))
-    statement.setString(startIndex + 5, actor.username.value)
-    statement.setString(startIndex + 6, actor.username.value)
-    startIndex + 7
+    val afterGlobalOverride = bindBoolean(statement, startIndex, SubmissionPolicy.hasGlobalViewOverride(actor))
+    val afterOwnUsername = bindString(statement, afterGlobalOverride, actor.username.value)
+    val afterProblemViewerGrant = bindString(statement, afterOwnUsername, actor.username.value)
+    val afterProblemGroupGrant = bindString(statement, afterProblemViewerGrant, actor.username.value)
+    val afterProblemSetOverride = bindBoolean(statement, afterProblemGroupGrant, SubmissionPolicy.hasGlobalViewOverride(actor))
+    val afterProblemSetViewerGrant = bindString(statement, afterProblemSetOverride, actor.username.value)
+    bindString(statement, afterProblemSetViewerGrant, actor.username.value)
+
+  private def bindUserQuery(
+    statement: PreparedStatement,
+    startIndex: Int,
+    rawQuery: Option[String]
+  ): Int =
+    val normalizedQuery = rawQuery.map(_.trim).filter(_.nonEmpty)
+    val searchPattern = normalizedQuery.map(LikePatternSql.fromRaw)
+    val afterEnabledFlag = bindBoolean(statement, startIndex, normalizedQuery.nonEmpty)
+    val afterUsernamePattern = bindString(statement, afterEnabledFlag, searchPattern.map(_.containsPattern).getOrElse(""))
+    bindString(statement, afterUsernamePattern, searchPattern.map(_.containsPattern).getOrElse(""))
+
+  private def bindProblemQuery(
+    statement: PreparedStatement,
+    startIndex: Int,
+    rawQuery: Option[String]
+  ): Int =
+    val normalizedQuery = rawQuery.map(_.trim).filter(_.nonEmpty)
+    val searchPattern = normalizedQuery.map(LikePatternSql.fromRaw)
+    val afterEnabledFlag = bindBoolean(statement, startIndex, normalizedQuery.nonEmpty)
+    val afterSlugPattern = bindString(statement, afterEnabledFlag, searchPattern.map(_.containsPattern).getOrElse(""))
+    bindString(statement, afterSlugPattern, searchPattern.map(_.containsPattern).getOrElse(""))
+
+  private def bindBoolean(statement: PreparedStatement, index: Int, value: Boolean): Int =
+    statement.setBoolean(index, value)
+    index + 1
+
+  private def bindString(statement: PreparedStatement, index: Int, value: String): Int =
+    statement.setString(index, value)
+    index + 1
+
+  private def bindNullableString(statement: PreparedStatement, index: Int, value: Option[String], sqlType: Int): Int =
+    value match
+      case Some(currentValue) => statement.setString(index, currentValue)
+      case None => statement.setNull(index, sqlType)
+    index + 1

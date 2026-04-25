@@ -3,7 +3,6 @@ package domains.submission.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.model.Username
 import domains.submission.application.SubmissionCommands
 import domains.submission.model.{CreateSubmissionRequest, SubmissionId, SubmissionListRequest, SubmissionSort, SubmissionSortDirection, SubmissionVerdictFilter}
 import domains.shared.http.AuthenticatedHttpExecutor
@@ -68,7 +67,7 @@ object SubmissionRouter:
       pageSize <- parsePositiveInt(queryParams.get("pageSize"), defaultValue = 10, fieldName = "Page size")
     yield
       SubmissionListRequest(
-        username = queryParams.get("username").map(Username.canonical),
+        userQuery = queryParams.get("username").map(_.trim).filter(_.nonEmpty),
         problemQuery = queryParams.get("problem").map(_.trim).filter(_.nonEmpty),
         verdict = verdict,
         sort = sort,

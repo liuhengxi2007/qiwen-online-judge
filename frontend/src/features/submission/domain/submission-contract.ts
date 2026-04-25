@@ -21,7 +21,6 @@ import {
   requireParsed,
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission-parsers'
-import { parseUsername, usernameValue } from '@/features/user/domain/user'
 
 export function fromSubmissionDetailContract(submission: SubmissionDetailContract): SubmissionDetail {
   return {
@@ -84,7 +83,7 @@ export function toCreateSubmissionRequestContract(request: CreateSubmissionReque
 
 export function toSubmissionListRequestContract(request: SubmissionListRequest): SubmissionListRequestContract {
   return {
-    username: request.username === null ? null : usernameValue(request.username),
+    userQuery: request.userQuery,
     problemQuery: request.problemQuery,
     verdict: request.verdict,
     sort: request.sort,
@@ -95,8 +94,8 @@ export function toSubmissionListRequestContract(request: SubmissionListRequest):
 }
 
 export function fromSubmissionListRequestContract(request: SubmissionListRequestContract): SubmissionListRequest {
-  if (request.username !== null && typeof request.username !== 'string') {
-    throw new Error('Invalid submission list request username.')
+  if (request.userQuery !== null && typeof request.userQuery !== 'string') {
+    throw new Error('Invalid submission list request user query.')
   }
 
   if (request.problemQuery !== null && typeof request.problemQuery !== 'string') {
@@ -116,7 +115,7 @@ export function fromSubmissionListRequestContract(request: SubmissionListRequest
   }
 
   return {
-    username: request.username === null ? null : requireParsed(parseUsername(request.username), 'submission list username'),
+    userQuery: request.userQuery,
     problemQuery: request.problemQuery,
     verdict: request.verdict,
     sort: request.sort,

@@ -5,6 +5,7 @@ import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
 import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility}
+import domains.shared.sql.LikePatternSql
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -104,10 +105,10 @@ object ProblemTableSupport:
     startIndex: Int
   ): Int =
     val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
-    val likeQuery = normalizedQuery.map(value => s"%$value%").getOrElse("")
+    val likeQuery = normalizedQuery.map(LikePatternSql.fromRaw)
     statement.setBoolean(startIndex, normalizedQuery.nonEmpty)
-    statement.setString(startIndex + 1, likeQuery)
-    statement.setString(startIndex + 2, likeQuery)
+    statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
+    statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3
 
   def bindListQuery(
@@ -129,10 +130,11 @@ object ProblemTableSupport:
   ): Unit =
     val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
     val afterSearchIndex = bindSearchQuery(statement, Some(query), startIndex = nextIndex)
-    statement.setString(afterSearchIndex, query)
-    statement.setString(afterSearchIndex + 1, s"$query%")
-    statement.setString(afterSearchIndex + 2, s"$query%")
-    statement.setString(afterSearchIndex + 3, query)
+    val searchPattern = LikePatternSql.fromRaw(query)
+    statement.setString(afterSearchIndex, searchPattern.raw)
+    statement.setString(afterSearchIndex + 1, searchPattern.prefixPattern)
+    statement.setString(afterSearchIndex + 2, searchPattern.prefixPattern)
+    statement.setString(afterSearchIndex + 3, searchPattern.containsPattern)
 
   def bindContainingProblemSetVisibilityQuery(
     statement: PreparedStatement,

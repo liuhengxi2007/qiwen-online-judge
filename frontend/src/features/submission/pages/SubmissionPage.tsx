@@ -33,10 +33,8 @@ import { useSubmissionListQuery } from '@/features/submission/hooks/use-submissi
 import { listUserSuggestions } from '@/features/user/api/user-client'
 import {
   displayNameValue,
-  parseUsername,
   usernameValue,
   type UserIdentity,
-  type Username,
 } from '@/features/user/domain/user'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -123,14 +121,11 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
   const problemQueryParam = searchParams.get('problem')?.trim() ?? ''
-  const usernameQueryResult = usernameQueryParam ? parseUsername(usernameQueryParam) : null
-  const queryUsernameFilter = usernameQueryResult?.ok ? usernameQueryResult.value : null
   const [usernameFilterInput, setUsernameFilterInput] = useState('')
   const [problemFilterInput, setProblemFilterInput] = useState('')
-  const [filterErrorMessage, setFilterErrorMessage] = useState('')
   const [isUsernameFilterFocused, setIsUsernameFilterFocused] = useState(false)
   const [isProblemFilterFocused, setIsProblemFilterFocused] = useState(false)
-  const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<Username | null>(null)
+  const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<string | null>(null)
   const [userSuggestions, setUserSuggestions] = useState<UserIdentity[]>([])
   const [problemSuggestions, setProblemSuggestions] = useState<ProblemSuggestion[]>([])
   const hasFixedProblemFilter = fixedProblemSlugFilter !== undefined
@@ -149,7 +144,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   })()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const request: SubmissionListRequest = {
-    username: queryUsernameFilter,
+    userQuery: usernameQueryParam || null,
     problemQuery: activeProblemQuery || null,
     verdict: activeVerdictFilter,
     sort: activeSort,
@@ -225,10 +220,10 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     ) : null
 
   useEffect(() => {
-    setUsernameFilterInput(queryUsernameFilter ? usernameValue(queryUsernameFilter) : '')
-    setSelectedUsernameSuggestion(queryUsernameFilter)
+    setUsernameFilterInput(usernameQueryParam)
+    setSelectedUsernameSuggestion(usernameQueryParam || null)
     setIsUsernameFilterFocused(false)
-  }, [queryUsernameFilter])
+  }, [usernameQueryParam])
 
   useEffect(() => {
     if (!hasFixedProblemFilter) {
@@ -307,13 +302,11 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     setUsernameFilterInput(value)
     setSelectedUsernameSuggestion(null)
     setIsUsernameFilterFocused(true)
-    setFilterErrorMessage('')
   }
 
   function updateProblemFilterInput(value: string) {
     setProblemFilterInput(value)
     setIsProblemFilterFocused(true)
-    setFilterErrorMessage('')
   }
 
   function applyFilters() {
@@ -323,24 +316,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     if (!trimmedUsernameInput) {
       nextSearchParams.delete('username')
     } else {
-      const nextUsername =
-        selectedUsernameSuggestion !== null
-          ? selectedUsernameSuggestion
-          : (() => {
-              const usernameResult = parseUsername(trimmedUsernameInput)
-              if (!usernameResult.ok) {
-                setFilterErrorMessage(usernameResult.error)
-                return null
-              }
-
-              return usernameResult.value
-            })()
-
-      if (nextUsername === null) {
-        return
-      }
-
-      nextSearchParams.set('username', usernameValue(nextUsername))
+      nextSearchParams.set('username', selectedUsernameSuggestion ?? trimmedUsernameInput)
     }
 
     if (!hasFixedProblemFilter) {
@@ -355,7 +331,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
     nextSearchParams.delete('page')
     setIsUsernameFilterFocused(false)
     setIsProblemFilterFocused(false)
-    setFilterErrorMessage('')
     setSearchParams(nextSearchParams)
   }
 
@@ -434,9 +409,8 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                         }}
                         onClick={() => {
                           setUsernameFilterInput(usernameValue(suggestion.username))
-                          setSelectedUsernameSuggestion(suggestion.username)
+                          setSelectedUsernameSuggestion(usernameValue(suggestion.username))
                           setIsUsernameFilterFocused(false)
-                          setFilterErrorMessage('')
                         }}
                       >
                         <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
@@ -480,7 +454,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                           onClick={() => {
                             setProblemFilterInput(problemSlugValue(suggestion.slug))
                             setIsProblemFilterFocused(false)
-                            setFilterErrorMessage('')
                           }}
                         >
                           <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
@@ -565,12 +538,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
               </div>
             </div>
 
-            {filterErrorMessage ? (
-              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{filterErrorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-
             <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
@@ -591,7 +558,6 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                   setProblemFilterInput('')
                   setIsUsernameFilterFocused(false)
                   setIsProblemFilterFocused(false)
-                  setFilterErrorMessage('')
                   const nextSearchParams = new URLSearchParams(searchParams)
                   nextSearchParams.delete('username')
                   nextSearchParams.delete('problem')
@@ -606,10 +572,10 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
               </Button>
             </div>
 
-            {queryUsernameFilter ? (
+            {usernameQueryParam ? (
               <p className="text-sm text-slate-600">
                 {t('submission.filter.showingUser', {
-                  username: usernameValue(queryUsernameFilter),
+                  query: usernameQueryParam,
                 })}
               </p>
             ) : (
