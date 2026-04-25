@@ -128,6 +128,8 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const [isProblemFilterFocused, setIsProblemFilterFocused] = useState(false)
   const [isUserSuggestionEnabled, setIsUserSuggestionEnabled] = useState(false)
   const [isProblemSuggestionEnabled, setIsProblemSuggestionEnabled] = useState(false)
+  const [isLoadingUserSuggestions, setIsLoadingUserSuggestions] = useState(false)
+  const [isLoadingProblemSuggestions, setIsLoadingProblemSuggestions] = useState(false)
   const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<string | null>(null)
   const [userSuggestions, setUserSuggestions] = useState<UserIdentity[]>([])
   const [problemSuggestions, setProblemSuggestions] = useState<ProblemSuggestion[]>([])
@@ -159,10 +161,10 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   const currentPageSubmissions = submissionQuery.response.items
   const totalPages = Math.max(1, Math.ceil(submissionQuery.response.totalItems / submissionQuery.response.pageSize))
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
-  const showUserSuggestions =
-    isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput) && userSuggestions.length > 0
-  const showProblemSuggestions =
-    isProblemSuggestionEnabled && isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput) && problemSuggestions.length > 0
+  const showUserSuggestionPanel =
+    isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput)
+  const showProblemSuggestionPanel =
+    isProblemSuggestionEnabled && isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput)
 
   function updateSearchFilter(name: string, value: string | null) {
     const nextSearchParams = new URLSearchParams(searchParams)
@@ -250,26 +252,31 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   useEffect(() => {
     if (!isUserSuggestionEnabled || !isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {
       setUserSuggestions([])
+      setIsLoadingUserSuggestions(false)
       return
     }
 
     let cancelled = false
     const timeoutId = window.setTimeout(() => {
+      setIsLoadingUserSuggestions(true)
       void listUserSuggestions(usernameFilterInput.trim())
         .then((suggestions) => {
           if (!cancelled) {
             setUserSuggestions(suggestions)
+            setIsLoadingUserSuggestions(false)
           }
         })
         .catch(() => {
           if (!cancelled) {
             setUserSuggestions([])
+            setIsLoadingUserSuggestions(false)
           }
         })
     }, 150)
 
     return () => {
       cancelled = true
+      setIsLoadingUserSuggestions(false)
       window.clearTimeout(timeoutId)
     }
   }, [isUserSuggestionEnabled, isUsernameFilterFocused, usernameFilterInput])
@@ -277,26 +284,31 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
   useEffect(() => {
     if (!isProblemSuggestionEnabled || !isProblemFilterFocused || !shouldShowTypingSuggestions(problemFilterInput) || hasFixedProblemFilter) {
       setProblemSuggestions([])
+      setIsLoadingProblemSuggestions(false)
       return
     }
 
     let cancelled = false
     const timeoutId = window.setTimeout(() => {
+      setIsLoadingProblemSuggestions(true)
       void listProblemSuggestions(problemFilterInput.trim())
         .then((suggestions) => {
           if (!cancelled) {
             setProblemSuggestions(suggestions)
+            setIsLoadingProblemSuggestions(false)
           }
         })
         .catch(() => {
           if (!cancelled) {
             setProblemSuggestions([])
+            setIsLoadingProblemSuggestions(false)
           }
         })
     }, 150)
 
     return () => {
       cancelled = true
+      setIsLoadingProblemSuggestions(false)
       window.clearTimeout(timeoutId)
     }
   }, [hasFixedProblemFilter, isProblemSuggestionEnabled, isProblemFilterFocused, problemFilterInput])
@@ -380,7 +392,13 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
             <CardDescription>{t('submission.filter.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className={`grid gap-4 ${hasFixedProblemFilter ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+            <div
+              className={`grid gap-4 ${
+                hasFixedProblemFilter
+                  ? 'lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,5fr)]'
+                  : 'lg:grid-cols-[minmax(0,5fr)_minmax(0,5fr)_minmax(0,4fr)_minmax(0,5fr)]'
+              }`}
+            >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
@@ -393,6 +411,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                       checked={isUserSuggestionEnabled}
                       onCheckedChange={(checked) => {
                         setIsUserSuggestionEnabled(checked)
+                        setIsUsernameFilterFocused(checked)
                         if (!checked) {
                           setUserSuggestions([])
                         }
@@ -417,26 +436,32 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     onKeyDown={applyFiltersOnEnter}
                   />
                 </div>
-                {showUserSuggestions ? (
+                {showUserSuggestionPanel ? (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                    {userSuggestions.map((suggestion) => (
-                      <button
-                        key={usernameValue(suggestion.username)}
-                        type="button"
-                        className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
-                        onMouseDown={(event) => {
-                          event.preventDefault()
-                        }}
-                        onClick={() => {
-                          setUsernameFilterInput(usernameValue(suggestion.username))
-                          setSelectedUsernameSuggestion(usernameValue(suggestion.username))
-                          setIsUsernameFilterFocused(false)
-                        }}
-                      >
-                        <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
-                        <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
-                      </button>
-                    ))}
+                    {isLoadingUserSuggestions ? (
+                      <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
+                    ) : userSuggestions.length === 0 ? (
+                      <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
+                    ) : (
+                      userSuggestions.map((suggestion) => (
+                        <button
+                          key={usernameValue(suggestion.username)}
+                          type="button"
+                          className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                          onMouseDown={(event) => {
+                            event.preventDefault()
+                          }}
+                          onClick={() => {
+                            setUsernameFilterInput(usernameValue(suggestion.username))
+                            setSelectedUsernameSuggestion(usernameValue(suggestion.username))
+                            setIsUsernameFilterFocused(false)
+                          }}
+                        >
+                          <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
+                          <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
+                        </button>
+                      ))
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -454,6 +479,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                         checked={isProblemSuggestionEnabled}
                         onCheckedChange={(checked) => {
                           setIsProblemSuggestionEnabled(checked)
+                          setIsProblemFilterFocused(checked)
                           if (!checked) {
                             setProblemSuggestions([])
                           }
@@ -478,25 +504,31 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                       onKeyDown={applyFiltersOnEnter}
                     />
                   </div>
-                  {showProblemSuggestions ? (
+                  {showProblemSuggestionPanel ? (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                      {problemSuggestions.map((suggestion) => (
-                        <button
-                          key={problemSlugValue(suggestion.slug)}
-                          type="button"
-                          className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
-                          onMouseDown={(event) => {
-                            event.preventDefault()
-                          }}
-                          onClick={() => {
-                            setProblemFilterInput(problemSlugValue(suggestion.slug))
-                            setIsProblemFilterFocused(false)
-                          }}
-                        >
-                          <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
-                          <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
-                        </button>
-                      ))}
+                      {isLoadingProblemSuggestions ? (
+                        <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
+                      ) : problemSuggestions.length === 0 ? (
+                        <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
+                      ) : (
+                        problemSuggestions.map((suggestion) => (
+                          <button
+                            key={problemSlugValue(suggestion.slug)}
+                            type="button"
+                            className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                            onMouseDown={(event) => {
+                              event.preventDefault()
+                            }}
+                            onClick={() => {
+                              setProblemFilterInput(problemSlugValue(suggestion.slug))
+                              setIsProblemFilterFocused(false)
+                            }}
+                          >
+                            <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
+                            <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
+                          </button>
+                        ))
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -512,7 +544,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                     }
                   }}
                 >
-                  <SelectTrigger id="submission-verdict-filter" className="rounded-2xl border-slate-300 bg-white">
+                  <SelectTrigger id="submission-verdict-filter" className="min-w-32 rounded-2xl border-slate-300 bg-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -527,7 +559,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
 
               <div className="space-y-2">
                 <Label htmlFor="submission-sort">{t('submission.filter.sort')}</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Select
                     value={activeSort}
                     onValueChange={(value) => {
@@ -549,7 +581,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                       }
                     }}
                   >
-                    <SelectTrigger id="submission-sort" className="rounded-2xl border-slate-300 bg-white">
+                    <SelectTrigger id="submission-sort" className="min-w-40 flex-1 rounded-2xl border-slate-300 bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

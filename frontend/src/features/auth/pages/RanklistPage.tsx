@@ -74,6 +74,7 @@ function RanklistPagination({
 type ContributionRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
+  errorMessage: string
   items: UserRanklistItem[]
   isLoading: boolean
   pageSize: number
@@ -83,6 +84,7 @@ type ContributionRanklistCardProps = {
 function ContributionRanklistCard({
   acceptedPage,
   contributionPage,
+  errorMessage,
   items,
   isLoading,
   pageSize,
@@ -98,6 +100,10 @@ function ContributionRanklistCard({
       <CardContent className="space-y-4 p-5 pt-0 sm:p-6 sm:pt-0">
         {isLoading ? (
           <p className="text-sm text-slate-500">{t('ranklist.loading')}</p>
+        ) : errorMessage ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+            <p className="text-base font-medium text-slate-900">{t('ranklist.unavailable')}</p>
+          </div>
         ) : items.length > 0 ? (
           items.map((item, index) => {
             const rank = (contributionPage - 1) * pageSize + index + 1
@@ -125,13 +131,15 @@ function ContributionRanklistCard({
           </div>
         )}
 
-        <RanklistPagination
-          acceptedPage={acceptedPage}
-          contributionPage={contributionPage}
-          currentPage={contributionPage}
-          target="contribution"
-          totalPages={totalPages}
-        />
+        {!isLoading && !errorMessage && items.length > 0 ? (
+          <RanklistPagination
+            acceptedPage={acceptedPage}
+            contributionPage={contributionPage}
+            currentPage={contributionPage}
+            target="contribution"
+            totalPages={totalPages}
+          />
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -140,6 +148,7 @@ function ContributionRanklistCard({
 type AcceptedRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
+  errorMessage: string
   items: UserAcceptedRanklistItem[]
   isLoading: boolean
   pageSize: number
@@ -149,6 +158,7 @@ type AcceptedRanklistCardProps = {
 function AcceptedRanklistCard({
   acceptedPage,
   contributionPage,
+  errorMessage,
   items,
   isLoading,
   pageSize,
@@ -164,6 +174,10 @@ function AcceptedRanklistCard({
       <CardContent className="space-y-4 p-5 pt-0 sm:p-6 sm:pt-0">
         {isLoading ? (
           <p className="text-sm text-slate-500">{t('ranklist.loading')}</p>
+        ) : errorMessage ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+            <p className="text-base font-medium text-slate-900">{t('ranklist.unavailable')}</p>
+          </div>
         ) : items.length > 0 ? (
           items.map((item, index) => {
             const rank = (acceptedPage - 1) * pageSize + index + 1
@@ -190,13 +204,15 @@ function AcceptedRanklistCard({
           </div>
         )}
 
-        <RanklistPagination
-          acceptedPage={acceptedPage}
-          contributionPage={contributionPage}
-          currentPage={acceptedPage}
-          target="accepted"
-          totalPages={totalPages}
-        />
+        {!isLoading && !errorMessage && items.length > 0 ? (
+          <RanklistPagination
+            acceptedPage={acceptedPage}
+            contributionPage={contributionPage}
+            currentPage={acceptedPage}
+            target="accepted"
+            totalPages={totalPages}
+          />
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -255,6 +271,7 @@ export function RanklistPage() {
           <AcceptedRanklistCard
             acceptedPage={acceptedPage}
             contributionPage={contributionPage}
+            errorMessage={query.acceptedRanklistLoadError}
             isLoading={query.isLoadingAcceptedRanklist}
             items={acceptedResponse?.items ?? []}
             pageSize={acceptedPageSize}
@@ -264,6 +281,7 @@ export function RanklistPage() {
           <ContributionRanklistCard
             acceptedPage={acceptedPage}
             contributionPage={contributionPage}
+            errorMessage={query.contributionRanklistLoadError}
             isLoading={query.isLoadingContributionRanklist}
             items={contributionResponse?.items ?? []}
             pageSize={contributionPageSize}
