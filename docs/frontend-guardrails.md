@@ -5,7 +5,9 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 ## Frontend
 
 - `src/features/auth`
-  - Authentication, session state, registration, and user settings
+  - Authentication, session state, and registration
+- `src/features/user`
+  - User profile, ranklist, and user-owned shared account models and API mappings
 - `src/features/site-management`
   - Site-level user management and permission updates
 - `src/features/dashboard`
