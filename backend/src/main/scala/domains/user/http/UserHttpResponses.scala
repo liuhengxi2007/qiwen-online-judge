@@ -5,6 +5,7 @@ import domains.auth.http.AuthHttpResponses
 import domains.auth.model.{AuthUser, SessionResponse}
 import domains.shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
+import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
 import domains.user.model.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
@@ -88,6 +89,12 @@ object UserHttpResponses:
         userNotFoundResponse
       case UserMutationCommands.UpdateUserSettingsResult.Updated(user, _) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(toSessionResponse(user).asJson))
+
+  def mapUpdateUserSettingsOutput(output: UpdateUserSettingsOutput): IO[Response[IO]] =
+    mapUpdateUserSettingsResult(output.result).map { response =>
+      if output.clearSessionCookie then response.addCookie(AuthHttpResponses.clearedSessionCookie)
+      else response
+    }
 
   def mapDeleteUserResult(result: UserMutationCommands.DeleteUserResult): IO[Response[IO]] =
     result match

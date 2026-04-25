@@ -30,7 +30,7 @@ object AuthUserTableSupport:
     for
       passwordHash <- PasswordHasher.hashPassword(seedAdminUser.password)
       _ <- IO.blocking {
-        val statement = connection.prepareStatement(AuthUserTableSql.seedAdminSql)
+        val statement = connection.prepareStatement(AuthUserTableSql.seedAuthAdminSql)
         try
           statement.setString(1, seedAdminUser.username.value)
           statement.setString(2, seedAdminUser.displayName.value)

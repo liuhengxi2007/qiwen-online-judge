@@ -4,9 +4,9 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.PasswordHasher
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
-import domains.auth.table.AuthUserTable
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale}
+import domains.user.table.UserTable
 
 import java.sql.Connection
 
@@ -50,7 +50,7 @@ object UserMutationCommands:
   ): IO[GetUserSettingsResult] =
     val _ = actor
     databaseSession.withTransactionConnection(connection =>
-      AuthUserTable.findByUsername(connection, targetUsername)
+      UserTable.findByUsername(connection, targetUsername)
     ).map {
       case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
       case None => GetUserSettingsResult.NotFound
@@ -61,7 +61,7 @@ object UserMutationCommands:
     actor: SiteManagerUser
   ): IO[List[AuthUserListItem]] =
     databaseSession.withTransactionConnection(connection =>
-      AuthUserTable.listUsers(connection, actor)
+      UserTable.listUsers(connection, actor)
     )
 
   def updateUserPermissions(
@@ -77,7 +77,7 @@ object UserMutationCommands:
         if targetUsername.value == protectedAdminUsername then
           IO.pure(UpdateUserPermissionsResult.ProtectedAdmin)
         else
-          AuthUserTable.updatePermissions(
+          UserTable.updatePermissions(
             connection,
             siteManagerActor,
             targetUsername,
@@ -96,7 +96,7 @@ object UserMutationCommands:
     if !commandCanAccessTarget(command, targetUsername) then
       IO.pure(UpdateUserSettingsResult.Forbidden)
     else
-      AuthUserTable.findByUsername(connection, targetUsername).flatMap {
+      UserTable.findByUsername(connection, targetUsername).flatMap {
         case None =>
           IO.pure(UpdateUserSettingsResult.NotFound)
         case Some(targetUser) =>
@@ -129,10 +129,10 @@ object UserMutationCommands:
       case Some(_) if targetUsername.value == actor.username.value =>
         IO.pure(DeleteUserResult.CannotDeleteSelf)
       case Some(_) =>
-        AuthUserTable.delete(connection, targetUsername).map {
-          case AuthUserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
-          case AuthUserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
-          case AuthUserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
+        UserTable.delete(connection, targetUsername).map {
+          case UserTable.DeleteUserTableResult.NotFound => DeleteUserResult.NotFound
+          case UserTable.DeleteUserTableResult.HasOwnedResources => DeleteUserResult.HasOwnedResources
+          case UserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
         }
 
   private def updateOwnSettings(
@@ -172,7 +172,7 @@ object UserMutationCommands:
       nextPasswordHash <- newPassword match
         case Some(password) => PasswordHasher.hashPassword(password)
         case None => IO.pure(targetUser.passwordHash)
-      updatedUser <- AuthUserTable.updateSettings(
+      updatedUser <- UserTable.updateSettings(
         connection,
         targetUser.username,
         displayName = displayName,

@@ -3,10 +3,10 @@ package domains.user.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
-import domains.auth.table.AuthUserTable
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserProfileResponse, UserRanklistItem}
+import domains.user.table.UserTable
 
 object UserQueryCommands:
 
@@ -23,13 +23,13 @@ object UserQueryCommands:
   ): IO[GetUserProfileResult] =
     val _ = actor
     databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.findByUsername(connection, targetUsername).flatMap {
+      UserTable.findByUsername(connection, targetUsername).flatMap {
         case None =>
           IO.pure(GetUserProfileResult.NotFound)
         case Some(targetUser) =>
           for
             contribution <- BlogTable.contributionByAuthor(connection, targetUsername)
-            acceptedProblems <- AuthUserTable.listAcceptedProblems(connection, targetUsername)
+            acceptedProblems <- UserTable.listAcceptedProblems(connection, targetUsername)
           yield
             GetUserProfileResult.Found(
               UserProfileResponse(
@@ -49,7 +49,7 @@ object UserQueryCommands:
   ): IO[PageResponse[UserRanklistItem]] =
     val _ = actor
     databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.listContributionRanklist(
+      UserTable.listContributionRanklist(
         connection,
         PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
       )
@@ -62,7 +62,7 @@ object UserQueryCommands:
   ): IO[PageResponse[UserAcceptedRanklistItem]] =
     val _ = actor
     databaseSession.withTransactionConnection { connection =>
-      AuthUserTable.listAcceptedRanklist(
+      UserTable.listAcceptedRanklist(
         connection,
         PageRequest(page = pageRequest.page, pageSize = ranklistPageSize)
       )
