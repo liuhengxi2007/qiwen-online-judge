@@ -4,7 +4,7 @@ import domains.auth.model.AuthUser
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
-import domains.shared.access.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility, missingInsertResult}
+import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility}
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -85,20 +85,30 @@ object ProblemTableSupport:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  def bindVisibilityQuery(
+  private def bindVisibilityQuery(
     statement: PreparedStatement,
     actor: AuthUser,
-    pageSize: Option[Int],
-    offset: Option[Int]
-  ): Unit =
-    statement.setBoolean(1, actor.siteManager || actor.problemManager)
-    statement.setString(2, actor.username.value)
-    statement.setString(3, actor.username.value)
-    statement.setBoolean(4, actor.siteManager || actor.problemManager)
-    statement.setString(5, actor.username.value)
-    statement.setString(6, actor.username.value)
-    pageSize.foreach(statement.setInt(10, _))
-    offset.foreach(statement.setInt(11, _))
+    startIndex: Int
+  ): Int =
+    statement.setBoolean(startIndex, actor.siteManager || actor.problemManager)
+    statement.setString(startIndex + 1, actor.username.value)
+    statement.setString(startIndex + 2, actor.username.value)
+    statement.setBoolean(startIndex + 3, actor.siteManager || actor.problemManager)
+    statement.setString(startIndex + 4, actor.username.value)
+    statement.setString(startIndex + 5, actor.username.value)
+    startIndex + 6
+
+  private def bindSearchQuery(
+    statement: PreparedStatement,
+    query: Option[String],
+    startIndex: Int
+  ): Int =
+    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
+    val likeQuery = normalizedQuery.map(value => s"%$value%").getOrElse("")
+    statement.setBoolean(startIndex, normalizedQuery.nonEmpty)
+    statement.setString(startIndex + 1, likeQuery)
+    statement.setString(startIndex + 2, likeQuery)
+    startIndex + 3
 
   def bindListQuery(
     statement: PreparedStatement,
@@ -107,12 +117,22 @@ object ProblemTableSupport:
     pageSize: Option[Int],
     offset: Option[Int]
   ): Unit =
-    bindVisibilityQuery(statement, actor, pageSize, offset)
-    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
-    val likeQuery = normalizedQuery.map(value => s"%$value%").getOrElse("")
-    statement.setBoolean(7, normalizedQuery.nonEmpty)
-    statement.setString(8, likeQuery)
-    statement.setString(9, likeQuery)
+    val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
+    val afterSearchIndex = bindSearchQuery(statement, query, startIndex = nextIndex)
+    pageSize.foreach(statement.setInt(afterSearchIndex, _))
+    offset.foreach(statement.setInt(afterSearchIndex + 1, _))
+
+  def bindSuggestionQuery(
+    statement: PreparedStatement,
+    actor: AuthUser,
+    query: String
+  ): Unit =
+    val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
+    val afterSearchIndex = bindSearchQuery(statement, Some(query), startIndex = nextIndex)
+    statement.setString(afterSearchIndex, query)
+    statement.setString(afterSearchIndex + 1, s"$query%")
+    statement.setString(afterSearchIndex + 2, s"$query%")
+    statement.setString(afterSearchIndex + 3, query)
 
   def bindContainingProblemSetVisibilityQuery(
     statement: PreparedStatement,

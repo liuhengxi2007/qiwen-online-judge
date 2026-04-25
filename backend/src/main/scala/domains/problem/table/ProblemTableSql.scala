@@ -5,6 +5,80 @@ import domains.shared.sql.UserIdentitySql
 object ProblemTableSql:
   val suggestionLimit: Int = 5
 
+  private val visibilityPredicate: String =
+    """
+      |(
+      |  ? = true
+      |  or p.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from resource_access_grants rag
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user'
+      |      and rag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from resource_access_grants rag
+      |    join user_groups ug on ug.slug = rag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where rag.resource_kind = 'problem'
+      |      and rag.resource_id = p.id
+      |      and rag.grant_role = 'viewer'
+      |      and rag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from problem_set_problems psp
+      |    join problem_sets ps on ps.id = psp.problem_set_id
+      |    where psp.problem_id = p.id
+      |      and (
+      |        ? = true
+      |        or ps.base_access = 'public'
+      |        or exists (
+      |          select 1
+      |          from resource_access_grants rag
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user'
+      |            and rag.subject_key = ?
+      |        )
+      |        or exists (
+      |          select 1
+      |          from resource_access_grants rag
+      |          join user_groups ug on ug.slug = rag.subject_key
+      |          join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |          where rag.resource_kind = 'problem_set'
+      |            and rag.resource_id = ps.id
+      |            and rag.grant_role = 'viewer'
+      |            and rag.subject_kind = 'user_group'
+      |            and ugm.username = ?
+      |        )
+      |      )
+      |  )
+      |)
+      |""".stripMargin
+
+  private val searchPredicate: String =
+    """
+      |(? = false or lower(p.slug) like lower(?) or lower(p.title) like lower(?))
+      |""".stripMargin
+
+  private val suggestionOrderClause: String =
+    """
+      |case
+      |  when lower(p.slug) = lower(?) then 0
+      |  when lower(p.slug) like lower(?) then 1
+      |  when lower(p.title) like lower(?) then 2
+      |  when position(lower(?) in lower(p.slug)) > 0 then 3
+      |  else 4
+      |end,
+      |p.slug asc
+      |""".stripMargin
 
   val listSql: String =
     s"""
@@ -12,125 +86,19 @@ object ProblemTableSql:
       |from problems p
       |${UserIdentitySql.joinAuthUsers("p.creator_username", "au")}
       |where
-      |  (
-      |    ? = true
-      |    or p.base_access = 'public'
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user'
-      |        and rag.subject_key = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      join user_groups ug on ug.slug = rag.subject_key
-      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user_group'
-      |        and ugm.username = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from problem_set_problems psp
-      |      join problem_sets ps on ps.id = psp.problem_set_id
-      |      where psp.problem_id = p.id
-      |        and (
-      |          ? = true
-      |          or ps.base_access = 'public'
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user'
-      |              and rag.subject_key = ?
-      |          )
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            join user_groups ug on ug.slug = rag.subject_key
-      |            join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user_group'
-      |              and ugm.username = ?
-      |          )
-      |        )
-      |    )
-      |  )
-      |  and (? = false or lower(p.slug) like lower(?) or lower(p.title) like lower(?))
+      |  $visibilityPredicate
+      |  and $searchPredicate
       |order by p.updated_at desc, p.slug asc
       |limit ? offset ?
       |""".stripMargin
 
   val countSql: String =
-    """
+    s"""
       |select count(*) as total_items
       |from problems p
       |where
-      |  (
-      |    ? = true
-      |    or p.base_access = 'public'
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user'
-      |        and rag.subject_key = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      join user_groups ug on ug.slug = rag.subject_key
-      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user_group'
-      |        and ugm.username = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from problem_set_problems psp
-      |      join problem_sets ps on ps.id = psp.problem_set_id
-      |      where psp.problem_id = p.id
-      |        and (
-      |          ? = true
-      |          or ps.base_access = 'public'
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user'
-      |              and rag.subject_key = ?
-      |          )
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            join user_groups ug on ug.slug = rag.subject_key
-      |            join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user_group'
-      |              and ugm.username = ?
-      |          )
-      |        )
-      |    )
-      |  )
-      |  and (? = false or lower(p.slug) like lower(?) or lower(p.title) like lower(?))
+      |  $visibilityPredicate
+      |  and $searchPredicate
       |""".stripMargin
 
   val listSuggestionsSql: String =
@@ -138,73 +106,10 @@ object ProblemTableSql:
       |select p.slug, p.title
       |from problems p
       |where
-      |  (
-      |    ? = true
-      |    or p.base_access = 'public'
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user'
-      |        and rag.subject_key = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from resource_access_grants rag
-      |      join user_groups ug on ug.slug = rag.subject_key
-      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rag.resource_kind = 'problem'
-      |        and rag.resource_id = p.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user_group'
-      |        and ugm.username = ?
-      |    )
-      |    or exists (
-      |      select 1
-      |      from problem_set_problems psp
-      |      join problem_sets ps on ps.id = psp.problem_set_id
-      |      where psp.problem_id = p.id
-      |        and (
-      |          ? = true
-      |          or ps.base_access = 'public'
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user'
-      |              and rag.subject_key = ?
-      |          )
-      |          or exists (
-      |            select 1
-      |            from resource_access_grants rag
-      |            join user_groups ug on ug.slug = rag.subject_key
-      |            join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |            where rag.resource_kind = 'problem_set'
-      |              and rag.resource_id = ps.id
-      |              and rag.grant_role = 'viewer'
-      |              and rag.subject_kind = 'user_group'
-      |              and ugm.username = ?
-      |          )
-      |        )
-      |    )
-      |  )
-      |  and (
-      |    lower(p.slug) like lower(?)
-      |    or lower(p.title) like lower(?)
-      |  )
+      |  $visibilityPredicate
+      |  and $searchPredicate
       |order by
-      |  case
-      |    when lower(p.slug) = lower(?) then 0
-      |    when lower(p.slug) like lower(?) then 1
-      |    when lower(p.title) like lower(?) then 2
-      |    when position(lower(?) in lower(p.slug)) > 0 then 3
-      |    else 4
-      |  end,
-      |  p.slug asc
+      |  $suggestionOrderClause
       |limit $suggestionLimit
       |""".stripMargin
 

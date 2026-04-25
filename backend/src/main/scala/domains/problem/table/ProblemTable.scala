@@ -81,15 +81,7 @@ object ProblemTable:
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSql)
       try
-        val containsPattern = s"%$query%"
-        val prefixPattern = s"$query%"
-        bindVisibilityQuery(statement, actor, pageSize = None, offset = None)
-        statement.setString(7, containsPattern)
-        statement.setString(8, containsPattern)
-        statement.setString(9, query)
-        statement.setString(10, prefixPattern)
-        statement.setString(11, prefixPattern)
-        statement.setString(12, query)
+        bindSuggestionQuery(statement, actor, query)
         val resultSet = statement.executeQuery()
         try
           Iterator
