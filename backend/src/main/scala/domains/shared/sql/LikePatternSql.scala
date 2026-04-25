@@ -1,5 +1,7 @@
 package domains.shared.sql
 
+import scala.annotation.tailrec
+
 final case class LikePatternSql(
   raw: String,
   containsPattern: String,
@@ -18,31 +20,26 @@ object LikePatternSql:
     )
 
   private def compileWildcardPattern(raw: String): String =
-    val builder = new StringBuilder
-    var index = 0
+    @tailrec
+    def go(remaining: List[Char], acc: List[String]): List[String] =
+      remaining match
+        case '\\' :: escaped :: tail =>
+          go(tail, escapeLiteral(escaped) :: acc)
+        case '\\' :: Nil =>
+          go(Nil, escapeLiteral('\\') :: acc)
+        case '*' :: tail =>
+          go(tail, "%" :: acc)
+        case '?' :: tail =>
+          go(tail, "_" :: acc)
+        case character :: tail =>
+          go(tail, escapeLiteral(character) :: acc)
+        case Nil =>
+          acc.reverse
 
-    while index < raw.length do
-      raw.charAt(index) match
-        case '\\' =>
-          if index + 1 < raw.length then
-            appendLiteral(builder, raw.charAt(index + 1))
-            index += 2
-          else
-            appendLiteral(builder, '\\')
-            index += 1
-        case '*' =>
-          builder.append('%')
-          index += 1
-        case '?' =>
-          builder.append('_')
-          index += 1
-        case other =>
-          appendLiteral(builder, other)
-          index += 1
+    go(raw.toList, Nil).mkString
 
-    builder.toString()
-
-  private def appendLiteral(builder: StringBuilder, character: Char): Unit =
+  private def escapeLiteral(character: Char): String =
     if character == '%' || character == '_' || character == '\\' then
-      builder.append('\\')
-    builder.append(character)
+      s"\\$character"
+    else
+      character.toString
