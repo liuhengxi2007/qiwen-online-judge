@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -18,7 +18,15 @@ object ProblemRouter:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problems" =>
-        handlers.execute(request, (), ProblemHttpPlanDefinitions.listProblems)
+        handlers.execute(
+          request,
+          ProblemListRequest(
+            query = request.uri.query.params.get("q").map(_.trim).filter(_.nonEmpty),
+            page = parsePositiveInt(request.uri.query.params.get("page"), 1),
+            pageSize = parsePositiveInt(request.uri.query.params.get("pageSize"), 10)
+          ),
+          ProblemHttpPlanDefinitions.listProblems
+        )
 
       case request @ GET -> Root / "api" / "problems" / "suggestions" =>
         handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), ProblemHttpPlanDefinitions.listProblemSuggestions)
@@ -107,3 +115,6 @@ object ProblemRouter:
           case Right(parsedProblemSlug) =>
             handlers.execute(request, parsedProblemSlug, ProblemHttpPlanDefinitions.deleteProblem)
     }
+
+  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
+    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

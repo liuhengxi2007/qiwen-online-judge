@@ -26,6 +26,7 @@ export {
   fromProblemListResponseContract,
   fromProblemSuggestionContract,
   fromProblemSummaryContract,
+  toProblemListRequestContract,
   toCreateProblemRequestContract,
   toUpdateProblemRequestContract,
 } from '@/features/problem/domain/problem-contract'
@@ -38,6 +39,7 @@ export type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFi
 export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'
+export type { ProblemListRequest } from '@/features/problem/model/ProblemListRequest'
 export type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
 export type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
 export type { ProblemSlug } from '@/features/problem/model/ProblemSlug'

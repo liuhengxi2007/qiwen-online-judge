@@ -1,4 +1,5 @@
 import type {
+  ProblemListRequest as ProblemListRequestContract,
   CreateProblemRequest as CreateProblemRequestContract,
   ProblemDetail as ProblemDetailContract,
   ProblemListResponse as ProblemListResponseContract,
@@ -9,6 +10,7 @@ import type {
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
+import type { ProblemListRequest } from '@/features/problem/model/ProblemListRequest'
 import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
 import type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
 import type { ProblemSummary } from '@/features/problem/model/ProblemSummary'
@@ -76,6 +78,14 @@ export function fromProblemSuggestionContract(problem: ProblemSuggestionContract
   return {
     slug: requireParsed(parseProblemSlug(problem.slug), 'problem suggestion slug'),
     title: requireParsed(parseProblemTitle(problem.title), 'problem suggestion title'),
+  }
+}
+
+export function toProblemListRequestContract(request: ProblemListRequest): ProblemListRequestContract {
+  return {
+    query: request.query,
+    page: request.page,
+    pageSize: request.pageSize,
   }
 }
 

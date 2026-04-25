@@ -1,10 +1,13 @@
-import { Link, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { FilePlus2, LibraryBig } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   problemSlugValue,
@@ -20,11 +23,32 @@ import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
+const problemsPerPage = 10
+
+function buildPageNumbers(currentPage: number, totalPages: number): number[] {
+  const firstPage = Math.max(1, currentPage - 2)
+  const lastPage = Math.min(totalPages, currentPage + 2)
+  const pages: number[] = []
+  for (let page = firstPage; page <= lastPage; page += 1) {
+    pages.push(page)
+  }
+  return pages
+}
+
+function parsePositivePage(value: string | null): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
 export function ProblemPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.pageTitle'))
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeQuery = searchParams.get('q')?.trim() ?? ''
+  const [queryInput, setQueryInput] = useState(activeQuery)
+  const currentPage = parsePositivePage(searchParams.get('page'))
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -35,7 +59,40 @@ export function ProblemPage() {
   }
 
   const canCreate = user.siteManager || user.problemManager
-  const model = useProblemPageModel()
+  const model = useProblemPageModel({
+    query: activeQuery || null,
+    page: currentPage,
+    pageSize: problemsPerPage,
+  })
+  const totalPages = Math.max(1, Math.ceil(model.totalItems / model.pageSize))
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
+
+  useEffect(() => {
+    setQueryInput(activeQuery)
+  }, [activeQuery])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      const nextSearchParams = new URLSearchParams(searchParams)
+      if (totalPages <= 1) {
+        nextSearchParams.delete('page')
+      } else {
+        nextSearchParams.set('page', String(totalPages))
+      }
+      setSearchParams(nextSearchParams)
+    }
+  }, [currentPage, searchParams, setSearchParams, totalPages])
+
+  function applyQuery() {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (!queryInput.trim()) {
+      nextSearchParams.delete('q')
+    } else {
+      nextSearchParams.set('q', queryInput.trim())
+    }
+    nextSearchParams.delete('page')
+    setSearchParams(nextSearchParams)
+  }
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
@@ -83,6 +140,45 @@ export function ProblemPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="problem-search">{t('problem.list.searchLabel')}</Label>
+                  <Input
+                    id="problem-search"
+                    value={queryInput}
+                    placeholder={t('problem.list.searchPlaceholder')}
+                    onChange={(event) => {
+                      setQueryInput(event.target.value)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        applyQuery()
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button type="button" className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800" onClick={applyQuery}>
+                    {t('problem.list.searchApply')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl border-slate-300 bg-white"
+                    onClick={() => {
+                      setQueryInput('')
+                      const nextSearchParams = new URLSearchParams(searchParams)
+                      nextSearchParams.delete('q')
+                      nextSearchParams.delete('page')
+                      setSearchParams(nextSearchParams)
+                    }}
+                  >
+                    {t('problem.list.searchClear')}
+                  </Button>
+                </div>
+              </div>
+
               {model.isLoading ? (
                 <p className="text-sm text-slate-500">{t('problem.list.loading')}</p>
               ) : model.problems.length === 0 ? (
@@ -101,6 +197,51 @@ export function ProblemPage() {
                   />
                 ))
               )}
+              {!model.isLoading && model.problems.length > 0 && totalPages > 1 ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl border-slate-300 bg-white"
+                    disabled={currentPage === 1}
+                    onClick={() => {
+                      const nextSearchParams = new URLSearchParams(searchParams)
+                      nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
+                      setSearchParams(nextSearchParams)
+                    }}
+                  >
+                    {t('common.pagination.previous')}
+                  </Button>
+                  {pageNumbers.map((page) => (
+                    <Button
+                      key={page}
+                      type="button"
+                      variant={page === currentPage ? 'default' : 'outline'}
+                      className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'}
+                      onClick={() => {
+                        const nextSearchParams = new URLSearchParams(searchParams)
+                        nextSearchParams.set('page', String(page))
+                        setSearchParams(nextSearchParams)
+                      }}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl border-slate-300 bg-white"
+                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      const nextSearchParams = new URLSearchParams(searchParams)
+                      nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
+                      setSearchParams(nextSearchParams)
+                    }}
+                  >
+                    {t('common.pagination.next')}
+                  </Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

@@ -97,8 +97,22 @@ object ProblemTableSupport:
     statement.setBoolean(4, actor.siteManager || actor.problemManager)
     statement.setString(5, actor.username.value)
     statement.setString(6, actor.username.value)
-    pageSize.foreach(statement.setInt(7, _))
-    offset.foreach(statement.setInt(8, _))
+    pageSize.foreach(statement.setInt(10, _))
+    offset.foreach(statement.setInt(11, _))
+
+  def bindListQuery(
+    statement: PreparedStatement,
+    actor: AuthUser,
+    query: Option[String],
+    pageSize: Option[Int],
+    offset: Option[Int]
+  ): Unit =
+    bindVisibilityQuery(statement, actor, pageSize, offset)
+    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
+    val likeQuery = normalizedQuery.map(value => s"%$value%").getOrElse("")
+    statement.setBoolean(7, normalizedQuery.nonEmpty)
+    statement.setString(8, likeQuery)
+    statement.setString(9, likeQuery)
 
   def bindContainingProblemSetVisibilityQuery(
     statement: PreparedStatement,

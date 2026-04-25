@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.model.{ProblemDetail, ProblemListRequest, ProblemSuggestion, ProblemSummary}
 import domains.problem.table.ProblemTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.problem.application.ProblemCommandResults.*
@@ -14,11 +14,15 @@ object ProblemQueryCommands:
   def listProblems(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    pageRequest: PageRequest
+    request: ProblemListRequest
   ): IO[PageResponse[ProblemSummary]] =
-    val normalizedPageRequest = pageRequest.normalized
+    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.listVisibleTo(connection, actor, normalizedPageRequest.page, normalizedPageRequest.pageSize)
+      ProblemTable.listVisibleTo(
+        connection,
+        actor,
+        request.copy(page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize)
+      )
     }
 
   def getProblemBySlug(

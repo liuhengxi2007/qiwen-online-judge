@@ -2,7 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemListRequest, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessGrantTable, ResourceAccessPolicy, ResourceId, ResourceKind}
 import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import domains.shared.model.PageResponse
@@ -18,12 +18,12 @@ object ProblemTable:
   def initialize(connection: Connection): IO[Unit] =
     ProblemTableSchema.initialize(connection)
 
-  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSummary]] =
+  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, request: ProblemListRequest): IO[PageResponse[ProblemSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
         try
-          bindVisibilityQuery(statement, actor, pageSize = None, offset = None)
+          bindListQuery(statement, actor, request.query, pageSize = None, offset = None)
           val resultSet = statement.executeQuery()
           try if resultSet.next() then resultSet.getLong("total_items") else 0L
           finally resultSet.close()
@@ -32,7 +32,13 @@ object ProblemTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSql)
         try
-          bindVisibilityQuery(statement, actor, pageSize = Some(pageSize), offset = Some((page - 1) * pageSize))
+          bindListQuery(
+            statement,
+            actor,
+            request.query,
+            pageSize = Some(request.pageSize),
+            offset = Some((request.page - 1) * request.pageSize)
+          )
           val resultSet = statement.executeQuery()
           try
             Iterator
@@ -50,7 +56,7 @@ object ProblemTable:
           managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Manager)
         yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
       }
-    yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
+    yield PageResponse(items = itemsWithPolicies, page = request.page, pageSize = request.pageSize, totalItems = totalItems)
 
   def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     IO.blocking {

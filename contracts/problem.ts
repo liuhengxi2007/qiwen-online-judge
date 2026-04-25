@@ -22,6 +22,12 @@ export type ProblemSuggestion = {
   title: string
 }
 
+export type ProblemListRequest = {
+  query: string | null
+  page: number
+  pageSize: number
+}
+
 export type ProblemDetail = {
   id: string
   slug: string
