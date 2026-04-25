@@ -25,6 +25,7 @@ type SiteManageUserCardProps = {
   model: SiteManageModel
   siteManagerSession: boolean
   queryInput: string
+  hasActiveQuery: boolean
   onQueryInputChange: (value: string) => void
   onApplyQuery: () => void
   onClearQuery: () => void
@@ -47,6 +48,7 @@ export function SiteManageUserCard({
   model,
   siteManagerSession,
   queryInput,
+  hasActiveQuery,
   onQueryInputChange,
   onApplyQuery,
   onClearQuery,
@@ -122,11 +124,12 @@ export function SiteManageUserCard({
           <p className="text-sm text-stone-500">{t('siteManage.loadingUsers')}</p>
         ) : model.users.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center">
-            <p className="text-base font-medium text-stone-900">{t('siteManage.emptyUsersTitle')}</p>
-            <p className="mt-2 text-sm leading-7 text-stone-600">{t('siteManage.emptyUsersDescription')}</p>
-            <Button asChild variant="outline" className="mt-5 rounded-full border-stone-300 bg-white">
-              <Link to="/">{t('siteManage.backToDashboard')}</Link>
-            </Button>
+            <p className="text-base font-medium text-stone-900">
+              {t(hasActiveQuery ? 'siteManage.noMatchingUsersTitle' : 'siteManage.emptyUsersTitle')}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-stone-600">
+              {t(hasActiveQuery ? 'siteManage.noMatchingUsersDescription' : 'siteManage.emptyUsersDescription')}
+            </p>
           </div>
         ) : (
           <Table>

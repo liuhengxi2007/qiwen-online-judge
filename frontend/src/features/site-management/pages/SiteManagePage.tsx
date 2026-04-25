@@ -106,6 +106,7 @@ export function SiteManagePage() {
         }}
         siteManagerSession={Boolean(siteManagerSession)}
         queryInput={queryInput}
+        hasActiveQuery={Boolean(activeQuery)}
         onQueryInputChange={setQueryInput}
         onApplyQuery={() => {
           const nextSearchParams = new URLSearchParams(searchParams)
