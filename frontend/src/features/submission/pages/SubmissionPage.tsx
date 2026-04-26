@@ -12,7 +12,14 @@ import { Switch } from '@/components/ui/switch'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { listProblemSuggestions } from '@/features/problem/api/problem-client'
 import type { ProblemSuggestion } from '@/features/problem/domain/problem'
-import { parseProblemSlug, problemSlugValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
+import {
+  formatProblemTitleDisplay,
+  parseProblemSlug,
+  problemSlugValue,
+  problemTitleValue,
+  type ProblemSlug,
+  useProblemTitleDisplayMode,
+} from '@/features/problem/domain/problem'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
@@ -118,6 +125,7 @@ type SubmissionPageProps = {
 export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('submission.pageTitle'))
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
@@ -709,7 +717,7 @@ export function SubmissionPage({ fixedProblemSlugFilter }: SubmissionPageProps =
                           className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
                           to={`/problems/${problemSlugValue(submission.problemSlug)}`}
                         >
-                          {problemTitleValue(submission.problemTitle)}
+                          {formatProblemTitleDisplay(submission.problemTitle, submission.problemSlug, problemTitleDisplayMode)}
                         </Link>
                       </dd>
                     </div>
