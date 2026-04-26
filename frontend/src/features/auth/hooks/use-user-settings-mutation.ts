@@ -74,12 +74,10 @@ type SubmitSettingsResult =
 
 export function useUserSettingsMutation() {
   const { t } = useI18n()
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)
 
   const submitSettings = useCallback(
     async (params: SubmitSettingsParams): Promise<SubmitSettingsResult> => {
-      setIsSubmitting(true)
       setNavigationIntent(null)
 
       try {
@@ -110,7 +108,6 @@ export function useUserSettingsMutation() {
           await logout()
           params.setViewer(null)
           setNavigationIntent(toPasswordChangedRedirect())
-          setIsSubmitting(false)
           return { kind: 'updated_and_signed_out' }
         }
 
@@ -121,11 +118,9 @@ export function useUserSettingsMutation() {
               ? t('userSettings.preferencesUpdateSuccess')
               : t('userSettings.accountUpdateSuccess')
 
-        setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }
       } catch (error) {
         if (error instanceof UserClientError && error.kind === 'forbidden') {
-          setIsSubmitting(false)
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }
         }
@@ -134,12 +129,10 @@ export function useUserSettingsMutation() {
           const message =
             error.message ||
             (params.kind === 'own_account' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))
-          setIsSubmitting(false)
           return { kind: 'unauthorized', message }
         }
 
         const message = t('userSettings.updateFailed')
-        setIsSubmitting(false)
         return { kind: 'failed', message }
       }
     },
@@ -147,7 +140,6 @@ export function useUserSettingsMutation() {
   )
 
   return {
-    isSubmitting,
     navigationIntent,
     submitSettings,
   }

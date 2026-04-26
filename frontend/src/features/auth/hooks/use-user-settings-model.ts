@@ -7,6 +7,7 @@ import {
 import {
   initialUserSettingsState,
   reduceUserSettingsState,
+  type UserSettingsSection,
 } from '@/features/auth/domain/user-settings-state'
 import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/features/auth/domain/user-settings-form'
 import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-query'
@@ -27,8 +28,6 @@ import type {
   UpdateOwnPreferencesRequest,
   UpdateOwnProfileRequest,
 } from '@/features/user/domain/user'
-
-export type UserSettingsSection = 'profile' | 'preferences' | 'account'
 
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse
@@ -79,7 +78,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
   async function submit(section: UserSettingsSection) {
     if (!displayedUser) {
-      dispatch({ type: 'submit_failed', message: t('userSettings.loadingSelected') })
+      dispatch({ type: 'submit_failed', section, message: t('userSettings.loadingSelected') })
       return
     }
 
@@ -95,6 +94,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
         query.replaceEditedUser(targetUsername, result.user)
         dispatch({
           type: 'submit_succeeded',
+          section,
           user: result.user,
           message: result.message,
         })
@@ -105,10 +105,10 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
         dispatch({ type: 'redirect_requested', intent: toForbiddenRedirect() })
         return
       case 'unauthorized':
-        dispatch({ type: 'submit_failed', message: result.message })
+        dispatch({ type: 'submit_failed', section, message: result.message })
         return
       case 'failed':
-        dispatch({ type: 'submit_failed', message: result.message })
+        dispatch({ type: 'submit_failed', section, message: result.message })
         return
     }
   }
@@ -116,11 +116,11 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
   async function submitProfileSettings() {
     const validation = validateUserProfileDraft({ displayName: state.displayName })
     if (!validation.ok) {
-      dispatch({ type: 'submit_failed', message: validation.message })
+      dispatch({ type: 'submit_failed', section: 'profile', message: validation.message })
       return { kind: 'failed', message: validation.message } as const
     }
 
-    dispatch({ type: 'submit_started' })
+    dispatch({ type: 'submit_started', section: 'profile' })
     return submitSettings(
       isEditingOwnSettings
         ? {
@@ -145,11 +145,11 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
       problemTitleDisplayMode: state.problemTitleDisplayMode,
     })
     if (!validation.ok) {
-      dispatch({ type: 'submit_failed', message: validation.message })
+      dispatch({ type: 'submit_failed', section: 'preferences', message: validation.message })
       return { kind: 'failed', message: validation.message } as const
     }
 
-    dispatch({ type: 'submit_started' })
+    dispatch({ type: 'submit_started', section: 'preferences' })
     return submitSettings(
       isEditingOwnSettings
         ? {
@@ -178,11 +178,11 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
       isEditingOwnSettings,
     )
     if (!validation.ok) {
-      dispatch({ type: 'submit_failed', message: validation.message })
+      dispatch({ type: 'submit_failed', section: 'account', message: validation.message })
       return { kind: 'failed', message: validation.message } as const
     }
 
-    dispatch({ type: 'submit_started' })
+    dispatch({ type: 'submit_started', section: 'account' })
     return submitSettings(
       isEditingOwnSettings
         ? {
@@ -205,7 +205,8 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     displayedUser,
     isEditingOwnSettings,
     targetUsername,
-    isSubmitting: state.isSubmitting || mutation.isSubmitting,
+    loadErrorMessage: state.loadErrorMessage,
+    sections: state.sections,
     isLoadingSettings: query.isLoadingSettings,
     navigationIntent: routePolicy.navigationIntent ?? state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent,
     setDisplayName: (value: string) => dispatch({ type: 'set_display_name', value }),

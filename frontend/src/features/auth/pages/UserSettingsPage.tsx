@@ -41,9 +41,8 @@ export function UserSettingsPage() {
     currentPassword,
     newPassword,
     confirmNewPassword,
-    errorMessage,
-    successMessage,
-    isSubmitting,
+    loadErrorMessage,
+    sections,
     isEditingOwnSettings,
     targetUsername,
     navigationIntent: modelNavigationIntent,
@@ -90,14 +89,9 @@ export function UserSettingsPage() {
         user={displayedUser}
       />
 
-      {errorMessage ? (
+      {loadErrorMessage ? (
         <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
-        </Alert>
-      ) : null}
-      {successMessage ? (
-        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-          <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
+          <AlertDescription className="text-rose-700">{loadErrorMessage}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -114,6 +108,16 @@ export function UserSettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
+          {sections.profile.errorMessage ? (
+            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+              <AlertDescription className="text-rose-700">{sections.profile.errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          {sections.profile.successMessage ? (
+            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+              <AlertDescription className="text-emerald-700">{sections.profile.successMessage}</AlertDescription>
+            </Alert>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="settings-display-name">{t('common.displayName')}</Label>
             <Input
@@ -125,13 +129,13 @@ export function UserSettingsPage() {
           <div className="space-y-2">
             <Button
               type="button"
-              disabled={isSubmitting || !displayedUser}
+              disabled={sections.profile.isSubmitting || !displayedUser}
               className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
               onClick={() => {
                 void submit('profile')
               }}
             >
-              {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+              {sections.profile.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
             </Button>
           </div>
         </CardContent>
@@ -150,6 +154,16 @@ export function UserSettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
+          {sections.preferences.errorMessage ? (
+            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+              <AlertDescription className="text-rose-700">{sections.preferences.errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          {sections.preferences.successMessage ? (
+            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+              <AlertDescription className="text-emerald-700">{sections.preferences.successMessage}</AlertDescription>
+            </Alert>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="settings-display-mode">{t('userSettings.displayMode')}</Label>
             <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as typeof displayMode)}>
@@ -205,13 +219,13 @@ export function UserSettingsPage() {
           </div>
           <Button
             type="button"
-            disabled={isSubmitting || !displayedUser}
+            disabled={sections.preferences.isSubmitting || !displayedUser}
             className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
             onClick={() => {
               void submit('preferences')
             }}
           >
-            {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+            {sections.preferences.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
           </Button>
         </CardContent>
       </Card>
@@ -229,6 +243,16 @@ export function UserSettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
+          {sections.account.errorMessage ? (
+            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+              <AlertDescription className="text-rose-700">{sections.account.errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          {sections.account.successMessage ? (
+            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+              <AlertDescription className="text-emerald-700">{sections.account.successMessage}</AlertDescription>
+            </Alert>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="settings-email">{t('common.email')}</Label>
             <Input
@@ -282,13 +306,13 @@ export function UserSettingsPage() {
 
           <Button
             type="button"
-            disabled={isSubmitting || !displayedUser}
+            disabled={sections.account.isSubmitting || !displayedUser}
             className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
             onClick={() => {
               void submit('account')
             }}
           >
-            {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+            {sections.account.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
           </Button>
         </CardContent>
       </Card>

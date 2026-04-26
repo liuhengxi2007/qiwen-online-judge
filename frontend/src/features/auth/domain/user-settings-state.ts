@@ -11,6 +11,14 @@ import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
+export type UserSettingsSection = 'profile' | 'preferences' | 'account'
+
+export type UserSettingsSectionState = {
+  errorMessage: string
+  successMessage: string
+  isSubmitting: boolean
+}
+
 export type UserSettingsState = {
   editedUser: SessionResponse | null
   displayName: string
@@ -21,9 +29,8 @@ export type UserSettingsState = {
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
-  errorMessage: string
-  successMessage: string
-  isSubmitting: boolean
+  loadErrorMessage: string
+  sections: Record<UserSettingsSection, UserSettingsSectionState>
   navigationIntent: NavigationIntent | null
 }
 
@@ -39,10 +46,40 @@ export type UserSettingsAction =
   | { type: 'set_current_password'; value: string }
   | { type: 'set_new_password'; value: string }
   | { type: 'set_confirm_new_password'; value: string }
-  | { type: 'submit_started' }
-  | { type: 'submit_succeeded'; user: SessionResponse; message: string }
-  | { type: 'submit_failed'; message: string }
+  | { type: 'submit_started'; section: UserSettingsSection }
+  | { type: 'submit_succeeded'; section: UserSettingsSection; user: SessionResponse; message: string }
+  | { type: 'submit_failed'; section: UserSettingsSection; message: string }
   | { type: 'redirect_requested'; intent: NavigationIntent }
+
+function initialSectionState(): UserSettingsSectionState {
+  return {
+    errorMessage: '',
+    successMessage: '',
+    isSubmitting: false,
+  }
+}
+
+function initialSections(): Record<UserSettingsSection, UserSettingsSectionState> {
+  return {
+    profile: initialSectionState(),
+    preferences: initialSectionState(),
+    account: initialSectionState(),
+  }
+}
+
+function clearSectionFeedback(
+  sections: Record<UserSettingsSection, UserSettingsSectionState>,
+  section: UserSettingsSection,
+): Record<UserSettingsSection, UserSettingsSectionState> {
+  return {
+    ...sections,
+    [section]: {
+      ...sections[section],
+      errorMessage: '',
+      successMessage: '',
+    },
+  }
+}
 
 export const initialUserSettingsState: UserSettingsState = {
   editedUser: null,
@@ -54,9 +91,8 @@ export const initialUserSettingsState: UserSettingsState = {
   currentPassword: '',
   newPassword: '',
   confirmNewPassword: '',
-  errorMessage: '',
-  successMessage: '',
-  isSubmitting: false,
+  loadErrorMessage: '',
+  sections: initialSections(),
   navigationIntent: null,
 }
 
@@ -79,9 +115,8 @@ export function reduceUserSettingsState(
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
-        errorMessage: '',
-        successMessage: '',
-        isSubmitting: false,
+        loadErrorMessage: '',
+        sections: initialSections(),
         navigationIntent: null,
       }
     case 'query_synced':
@@ -93,36 +128,72 @@ export function reduceUserSettingsState(
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         locale: userLocaleValue(action.user.preferences.locale),
         problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
-        errorMessage: '',
+        loadErrorMessage: '',
       }
     case 'query_failed':
       return {
         ...state,
-        errorMessage: action.message,
-        successMessage: '',
+        loadErrorMessage: action.message,
       }
     case 'set_display_name':
-      return { ...state, displayName: action.value, successMessage: '' }
+      return {
+        ...state,
+        displayName: action.value,
+        sections: clearSectionFeedback(state.sections, 'profile'),
+      }
     case 'set_email':
-      return { ...state, email: action.value, successMessage: '' }
+      return {
+        ...state,
+        email: action.value,
+        sections: clearSectionFeedback(state.sections, 'account'),
+      }
     case 'set_display_mode':
-      return { ...state, displayMode: action.value, successMessage: '' }
+      return {
+        ...state,
+        displayMode: action.value,
+        sections: clearSectionFeedback(state.sections, 'preferences'),
+      }
     case 'set_locale':
-      return { ...state, locale: action.value, successMessage: '' }
+      return {
+        ...state,
+        locale: action.value,
+        sections: clearSectionFeedback(state.sections, 'preferences'),
+      }
     case 'set_problem_title_display_mode':
-      return { ...state, problemTitleDisplayMode: action.value, successMessage: '' }
+      return {
+        ...state,
+        problemTitleDisplayMode: action.value,
+        sections: clearSectionFeedback(state.sections, 'preferences'),
+      }
     case 'set_current_password':
-      return { ...state, currentPassword: action.value, successMessage: '' }
+      return {
+        ...state,
+        currentPassword: action.value,
+        sections: clearSectionFeedback(state.sections, 'account'),
+      }
     case 'set_new_password':
-      return { ...state, newPassword: action.value, successMessage: '' }
+      return {
+        ...state,
+        newPassword: action.value,
+        sections: clearSectionFeedback(state.sections, 'account'),
+      }
     case 'set_confirm_new_password':
-      return { ...state, confirmNewPassword: action.value, successMessage: '' }
+      return {
+        ...state,
+        confirmNewPassword: action.value,
+        sections: clearSectionFeedback(state.sections, 'account'),
+      }
     case 'submit_started':
       return {
         ...state,
-        isSubmitting: true,
-        errorMessage: '',
-        successMessage: '',
+        sections: {
+          ...state.sections,
+          [action.section]: {
+            errorMessage: '',
+            successMessage: '',
+            isSubmitting: true,
+          },
+        },
       }
     case 'submit_succeeded':
       return {
@@ -133,19 +204,29 @@ export function reduceUserSettingsState(
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         locale: userLocaleValue(action.user.preferences.locale),
         problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
-        currentPassword: '',
-        newPassword: '',
-        confirmNewPassword: '',
-        isSubmitting: false,
-        errorMessage: '',
-        successMessage: action.message,
+        currentPassword: action.section === 'account' ? '' : state.currentPassword,
+        newPassword: action.section === 'account' ? '' : state.newPassword,
+        confirmNewPassword: action.section === 'account' ? '' : state.confirmNewPassword,
+        sections: {
+          ...state.sections,
+          [action.section]: {
+            errorMessage: '',
+            successMessage: action.message,
+            isSubmitting: false,
+          },
+        },
       }
     case 'submit_failed':
       return {
         ...state,
-        isSubmitting: false,
-        errorMessage: action.message,
-        successMessage: '',
+        sections: {
+          ...state.sections,
+          [action.section]: {
+            errorMessage: action.message,
+            successMessage: '',
+            isSubmitting: false,
+          },
+        },
       }
     case 'redirect_requested':
       return {
