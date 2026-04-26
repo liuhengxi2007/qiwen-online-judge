@@ -3,9 +3,9 @@ package domains.user.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthUser, SiteManagerUser, Username}
+import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PlaintextPassword, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale}
+import domains.user.model.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale, UserPreferences}
 import domains.user.table.UserTable
 
 import java.sql.Connection
@@ -26,8 +26,12 @@ object UserMutationCommands:
     case Updated(user: AuthUser)
 
   enum UpdateUserSettingsCommand:
-    case UpdateOwn(actor: AuthUser, request: UpdateOwnSettingsRequest)
-    case UpdateManaged(actor: SiteManagerUser, request: UpdateManagedUserSettingsRequest)
+    case UpdateOwnProfile(actor: AuthUser, request: UpdateOwnProfileRequest)
+    case UpdateOwnPreferences(actor: AuthUser, request: UpdateOwnPreferencesRequest)
+    case UpdateOwnAccount(actor: AuthUser, request: UpdateOwnAccountRequest)
+    case UpdateManagedProfile(actor: SiteManagerUser, request: UpdateManagedUserProfileRequest)
+    case UpdateManagedPreferences(actor: SiteManagerUser, request: UpdateManagedUserPreferencesRequest)
+    case UpdateManagedAccount(actor: SiteManagerUser, request: UpdateManagedUserAccountRequest)
 
   enum UpdateUserSettingsResult:
     case Forbidden
@@ -93,18 +97,62 @@ object UserMutationCommands:
           IO.pure(UpdateUserSettingsResult.NotFound)
         case Some(targetUser) =>
           command match
-            case UpdateUserSettingsCommand.UpdateOwn(actor, request) =>
-              updateOwnSettings(connection, actor, targetUser, request)
-            case UpdateUserSettingsCommand.UpdateManaged(_, request) =>
+            case UpdateUserSettingsCommand.UpdateOwnProfile(_, request) =>
               updateSettingsRecord(
                 connection,
                 targetUser,
-                request.displayName,
-                request.email,
-                request.preferences.displayMode,
-                request.preferences.locale,
-                request.preferences.problemTitleDisplayMode,
-                request.newPassword
+                displayName = request.displayName,
+                email = targetUser.email,
+                displayMode = targetUser.displayMode,
+                locale = targetUser.locale,
+                problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                newPassword = None
+              )
+            case UpdateUserSettingsCommand.UpdateOwnPreferences(_, request) =>
+              updateSettingsRecord(
+                connection,
+                targetUser,
+                displayName = targetUser.displayName,
+                email = targetUser.email,
+                displayMode = request.preferences.displayMode,
+                locale = request.preferences.locale,
+                problemTitleDisplayMode = request.preferences.problemTitleDisplayMode,
+                newPassword = None
+              )
+            case UpdateUserSettingsCommand.UpdateOwnAccount(actor, request) =>
+              updateOwnAccount(connection, actor, targetUser, request)
+            case UpdateUserSettingsCommand.UpdateManagedProfile(_, request) =>
+              updateSettingsRecord(
+                connection,
+                targetUser,
+                displayName = request.displayName,
+                email = targetUser.email,
+                displayMode = targetUser.displayMode,
+                locale = targetUser.locale,
+                problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                newPassword = None
+              )
+            case UpdateUserSettingsCommand.UpdateManagedPreferences(_, request) =>
+              updateSettingsRecord(
+                connection,
+                targetUser,
+                displayName = targetUser.displayName,
+                email = targetUser.email,
+                displayMode = request.preferences.displayMode,
+                locale = request.preferences.locale,
+                problemTitleDisplayMode = request.preferences.problemTitleDisplayMode,
+                newPassword = None
+              )
+            case UpdateUserSettingsCommand.UpdateManagedAccount(_, request) =>
+              updateSettingsRecord(
+                connection,
+                targetUser,
+                displayName = targetUser.displayName,
+                email = request.email,
+                displayMode = targetUser.displayMode,
+                locale = targetUser.locale,
+                problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                newPassword = request.newPassword
               )
       }
 
@@ -127,11 +175,11 @@ object UserMutationCommands:
           case UserTable.DeleteUserTableResult.Deleted => DeleteUserResult.Deleted
         }
 
-  private def updateOwnSettings(
+  private def updateOwnAccount(
     connection: Connection,
     actor: AuthUser,
     targetUser: AuthUser,
-    request: UpdateOwnSettingsRequest
+    request: UpdateOwnAccountRequest
   ): IO[UpdateUserSettingsResult] =
     PasswordHasher.verifyPassword(request.currentPassword, actor.passwordHash).flatMap {
       case false =>
@@ -140,12 +188,12 @@ object UserMutationCommands:
         updateSettingsRecord(
           connection,
           targetUser,
-          request.displayName,
-          request.email,
-          request.preferences.displayMode,
-          request.preferences.locale,
-          request.preferences.problemTitleDisplayMode,
-          request.newPassword
+          displayName = targetUser.displayName,
+          email = request.email,
+          displayMode = targetUser.displayMode,
+          locale = targetUser.locale,
+          problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+          newPassword = request.newPassword
         )
     }
 
@@ -180,7 +228,15 @@ object UserMutationCommands:
 
   private def commandCanAccessTarget(command: UpdateUserSettingsCommand, targetUsername: Username): Boolean =
     command match
-      case UpdateUserSettingsCommand.UpdateOwn(actor, _) =>
+      case UpdateUserSettingsCommand.UpdateOwnProfile(actor, _) =>
         targetUsername.value == actor.username.value
-      case UpdateUserSettingsCommand.UpdateManaged(actor, _) =>
+      case UpdateUserSettingsCommand.UpdateOwnPreferences(actor, _) =>
+        targetUsername.value == actor.username.value
+      case UpdateUserSettingsCommand.UpdateOwnAccount(actor, _) =>
+        targetUsername.value == actor.username.value
+      case UpdateUserSettingsCommand.UpdateManagedProfile(actor, _) =>
+        actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value
+      case UpdateUserSettingsCommand.UpdateManagedPreferences(actor, _) =>
+        actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value
+      case UpdateUserSettingsCommand.UpdateManagedAccount(actor, _) =>
         actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value

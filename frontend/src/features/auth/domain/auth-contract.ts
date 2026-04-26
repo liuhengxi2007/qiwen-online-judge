@@ -30,8 +30,12 @@ export {
   fromUserIdentityContract,
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
-  toUpdateManagedUserSettingsRequestContract,
-  toUpdateOwnSettingsRequestContract,
+  toUpdateManagedUserAccountRequestContract,
+  toUpdateManagedUserPreferencesRequestContract,
+  toUpdateManagedUserProfileRequestContract,
+  toUpdateOwnAccountRequestContract,
+  toUpdateOwnPreferencesRequestContract,
+  toUpdateOwnProfileRequestContract,
   toUpdateUserPermissionsRequestContract,
 } from '@/features/user/domain/user-contract'
 

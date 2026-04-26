@@ -5,28 +5,38 @@ import {
   parseProblemTitleDisplayMode,
   parseUserDisplayMode,
   parseUserLocale,
-  type UpdateManagedUserSettingsRequest,
-  type UpdateOwnSettingsRequest,
+  type ProblemTitleDisplayMode,
+  type UpdateManagedUserAccountRequest,
+  type UpdateManagedUserPreferencesRequest,
+  type UpdateManagedUserProfileRequest,
+  type UpdateOwnAccountRequest,
+  type UpdateOwnPreferencesRequest,
+  type UpdateOwnProfileRequest,
+  type UserDisplayMode,
+  type UserLocale,
 } from '@/features/auth/domain/auth'
+import { translateMessage } from '@/shared/i18n/messages'
 
-export type UserSettingsDraft = {
+export type UserProfileDraft = {
   displayName: string
+}
+
+export type UserPreferencesDraft = {
+  displayMode: UserDisplayMode
+  locale: UserLocale
+  problemTitleDisplayMode: ProblemTitleDisplayMode
+}
+
+export type UserAccountDraft = {
   email: string
-  displayMode: string
-  locale: string
-  problemTitleDisplayMode: string
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
 }
 
-export type UserSettingsSubmission =
-  | { kind: 'own'; request: UpdateOwnSettingsRequest }
-  | { kind: 'managed'; request: UpdateManagedUserSettingsRequest }
-
-type ValidationSuccess = {
+type ValidationSuccess<T> = {
   ok: true
-  submission: UserSettingsSubmission
+  request: T
 }
 
 type ValidationFailure = {
@@ -34,20 +44,25 @@ type ValidationFailure = {
   message: string
 }
 
-export function validateUserSettingsDraft(
-  draft: UserSettingsDraft,
-  isEditingOwnSettings: boolean,
-): ValidationSuccess | ValidationFailure {
+export function validateUserProfileDraft(
+  draft: UserProfileDraft,
+): ValidationSuccess<UpdateOwnProfileRequest | UpdateManagedUserProfileRequest> | ValidationFailure {
   const displayNameResult = parseDisplayName(draft.displayName)
   if (!displayNameResult.ok) {
     return { ok: false, message: displayNameResult.error }
   }
 
-  const emailResult = parseEmailAddress(draft.email)
-  if (!emailResult.ok) {
-    return { ok: false, message: emailResult.error }
+  return {
+    ok: true,
+    request: {
+      displayName: displayNameResult.value,
+    },
   }
+}
 
+export function validateUserPreferencesDraft(
+  draft: UserPreferencesDraft,
+): ValidationSuccess<UpdateOwnPreferencesRequest | UpdateManagedUserPreferencesRequest> | ValidationFailure {
   const displayModeResult = parseUserDisplayMode(draft.displayMode)
   if (!displayModeResult.ok) {
     return { ok: false, message: displayModeResult.error }
@@ -63,16 +78,25 @@ export function validateUserSettingsDraft(
     return { ok: false, message: problemTitleDisplayModeResult.error }
   }
 
-  const currentPasswordResult =
-    isEditingOwnSettings || draft.currentPassword.trim()
-      ? parsePlaintextPassword(draft.currentPassword)
-      : null
+  return {
+    ok: true,
+    request: {
+      preferences: {
+        displayMode: displayModeResult.value,
+        locale: localeResult.value,
+        problemTitleDisplayMode: problemTitleDisplayModeResult.value,
+      },
+    },
+  }
+}
 
-  if (isEditingOwnSettings && (!currentPasswordResult || !currentPasswordResult.ok)) {
-    return {
-      ok: false,
-      message: currentPasswordResult?.error ?? 'Password is required.',
-    }
+export function validateUserAccountDraft(
+  draft: UserAccountDraft,
+  isEditingOwnSettings: boolean,
+): ValidationSuccess<UpdateOwnAccountRequest | UpdateManagedUserAccountRequest> | ValidationFailure {
+  const emailResult = parseEmailAddress(draft.email)
+  if (!emailResult.ok) {
+    return { ok: false, message: emailResult.error }
   }
 
   const newPasswordResult = draft.newPassword.trim() ? parsePlaintextPassword(draft.newPassword) : null
@@ -93,50 +117,36 @@ export function validateUserSettingsDraft(
       !confirmNewPasswordResult ||
       newPasswordResult.value !== confirmNewPasswordResult.value
     ) {
-      return { ok: false, message: 'New passwords do not match.' }
+      return {
+        ok: false,
+        message: confirmNewPasswordResult?.ok
+          ? translateMessage('userSettings.passwordMismatch')
+          : translateMessage('userSettings.confirmNewPassword'),
+      }
     }
   }
 
-  const currentPassword = currentPasswordResult && currentPasswordResult.ok ? currentPasswordResult.value : null
-
   if (isEditingOwnSettings) {
-    if (!currentPassword) {
-      return { ok: false, message: 'Password is required.' }
+    const currentPasswordResult = parsePlaintextPassword(draft.currentPassword)
+    if (!currentPasswordResult.ok) {
+      return { ok: false, message: currentPasswordResult.error }
     }
 
     return {
       ok: true,
-      submission: {
-        kind: 'own',
-        request: {
-          displayName: displayNameResult.value,
-          email: emailResult.value,
-          preferences: {
-            displayMode: displayModeResult.value,
-            locale: localeResult.value,
-            problemTitleDisplayMode: problemTitleDisplayModeResult.value,
-          },
-          currentPassword,
-          newPassword: newPasswordResult ? newPasswordResult.value : null,
-        },
+      request: {
+        email: emailResult.value,
+        currentPassword: currentPasswordResult.value,
+        newPassword: newPasswordResult ? newPasswordResult.value : null,
       },
     }
   }
 
   return {
     ok: true,
-    submission: {
-      kind: 'managed',
-      request: {
-        displayName: displayNameResult.value,
-        email: emailResult.value,
-        preferences: {
-          displayMode: displayModeResult.value,
-          locale: localeResult.value,
-          problemTitleDisplayMode: problemTitleDisplayModeResult.value,
-        },
-        newPassword: newPasswordResult ? newPasswordResult.value : null,
-      },
+    request: {
+      email: emailResult.value,
+      newPassword: newPasswordResult ? newPasswordResult.value : null,
     },
   }
 }

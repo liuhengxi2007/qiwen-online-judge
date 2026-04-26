@@ -116,8 +116,12 @@ function run() {
 
   const userFiles = {
     AuthUserListItem: read('backend/src/main/scala/domains/user/model/AuthUserListItem.scala'),
-    UpdateOwnSettingsRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnSettingsRequest.scala'),
-    UpdateManagedUserSettingsRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserSettingsRequest.scala'),
+    UpdateOwnProfileRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnProfileRequest.scala'),
+    UpdateOwnPreferencesRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnPreferencesRequest.scala'),
+    UpdateOwnAccountRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnAccountRequest.scala'),
+    UpdateManagedUserProfileRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserProfileRequest.scala'),
+    UpdateManagedUserPreferencesRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserPreferencesRequest.scala'),
+    UpdateManagedUserAccountRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserAccountRequest.scala'),
     UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/user/model/UpdateUserPermissionsRequest.scala'),
     UserProfileResponse: read('backend/src/main/scala/domains/user/model/UserProfileResponse.scala'),
   }
@@ -229,8 +233,12 @@ function run() {
 
   const userMappings = [
     ['AuthUserListItem', 'AuthUserListItem'],
-    ['UpdateOwnSettingsRequest', 'UpdateOwnSettingsRequest'],
-    ['UpdateManagedUserSettingsRequest', 'UpdateManagedUserSettingsRequest'],
+    ['UpdateOwnProfileRequest', 'UpdateOwnProfileRequest'],
+    ['UpdateOwnPreferencesRequest', 'UpdateOwnPreferencesRequest'],
+    ['UpdateOwnAccountRequest', 'UpdateOwnAccountRequest'],
+    ['UpdateManagedUserProfileRequest', 'UpdateManagedUserProfileRequest'],
+    ['UpdateManagedUserPreferencesRequest', 'UpdateManagedUserPreferencesRequest'],
+    ['UpdateManagedUserAccountRequest', 'UpdateManagedUserAccountRequest'],
     ['UpdateUserPermissionsRequest', 'UpdateUserPermissionsRequest'],
     ['UserProfileResponse', 'UserProfileResponse'],
   ]

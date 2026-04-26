@@ -123,23 +123,17 @@ export function UserSettingsPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="settings-email">{t('common.email')}</Label>
-            <Input
-              id="settings-email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
+            <Button
+              type="button"
+              disabled={isSubmitting || !displayedUser}
+              className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
+              onClick={() => {
+                void submit('profile')
+              }}
+            >
+              {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+            </Button>
           </div>
-          <Button
-            type="button"
-            disabled={isSubmitting || !displayedUser}
-            className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
-            onClick={() => {
-              void submit('profile')
-            }}
-          >
-            {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
-          </Button>
         </CardContent>
       </Card>
 
@@ -229,12 +223,20 @@ export function UserSettingsPage() {
               <LockKeyhole className="size-5" />
             </div>
             <div>
-              <CardTitle className="text-xl text-slate-950">{t('userSettings.passwordTitle')}</CardTitle>
-              <CardDescription>{t('userSettings.passwordDescription')}</CardDescription>
+              <CardTitle className="text-xl text-slate-950">{t('userSettings.accountTitle')}</CardTitle>
+              <CardDescription>{t('userSettings.accountDescription')}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="settings-email">{t('common.email')}</Label>
+            <Input
+              id="settings-email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="settings-new-password">{t('userSettings.newPassword')}</Label>
@@ -283,7 +285,7 @@ export function UserSettingsPage() {
             disabled={isSubmitting || !displayedUser}
             className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
             onClick={() => {
-              void submit('password')
+              void submit('account')
             }}
           >
             {isSubmitting ? t('userSettings.saving') : t('userSettings.save')}

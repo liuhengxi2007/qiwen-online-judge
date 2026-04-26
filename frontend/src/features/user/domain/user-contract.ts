@@ -2,8 +2,12 @@ import type {
   AuthUserListItem as AuthUserListItemContract,
   UserListRequest as UserListRequestContract,
   UserListResponse as UserListResponseContract,
-  UpdateManagedUserSettingsRequest as UpdateManagedUserSettingsRequestContract,
-  UpdateOwnSettingsRequest as UpdateOwnSettingsRequestContract,
+  UpdateManagedUserAccountRequest as UpdateManagedUserAccountRequestContract,
+  UpdateManagedUserPreferencesRequest as UpdateManagedUserPreferencesRequestContract,
+  UpdateManagedUserProfileRequest as UpdateManagedUserProfileRequestContract,
+  UpdateOwnAccountRequest as UpdateOwnAccountRequestContract,
+  UpdateOwnPreferencesRequest as UpdateOwnPreferencesRequestContract,
+  UpdateOwnProfileRequest as UpdateOwnProfileRequestContract,
   UpdateUserPermissionsRequest as UpdateUserPermissionsRequestContract,
   UserAcceptedRanklistItem as UserAcceptedRanklistItemContract,
   UserProfileResponse as UserProfileResponseContract,
@@ -13,8 +17,12 @@ import type { PageResponse as PageResponseContract } from '@contracts/shared'
 import type { AuthUserListItem } from '@/features/user/model/AuthUserListItem'
 import type { UserListRequest } from '@/features/user/model/UserListRequest'
 import type { UserListResponse } from '@/features/user/model/UserListResponse'
-import type { UpdateManagedUserSettingsRequest } from '@/features/user/model/UpdateManagedUserSettingsRequest'
-import type { UpdateOwnSettingsRequest } from '@/features/user/model/UpdateOwnSettingsRequest'
+import type { UpdateManagedUserAccountRequest } from '@/features/user/model/UpdateManagedUserAccountRequest'
+import type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/UpdateManagedUserPreferencesRequest'
+import type { UpdateManagedUserProfileRequest } from '@/features/user/model/UpdateManagedUserProfileRequest'
+import type { UpdateOwnAccountRequest } from '@/features/user/model/UpdateOwnAccountRequest'
+import type { UpdateOwnPreferencesRequest } from '@/features/user/model/UpdateOwnPreferencesRequest'
+import type { UpdateOwnProfileRequest } from '@/features/user/model/UpdateOwnProfileRequest'
 import type { UpdateUserPermissionsRequest } from '@/features/user/model/UpdateUserPermissionsRequest'
 import type { UserAcceptedRanklistItem } from '@/features/user/model/UserAcceptedRanklistItem'
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
@@ -142,33 +150,61 @@ export function toUpdateUserPermissionsRequestContract(
   return request
 }
 
-export function toUpdateOwnSettingsRequestContract(
-  request: UpdateOwnSettingsRequest,
-): UpdateOwnSettingsRequestContract {
+export function toUpdateOwnProfileRequestContract(
+  request: UpdateOwnProfileRequest,
+): UpdateOwnProfileRequestContract {
   return {
     displayName: displayNameValue(request.displayName),
-    email: emailAddressValue(request.email),
+  }
+}
+
+export function toUpdateOwnPreferencesRequestContract(
+  request: UpdateOwnPreferencesRequest,
+): UpdateOwnPreferencesRequestContract {
+  return {
     preferences: {
       displayMode: userDisplayModeValue(request.preferences.displayMode),
       locale: userLocaleValue(request.preferences.locale),
       problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
     },
+  }
+}
+
+export function toUpdateOwnAccountRequestContract(
+  request: UpdateOwnAccountRequest,
+): UpdateOwnAccountRequestContract {
+  return {
+    email: emailAddressValue(request.email),
     currentPassword: plaintextPasswordValue(request.currentPassword),
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
   }
 }
 
-export function toUpdateManagedUserSettingsRequestContract(
-  request: UpdateManagedUserSettingsRequest,
-): UpdateManagedUserSettingsRequestContract {
+export function toUpdateManagedUserProfileRequestContract(
+  request: UpdateManagedUserProfileRequest,
+): UpdateManagedUserProfileRequestContract {
   return {
     displayName: displayNameValue(request.displayName),
-    email: emailAddressValue(request.email),
+  }
+}
+
+export function toUpdateManagedUserPreferencesRequestContract(
+  request: UpdateManagedUserPreferencesRequest,
+): UpdateManagedUserPreferencesRequestContract {
+  return {
     preferences: {
       displayMode: userDisplayModeValue(request.preferences.displayMode),
       locale: userLocaleValue(request.preferences.locale),
       problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
     },
+  }
+}
+
+export function toUpdateManagedUserAccountRequestContract(
+  request: UpdateManagedUserAccountRequest,
+): UpdateManagedUserAccountRequestContract {
+  return {
+    email: emailAddressValue(request.email),
     newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
   }
 }

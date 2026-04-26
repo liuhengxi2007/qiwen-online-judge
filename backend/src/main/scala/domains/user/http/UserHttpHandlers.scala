@@ -6,7 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.model.{UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest}
+import domains.user.model.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -74,43 +74,125 @@ final class UserHttpHandlers(
       )
     }
 
-  def executeUserSettingsUpdate(
+  def executeUserSettingsProfileUpdate(
     request: Request[IO],
     targetUsername: Username
   ): IO[Response[IO]] =
     AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
       if targetUsername.value == actor.username.value then
-        runOwnSettingsUpdate(request, targetUsername, actor)
+        runOwnProfileUpdate(request, targetUsername, actor)
       else
         SiteManagerUser.from(actor) match
           case Some(siteManagerActor) =>
-            runManagedSettingsUpdate(request, targetUsername, siteManagerActor)
+            runManagedProfileUpdate(request, targetUsername, siteManagerActor)
           case None =>
             UserHttpResponses.validationErrorResponse("Site manager permission required.")
     }
 
-  private def runOwnSettingsUpdate(
+  def executeUserSettingsPreferencesUpdate(
+    request: Request[IO],
+    targetUsername: Username
+  ): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      if targetUsername.value == actor.username.value then
+        runOwnPreferencesUpdate(request, targetUsername, actor)
+      else
+        SiteManagerUser.from(actor) match
+          case Some(siteManagerActor) =>
+            runManagedPreferencesUpdate(request, targetUsername, siteManagerActor)
+          case None =>
+            UserHttpResponses.validationErrorResponse("Site manager permission required.")
+    }
+
+  def executeUserSettingsAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username
+  ): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      if targetUsername.value == actor.username.value then
+        runOwnAccountUpdate(request, targetUsername, actor)
+      else
+        SiteManagerUser.from(actor) match
+          case Some(siteManagerActor) =>
+            runManagedAccountUpdate(request, targetUsername, siteManagerActor)
+          case None =>
+            UserHttpResponses.validationErrorResponse("Site manager permission required.")
+    }
+
+  private def runOwnProfileUpdate(
     request: Request[IO],
     targetUsername: Username,
     actor: AuthUser
   ): IO[Response[IO]] =
-    request.as[UpdateOwnSettingsRequest].flatMap { body =>
+    request.as[UpdateOwnProfileRequest].flatMap { body =>
       databaseSession.withTransactionConnection(connection =>
-        UserHttpPlanDefinitions.updateOwnSettings.plan
+        UserHttpPlanDefinitions.updateOwnProfile.plan
           .execute(context, connection, actor, (targetUsername, body))
-          .flatMap(UserHttpPlanDefinitions.updateOwnSettings.toResponse)
+          .flatMap(UserHttpPlanDefinitions.updateOwnProfile.toResponse)
       )
     }
 
-  private def runManagedSettingsUpdate(
+  private def runOwnPreferencesUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: AuthUser
+  ): IO[Response[IO]] =
+    request.as[UpdateOwnPreferencesRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        UserHttpPlanDefinitions.updateOwnPreferences.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(UserHttpPlanDefinitions.updateOwnPreferences.toResponse)
+      )
+    }
+
+  private def runOwnAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: AuthUser
+  ): IO[Response[IO]] =
+    request.as[UpdateOwnAccountRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        UserHttpPlanDefinitions.updateOwnAccount.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(UserHttpPlanDefinitions.updateOwnAccount.toResponse)
+      )
+    }
+
+  private def runManagedProfileUpdate(
     request: Request[IO],
     targetUsername: Username,
     actor: SiteManagerUser
   ): IO[Response[IO]] =
-    request.as[UpdateManagedUserSettingsRequest].flatMap { body =>
+    request.as[UpdateManagedUserProfileRequest].flatMap { body =>
       databaseSession.withTransactionConnection(connection =>
-        UserHttpPlanDefinitions.updateManagedSettings.plan
+        UserHttpPlanDefinitions.updateManagedProfile.plan
           .execute(context, connection, actor, (targetUsername, body))
-          .flatMap(UserHttpPlanDefinitions.updateManagedSettings.toResponse)
+          .flatMap(UserHttpPlanDefinitions.updateManagedProfile.toResponse)
+      )
+    }
+
+  private def runManagedPreferencesUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: SiteManagerUser
+  ): IO[Response[IO]] =
+    request.as[UpdateManagedUserPreferencesRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        UserHttpPlanDefinitions.updateManagedPreferences.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(UserHttpPlanDefinitions.updateManagedPreferences.toResponse)
+      )
+    }
+
+  private def runManagedAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: SiteManagerUser
+  ): IO[Response[IO]] =
+    request.as[UpdateManagedUserAccountRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        UserHttpPlanDefinitions.updateManagedAccount.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(UserHttpPlanDefinitions.updateManagedAccount.toResponse)
       )
     }

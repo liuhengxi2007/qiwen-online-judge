@@ -92,17 +92,29 @@ export type UpdateUserPermissionsRequest = {
   problemManager: boolean
 }
 
-export type UpdateOwnSettingsRequest = {
+export type UpdateOwnProfileRequest = {
   displayName: string
-  email: string
+}
+
+export type UpdateOwnPreferencesRequest = {
   preferences: UserPreferences
+}
+
+export type UpdateOwnAccountRequest = {
+  email: string
   currentPassword: string
   newPassword: string | null
 }
 
-export type UpdateManagedUserSettingsRequest = {
+export type UpdateManagedUserProfileRequest = {
   displayName: string
-  email: string
+}
+
+export type UpdateManagedUserPreferencesRequest = {
   preferences: UserPreferences
+}
+
+export type UpdateManagedUserAccountRequest = {
+  email: string
   newPassword: string | null
 }

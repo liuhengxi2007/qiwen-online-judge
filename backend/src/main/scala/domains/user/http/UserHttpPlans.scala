@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
-import domains.user.model.{AuthUserListItem, UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserIdentity, UserListRequest, UserListResponse, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserIdentity, UserListRequest, UserListResponse, UserRanklistItem}
 
 import java.sql.Connection
 
@@ -96,19 +96,19 @@ object UserHttpPlans:
       val (targetUsername, request) = input
       UserMutationCommands.updateUserPermissions(connection, actor.authUser, targetUsername, request)
 
-  case object UpdateOwnSettings
-      extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnSettingsRequest), UpdateUserSettingsOutput]:
+  case object UpdateOwnProfile
+      extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnProfileRequest), UpdateUserSettingsOutput]:
 
-    override val name: String = "UpdateOwnSettings"
+    override val name: String = "UpdateOwnProfile"
 
     override def execute(
       context: UserHttpContext,
       connection: Connection,
       actor: AuthUser,
-      input: (Username, UpdateOwnSettingsRequest)
+      input: (Username, UpdateOwnProfileRequest)
     ): IO[UpdateUserSettingsOutput] =
       val (targetUsername, request) = input
-      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateOwn(actor, request)
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateOwnProfile(actor, request)
       for
         result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
         _ <- revokePasswordChangedSessions(context, targetUsername, result)
@@ -118,19 +118,107 @@ object UserHttpPlans:
           clearSessionCookie = passwordChangedByActor(actor, targetUsername, result)
         )
 
-  case object UpdateManagedSettings
-      extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserSettingsRequest), UpdateUserSettingsOutput]:
+  case object UpdateOwnPreferences
+      extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnPreferencesRequest), UpdateUserSettingsOutput]:
 
-    override val name: String = "UpdateManagedSettings"
+    override val name: String = "UpdateOwnPreferences"
+
+    override def execute(
+      context: UserHttpContext,
+      connection: Connection,
+      actor: AuthUser,
+      input: (Username, UpdateOwnPreferencesRequest)
+    ): IO[UpdateUserSettingsOutput] =
+      val (targetUsername, request) = input
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateOwnPreferences(actor, request)
+      for
+        result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
+        _ <- revokePasswordChangedSessions(context, targetUsername, result)
+      yield
+        UpdateUserSettingsOutput(
+          result = result,
+          clearSessionCookie = passwordChangedByActor(actor, targetUsername, result)
+        )
+
+  case object UpdateOwnAccount
+      extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnAccountRequest), UpdateUserSettingsOutput]:
+
+    override val name: String = "UpdateOwnAccount"
+
+    override def execute(
+      context: UserHttpContext,
+      connection: Connection,
+      actor: AuthUser,
+      input: (Username, UpdateOwnAccountRequest)
+    ): IO[UpdateUserSettingsOutput] =
+      val (targetUsername, request) = input
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateOwnAccount(actor, request)
+      for
+        result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
+        _ <- revokePasswordChangedSessions(context, targetUsername, result)
+      yield
+        UpdateUserSettingsOutput(
+          result = result,
+          clearSessionCookie = passwordChangedByActor(actor, targetUsername, result)
+        )
+
+  case object UpdateManagedProfile
+      extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserProfileRequest), UpdateUserSettingsOutput]:
+
+    override val name: String = "UpdateManagedProfile"
 
     override def execute(
       context: UserHttpContext,
       connection: Connection,
       actor: SiteManagerUser,
-      input: (Username, UpdateManagedUserSettingsRequest)
+      input: (Username, UpdateManagedUserProfileRequest)
     ): IO[UpdateUserSettingsOutput] =
       val (targetUsername, request) = input
-      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateManaged(actor, request)
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateManagedProfile(actor, request)
+      for
+        result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
+        _ <- revokePasswordChangedSessions(context, targetUsername, result)
+      yield
+        UpdateUserSettingsOutput(
+          result = result,
+          clearSessionCookie = false
+        )
+
+  case object UpdateManagedPreferences
+      extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserPreferencesRequest), UpdateUserSettingsOutput]:
+
+    override val name: String = "UpdateManagedPreferences"
+
+    override def execute(
+      context: UserHttpContext,
+      connection: Connection,
+      actor: SiteManagerUser,
+      input: (Username, UpdateManagedUserPreferencesRequest)
+    ): IO[UpdateUserSettingsOutput] =
+      val (targetUsername, request) = input
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateManagedPreferences(actor, request)
+      for
+        result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
+        _ <- revokePasswordChangedSessions(context, targetUsername, result)
+      yield
+        UpdateUserSettingsOutput(
+          result = result,
+          clearSessionCookie = false
+        )
+
+  case object UpdateManagedAccount
+      extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserAccountRequest), UpdateUserSettingsOutput]:
+
+    override val name: String = "UpdateManagedAccount"
+
+    override def execute(
+      context: UserHttpContext,
+      connection: Connection,
+      actor: SiteManagerUser,
+      input: (Username, UpdateManagedUserAccountRequest)
+    ): IO[UpdateUserSettingsOutput] =
+      val (targetUsername, request) = input
+      val command = UserMutationCommands.UpdateUserSettingsCommand.UpdateManagedAccount(actor, request)
       for
         result <- UserMutationCommands.updateUserSettings(connection, targetUsername, command)
         _ <- revokePasswordChangedSessions(context, targetUsername, result)

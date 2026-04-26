@@ -8,25 +8,60 @@ import {
 import { logout } from '@/features/auth/api/auth-client'
 import {
   UserClientError,
-  updateManagedUserSettings,
-  updateOwnUserSettings,
+  updateManagedUserAccount,
+  updateManagedUserPreferences,
+  updateManagedUserProfile,
+  updateOwnUserAccount,
+  updateOwnUserPreferences,
+  updateOwnUserProfile,
 } from '@/features/user/api/user-client'
-import type { UpdateManagedUserSettingsRequest, UpdateOwnSettingsRequest } from '@/features/user/domain/user'
+import type {
+  UpdateManagedUserAccountRequest,
+  UpdateManagedUserPreferencesRequest,
+  UpdateManagedUserProfileRequest,
+  UpdateOwnAccountRequest,
+  UpdateOwnPreferencesRequest,
+  UpdateOwnProfileRequest,
+} from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type SubmitSettingsParams =
   | {
-      kind: 'own'
+      kind: 'own_profile'
       targetUsername: Username
-      request: UpdateOwnSettingsRequest
+      request: UpdateOwnProfileRequest
       setViewer: (session: SessionResponse | null) => void
     }
   | {
-      kind: 'managed'
+      kind: 'own_preferences'
       targetUsername: Username
-      request: UpdateManagedUserSettingsRequest
+      request: UpdateOwnPreferencesRequest
+      setViewer: (session: SessionResponse | null) => void
+    }
+  | {
+      kind: 'own_account'
+      targetUsername: Username
+      request: UpdateOwnAccountRequest
+      setViewer: (session: SessionResponse | null) => void
+    }
+  | {
+      kind: 'managed_profile'
+      targetUsername: Username
+      request: UpdateManagedUserProfileRequest
+      setViewer: (session: SessionResponse | null) => void
+    }
+  | {
+      kind: 'managed_preferences'
+      targetUsername: Username
+      request: UpdateManagedUserPreferencesRequest
+      setViewer: (session: SessionResponse | null) => void
+    }
+  | {
+      kind: 'managed_account'
+      targetUsername: Username
+      request: UpdateManagedUserAccountRequest
       setViewer: (session: SessionResponse | null) => void
     }
 
@@ -48,14 +83,26 @@ export function useUserSettingsMutation() {
       setNavigationIntent(null)
 
       try {
-        const updatedUser =
-          params.kind === 'own'
-            ? await updateOwnUserSettings(params.targetUsername, params.request)
-            : await updateManagedUserSettings(params.targetUsername, params.request)
+        const updatedUser = await (() => {
+          switch (params.kind) {
+            case 'own_profile':
+              return updateOwnUserProfile(params.targetUsername, params.request)
+            case 'own_preferences':
+              return updateOwnUserPreferences(params.targetUsername, params.request)
+            case 'own_account':
+              return updateOwnUserAccount(params.targetUsername, params.request)
+            case 'managed_profile':
+              return updateManagedUserProfile(params.targetUsername, params.request)
+            case 'managed_preferences':
+              return updateManagedUserPreferences(params.targetUsername, params.request)
+            case 'managed_account':
+              return updateManagedUserAccount(params.targetUsername, params.request)
+          }
+        })()
 
-        const shouldSignOutAfterUpdate = params.kind === 'own' && params.request.newPassword !== null
+        const shouldSignOutAfterUpdate = params.kind === 'own_account' && params.request.newPassword !== null
 
-        if (params.kind === 'own' && !shouldSignOutAfterUpdate) {
+        if ((params.kind === 'own_profile' || params.kind === 'own_preferences' || params.kind === 'own_account') && !shouldSignOutAfterUpdate) {
           params.setViewer(toAuthSession(updatedUser))
         }
 
@@ -67,7 +114,12 @@ export function useUserSettingsMutation() {
           return { kind: 'updated_and_signed_out' }
         }
 
-        const message = t('userSettings.updateSuccess')
+        const message =
+          params.kind === 'own_profile' || params.kind === 'managed_profile'
+            ? t('userSettings.profileUpdateSuccess')
+            : params.kind === 'own_preferences' || params.kind === 'managed_preferences'
+              ? t('userSettings.preferencesUpdateSuccess')
+              : t('userSettings.accountUpdateSuccess')
 
         setIsSubmitting(false)
         return { kind: 'updated', user: updatedUser, message }
@@ -81,7 +133,7 @@ export function useUserSettingsMutation() {
         if (error instanceof UserClientError && error.kind === 'unauthorized') {
           const message =
             error.message ||
-            (params.kind === 'own' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))
+            (params.kind === 'own_account' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))
           setIsSubmitting(false)
           return { kind: 'unauthorized', message }
         }

@@ -1,6 +1,10 @@
 export type { AuthUserListItem } from '@/features/user/model/AuthUserListItem'
-export type { UpdateManagedUserSettingsRequest } from '@/features/user/model/UpdateManagedUserSettingsRequest'
-export type { UpdateOwnSettingsRequest } from '@/features/user/model/UpdateOwnSettingsRequest'
+export type { UpdateManagedUserAccountRequest } from '@/features/user/model/UpdateManagedUserAccountRequest'
+export type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/UpdateManagedUserPreferencesRequest'
+export type { UpdateManagedUserProfileRequest } from '@/features/user/model/UpdateManagedUserProfileRequest'
+export type { UpdateOwnAccountRequest } from '@/features/user/model/UpdateOwnAccountRequest'
+export type { UpdateOwnPreferencesRequest } from '@/features/user/model/UpdateOwnPreferencesRequest'
+export type { UpdateOwnProfileRequest } from '@/features/user/model/UpdateOwnProfileRequest'
 export type { UpdateUserPermissionsRequest } from '@/features/user/model/UpdateUserPermissionsRequest'
 export type { UserAcceptedProblem } from '@/features/user/model/UserAcceptedProblem'
 export type { UserAcceptedRanklistItem } from '@/features/user/model/UserAcceptedRanklistItem'
@@ -42,7 +46,11 @@ export {
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
   toUserListRequestContract,
-  toUpdateManagedUserSettingsRequestContract,
-  toUpdateOwnSettingsRequestContract,
+  toUpdateManagedUserAccountRequestContract,
+  toUpdateManagedUserPreferencesRequestContract,
+  toUpdateManagedUserProfileRequestContract,
+  toUpdateOwnAccountRequestContract,
+  toUpdateOwnPreferencesRequestContract,
+  toUpdateOwnProfileRequestContract,
   toUpdateUserPermissionsRequestContract,
 } from '@/features/user/domain/user-contract'

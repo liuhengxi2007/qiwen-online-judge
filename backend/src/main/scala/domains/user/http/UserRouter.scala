@@ -52,8 +52,14 @@ object UserRouter:
           updateUserPermissions
         )(body => (Username.canonical(targetUsername), body))
 
-      case request @ POST -> Root / "api" / "users" / targetUsername / "settings" =>
-        handlers.executeUserSettingsUpdate(request, Username.canonical(targetUsername))
+      case request @ POST -> Root / "api" / "users" / targetUsername / "settings" / "profile" =>
+        handlers.executeUserSettingsProfileUpdate(request, Username.canonical(targetUsername))
+
+      case request @ POST -> Root / "api" / "users" / targetUsername / "settings" / "preferences" =>
+        handlers.executeUserSettingsPreferencesUpdate(request, Username.canonical(targetUsername))
+
+      case request @ POST -> Root / "api" / "users" / targetUsername / "settings" / "account" =>
+        handlers.executeUserSettingsAccountUpdate(request, Username.canonical(targetUsername))
 
       case request @ POST -> Root / "api" / "users" / targetUsername / "delete" =>
         handlers.execute(request, Username.canonical(targetUsername), deleteUser)

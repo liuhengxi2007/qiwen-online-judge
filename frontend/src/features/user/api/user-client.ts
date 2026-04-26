@@ -4,8 +4,12 @@ import type {
   AuthUserListItem,
   UserListRequest,
   UserListResponse,
-  UpdateManagedUserSettingsRequest,
-  UpdateOwnSettingsRequest,
+  UpdateManagedUserAccountRequest,
+  UpdateManagedUserPreferencesRequest,
+  UpdateManagedUserProfileRequest,
+  UpdateOwnAccountRequest,
+  UpdateOwnPreferencesRequest,
+  UpdateOwnProfileRequest,
   UpdateUserPermissionsRequest,
   UserAcceptedRanklistResponse,
   UserIdentity,
@@ -21,8 +25,12 @@ import {
   fromUserProfileResponseContract,
   fromUserRanklistResponseContract,
   toUserListRequestContract,
-  toUpdateManagedUserSettingsRequestContract,
-  toUpdateOwnSettingsRequestContract,
+  toUpdateManagedUserAccountRequestContract,
+  toUpdateManagedUserPreferencesRequestContract,
+  toUpdateManagedUserProfileRequestContract,
+  toUpdateOwnAccountRequestContract,
+  toUpdateOwnPreferencesRequestContract,
+  toUpdateOwnProfileRequestContract,
   toUpdateUserPermissionsRequestContract,
   usernameValue,
 } from '@/features/user/domain/user'
@@ -94,24 +102,68 @@ export function deleteUser(username: Username): Promise<SuccessResponse> {
   return postJson(`/api/users/${encodeURIComponent(usernameValue(username))}/delete`, decodeSuccessResponse, {})
 }
 
-export function updateOwnUserSettings(
+export function updateOwnUserProfile(
   username: Username,
-  request: UpdateOwnSettingsRequest,
+  request: UpdateOwnProfileRequest,
 ): Promise<SessionResponse> {
   return postJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/profile`,
     fromSessionResponseContract,
-    toUpdateOwnSettingsRequestContract(request),
+    toUpdateOwnProfileRequestContract(request),
   )
 }
 
-export function updateManagedUserSettings(
+export function updateOwnUserPreferences(
   username: Username,
-  request: UpdateManagedUserSettingsRequest,
+  request: UpdateOwnPreferencesRequest,
 ): Promise<SessionResponse> {
   return postJson(
-    `/api/users/${encodeURIComponent(usernameValue(username))}/settings`,
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/preferences`,
     fromSessionResponseContract,
-    toUpdateManagedUserSettingsRequestContract(request),
+    toUpdateOwnPreferencesRequestContract(request),
+  )
+}
+
+export function updateOwnUserAccount(
+  username: Username,
+  request: UpdateOwnAccountRequest,
+): Promise<SessionResponse> {
+  return postJson(
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/account`,
+    fromSessionResponseContract,
+    toUpdateOwnAccountRequestContract(request),
+  )
+}
+
+export function updateManagedUserProfile(
+  username: Username,
+  request: UpdateManagedUserProfileRequest,
+): Promise<SessionResponse> {
+  return postJson(
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/profile`,
+    fromSessionResponseContract,
+    toUpdateManagedUserProfileRequestContract(request),
+  )
+}
+
+export function updateManagedUserPreferences(
+  username: Username,
+  request: UpdateManagedUserPreferencesRequest,
+): Promise<SessionResponse> {
+  return postJson(
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/preferences`,
+    fromSessionResponseContract,
+    toUpdateManagedUserPreferencesRequestContract(request),
+  )
+}
+
+export function updateManagedUserAccount(
+  username: Username,
+  request: UpdateManagedUserAccountRequest,
+): Promise<SessionResponse> {
+  return postJson(
+    `/api/users/${encodeURIComponent(usernameValue(username))}/settings/account`,
+    fromSessionResponseContract,
+    toUpdateManagedUserAccountRequestContract(request),
   )
 }

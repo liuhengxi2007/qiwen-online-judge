@@ -102,21 +102,21 @@ export function reduceUserSettingsState(
         successMessage: '',
       }
     case 'set_display_name':
-      return { ...state, displayName: action.value }
+      return { ...state, displayName: action.value, successMessage: '' }
     case 'set_email':
-      return { ...state, email: action.value }
+      return { ...state, email: action.value, successMessage: '' }
     case 'set_display_mode':
-      return { ...state, displayMode: action.value }
+      return { ...state, displayMode: action.value, successMessage: '' }
     case 'set_locale':
-      return { ...state, locale: action.value }
+      return { ...state, locale: action.value, successMessage: '' }
     case 'set_problem_title_display_mode':
-      return { ...state, problemTitleDisplayMode: action.value }
+      return { ...state, problemTitleDisplayMode: action.value, successMessage: '' }
     case 'set_current_password':
-      return { ...state, currentPassword: action.value }
+      return { ...state, currentPassword: action.value, successMessage: '' }
     case 'set_new_password':
-      return { ...state, newPassword: action.value }
+      return { ...state, newPassword: action.value, successMessage: '' }
     case 'set_confirm_new_password':
-      return { ...state, confirmNewPassword: action.value }
+      return { ...state, confirmNewPassword: action.value, successMessage: '' }
     case 'submit_started':
       return {
         ...state,
