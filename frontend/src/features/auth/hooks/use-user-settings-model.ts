@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react'
 
 import {
+  displayNameValue,
   parseUsername,
   type SessionResponse,
 } from '@/features/auth/domain/auth'
@@ -19,6 +20,8 @@ import { useI18n } from '@/shared/i18n/i18n'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
+
+export type UserSettingsSection = 'profile' | 'preferences' | 'password'
 
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse
@@ -67,7 +70,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     }
   }, [query.editedUser, query.settingsLoadError])
 
-  async function submit() {
+  async function submit(section: UserSettingsSection) {
     if (!displayedUser) {
       dispatch({ type: 'submit_failed', message: t('userSettings.loadingSelected') })
       return
@@ -75,14 +78,15 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
 
     const validation = validateUserSettingsDraft(
       {
-        displayName: state.displayName,
-        email: state.email,
-        displayMode: state.displayMode,
-        locale: state.locale,
-        problemTitleDisplayMode: state.problemTitleDisplayMode,
-        currentPassword: state.currentPassword,
-        newPassword: state.newPassword,
-        confirmNewPassword: state.confirmNewPassword,
+        displayName: section === 'profile' ? state.displayName : displayNameValue(displayedUser.displayName),
+        email: section === 'profile' ? state.email : displayedUser.email,
+        displayMode: section === 'preferences' ? state.displayMode : displayedUser.preferences.displayMode,
+        locale: section === 'preferences' ? state.locale : displayedUser.preferences.locale,
+        problemTitleDisplayMode:
+          section === 'preferences' ? state.problemTitleDisplayMode : displayedUser.preferences.problemTitleDisplayMode,
+        currentPassword: section === 'password' ? state.currentPassword : '',
+        newPassword: section === 'password' ? state.newPassword : '',
+        confirmNewPassword: section === 'password' ? state.confirmNewPassword : '',
       },
       isEditingOwnSettings,
     )
