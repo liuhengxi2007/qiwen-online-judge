@@ -52,13 +52,15 @@ object UserMutationCommands:
     actor: AuthUser,
     targetUsername: Username
   ): IO[GetUserSettingsResult] =
-    val _ = actor
-    databaseSession.withTransactionConnection(connection =>
-      UserTable.findByUsername(connection, targetUsername)
-    ).map {
-      case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
-      case None => GetUserSettingsResult.NotFound
-    }
+    if !canReadUserSettings(actor, targetUsername) then
+      IO.pure(GetUserSettingsResult.Forbidden)
+    else
+      databaseSession.withTransactionConnection(connection =>
+        UserTable.findByUsername(connection, targetUsername)
+      ).map {
+        case Some(targetUser) => GetUserSettingsResult.Found(targetUser)
+        case None => GetUserSettingsResult.NotFound
+      }
 
   def updateUserPermissions(
     connection: Connection,
@@ -240,3 +242,6 @@ object UserMutationCommands:
         actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value
       case UpdateUserSettingsCommand.UpdateManagedAccount(actor, _) =>
         actor.authUser.siteManager && targetUsername.value != actor.authUser.username.value
+
+  private def canReadUserSettings(actor: AuthUser, targetUsername: Username): Boolean =
+    targetUsername.value == actor.username.value || actor.siteManager
