@@ -2,6 +2,7 @@ package domains.problem.table
 
 import database.ResourceAccessGrantTable
 import cats.effect.IO
+import cats.syntax.all.*
 import domains.auth.model.Username
 import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemListRequest, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
@@ -50,12 +51,11 @@ object ProblemTable:
           finally resultSet.close()
         finally statement.close()
       }
-      itemsWithPolicies <- items.foldLeft(IO.pure(List.empty[ProblemSummary])) { (accIO, item) =>
+      itemsWithPolicies <- items.traverse { item =>
         for
-          acc <- accIO
           viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Viewer)
           managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Manager)
-        yield acc :+ item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
+        yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
       }
     yield PageResponse(items = itemsWithPolicies, page = request.page, pageSize = request.pageSize, totalItems = totalItems)
 

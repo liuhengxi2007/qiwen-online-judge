@@ -28,11 +28,7 @@ const problemsPerPage = 10
 function buildPageNumbers(currentPage: number, totalPages: number): number[] {
   const firstPage = Math.max(1, currentPage - 2)
   const lastPage = Math.min(totalPages, currentPage + 2)
-  const pages: number[] = []
-  for (let page = firstPage; page <= lastPage; page += 1) {
-    pages.push(page)
-  }
-  return pages
+  return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index)
 }
 
 function parsePositivePage(value: string | null): number {
