@@ -1,7 +1,9 @@
-package domains.shared.access
+package database
 
 import cats.effect.IO
 import domains.auth.model.Username
+import domains.shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
+import domains.usergroup.model.UserGroupSlug
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
@@ -222,10 +224,7 @@ object ResourceAccessGrantTable:
       finally statement.close()
     }
 
-  private def exists(
-    connection: Connection,
-    sql: String
-  )(bind: PreparedStatement => Unit): IO[Boolean] =
+  private def exists(connection: Connection, sql: String)(bind: PreparedStatement => Unit): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(sql)
       try
@@ -238,28 +237,28 @@ object ResourceAccessGrantTable:
 
   private def readGrant(resultSet: ResultSet): ResourceAccessGrant =
     ResourceAccessGrant(
-      resourceKind = parseOptionalColumn("resource_access_grants.resource_kind", resultSet.getString("resource_kind"), ResourceKind.fromDatabase),
+      resourceKind =
+        ResourceKind
+          .fromDatabase(resultSet.getString("resource_kind"))
+          .getOrElse(throw IllegalStateException(s"Invalid resource_kind: ${resultSet.getString("resource_kind")}")),
       resourceId = ResourceId(resultSet.getObject("resource_id", classOf[java.util.UUID])),
-      grantRole = parseOptionalColumn("resource_access_grants.grant_role", resultSet.getString("grant_role"), GrantRole.fromDatabase),
-      subject = readSubject(resultSet.getString("subject_kind"), resultSet.getString("subject_key")),
+      grantRole =
+        GrantRole
+          .fromDatabase(resultSet.getString("grant_role"))
+          .getOrElse(throw IllegalStateException(s"Invalid grant_role: ${resultSet.getString("grant_role")}")),
+      subject = parseAccessSubject(resultSet.getString("subject_kind"), resultSet.getString("subject_key")),
       createdAt = resultSet.getTimestamp("created_at").toInstant
     )
 
-  private def readSubject(subjectKind: String, subjectKey: String): AccessSubject =
+  private def parseAccessSubject(subjectKind: String, subjectKey: String): AccessSubject =
     subjectKind match
       case "user" => AccessSubject.User(Username.canonical(subjectKey))
       case "user_group" =>
-        AccessSubject.UserGroup(
-          parseColumn(
-            "resource_access_grants.subject_key",
-            subjectKey,
-            domains.usergroup.model.UserGroupSlug.parse,
+        UserGroupSlug
+          .parse(subjectKey)
+          .fold(
+            message => throw IllegalStateException(s"Invalid access subject slug: $message"),
+            AccessSubject.UserGroup(_)
           )
-        )
-      case other => throw IllegalStateException(s"Invalid value in resource_access_grants.subject_kind: $other")
-
-  private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
-    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
-
-  private def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
-    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+      case other =>
+        throw IllegalStateException(s"Invalid access subject kind: $other")

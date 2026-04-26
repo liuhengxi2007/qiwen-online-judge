@@ -1,7 +1,7 @@
 import domains.auth.application.SessionStore
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
-import database.DatabaseSession
+import database.{DatabaseSession, ResourceAccessGrantTable}
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.CORS
@@ -13,7 +13,6 @@ import domains.judge.application.JudgeConfig
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.ResourceAccessGrantTable
 import domains.submission.table.SubmissionTable
 import domains.judger.table.JudgerTable
 import domains.usergroup.table.UserGroupTable

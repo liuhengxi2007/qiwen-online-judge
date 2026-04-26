@@ -1,4 +1,6 @@
-package domains.shared.access
+package database
+
+import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy}
 
 object ResourceAccessTableSupport:
 

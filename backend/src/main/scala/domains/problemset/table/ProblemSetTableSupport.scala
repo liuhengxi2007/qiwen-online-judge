@@ -1,12 +1,12 @@
 package domains.problemset.table
 
 import cats.effect.IO
+import database.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
-import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility}
 
 import java.sql.{PreparedStatement, ResultSet}
 

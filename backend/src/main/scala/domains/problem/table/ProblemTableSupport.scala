@@ -1,10 +1,10 @@
 package domains.problem.table
 
+import database.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
-import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId, ResourceAccessTableSupport}
-import domains.shared.access.ResourceAccessTableSupport.{missingInsertResult, parseColumn, parseOptionalColumn, policyFrom, sanitizePolicy, toLegacyVisibility}
+import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 import domains.shared.sql.LikePatternSql
 
 import java.sql.{PreparedStatement, ResultSet}

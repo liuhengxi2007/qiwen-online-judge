@@ -1,14 +1,14 @@
 package domains.problem.application
 
 import cats.effect.IO
-import database.DatabaseSession
+import database.{DatabaseSession, ResourceAccessGrantTable}
 import domains.auth.model.AuthUser
 import domains.problem.model.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
-import domains.shared.access.{ResourceAccessGrantTable, ResourceId, ResourceKind}
+import domains.shared.access.{ResourceId, ResourceKind}
 
 import java.time.Instant
 

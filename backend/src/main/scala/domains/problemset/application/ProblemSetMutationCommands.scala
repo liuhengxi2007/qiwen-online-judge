@@ -1,13 +1,13 @@
 package domains.problemset.application
 
 import cats.effect.IO
-import database.DatabaseSession
+import database.{DatabaseSession, ResourceAccessGrantTable}
 import domains.auth.model.AuthUser
 import domains.problem.model.ProblemSlug
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{ResourceAccessGrantTable, ResourceId, ResourceKind}
+import domains.shared.access.{ResourceId, ResourceKind}
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetCommandSupport.*
 import domains.problemset.application.ProblemSetDecisions.*
