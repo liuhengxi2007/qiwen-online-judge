@@ -30,6 +30,10 @@ export function formatCodeLength(value: number): string {
   return `${value} B`
 }
 
+export function formatSubmissionDateTime(value: string): string {
+  return new Date(value).toLocaleString()
+}
+
 function formatWithReadablePrecision(value: number): string {
   if (value < 1) {
     return new Intl.NumberFormat(undefined, {

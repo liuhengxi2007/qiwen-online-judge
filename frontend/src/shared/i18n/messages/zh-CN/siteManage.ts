@@ -23,6 +23,7 @@ export const zhCnSiteManageMessages: Record<string, string> = {
   'siteManage.loadingJudgers': '正在加载评测机...',
   'siteManage.usersLoadFailed': '无法加载用户列表。',
   'siteManage.judgersLoadFailed': '无法加载已注册的评测机。',
+  'siteManage.message.updatePermissionsSucceeded': '已更新 {{username}} 的权限。',
   'siteManage.message.updatePermissionsFailed': '无法更新用户权限。',
   'siteManage.message.deleteUserFailed': '无法删除用户。',
   'siteManage.emptyJudgersTitle': '当前没有已注册的评测机。',

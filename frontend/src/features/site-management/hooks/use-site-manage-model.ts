@@ -76,7 +76,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean, userListRequest:
     judgerListError: query.judgerListError,
     isLoadingUsers: query.isLoadingUsers,
     isLoadingJudgers: query.isLoadingJudgers,
-    statusMessage: state.statusMessage,
+    notice: state.notice,
     updatingUsername: currentUpdatingUsername,
     deletingUsername: currentDeletingUsername,
     navigationIntent: state.navigationIntent ?? query.navigationIntent ?? mutation.navigationIntent ?? deleteMutation.navigationIntent,

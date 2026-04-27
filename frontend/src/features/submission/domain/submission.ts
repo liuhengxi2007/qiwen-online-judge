@@ -20,11 +20,6 @@ export {
   submissionVerdictLabel,
 } from '@/features/submission/domain/submission-parsers'
 export {
-  formatCodeLength,
-  formatOptionalDurationMs,
-  formatOptionalMemoryKb,
-} from '@/features/submission/domain/submission-formatters'
-export {
   fromSubmissionDetailContract,
   fromSubmissionListRequestContract,
   fromSubmissionListResponseContract,

@@ -12,11 +12,13 @@ import {
 } from '@/features/problem/domain/problem'
 import { listUserSuggestions } from '@/features/user/api/user-client'
 import type { UserIdentity } from '@/features/user/domain/user'
-import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
+} from '@/features/submission/components/submission-support'
+import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
+import {
   isSubmissionSort,
   isSubmissionSortDirection,
   isSubmissionVerdictFilter,

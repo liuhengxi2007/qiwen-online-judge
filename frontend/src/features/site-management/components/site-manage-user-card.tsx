@@ -55,6 +55,14 @@ export function SiteManageUserCard({
   const { t } = useI18n()
   const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username) === 'admin'
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
+  const statusMessage =
+    model.notice?.kind === 'permissions_updated'
+      ? t('siteManage.message.updatePermissionsSucceeded', {
+          username: displayNameValue(model.notice.displayName),
+        })
+      : model.notice?.kind === 'text'
+        ? model.notice.message
+        : ''
 
   function applyQueryOnEnter(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== 'Enter') {
@@ -79,9 +87,9 @@ export function SiteManageUserCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {model.statusMessage ? (
+        {statusMessage ? (
           <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.statusMessage}</AlertDescription>
+            <AlertDescription className="text-emerald-700">{statusMessage}</AlertDescription>
           </Alert>
         ) : null}
         {model.userListError ? (

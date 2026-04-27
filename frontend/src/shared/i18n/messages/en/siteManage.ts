@@ -23,6 +23,7 @@ export const enSiteManageMessages: Record<string, string> = {
   'siteManage.loadingJudgers': 'Loading registered judgers...',
   'siteManage.usersLoadFailed': 'Unable to load users.',
   'siteManage.judgersLoadFailed': 'Unable to load registered judgers.',
+  'siteManage.message.updatePermissionsSucceeded': 'Permissions updated for {{username}}.',
   'siteManage.message.updatePermissionsFailed': 'Unable to update user permissions.',
   'siteManage.message.deleteUserFailed': 'Unable to delete user.',
   'siteManage.emptyJudgersTitle': 'No judgers are registered right now.',

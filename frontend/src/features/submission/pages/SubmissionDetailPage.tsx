@@ -8,9 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { deleteSubmission, rejudgeSubmission } from '@/features/submission/api/submission-client'
 import {
-  formatCodeLength,
-  formatOptionalDurationMs,
-  formatOptionalMemoryKb,
   isTerminalSubmissionStatus,
   parseSubmissionId,
   submissionIdValue,
@@ -18,6 +15,12 @@ import {
   submissionVerdictLabel,
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission'
+import {
+  formatCodeLength,
+  formatOptionalDurationMs,
+  formatOptionalMemoryKb,
+  formatSubmissionDateTime,
+} from '@/features/submission/components/submission-support'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
@@ -217,7 +220,7 @@ export function SubmissionDetailPage() {
                 <div>
                   <p className="text-slate-500">{t('common.submittedAt')}</p>
                   <p className="mt-1 font-medium text-slate-900">
-                    {new Date(submissionQuery.submission.submittedAt).toLocaleString()}
+                    {formatSubmissionDateTime(submissionQuery.submission.submittedAt)}
                   </p>
                 </div>
                 <div>

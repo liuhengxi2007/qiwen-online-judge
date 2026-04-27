@@ -1,9 +1,13 @@
-import type { Username } from '@/features/auth/domain/auth'
-import { displayNameValue, type AuthUserListItem } from '@/features/user/domain/user'
+import type { DisplayName, Username } from '@/features/auth/domain/auth'
+import type { AuthUserListItem } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
+export type SiteManageNotice =
+  | { kind: 'permissions_updated'; displayName: DisplayName }
+  | { kind: 'text'; message: string }
+
 export type SiteManageState = {
-  statusMessage: string
+  notice: SiteManageNotice | null
   actionErrorMessage: string
   updatingUsername: Username | null
   navigationIntent: NavigationIntent | null
@@ -18,7 +22,7 @@ export type SiteManageAction =
   | { type: 'redirect_requested'; intent: NavigationIntent }
 
 export const initialSiteManageState: SiteManageState = {
-  statusMessage: '',
+  notice: null,
   actionErrorMessage: '',
   updatingUsername: null,
   navigationIntent: null,
@@ -33,35 +37,35 @@ export function reduceSiteManageState(
       return {
         ...state,
         updatingUsername: action.username,
-        statusMessage: '',
+        notice: null,
         actionErrorMessage: '',
       }
     case 'update_succeeded':
       return {
         ...state,
         updatingUsername: null,
-        statusMessage: `Permissions updated for ${displayNameValue(action.user.displayName)}.`,
+        notice: { kind: 'permissions_updated', displayName: action.user.displayName },
         actionErrorMessage: '',
       }
     case 'delete_started':
       return {
         ...state,
         updatingUsername: action.username,
-        statusMessage: '',
+        notice: null,
         actionErrorMessage: '',
       }
     case 'delete_succeeded':
       return {
         ...state,
         updatingUsername: null,
-        statusMessage: action.message,
+        notice: { kind: 'text', message: action.message },
         actionErrorMessage: '',
       }
     case 'update_failed':
       return {
         ...state,
         updatingUsername: null,
-        statusMessage: '',
+        notice: null,
         actionErrorMessage: action.message,
       }
     case 'redirect_requested':
