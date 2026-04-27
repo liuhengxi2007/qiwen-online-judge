@@ -23,6 +23,7 @@ import {
   parseProblemStatementText,
   parseProblemTimeLimitMs,
   parseProblemTitle,
+  problemSearchQueryValue,
   problemSlugValue,
   problemSpaceLimitMbValue,
   problemStatementTextValue,
@@ -83,9 +84,9 @@ export function fromProblemSuggestionContract(problem: ProblemSuggestionContract
 
 export function toProblemListRequestContract(request: ProblemListRequest): ProblemListRequestContract {
   return {
-    query: request.query,
-    page: request.page,
-    pageSize: request.pageSize,
+    query: request.query ? problemSearchQueryValue(request.query) : null,
+    page: request.pageRequest.page,
+    pageSize: request.pageRequest.pageSize,
   }
 }
 

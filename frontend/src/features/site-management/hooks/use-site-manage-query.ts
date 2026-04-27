@@ -27,8 +27,8 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
     enabled: null,
     requestKey: '',
     users: [],
-    userPage: userListRequest.page,
-    userPageSize: userListRequest.pageSize,
+    userPage: userListRequest.pageRequest.page,
+    userPageSize: userListRequest.pageRequest.pageSize,
     totalUsers: 0,
     judgers: [],
     userListError: '',
@@ -74,8 +74,8 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
             enabled: siteManagerEnabled,
             requestKey,
             users: [],
-            userPage: userListRequest.page,
-            userPageSize: userListRequest.pageSize,
+            userPage: userListRequest.pageRequest.page,
+            userPageSize: userListRequest.pageRequest.pageSize,
             totalUsers: 0,
             userListError: '',
             navigationIntent: toSiteManageDeniedRedirect(),
@@ -89,8 +89,8 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
           enabled: siteManagerEnabled,
           requestKey,
           users: [],
-          userPage: userListRequest.page,
-          userPageSize: userListRequest.pageSize,
+          userPage: userListRequest.pageRequest.page,
+          userPageSize: userListRequest.pageRequest.pageSize,
           totalUsers: 0,
           userListError: translateMessage('siteManage.usersLoadFailed'),
           usersLoaded: true,
@@ -150,11 +150,11 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
     userPage:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.userPage
-        : userListRequest.page,
+        : userListRequest.pageRequest.page,
     userPageSize:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.userPageSize
-        : userListRequest.pageSize,
+        : userListRequest.pageRequest.pageSize,
     totalUsers:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.totalUsers

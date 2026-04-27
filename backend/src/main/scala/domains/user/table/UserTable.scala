@@ -6,7 +6,7 @@ import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Si
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserListRequest, UserListResponse, UserLocale, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserListRequest, UserListResponse, UserLocale, UserRanklistItem, UserSearchQuery}
 import domains.user.table.UserTableSql.*
 import domains.user.table.UserTableSupport.*
 
@@ -34,8 +34,8 @@ object UserTable:
 
   def listUsers(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
     val _ = actor
-    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
-    val normalizedRequest = request.copy(page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize)
+    val normalizedPageRequest = request.pageRequest.normalized
+    val normalizedRequest = request.copy(pageRequest = normalizedPageRequest)
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countUsersSql)
@@ -52,8 +52,8 @@ object UserTable:
         val statement = connection.prepareStatement(listUsersSql)
         try
           val nextIndex = bindUserSearchQuery(statement, normalizedRequest.query, startIndex = 1)
-          statement.setInt(nextIndex, normalizedRequest.pageSize)
-          statement.setInt(nextIndex + 1, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
+          statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
+          statement.setInt(nextIndex + 1, (normalizedRequest.pageRequest.page - 1) * normalizedRequest.pageRequest.pageSize)
           val resultSet = statement.executeQuery()
           try
             Iterator
@@ -66,16 +66,16 @@ object UserTable:
       }
     yield PageResponse(
       items = items,
-      page = normalizedRequest.page,
-      pageSize = normalizedRequest.pageSize,
+      page = normalizedRequest.pageRequest.page,
+      pageSize = normalizedRequest.pageRequest.pageSize,
       totalItems = totalItems
     )
 
-  def listSuggestions(connection: Connection, query: String): IO[List[UserIdentity]] =
+  def listSuggestions(connection: Connection, query: UserSearchQuery): IO[List[UserIdentity]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSql)
       try
-        val searchPattern = LikePatternSql.fromRaw(query)
+        val searchPattern = LikePatternSql.fromRaw(query.value)
         val nextIndex = bindUserSearchQuery(statement, Some(query), startIndex = 1)
         statement.setString(nextIndex, searchPattern.raw)
         statement.setString(nextIndex + 1, searchPattern.prefixPattern)

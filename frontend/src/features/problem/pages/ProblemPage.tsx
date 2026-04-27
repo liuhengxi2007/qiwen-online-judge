@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
+  parseProblemSearchQuery,
   problemSlugValue,
   useProblemTitleDisplay,
   useProblemTitleDisplayMode,
@@ -56,9 +57,17 @@ export function ProblemPage() {
 
   const canCreate = user.siteManager || user.problemManager
   const model = useProblemPageModel({
-    query: activeQuery || null,
-    page: currentPage,
-    pageSize: problemsPerPage,
+    query: (() => {
+      if (!activeQuery) {
+        return null
+      }
+      const parsedQuery = parseProblemSearchQuery(activeQuery)
+      return parsedQuery.ok ? parsedQuery.value : null
+    })(),
+    pageRequest: {
+      page: currentPage,
+      pageSize: problemsPerPage,
+    },
   })
   const totalPages = Math.max(1, Math.ceil(model.totalItems / model.pageSize))
   const pageNumbers = buildPageNumbers(currentPage, totalPages)

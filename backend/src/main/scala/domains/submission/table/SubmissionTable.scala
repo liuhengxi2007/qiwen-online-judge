@@ -89,8 +89,8 @@ object SubmissionTable:
     }
 
   def listVisibleTo(connection: Connection, actor: AuthUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
-    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
-    val normalizedRequest = request.copy(page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize)
+    val normalizedPageRequest = request.pageRequest.normalized
+    val normalizedRequest = request.copy(pageRequest = normalizedPageRequest)
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
@@ -105,8 +105,8 @@ object SubmissionTable:
         val statement = connection.prepareStatement(listSql(normalizedRequest.sort, normalizedRequest.direction))
         try
           val nextIndex = bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true)
-          statement.setInt(nextIndex, normalizedRequest.pageSize)
-          statement.setInt(nextIndex + 1, (normalizedRequest.page - 1) * normalizedRequest.pageSize)
+          statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
+          statement.setInt(nextIndex + 1, (normalizedRequest.pageRequest.page - 1) * normalizedRequest.pageRequest.pageSize)
           val resultSet = statement.executeQuery()
           try
             Iterator
@@ -119,8 +119,8 @@ object SubmissionTable:
       }
     yield PageResponse(
       items = items,
-      page = normalizedRequest.page,
-      pageSize = normalizedRequest.pageSize,
+      page = normalizedRequest.pageRequest.page,
+      pageSize = normalizedRequest.pageRequest.pageSize,
       totalItems = totalItems
     )
 
@@ -240,22 +240,20 @@ object SubmissionTable:
   private def bindUserQuery(
     statement: PreparedStatement,
     startIndex: Int,
-    rawQuery: Option[String]
+    rawQuery: Option[domains.submission.model.SubmissionUserQuery]
   ): Int =
-    val normalizedQuery = rawQuery.map(_.trim).filter(_.nonEmpty)
-    val searchPattern = normalizedQuery.map(LikePatternSql.fromRaw)
-    val afterEnabledFlag = bindBoolean(statement, startIndex, normalizedQuery.nonEmpty)
+    val searchPattern = rawQuery.map(query => LikePatternSql.fromRaw(query.value))
+    val afterEnabledFlag = bindBoolean(statement, startIndex, rawQuery.nonEmpty)
     val afterUsernamePattern = bindString(statement, afterEnabledFlag, searchPattern.map(_.containsPattern).getOrElse(""))
     bindString(statement, afterUsernamePattern, searchPattern.map(_.containsPattern).getOrElse(""))
 
   private def bindProblemQuery(
     statement: PreparedStatement,
     startIndex: Int,
-    rawQuery: Option[String]
+    rawQuery: Option[domains.submission.model.SubmissionProblemQuery]
   ): Int =
-    val normalizedQuery = rawQuery.map(_.trim).filter(_.nonEmpty)
-    val searchPattern = normalizedQuery.map(LikePatternSql.fromRaw)
-    val afterEnabledFlag = bindBoolean(statement, startIndex, normalizedQuery.nonEmpty)
+    val searchPattern = rawQuery.map(query => LikePatternSql.fromRaw(query.value))
+    val afterEnabledFlag = bindBoolean(statement, startIndex, rawQuery.nonEmpty)
     val afterSlugPattern = bindString(statement, afterEnabledFlag, searchPattern.map(_.containsPattern).getOrElse(""))
     bindString(statement, afterSlugPattern, searchPattern.map(_.containsPattern).getOrElse(""))
 

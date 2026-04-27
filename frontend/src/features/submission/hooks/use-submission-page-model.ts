@@ -20,6 +20,8 @@ import {
   isSubmissionSort,
   isSubmissionSortDirection,
   isSubmissionVerdictFilter,
+  parseSubmissionProblemQuery,
+  parseSubmissionUserQuery,
   submissionIdValue,
   submissionLanguageLabel,
   submissionStatusLabel,
@@ -123,13 +125,27 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   })()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const request: SubmissionListRequest = {
-    userQuery: usernameQueryParam || null,
-    problemQuery: activeProblemQuery || null,
+    userQuery: (() => {
+      if (!usernameQueryParam) {
+        return null
+      }
+      const parsedQuery = parseSubmissionUserQuery(usernameQueryParam)
+      return parsedQuery.ok ? parsedQuery.value : null
+    })(),
+    problemQuery: (() => {
+      if (!activeProblemQuery) {
+        return null
+      }
+      const parsedQuery = parseSubmissionProblemQuery(activeProblemQuery)
+      return parsedQuery.ok ? parsedQuery.value : null
+    })(),
     verdict: activeVerdictFilter,
     sort: activeSort,
     direction: activeDirection,
-    page: currentPage,
-    pageSize: submissionsPerPage,
+    pageRequest: {
+      page: currentPage,
+      pageSize: submissionsPerPage,
+    },
   }
   const submissionQuery = useSubmissionListQuery(request)
   const currentPageSubmissions = submissionQuery.response.items

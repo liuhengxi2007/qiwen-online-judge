@@ -4,7 +4,7 @@ import database.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemListRequest, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
 import database.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import domains.shared.model.PageResponse
@@ -38,8 +38,8 @@ object ProblemTable:
             statement,
             actor,
             request.query,
-            pageSize = Some(request.pageSize),
-            offset = Some((request.page - 1) * request.pageSize)
+            pageSize = Some(request.pageRequest.pageSize),
+            offset = Some((request.pageRequest.page - 1) * request.pageRequest.pageSize)
           )
           val resultSet = statement.executeQuery()
           try
@@ -57,7 +57,12 @@ object ProblemTable:
           managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Manager)
         yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
       }
-    yield PageResponse(items = itemsWithPolicies, page = request.page, pageSize = request.pageSize, totalItems = totalItems)
+    yield PageResponse(
+      items = itemsWithPolicies,
+      page = request.pageRequest.page,
+      pageSize = request.pageRequest.pageSize,
+      totalItems = totalItems
+    )
 
   def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     IO.blocking {
@@ -78,7 +83,7 @@ object ProblemTable:
         IO.pure(None)
     }
 
-  def listSuggestions(connection: Connection, actor: domains.auth.model.AuthUser, query: String): IO[List[ProblemSuggestion]] =
+  def listSuggestions(connection: Connection, actor: domains.auth.model.AuthUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSql)
       try

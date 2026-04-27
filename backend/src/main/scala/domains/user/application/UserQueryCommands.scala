@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserListRequest, UserListResponse, UserProfileResponse, UserRanklistItem}
+import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserListRequest, UserListResponse, UserProfileResponse, UserRanklistItem, UserSearchQuery}
 import domains.user.table.UserTable
 
 object UserQueryCommands:
@@ -22,9 +22,8 @@ object UserQueryCommands:
     actor: SiteManagerUser,
     request: UserListRequest
   ): IO[UserListResponse] =
-    val normalizedRequest = request.copy(query = normalizeSearchQuery(request.query))
     databaseSession.withTransactionConnection { connection =>
-      UserTable.listUsers(connection, actor, normalizedRequest)
+      UserTable.listUsers(connection, actor, request)
     }
 
   def getUserProfile(
@@ -82,16 +81,11 @@ object UserQueryCommands:
   def listSuggestions(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    query: String
+    query: UserSearchQuery
   ): IO[List[UserIdentity]] =
     val _ = actor
-    normalizeSearchQuery(Some(query)) match
-      case None => IO.pure(List.empty)
-      case Some(trimmedQuery) if trimmedQuery.length < minSuggestionQueryLength => IO.pure(List.empty)
-      case Some(trimmedQuery) =>
-        databaseSession.withTransactionConnection { connection =>
-          UserTable.listSuggestions(connection, trimmedQuery)
-        }
-
-  private def normalizeSearchQuery(rawQuery: Option[String]): Option[String] =
-    rawQuery.map(_.trim).filter(_.nonEmpty)
+    if query.value.length < minSuggestionQueryLength then IO.pure(List.empty)
+    else
+      databaseSession.withTransactionConnection { connection =>
+        UserTable.listSuggestions(connection, query)
+      }

@@ -1,10 +1,12 @@
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
+import type { SubmissionProblemQuery } from '@/features/submission/model/SubmissionProblemQuery'
 import type { SubmissionSort } from '@/features/submission/model/SubmissionSort'
 import type { SubmissionSortDirection } from '@/features/submission/model/SubmissionSortDirection'
 import type { SubmissionVerdictFilter } from '@/features/submission/model/SubmissionVerdictFilter'
 import type { SubmissionSourceCode } from '@/features/submission/model/SubmissionSourceCode'
 import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
+import type { SubmissionUserQuery } from '@/features/submission/model/SubmissionUserQuery'
 import type { SubmissionVerdict } from '@/features/submission/model/SubmissionVerdict'
 
 type ParseSuccess<T> = { ok: true; value: T }
@@ -42,6 +44,14 @@ function createSubmissionSourceCode(value: string): SubmissionSourceCode {
   return value as SubmissionSourceCode
 }
 
+function createSubmissionUserQuery(value: string): SubmissionUserQuery {
+  return value as SubmissionUserQuery
+}
+
+function createSubmissionProblemQuery(value: string): SubmissionProblemQuery {
+  return value as SubmissionProblemQuery
+}
+
 export function requireParsed<T>(result: ParseResult<T>, label: string): T {
   if (!result.ok) {
     throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
@@ -56,6 +66,14 @@ export function submissionIdValue(submissionId: SubmissionId): number {
 
 export function submissionSourceCodeValue(sourceCode: SubmissionSourceCode): string {
   return sourceCode
+}
+
+export function submissionUserQueryValue(query: SubmissionUserQuery): string {
+  return query
+}
+
+export function submissionProblemQueryValue(query: SubmissionProblemQuery): string {
+  return query
 }
 
 export function isSubmissionLanguage(value: string): value is SubmissionLanguage {
@@ -156,4 +174,20 @@ export function parseSubmissionSourceCode(rawSourceCode: string): ParseResult<Su
   }
 
   return { ok: true, value: createSubmissionSourceCode(rawSourceCode) }
+}
+
+export function parseSubmissionUserQuery(rawQuery: string): ParseResult<SubmissionUserQuery> {
+  const normalized = rawQuery.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Submission username query is required.' }
+  }
+  return { ok: true, value: createSubmissionUserQuery(normalized) }
+}
+
+export function parseSubmissionProblemQuery(rawQuery: string): ParseResult<SubmissionProblemQuery> {
+  const normalized = rawQuery.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Submission problem query is required.' }
+  }
+  return { ok: true, value: createSubmissionProblemQuery(normalized) }
 }

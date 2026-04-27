@@ -4,7 +4,8 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.submission.application.SubmissionCommands
-import domains.submission.model.{CreateSubmissionRequest, SubmissionId, SubmissionListRequest, SubmissionSort, SubmissionSortDirection, SubmissionVerdictFilter}
+import domains.shared.model.PageRequest
+import domains.submission.model.{CreateSubmissionRequest, SubmissionId, SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -67,13 +68,12 @@ object SubmissionRouter:
       pageSize <- parsePositiveInt(queryParams.get("pageSize"), defaultValue = 10, fieldName = "Page size")
     yield
       SubmissionListRequest(
-        userQuery = queryParams.get("username").map(_.trim).filter(_.nonEmpty),
-        problemQuery = queryParams.get("problem").map(_.trim).filter(_.nonEmpty),
+        userQuery = queryParams.get("username").flatMap(rawQuery => SubmissionUserQuery.parse(rawQuery).toOption),
+        problemQuery = queryParams.get("problem").flatMap(rawQuery => SubmissionProblemQuery.parse(rawQuery).toOption),
         verdict = verdict,
         sort = sort,
         direction = direction,
-        page = page,
-        pageSize = pageSize
+        pageRequest = PageRequest(page = page, pageSize = pageSize)
       )
 
   private def parsePositiveInt(rawValue: Option[String], defaultValue: Int, fieldName: String): Either[String, Int] =

@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSlug, ProblemSuggestion, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSuggestion, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import io.circe.syntax.*
 
@@ -41,14 +41,14 @@ object ProblemHttpPlans:
       ProblemCommands
         .createProblem(connection, actor, input)
 
-  case object ListProblemSuggestions extends PlainAuthenticatedHttpPlan[String, List[ProblemSuggestion]]:
+  case object ListProblemSuggestions extends PlainAuthenticatedHttpPlan[ProblemSearchQuery, List[ProblemSuggestion]]:
 
     override val name: String = "ListProblemSuggestions"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: String
+      input: ProblemSearchQuery
     ): IO[List[ProblemSuggestion]] =
       ProblemCommands.listProblemSuggestions(databaseSession, actor, input)
 

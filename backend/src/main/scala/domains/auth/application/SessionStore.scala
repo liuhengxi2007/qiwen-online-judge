@@ -2,7 +2,7 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.Username
+import domains.auth.model.{SessionToken, Username}
 import domains.auth.table.SessionTable
 
 import java.sql.Connection
@@ -17,7 +17,7 @@ final class SessionStore private (
 
   private val tokenLengthBytes = 32
 
-  def createSession(username: Username): IO[String] =
+  def createSession(username: Username): IO[SessionToken] =
     for
       token <- nextToken
       _ <- databaseSession.withTransactionConnection(connection =>
@@ -25,16 +25,16 @@ final class SessionStore private (
       )
     yield token
 
-  def createSessionInConnection(connection: Connection, username: Username): IO[String] =
+  def createSessionInConnection(connection: Connection, username: Username): IO[SessionToken] =
     createSessionInConnection(connection, username, None)
 
-  def lookupUsername(token: String): IO[Option[Username]] =
+  def lookupUsername(token: SessionToken): IO[Option[Username]] =
     databaseSession.withTransactionConnection(connection =>
       SessionTable.deleteExpired(connection) *>
         SessionTable.touchAndFindUsernameByToken(connection, token, sessionConfig.activeExtensionThreshold)
     )
 
-  def deleteSession(token: String): IO[Unit] =
+  def deleteSession(token: SessionToken): IO[Unit] =
     databaseSession.withTransactionConnection(connection =>
       SessionTable.deleteByToken(connection, token)
     )
@@ -44,18 +44,18 @@ final class SessionStore private (
       SessionTable.deleteByUsername(connection, username)
     )
 
-  private def nextToken: IO[String] =
+  private def nextToken: IO[SessionToken] =
     IO.delay {
       val tokenBytes = new Array[Byte](tokenLengthBytes)
       random.nextBytes(tokenBytes)
-      Base64.getUrlEncoder.withoutPadding().encodeToString(tokenBytes)
+      SessionToken(Base64.getUrlEncoder.withoutPadding().encodeToString(tokenBytes))
     }
 
   private def createSessionInConnection(
     connection: Connection,
     username: Username,
-    existingToken: Option[String]
-  ): IO[String] =
+    existingToken: Option[SessionToken]
+  ): IO[SessionToken] =
     for
       token <- existingToken match
         case Some(token) => IO.pure(token)
@@ -66,7 +66,7 @@ final class SessionStore private (
 
   private def insertSession(
     connection: Connection,
-    token: String,
+    token: SessionToken,
     username: Username,
     expiresAt: java.time.Instant
   ): IO[Unit] =

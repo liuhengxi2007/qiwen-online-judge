@@ -36,6 +36,7 @@ import {
   parseDisplayName,
   parseEmailAddress,
   parseUserContribution,
+  userSearchQueryValue,
   parseUsername,
   plaintextPasswordValue,
   problemTitleDisplayModeValue,
@@ -138,9 +139,9 @@ export function fromUserListResponseContract(response: UserListResponseContract)
 
 export function toUserListRequestContract(request: UserListRequest): UserListRequestContract {
   return {
-    query: request.query,
-    page: request.page,
-    pageSize: request.pageSize,
+    query: request.query ? userSearchQueryValue(request.query) : null,
+    page: request.pageRequest.page,
+    pageSize: request.pageRequest.pageSize,
   }
 }
 

@@ -19,8 +19,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
     key: '',
     response: {
       items: [],
-      page: request.page,
-      pageSize: request.pageSize,
+      page: request.pageRequest.page,
+      pageSize: request.pageRequest.pageSize,
       totalItems: 0,
     },
     isLoading: true,
@@ -54,8 +54,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
           key,
           response: {
             items: [],
-            page: request.page,
-            pageSize: request.pageSize,
+            page: request.pageRequest.page,
+            pageSize: request.pageRequest.pageSize,
             totalItems: 0,
           },
           isLoading: false,
@@ -70,8 +70,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
 
   return {
     problems: state.key === key ? state.response.items : [],
-    page: state.key === key ? state.response.page : request.page,
-    pageSize: state.key === key ? state.response.pageSize : request.pageSize,
+    page: state.key === key ? state.response.page : request.pageRequest.page,
+    pageSize: state.key === key ? state.response.pageSize : request.pageRequest.pageSize,
     totalItems: state.key === key ? state.response.totalItems : 0,
     isLoading: state.isLoading || state.key !== key,
     errorMessage: state.key === key ? state.errorMessage : '',

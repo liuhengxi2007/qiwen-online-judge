@@ -3,14 +3,14 @@ package domains.auth.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.model.{AuthUser, SiteManagerUser}
+import domains.auth.model.{AuthUser, SessionToken, SiteManagerUser}
 import domains.auth.table.AuthUserTable
 import org.http4s.{Request, Response}
 
 object AuthHttpSessionSupport:
 
-  def currentSessionToken(request: Request[IO]): Option[String] =
-    request.cookies.find(_.name == "qiwen_session").map(_.content)
+  def currentSessionToken(request: Request[IO]): Option[SessionToken] =
+    request.cookies.find(_.name == "qiwen_session").flatMap(cookie => SessionToken.parse(cookie.content).toOption)
 
   def authenticatedUser(
     databaseSession: DatabaseSession,

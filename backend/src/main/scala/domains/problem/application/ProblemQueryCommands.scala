@@ -5,26 +5,17 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
-import domains.problem.model.{ProblemDetail, ProblemListRequest, ProblemSuggestion, ProblemSummary}
+import domains.problem.model.{ProblemDetail, ProblemListRequest, ProblemSearchQuery, ProblemSuggestion, ProblemSummary}
 import domains.problem.table.ProblemTable
-import domains.shared.model.{PageRequest, PageResponse}
+import domains.shared.model.PageResponse
 
 object ProblemQueryCommands:
-  private def normalizeSearchQuery(rawQuery: String): Option[String] =
-    Option(rawQuery.trim).filter(_.nonEmpty)
-
   def listProblems(
     databaseSession: DatabaseSession,
     actor: AuthUser,
     request: ProblemListRequest
   ): IO[PageResponse[ProblemSummary]] =
-    val normalizedPageRequest = PageRequest(page = request.page, pageSize = request.pageSize).normalized
-    val normalizedRequest =
-      request.copy(
-        query = request.query.flatMap(normalizeSearchQuery),
-        page = normalizedPageRequest.page,
-        pageSize = normalizedPageRequest.pageSize
-      )
+    val normalizedRequest = request.copy(pageRequest = request.pageRequest.normalized)
     databaseSession.withTransactionConnection { connection =>
       ProblemTable.listVisibleTo(connection, actor, normalizedRequest)
     }
@@ -49,11 +40,8 @@ object ProblemQueryCommands:
   def listProblemSuggestions(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    query: String
+    query: ProblemSearchQuery
   ): IO[List[ProblemSuggestion]] =
-    normalizeSearchQuery(query) match
-      case None => IO.pure(List.empty)
-      case Some(normalizedQuery) =>
-        databaseSession.withTransactionConnection { connection =>
-          ProblemTable.listSuggestions(connection, actor, normalizedQuery)
-        }
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.listSuggestions(connection, actor, query)
+    }

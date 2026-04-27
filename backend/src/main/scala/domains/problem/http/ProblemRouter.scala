@@ -4,7 +4,8 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.shared.model.PageRequest
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -21,15 +22,21 @@ object ProblemRouter:
         handlers.execute(
           request,
           ProblemListRequest(
-            query = request.uri.query.params.get("q").map(_.trim).filter(_.nonEmpty),
-            page = parsePositiveInt(request.uri.query.params.get("page"), 1),
-            pageSize = parsePositiveInt(request.uri.query.params.get("pageSize"), 10)
+            query = request.uri.query.params.get("q").flatMap(rawQuery => ProblemSearchQuery.parse(rawQuery).toOption),
+            pageRequest = PageRequest(
+              page = parsePositiveInt(request.uri.query.params.get("page"), 1),
+              pageSize = parsePositiveInt(request.uri.query.params.get("pageSize"), 10)
+            )
           ),
           ProblemHttpPlanDefinitions.listProblems
         )
 
       case request @ GET -> Root / "api" / "problems" / "suggestions" =>
-        handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), ProblemHttpPlanDefinitions.listProblemSuggestions)
+        ProblemSearchQuery.parse(request.uri.query.params.get("q").getOrElse("")) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(query) =>
+            handlers.execute(request, query, ProblemHttpPlanDefinitions.listProblemSuggestions)
 
       case request @ POST -> Root / "api" / "problems" =>
         handlers.executeDecoded[CreateProblemRequest, CreateProblemRequest, ProblemCommands.CreateProblemResult](

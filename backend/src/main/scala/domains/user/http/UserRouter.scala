@@ -7,7 +7,7 @@ import domains.auth.model.Username
 import domains.shared.model.PageRequest
 import domains.user.application.UserMutationCommands
 import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}
-import domains.user.model.{UpdateUserPermissionsRequest, UserListRequest}
+import domains.user.model.{UpdateUserPermissionsRequest, UserListRequest, UserSearchQuery}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -24,15 +24,19 @@ object UserRouter:
         handlers.execute(
           request,
           UserListRequest(
-            query = request.uri.query.params.get("q").map(_.trim).filter(_.nonEmpty),
-            page = parsePage(request.uri.query.params.get("page")),
-            pageSize = parsePageSize(request.uri.query.params.get("pageSize"))
+            query = request.uri.query.params.get("q").flatMap(rawQuery => UserSearchQuery.parse(rawQuery).toOption),
+            pageRequest = PageRequest(
+              page = parsePage(request.uri.query.params.get("page")),
+              pageSize = parsePageSize(request.uri.query.params.get("pageSize"))
+            )
           ),
           listUsers
         )
 
       case request @ GET -> Root / "api" / "users" / "suggestions" =>
-        handlers.execute(request, request.uri.query.params.get("q").getOrElse(""), listUserSuggestions)
+        UserSearchQuery.parse(request.uri.query.params.get("q").getOrElse("")) match
+          case Left(message) => UserHttpResponses.validationErrorResponse(message)
+          case Right(query) => handlers.execute(request, query, listUserSuggestions)
 
       case request @ GET -> Root / "api" / "users" / targetUsername / "profile" =>
         handlers.execute(request, Username.canonical(targetUsername), getUserProfile)

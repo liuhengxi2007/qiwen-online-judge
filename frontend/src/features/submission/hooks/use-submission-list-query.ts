@@ -14,8 +14,8 @@ function requestKey(request: SubmissionListRequest): string {
     verdict: request.verdict,
     sort: request.sort,
     direction: request.direction,
-    page: request.page,
-    pageSize: request.pageSize,
+    page: request.pageRequest.page,
+    pageSize: request.pageRequest.pageSize,
   })
 }
 
@@ -29,8 +29,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     key: '',
     response: {
       items: [],
-      page: request.page,
-      pageSize: request.pageSize,
+      page: request.pageRequest.page,
+      pageSize: request.pageRequest.pageSize,
       totalItems: 0,
     },
     errorMessage: '',
@@ -66,8 +66,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
             key,
             response: {
               items: [],
-              page: request.page,
-              pageSize: request.pageSize,
+              page: request.pageRequest.page,
+              pageSize: request.pageRequest.pageSize,
               totalItems: 0,
             },
             errorMessage: 'Unable to load submissions.',
@@ -92,8 +92,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
         ? queryState.response
         : {
             items: [],
-            page: request.page,
-            pageSize: request.pageSize,
+            page: request.pageRequest.page,
+            pageSize: request.pageRequest.pageSize,
             totalItems: 0,
           },
     isLoading: queryState.key !== key,

@@ -3,7 +3,7 @@ package domains.problem.table
 import database.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
-import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDetail, ProblemId, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 import domains.shared.sql.LikePatternSql
 
@@ -101,12 +101,11 @@ object ProblemTableSupport:
 
   private def bindSearchQuery(
     statement: PreparedStatement,
-    query: Option[String],
+    query: Option[ProblemSearchQuery],
     startIndex: Int
   ): Int =
-    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
-    val likeQuery = normalizedQuery.map(LikePatternSql.fromRaw)
-    statement.setBoolean(startIndex, normalizedQuery.nonEmpty)
+    val likeQuery = query.map(searchQuery => LikePatternSql.fromRaw(searchQuery.value))
+    statement.setBoolean(startIndex, query.nonEmpty)
     statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
     statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3
@@ -114,7 +113,7 @@ object ProblemTableSupport:
   def bindListQuery(
     statement: PreparedStatement,
     actor: AuthUser,
-    query: Option[String],
+    query: Option[ProblemSearchQuery],
     pageSize: Option[Int],
     offset: Option[Int]
   ): Unit =
@@ -126,11 +125,11 @@ object ProblemTableSupport:
   def bindSuggestionQuery(
     statement: PreparedStatement,
     actor: AuthUser,
-    query: String
+    query: ProblemSearchQuery
   ): Unit =
     val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
     val afterSearchIndex = bindSearchQuery(statement, Some(query), startIndex = nextIndex)
-    val searchPattern = LikePatternSql.fromRaw(query)
+    val searchPattern = LikePatternSql.fromRaw(query.value)
     statement.setString(afterSearchIndex, searchPattern.raw)
     statement.setString(afterSearchIndex + 1, searchPattern.prefixPattern)
     statement.setString(afterSearchIndex + 2, searchPattern.prefixPattern)

@@ -20,6 +20,7 @@ export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTi
 export type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
 export type { UserListRequest } from '@/features/user/model/UserListRequest'
 export type { UserListResponse } from '@/features/user/model/UserListResponse'
+export type { UserSearchQuery } from '@/features/user/model/UserSearchQuery'
 
 export {
   displayNameValue,
@@ -30,12 +31,14 @@ export {
   parseUserContribution,
   parseUserDisplayMode,
   parseUserLocale,
+  parseUserSearchQuery,
   parseUsername,
   plaintextPasswordValue,
   problemTitleDisplayModeValue,
   userContributionValue,
   userDisplayModeValue,
   userLocaleValue,
+  userSearchQueryValue,
   usernameValue,
 } from '@/features/user/domain/user-parsers'
 export {

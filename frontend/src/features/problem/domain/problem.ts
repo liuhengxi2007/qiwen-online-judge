@@ -2,6 +2,7 @@ export type { ParseResult } from '@/features/problem/domain/problem-parsers'
 export {
   parseProblemDataFilename,
   parseProblemId,
+  parseProblemSearchQuery,
   parseProblemSlug,
   parseProblemSpaceLimitMb,
   parseProblemStatementText,
@@ -9,6 +10,7 @@ export {
   parseProblemTitle,
   problemDataFilenameValue,
   problemIdValue,
+  problemSearchQueryValue,
   problemSlugValue,
   problemSpaceLimitMbValue,
   problemStatementTextValue,
@@ -41,6 +43,7 @@ export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'
 export type { ProblemListRequest } from '@/features/problem/model/ProblemListRequest'
 export type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
+export type { ProblemSearchQuery } from '@/features/problem/model/ProblemSearchQuery'
 export type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
 export type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 export type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'

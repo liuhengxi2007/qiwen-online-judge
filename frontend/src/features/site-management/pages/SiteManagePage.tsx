@@ -8,6 +8,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
+import { parseUserSearchQuery } from '@/features/user/domain/user'
 import { useI18n } from '@/shared/i18n/i18n'
 
 export function SiteManagePage() {
@@ -36,9 +37,17 @@ export function SiteManagePage() {
     savePermissions,
     deleteUser,
   } = useSiteManageModel(Boolean(siteManagerSession), {
-    query: activeQuery || null,
-    page: currentPage,
-    pageSize: 10,
+    query: (() => {
+      if (!activeQuery) {
+        return null
+      }
+      const parsedQuery = parseUserSearchQuery(activeQuery)
+      return parsedQuery.ok ? parsedQuery.value : null
+    })(),
+    pageRequest: {
+      page: currentPage,
+      pageSize: 10,
+    },
   })
   const totalPages = Math.max(1, Math.ceil(totalUsers / userPageSize))
 

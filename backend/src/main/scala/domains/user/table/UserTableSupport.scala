@@ -3,7 +3,7 @@ package domains.user.table
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import domains.shared.sql.LikePatternSql
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem}
+import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserRanklistItem, UserSearchQuery}
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -67,12 +67,11 @@ object UserTableSupport:
 
   def bindUserSearchQuery(
     statement: PreparedStatement,
-    query: Option[String],
+    query: Option[UserSearchQuery],
     startIndex: Int
   ): Int =
-    val normalizedQuery = query.map(_.trim).filter(_.nonEmpty)
-    val likeQuery = normalizedQuery.map(LikePatternSql.fromRaw)
-    statement.setBoolean(startIndex, normalizedQuery.nonEmpty)
+    val likeQuery = query.map(searchQuery => LikePatternSql.fromRaw(searchQuery.value))
+    statement.setBoolean(startIndex, query.nonEmpty)
     statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
     statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3

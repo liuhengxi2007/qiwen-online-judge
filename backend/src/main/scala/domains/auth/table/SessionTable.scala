@@ -1,7 +1,7 @@
 package domains.auth.table
 
 import cats.effect.IO
-import domains.auth.model.Username
+import domains.auth.model.{SessionToken, Username}
 import domains.auth.table.SessionTableSchema.*
 import domains.auth.table.SessionTableSql.*
 import domains.auth.table.SessionTableSupport.*
@@ -15,12 +15,12 @@ object SessionTable:
   def initialize(connection: Connection, sessionTtl: Duration): IO[Unit] =
     SessionTableSchema.initialize(connection, sessionTtl)
 
-  def insert(connection: Connection, token: String, username: Username, expiresAt: Instant): IO[Unit] =
+  def insert(connection: Connection, token: SessionToken, username: Username, expiresAt: Instant): IO[Unit] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(insertSql)
       try
-        statement.setString(1, token)
+        statement.setString(1, token.value)
         statement.setString(2, username.value)
         statement.setTimestamp(3, Timestamp.from(now))
         statement.setTimestamp(4, Timestamp.from(now))
@@ -32,14 +32,14 @@ object SessionTable:
 
   def touchAndFindUsernameByToken(
     connection: Connection,
-    token: String,
+    token: SessionToken,
     activeExtensionThreshold: Duration
   ): IO[Option[Username]] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(findSessionByTokenSql)
       try
-        statement.setString(1, token)
+        statement.setString(1, token.value)
         statement.setTimestamp(2, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
@@ -51,7 +51,7 @@ object SessionTable:
             try
               touchStatement.setTimestamp(1, Timestamp.from(now))
               touchStatement.setTimestamp(2, Timestamp.from(nextExpiresAt))
-              touchStatement.setString(3, token)
+              touchStatement.setString(3, token.value)
               touchStatement.executeUpdate()
             finally touchStatement.close()
             Some(username)
@@ -70,11 +70,11 @@ object SessionTable:
       finally statement.close()
     }
 
-  def deleteByToken(connection: Connection, token: String): IO[Unit] =
+  def deleteByToken(connection: Connection, token: SessionToken): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteByTokenSql)
       try
-        statement.setString(1, token)
+        statement.setString(1, token.value)
         statement.executeUpdate()
         ()
       finally statement.close()

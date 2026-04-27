@@ -17,9 +17,13 @@ import {
   isSubmissionSortDirection,
   isSubmissionVerdictFilter,
   parseSubmissionId,
+  parseSubmissionProblemQuery,
   parseSubmissionSourceCode,
+  parseSubmissionUserQuery,
   requireParsed,
+  submissionProblemQueryValue,
   submissionSourceCodeValue,
+  submissionUserQueryValue,
 } from '@/features/submission/domain/submission-parsers'
 
 export function fromSubmissionDetailContract(submission: SubmissionDetailContract): SubmissionDetail {
@@ -83,13 +87,13 @@ export function toCreateSubmissionRequestContract(request: CreateSubmissionReque
 
 export function toSubmissionListRequestContract(request: SubmissionListRequest): SubmissionListRequestContract {
   return {
-    userQuery: request.userQuery,
-    problemQuery: request.problemQuery,
+    userQuery: request.userQuery ? submissionUserQueryValue(request.userQuery) : null,
+    problemQuery: request.problemQuery ? submissionProblemQueryValue(request.problemQuery) : null,
     verdict: request.verdict,
     sort: request.sort,
     direction: request.direction,
-    page: request.page,
-    pageSize: request.pageSize,
+    page: request.pageRequest.page,
+    pageSize: request.pageRequest.pageSize,
   }
 }
 
@@ -115,12 +119,17 @@ export function fromSubmissionListRequestContract(request: SubmissionListRequest
   }
 
   return {
-    userQuery: request.userQuery,
-    problemQuery: request.problemQuery,
+    userQuery: request.userQuery === null ? null : requireParsed(parseSubmissionUserQuery(request.userQuery), 'submission list request user query'),
+    problemQuery:
+      request.problemQuery === null
+        ? null
+        : requireParsed(parseSubmissionProblemQuery(request.problemQuery), 'submission list request problem query'),
     verdict: request.verdict,
     sort: request.sort,
     direction: request.direction,
-    page: request.page,
-    pageSize: request.pageSize,
+    pageRequest: {
+      page: request.page,
+      pageSize: request.pageSize,
+    },
   }
 }

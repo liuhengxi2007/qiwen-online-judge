@@ -1,14 +1,27 @@
 package domains.problem.model
 
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import domains.shared.model.PageRequest
+import io.circe.{Decoder, Encoder, Json}
+import io.circe.syntax.*
 
 final case class ProblemListRequest(
-  query: Option[String],
-  page: Int,
-  pageSize: Int
+  query: Option[ProblemSearchQuery],
+  pageRequest: PageRequest
 )
 
 object ProblemListRequest:
-  given Encoder[ProblemListRequest] = deriveEncoder[ProblemListRequest]
-  given Decoder[ProblemListRequest] = deriveDecoder[ProblemListRequest]
+  given Encoder[ProblemListRequest] = Encoder.instance(request =>
+    Json.obj(
+      "query" -> request.query.asJson,
+      "page" -> request.pageRequest.page.asJson,
+      "pageSize" -> request.pageRequest.pageSize.asJson
+    )
+  )
+
+  given Decoder[ProblemListRequest] = Decoder.instance { cursor =>
+    for
+      query <- cursor.downField("query").as[Option[ProblemSearchQuery]]
+      page <- cursor.downField("page").as[Int]
+      pageSize <- cursor.downField("pageSize").as[Int]
+    yield ProblemListRequest(query = query, pageRequest = PageRequest(page = page, pageSize = pageSize))
+  }

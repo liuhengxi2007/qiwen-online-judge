@@ -1,7 +1,7 @@
 package domains.auth.http
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, LoginResponse, RegisterResponse, SessionResponse}
+import domains.auth.model.{AuthUser, LoginResponse, RegisterResponse, SessionResponse, SessionToken}
 import domains.judger.model.RegisteredJudgerListItem
 import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
@@ -53,10 +53,10 @@ object AuthHttpResponses:
   def loggedOutResponse(clearedSessionCookie: ResponseCookie): IO[Response[IO]] =
     successResponse(Status.Ok, ApiMessages.loggedOut).map(_.addCookie(clearedSessionCookie))
 
-  def sessionCookie(token: String): ResponseCookie =
+  def sessionCookie(token: SessionToken): ResponseCookie =
     ResponseCookie(
       name = sessionCookieName,
-      content = token,
+      content = token.value,
       path = Some("/"),
       httpOnly = true,
       sameSite = Some(SameSite.Lax)

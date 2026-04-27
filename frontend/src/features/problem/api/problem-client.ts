@@ -16,6 +16,7 @@ import {
   fromProblemListResponseContract,
   fromProblemSuggestionContract,
   parseProblemDataFilename,
+  parseProblemSearchQuery,
   problemSlugValue,
   toProblemListRequestContract,
   toCreateProblemRequestContract,
@@ -35,8 +36,13 @@ export async function listProblems(request: ProblemListRequest): Promise<Problem
 }
 
 export async function listProblemSuggestions(query: string): Promise<ProblemSuggestion[]> {
+  const parsedQuery = parseProblemSearchQuery(query)
+  if (!parsedQuery.ok) {
+    return []
+  }
+
   const url = new URL('/api/problems/suggestions', window.location.origin)
-  url.searchParams.set('q', query)
+  url.searchParams.set('q', parsedQuery.value)
   return requestJson(url.pathname + url.search, (value) => {
     if (!Array.isArray(value)) {
       throw new Error('Invalid problem suggestion payload.')

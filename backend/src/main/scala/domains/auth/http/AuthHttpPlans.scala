@@ -15,13 +15,13 @@ object AuthHttpPlans:
 
   enum LoginOutput:
     case InvalidCredentials
-    case LoggedIn(user: AuthUser, sessionToken: String)
+    case LoggedIn(user: AuthUser, sessionToken: SessionToken)
 
   enum RegisterOutput:
     case ValidationFailed(message: String)
     case UsernameConflict
     case UsernameConflictsWithUserGroup
-    case Registered(user: AuthUser, sessionToken: String)
+    case Registered(user: AuthUser, sessionToken: SessionToken)
 
   final case class LogoutOutput(clearedSessionCookie: org.http4s.ResponseCookie)
 
@@ -36,13 +36,13 @@ object AuthHttpPlans:
     ): IO[SessionResponse] =
       IO.pure(AuthHttpResponses.toSessionResponse(actor))
 
-  case object Logout extends PublicPlainAuthHttpPlan[Option[String], LogoutOutput]:
+  case object Logout extends PublicPlainAuthHttpPlan[Option[SessionToken], LogoutOutput]:
 
     override val name: String = "Logout"
 
     override def execute(
       context: AuthHttpContext,
-      input: Option[String]
+      input: Option[SessionToken]
     ): IO[LogoutOutput] =
       input match
         case Some(token) =>

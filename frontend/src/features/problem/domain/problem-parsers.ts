@@ -1,6 +1,7 @@
 import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
+import type { ProblemSearchQuery } from '@/features/problem/model/ProblemSearchQuery'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'
 import type { ProblemStatementText } from '@/features/problem/model/ProblemStatementText'
@@ -20,6 +21,10 @@ function createProblemId(value: string): ProblemId {
 
 function createProblemSlug(value: string): ProblemSlug {
   return value as ProblemSlug
+}
+
+function createProblemSearchQuery(value: string): ProblemSearchQuery {
+  return value as ProblemSearchQuery
 }
 
 function createProblemTitle(value: string): ProblemTitle {
@@ -64,6 +69,10 @@ export function problemSlugValue(slug: ProblemSlug): string {
   return slug
 }
 
+export function problemSearchQueryValue(query: ProblemSearchQuery): string {
+  return query
+}
+
 export function problemTitleValue(title: ProblemTitle): string {
   return title
 }
@@ -96,6 +105,14 @@ export function parseProblemSlug(rawSlug: string): ParseResult<ProblemSlug> {
     return { ok: false, error: 'Problem slug may contain only lowercase letters, numbers, and hyphens.' }
   }
   return { ok: true, value: createProblemSlug(normalized) }
+}
+
+export function parseProblemSearchQuery(rawQuery: string): ParseResult<ProblemSearchQuery> {
+  const normalized = rawQuery.trim()
+  if (!normalized) {
+    return { ok: false, error: 'Problem search query is required.' }
+  }
+  return { ok: true, value: createProblemSearchQuery(normalized) }
 }
 
 export function parseProblemId(rawId: string): ParseResult<ProblemId> {

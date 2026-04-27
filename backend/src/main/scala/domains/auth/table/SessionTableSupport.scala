@@ -1,6 +1,7 @@
 package domains.auth.table
 
 import cats.effect.IO
+import domains.auth.model.SessionToken
 
 import java.sql.Timestamp
 import java.time.{Duration, Instant}
@@ -18,11 +19,14 @@ object SessionTableSupport:
               .continually(resultSet.next())
               .takeWhile(identity)
               .map(_ =>
+                val token = SessionToken
+                  .parse(resultSet.getString("token"))
+                  .fold(message => throw new IllegalStateException(message), identity)
                 (
-                  resultSet.getString("token"),
+                  token,
                   Option(resultSet.getTimestamp("created_at"))
                     .map(_.toInstant)
-                    .getOrElse(throw new IllegalStateException(s"auth_sessions.created_at is missing for token ${resultSet.getString("token")}")),
+                    .getOrElse(throw new IllegalStateException(s"auth_sessions.created_at is missing for token ${token.value}")),
                   Option(resultSet.getTimestamp("last_active_at")).map(_.toInstant),
                   Option(resultSet.getTimestamp("expires_at")).map(_.toInstant),
                 )
@@ -37,7 +41,7 @@ object SessionTableSupport:
             val expiresAt = maybeExpiresAt.getOrElse(lastActiveAt.plus(sessionTtl))
             updateStatement.setTimestamp(1, Timestamp.from(lastActiveAt))
             updateStatement.setTimestamp(2, Timestamp.from(expiresAt))
-            updateStatement.setString(3, token)
+            updateStatement.setString(3, token.value)
             updateStatement.addBatch()
           }
           if rows.nonEmpty then
