@@ -148,11 +148,14 @@ object Cpp17JudgeExecutor:
 
   private def formatCompileError(compilerPath: String, result: ProcessResult): String =
     val exitCode = result.exitCode.getOrElse(-1)
-    val detail =
-      if exitCode == 127 then
-        s"Compiler '$compilerPath' was not found on the judger host (exit status 127)."
-      else s"Compilation failed with exit status $exitCode using $compilerPath."
-    renderDetail(detail, result)
+    if exitCode == 127 then
+      renderDetail(s"Compiler '$compilerPath' was not found on the judger host (exit status 127).", result)
+    else
+      nonEmptyOrFallback(
+        result.stderr,
+        result.stdout,
+        s"Compilation failed with exit status $exitCode using $compilerPath."
+      )
 
   private def formatRuntimeError(testcaseName: String, result: ProcessResult): String =
     val exitCode = result.exitCode.getOrElse(-1)
