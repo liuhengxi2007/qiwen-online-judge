@@ -1,4 +1,4 @@
-import domains.auth.application.SessionStore
+import domains.auth.application.{RedisSessionCache, SessionCache, SessionCacheConfig, SessionStore}
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
 import database.{DatabaseSession, ResourceAccessGrantTable}
@@ -33,7 +33,11 @@ object Main extends IOApp.Simple:
   private val applicationResource: cats.effect.Resource[IO, Server] =
     for
       databaseSession <- DatabaseSession.resource
-      sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession))
+      sessionCache <- SessionCacheConfig
+        .fromEnvironment(sys.env)
+        .map(RedisSessionCache.resource)
+        .getOrElse(cats.effect.Resource.pure[IO, SessionCache](SessionCache.noop))
+      sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession, sessionCache))
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       _ <- cats.effect.Resource.eval {

@@ -17,6 +17,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % "0.14.9",
       "io.circe" %% "circe-parser" % "0.14.9",
       "io.minio" % "minio" % "8.5.17",
+      "redis.clients" % "jedis" % "5.2.0",
       "com.zaxxer" % "HikariCP" % "5.1.0",
       "org.postgresql" % "postgresql" % "42.7.4",
       "org.typelevel" %% "log4cats-slf4j" % "2.7.0",

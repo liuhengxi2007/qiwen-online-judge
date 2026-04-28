@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.model.SessionToken
 
 import java.sql.Timestamp
-import java.time.{Duration, Instant}
+import java.time.Duration
 
 object SessionTableSupport:
 
@@ -50,6 +50,3 @@ object SessionTableSupport:
         finally updateStatement.close()
       finally selectStatement.close()
     }
-
-  def maxInstant(left: Instant, right: Instant): Instant =
-    if left.isAfter(right) then left else right

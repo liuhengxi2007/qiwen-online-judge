@@ -11,6 +11,10 @@ import java.sql.Timestamp
 import java.time.{Duration, Instant}
 
 object SessionTable:
+  final case class ActiveSession(
+    username: Username,
+    expiresAt: Instant
+  )
 
   def initialize(connection: Connection, sessionTtl: Duration): IO[Unit] =
     SessionTableSchema.initialize(connection, sessionTtl)
@@ -30,13 +34,12 @@ object SessionTable:
       finally statement.close()
     }
 
-  def touchAndFindUsernameByToken(
+  def findActiveByToken(
     connection: Connection,
     token: SessionToken,
-    activeExtensionThreshold: Duration
-  ): IO[Option[Username]] =
+    now: Instant
+  ): IO[Option[ActiveSession]] =
     IO.blocking {
-      val now = Instant.now()
       val statement = connection.prepareStatement(findSessionByTokenSql)
       try
         statement.setString(1, token.value)
@@ -44,18 +47,50 @@ object SessionTable:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
-            val username = Username.canonical(resultSet.getString("username"))
-            val currentExpiresAt = resultSet.getTimestamp("expires_at").toInstant
-            val nextExpiresAt = maxInstant(currentExpiresAt, now.plus(activeExtensionThreshold))
-            val touchStatement = connection.prepareStatement(touchSessionSql)
-            try
-              touchStatement.setTimestamp(1, Timestamp.from(now))
-              touchStatement.setTimestamp(2, Timestamp.from(nextExpiresAt))
-              touchStatement.setString(3, token.value)
-              touchStatement.executeUpdate()
-            finally touchStatement.close()
-            Some(username)
+            Some(
+              ActiveSession(
+                username = Username.canonical(resultSet.getString("username")),
+                expiresAt = resultSet.getTimestamp("expires_at").toInstant
+              )
+            )
           else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def renewSession(
+    connection: Connection,
+    token: SessionToken,
+    now: Instant,
+    nextExpiresAt: Instant
+  ): IO[Boolean] =
+    IO.blocking {
+      val touchStatement = connection.prepareStatement(touchSessionSql)
+      try
+        touchStatement.setTimestamp(1, Timestamp.from(now))
+        touchStatement.setTimestamp(2, Timestamp.from(nextExpiresAt))
+        touchStatement.setString(3, token.value)
+        touchStatement.setTimestamp(4, Timestamp.from(now))
+        touchStatement.executeUpdate() > 0
+      finally touchStatement.close()
+    }
+
+  def findTokensByUsername(connection: Connection, username: Username): IO[List[SessionToken]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(findTokensByUsernameSql)
+      try
+        statement.setString(1, username.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ =>
+              SessionToken
+                .parse(resultSet.getString("token"))
+                .fold(message => throw new IllegalStateException(message), identity)
+            )
+            .toList
         finally resultSet.close()
       finally statement.close()
     }

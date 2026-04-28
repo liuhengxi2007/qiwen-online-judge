@@ -10,7 +10,7 @@ object SessionTableSql:
 
   val findSessionByTokenSql: String =
     """
-      |select username, expires_at, last_active_at
+      |select username, expires_at
       |from auth_sessions
       |where token = ?
       |  and expires_at > ?
@@ -21,6 +21,14 @@ object SessionTableSql:
       |update auth_sessions
       |set last_active_at = ?, expires_at = ?
       |where token = ?
+      |  and expires_at > ?
+      |""".stripMargin
+
+  val findTokensByUsernameSql: String =
+    """
+      |select token
+      |from auth_sessions
+      |where username = ?
       |""".stripMargin
 
   val deleteByTokenSql: String =
