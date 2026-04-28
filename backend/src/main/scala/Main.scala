@@ -10,6 +10,7 @@ import domains.system.http.ApiRouter
 import domains.auth.table.AuthUserTable
 import domains.blog.table.BlogTable
 import domains.judge.application.JudgeConfig
+import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.auth.table.SessionTable
 import domains.problem.table.ProblemTable
 import domains.problemset.table.ProblemSetTable
@@ -34,6 +35,18 @@ object Main extends IOApp.Simple:
       databaseSession <- DatabaseSession.resource
       sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession))
       judgeConfig = JudgeConfig.loadFromEnvironment()
+      problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
+      _ <- cats.effect.Resource.eval {
+        val storage =
+          problemDataStorageConfig.backend match
+            case ProblemDataStorageBackend.Local =>
+              LocalProblemDataStorage(problemDataStorageConfig.localRootDirectory)
+            case ProblemDataStorageBackend.Minio =>
+              problemDataStorageConfig.minio match
+                case Some(config) => MinioProblemDataStorage(config)
+                case None => throw IllegalStateException("MinIO storage backend requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET.")
+        IO.delay(ProblemDataStorage.install(storage))
+      }
       _ <- cats.effect.Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for

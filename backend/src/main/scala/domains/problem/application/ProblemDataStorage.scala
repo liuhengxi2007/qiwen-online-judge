@@ -8,6 +8,7 @@ trait ProblemDataStorage:
   import ProblemDataStorage.ProblemDataSnapshot
 
   def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]]
+  def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest]
   def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot]
   def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath]
   def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]]
@@ -26,6 +27,9 @@ object ProblemDataStorage:
 
   def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]] =
     current.listPaths(problemSlug)
+
+  def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest] =
+    current.describeManifest(problemSlug)
 
   def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath] =
     current.writePath(problemSlug, path, bytes)

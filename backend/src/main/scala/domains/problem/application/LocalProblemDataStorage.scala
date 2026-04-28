@@ -5,12 +5,12 @@ import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
 import domains.problem.model.{ProblemDataPath, ProblemSlug}
 
 import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
 
-object LocalProblemDataStorage extends ProblemDataStorage:
+class LocalProblemDataStorage(rootDirectory: Path) extends ProblemDataStorage:
 
-  private def rootDirectory: Path =
-    Paths.get(sys.props.getOrElse("user.dir", "."), "problems")
+  def this() = this(Paths.get(sys.props.getOrElse("user.dir", "."), "problems"))
 
   private def dataDirectory(problemSlug: ProblemSlug): Path =
     rootDirectory.resolve(problemSlug.value).resolve("data")
@@ -28,6 +28,16 @@ object LocalProblemDataStorage extends ProblemDataStorage:
             .toList
             .sortBy(_.value)
         finally stream.close()
+    }
+
+  override def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest] =
+    snapshotDirectory(problemSlug).map { snapshot =>
+      val entries = snapshot.toList
+        .sortBy(_._1.value)
+        .map { case (path, bytes) =>
+          ProblemDataManifestEntry(path = path, sizeBytes = bytes.length.toLong, sha256 = sha256Hex(bytes))
+        }
+      ProblemDataManifest(problemSlug = problemSlug, entries = entries, version = manifestVersion(entries))
     }
 
   override def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
@@ -145,3 +155,20 @@ object LocalProblemDataStorage extends ProblemDataStorage:
     ProblemDataPath
       .parse(rawPath)
       .fold(message => throw IllegalStateException(s"Invalid $label: $message"), identity)
+
+  private def manifestVersion(entries: List[ProblemDataManifestEntry]): String =
+    sha256Hex(
+      entries
+        .map(entry => s"${entry.path.value}:${entry.sizeBytes}:${entry.sha256}")
+        .mkString("\n")
+        .getBytes(java.nio.charset.StandardCharsets.UTF_8)
+    )
+
+  private def sha256Hex(bytes: Array[Byte]): String =
+    MessageDigest
+      .getInstance("SHA-256")
+      .digest(bytes)
+      .map("%02x".format(_))
+      .mkString
+
+object LocalProblemDataStorage extends LocalProblemDataStorage()
