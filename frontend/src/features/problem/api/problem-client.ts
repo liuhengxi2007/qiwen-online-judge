@@ -8,7 +8,6 @@ import type {
   ProblemListResponse,
   ProblemSlug,
   ProblemSuggestion,
-  UpdateProblemDataRequest,
   UpdateProblemRequest,
 } from '@/features/problem/domain/problem'
 import {
@@ -17,12 +16,13 @@ import {
   fromProblemSuggestionContract,
   parseProblemDataFilename,
   parseProblemSearchQuery,
+  problemDataFilenameValue,
   problemSlugValue,
   toProblemListRequestContract,
   toCreateProblemRequestContract,
   toUpdateProblemRequestContract,
 } from '@/features/problem/domain/problem'
-import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
+import { decodeSuccessResponse, postJson, postMultipart, requestJson } from '@/shared/api/http-client'
 
 export async function listProblems(request: ProblemListRequest): Promise<ProblemListResponse> {
   const url = new URL('/api/problems', window.location.origin)
@@ -72,14 +72,19 @@ export function deleteProblem(problemSlug: ProblemSlug): Promise<SuccessResponse
   return postJson(`/api/problems/${problemSlugValue(problemSlug)}/delete`, decodeSuccessResponse, {})
 }
 
-export async function updateProblemData(
+export async function uploadProblemDataFile(
   problemSlug: ProblemSlug,
-  request: UpdateProblemDataRequest,
+  file: File,
+  filename: ProblemDataFilename,
 ): Promise<ProblemDetail> {
-  return postJson(
-    `/api/problems/${problemSlugValue(problemSlug)}/data`,
+  const formData = new FormData()
+  formData.set('file', file)
+  formData.set('path', problemDataFilenameValue(filename))
+
+  return postMultipart(
+    `/api/problems/${problemSlugValue(problemSlug)}/data/files`,
     fromProblemDetailContract,
-    request,
+    formData,
   )
 }
 

@@ -179,3 +179,14 @@ export function postJson<TResponse>(input: RequestInfo, decode: JsonDecoder<TRes
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
+
+export function postMultipart<TResponse>(
+  input: RequestInfo,
+  decode: JsonDecoder<TResponse>,
+  body: FormData,
+): Promise<TResponse> {
+  return requestJson<TResponse>(input, decode, {
+    method: 'POST',
+    body,
+  })
+}

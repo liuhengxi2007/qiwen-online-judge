@@ -51,5 +51,4 @@ export type { ProblemStatementText } from '@/features/problem/model/ProblemState
 export type { ProblemSummary } from '@/features/problem/model/ProblemSummary'
 export type { ProblemTimeLimitMs } from '@/features/problem/model/ProblemTimeLimitMs'
 export type { ProblemTitle } from '@/features/problem/model/ProblemTitle'
-export type { UpdateProblemDataRequest } from '@/features/problem/model/UpdateProblemDataRequest'
 export type { UpdateProblemRequest } from '@/features/problem/model/UpdateProblemRequest'

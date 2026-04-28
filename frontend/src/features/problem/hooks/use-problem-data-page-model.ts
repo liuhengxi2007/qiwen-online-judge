@@ -4,8 +4,8 @@ import {
   clearProblemData,
   deleteProblemData,
   listProblemDataFiles,
+  uploadProblemDataFile,
   updateProblem,
-  updateProblemData,
 } from '@/features/problem/api/problem-client'
 import {
   parseProblemDataFilename,
@@ -77,14 +77,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     dispatch({ type: 'upload_started' })
 
     try {
-      const buffer = await state.selectedFile.arrayBuffer()
-      const bytes = new Uint8Array(buffer)
-      const binary = Array.from(bytes).reduce((text, byte) => text + String.fromCharCode(byte), '')
-
-      const updatedProblem = await updateProblemData(problemSlug, {
-        filename: filenameResult.value,
-        contentBase64: btoa(binary),
-      })
+      const updatedProblem = await uploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
 
       replaceProblem(updatedProblem)
       dispatch({
