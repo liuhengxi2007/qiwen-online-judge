@@ -32,7 +32,12 @@ object Cpp17JudgeExecutor:
               )
               result <-
                 if compileResult.timedOut then
-                  IO.pure(systemError("Compilation timed out on the judger machine."))
+                  IO.pure(
+                    completed(
+                      SubmissionVerdict.CompileError,
+                      s"Compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
+                    )
+                  )
                 else if compileResult.exitCode.getOrElse(-1) != 0 then
                   IO.pure(completed(SubmissionVerdict.CompileError, formatCompileError(compilerPath, compileResult)))
                 else
@@ -146,6 +151,8 @@ object Cpp17JudgeExecutor:
     val detail =
       if exitCode == 127 then
         s"Compiler '$compilerPath' was not found on the judger host (exit status 127)."
+      else if looksLikeCompileResourceLimit(result) then
+        s"Compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
       else s"Compilation failed with exit status $exitCode using $compilerPath."
     renderDetail(detail, result)
 
@@ -219,6 +226,13 @@ object Cpp17JudgeExecutor:
 
   private def shellQuote(value: String): String =
     "'" + value.replace("'", "'\"'\"'") + "'"
+
+  private def looksLikeCompileResourceLimit(result: ProcessResult): Boolean =
+    val stderr = result.stderr.toLowerCase
+    stderr.contains("fatal error: killed signal terminated program cc1plus") ||
+    stderr.contains("virtual memory exhausted") ||
+    stderr.contains("out of memory") ||
+    stderr.contains("cannot allocate memory")
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()
