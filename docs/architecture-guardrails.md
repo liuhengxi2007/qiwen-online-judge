@@ -19,6 +19,7 @@ Use this file as the entry point, then continue through the linked topic documen
 - [Contract Checks](./contract-checks.md)
 - [File Upload Capability](./file-upload-capability.md)
 - [HTTP Planner Protocol](./http-planner-protocol.md)
+- [Problem Data Operations](./problem-data-operations.md)
 - [Problem Data Storage Migration](./problem-data-storage-migration.md)
 - [Resource Lifecycle Matrix](./resource-lifecycle-matrix.md)
 

@@ -2,7 +2,7 @@
 
 This document records the agreed migration path for problem data storage.
 
-The current implementation stores problem data under the backend working directory and exposes upload through a JSON API with base64-encoded file contents.
+Most of the planned migration has now been implemented. See also [Problem Data Operations](./problem-data-operations.md) for the current runtime state.
 
 The target design moves problem data to object storage compatible with MinIO/S3, supports tree-shaped relative paths, and removes large base64 payloads from storage-oriented protocols.
 
@@ -32,6 +32,8 @@ Phase 2 is a problem-data-specific backend refactor with compatibility preserved
 
 This phase does not yet require frontend or judger protocol changes.
 
+Status: implemented
+
 ## Phase 3
 
 Replace the current management upload API with binary upload endpoints.
@@ -51,6 +53,8 @@ Recommended request shape for single-file upload:
 - field `path`
 - optional field `replace`
 
+Status: implemented
+
 ## Phase 4
 
 Introduce MinIO-backed storage and file metadata persistence.
@@ -59,12 +63,15 @@ Recommended object key pattern:
 
 - `problems/{problemSlug}/data/{relativePath}`
 
-Recommended table:
+Implemented table:
 
 - `problem_data_file`
-- columns: `problem_id`, `relative_path`, `object_key`, `size_bytes`, `etag`, `sha256`, `created_at`
+- current columns: `problem_id`, `relative_path`, `size_bytes`, `sha256`, `created_at`
+- future extensions may add `object_key` and `etag` if storage metadata needs to be persisted explicitly
 
 The existing `problems.data_name` field should become a compatibility summary field and later be removed or downgraded in importance.
+
+Status: partially implemented
 
 ## Phase 5
 
@@ -83,6 +90,8 @@ Recommended cache shape on the judger:
 
 - blob cache keyed by `sha256`
 - lightweight manifest records keyed by `problemDataVersion`
+
+Status: implemented with backend-internal downloads and basic cache files. Direct MinIO judger access and more advanced cache eviction remain optional future work.
 
 ## Constraints
 
