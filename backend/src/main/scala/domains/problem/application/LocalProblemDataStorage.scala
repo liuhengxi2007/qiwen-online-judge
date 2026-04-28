@@ -3,7 +3,6 @@ package domains.problem.application
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
 import domains.problem.model.{ProblemDataPath, ProblemSlug}
-import domains.shared.upload.{FileUploadPolicy, FileUploadPreparation}
 
 import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import scala.jdk.CollectionConverters.*
@@ -53,29 +52,15 @@ object LocalProblemDataStorage extends ProblemDataStorage:
       val sanitizedPath = sanitizePath(path)
       val directory = dataDirectory(problemSlug)
       Files.createDirectories(directory)
-      val preparedFiles =
-        if sanitizedPath.value.toLowerCase.endsWith(".zip") then
-          FileUploadPreparation
-            .prepareArchive(bytes, None, FileUploadPolicy.preserve)
-            .fold(message => throw IllegalArgumentException(message), identity)
-        else
-          List(
-            FileUploadPreparation
-              .prepareFile(sanitizedPath.toStoredFilePath, bytes, FileUploadPolicy.preserve)
-              .fold(message => throw IllegalArgumentException(message), identity)
-          )
-
-      preparedFiles.foreach { preparedFile =>
-        val targetPath = resolveTargetPath(directory, ProblemDataPath(preparedFile.path.value))
-        Files.createDirectories(targetPath.getParent)
-        Files.write(
-          targetPath,
-          preparedFile.bytes,
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING,
-          StandardOpenOption.WRITE
-        )
-      }
+      val targetPath = resolveTargetPath(directory, sanitizedPath)
+      Files.createDirectories(targetPath.getParent)
+      Files.write(
+        targetPath,
+        bytes,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING,
+        StandardOpenOption.WRITE
+      )
       sanitizedPath
     }
 

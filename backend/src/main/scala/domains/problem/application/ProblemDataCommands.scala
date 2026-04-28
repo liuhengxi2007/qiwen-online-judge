@@ -12,6 +12,27 @@ import java.time.Instant
 
 object ProblemDataCommands:
 
+  private def writePreparedFiles(
+    problemSlug: domains.problem.model.ProblemSlug,
+    preparedFiles: List[domains.shared.upload.PreparedUploadFile]
+  ): IO[Unit] =
+    preparedFiles.foldLeft(IO.unit) { (accIo, preparedFile) =>
+      accIo *> (ProblemDataUploadPreparation.toProblemDataPath(preparedFile.path) match
+        case Left(message) =>
+          IO.raiseError(IllegalArgumentException(message))
+        case Right(path) =>
+          ProblemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
+    }
+
+  private def summaryFilenameFor(
+    preparedFiles: List[domains.shared.upload.PreparedUploadFile]
+  ): Either[String, ProblemDataFilename] =
+    preparedFiles
+      .sortBy(_.path.value)
+      .lastOption
+      .toRight("Uploaded archive does not contain any files.")
+      .flatMap(file => ProblemDataFilename.parse(file.path.fileName))
+
   def updateProblemData(
     databaseSession: DatabaseSession,
     actor: AuthUser,
@@ -36,22 +57,24 @@ object ProblemDataCommands:
           case Left(message) =>
             IO.pure(UpdateProblemDataResult.ValidationFailed(message))
           case Right(decodedBytes) =>
-            for
-              maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-              result <- maybeProblem match
-                case None =>
-                  IO.pure(UpdateProblemDataResult.ProblemNotFound)
-                case Some(problem) =>
-                  canManageProblem(connection, actor, problem).flatMap {
-                    case false =>
-                      IO.pure(UpdateProblemDataResult.Forbidden)
-                    case true =>
-                      for
-                        snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-                        result <- ProblemDataStorage
-                          .writeFile(problem.slug, validRequest.filename, decodedBytes)
-                          .flatMap(savedFilename =>
-                            ProblemTable.updateData(connection, problem.id, Instant.now(), savedFilename)
+            ProblemDataUploadPreparation.prepareLegacyUpload(validRequest.filename, decodedBytes) match
+              case Left(message) =>
+                IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+              case Right(preparedFiles) =>
+                for
+                  maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+                  result <- maybeProblem match
+                    case None =>
+                      IO.pure(UpdateProblemDataResult.ProblemNotFound)
+                    case Some(problem) =>
+                      canManageProblem(connection, actor, problem).flatMap {
+                        case false =>
+                          IO.pure(UpdateProblemDataResult.Forbidden)
+                        case true =>
+                          for
+                            snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                            result <- writePreparedFiles(problem.slug, preparedFiles)
+                              .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), validRequest.filename))
                               .flatMap(_ =>
                                 ProblemTable
                                   .findBySlug(connection, problem.slug)
@@ -59,13 +82,81 @@ object ProblemDataCommands:
                                   .map(_.copy(canManage = true))
                                   .map(UpdateProblemDataResult.Updated(_))
                               )
-                          )
-                          .handleErrorWith { error =>
-                            ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                          }
-                      yield result
+                              .handleErrorWith { error =>
+                                ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                              }
+                          yield result
+                      }
+                yield result
+
+  def uploadProblemDataFile(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    path: domains.problem.model.ProblemDataPath,
+    bytes: Array[Byte]
+  ): IO[UpdateProblemDataResult] =
+    ProblemDataUploadPreparation.prepareSingleFile(path, bytes) match
+      case Left(message) =>
+        IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+      case Right(preparedFile) =>
+        summaryFilenameFor(List(preparedFile)) match
+          case Left(message) =>
+            IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+          case Right(summaryFilename) =>
+            persistPreparedUpload(connection, actor, problemSlug, List(preparedFile), summaryFilename)
+
+  def uploadProblemDataArchive(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    targetDirectory: Option[domains.problem.model.ProblemDataPath],
+    archiveBytes: Array[Byte]
+  ): IO[UpdateProblemDataResult] =
+    ProblemDataUploadPreparation.prepareArchive(archiveBytes, targetDirectory) match
+      case Left(message) =>
+        IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+      case Right(preparedFiles) =>
+        summaryFilenameFor(preparedFiles) match
+          case Left(message) =>
+            IO.pure(UpdateProblemDataResult.ValidationFailed(message))
+          case Right(summaryFilename) =>
+            persistPreparedUpload(connection, actor, problemSlug, preparedFiles, summaryFilename)
+
+  private def persistPreparedUpload(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    preparedFiles: List[domains.shared.upload.PreparedUploadFile],
+    summaryFilename: ProblemDataFilename
+  ): IO[UpdateProblemDataResult] =
+    for
+      maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+      result <- maybeProblem match
+        case None =>
+          IO.pure(UpdateProblemDataResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).flatMap {
+            case false =>
+              IO.pure(UpdateProblemDataResult.Forbidden)
+            case true =>
+              for
+                snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+                result <- writePreparedFiles(problem.slug, preparedFiles)
+                  .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
+                  .flatMap(_ =>
+                    ProblemTable
+                      .findBySlug(connection, problem.slug)
+                      .map(updatedProblemOrError("Problem disappeared after data update"))
+                      .map(_.copy(canManage = true))
+                      .map(UpdateProblemDataResult.Updated(_))
+                  )
+                  .handleErrorWith { error =>
+                    ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                   }
-            yield result
+              yield result
+          }
+    yield result
 
   def listProblemData(
     databaseSession: DatabaseSession,
