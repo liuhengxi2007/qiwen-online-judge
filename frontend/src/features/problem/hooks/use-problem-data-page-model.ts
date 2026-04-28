@@ -6,6 +6,7 @@ import {
   deleteProblemDataPath,
   listProblemDataFiles,
   listProblemDataTree,
+  uploadProblemDataArchive,
   uploadProblemDataFile,
   updateProblem,
 } from '@/features/problem/api/problem-client'
@@ -80,7 +81,10 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     dispatch({ type: 'upload_started' })
 
     try {
-      const updatedProblem = await uploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
+      const isZipArchive = state.selectedFile.name.toLowerCase().endsWith('.zip')
+      const updatedProblem = isZipArchive
+        ? await uploadProblemDataArchive(problemSlug, state.selectedFile)
+        : await uploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
 
       replaceProblem(updatedProblem)
       dispatch({

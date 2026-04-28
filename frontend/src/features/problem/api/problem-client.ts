@@ -92,6 +92,17 @@ export async function uploadProblemDataFile(
   )
 }
 
+export async function uploadProblemDataArchive(problemSlug: ProblemSlug, file: File): Promise<ProblemDetail> {
+  const formData = new FormData()
+  formData.set('file', file)
+
+  return postMultipart(
+    `/api/problems/${problemSlugValue(problemSlug)}/data/archive`,
+    fromProblemDetailContract,
+    formData,
+  )
+}
+
 export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileListResponse> {
   return requestJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data`,
