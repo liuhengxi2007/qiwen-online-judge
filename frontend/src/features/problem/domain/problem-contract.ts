@@ -1,6 +1,7 @@
 import type {
   ProblemListRequest as ProblemListRequestContract,
   CreateProblemRequest as CreateProblemRequestContract,
+  ProblemDataUploadResult as ProblemDataUploadResultContract,
   ProblemDetail as ProblemDetailContract,
   ProblemListResponse as ProblemListResponseContract,
   ProblemSuggestion as ProblemSuggestionContract,
@@ -10,6 +11,7 @@ import type {
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
+import type { ProblemDataUploadResult } from '@/features/problem/model/ProblemDataUploadResult'
 import type { ProblemListRequest } from '@/features/problem/model/ProblemListRequest'
 import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
 import type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
@@ -63,6 +65,15 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     canManage: problem.canManage,
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
+  }
+}
+
+export function fromProblemDataUploadResultContract(
+  result: ProblemDataUploadResultContract,
+): ProblemDataUploadResult {
+  return {
+    problem: fromProblemDetailContract(result.problem),
+    uploadedFileCount: result.uploadedFileCount,
   }
 }
 

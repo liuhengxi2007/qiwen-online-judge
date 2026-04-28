@@ -82,8 +82,8 @@ object ProblemHttpResponses:
         errorResponse(Status.BadRequest, message)
       case ProblemCommands.UpdateProblemDataResult.ProblemNotFound =>
         hiddenProblemResponse
-      case ProblemCommands.UpdateProblemDataResult.Updated(problem) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
+      case ProblemCommands.UpdateProblemDataResult.Updated(result) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(result.asJson))
 
   def mapListDataResult(result: ProblemCommands.ListProblemDataResult): IO[Response[IO]] =
     result match

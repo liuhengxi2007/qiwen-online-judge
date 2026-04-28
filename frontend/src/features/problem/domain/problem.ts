@@ -27,6 +27,7 @@ export {
 } from '@/features/problem/domain/problem-display'
 export {
   fromProblemDetailContract,
+  fromProblemDataUploadResultContract,
   fromProblemListResponseContract,
   fromProblemSuggestionContract,
   fromProblemSummaryContract,
@@ -43,6 +44,7 @@ export type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFi
 export type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 export type { ProblemDataTreeNode, ProblemDataTreeNodeKind } from '@/features/problem/model/ProblemDataTreeNode'
 export type { ProblemDataTreeResponse } from '@/features/problem/model/ProblemDataTreeResponse'
+export type { ProblemDataUploadResult } from '@/features/problem/model/ProblemDataUploadResult'
 export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'

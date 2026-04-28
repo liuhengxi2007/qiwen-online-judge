@@ -86,10 +86,12 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
         ? await uploadProblemDataArchive(problemSlug, state.selectedFile)
         : await uploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
 
-      replaceProblem(updatedProblem)
+      replaceProblem(updatedProblem.problem)
       dispatch({
         type: 'upload_succeeded',
-        message: `Uploaded ${updatedProblem.data.value ?? problemDataFilenameValue(filenameResult.value)} successfully.`,
+        message: isZipArchive
+          ? `Uploaded ${updatedProblem.uploadedFileCount} file(s) successfully.`
+          : `Uploaded ${updatedProblem.problem.data.value ?? problemDataFilenameValue(filenameResult.value)} successfully.`,
       })
       await loadFiles()
       return { ok: true }

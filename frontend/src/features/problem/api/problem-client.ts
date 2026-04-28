@@ -5,6 +5,7 @@ import type {
   ProblemDataFilename,
   ProblemDataPath,
   ProblemDetail,
+  ProblemDataUploadResult,
   ProblemListRequest,
   ProblemListResponse,
   ProblemSlug,
@@ -13,6 +14,7 @@ import type {
   UpdateProblemRequest,
 } from '@/features/problem/domain/problem'
 import {
+  fromProblemDataUploadResultContract,
   fromProblemDetailContract,
   fromProblemListResponseContract,
   fromProblemSuggestionContract,
@@ -80,25 +82,28 @@ export async function uploadProblemDataFile(
   problemSlug: ProblemSlug,
   file: File,
   filename: ProblemDataFilename,
-): Promise<ProblemDetail> {
+): Promise<ProblemDataUploadResult> {
   const formData = new FormData()
   formData.set('file', file)
   formData.set('path', problemDataFilenameValue(filename))
 
   return postMultipart(
     `/api/problems/${problemSlugValue(problemSlug)}/data/files`,
-    fromProblemDetailContract,
+    fromProblemDataUploadResultContract,
     formData,
   )
 }
 
-export async function uploadProblemDataArchive(problemSlug: ProblemSlug, file: File): Promise<ProblemDetail> {
+export async function uploadProblemDataArchive(
+  problemSlug: ProblemSlug,
+  file: File,
+): Promise<ProblemDataUploadResult> {
   const formData = new FormData()
   formData.set('file', file)
 
   return postMultipart(
     `/api/problems/${problemSlugValue(problemSlug)}/data/archive`,
-    fromProblemDetailContract,
+    fromProblemDataUploadResultContract,
     formData,
   )
 }

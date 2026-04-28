@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, ProblemDataUploadResult}
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
@@ -101,6 +101,7 @@ object ProblemDataCommands:
                       .findBySlug(connection, problem.slug)
                       .map(updatedProblemOrError("Problem disappeared after data update"))
                       .map(_.copy(canManage = true))
+                      .map(problem => ProblemDataUploadResult(problem, preparedFiles.length))
                       .map(UpdateProblemDataResult.Updated(_))
                   )
                   .handleErrorWith { error =>

@@ -44,6 +44,11 @@ export type ProblemDetail = {
   updatedAt: string
 }
 
+export type ProblemDataUploadResult = {
+  problem: ProblemDetail
+  uploadedFileCount: number
+}
+
 export type CreateProblemRequest = {
   slug: string
   title: string

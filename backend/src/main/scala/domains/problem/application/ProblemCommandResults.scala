@@ -1,6 +1,6 @@
 package domains.problem.application
 
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDetail}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 
 object ProblemCommandResults:
 
@@ -31,7 +31,7 @@ object ProblemCommandResults:
     case Forbidden
     case ValidationFailed(message: String)
     case ProblemNotFound
-    case Updated(problem: ProblemDetail)
+    case Updated(result: ProblemDataUploadResult)
 
   enum ListProblemDataResult:
     case Forbidden
