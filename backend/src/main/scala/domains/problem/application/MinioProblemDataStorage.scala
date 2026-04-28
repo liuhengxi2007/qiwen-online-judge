@@ -48,7 +48,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         .map { case (path, bytes) =>
           ProblemDataManifestEntry(path = path, sizeBytes = bytes.length.toLong, sha256 = sha256Hex(bytes))
         }
-    yield ProblemDataManifest(problemSlug = problemSlug, entries = entries, version = manifestVersion(entries))
+    yield ProblemDataManifest.fromEntries(problemSlug, entries)
 
   override def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
     listPaths(problemSlug).flatMap { paths =>
@@ -136,14 +136,6 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
 
   private def parseStoredPath(rawPath: String): ProblemDataPath =
     ProblemDataPath.parse(rawPath).fold(message => throw IllegalStateException(message), identity)
-
-  private def manifestVersion(entries: List[ProblemDataManifestEntry]): String =
-    sha256Hex(
-      entries
-        .map(entry => s"${entry.path.value}:${entry.sizeBytes}:${entry.sha256}")
-        .mkString("\n")
-        .getBytes(java.nio.charset.StandardCharsets.UTF_8)
-    )
 
   private def sha256Hex(bytes: Array[Byte]): String =
     MessageDigest

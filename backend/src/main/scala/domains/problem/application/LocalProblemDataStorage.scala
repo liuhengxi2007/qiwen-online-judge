@@ -37,7 +37,7 @@ class LocalProblemDataStorage(rootDirectory: Path) extends ProblemDataStorage:
         .map { case (path, bytes) =>
           ProblemDataManifestEntry(path = path, sizeBytes = bytes.length.toLong, sha256 = sha256Hex(bytes))
         }
-      ProblemDataManifest(problemSlug = problemSlug, entries = entries, version = manifestVersion(entries))
+      ProblemDataManifest.fromEntries(problemSlug, entries)
     }
 
   override def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
@@ -155,14 +155,6 @@ class LocalProblemDataStorage(rootDirectory: Path) extends ProblemDataStorage:
     ProblemDataPath
       .parse(rawPath)
       .fold(message => throw IllegalStateException(s"Invalid $label: $message"), identity)
-
-  private def manifestVersion(entries: List[ProblemDataManifestEntry]): String =
-    sha256Hex(
-      entries
-        .map(entry => s"${entry.path.value}:${entry.sizeBytes}:${entry.sha256}")
-        .mkString("\n")
-        .getBytes(java.nio.charset.StandardCharsets.UTF_8)
-    )
 
   private def sha256Hex(bytes: Array[Byte]): String =
     MessageDigest

@@ -1,9 +1,9 @@
 package domains.judge.application
 
 import cats.effect.IO
-import domains.problem.application.ProblemDataStorage
+import domains.problem.application.ProblemDataManifest
 import domains.problem.model.ProblemDataPath
-import domains.problem.table.ProblemTable
+import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.submission.table.ClaimedSubmission
 import judgeprotocol.model.{JudgeTask, JudgeTaskFileRef, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 
@@ -15,8 +15,10 @@ object JudgeTaskBuilder:
   ): IO[Either[String, JudgeTask]] =
     for
       problem <- ProblemTable.findBySlug(connection, claimedSubmission.problemSlug)
-      manifest <- ProblemDataStorage.describeManifest(claimedSubmission.problemSlug)
-      testcases <- loadTestcases(claimedSubmission)
+      manifest <- problem match
+        case None => IO.pure(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
+        case Some(foundProblem) => ProblemDataFileTable.manifestForProblem(connection, foundProblem.id, claimedSubmission.problemSlug)
+      testcases <- loadTestcases(manifest)
     yield
       problem match
         case None =>
@@ -37,21 +39,18 @@ object JudgeTaskBuilder:
             )
           )
 
-  private def loadTestcases(claimedSubmission: ClaimedSubmission): IO[List[JudgeTaskTestcase]] =
-    for
-      manifest <- ProblemDataStorage.describeManifest(claimedSubmission.problemSlug)
-      testcaseFiles = manifest.entries
-        .filter(_.path.value.toLowerCase.endsWith(".in"))
-        .sortBy(_.path.value)
-      testcases <- testcaseFiles.foldLeft(IO.pure(List.empty[JudgeTaskTestcase])) { (accIO, inputEntry) =>
-        for
-          acc <- accIO
-          maybeTestcase <- loadTestcase(inputEntry, manifest.entries)
-        yield maybeTestcase match
-          case Some(testcase) => acc :+ testcase
-          case None => acc
-      }
-    yield testcases
+  private def loadTestcases(manifest: ProblemDataManifest): IO[List[JudgeTaskTestcase]] =
+    val testcaseFiles = manifest.entries
+      .filter(_.path.value.toLowerCase.endsWith(".in"))
+      .sortBy(_.path.value)
+    testcaseFiles.foldLeft(IO.pure(List.empty[JudgeTaskTestcase])) { (accIO, inputEntry) =>
+      for
+        acc <- accIO
+        maybeTestcase <- loadTestcase(inputEntry, manifest.entries)
+      yield maybeTestcase match
+        case Some(testcase) => acc :+ testcase
+        case None => acc
+    }
 
   private def loadTestcase(
     inputEntry: domains.problem.application.ProblemDataManifestEntry,

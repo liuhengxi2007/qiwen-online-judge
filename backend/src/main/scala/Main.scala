@@ -12,7 +12,7 @@ import domains.blog.table.BlogTable
 import domains.judge.application.JudgeConfig
 import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.auth.table.SessionTable
-import domains.problem.table.ProblemTable
+import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problemset.table.ProblemSetTable
 import domains.submission.table.SubmissionTable
 import domains.judger.table.JudgerTable
@@ -54,6 +54,7 @@ object Main extends IOApp.Simple:
             _ <- AuthUserTable.initialize(connection)
             _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
+            _ <- ProblemDataFileTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
             _ <- SubmissionTable.initialize(connection)
             _ <- BlogTable.initialize(connection)

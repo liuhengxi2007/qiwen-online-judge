@@ -4,13 +4,20 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, UpdateProblemDataRequest}
-import domains.problem.table.ProblemTable
+import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
 
 import java.time.Instant
 
 object ProblemDataCommands:
+
+  private def sha256Hex(bytes: Array[Byte]): String =
+    java.security.MessageDigest
+      .getInstance("SHA-256")
+      .digest(bytes)
+      .map("%02x".format(_))
+      .mkString
 
   private def writePreparedFiles(
     problemSlug: domains.problem.model.ProblemSlug,
@@ -75,6 +82,7 @@ object ProblemDataCommands:
                             snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
                             result <- writePreparedFiles(problem.slug, preparedFiles)
                               .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), validRequest.filename))
+                              .flatMap(_ => ProblemDataFileTable.replaceForProblem(connection, problem.id, toManifestEntries(preparedFiles), Instant.now()))
                               .flatMap(_ =>
                                 ProblemTable
                                   .findBySlug(connection, problem.slug)
@@ -144,6 +152,7 @@ object ProblemDataCommands:
                 snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
                 result <- writePreparedFiles(problem.slug, preparedFiles)
                   .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
+                  .flatMap(_ => ProblemDataFileTable.replaceForProblem(connection, problem.id, toManifestEntries(preparedFiles), Instant.now()))
                   .flatMap(_ =>
                     ProblemTable
                       .findBySlug(connection, problem.slug)
@@ -210,8 +219,8 @@ object ProblemDataCommands:
             case false =>
               IO.pure(ListProblemDataTreeResult.Forbidden)
             case true =>
-              ProblemDataStorage
-                .describeManifest(problem.slug)
+              ProblemDataFileTable
+                .manifestForProblem(connection, problem.id, problem.slug)
                 .map(manifest => ListProblemDataTreeResult.Listed(buildTreeResponse(manifest.entries)))
           }
       }
@@ -247,9 +256,9 @@ object ProblemDataCommands:
                 case false =>
                   IO.pure(DeleteProblemDataResult.DataFileNotFound)
                 case true =>
-                  ProblemDataStorage
-                    .listFiles(problem.slug)
-                    .flatMap(files => ProblemTable.updateData(connection, problem.id, Instant.now(), files.lastOption))
+                  ProblemDataFileTable.deleteForProblemPath(connection, problem.id, ProblemDataPath.fromFilename(filename))
+                    .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
+                    .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), entries.lastOption.flatMap(entry => ProblemDataFilename.parse(entry.path.fileName).toOption)))
                     .flatMap(_ =>
                       ProblemTable
                         .findBySlug(connection, problem.slug)
@@ -285,16 +294,9 @@ object ProblemDataCommands:
                 case false =>
                   IO.pure(DeleteProblemDataResult.DataFileNotFound)
                 case true =>
-                  ProblemDataStorage
-                    .describeManifest(problem.slug)
-                    .flatMap(manifest =>
-                      ProblemTable.updateData(
-                        connection,
-                        problem.id,
-                        Instant.now(),
-                        manifest.entries.sortBy(_.path.value).lastOption.flatMap(entry => ProblemDataFilename.parse(entry.path.fileName).toOption)
-                      )
-                    )
+                  ProblemDataFileTable.deleteForProblemPath(connection, problem.id, path)
+                    .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
+                    .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), entries.lastOption.flatMap(entry => ProblemDataFilename.parse(entry.path.fileName).toOption)))
                     .flatMap(_ =>
                       ProblemTable
                         .findBySlug(connection, problem.slug)
@@ -336,6 +338,7 @@ object ProblemDataCommands:
               snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
               result <- ProblemDataStorage
                 .deleteAllFiles(problem.slug)
+                .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
                 .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
                 .flatMap(_ =>
                   ProblemTable
@@ -369,3 +372,10 @@ object ProblemDataCommands:
   private def directoryPrefixes(path: ProblemDataPath): List[ProblemDataPath] =
     val segments = path.value.split('/').toList.dropRight(1)
     segments.indices.map(index => ProblemDataPath(segments.take(index + 1).mkString("/"))).toList
+
+  private def toManifestEntries(preparedFiles: List[domains.shared.upload.PreparedUploadFile]): List[ProblemDataManifestEntry] =
+    preparedFiles.flatMap { preparedFile =>
+      ProblemDataUploadPreparation.toProblemDataPath(preparedFile.path).toOption.map { path =>
+        ProblemDataManifestEntry(path = path, sizeBytes = preparedFile.bytes.length.toLong, sha256 = sha256Hex(preparedFile.bytes))
+      }
+    }
