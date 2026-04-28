@@ -152,6 +152,17 @@ export function submissionVerdictLabel(verdict: SubmissionVerdict | null): strin
   }
 }
 
+export function submissionJudgeStateLabel(
+  status: SubmissionStatus,
+  verdict: SubmissionVerdict | null,
+): string {
+  if (verdict !== null) {
+    return submissionVerdictLabel(verdict)
+  }
+
+  return submissionStatusLabel(status)
+}
+
 export function parseSubmissionId(rawId: number): ParseResult<SubmissionId> {
   if (!Number.isInteger(rawId)) {
     return { ok: false, error: 'Submission id must be an integer.' }

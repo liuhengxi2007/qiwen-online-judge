@@ -11,8 +11,8 @@ import {
   isTerminalSubmissionStatus,
   parseSubmissionId,
   submissionIdValue,
+  submissionJudgeStateLabel,
   submissionLanguageLabel,
-  submissionVerdictLabel,
   submissionSourceCodeValue,
 } from '@/features/submission/domain/submission'
 import {
@@ -214,7 +214,10 @@ export function SubmissionDetailPage() {
                 <div>
                   <p className="text-slate-500">{t('common.verdict')}</p>
                   <p className="mt-1 font-medium text-slate-900">
-                    {submissionVerdictLabel(submissionQuery.submission.verdict)}
+                    {submissionJudgeStateLabel(
+                      submissionQuery.submission.status,
+                      submissionQuery.submission.verdict,
+                    )}
                   </p>
                 </div>
                 <div>

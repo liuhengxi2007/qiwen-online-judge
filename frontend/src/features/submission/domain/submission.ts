@@ -12,6 +12,7 @@ export {
   parseSubmissionSourceCode,
   parseSubmissionUserQuery,
   submissionIdValue,
+  submissionJudgeStateLabel,
   submissionLanguageLabel,
   submissionProblemQueryValue,
   submissionSourceCodeValue,

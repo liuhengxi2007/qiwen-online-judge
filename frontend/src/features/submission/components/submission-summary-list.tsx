@@ -8,9 +8,8 @@ import {
 } from '@/features/problem/domain/problem'
 import {
   submissionIdValue,
+  submissionJudgeStateLabel,
   submissionLanguageLabel,
-  submissionStatusLabel,
-  submissionVerdictLabel,
   type SubmissionSummary,
 } from '@/features/submission/domain/submission'
 import {
@@ -35,9 +34,7 @@ type SubmissionSummaryListProps = {
 }
 
 function submissionOverviewStatus(submission: SubmissionSummary): string {
-  return submission.status !== 'completed'
-    ? submissionStatusLabel(submission.status)
-    : submissionVerdictLabel(submission.verdict)
+  return submissionJudgeStateLabel(submission.status, submission.verdict)
 }
 
 export function SubmissionSummaryList({
