@@ -17,7 +17,9 @@ Use this file as the entry point, then continue through the linked topic documen
 
 - [Backend Contract Alignment](./backend-contract-alignment.md)
 - [Contract Checks](./contract-checks.md)
+- [File Upload Capability](./file-upload-capability.md)
 - [HTTP Planner Protocol](./http-planner-protocol.md)
+- [Problem Data Storage Migration](./problem-data-storage-migration.md)
 - [Resource Lifecycle Matrix](./resource-lifecycle-matrix.md)
 
 ## Rule
