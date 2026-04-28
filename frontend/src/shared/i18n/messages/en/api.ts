@@ -37,6 +37,10 @@ export const enApiMessages: Record<string, string> = {
   'api.error.blog.pending_submission_not_found': 'Pending problem blog submission not found.',
   'api.error.blog.problem_link_not_found': 'Problem blog link not found.',
   'api.error.blog.comment_not_found': 'Blog comment not found.',
+  'api.error.message.conversation_not_found': 'Conversation not found.',
+  'api.error.message.blocked_by_recipient': 'This user has blocked direct messages from you.',
+  'api.error.message.self_forbidden': 'You cannot send a direct message to yourself.',
+  'api.error.message.block_self_forbidden': 'You cannot block yourself.',
   'api.error.judge.token_invalid': 'Judge token is invalid.',
   'api.error.judger.not_found_or_expired': 'Judger not found or lease expired.',
   'api.success.auth.logged_out': 'Logged out.',
@@ -50,6 +54,7 @@ export const enApiMessages: Record<string, string> = {
   'api.success.blog.linked_to_problem': 'Blog linked to problem.',
   'api.success.blog.problem_submission_accepted': 'Problem blog submission accepted.',
   'api.success.blog.unlinked_from_problem': 'Blog unlinked from problem.',
+  'api.success.message.block_removed': 'Block removed.',
   'api.success.judger.heartbeat_recorded': 'Judger heartbeat recorded.',
   'api.success.judge.result_recorded': 'Judge result recorded.',
 }

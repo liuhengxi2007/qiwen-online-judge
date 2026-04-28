@@ -5,13 +5,19 @@ import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig
+import domains.message.application.MessageEventHub
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*
 
 object ApiRouter:
 
-  def httpApp(databaseSession: DatabaseSession, sessionStore: SessionStore, judgeConfig: JudgeConfig): HttpApp[IO] =
+  def httpApp(
+    databaseSession: DatabaseSession,
+    sessionStore: SessionStore,
+    judgeConfig: JudgeConfig,
+    messageEventHub: MessageEventHub
+  ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
       domains.system.health.HealthRouter.routes <+>
         domains.auth.http.AuthRouter.routes(databaseSession, sessionStore, judgeConfig) <+>
@@ -22,6 +28,7 @@ object ApiRouter:
         domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
         domains.submission.http.SubmissionRouter.routes(databaseSession, sessionStore) <+>
         domains.blog.http.BlogRouter.routes(databaseSession, sessionStore) <+>
-        domains.usergroup.http.UserGroupRouter.routes(databaseSession, sessionStore)
+        domains.usergroup.http.UserGroupRouter.routes(databaseSession, sessionStore) <+>
+        domains.message.http.MessageRouter.routes(databaseSession, sessionStore, messageEventHub)
 
     allRoutes.orNotFound

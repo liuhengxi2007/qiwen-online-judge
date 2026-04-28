@@ -16,6 +16,8 @@ import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problemset.table.ProblemSetTable
 import domains.submission.table.SubmissionTable
 import domains.judger.table.JudgerTable
+import domains.message.application.MessageEventHub
+import domains.message.table.MessageTable
 import domains.usergroup.table.UserGroupTable
 
 object Main extends IOApp.Simple:
@@ -38,6 +40,7 @@ object Main extends IOApp.Simple:
         .map(RedisSessionCache.resource)
         .getOrElse(cats.effect.Resource.pure[IO, SessionCache](SessionCache.noop))
       sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession, sessionCache))
+      messageEventHub <- MessageEventHub.resource
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       _ <- cats.effect.Resource.eval {
@@ -64,11 +67,12 @@ object Main extends IOApp.Simple:
             _ <- BlogTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
+            _ <- MessageTable.initialize(connection)
             _ <- ResourceAccessGrantTable.initialize(connection)
           yield ()
         }
       }
-      httpApp = CORS.policy.withAllowOriginAll(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig))
+      httpApp = CORS.policy.withAllowOriginAll(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, messageEventHub))
       server <- serverResource(httpApp)
     yield server
 

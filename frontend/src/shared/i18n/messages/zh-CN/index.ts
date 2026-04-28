@@ -14,6 +14,7 @@ import { zhCnForbiddenMessages } from '@/shared/i18n/messages/zh-CN/forbidden'
 import { zhCnRanklistMessages } from '@/shared/i18n/messages/zh-CN/ranklist'
 import { zhCnResourceAccessMessages } from '@/shared/i18n/messages/zh-CN/resourceAccess'
 import { zhCnApiMessages } from '@/shared/i18n/messages/zh-CN/api'
+import { zhCnMessageMessages } from '@/shared/i18n/messages/zh-CN/message'
 
 export const zhCnMessages: Record<string, string> = {
   ...zhCnCommonMessages,
@@ -32,4 +33,5 @@ export const zhCnMessages: Record<string, string> = {
   ...zhCnRanklistMessages,
   ...zhCnResourceAccessMessages,
   ...zhCnApiMessages,
+  ...zhCnMessageMessages,
 }

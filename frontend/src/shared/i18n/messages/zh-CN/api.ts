@@ -37,6 +37,10 @@ export const zhCnApiMessages: Record<string, string> = {
   'api.error.blog.pending_submission_not_found': '待审核的题目博客投稿不存在。',
   'api.error.blog.problem_link_not_found': '题目博客关联不存在。',
   'api.error.blog.comment_not_found': '博客评论不存在。',
+  'api.error.message.conversation_not_found': '会话不存在。',
+  'api.error.message.blocked_by_recipient': '对方已阻止你继续发送新的私信。',
+  'api.error.message.self_forbidden': '不能给自己发送私信。',
+  'api.error.message.block_self_forbidden': '不能拉黑你自己。',
   'api.error.judge.token_invalid': '评测 token 无效。',
   'api.error.judger.not_found_or_expired': '评测机不存在或租约已过期。',
   'api.success.auth.logged_out': '已退出登录。',
@@ -50,6 +54,7 @@ export const zhCnApiMessages: Record<string, string> = {
   'api.success.blog.linked_to_problem': '博客已关联到题目。',
   'api.success.blog.problem_submission_accepted': '题目博客投稿已通过。',
   'api.success.blog.unlinked_from_problem': '博客已取消与题目的关联。',
+  'api.success.message.block_removed': '已取消拉黑。',
   'api.success.judger.heartbeat_recorded': '评测机心跳已记录。',
   'api.success.judge.result_recorded': '评测结果已记录。',
 }

@@ -77,6 +77,10 @@ object ApiMessages:
   val pendingProblemBlogSubmissionNotFound: ApiMessage = ApiMessage("api.error.blog.pending_submission_not_found")
   val problemBlogLinkNotFound: ApiMessage = ApiMessage("api.error.blog.problem_link_not_found")
   val blogCommentNotFound: ApiMessage = ApiMessage("api.error.blog.comment_not_found")
+  val directMessageConversationNotFound: ApiMessage = ApiMessage("api.error.message.conversation_not_found")
+  val directMessageBlockedByRecipient: ApiMessage = ApiMessage("api.error.message.blocked_by_recipient")
+  val directMessageSelfForbidden: ApiMessage = ApiMessage("api.error.message.self_forbidden")
+  val directMessageBlockSelfForbidden: ApiMessage = ApiMessage("api.error.message.block_self_forbidden")
   val judgeTokenInvalid: ApiMessage = ApiMessage("api.error.judge.token_invalid")
   val judgerNotFoundOrExpired: ApiMessage = ApiMessage("api.error.judger.not_found_or_expired")
 
@@ -91,5 +95,6 @@ object ApiMessages:
   val blogLinkedToProblem: ApiMessage = ApiMessage("api.success.blog.linked_to_problem")
   val problemBlogSubmissionAccepted: ApiMessage = ApiMessage("api.success.blog.problem_submission_accepted")
   val blogUnlinkedFromProblem: ApiMessage = ApiMessage("api.success.blog.unlinked_from_problem")
+  val directMessageBlockRemoved: ApiMessage = ApiMessage("api.success.message.block_removed")
   val judgerHeartbeatRecorded: ApiMessage = ApiMessage("api.success.judger.heartbeat_recorded")
   val judgeResultRecorded: ApiMessage = ApiMessage("api.success.judge.result_recorded")

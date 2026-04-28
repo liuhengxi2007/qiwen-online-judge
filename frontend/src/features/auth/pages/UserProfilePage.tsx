@@ -1,17 +1,20 @@
 import { useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Files, NotebookPen, Settings, Sparkles, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { createConversation } from '@/features/message/api/message-client'
 import { contributionTextClassName } from '@/features/auth/domain/contribution-style'
 import { displayNameValue, parseUsername, userContributionValue, usernameValue } from '@/features/auth/domain/auth'
+import { messageConversationIdValue } from '@/features/message/domain/message'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { problemSlugValue } from '@/features/problem/domain/problem'
 import { formatProblemTitleDisplay, useProblemTitleDisplayMode } from '@/features/problem/domain/problem-display'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserProfileQuery } from '@/features/auth/hooks/use-user-profile-query'
 import { resolveUserProfileRoutePolicy } from '@/features/auth/lib/route-policy'
+import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -21,8 +24,10 @@ const acceptedProblemsPerPage = 10
 
 export function UserProfilePage() {
   const { t } = useI18n()
+  const navigate = useNavigate()
   const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
   const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
+  const [messageActionError, setMessageActionError] = useState('')
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
   usePageTitle(t('userProfile.pageTitle'))
   const { username: routeUsername } = useParams<{ username: string }>()
@@ -91,6 +96,11 @@ export function UserProfilePage() {
             <AlertDescription className="text-rose-700">{query.profileLoadError}</AlertDescription>
           </Alert>
         ) : null}
+        {messageActionError ? (
+          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{messageActionError}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
@@ -131,6 +141,23 @@ export function UserProfilePage() {
                         <Settings className="size-4" />
                         {t('userProfile.openSettings')}
                       </Link>
+                    </Button>
+                  ) : null}
+                  {viewer.username !== routePolicy.targetUsername ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-2xl border-cyan-300 bg-white text-cyan-950"
+                      onClick={() => {
+                        setMessageActionError('')
+                        void createConversation({ targetUsername: routePolicy.targetUsername })
+                          .then((conversation) => navigate(`/messages/${messageConversationIdValue(conversation.id)}`))
+                          .catch((error) => {
+                            setMessageActionError(error instanceof HttpClientError ? error.message : t('messages.openFailed'))
+                          })
+                      }}
+                    >
+                      {t('nav.messages')}
                     </Button>
                   ) : null}
                 </div>

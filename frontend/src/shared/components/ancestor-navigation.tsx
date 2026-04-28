@@ -6,7 +6,7 @@ import { useI18n } from '@/shared/i18n/i18n'
 
 type AncestorLink = {
   to: string
-  labelKey: 'dashboard' | 'blogs' | 'problems' | 'problem' | 'problemSets' | 'submissions' | 'userGroups'
+  labelKey: 'dashboard' | 'blogs' | 'problems' | 'problem' | 'problemSets' | 'messages' | 'submissions' | 'userGroups'
 }
 
 function buildAncestorLinks(pathname: string): AncestorLink[] {
@@ -90,6 +90,17 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
 
   if (pathname === '/submissions') {
     return [{ to: '/', labelKey: 'dashboard' }]
+  }
+
+  if (pathname === '/messages') {
+    return [{ to: '/', labelKey: 'dashboard' }]
+  }
+
+  if (/^\/messages\/[^/]+$/.test(pathname)) {
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/messages', labelKey: 'messages' },
+    ]
   }
 
   if (/^\/submission\/[^/]+$/.test(pathname)) {

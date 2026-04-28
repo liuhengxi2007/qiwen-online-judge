@@ -13,6 +13,9 @@ import { ProblemDetailPage } from '@/features/problem/pages/ProblemDetailPage'
 import { ProblemPage } from '@/features/problem/pages/ProblemPage'
 import { ProblemSubmitPage } from '@/features/problem/pages/ProblemSubmitPage'
 import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
+import { MessageConversationPage } from '@/features/message/pages/MessageConversationPage'
+import { MessageInboxPage } from '@/features/message/pages/MessageInboxPage'
+import { useMessageRealtimeConnection } from '@/features/message/hooks/use-message-realtime-connection'
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { ForbiddenPage } from '@/shared/pages/ForbiddenPage'
@@ -39,6 +42,7 @@ function GuestOnlyRoute({ element }: { element: ReactElement }) {
 
 function AuthenticatedRoute({ element }: { element: ReactElement }) {
   const session = useAuthStore((state) => state.session)
+  useMessageRealtimeConnection()
   return session ? element : <Navigate replace to="/login" />
 }
 
@@ -114,6 +118,14 @@ export const router = createBrowserRouter([
   {
     path: '/problem-sets/:slug',
     element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
+  },
+  {
+    path: '/messages',
+    element: <AuthenticatedRoute element={<MessageInboxPage />} />,
+  },
+  {
+    path: '/messages/:conversationId',
+    element: <AuthenticatedRoute element={<MessageConversationPage />} />,
   },
   {
     path: '/submissions',
