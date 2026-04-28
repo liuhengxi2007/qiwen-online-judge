@@ -74,6 +74,8 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.data.uploadFile': '上传文件',
   'problem.data.uploading': '正在上传数据...',
   'problem.data.upload': '上传数据文件',
+  'problem.data.fileOverwriteWarning': '上传 {{filename}} 会覆盖同一路径的现有文件。',
+  'problem.data.archiveOverwriteWarning': '上传 zip 压缩包可能会覆盖路径相同的现有文件。',
   'problem.data.filesTitle': '已上传的数据文件',
   'problem.data.filesDescription': '文件存储在题目目录下，可在这里直接下载。',
   'problem.data.loadingFiles': '正在加载文件...',

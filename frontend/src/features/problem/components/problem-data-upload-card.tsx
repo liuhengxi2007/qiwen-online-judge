@@ -42,6 +42,12 @@ export function ProblemDataUploadCard({ model }: { model: ProblemDataPageModel }
           </Alert>
         ) : null}
 
+        {model.uploadWarningMessage ? (
+          <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
+            <AlertDescription className="text-amber-900">{model.uploadWarningMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
         <Button
           type="button"
           disabled={model.isUploading || model.selectedFile === null}

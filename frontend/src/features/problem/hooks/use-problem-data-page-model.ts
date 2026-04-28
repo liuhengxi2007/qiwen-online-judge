@@ -35,6 +35,25 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug)
   const replaceProblem = detailQuery.replaceProblem
   const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
+  const uploadWarningMessage = (() => {
+    const selectedFile = state.selectedFile
+    if (!selectedFile) {
+      return ''
+    }
+
+    const isZipArchive = selectedFile.name.toLowerCase().endsWith('.zip')
+    if (isZipArchive) {
+      const hasExistingFiles = state.dataTree.some((node) => node.kind === 'file')
+      return hasExistingFiles ? t('problem.data.archiveOverwriteWarning') : ''
+    }
+
+    const overwritesExistingFile = state.dataTree.some(
+      (node) => node.kind === 'file' && problemDataPathValue(node.path) === selectedFile.name,
+    )
+    return overwritesExistingFile
+      ? t('problem.data.fileOverwriteWarning', { filename: selectedFile.name })
+      : ''
+  })()
 
   useEffect(() => {
     if (!detailQuery.problem) {
@@ -224,6 +243,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     dataTree: state.dataTree,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage,
+    uploadWarningMessage,
     setTimeLimitMs: (value: number) => dispatch({ type: 'time_limit_set', value }),
     setSpaceLimitMb: (value: number) => dispatch({ type: 'space_limit_set', value }),
     setSelectedFile: (file: File | null) => dispatch({ type: 'selected_file_set', file }),

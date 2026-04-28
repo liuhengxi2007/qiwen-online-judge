@@ -74,6 +74,8 @@ export const enProblemMessages: Record<string, string> = {
   'problem.data.uploadFile': 'Upload file',
   'problem.data.uploading': 'Uploading data...',
   'problem.data.upload': 'Upload data file',
+  'problem.data.fileOverwriteWarning': 'Uploading {{filename}} will overwrite the existing file with the same path.',
+  'problem.data.archiveOverwriteWarning': 'Uploading a zip archive may overwrite existing files that have matching paths.',
   'problem.data.filesTitle': 'Uploaded data files',
   'problem.data.filesDescription': 'Files are stored under the problem folder and can be downloaded here.',
   'problem.data.loadingFiles': 'Loading files...',
