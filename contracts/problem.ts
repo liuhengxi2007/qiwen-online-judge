@@ -72,4 +72,16 @@ export type ProblemDataFileListResponse = {
   items: string[]
 }
 
+export type ProblemDataTreeNodeKind = 'file' | 'directory'
+
+export type ProblemDataTreeNode = {
+  path: string
+  kind: ProblemDataTreeNodeKind
+  sizeBytes: number | null
+}
+
+export type ProblemDataTreeResponse = {
+  items: ProblemDataTreeNode[]
+}
+
 export type ProblemListResponse = PageResponse<ProblemSummary>

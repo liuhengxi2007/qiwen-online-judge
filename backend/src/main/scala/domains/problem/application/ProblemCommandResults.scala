@@ -1,6 +1,6 @@
 package domains.problem.application
 
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDetail}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDetail}
 
 object ProblemCommandResults:
 
@@ -37,6 +37,11 @@ object ProblemCommandResults:
     case Forbidden
     case ProblemNotFound
     case Listed(response: ProblemDataFileListResponse)
+
+  enum ListProblemDataTreeResult:
+    case Forbidden
+    case ProblemNotFound
+    case Listed(response: ProblemDataTreeResponse)
 
   enum AuthorizeProblemDataDownloadResult:
     case Forbidden

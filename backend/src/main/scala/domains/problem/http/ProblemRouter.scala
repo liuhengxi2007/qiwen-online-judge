@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.model.PageRequest
 import domains.shared.http.AuthenticatedHttpExecutor
 import fs2.text
@@ -16,6 +16,8 @@ import org.http4s.dsl.io.*
 import org.http4s.multipart.Multipart
 
 object ProblemRouter:
+
+  private object PathQueryParamMatcher extends org.http4s.dsl.impl.QueryParamDecoderMatcher[String]("path")
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
@@ -60,6 +62,32 @@ object ProblemRouter:
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
             handlers.execute(request, parsedProblemSlug, ProblemHttpPlanDefinitions.listProblemData)
+
+      case request @ GET -> Root / "api" / "problems" / problemSlug / "data" / "tree" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            handlers.execute(request, parsedProblemSlug, ProblemHttpPlanDefinitions.listProblemDataTree)
+
+      case GET -> Root / "api" / "problems" / problemSlug / "data" / "file" :? PathQueryParamMatcher(rawPath) =>
+        (ProblemSlug.parse(problemSlug), ProblemDataPath.parse(rawPath)) match
+          case (Left(message), _) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case (_, Left(message)) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case (Right(parsedProblemSlug), Right(parsedPath)) =>
+            ProblemHttpResponses.downloadDataPathResponse(parsedProblemSlug, parsedPath)
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / "file" / "delete" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            handlers.executeDecoded[DeleteProblemDataPathRequest, (ProblemSlug, DeleteProblemDataPathRequest), ProblemCommands.DeleteProblemDataResult](
+              request,
+              ProblemHttpPlanDefinitions.deleteProblemDataPath
+            ) { deleteRequest => (parsedProblemSlug, deleteRequest) }
 
       case request @ GET -> Root / "api" / "problems" / problemSlug / "data" / filename =>
         ProblemSlug.parse(problemSlug) match

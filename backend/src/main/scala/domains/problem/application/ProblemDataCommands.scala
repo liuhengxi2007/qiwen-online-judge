@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, UpdateProblemDataRequest}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, UpdateProblemDataRequest}
 import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
@@ -196,6 +196,27 @@ object ProblemDataCommands:
       }
     }
 
+  def listProblemDataTree(
+    databaseSession: DatabaseSession,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug
+  ): IO[ListProblemDataTreeResult] =
+    databaseSession.withTransactionConnection { connection =>
+      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+        case None =>
+          IO.pure(ListProblemDataTreeResult.ProblemNotFound)
+        case Some(problem) =>
+          canManageProblem(connection, actor, problem).flatMap {
+            case false =>
+              IO.pure(ListProblemDataTreeResult.Forbidden)
+            case true =>
+              ProblemDataStorage
+                .describeManifest(problem.slug)
+                .map(manifest => ListProblemDataTreeResult.Listed(buildTreeResponse(manifest.entries)))
+          }
+      }
+    }
+
   def deleteProblemData(
     databaseSession: DatabaseSession,
     actor: AuthUser,
@@ -229,6 +250,51 @@ object ProblemDataCommands:
                   ProblemDataStorage
                     .listFiles(problem.slug)
                     .flatMap(files => ProblemTable.updateData(connection, problem.id, Instant.now(), files.lastOption))
+                    .flatMap(_ =>
+                      ProblemTable
+                        .findBySlug(connection, problem.slug)
+                        .map(updatedProblemOrError("Problem disappeared after data deletion"))
+                        .map(_.copy(canManage = true))
+                        .map(DeleteProblemDataResult.Deleted(_))
+                    )
+                    .handleErrorWith { error =>
+                      ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                    }
+              }
+            yield result
+        }
+    }
+
+  def deleteProblemDataPath(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSlug: domains.problem.model.ProblemSlug,
+    path: ProblemDataPath
+  ): IO[DeleteProblemDataResult] =
+    ProblemTable.findBySlug(connection, problemSlug).flatMap {
+      case None =>
+        IO.pure(DeleteProblemDataResult.ProblemNotFound)
+      case Some(problem) =>
+        canManageProblem(connection, actor, problem).flatMap {
+          case false =>
+            IO.pure(DeleteProblemDataResult.Forbidden)
+          case true =>
+            for
+              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
+              result <- ProblemDataStorage.deletePath(problem.slug, path).flatMap {
+                case false =>
+                  IO.pure(DeleteProblemDataResult.DataFileNotFound)
+                case true =>
+                  ProblemDataStorage
+                    .describeManifest(problem.slug)
+                    .flatMap(manifest =>
+                      ProblemTable.updateData(
+                        connection,
+                        problem.id,
+                        Instant.now(),
+                        manifest.entries.sortBy(_.path.value).lastOption.flatMap(entry => ProblemDataFilename.parse(entry.path.fileName).toOption)
+                      )
+                    )
                     .flatMap(_ =>
                       ProblemTable
                         .findBySlug(connection, problem.slug)
@@ -284,3 +350,22 @@ object ProblemDataCommands:
             yield result
         }
     }
+
+  private def buildTreeResponse(entries: List[ProblemDataManifestEntry]): ProblemDataTreeResponse =
+    val directoryNodes =
+      entries
+        .flatMap(entry => directoryPrefixes(entry.path))
+        .distinct
+        .sortBy(_.value)
+        .map(path => ProblemDataTreeNode(path = path, kind = ProblemDataTreeNodeKind.Directory, sizeBytes = None))
+
+    val fileNodes =
+      entries
+        .sortBy(_.path.value)
+        .map(entry => ProblemDataTreeNode(path = entry.path, kind = ProblemDataTreeNodeKind.File, sizeBytes = Some(entry.sizeBytes)))
+
+    ProblemDataTreeResponse(items = directoryNodes ++ fileNodes)
+
+  private def directoryPrefixes(path: ProblemDataPath): List[ProblemDataPath] =
+    val segments = path.value.split('/').toList.dropRight(1)
+    segments.indices.map(index => ProblemDataPath(segments.take(index + 1).mkString("/"))).toList

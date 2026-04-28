@@ -1,6 +1,7 @@
 export type { ParseResult } from '@/features/problem/domain/problem-parsers'
 export {
   parseProblemDataFilename,
+  parseProblemDataPath,
   parseProblemId,
   parseProblemSearchQuery,
   parseProblemSlug,
@@ -9,6 +10,7 @@ export {
   parseProblemTimeLimitMs,
   parseProblemTitle,
   problemDataFilenameValue,
+  problemDataPathValue,
   problemIdValue,
   problemSearchQueryValue,
   problemSlugValue,
@@ -38,6 +40,9 @@ export type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubm
 export type { ProblemData } from '@/features/problem/model/ProblemData'
 export type { ProblemDataFileListResponse } from '@/features/problem/model/ProblemDataFileListResponse'
 export type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+export type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
+export type { ProblemDataTreeNode, ProblemDataTreeNodeKind } from '@/features/problem/model/ProblemDataTreeNode'
+export type { ProblemDataTreeResponse } from '@/features/problem/model/ProblemDataTreeResponse'
 export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
 export type { ProblemId } from '@/features/problem/model/ProblemId'

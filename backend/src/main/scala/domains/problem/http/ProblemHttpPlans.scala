@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSuggestion, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSuggestion, UpdateProblemDataRequest, UpdateProblemRequest}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import io.circe.syntax.*
 
@@ -76,6 +76,18 @@ object ProblemHttpPlans:
       ProblemCommands
         .listProblemData(databaseSession, actor, input)
 
+  case object ListProblemDataTree extends PlainAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.ListProblemDataTreeResult]:
+
+    override val name: String = "ListProblemDataTree"
+
+    override def execute(
+      databaseSession: DatabaseSession,
+      actor: AuthUser,
+      input: ProblemSlug
+    ): IO[ProblemCommands.ListProblemDataTreeResult] =
+      ProblemCommands
+        .listProblemDataTree(databaseSession, actor, input)
+
   case object DownloadProblemData extends PlainAuthenticatedHttpPlan[(ProblemSlug, ProblemDataFilename), DownloadProblemDataOutput]:
 
     override val name: String = "DownloadProblemData"
@@ -102,6 +114,19 @@ object ProblemHttpPlans:
       val (problemSlug, filename) = input
       ProblemCommands
         .deleteProblemData(connection, actor, problemSlug, filename)
+
+  case object DeleteProblemDataPath extends TransactionAuthenticatedHttpPlan[(ProblemSlug, DeleteProblemDataPathRequest), ProblemCommands.DeleteProblemDataResult]:
+
+    override val name: String = "DeleteProblemDataPath"
+
+    override def execute(
+      connection: Connection,
+      actor: AuthUser,
+      input: (ProblemSlug, DeleteProblemDataPathRequest)
+    ): IO[ProblemCommands.DeleteProblemDataResult] =
+      val (problemSlug, request) = input
+      ProblemCommands
+        .deleteProblemDataPath(connection, actor, problemSlug, request.path)
 
   case object ClearProblemData extends TransactionAuthenticatedHttpPlan[ProblemSlug, ProblemCommands.ClearProblemDataResult]:
 

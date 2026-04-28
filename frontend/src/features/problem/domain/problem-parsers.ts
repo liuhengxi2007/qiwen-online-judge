@@ -1,5 +1,6 @@
 import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
 import type { ProblemSearchQuery } from '@/features/problem/model/ProblemSearchQuery'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
@@ -37,6 +38,10 @@ function createProblemStatementText(value: string): ProblemStatementText {
 
 function createProblemDataFilename(value: string): ProblemDataFilename {
   return value as ProblemDataFilename
+}
+
+function createProblemDataPath(value: string): ProblemDataPath {
+  return value as ProblemDataPath
 }
 
 function createProblemTimeLimitMs(value: number): ProblemTimeLimitMs {
@@ -83,6 +88,10 @@ export function problemStatementTextValue(statement: ProblemStatementText): stri
 
 export function problemDataFilenameValue(filename: ProblemDataFilename): string {
   return filename
+}
+
+export function problemDataPathValue(path: ProblemDataPath): string {
+  return path
 }
 
 export function problemTimeLimitMsValue(timeLimitMs: ProblemTimeLimitMs): number {
@@ -157,6 +166,30 @@ export function parseProblemDataFilename(rawFilename: string): ParseResult<Probl
     return { ok: false, error: 'Problem data file name must be at most 255 characters.' }
   }
   return { ok: true, value: createProblemDataFilename(normalized) }
+}
+
+export function parseProblemDataPath(rawPath: string): ParseResult<ProblemDataPath> {
+  const normalized = rawPath.trim().replaceAll('\\', '/')
+  if (!normalized) {
+    return { ok: false, error: 'Problem data path is required.' }
+  }
+  if (normalized.length > 1024) {
+    return { ok: false, error: 'Problem data path must be at most 1024 characters.' }
+  }
+  if (normalized.startsWith('/') || normalized.endsWith('/')) {
+    return { ok: false, error: "Problem data path must be relative and must not start or end with '/'." }
+  }
+  const segments = normalized.split('/')
+  if (segments.some((segment) => !segment)) {
+    return { ok: false, error: 'Problem data path must not contain empty segments.' }
+  }
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    return { ok: false, error: "Problem data path must not contain '.' or '..' segments." }
+  }
+  if (segments.some((segment) => segment.length > 255)) {
+    return { ok: false, error: 'Each problem data path segment must be at most 255 characters.' }
+  }
+  return { ok: true, value: createProblemDataPath(normalized) }
 }
 
 export function parseProblemTimeLimitMs(rawTimeLimitMs: number): ParseResult<ProblemTimeLimitMs> {

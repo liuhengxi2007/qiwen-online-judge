@@ -3,12 +3,15 @@ import { useCallback, useEffect, useReducer } from 'react'
 import {
   clearProblemData,
   deleteProblemData,
+  deleteProblemDataPath,
   listProblemDataFiles,
+  listProblemDataTree,
   uploadProblemDataFile,
   updateProblem,
 } from '@/features/problem/api/problem-client'
 import {
   parseProblemDataFilename,
+  problemDataPathValue,
   parseProblemSpaceLimitMb,
   parseProblemTimeLimitMs,
   problemDataFilenameValue,
@@ -47,8 +50,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
     try {
-      const files = await listProblemDataFiles(problemSlug)
-      dispatch({ type: 'load_succeeded', files: files.items })
+      const [files, tree] = await Promise.all([listProblemDataFiles(problemSlug), listProblemDataTree(problemSlug)])
+      dispatch({ type: 'load_succeeded', files: files.items, tree: tree.items })
       return { ok: true as const }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
@@ -103,6 +106,28 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
         dispatch({
           type: 'delete_succeeded',
           message: `Deleted ${problemDataFilenameValue(filename)} successfully.`,
+        })
+        await loadFiles()
+        return { ok: true }
+      } catch (error) {
+        const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem data.'
+        dispatch({ type: 'delete_failed', message })
+        return { ok: false, message }
+      }
+    },
+    [loadFiles, problemSlug, replaceProblem],
+  )
+
+  const deleteDataPath = useCallback(
+    async (path: import('@/features/problem/domain/problem').ProblemDataPath): Promise<DeleteResult> => {
+      dispatch({ type: 'delete_started', filename: path.split('/').slice(-1)[0] as ProblemDataFilename })
+
+      try {
+        const updatedProblem = await deleteProblemDataPath(problemSlug, path)
+        replaceProblem(updatedProblem)
+        dispatch({
+          type: 'delete_succeeded',
+          message: `Deleted ${problemDataPathValue(path)} successfully.`,
         })
         await loadFiles()
         return { ok: true }
@@ -190,6 +215,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     deletingFilename: state.deletingFilename,
     isClearingAll: state.isClearingAll,
     dataFiles: state.dataFiles,
+    dataTree: state.dataTree,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage,
     setTimeLimitMs: (value: number) => dispatch({ type: 'time_limit_set', value }),
@@ -201,6 +227,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch(message ? { type: 'upload_succeeded', message } : { type: 'success_cleared' }),
     uploadSelectedFile,
     deleteDataFile,
+    deleteDataPath,
     clearAllDataFiles,
     saveLimits,
   }

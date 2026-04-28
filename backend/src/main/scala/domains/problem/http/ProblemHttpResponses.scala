@@ -3,7 +3,7 @@ package domains.problem.http
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.{ProblemDataFilename, ProblemSlug}
+import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
 import domains.shared.http.ApiMessages
 import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
@@ -94,6 +94,15 @@ object ProblemHttpResponses:
       case ProblemCommands.ListProblemDataResult.Listed(response) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
+  def mapListDataTreeResult(result: ProblemCommands.ListProblemDataTreeResult): IO[Response[IO]] =
+    result match
+      case ProblemCommands.ListProblemDataTreeResult.Forbidden =>
+        hiddenProblemResponse
+      case ProblemCommands.ListProblemDataTreeResult.ProblemNotFound =>
+        hiddenProblemResponse
+      case ProblemCommands.ListProblemDataTreeResult.Listed(response) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
+
   def mapAuthorizeDownloadResult(result: ProblemCommands.AuthorizeProblemDataDownloadResult): IO[Response[IO]] =
     result match
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Forbidden =>
@@ -140,6 +149,22 @@ object ProblemHttpResponses:
             .putHeaders(
               Header.Raw(CIString("Content-Type"), "application/octet-stream"),
               Header.Raw(CIString("Content-Disposition"), s"""attachment; filename="${sanitizedFilename.value}""""),
+              Header.Raw(CIString("Content-Length"), bytes.length.toString)
+            )
+            .withBodyStream(Stream.emits(bytes).covary[IO])
+        )
+    }
+
+  def downloadDataPathResponse(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Response[IO]] =
+    ProblemDataStorage.readPath(problemSlug, path).flatMap {
+      case None =>
+        errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
+      case Some((storedPath, bytes)) =>
+        IO.pure(
+          Response[IO](status = Status.Ok)
+            .putHeaders(
+              Header.Raw(CIString("Content-Type"), "application/octet-stream"),
+              Header.Raw(CIString("Content-Disposition"), s"""attachment; filename="${storedPath.fileName}""""),
               Header.Raw(CIString("Content-Length"), bytes.length.toString)
             )
             .withBodyStream(Stream.emits(bytes).covary[IO])

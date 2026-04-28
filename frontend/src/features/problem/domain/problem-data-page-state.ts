@@ -1,4 +1,4 @@
-import type { ProblemDataFilename } from '@/features/problem/domain/problem'
+import type { ProblemDataFilename, ProblemDataTreeNode } from '@/features/problem/domain/problem'
 
 export type ProblemDataPageState = {
   timeLimitMs: number
@@ -10,6 +10,7 @@ export type ProblemDataPageState = {
   deletingFilename: ProblemDataFilename | null
   isClearingAll: boolean
   dataFiles: ProblemDataFilename[]
+  dataTree: ProblemDataTreeNode[]
   errorMessage: string
   successMessage: string
 }
@@ -23,7 +24,7 @@ export type ProblemDataPageAction =
   | { type: 'limits_save_failed'; message: string }
   | { type: 'selected_file_set'; file: File | null }
   | { type: 'load_started' }
-  | { type: 'load_succeeded'; files: ProblemDataFilename[] }
+  | { type: 'load_succeeded'; files: ProblemDataFilename[]; tree: ProblemDataTreeNode[] }
   | { type: 'load_failed'; message: string }
   | { type: 'upload_started' }
   | { type: 'upload_succeeded'; message: string }
@@ -47,6 +48,7 @@ export const initialProblemDataPageState: ProblemDataPageState = {
   deletingFilename: null,
   isClearingAll: false,
   dataFiles: [],
+  dataTree: [],
   errorMessage: '',
   successMessage: '',
 }
@@ -84,7 +86,7 @@ export function reduceProblemDataPageState(
     case 'load_started':
       return { ...state, isLoadingFiles: true }
     case 'load_succeeded':
-      return { ...state, isLoadingFiles: false, dataFiles: action.files }
+      return { ...state, isLoadingFiles: false, dataFiles: action.files, dataTree: action.tree }
     case 'load_failed':
       return { ...state, isLoadingFiles: false, errorMessage: action.message, successMessage: '' }
     case 'upload_started':
