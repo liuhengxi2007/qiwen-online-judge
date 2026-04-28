@@ -63,11 +63,6 @@ export type UpdateProblemRequest = {
   othersSubmissionAccess: OthersSubmissionAccess
 }
 
-export type UpdateProblemDataRequest = {
-  filename: string
-  contentBase64: string
-}
-
 export type ProblemDataFileListResponse = {
   items: string[]
 }

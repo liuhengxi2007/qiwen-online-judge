@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, UpdateProblemDataRequest}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse}
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
@@ -39,63 +39,6 @@ object ProblemDataCommands:
       .lastOption
       .toRight("Uploaded archive does not contain any files.")
       .flatMap(file => ProblemDataFilename.parse(file.path.fileName))
-
-  def updateProblemData(
-    databaseSession: DatabaseSession,
-    actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
-    request: UpdateProblemDataRequest
-  ): IO[UpdateProblemDataResult] =
-    databaseSession.withTransactionConnection(connection =>
-      updateProblemData(connection, actor, problemSlug, request)
-    )
-
-  def updateProblemData(
-    connection: java.sql.Connection,
-    actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
-    request: UpdateProblemDataRequest
-  ): IO[UpdateProblemDataResult] =
-    ProblemValidation.validateDataUpdate(request) match
-      case Left(message) =>
-        IO.pure(UpdateProblemDataResult.ValidationFailed(message))
-      case Right(validRequest) =>
-        validRequest.decodedBytes match
-          case Left(message) =>
-            IO.pure(UpdateProblemDataResult.ValidationFailed(message))
-          case Right(decodedBytes) =>
-            ProblemDataUploadPreparation.prepareLegacyUpload(validRequest.filename, decodedBytes) match
-              case Left(message) =>
-                IO.pure(UpdateProblemDataResult.ValidationFailed(message))
-              case Right(preparedFiles) =>
-                for
-                  maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
-                  result <- maybeProblem match
-                    case None =>
-                      IO.pure(UpdateProblemDataResult.ProblemNotFound)
-                    case Some(problem) =>
-                      canManageProblem(connection, actor, problem).flatMap {
-                        case false =>
-                          IO.pure(UpdateProblemDataResult.Forbidden)
-                        case true =>
-                          for
-                            snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-                            result <- writePreparedFiles(problem.slug, preparedFiles)
-                              .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), validRequest.filename))
-                              .flatMap(_ => ProblemDataFileTable.replaceForProblem(connection, problem.id, toManifestEntries(preparedFiles), Instant.now()))
-                              .flatMap(_ =>
-                                ProblemTable
-                                  .findBySlug(connection, problem.slug)
-                                  .map(updatedProblemOrError("Problem disappeared after data update"))
-                                  .map(_.copy(canManage = true))
-                                  .map(UpdateProblemDataResult.Updated(_))
-                              )
-                              .handleErrorWith { error =>
-                                ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                              }
-                          yield result
-                      }
-                yield result
 
   def uploadProblemDataFile(
     connection: java.sql.Connection,

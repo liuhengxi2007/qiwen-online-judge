@@ -17,7 +17,6 @@ object ProblemHttpPlanDefinitions:
   val deleteProblemDataPath = WithTransaction(ProblemHttpPlans.DeleteProblemDataPath, ProblemHttpResponses.mapDeleteDataResult)
   val clearProblemData = WithTransaction(ProblemHttpPlans.ClearProblemData, ProblemHttpResponses.mapClearDataResult)
   val updateProblem = WithTransaction(ProblemHttpPlans.UpdateProblem, ProblemHttpResponses.mapUpdateResult)
-  val updateProblemData = WithTransaction(ProblemHttpPlans.UpdateProblemData, ProblemHttpResponses.mapUpdateDataResult)
   val deleteProblem = WithTransaction(ProblemHttpPlans.DeleteProblem, ProblemHttpResponses.mapDeleteResult)
 
   val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
@@ -33,6 +32,5 @@ object ProblemHttpPlanDefinitions:
       deleteProblemDataPath,
       clearProblemData,
       updateProblem,
-      updateProblemData,
       deleteProblem
     ).map(plan => plan.name -> plan).toMap

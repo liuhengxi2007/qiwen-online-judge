@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problem.application.ProblemCommands
-import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemRequest}
 import domains.shared.model.PageRequest
 import domains.shared.http.AuthenticatedHttpExecutor
 import fs2.text
@@ -142,22 +142,6 @@ object ProblemRouter:
               ProblemHttpPlanDefinitions.updateProblem
             ) {
               updateRequest => (parsedProblemSlug, updateRequest)
-            }
-
-      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" =>
-        ProblemSlug.parse(problemSlug) match
-          case Left(message) =>
-            ProblemHttpResponses.validationErrorResponse(message)
-          case Right(parsedProblemSlug) =>
-            handlers.executeDecoded[
-              UpdateProblemDataRequest,
-              (ProblemSlug, UpdateProblemDataRequest),
-              ProblemCommands.UpdateProblemDataResult
-            ](
-              request,
-              ProblemHttpPlanDefinitions.updateProblemData
-            ) {
-              updateDataRequest => (parsedProblemSlug, updateDataRequest)
             }
 
       case request @ POST -> Root / "api" / "problems" / problemSlug / "delete" =>

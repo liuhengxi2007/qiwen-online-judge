@@ -1,6 +1,6 @@
 package domains.problem.application
 
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle, UpdateProblemDataRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
 
 object ProblemValidation:
 
@@ -31,9 +31,6 @@ object ProblemValidation:
       timeLimitMs = timeLimitMs,
       spaceLimitMb = spaceLimitMb
     )
-
-  def validateDataUpdate(request: UpdateProblemDataRequest): Either[String, UpdateProblemDataRequest] =
-    validateFilename(request.filename).map(filename => request.copy(filename = filename))
 
   private def validateSlug(slug: ProblemSlug): Either[String, ProblemSlug] =
     ProblemSlug.parse(slug.value)
