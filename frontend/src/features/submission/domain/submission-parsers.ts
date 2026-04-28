@@ -160,7 +160,14 @@ export function submissionJudgeStateLabel(
     return submissionVerdictLabel(verdict)
   }
 
-  return submissionStatusLabel(status)
+  switch (status) {
+    case 'queued':
+    case 'running':
+      return submissionVerdictLabel(null)
+    case 'completed':
+    case 'failed':
+      return submissionStatusLabel(status)
+  }
 }
 
 export function parseSubmissionId(rawId: number): ParseResult<SubmissionId> {
