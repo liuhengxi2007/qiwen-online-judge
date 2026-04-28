@@ -4,14 +4,13 @@ import cats.effect.IO
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionStatus, SubmissionVerdict}
 import judger.config.AppConfig
 
-import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 
 object Cpp17JudgeExecutor:
-  private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 10000L, memoryLimitMb = 1024)
+  private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048)
 
   def judge(task: JudgeTask, config: AppConfig, problemDataCache: ProblemDataCache): IO[ReportJudgeResultRequest] =
     resolveCompilerPath(config).flatMap {
@@ -167,8 +166,18 @@ object Cpp17JudgeExecutor:
     timeoutMs: Long
   ): IO[ProcessResult] =
     IO.blocking {
-      val builder = new ProcessBuilder((command :: args)*)
+      val stdoutPath = cwd.resolve(".compile.stdout")
+      val stderrPath = cwd.resolve(".compile.stderr")
+      Files.deleteIfExists(stdoutPath)
+      Files.deleteIfExists(stderrPath)
+
+      val shellCommand =
+        s"ulimit -v ${CompileLimits.memoryLimitKb.value}; ulimit -t ${CompileLimits.timeLimit.value / 1000L}; exec ${shellQuote(command)} ${args.map(shellQuote).mkString(" ")}"
+
+      val builder = new ProcessBuilder("bash", "-lc", shellCommand)
       builder.directory(cwd.toFile)
+      builder.redirectOutput(stdoutPath.toFile)
+      builder.redirectError(stderrPath.toFile)
       val process = builder.start()
 
       stdin.foreach { bytes =>
@@ -187,8 +196,8 @@ object Cpp17JudgeExecutor:
         exitCode = if completed then Some(process.exitValue()) else None,
         isolateStatus = None,
         isolateMessage = None,
-        stdout = readStream(process.getInputStream),
-        stderr = readStream(process.getErrorStream),
+        stdout = readOptionalFile(stdoutPath),
+        stderr = readOptionalFile(stderrPath),
         timedOut = !completed,
         timeUsedMs = None,
         memoryUsedKb = None
@@ -205,10 +214,11 @@ object Cpp17JudgeExecutor:
         throw RuntimeException(s"Compiled executable is not executable: ${path.toAbsolutePath}.")
     }
 
-  private def readStream(stream: java.io.InputStream): String =
-    val buffer = ByteArrayOutputStream()
-    stream.transferTo(buffer)
-    buffer.toString(StandardCharsets.UTF_8)
+  private def readOptionalFile(path: Path): String =
+    if Files.exists(path) then Files.readString(path, StandardCharsets.UTF_8) else ""
+
+  private def shellQuote(value: String): String =
+    "'" + value.replace("'", "'\"'\"'") + "'"
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()
