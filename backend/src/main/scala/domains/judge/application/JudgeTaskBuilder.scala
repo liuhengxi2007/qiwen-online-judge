@@ -2,12 +2,10 @@ package domains.judge.application
 
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.ProblemDataFilename
+import domains.problem.model.ProblemDataPath
 import domains.problem.table.ProblemTable
 import domains.submission.table.ClaimedSubmission
-import judgeprotocol.model.{JudgeTask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
-
-import java.util.Base64
+import judgeprotocol.model.{JudgeTask, JudgeTaskFileRef, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 
 object JudgeTaskBuilder:
 
@@ -17,6 +15,7 @@ object JudgeTaskBuilder:
   ): IO[Either[String, JudgeTask]] =
     for
       problem <- ProblemTable.findBySlug(connection, claimedSubmission.problemSlug)
+      manifest <- ProblemDataStorage.describeManifest(claimedSubmission.problemSlug)
       testcases <- loadTestcases(claimedSubmission)
     yield
       problem match
@@ -33,20 +32,21 @@ object JudgeTaskBuilder:
               sourceCode = SubmissionSourceCode(claimedSubmission.sourceCode.value),
               timeLimitMs = ProblemTimeLimitMs(claimedSubmission.timeLimitMs),
               spaceLimitMb = ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb),
+              problemDataVersion = manifest.version,
               testcases = testcases
             )
           )
 
   private def loadTestcases(claimedSubmission: ClaimedSubmission): IO[List[JudgeTaskTestcase]] =
     for
-      files <- ProblemDataStorage.listFiles(claimedSubmission.problemSlug)
-      testcaseFiles = files
-        .filter(_.value.toLowerCase.endsWith(".in"))
-        .sortBy(_.value)
-      testcases <- testcaseFiles.foldLeft(IO.pure(List.empty[JudgeTaskTestcase])) { (accIO, inputFilename) =>
+      manifest <- ProblemDataStorage.describeManifest(claimedSubmission.problemSlug)
+      testcaseFiles = manifest.entries
+        .filter(_.path.value.toLowerCase.endsWith(".in"))
+        .sortBy(_.path.value)
+      testcases <- testcaseFiles.foldLeft(IO.pure(List.empty[JudgeTaskTestcase])) { (accIO, inputEntry) =>
         for
           acc <- accIO
-          maybeTestcase <- loadTestcase(claimedSubmission, inputFilename)
+          maybeTestcase <- loadTestcase(inputEntry, manifest.entries)
         yield maybeTestcase match
           case Some(testcase) => acc :+ testcase
           case None => acc
@@ -54,37 +54,33 @@ object JudgeTaskBuilder:
     yield testcases
 
   private def loadTestcase(
-    claimedSubmission: ClaimedSubmission,
-    inputFilename: ProblemDataFilename
+    inputEntry: domains.problem.application.ProblemDataManifestEntry,
+    allEntries: List[domains.problem.application.ProblemDataManifestEntry]
   ): IO[Option[JudgeTaskTestcase]] =
-    val testcaseName = inputFilename.value.stripSuffix(".in")
-    val candidateOutputFilenames =
-      List(testcaseName + ".out", testcaseName + ".ans").flatMap(candidate => ProblemDataFilename.parse(candidate).toOption)
-    for
-      maybeInput <- ProblemDataStorage.readFile(claimedSubmission.problemSlug, inputFilename)
-      maybeOutput <- loadExpectedOutput(claimedSubmission, candidateOutputFilenames)
-    yield
-      for
-        (_, inputBytes) <- maybeInput
-        (_, outputBytes) <- maybeOutput
-      yield JudgeTaskTestcase(
-        name = TestcaseName(testcaseName),
-        inputBase64 = Base64.getEncoder.encodeToString(inputBytes),
-        expectedOutputBase64 = Base64.getEncoder.encodeToString(outputBytes)
+    val testcaseName = inputEntry.path.fileName.stripSuffix(".in")
+    val candidateOutputPaths =
+      List(
+        inputEntry.path.value.stripSuffix(".in") + ".out",
+        inputEntry.path.value.stripSuffix(".in") + ".ans"
+      ).flatMap(candidate => ProblemDataPath.parse(candidate).toOption)
+    val maybeOutput = candidateOutputPaths.view.flatMap(candidate => allEntries.find(_.path == candidate)).headOption
+    IO.pure(
+      maybeOutput.map(outputEntry =>
+        JudgeTaskTestcase(
+          name = TestcaseName(testcaseName),
+          input = JudgeTaskFileRef(
+            path = inputEntry.path.value,
+            sizeBytes = inputEntry.sizeBytes,
+            sha256 = inputEntry.sha256
+          ),
+          expectedOutput = JudgeTaskFileRef(
+            path = outputEntry.path.value,
+            sizeBytes = outputEntry.sizeBytes,
+            sha256 = outputEntry.sha256
+          )
+        )
       )
-
-  private def loadExpectedOutput(
-    claimedSubmission: ClaimedSubmission,
-    candidateOutputFilenames: List[ProblemDataFilename]
-  ): IO[Option[(ProblemDataFilename, Array[Byte])]] =
-    candidateOutputFilenames match
-      case Nil =>
-        IO.pure(None)
-      case filename :: remaining =>
-        ProblemDataStorage.readFile(claimedSubmission.problemSlug, filename).flatMap {
-          case some @ Some(_) => IO.pure(some)
-          case None => loadExpectedOutput(claimedSubmission, remaining)
-        }
+    )
 
   private def toProtocolLanguage(language: domains.submission.model.SubmissionLanguage): SubmissionLanguage =
     language match

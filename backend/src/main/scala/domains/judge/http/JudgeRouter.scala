@@ -19,6 +19,9 @@ object JudgeRouter:
       case request @ POST -> Root / "api" / "internal" / "judge" / "claim" =>
         handlers.claim(request)
 
+      case request @ GET -> Root / "api" / "internal" / "judge" / "problem-data" =>
+        handlers.downloadProblemData(request)
+
       case request @ POST -> Root / "api" / "internal" / "judge" / "submissions" / rawSubmissionId / "complete" =>
         handlers.completeSubmission(request, rawSubmissionId)
     }

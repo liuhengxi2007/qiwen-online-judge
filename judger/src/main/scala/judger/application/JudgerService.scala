@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.kernel.Ref
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judger.config.{AppConfig, RegisteredJudger}
-import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient}
+import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient, ProblemDataCache}
 import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.DurationLong
@@ -13,6 +13,7 @@ final class JudgerService(
   config: AppConfig,
   registeredJudgerRef: Ref[IO, RegisteredJudger],
   httpClient: JudgeHttpClient,
+  problemDataCache: ProblemDataCache,
   logger: Logger[IO]
 ):
   def runForever: IO[Nothing] =
@@ -35,7 +36,7 @@ final class JudgerService(
     val resultIo =
       task.language match
         case SubmissionLanguage.Cpp17 =>
-          Cpp17JudgeExecutor.judge(task, config)
+          Cpp17JudgeExecutor.judge(task, config, problemDataCache)
         case other =>
           IO.pure(
             ReportJudgeResultRequest(

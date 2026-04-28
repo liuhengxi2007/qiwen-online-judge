@@ -8,13 +8,12 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 object Cpp17JudgeExecutor:
   private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 10000L, memoryLimitMb = 1024)
 
-  def judge(task: JudgeTask, config: AppConfig): IO[ReportJudgeResultRequest] =
+  def judge(task: JudgeTask, config: AppConfig, problemDataCache: ProblemDataCache): IO[ReportJudgeResultRequest] =
     resolveCompilerPath(config).flatMap {
       case Left(message) =>
         IO.pure(systemError(message))
@@ -38,7 +37,7 @@ object Cpp17JudgeExecutor:
                 else if compileResult.exitCode.getOrElse(-1) != 0 then
                   IO.pure(completed(SubmissionVerdict.CompileError, formatCompileError(compilerPath, compileResult)))
                 else
-                  ensureExecutableExists(workingDirectory.resolve("main")) *> judgeTestcases(task, workingDirectory, sandbox)
+                  ensureExecutableExists(workingDirectory.resolve("main")) *> judgeTestcases(task, workingDirectory, sandbox, problemDataCache)
             yield result
           }
         }
@@ -50,27 +49,30 @@ object Cpp17JudgeExecutor:
   private def judgeTestcases(
     task: JudgeTask,
     workingDirectory: Path,
-    sandbox: IsolateSandbox
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache
   ): IO[ReportJudgeResultRequest] =
     task.testcases.foldLeft(IO.pure(TestcaseAccumulator.empty)) { (accIo, testcase) =>
       accIo.flatMap {
         case accumulator if accumulator.result.nonEmpty =>
           IO.pure(accumulator)
         case accumulator =>
-          val input = Base64.getDecoder.decode(testcase.inputBase64)
-          val expectedOutput = new String(Base64.getDecoder.decode(testcase.expectedOutputBase64), StandardCharsets.UTF_8)
-
-          sandbox.run(
-            SandboxExecutionRequest(
-              phase = s"run-${testcase.name.value}",
-              command = "/box/main",
-              args = Nil,
-              stdin = Some(input),
-              limits = SandboxLimits.runtime(task.timeLimitMs.value.toLong, task.spaceLimitMb.value),
-              processLimit = 1
-            ),
-            workingDirectory
-          ).map { runResult =>
+          for
+            input <- problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, testcase.input)
+            expectedOutputBytes <- problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, testcase.expectedOutput)
+            expectedOutput = new String(expectedOutputBytes, StandardCharsets.UTF_8)
+            runResult <- sandbox.run(
+              SandboxExecutionRequest(
+                phase = s"run-${testcase.name.value}",
+                command = "/box/main",
+                args = Nil,
+                stdin = Some(input),
+                limits = SandboxLimits.runtime(task.timeLimitMs.value.toLong, task.spaceLimitMb.value),
+                processLimit = 1
+              ),
+              workingDirectory
+            )
+          yield
             val nextAccumulator = accumulator.record(runResult)
             if runResult.timedOut then
               nextAccumulator.finish(completed(SubmissionVerdict.TimeLimitExceeded, s"Time limit exceeded on testcase ${testcase.name.value}."))
@@ -79,7 +81,6 @@ object Cpp17JudgeExecutor:
             else if normalizeOutput(runResult.stdout) != normalizeOutput(expectedOutput) then
               nextAccumulator.finish(completed(SubmissionVerdict.WrongAnswer, s"Wrong answer on testcase ${testcase.name.value}."))
             else nextAccumulator
-          }
       }
     }.map(
       accumulator => accumulator.result.getOrElse(accumulator.attachUsage(completed(SubmissionVerdict.Accepted)))

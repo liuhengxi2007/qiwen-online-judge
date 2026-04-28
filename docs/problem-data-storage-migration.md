@@ -77,6 +77,13 @@ Recommended shapes:
 
 Avoid continuing with `inputBase64` and `expectedOutputBase64` once object storage is the source of truth.
 
+The first implementation step may use backend-internal authenticated downloads instead of direct MinIO access from judgers.
+
+Recommended cache shape on the judger:
+
+- blob cache keyed by `sha256`
+- lightweight manifest records keyed by `problemDataVersion`
+
 ## Constraints
 
 - all paths must be relative

@@ -18,7 +18,8 @@ final case class AppConfig(
   isolateBin: String,
   isolateBoxId: Int,
   preferIsolateCgroups: Boolean,
-  workRoot: Path
+  workRoot: Path,
+  problemDataCacheRoot: Path
 )
 
 object AppConfig:
@@ -43,8 +44,9 @@ object AppConfig:
       isolateBin = env.get("ISOLATE_BIN").map(_.trim).filter(_.nonEmpty).getOrElse("isolate"),
       isolateBoxId = parseBoxId(env.get("ISOLATE_BOX_ID"), env.get("JUDGER_PROCESS_ID").orElse(detectProcessId())),
       preferIsolateCgroups = parseBoolean(env.get("ISOLATE_PREFER_CGROUPS"), defaultValue = true),
-      workRoot = Path.of(
-        env.get("JUDGER_WORK_ROOT").map(_.trim).filter(_.nonEmpty).getOrElse(defaultWorkRoot().toString)
+      workRoot = Path.of(env.get("JUDGER_WORK_ROOT").map(_.trim).filter(_.nonEmpty).getOrElse(defaultWorkRoot().toString)),
+      problemDataCacheRoot = Path.of(
+        env.get("JUDGER_PROBLEM_DATA_CACHE_ROOT").map(_.trim).filter(_.nonEmpty).getOrElse(defaultProblemDataCacheRoot().toString)
       )
     )
 
@@ -84,3 +86,6 @@ object AppConfig:
 
   private def defaultWorkRoot(): Path =
     Path.of(sys.props.getOrElse("user.home", "."), ".cache", "qiwen-judger")
+
+  private def defaultProblemDataCacheRoot(): Path =
+    defaultWorkRoot().resolve("problem-data-cache")

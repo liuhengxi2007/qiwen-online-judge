@@ -2,7 +2,7 @@ import cats.effect.{IO, IOApp}
 import cats.effect.kernel.Ref
 import judger.application.JudgerService
 import judger.config.{AppConfig, RegisteredJudger}
-import judger.infra.{JudgeHttpClient, LeaseExpiredException}
+import judger.infra.{JudgeHttpClient, LeaseExpiredException, ProblemDataCache}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration.DurationLong
@@ -16,10 +16,11 @@ object Main extends IOApp.Simple:
         IO.raiseError(IllegalArgumentException(message))
       case Right(config) =>
         val httpClient = JudgeHttpClient.create(config)
+        val problemDataCache = ProblemDataCache(config, httpClient)
         for
           registeredJudger <- registerJudger(httpClient)
           registeredJudgerRef <- Ref.of[IO, RegisteredJudger](registeredJudger)
-          service = JudgerService(config, registeredJudgerRef, httpClient, logger)
+          service = JudgerService(config, registeredJudgerRef, httpClient, problemDataCache, logger)
           _ <- logger.info(
             s"Starting judger ${registeredJudger.judgerId.value} against ${config.backendBaseUrl} " +
               s"(prefix=${config.preferredJudgerPrefix.value}, host=${config.host})"

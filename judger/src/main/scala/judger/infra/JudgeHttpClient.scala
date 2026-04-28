@@ -55,6 +55,13 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
       body = Some(result.asJson.noSpaces)
     ).void
 
+  def downloadProblemData(problemSlug: ProblemSlug, path: String): IO[Array[Byte]] =
+    requestBytes(
+      path =
+        s"/api/internal/judge/problem-data?problemSlug=${encode(problemSlug.value)}&path=${encode(path)}",
+      method = "GET"
+    )
+
   private def requestExpectSuccess(path: String, method: String, body: Option[String]): IO[String] =
     requestRaw(path, method, body).flatMap { response =>
       if response.isSuccess then IO.pure(response.body)
@@ -81,6 +88,22 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
 
       httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
     }
+
+  private def requestBytes(path: String, method: String): IO[Array[Byte]] =
+    IO.blocking {
+      val request = HttpRequest
+        .newBuilder(URI.create(s"${config.backendBaseUrl}$path"))
+        .timeout(Duration.ofSeconds(30))
+        .header("x-judge-token", config.judgeToken)
+        .method(method, HttpRequest.BodyPublishers.noBody())
+        .build()
+      val response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
+      if response.isSuccess then response.body
+      else throw RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${new String(response.body, StandardCharsets.UTF_8)}")
+    }
+
+  private def encode(value: String): String =
+    URLEncoder.encode(value, StandardCharsets.UTF_8)
 
   private def handleHeartbeatResponse(judgerId: JudgerId, response: HttpResponse[String]): IO[Unit] =
     if response.isSuccess then IO.unit

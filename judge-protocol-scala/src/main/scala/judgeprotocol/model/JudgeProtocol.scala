@@ -179,10 +179,20 @@ object ClaimJudgeTaskRequest:
   given Encoder[ClaimJudgeTaskRequest] = deriveEncoder[ClaimJudgeTaskRequest]
   given Decoder[ClaimJudgeTaskRequest] = deriveDecoder[ClaimJudgeTaskRequest]
 
+final case class JudgeTaskFileRef(
+  path: String,
+  sizeBytes: Long,
+  sha256: String
+)
+
+object JudgeTaskFileRef:
+  given Encoder[JudgeTaskFileRef] = deriveEncoder[JudgeTaskFileRef]
+  given Decoder[JudgeTaskFileRef] = deriveDecoder[JudgeTaskFileRef]
+
 final case class JudgeTaskTestcase(
   name: TestcaseName,
-  inputBase64: String,
-  expectedOutputBase64: String
+  input: JudgeTaskFileRef,
+  expectedOutput: JudgeTaskFileRef
 )
 
 object JudgeTaskTestcase:
@@ -196,6 +206,7 @@ final case class JudgeTask(
   sourceCode: SubmissionSourceCode,
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
+  problemDataVersion: String,
   testcases: List[JudgeTaskTestcase]
 )
 
