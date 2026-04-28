@@ -151,8 +151,6 @@ object Cpp17JudgeExecutor:
     val detail =
       if exitCode == 127 then
         s"Compiler '$compilerPath' was not found on the judger host (exit status 127)."
-      else if looksLikeCompileResourceLimit(result) then
-        s"Compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
       else s"Compilation failed with exit status $exitCode using $compilerPath."
     renderDetail(detail, result)
 
@@ -177,11 +175,16 @@ object Cpp17JudgeExecutor:
       val stderrPath = cwd.resolve(".compile.stderr")
       Files.deleteIfExists(stdoutPath)
       Files.deleteIfExists(stderrPath)
-
-      val shellCommand =
-        s"ulimit -v ${CompileLimits.memoryLimitKb.value}; ulimit -t ${CompileLimits.timeLimit.value / 1000L}; exec ${shellQuote(command)} ${args.map(shellQuote).mkString(" ")}"
-
-      val builder = new ProcessBuilder("bash", "-lc", shellCommand)
+      val builder = new ProcessBuilder(
+        (
+          List(
+            "prlimit",
+            s"--as=${CompileLimits.memoryLimitKb.value * 1024L}",
+            s"--cpu=${math.max(1L, CompileLimits.timeLimit.value / 1000L)}",
+            "--"
+          ) ++ (command :: args)
+        )*
+      )
       builder.directory(cwd.toFile)
       builder.redirectOutput(stdoutPath.toFile)
       builder.redirectError(stderrPath.toFile)
@@ -223,16 +226,6 @@ object Cpp17JudgeExecutor:
 
   private def readOptionalFile(path: Path): String =
     if Files.exists(path) then Files.readString(path, StandardCharsets.UTF_8) else ""
-
-  private def shellQuote(value: String): String =
-    "'" + value.replace("'", "'\"'\"'") + "'"
-
-  private def looksLikeCompileResourceLimit(result: ProcessResult): Boolean =
-    val stderr = result.stderr.toLowerCase
-    stderr.contains("fatal error: killed signal terminated program cc1plus") ||
-    stderr.contains("virtual memory exhausted") ||
-    stderr.contains("out of memory") ||
-    stderr.contains("cannot allocate memory")
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()
