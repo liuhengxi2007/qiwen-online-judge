@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 
-import { listSubmissions } from '@/features/submission/api/submission-client'
+import { getSubmission, listSubmissions } from '@/features/submission/api/submission-client'
 import {
   isTerminalSubmissionStatus,
   type SubmissionListRequest,
   type SubmissionListResponse,
+  type SubmissionSummary,
 } from '@/features/submission/domain/submission'
 
 function requestKey(request: SubmissionListRequest): string {
@@ -39,6 +40,77 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
   useEffect(() => {
     let cancelled = false
     let intervalId: number | null = null
+    let refreshInFlight = false
+    let currentResponse: SubmissionListResponse = {
+      items: [],
+      page: request.pageRequest.page,
+      pageSize: request.pageRequest.pageSize,
+      totalItems: 0,
+    }
+
+    function mergeSubmissionSummary(summary: SubmissionSummary, detail: Awaited<ReturnType<typeof getSubmission>>): SubmissionSummary {
+      return {
+        ...summary,
+        status: detail.status,
+        verdict: detail.verdict,
+        timeUsedMs: detail.timeUsedMs,
+        memoryUsedKb: detail.memoryUsedKb,
+        startedAt: detail.startedAt,
+        finishedAt: detail.finishedAt,
+      }
+    }
+
+    function stopPollingWhenStable(response: SubmissionListResponse) {
+      if (!response.items.some((submission) => !isTerminalSubmissionStatus(submission.status)) && intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+
+    const refreshVisibleSubmissionStates = () => {
+      if (refreshInFlight) {
+        return
+      }
+
+      const activeSubmissions = currentResponse.items.filter((submission) => !isTerminalSubmissionStatus(submission.status))
+      if (activeSubmissions.length === 0) {
+        stopPollingWhenStable(currentResponse)
+        return
+      }
+
+      refreshInFlight = true
+      void Promise.allSettled(activeSubmissions.map((submission) => getSubmission(submission.id))).then((results) => {
+        refreshInFlight = false
+        if (cancelled) {
+          return
+        }
+
+        const refreshedById = new Map(
+          results.flatMap((result, index) =>
+            result.status === 'fulfilled' ? [[activeSubmissions[index].id, result.value] as const] : [],
+          ),
+        )
+
+        if (refreshedById.size === 0) {
+          return
+        }
+
+        currentResponse = {
+          ...currentResponse,
+          items: currentResponse.items.map((submission) => {
+            const refreshed = refreshedById.get(submission.id)
+            return refreshed ? mergeSubmissionSummary(submission, refreshed) : submission
+          }),
+        }
+
+        setQueryState((previousState) => ({
+          key,
+          response: currentResponse,
+          errorMessage: previousState.key === key ? previousState.errorMessage : '',
+        }))
+        stopPollingWhenStable(currentResponse)
+      })
+    }
 
     const load = () => {
       void listSubmissions(request)
@@ -47,15 +119,13 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
             return
           }
 
+          currentResponse = loadedResponse
           setQueryState({
             key,
-            response: loadedResponse,
+            response: currentResponse,
             errorMessage: '',
           })
-          if (!loadedResponse.items.some((submission) => !isTerminalSubmissionStatus(submission.status)) && intervalId !== null) {
-            window.clearInterval(intervalId)
-            intervalId = null
-          }
+          stopPollingWhenStable(currentResponse)
         })
         .catch(() => {
           if (cancelled) {
@@ -76,7 +146,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     }
 
     load()
-    intervalId = window.setInterval(load, 3000)
+    intervalId = window.setInterval(refreshVisibleSubmissionStates, 3000)
 
     return () => {
       cancelled = true
