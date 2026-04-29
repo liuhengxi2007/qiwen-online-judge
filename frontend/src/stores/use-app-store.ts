@@ -25,7 +25,7 @@ export const useAppStore = create<AppStore>()(
         })),
     }),
     {
-      name: 'frontend-sample-template',
+      name: 'qiwen-online-judge-app',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         theme: state.theme,
