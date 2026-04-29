@@ -1,5 +1,5 @@
 import { fromUserIdentityContract } from '@/features/auth/domain/auth-contract'
-import { parseUsername, usernameValue, type ParseResult } from '@/features/auth/domain/auth'
+import { parseUsername, usernameValue, type ParseResult, type Username } from '@/features/auth/domain/auth'
 import { requireParsed } from '@/features/auth/domain/auth-parsers'
 import type { CreateConversationRequest } from '@/features/message/model/CreateConversationRequest'
 import type { ConversationMessageFacts } from '@/features/message/model/ConversationMessageFacts'
@@ -78,6 +78,10 @@ export function parseMessageContent(rawContent: string): ParseResult<MessageCont
 
 export function messageConversationIdValue(conversationId: MessageConversationId): string {
   return conversationId
+}
+
+export function messageConversationPath(username: Username): string {
+  return `/messages/with/${encodeURIComponent(usernameValue(username))}`
 }
 
 export function messageIdValue(messageId: MessageId): string {

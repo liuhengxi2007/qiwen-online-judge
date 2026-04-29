@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { usernameValue } from '@/features/auth/domain/auth'
 import type { UserIdentity } from '@/features/auth/domain/auth'
-import { createConversation, markAllMessagesRead } from '@/features/message/api/message-client'
-import { messageConversationIdValue } from '@/features/message/domain/message'
+import { markAllMessagesRead } from '@/features/message/api/message-client'
+import { messageConversationPath, messageConversationIdValue } from '@/features/message/domain/message'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { listUserSuggestions } from '@/features/user/api/user-client'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
@@ -33,7 +33,6 @@ export function MessageInboxPage() {
   const [suggestions, setSuggestions] = useState<UserIdentity[]>([])
   const [searchError, setSearchError] = useState('')
   const [inboxActionError, setInboxActionError] = useState('')
-  const [isOpeningConversation, setIsOpeningConversation] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
   useEffect(() => {
@@ -121,16 +120,7 @@ export function MessageInboxPage() {
                         key={usernameValue(suggestion.username)}
                         type="button"
                         className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-cyan-300 hover:bg-cyan-50"
-                        disabled={isOpeningConversation}
-                        onClick={() => {
-                          setIsOpeningConversation(true)
-                          void createConversation({ targetUsername: suggestion.username })
-                            .then((conversation) => navigate(`/messages/${messageConversationIdValue(conversation.id)}`))
-                            .catch((error) => {
-                              setSearchError(error instanceof HttpClientError ? error.message : t('messages.openFailed'))
-                            })
-                            .finally(() => setIsOpeningConversation(false))
-                        }}
+                        onClick={() => navigate(messageConversationPath(suggestion.username))}
                       >
                         <div>
                           <p className="font-medium text-slate-950">{suggestion.displayName}</p>
@@ -196,7 +186,7 @@ export function MessageInboxPage() {
                   <Link
                     key={messageConversationIdValue(conversation.id)}
                     className="block rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 transition hover:border-sky-300 hover:bg-sky-50"
-                    to={`/messages/${messageConversationIdValue(conversation.id)}`}
+                    to={messageConversationPath(conversation.otherUser.username)}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>

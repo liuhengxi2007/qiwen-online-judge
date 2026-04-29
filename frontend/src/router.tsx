@@ -124,7 +124,7 @@ export const router = createBrowserRouter([
     element: <AuthenticatedRoute element={<MessageInboxPage />} />,
   },
   {
-    path: '/messages/:conversationId',
+    path: '/messages/with/:username',
     element: <AuthenticatedRoute element={<MessageConversationPage />} />,
   },
   {

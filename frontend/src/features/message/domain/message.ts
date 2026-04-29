@@ -7,6 +7,7 @@ export {
   fromMessageInboxResponse,
   messageContentValue,
   messageConversationIdValue,
+  messageConversationPath,
   messageIdValue,
   parseMessageContent,
   parseMessageConversationId,

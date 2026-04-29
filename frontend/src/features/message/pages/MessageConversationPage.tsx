@@ -7,11 +7,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
+import { parseUsername, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { usernameValue } from '@/features/auth/domain/auth'
-import { getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/api/message-client'
-import type { MessageHistoryResponse } from '@/features/message/domain/message'
-import { messageConversationIdValue, messageIdValue, parseMessageContent, parseMessageConversationId } from '@/features/message/domain/message'
+import { createConversation, getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/api/message-client'
+import type { MessageConversationId, MessageHistoryResponse } from '@/features/message/domain/message'
+import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/domain/message'
 import { messageStreamEventName } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
@@ -30,7 +30,7 @@ const minimumIncomingMessagesBeforeBlockShortcut = 5
 export function MessageConversationPage() {
   const { t } = useI18n()
   usePageTitle(t('messages.conversationPageTitle'))
-  const { conversationId: routeConversationId } = useParams<{ conversationId: string }>()
+  const { username: routeUsername } = useParams<{ username: string }>()
   const { session, navigationIntent } = useSessionGuard()
   const refreshInbox = useMessageStore((state) => state.refreshInbox)
   const [history, setHistory] = useState<MessageHistoryResponse | null>(null)
@@ -41,21 +41,30 @@ export function MessageConversationPage() {
   const [isSending, setIsSending] = useState(false)
   const [isMarkingConversationRead, setIsMarkingConversationRead] = useState(false)
   const [pendingReadMessageId, setPendingReadMessageId] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<MessageConversationId | null>(null)
 
-  const parsedConversationId = routeConversationId ? parseMessageConversationId(routeConversationId) : null
-  const conversationId = parsedConversationId && parsedConversationId.ok ? parsedConversationId.value : null
+  const parsedRouteUsername = routeUsername ? parseUsername(routeUsername) : null
+  const targetUsername = parsedRouteUsername && parsedRouteUsername.ok ? parsedRouteUsername.value : null
 
   useEffect(() => {
-    if (!conversationId) {
+    if (!targetUsername) {
       return
     }
-    const activeConversationId = conversationId
-
+    const activeTargetUsername = targetUsername
     let cancelled = false
 
     async function loadConversation() {
       setIsLoading(true)
+      setHistory(null)
+      setErrorMessage('')
+      setSendErrorMessage('')
       try {
+        const conversation = await createConversation({ targetUsername: activeTargetUsername })
+        if (cancelled) {
+          return
+        }
+        const activeConversationId = conversation.id
+        setConversationId(activeConversationId)
         const response = await getConversationHistory(activeConversationId)
         if (cancelled) {
           return
@@ -65,6 +74,7 @@ export function MessageConversationPage() {
         setSendErrorMessage('')
       } catch (error) {
         if (!cancelled) {
+          setConversationId(null)
           setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
         }
       } finally {
@@ -79,7 +89,7 @@ export function MessageConversationPage() {
     return () => {
       cancelled = true
     }
-  }, [conversationId, refreshInbox, t])
+  }, [refreshInbox, t, targetUsername])
 
   useEffect(() => {
     if (!conversationId) {
@@ -120,7 +130,7 @@ export function MessageConversationPage() {
     return <Navigate replace to="/login" />
   }
 
-  if (!conversationId) {
+  if (!targetUsername) {
     return <Navigate replace to="/messages" />
   }
 
@@ -130,6 +140,9 @@ export function MessageConversationPage() {
     (history?.facts.otherParticipantMessageCount ?? 0) >= minimumIncomingMessagesBeforeBlockShortcut
   const hasUnreadMessages = (history?.conversation.unreadCount ?? 0) > 0
   const submitDraft = () => {
+    if (!conversationId) {
+      return
+    }
     const validation = parseMessageContent(draft)
     if (!validation.ok) {
       setSendErrorMessage(validation.error)
@@ -209,6 +222,9 @@ export function MessageConversationPage() {
                   disabled={!hasUnreadMessages || isMarkingConversationRead || isSending}
                   className="rounded-2xl border-slate-300 bg-white"
                   onClick={() => {
+                    if (!conversationId) {
+                      return
+                    }
                     setIsMarkingConversationRead(true)
                     void markConversationRead(conversationId, { mode: 'conversation' })
                       .then(async () => {
@@ -262,6 +278,9 @@ export function MessageConversationPage() {
                             disabled={isPendingRead || isMarkingConversationRead || isSending}
                             className="h-auto px-2 py-1 text-xs text-sky-700 hover:text-sky-900"
                             onClick={() => {
+                              if (!conversationId) {
+                                return
+                              }
                               setPendingReadMessageId(messageIdValue(message.id))
                               void markConversationRead(conversationId, { mode: 'message', messageId: message.id })
                                 .then(async () => {
