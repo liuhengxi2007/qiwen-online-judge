@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams } from 'react-router-dom'
 import { Ban, LockKeyhole, Search, Settings, SlidersHorizontal, UserRoundPen } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -29,6 +29,7 @@ export function UserSettingsPage() {
   const [isUpdatingBlocks, setIsUpdatingBlocks] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState<import('@/features/message/domain/message').MessageBlockEntry[]>([])
   const { username: routeUsername } = useParams<{ username: string }>()
+  const { hash } = useLocation()
   const { session: viewer, setSession: setViewer, navigationIntent: guardNavigationIntent } =
     useSessionGuard()
 
@@ -112,6 +113,18 @@ export function UserSettingsPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [blockSearch, isEditingOwnSettings, t, viewer.username])
+
+  useEffect(() => {
+    if (!isEditingOwnSettings || hash !== '#message-blocks') {
+      return
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('message-blocks')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+
+    return () => window.cancelAnimationFrame(frameId)
+  }, [hash, isEditingOwnSettings])
 
   return (
     <UserAccountPageShell

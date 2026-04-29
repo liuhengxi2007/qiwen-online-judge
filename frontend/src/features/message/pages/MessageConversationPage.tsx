@@ -36,6 +36,7 @@ export function MessageConversationPage() {
   const [history, setHistory] = useState<MessageHistoryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [sendErrorMessage, setSendErrorMessage] = useState('')
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isMarkingConversationRead, setIsMarkingConversationRead] = useState(false)
@@ -61,6 +62,7 @@ export function MessageConversationPage() {
         }
         setHistory(response)
         setErrorMessage('')
+        setSendErrorMessage('')
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
@@ -98,6 +100,7 @@ export function MessageConversationPage() {
         .then((response) => {
           setHistory(response)
           setErrorMessage('')
+          setSendErrorMessage('')
           void refreshInbox()
         })
         .catch((error) => {
@@ -129,7 +132,7 @@ export function MessageConversationPage() {
   const submitDraft = () => {
     const validation = parseMessageContent(draft)
     if (!validation.ok) {
-      setErrorMessage(validation.error)
+      setSendErrorMessage(validation.error)
       return
     }
 
@@ -141,9 +144,14 @@ export function MessageConversationPage() {
         const response = await getConversationHistory(conversationId)
         setHistory(response)
         setErrorMessage('')
+        setSendErrorMessage('')
         void refreshInbox()
       })
       .catch((error) => {
+        if (error instanceof HttpClientError && error.code === 'api.error.message.blocked_by_recipient') {
+          setSendErrorMessage(error.message)
+          return
+        }
         setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.sendFailed'))
       })
       .finally(() => setIsSending(false))
@@ -207,6 +215,7 @@ export function MessageConversationPage() {
                         const response = await getConversationHistory(conversationId)
                         setHistory(response)
                         setErrorMessage('')
+                        setSendErrorMessage('')
                         void refreshInbox()
                       })
                       .catch((error) => {
@@ -259,6 +268,7 @@ export function MessageConversationPage() {
                                   const response = await getConversationHistory(conversationId)
                                   setHistory(response)
                                   setErrorMessage('')
+                                  setSendErrorMessage('')
                                   void refreshInbox()
                                 })
                                 .catch((error) => {
@@ -281,10 +291,20 @@ export function MessageConversationPage() {
               <Textarea
                 className="min-h-32 rounded-3xl border-slate-300 bg-white"
                 value={draft}
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => {
+                  setDraft(event.target.value)
+                  if (sendErrorMessage) {
+                    setSendErrorMessage('')
+                  }
+                }}
                 onKeyDown={handleDraftKeyDown}
                 placeholder={t('messages.composePlaceholder')}
               />
+              {sendErrorMessage ? (
+                <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                  <AlertDescription className="text-rose-700">{sendErrorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-slate-500">{t('messages.composeHelp')}</p>
                 <div className="flex gap-2">

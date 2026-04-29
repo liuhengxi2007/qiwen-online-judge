@@ -34,7 +34,7 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
     <div className="flex flex-wrap items-center justify-end gap-2">
       <div className="inline-flex items-center rounded-xl border border-slate-300 bg-white shadow-sm">
         <Link
-          className="inline-flex items-center px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+          className="inline-flex items-center rounded-l-xl px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
           to={`/user/${usernameValue(session.username)}`}
         >
           <span className="font-semibold text-slate-950">
@@ -44,9 +44,9 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
         <span aria-hidden className="h-5 w-px bg-slate-200" />
         <Link
           aria-label={t('nav.openProfileMessages')}
-          className="relative inline-flex items-center justify-center px-3 py-1.5 text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-950"
+          className="relative inline-flex items-center justify-center rounded-r-xl px-3 py-1.5 text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-950"
           title={t('nav.openProfileMessages')}
-          to={`/user/${usernameValue(session.username)}#profile-messages`}
+          to="/messages"
         >
           <Mail className="size-4" />
           {totalUnreadCount > 0 ? (
