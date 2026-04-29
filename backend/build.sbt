@@ -21,7 +21,8 @@ lazy val root = (project in file("."))
       "com.zaxxer" % "HikariCP" % "5.1.0",
       "org.postgresql" % "postgresql" % "42.7.4",
       "org.typelevel" %% "log4cats-slf4j" % "2.7.0",
-      "org.slf4j" % "slf4j-simple" % "2.0.13"
+      "org.slf4j" % "slf4j-simple" % "2.0.13",
+      "org.scalameta" %% "munit" % "1.1.1" % Test
     ),
     Compile / run / mainClass := Some("Main")
   )

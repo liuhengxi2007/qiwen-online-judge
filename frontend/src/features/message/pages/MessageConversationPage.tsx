@@ -217,7 +217,7 @@ export function MessageConversationPage() {
                       type="button"
                       variant="outline"
                       className="rounded-2xl border-rose-300 bg-white text-rose-950"
-                      onClick={() => navigate(`/user/${usernameValue(session.username)}/settings`)}
+                      onClick={() => navigate(`/user/${usernameValue(session.username)}/settings#message-blocks`)}
                     >
                       <ShieldBan className="size-4" />
                       {t('messages.manageBlocks')}

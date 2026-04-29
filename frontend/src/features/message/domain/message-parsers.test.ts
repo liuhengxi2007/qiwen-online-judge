@@ -1,0 +1,183 @@
+import { describe, expect, it } from 'vitest'
+
+import {
+  fromDirectMessage,
+  fromMessageConversationSummary,
+  fromMessageInboxResponse,
+  messageContentValue,
+  messageConversationIdValue,
+  messageIdValue,
+  parseMessageContent,
+  parseMessageConversationId,
+  parseMessageId,
+} from '@/features/message/domain/message-parsers'
+
+const conversationId = '11111111-1111-4111-8111-111111111111'
+const messageId = '22222222-2222-4222-8222-222222222222'
+
+describe('message-parsers', () => {
+  it('parses message conversation ids', () => {
+    const parsed = parseMessageConversationId(` ${conversationId} `)
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(messageConversationIdValue(parsed.value)).toBe(conversationId)
+    }
+  })
+
+  it('rejects invalid message conversation ids', () => {
+    expect(parseMessageConversationId('   ')).toEqual({
+      ok: false,
+      error: 'Conversation id is required.',
+    })
+    expect(parseMessageConversationId('not-a-uuid')).toEqual({
+      ok: false,
+      error: 'Conversation id must be a valid UUID.',
+    })
+  })
+
+  it('parses message ids', () => {
+    const parsed = parseMessageId(` ${messageId} `)
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(messageIdValue(parsed.value)).toBe(messageId)
+    }
+  })
+
+  it('rejects invalid message ids', () => {
+    expect(parseMessageId('')).toEqual({
+      ok: false,
+      error: 'Message id is required.',
+    })
+    expect(parseMessageId('bad-id')).toEqual({
+      ok: false,
+      error: 'Message id must be a valid UUID.',
+    })
+  })
+
+  it('parses message content and trims it', () => {
+    const parsed = parseMessageContent('  hello world  ')
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(messageContentValue(parsed.value)).toBe('hello world')
+    }
+  })
+
+  it('rejects invalid message content', () => {
+    expect(parseMessageContent('   ')).toEqual({
+      ok: false,
+      error: 'Message content is required.',
+    })
+    expect(parseMessageContent('x'.repeat(5001))).toEqual({
+      ok: false,
+      error: 'Message content must be at most 5000 characters.',
+    })
+  })
+
+  it('maps a conversation summary contract payload', () => {
+    const summary = fromMessageConversationSummary({
+      id: conversationId,
+      otherUser: {
+        username: 'alice',
+        displayName: 'Alice',
+      },
+      lastMessagePreview: 'Last message',
+      lastMessageSenderUsername: 'alice',
+      lastMessageAt: '2026-04-29T12:00:00Z',
+      unreadCount: 3,
+    })
+
+    expect(messageConversationIdValue(summary.id)).toBe(conversationId)
+    expect(summary.otherUser.username).toBe('alice')
+    expect(summary.otherUser.displayName).toBe('Alice')
+    expect(summary.lastMessagePreview).toBe('Last message')
+    expect(summary.lastMessageSenderUsername).toBe('alice')
+    expect(summary.lastMessageAt).toBe('2026-04-29T12:00:00Z')
+    expect(summary.unreadCount).toBe(3)
+  })
+
+  it('throws for invalid conversation summary payloads', () => {
+    expect(() => fromMessageConversationSummary(null)).toThrow('Invalid message conversation payload.')
+    expect(() =>
+      fromMessageConversationSummary({
+        id: conversationId,
+        otherUser: {
+          username: 'alice',
+          displayName: 'Alice',
+        },
+        lastMessagePreview: null,
+        lastMessageSenderUsername: null,
+        lastMessageAt: '2026-04-29T12:00:00Z',
+        unreadCount: '3',
+      }),
+    ).toThrow('Invalid unread count.')
+  })
+
+  it('maps a direct message contract payload', () => {
+    const message = fromDirectMessage({
+      id: messageId,
+      conversationId,
+      sender: {
+        username: 'alice',
+        displayName: 'Alice',
+      },
+      recipientUsername: 'bob',
+      content: '  hi there  ',
+      createdAt: '2026-04-29T12:00:00Z',
+      readAt: null,
+    })
+
+    expect(messageIdValue(message.id)).toBe(messageId)
+    expect(messageConversationIdValue(message.conversationId)).toBe(conversationId)
+    expect(message.sender.username).toBe('alice')
+    expect(message.recipientUsername).toBe('bob')
+    expect(messageContentValue(message.content)).toBe('hi there')
+    expect(message.createdAt).toBe('2026-04-29T12:00:00Z')
+    expect(message.readAt).toBeNull()
+  })
+
+  it('throws for invalid direct message payloads', () => {
+    expect(() =>
+      fromDirectMessage({
+        id: messageId,
+        conversationId,
+        sender: {
+          username: 'alice',
+          displayName: 'Alice',
+        },
+        recipientUsername: 'bob',
+        content: '   ',
+        createdAt: '2026-04-29T12:00:00Z',
+        readAt: null,
+      }),
+    ).toThrow('Invalid message content in contract payload: Message content is required.')
+  })
+
+  it('maps a message inbox contract payload', () => {
+    const inbox = fromMessageInboxResponse({
+      conversations: [
+        {
+          id: conversationId,
+          otherUser: {
+            username: 'alice',
+            displayName: 'Alice',
+          },
+          lastMessagePreview: null,
+          lastMessageSenderUsername: null,
+          lastMessageAt: '2026-04-29T12:00:00Z',
+          unreadCount: 1,
+        },
+      ],
+      totalUnreadCount: 1,
+    })
+
+    expect(inbox.conversations).toHaveLength(1)
+    expect(messageConversationIdValue(inbox.conversations[0].id)).toBe(conversationId)
+    expect(inbox.totalUnreadCount).toBe(1)
+  })
+
+  it('throws for invalid message inbox payloads', () => {
+    expect(() => fromMessageInboxResponse({ conversations: 'not-an-array', totalUnreadCount: 1 })).toThrow(
+      'Invalid message inbox payload.',
+    )
+  })
+})

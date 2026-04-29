@@ -64,9 +64,10 @@ export function useMessageRealtimeConnection() {
       return
     }
 
+    const isFirstSubscriber = subscriberCount === 0
     subscriberCount += 1
     ensureEventSource(refreshInbox)
-    if (!hasLoadedInbox) {
+    if (isFirstSubscriber && !hasLoadedInbox) {
       void refreshInbox()
     }
 

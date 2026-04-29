@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
-import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { AccountActions } from '@/shared/components/account-actions'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -63,7 +62,6 @@ function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
 export function AppSectionBar() {
   const { t } = useI18n()
   const session = useAuthStore((state) => state.session)
-  const totalUnreadCount = useMessageStore((state) => state.totalUnreadCount)
 
   if (!session) {
     return null
@@ -72,7 +70,6 @@ export function AppSectionBar() {
   const items: NavItem[] = [
     { to: '/problems', label: t('nav.problems'), tone: 'emerald' },
     { to: '/problem-sets', label: t('nav.problemSets'), tone: 'rose' },
-    { to: '/messages', label: totalUnreadCount > 0 ? `${t('nav.messages')} (${totalUnreadCount})` : t('nav.messages'), tone: 'cyan' },
     { to: '/submissions', label: t('nav.submissions'), tone: 'indigo' },
     { to: '/blogs', label: t('nav.blogs'), tone: 'orange' },
     { to: '/ranklist', label: t('nav.ranklist'), tone: 'amber' },
@@ -80,7 +77,7 @@ export function AppSectionBar() {
   ]
 
   if (session.siteManager) {
-    items.push({ to: '/site-manage', label: t('dashboard.siteManage.title'), tone: 'fuchsia' })
+    items.push({ to: '/site-manage', label: t('nav.siteManageShort'), tone: 'fuchsia' })
   }
 
   return (

@@ -372,10 +372,10 @@ export function UserSettingsPage() {
       />
 
       {isEditingOwnSettings ? (
-        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <Card id="message-blocks" className="scroll-mt-28 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                 <Ban className="size-5" />
               </div>
               <div>

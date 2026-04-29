@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { LogOut, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { logout as logoutRequest } from '@/features/auth/api/auth-client'
 import { usernameValue } from '@/features/auth/domain/auth'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
+import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -17,6 +18,7 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const clearSession = useAuthStore((state) => state.clearSession)
+  const totalUnreadCount = useMessageStore((state) => state.totalUnreadCount)
 
   if (!session) {
     return null
@@ -30,14 +32,30 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <Link
-        className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
-        to={`/user/${usernameValue(session.username)}`}
-      >
-        <span className="font-semibold text-slate-950">
-          {formatUserDisplayLabel(session, session.preferences.displayMode)}
-        </span>
-      </Link>
+      <div className="inline-flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+        <Link
+          className="inline-flex items-center px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+          to={`/user/${usernameValue(session.username)}`}
+        >
+          <span className="font-semibold text-slate-950">
+            {formatUserDisplayLabel(session, session.preferences.displayMode)}
+          </span>
+        </Link>
+        <span aria-hidden className="h-5 w-px bg-slate-200" />
+        <Link
+          aria-label={t('nav.openProfileMessages')}
+          className="relative inline-flex items-center justify-center px-3 py-1.5 text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-950"
+          title={t('nav.openProfileMessages')}
+          to={`/user/${usernameValue(session.username)}#profile-messages`}
+        >
+          <Mail className="size-4" />
+          {totalUnreadCount > 0 ? (
+            <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1.5 text-[11px] font-semibold leading-5 text-white">
+              {String(totalUnreadCount)}
+            </span>
+          ) : null}
+        </Link>
+      </div>
       <Button
         type="button"
         variant="outline"

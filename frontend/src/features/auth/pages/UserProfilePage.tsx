@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Files, NotebookPen, Settings, Sparkles, UserRound } from 'lucide-react'
+import { Files, Mail, NotebookPen, Settings, ShieldBan, Sparkles, UserRound } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -55,6 +55,7 @@ export function UserProfilePage() {
   const displayedUser = query.profile
   const displayedContribution = displayedUser ? Math.round(userContributionValue(displayedUser.contribution)) : null
   const acceptedProblems = displayedUser?.acceptedProblems ?? []
+  const isOwnProfile = viewer.username === routePolicy.targetUsername
   const acceptedProblemsTotalPages = Math.max(1, Math.ceil(acceptedProblems.length / acceptedProblemsPerPage))
   const normalizedAcceptedProblemsPage = Math.min(acceptedProblemsPage, acceptedProblemsTotalPages)
   const acceptedProblemsPageItems = acceptedProblems.slice(
@@ -143,7 +144,7 @@ export function UserProfilePage() {
                       </Link>
                     </Button>
                   ) : null}
-                  {viewer.username !== routePolicy.targetUsername ? (
+                  {!isOwnProfile ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -161,6 +162,34 @@ export function UserProfilePage() {
                     </Button>
                   ) : null}
                 </div>
+
+                {isOwnProfile ? (
+                  <div id="profile-messages" className="rounded-3xl border border-cyan-100 bg-cyan-50 p-6 scroll-mt-28">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                        <Mail className="size-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-cyan-950">{t('userProfile.messagesTitle')}</p>
+                        <p className="mt-1 text-sm text-cyan-800">{t('userProfile.messagesDescription')}</p>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <Button asChild className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400">
+                            <Link to="/messages">
+                              <Mail className="size-4" />
+                              {t('userProfile.openMessages')}
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" className="rounded-2xl border-cyan-300 bg-white text-cyan-950">
+                            <Link to={`/user/${targetUsername}/settings#message-blocks`}>
+                              <ShieldBan className="size-4" />
+                              {t('messages.manageBlocks')}
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-5">
