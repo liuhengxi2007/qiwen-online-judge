@@ -7,6 +7,7 @@ import {
   fromMessageInboxResponse,
   messageContentValue,
   messageConversationIdValue,
+  messageConversationPath,
   messageIdValue,
   parseMessageContent,
   parseMessageConversationId,
@@ -74,6 +75,11 @@ describe('message-parsers', () => {
       ok: false,
       error: 'Message content must be at most 5000 characters.',
     })
+  })
+
+  it('builds username-based message conversation paths', () => {
+    expect(messageConversationPath('alice')).toBe('/messages/with/alice')
+    expect(messageConversationPath('alice+bob')).toBe('/messages/with/alice%2Bbob')
   })
 
   it('maps a conversation summary contract payload', () => {
