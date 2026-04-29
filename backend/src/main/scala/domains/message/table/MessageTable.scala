@@ -2,7 +2,7 @@ package domains.message.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 import domains.message.table.MessageTableSchema.initialize
 import domains.message.table.MessageTableSql.*
 import domains.message.table.MessageTableSupport.*
@@ -154,6 +154,29 @@ object MessageTable:
           val hasMore = descendingMessages.size > limit
           val visibleMessages = descendingMessages.take(limit).reverse
           (visibleMessages, hasMore)
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def getConversationMessageFacts(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    actorUsername: Username
+  ): IO[ConversationMessageFacts] =
+    IO.blocking {
+      val statement = connection.prepareStatement(conversationMessageFactsSql)
+      try
+        statement.setString(1, actorUsername.value)
+        statement.setString(2, actorUsername.value)
+        statement.setObject(3, conversationId.value)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then
+            ConversationMessageFacts(
+              viewerHasSentMessage = resultSet.getBoolean("viewer_has_sent_message"),
+              otherParticipantMessageCount = resultSet.getInt("other_participant_message_count")
+            )
+          else ConversationMessageFacts(viewerHasSentMessage = false, otherParticipantMessageCount = 0)
         finally resultSet.close()
       finally statement.close()
     }

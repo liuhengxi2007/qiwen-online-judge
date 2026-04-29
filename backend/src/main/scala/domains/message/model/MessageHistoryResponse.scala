@@ -6,7 +6,8 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class MessageHistoryResponse(
   conversation: MessageConversationSummary,
   messages: List[DirectMessage],
-  hasMore: Boolean
+  hasMore: Boolean,
+  facts: ConversationMessageFacts
 )
 
 object MessageHistoryResponse:

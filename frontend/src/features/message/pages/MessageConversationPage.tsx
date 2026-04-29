@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { MessageCircle, SendHorizontal, ShieldBan } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -24,10 +24,11 @@ type MessageStreamEventDetail =
   | { type: 'conversation_read'; payload: { conversationId?: string } }
   | { type: 'inbox_changed'; payload: unknown }
 
+const minimumIncomingMessagesBeforeBlockShortcut = 5
+
 export function MessageConversationPage() {
   const { t } = useI18n()
   usePageTitle(t('messages.conversationPageTitle'))
-  const navigate = useNavigate()
   const { conversationId: routeConversationId } = useParams<{ conversationId: string }>()
   const { session, navigationIntent } = useSessionGuard()
   const refreshInbox = useMessageStore((state) => state.refreshInbox)
@@ -122,10 +123,13 @@ export function MessageConversationPage() {
   }
 
   const conversation = history?.conversation ?? null
+  const showManageBlocksShortcut =
+    !history?.facts.viewerHasSentMessage &&
+    (history?.facts.otherParticipantMessageCount ?? 0) >= minimumIncomingMessagesBeforeBlockShortcut
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-5xl">
+      <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
@@ -148,28 +152,19 @@ export function MessageConversationPage() {
                 </div>
                 <div>
                   <CardTitle className="text-xl text-slate-950">
-                    {conversation?.otherUser.displayName ?? t('messages.conversationTitle')}
+                    {conversation ? (
+                      <Link className="transition hover:text-cyan-800 hover:underline" to={`/user/${usernameValue(conversation.otherUser.username)}`}>
+                        {conversation.otherUser.displayName}
+                      </Link>
+                    ) : (
+                      t('messages.conversationTitle')
+                    )}
                   </CardTitle>
                   <CardDescription>
                     {conversation ? `@${usernameValue(conversation.otherUser.username)}` : t('messages.conversationTitleDescription')}
                   </CardDescription>
                 </div>
               </div>
-              {conversation ? (
-                <div className="flex gap-2">
-                  <Button asChild variant="outline" className="rounded-2xl border-cyan-300 bg-white text-cyan-950">
-                    <Link to={`/user/${usernameValue(conversation.otherUser.username)}`}>{t('messages.openProfile')}</Link>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl border-slate-300 bg-white"
-                    onClick={() => navigate('/messages')}
-                  >
-                    {t('messages.backToInbox')}
-                  </Button>
-                </div>
-              ) : null}
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -212,15 +207,12 @@ export function MessageConversationPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-slate-500">{t('messages.composeHelp')}</p>
                 <div className="flex gap-2">
-                  {conversation ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-2xl border-rose-300 bg-white text-rose-950"
-                      onClick={() => navigate(`/user/${usernameValue(session.username)}/settings#message-blocks`)}
-                    >
-                      <ShieldBan className="size-4" />
-                      {t('messages.manageBlocks')}
+                  {conversation && showManageBlocksShortcut ? (
+                    <Button asChild type="button" variant="outline" className="rounded-2xl border-rose-300 bg-white text-rose-950">
+                      <Link to={`/user/${usernameValue(session.username)}/settings#message-blocks`}>
+                        <ShieldBan className="size-4" />
+                        {t('messages.manageBlocks')}
+                      </Link>
                     </Button>
                   ) : null}
                   <Button

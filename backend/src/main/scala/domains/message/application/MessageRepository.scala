@@ -2,7 +2,7 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 
 import java.sql.Connection
 
@@ -35,6 +35,12 @@ trait MessageRepository:
     beforeMessageId: Option[MessageId],
     limit: Int
   ): IO[(List[DirectMessage], Boolean)]
+
+  def getConversationMessageFacts(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    actorUsername: Username
+  ): IO[ConversationMessageFacts]
 
   def insertMessage(
     connection: Connection,

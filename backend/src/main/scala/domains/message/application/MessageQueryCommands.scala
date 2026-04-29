@@ -1,6 +1,7 @@
 package domains.message.application
 
 import cats.effect.IO
+import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
@@ -33,14 +34,16 @@ object MessageQueryCommands:
         result <- conversation match
           case None => IO.pure(GetConversationHistoryResult.ConversationNotFound)
           case Some(summary) =>
-            repository
-              .listConversationMessages(connection, conversationId, beforeMessageId, limit.filter(_ > 0).getOrElse(defaultHistoryLimit))
-              .map { case (messages, hasMore) =>
+            (
+              repository.listConversationMessages(connection, conversationId, beforeMessageId, limit.filter(_ > 0).getOrElse(defaultHistoryLimit)),
+              repository.getConversationMessageFacts(connection, conversationId, actor.username)
+            ).mapN { case ((messages, hasMore), facts) =>
                 GetConversationHistoryResult.Found(
                   MessageHistoryResponse(
                     conversation = summary,
                     messages = messages,
-                    hasMore = hasMore
+                    hasMore = hasMore,
+                    facts = facts
                   )
                 )
               }

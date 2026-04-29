@@ -2,7 +2,7 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 import domains.message.table.MessageTable
 
 import java.sql.Connection
@@ -42,6 +42,13 @@ object JdbcMessageRepository extends MessageRepository:
     limit: Int
   ): IO[(List[DirectMessage], Boolean)] =
     MessageTable.listConversationMessages(connection, conversationId, beforeMessageId, limit)
+
+  override def getConversationMessageFacts(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    actorUsername: Username
+  ): IO[ConversationMessageFacts] =
+    MessageTable.getConversationMessageFacts(connection, conversationId, actorUsername)
 
   override def insertMessage(
     connection: Connection,

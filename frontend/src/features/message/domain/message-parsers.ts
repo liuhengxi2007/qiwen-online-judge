@@ -2,6 +2,7 @@ import { fromUserIdentityContract } from '@/features/auth/domain/auth-contract'
 import { parseUsername, usernameValue, type ParseResult } from '@/features/auth/domain/auth'
 import { requireParsed } from '@/features/auth/domain/auth-parsers'
 import type { CreateConversationRequest } from '@/features/message/model/CreateConversationRequest'
+import type { ConversationMessageFacts } from '@/features/message/model/ConversationMessageFacts'
 import type { DirectMessage } from '@/features/message/model/DirectMessage'
 import type { MessageBlockEntry } from '@/features/message/model/MessageBlockEntry'
 import type { MessageContent } from '@/features/message/model/MessageContent'
@@ -25,6 +26,17 @@ function createMessageId(value: string): MessageId {
 
 function createMessageContent(value: string): MessageContent {
   return value as MessageContent
+}
+
+function fromConversationMessageFacts(value: unknown): ConversationMessageFacts {
+  if (!isRecord(value)) {
+    throw new Error('Invalid message history facts payload.')
+  }
+
+  return {
+    viewerHasSentMessage: readBoolean(value.viewerHasSentMessage, 'viewer has sent message'),
+    otherParticipantMessageCount: readNumber(value.otherParticipantMessageCount, 'other participant message count'),
+  }
 }
 
 export function parseMessageConversationId(rawId: string): ParseResult<MessageConversationId> {
@@ -118,6 +130,7 @@ export function fromMessageHistoryResponse(value: unknown): MessageHistoryRespon
     conversation: fromMessageConversationSummary(value.conversation),
     messages: value.messages.map(fromDirectMessage),
     hasMore: readBoolean(value.hasMore, 'message history has more'),
+    facts: fromConversationMessageFacts(value.facts),
   }
 }
 

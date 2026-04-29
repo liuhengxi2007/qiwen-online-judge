@@ -171,6 +171,14 @@ object MessageTableSql:
       |limit ?
       |""".stripMargin
 
+  val conversationMessageFactsSql: String =
+    """
+      |select coalesce(bool_or(lower(sender_username) = lower(?)), false) as viewer_has_sent_message,
+      |       count(*) filter (where lower(sender_username) <> lower(?))::int as other_participant_message_count
+      |from direct_messages
+      |where conversation_id = ?
+      |""".stripMargin
+
   val insertMessageSql: String =
     """
       |insert into direct_messages (

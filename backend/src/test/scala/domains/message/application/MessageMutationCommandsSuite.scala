@@ -3,7 +3,7 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.{CreateConversationRequest, DirectMessage, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
+import domains.message.model.{ConversationMessageFacts, CreateConversationRequest, DirectMessage, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{UserDisplayMode, UserIdentity, UserLocale}
 import munit.FunSuite
@@ -216,6 +216,13 @@ class MessageMutationCommandsSuite extends FunSuite:
 
     override def isBlocked(connection: Connection, ownerUsername: Username, blockedUsername: Username): IO[Boolean] =
       IO.pure(blockedResult)
+
+    override def getConversationMessageFacts(
+      connection: Connection,
+      conversationId: MessageConversationId,
+      actorUsername: Username
+    ): IO[ConversationMessageFacts] =
+      IO.raiseError(new UnsupportedOperationException("not used in this suite"))
 
     override def markConversationRead(
       connection: Connection,

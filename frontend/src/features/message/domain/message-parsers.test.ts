@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   fromDirectMessage,
   fromMessageConversationSummary,
+  fromMessageHistoryResponse,
   fromMessageInboxResponse,
   messageContentValue,
   messageConversationIdValue,
@@ -179,5 +180,43 @@ describe('message-parsers', () => {
     expect(() => fromMessageInboxResponse({ conversations: 'not-an-array', totalUnreadCount: 1 })).toThrow(
       'Invalid message inbox payload.',
     )
+  })
+
+  it('maps a message history payload with conversation facts', () => {
+    const history = fromMessageHistoryResponse({
+      conversation: {
+        id: conversationId,
+        otherUser: {
+          username: 'alice',
+          displayName: 'Alice',
+        },
+        lastMessagePreview: null,
+        lastMessageSenderUsername: null,
+        lastMessageAt: '2026-04-29T12:00:00Z',
+        unreadCount: 0,
+      },
+      messages: [
+        {
+          id: messageId,
+          conversationId,
+          sender: {
+            username: 'alice',
+            displayName: 'Alice',
+          },
+          recipientUsername: 'bob',
+          content: 'hello',
+          createdAt: '2026-04-29T12:00:00Z',
+          readAt: null,
+        },
+      ],
+      hasMore: false,
+      facts: {
+        viewerHasSentMessage: false,
+        otherParticipantMessageCount: 6,
+      },
+    })
+
+    expect(history.facts.viewerHasSentMessage).toBe(false)
+    expect(history.facts.otherParticipantMessageCount).toBe(6)
   })
 })
