@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { MessageCircle, SendHorizontal, ShieldBan } from 'lucide-react'
+import type { KeyboardEvent } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { usernameValue } from '@/features/auth/domain/auth'
 import { getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/api/message-client'
 import type { MessageHistoryResponse } from '@/features/message/domain/message'
-import { messageConversationIdValue, parseMessageContent, parseMessageConversationId } from '@/features/message/domain/message'
+import { messageConversationIdValue, messageIdValue, parseMessageContent, parseMessageConversationId } from '@/features/message/domain/message'
 import { messageStreamEventName } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
@@ -37,6 +38,8 @@ export function MessageConversationPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isMarkingConversationRead, setIsMarkingConversationRead] = useState(false)
+  const [pendingReadMessageId, setPendingReadMessageId] = useState<string | null>(null)
 
   const parsedConversationId = routeConversationId ? parseMessageConversationId(routeConversationId) : null
   const conversationId = parsedConversationId && parsedConversationId.ok ? parsedConversationId.value : null
@@ -58,8 +61,6 @@ export function MessageConversationPage() {
         }
         setHistory(response)
         setErrorMessage('')
-        await markConversationRead(activeConversationId)
-        void refreshInbox()
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
@@ -94,11 +95,9 @@ export function MessageConversationPage() {
       }
 
       void getConversationHistory(activeConversationId)
-        .then(async (response) => {
+        .then((response) => {
           setHistory(response)
-          if (detail.type === 'message_received') {
-            await markConversationRead(activeConversationId)
-          }
+          setErrorMessage('')
           void refreshInbox()
         })
         .catch((error) => {
@@ -126,6 +125,36 @@ export function MessageConversationPage() {
   const showManageBlocksShortcut =
     !history?.facts.viewerHasSentMessage &&
     (history?.facts.otherParticipantMessageCount ?? 0) >= minimumIncomingMessagesBeforeBlockShortcut
+  const hasUnreadMessages = (history?.conversation.unreadCount ?? 0) > 0
+  const submitDraft = () => {
+    const validation = parseMessageContent(draft)
+    if (!validation.ok) {
+      setErrorMessage(validation.error)
+      return
+    }
+
+    setIsSending(true)
+    void sendDirectMessage(conversationId, { content: validation.value })
+      .then(async () => {
+        setDraft('')
+        await markConversationRead(conversationId, { mode: 'conversation' })
+        const response = await getConversationHistory(conversationId)
+        setHistory(response)
+        setErrorMessage('')
+        void refreshInbox()
+      })
+      .catch((error) => {
+        setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.sendFailed'))
+      })
+      .finally(() => setIsSending(false))
+  }
+
+  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !isSending) {
+      event.preventDefault()
+      submitDraft()
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">
@@ -145,11 +174,11 @@ export function MessageConversationPage() {
 
         <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <CardHeader>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
-                  <MessageCircle className="size-5" />
-                </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+                    <MessageCircle className="size-5" />
+                  </div>
                 <div>
                   <CardTitle className="text-xl text-slate-950">
                     {conversation ? (
@@ -165,6 +194,30 @@ export function MessageConversationPage() {
                   </CardDescription>
                 </div>
               </div>
+              {conversation ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!hasUnreadMessages || isMarkingConversationRead || isSending}
+                  className="rounded-2xl border-slate-300 bg-white"
+                  onClick={() => {
+                    setIsMarkingConversationRead(true)
+                    void markConversationRead(conversationId, { mode: 'conversation' })
+                      .then(async () => {
+                        const response = await getConversationHistory(conversationId)
+                        setHistory(response)
+                        setErrorMessage('')
+                        void refreshInbox()
+                      })
+                      .catch((error) => {
+                        setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+                      })
+                      .finally(() => setIsMarkingConversationRead(false))
+                  }}
+                >
+                  {isMarkingConversationRead ? t('messages.markingRead') : t('messages.markConversationRead')}
+                </Button>
+              ) : null}
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -179,6 +232,8 @@ export function MessageConversationPage() {
               {!isLoading && history?.messages.length === 0 ? <p className="text-sm text-slate-500">{t('messages.noMessagesYet')}</p> : null}
               {history?.messages.map((message) => {
                 const isOwn = message.sender.username === session.username
+                const isUnreadIncoming = !isOwn && message.readAt === null
+                const isPendingRead = pendingReadMessageId === messageIdValue(message.id)
                 return (
                   <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -190,6 +245,31 @@ export function MessageConversationPage() {
                       <div className={`mt-2 flex items-center gap-2 text-xs ${isOwn ? 'text-cyan-900' : 'text-slate-500'}`}>
                         <span>{new Date(message.createdAt).toLocaleString()}</span>
                         {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.unread')}</span> : null}
+                        {isUnreadIncoming ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isPendingRead || isMarkingConversationRead || isSending}
+                            className="h-auto px-2 py-1 text-xs text-sky-700 hover:text-sky-900"
+                            onClick={() => {
+                              setPendingReadMessageId(messageIdValue(message.id))
+                              void markConversationRead(conversationId, { mode: 'message', messageId: message.id })
+                                .then(async () => {
+                                  const response = await getConversationHistory(conversationId)
+                                  setHistory(response)
+                                  setErrorMessage('')
+                                  void refreshInbox()
+                                })
+                                .catch((error) => {
+                                  setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+                                })
+                                .finally(() => setPendingReadMessageId(null))
+                            }}
+                          >
+                            {isPendingRead ? t('messages.markingRead') : t('messages.markRead')}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -202,6 +282,7 @@ export function MessageConversationPage() {
                 className="min-h-32 rounded-3xl border-slate-300 bg-white"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleDraftKeyDown}
                 placeholder={t('messages.composePlaceholder')}
               />
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -219,28 +300,7 @@ export function MessageConversationPage() {
                     type="button"
                     disabled={isSending}
                     className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400"
-                    onClick={() => {
-                      const validation = parseMessageContent(draft)
-                      if (!validation.ok) {
-                        setErrorMessage(validation.error)
-                        return
-                      }
-
-                      setIsSending(true)
-                      void sendDirectMessage(conversationId, { content: validation.value })
-                        .then(async () => {
-                          setDraft('')
-                          const response = await getConversationHistory(conversationId)
-                          setHistory(response)
-                          setErrorMessage('')
-                          await markConversationRead(conversationId)
-                          void refreshInbox()
-                        })
-                        .catch((error) => {
-                          setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.sendFailed'))
-                        })
-                        .finally(() => setIsSending(false))
-                    }}
+                    onClick={submitDraft}
                   >
                     <SendHorizontal className="size-4" />
                     {isSending ? t('messages.sending') : t('messages.send')}

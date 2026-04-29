@@ -52,6 +52,10 @@ object MessageHttpResponses:
       case MarkConversationReadResult.Marked(summary, _, _) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(summary.asJson))
 
+  def markAllMessagesReadResponse(output: domains.message.application.MessageCommandResults.MarkAllMessagesReadResult): IO[Response[IO]] =
+    val _ = output
+    successResponse(Status.Ok, ApiMessages.directMessagesMarkedRead)
+
   def listBlocksResponse(entries: List[domains.message.model.MessageBlockEntry]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(entries.asJson))
 

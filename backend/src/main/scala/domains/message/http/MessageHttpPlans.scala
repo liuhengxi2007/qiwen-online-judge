@@ -1,9 +1,10 @@
 package domains.message.http
 
+import cats.syntax.all.*
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
-import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
+import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.application.{MessageCommands, MessageEventHub, MessageStreamEvent}
 import domains.message.model.{CreateConversationRequest, MarkConversationReadRequest, MessageConversationId, MessageId, SendDirectMessageRequest}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
@@ -58,10 +59,7 @@ object MessageHttpPlans:
           IO.pure(SendMessageOutput(other, None))
       }
 
-  final case class MarkConversationReadOutput(
-    result: MarkConversationReadResult,
-    notification: Option[(Username, MessageStreamEvent.ConversationRead)]
-  )
+  final case class MarkConversationReadOutput(result: MarkConversationReadResult)
 
   final class MarkConversationReadPlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[(MessageConversationId, MarkConversationReadRequest), MarkConversationReadOutput]:
@@ -75,11 +73,26 @@ object MessageHttpPlans:
       MessageCommands.markConversationRead(connection, actor, conversationId, request).flatMap {
         case marked @ MarkConversationReadResult.Marked(_, otherParticipant, Some(readUpToMessageId)) =>
           val event = MessageStreamEvent.ConversationRead(conversationId, readUpToMessageId, actor.username)
-          messageEventHub.publish(otherParticipant, event).as(
-            MarkConversationReadOutput(marked, Some(otherParticipant -> event))
+          messageEventHub.publish(otherParticipant, event) *> messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged).as(
+            MarkConversationReadOutput(marked)
           )
         case other =>
-          IO.pure(MarkConversationReadOutput(other, None))
+          IO.pure(MarkConversationReadOutput(other))
+      }
+
+  final class MarkAllMessagesReadPlan(messageEventHub: MessageEventHub)
+      extends TransactionAuthenticatedHttpPlan[Unit, MarkAllMessagesReadResult]:
+    override val name: String = "MarkAllMessagesRead"
+    override def execute(connection: Connection, actor: AuthUser, input: Unit): IO[MarkAllMessagesReadResult] =
+      val _ = input
+      MessageCommands.markAllMessagesRead(connection, actor).flatTap { result =>
+        val publishReceipts = result.receipts.traverse_(receipt =>
+          messageEventHub.publish(
+            receipt.otherParticipant,
+            MessageStreamEvent.ConversationRead(receipt.conversationId, receipt.readUpToMessageId, actor.username)
+          )
+        )
+        publishReceipts *> messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
       }
 
   case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.model.MessageBlockEntry]]:

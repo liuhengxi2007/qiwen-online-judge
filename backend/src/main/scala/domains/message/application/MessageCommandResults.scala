@@ -1,7 +1,7 @@
 package domains.message.application
 
 import domains.auth.model.Username
-import domains.message.model.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse, MessageId}
+import domains.message.model.{ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse, MessageId}
 
 object MessageCommandResults:
 
@@ -30,3 +30,7 @@ object MessageCommandResults:
 
   enum RemoveBlockResult:
     case Removed
+
+  final case class MarkAllMessagesReadResult(
+    receipts: List[ConversationReadReceipt]
+  )

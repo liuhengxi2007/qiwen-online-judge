@@ -55,6 +55,7 @@ export const zhCnApiMessages: Record<string, string> = {
   'api.success.blog.problem_submission_accepted': '题目博客投稿已通过。',
   'api.success.blog.unlinked_from_problem': '博客已取消与题目的关联。',
   'api.success.message.block_removed': '已取消拉黑。',
+  'api.success.message.marked_read': '已标记为已读。',
   'api.success.judger.heartbeat_recorded': '评测机心跳已记录。',
   'api.success.judge.result_recorded': '评测结果已记录。',
 }

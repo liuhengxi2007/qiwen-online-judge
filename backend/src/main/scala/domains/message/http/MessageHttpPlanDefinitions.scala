@@ -13,6 +13,8 @@ object MessageHttpPlanDefinitions:
     val sendMessage = WithTransaction(new MessageHttpPlans.SendMessagePlan(messageEventHub), MessageHttpResponses.sendMessageResponse)
     val markConversationRead =
       WithTransaction(new MessageHttpPlans.MarkConversationReadPlan(messageEventHub), MessageHttpResponses.markConversationReadResponse)
+    val markAllMessagesRead =
+      WithTransaction(new MessageHttpPlans.MarkAllMessagesReadPlan(messageEventHub), MessageHttpResponses.markAllMessagesReadResponse)
     val listBlocks = Plain(MessageHttpPlans.ListBlocks, MessageHttpResponses.listBlocksResponse)
     val addBlock = WithTransaction(new MessageHttpPlans.AddBlockPlan(messageEventHub), MessageHttpResponses.addBlockResponse)
     val removeBlock = WithTransaction(new MessageHttpPlans.RemoveBlockPlan(messageEventHub), MessageHttpResponses.removeBlockResponse)
@@ -23,6 +25,7 @@ object MessageHttpPlanDefinitions:
       createConversation,
       sendMessage,
       markConversationRead,
+      markAllMessagesRead,
       listBlocks,
       addBlock,
       removeBlock

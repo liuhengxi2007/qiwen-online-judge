@@ -1,7 +1,7 @@
 package domains.message.table
 
 import domains.auth.model.{DisplayName, Username}
-import domains.message.model.{DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId}
+import domains.message.model.{ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId}
 import domains.user.model.UserIdentity
 
 import java.sql.ResultSet
@@ -44,4 +44,11 @@ object MessageTableSupport:
         displayName = DisplayName(resultSet.getString("blocked_display_name"))
       ),
       createdAt = resultSet.getTimestamp("created_at").toInstant
+    )
+
+  def readConversationReadReceipt(resultSet: ResultSet): ConversationReadReceipt =
+    ConversationReadReceipt(
+      conversationId = MessageConversationId(resultSet.getObject("conversation_id", classOf[java.util.UUID])),
+      otherParticipant = Username.canonical(resultSet.getString("other_username")),
+      readUpToMessageId = MessageId(resultSet.getObject("read_up_to_message_id", classOf[java.util.UUID]))
     )

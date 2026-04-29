@@ -11,7 +11,9 @@ import {
   parseMessageContent,
   parseMessageConversationId,
   parseMessageId,
+  toMarkConversationReadRequest,
 } from '@/features/message/domain/message-parsers'
+import type { MessageId as MessageIdValue } from '@/features/message/model/MessageId'
 
 const conversationId = '11111111-1111-4111-8111-111111111111'
 const messageId = '22222222-2222-4222-8222-222222222222'
@@ -218,5 +220,15 @@ describe('message-parsers', () => {
 
     expect(history.facts.viewerHasSentMessage).toBe(false)
     expect(history.facts.otherParticipantMessageCount).toBe(6)
+  })
+
+  it('maps mark conversation read requests for both supported modes', () => {
+    expect(toMarkConversationReadRequest({ mode: 'conversation' })).toEqual({
+      mode: 'conversation',
+    })
+    expect(toMarkConversationReadRequest({ mode: 'message', messageId: messageId as MessageIdValue })).toEqual({
+      mode: 'message',
+      messageId,
+    })
   })
 })

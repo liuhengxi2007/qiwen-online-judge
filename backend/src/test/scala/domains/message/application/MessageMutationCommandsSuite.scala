@@ -3,7 +3,7 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.{ConversationMessageFacts, CreateConversationRequest, DirectMessage, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
+import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, CreateConversationRequest, DirectMessage, MarkConversationReadMode, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{UserDisplayMode, UserIdentity, UserLocale}
 import munit.FunSuite
@@ -81,7 +81,9 @@ class MessageMutationCommandsSuite extends FunSuite:
     val repository = FakeMessageRepository(summaryForUser = None)
 
     val result =
-      MessageMutationCommands.markConversationRead(connection, actor, conversationId, MarkConversationReadRequest(), repository).unsafeRunSync()
+      MessageMutationCommands
+        .markConversationRead(connection, actor, conversationId, MarkConversationReadRequest(MarkConversationReadMode.Conversation, None), repository)
+        .unsafeRunSync()
     assertEquals(result, MarkConversationReadResult.ConversationNotFound)
   }
 
@@ -93,8 +95,33 @@ class MessageMutationCommandsSuite extends FunSuite:
     )
 
     val result =
-      MessageMutationCommands.markConversationRead(connection, actor, conversationId, MarkConversationReadRequest(), repository).unsafeRunSync()
+      MessageMutationCommands
+        .markConversationRead(connection, actor, conversationId, MarkConversationReadRequest(MarkConversationReadMode.Conversation, None), repository)
+        .unsafeRunSync()
     assertEquals(result, MarkConversationReadResult.Marked(summary, targetUsername, Some(messageId)))
+  }
+
+  test("markConversationRead returns the selected message id when message mode updates one unread message") {
+    val repository = FakeMessageRepository(
+      summaryForUser = Some(summary),
+      otherParticipant = Some(targetUsername),
+      markMessageReadResult = true
+    )
+
+    val result =
+      MessageMutationCommands
+        .markConversationRead(connection, actor, conversationId, MarkConversationReadRequest(MarkConversationReadMode.Message, Some(messageId)), repository)
+        .unsafeRunSync()
+    assertEquals(result, MarkConversationReadResult.Marked(summary, targetUsername, Some(messageId)))
+  }
+
+  test("markAllMessagesRead delegates to the repository") {
+    val receipt = ConversationReadReceipt(conversationId, targetUsername, messageId)
+    val repository = FakeMessageRepository(unreadConversationReadReceipts = List(receipt))
+
+    val result = MessageMutationCommands.markAllMessagesRead(connection, actor, repository).unsafeRunSync()
+    assertEquals(repository.markAllMessagesReadCalled, true)
+    assertEquals(result.receipts, List(receipt))
   }
 
   test("addBlock returns CannotBlockSelf when actor targets self") {
@@ -167,8 +194,11 @@ class MessageMutationCommandsSuite extends FunSuite:
     insertedMessage: DirectMessage = directMessage,
     blockedResult: Boolean = false,
     readUpToMessageId: Option[MessageId] = Some(messageId),
+    markMessageReadResult: Boolean = false,
+    unreadConversationReadReceipts: List[ConversationReadReceipt] = Nil,
     blockEntryToReturn: MessageBlockEntry = blockEntry
   ) extends MessageRepository:
+    var markAllMessagesReadCalled: Boolean = false
 
     override def userExists(connection: Connection, username: Username): IO[Boolean] =
       IO.pure(userExistsResult)
@@ -230,6 +260,25 @@ class MessageMutationCommandsSuite extends FunSuite:
       recipientUsername: Username
     ): IO[Option[MessageId]] =
       IO.pure(readUpToMessageId)
+
+    override def markMessageRead(
+      connection: Connection,
+      conversationId: MessageConversationId,
+      recipientUsername: Username,
+      messageId: MessageId
+    ): IO[Boolean] =
+      IO.pure(markMessageReadResult)
+
+    override def markAllMessagesRead(connection: Connection, recipientUsername: Username): IO[Unit] =
+      IO {
+        markAllMessagesReadCalled = true
+      }
+
+    override def listUnreadConversationReadReceipts(
+      connection: Connection,
+      recipientUsername: Username
+    ): IO[List[ConversationReadReceipt]] =
+      IO.pure(unreadConversationReadReceipts)
 
     override def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]] =
       IO.raiseError(new UnsupportedOperationException("not used in this suite"))

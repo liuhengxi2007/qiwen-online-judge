@@ -96,5 +96,6 @@ object ApiMessages:
   val problemBlogSubmissionAccepted: ApiMessage = ApiMessage("api.success.blog.problem_submission_accepted")
   val blogUnlinkedFromProblem: ApiMessage = ApiMessage("api.success.blog.unlinked_from_problem")
   val directMessageBlockRemoved: ApiMessage = ApiMessage("api.success.message.block_removed")
+  val directMessagesMarkedRead: ApiMessage = ApiMessage("api.success.message.marked_read")
   val judgerHeartbeatRecorded: ApiMessage = ApiMessage("api.success.judger.heartbeat_recorded")
   val judgeResultRecorded: ApiMessage = ApiMessage("api.success.judge.result_recorded")

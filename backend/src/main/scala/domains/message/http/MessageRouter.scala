@@ -74,6 +74,15 @@ object MessageRouter:
               plans("MarkConversationRead").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[(MessageConversationId, MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput]]
             )(body => (parsedConversationId, body))
 
+      case request @ POST -> Root / "api" / "messages" / "read-all" =>
+        handlers.execute(
+          request,
+          (),
+          plans("MarkAllMessagesRead").asInstanceOf[
+            domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult]
+          ]
+        )
+
       case request @ GET -> Root / "api" / "messages" / "blocks" =>
         handlers.execute(
           request,

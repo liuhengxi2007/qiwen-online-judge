@@ -2,7 +2,7 @@ package domains.message.table
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 import domains.message.table.MessageTableSchema.initialize
 import domains.message.table.MessageTableSql.*
 import domains.message.table.MessageTableSupport.*
@@ -245,6 +245,18 @@ object MessageTable:
     recipientUsername: Username
   ): IO[Option[MessageId]] =
     for
+      readUpToMessageId <- IO.blocking {
+        val statement = connection.prepareStatement(findLastUnreadMessageInConversationSql)
+        try
+          statement.setObject(1, conversationId.value)
+          statement.setString(2, recipientUsername.value)
+          val resultSet = statement.executeQuery()
+          try
+            if resultSet.next() then Some(MessageId(resultSet.getObject("id", classOf[java.util.UUID])))
+            else None
+          finally resultSet.close()
+        finally statement.close()
+      }
       now <- IO.realTimeInstant
       _ <- IO.blocking {
         val statement = connection.prepareStatement(markConversationReadSql)
@@ -256,19 +268,61 @@ object MessageTable:
           ()
         finally statement.close()
       }
-      readUpToMessageId <- IO.blocking {
-        val statement = connection.prepareStatement(findLastReadMessageSql)
+    yield readUpToMessageId
+
+  def markMessageRead(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    recipientUsername: Username,
+    messageId: MessageId
+  ): IO[Boolean] =
+    for
+      now <- IO.realTimeInstant
+      updatedCount <- IO.blocking {
+        val statement = connection.prepareStatement(markMessageReadSql)
         try
-          statement.setObject(1, conversationId.value)
-          statement.setString(2, recipientUsername.value)
-          val resultSet = statement.executeQuery()
-          try
-            if resultSet.next() then Some(MessageId(resultSet.getObject("id", classOf[java.util.UUID])))
-            else None
-          finally resultSet.close()
+          statement.setTimestamp(1, Timestamp.from(now))
+          statement.setObject(2, messageId.value)
+          statement.setObject(3, conversationId.value)
+          statement.setString(4, recipientUsername.value)
+          statement.executeUpdate()
         finally statement.close()
       }
-    yield readUpToMessageId
+    yield updatedCount > 0
+
+  def markAllMessagesRead(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[Unit] =
+    for
+      now <- IO.realTimeInstant
+      _ <- IO.blocking {
+        val statement = connection.prepareStatement(markAllMessagesReadSql)
+        try
+          statement.setTimestamp(1, Timestamp.from(now))
+          statement.setString(2, recipientUsername.value)
+          statement.executeUpdate()
+          ()
+        finally statement.close()
+      }
+    yield ()
+
+  def listUnreadConversationReadReceipts(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[List[ConversationReadReceipt]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listUnreadConversationReadReceiptsSql)
+      try
+        statement.setString(1, recipientUsername.value)
+        statement.setString(2, recipientUsername.value)
+        statement.setString(3, recipientUsername.value)
+        statement.setString(4, recipientUsername.value)
+        val resultSet = statement.executeQuery()
+        try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readConversationReadReceipt(resultSet)).toList
+        finally resultSet.close()
+      finally statement.close()
+    }
 
   def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]] =
     IO.blocking {

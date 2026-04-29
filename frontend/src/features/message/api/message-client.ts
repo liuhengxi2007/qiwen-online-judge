@@ -20,6 +20,7 @@ import {
   messageConversationIdValue,
   messageIdValue,
   toCreateConversationRequest,
+  toMarkConversationReadRequest,
   toSendDirectMessageRequest,
 } from '@/features/message/domain/message'
 import { usernameValue } from '@/features/auth/domain/auth'
@@ -62,13 +63,17 @@ export function sendDirectMessage(
 
 export function markConversationRead(
   conversationId: MessageConversationId,
-  request: MarkConversationReadRequest = {},
+  request: MarkConversationReadRequest,
 ): Promise<MessageConversationSummary> {
   return postJson(
     `/api/messages/conversations/${encodeURIComponent(messageConversationIdValue(conversationId))}/read`,
     fromMessageConversationSummary,
-    request,
+    toMarkConversationReadRequest(request),
   )
+}
+
+export function markAllMessagesRead(): Promise<SuccessResponse> {
+  return postJson('/api/messages/read-all', decodeSuccessResponse, {})
 }
 
 export function listMessageBlocks(): Promise<MessageBlockEntry[]> {

@@ -3,12 +3,13 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Inbox, MessageSquareMore, Search } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { usernameValue } from '@/features/auth/domain/auth'
 import type { UserIdentity } from '@/features/auth/domain/auth'
-import { createConversation } from '@/features/message/api/message-client'
+import { createConversation, markAllMessagesRead } from '@/features/message/api/message-client'
 import { messageConversationIdValue } from '@/features/message/domain/message'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { listUserSuggestions } from '@/features/user/api/user-client'
@@ -31,7 +32,9 @@ export function MessageInboxPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [suggestions, setSuggestions] = useState<UserIdentity[]>([])
   const [searchError, setSearchError] = useState('')
+  const [inboxActionError, setInboxActionError] = useState('')
   const [isOpeningConversation, setIsOpeningConversation] = useState(false)
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
 
   useEffect(() => {
     void refreshInbox()
@@ -143,17 +146,44 @@ export function MessageInboxPage() {
 
           <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                  <Inbox className="size-5" />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                    <Inbox className="size-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl text-slate-950">{t('messages.inboxTitle')}</CardTitle>
+                    <CardDescription>{t('messages.inboxDescription')}</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-xl text-slate-950">{t('messages.inboxTitle')}</CardTitle>
-                  <CardDescription>{t('messages.inboxDescription')}</CardDescription>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={totalUnreadCount === 0 || isMarkingAllRead}
+                  className="rounded-2xl border-slate-300 bg-white"
+                  onClick={() => {
+                    setIsMarkingAllRead(true)
+                    void markAllMessagesRead()
+                      .then(async () => {
+                        setInboxActionError('')
+                        await refreshInbox()
+                      })
+                      .catch((error) => {
+                        setInboxActionError(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+                      })
+                      .finally(() => setIsMarkingAllRead(false))
+                  }}
+                >
+                  {isMarkingAllRead ? t('messages.markingRead') : t('messages.markAllRead')}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {inboxActionError ? (
+                <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                  <AlertDescription className="text-rose-700">{inboxActionError}</AlertDescription>
+                </Alert>
+              ) : null}
               {inboxError ? (
                 <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
                   <AlertDescription className="text-rose-700">{inboxError}</AlertDescription>

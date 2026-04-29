@@ -2,7 +2,7 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 
 import java.sql.Connection
 
@@ -57,6 +57,23 @@ trait MessageRepository:
     conversationId: MessageConversationId,
     recipientUsername: Username
   ): IO[Option[MessageId]]
+
+  def markMessageRead(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    recipientUsername: Username,
+    messageId: MessageId
+  ): IO[Boolean]
+
+  def markAllMessagesRead(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[Unit]
+
+  def listUnreadConversationReadReceipts(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[List[ConversationReadReceipt]]
 
   def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]]
 

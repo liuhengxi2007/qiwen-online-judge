@@ -55,6 +55,7 @@ export const enApiMessages: Record<string, string> = {
   'api.success.blog.problem_submission_accepted': 'Problem blog submission accepted.',
   'api.success.blog.unlinked_from_problem': 'Blog unlinked from problem.',
   'api.success.message.block_removed': 'Block removed.',
+  'api.success.message.marked_read': 'Marked as read.',
   'api.success.judger.heartbeat_recorded': 'Judger heartbeat recorded.',
   'api.success.judge.result_recorded': 'Judge result recorded.',
 }

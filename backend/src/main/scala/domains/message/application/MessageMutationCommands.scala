@@ -2,8 +2,8 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.AuthUser
-import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.{CreateConversationRequest, MarkConversationReadRequest, MessageConversationId, SendDirectMessageRequest}
+import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
+import domains.message.model.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, MessageConversationId, SendDirectMessageRequest}
 
 import java.sql.Connection
 
@@ -53,18 +53,37 @@ object MessageMutationCommands:
     request: MarkConversationReadRequest,
     repository: MessageRepository = defaultRepository
   ): IO[MarkConversationReadResult] =
-    val _ = request
     repository.findConversationSummaryForUser(connection, actor.username, conversationId).flatMap {
       case None => IO.pure(MarkConversationReadResult.ConversationNotFound)
-      case Some(summary) =>
+      case Some(existingSummary) =>
         repository.findOtherParticipant(connection, actor.username, conversationId).flatMap {
           case None =>
             IO.pure(MarkConversationReadResult.ConversationNotFound)
           case Some(otherParticipant) =>
-            repository.markConversationRead(connection, conversationId, actor.username).map { readUpToMessageId =>
-              MarkConversationReadResult.Marked(summary, otherParticipant, readUpToMessageId)
+            val markRead = request.mode match
+              case MarkConversationReadMode.Message =>
+                repository.markMessageRead(connection, conversationId, actor.username, request.messageId.get).map {
+                  case true => request.messageId
+                  case false => None
+                }
+              case MarkConversationReadMode.Conversation =>
+                repository.markConversationRead(connection, conversationId, actor.username)
+
+            markRead.flatMap { readUpToMessageId =>
+              repository.findConversationSummaryForUser(connection, actor.username, conversationId).map { updatedSummary =>
+                MarkConversationReadResult.Marked(updatedSummary.getOrElse(existingSummary), otherParticipant, readUpToMessageId)
+              }
             }
         }
+    }
+
+  def markAllMessagesRead(
+    connection: Connection,
+    actor: AuthUser,
+    repository: MessageRepository = defaultRepository
+  ): IO[MarkAllMessagesReadResult] =
+    repository.listUnreadConversationReadReceipts(connection, actor.username).flatMap { receipts =>
+      repository.markAllMessagesRead(connection, actor.username).as(MarkAllMessagesReadResult(receipts))
     }
 
   def addBlock(

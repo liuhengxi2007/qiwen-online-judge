@@ -232,15 +232,54 @@ object MessageTableSql:
       |  and read_at is null
       |""".stripMargin
 
-  val findLastReadMessageSql: String =
+  val findLastUnreadMessageInConversationSql: String =
     """
       |select id
       |from direct_messages
       |where conversation_id = ?
       |  and lower(recipient_username) = lower(?)
-      |  and read_at is not null
+      |  and read_at is null
       |order by created_at desc, id desc
       |limit 1
+      |""".stripMargin
+
+  val markMessageReadSql: String =
+    """
+      |update direct_messages
+      |set read_at = ?
+      |where id = ?
+      |  and conversation_id = ?
+      |  and lower(recipient_username) = lower(?)
+      |  and read_at is null
+      |""".stripMargin
+
+  val markAllMessagesReadSql: String =
+    """
+      |update direct_messages
+      |set read_at = ?
+      |where lower(recipient_username) = lower(?)
+      |  and read_at is null
+      |""".stripMargin
+
+  val listUnreadConversationReadReceiptsSql: String =
+    """
+      |select mc.id as conversation_id,
+      |       case
+      |         when lower(mc.participant_a_username) = lower(?) then mc.participant_b_username
+      |         else mc.participant_a_username
+      |       end as other_username,
+      |       unread.id as read_up_to_message_id
+      |from message_conversations mc
+      |join lateral (
+      |  select dm.id
+      |  from direct_messages dm
+      |  where dm.conversation_id = mc.id
+      |    and lower(dm.recipient_username) = lower(?)
+      |    and dm.read_at is null
+      |  order by dm.created_at desc, dm.id desc
+      |  limit 1
+      |) unread on true
+      |where lower(mc.participant_a_username) = lower(?) or lower(mc.participant_b_username) = lower(?)
       |""".stripMargin
 
   val listBlocksSql: String =

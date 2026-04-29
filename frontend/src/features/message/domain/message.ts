@@ -12,6 +12,7 @@ export {
   parseMessageConversationId,
   parseMessageId,
   toCreateConversationRequest,
+  toMarkConversationReadRequest,
   toSendDirectMessageRequest,
 } from '@/features/message/domain/message-parsers'
 

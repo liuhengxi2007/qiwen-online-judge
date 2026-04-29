@@ -2,7 +2,7 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
 import domains.message.table.MessageTable
 
 import java.sql.Connection
@@ -68,6 +68,26 @@ object JdbcMessageRepository extends MessageRepository:
     recipientUsername: Username
   ): IO[Option[MessageId]] =
     MessageTable.markConversationRead(connection, conversationId, recipientUsername)
+
+  override def markMessageRead(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    recipientUsername: Username,
+    messageId: MessageId
+  ): IO[Boolean] =
+    MessageTable.markMessageRead(connection, conversationId, recipientUsername, messageId)
+
+  override def markAllMessagesRead(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[Unit] =
+    MessageTable.markAllMessagesRead(connection, recipientUsername)
+
+  override def listUnreadConversationReadReceipts(
+    connection: Connection,
+    recipientUsername: Username
+  ): IO[List[ConversationReadReceipt]] =
+    MessageTable.listUnreadConversationReadReceipts(connection, recipientUsername)
 
   override def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]] =
     MessageTable.listBlocks(connection, ownerUsername)

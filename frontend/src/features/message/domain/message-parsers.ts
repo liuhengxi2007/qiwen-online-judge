@@ -4,6 +4,7 @@ import { requireParsed } from '@/features/auth/domain/auth-parsers'
 import type { CreateConversationRequest } from '@/features/message/model/CreateConversationRequest'
 import type { ConversationMessageFacts } from '@/features/message/model/ConversationMessageFacts'
 import type { DirectMessage } from '@/features/message/model/DirectMessage'
+import type { MarkConversationReadRequest } from '@/features/message/model/MarkConversationReadRequest'
 import type { MessageBlockEntry } from '@/features/message/model/MessageBlockEntry'
 import type { MessageContent } from '@/features/message/model/MessageContent'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
@@ -165,6 +166,20 @@ export function toCreateConversationRequest(request: CreateConversationRequest):
 export function toSendDirectMessageRequest(request: SendDirectMessageRequest): { content: string } {
   return {
     content: messageContentValue(request.content),
+  }
+}
+
+export function toMarkConversationReadRequest(
+  request: MarkConversationReadRequest,
+): { mode: 'conversation' } | { mode: 'message'; messageId: string } {
+  switch (request.mode) {
+    case 'conversation':
+      return { mode: 'conversation' }
+    case 'message':
+      return {
+        mode: 'message',
+        messageId: messageIdValue(request.messageId),
+      }
   }
 }
 
