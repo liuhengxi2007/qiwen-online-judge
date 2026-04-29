@@ -37,4 +37,49 @@ describe('site-manage-state', () => {
 
     expect(next.navigationIntent).toEqual({ to: '/site-manage', replace: true })
   })
+
+  it('tracks delete start and success transitions', () => {
+    const started = reduceSiteManageState(
+      {
+        ...initialSiteManageState,
+        notice: { kind: 'text', message: 'old' },
+        actionErrorMessage: 'boom',
+      },
+      {
+        type: 'delete_started',
+        username: 'alice' as Username,
+      },
+    )
+
+    expect(started.updatingUsername).toBe('alice')
+    expect(started.notice).toBeNull()
+    expect(started.actionErrorMessage).toBe('')
+
+    const succeeded = reduceSiteManageState(started, {
+      type: 'delete_succeeded',
+      message: 'Deleted.',
+    })
+
+    expect(succeeded.updatingUsername).toBeNull()
+    expect(succeeded.notice).toEqual({ kind: 'text', message: 'Deleted.' })
+    expect(succeeded.actionErrorMessage).toBe('')
+  })
+
+  it('clears transient state when an update fails', () => {
+    const next = reduceSiteManageState(
+      {
+        ...initialSiteManageState,
+        updatingUsername: 'alice' as Username,
+        notice: { kind: 'text', message: 'done' },
+      },
+      {
+        type: 'update_failed',
+        message: 'Forbidden.',
+      },
+    )
+
+    expect(next.updatingUsername).toBeNull()
+    expect(next.notice).toBeNull()
+    expect(next.actionErrorMessage).toBe('Forbidden.')
+  })
 })

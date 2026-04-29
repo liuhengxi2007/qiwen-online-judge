@@ -38,4 +38,19 @@ describe('judger-contract', () => {
 
     expect(mapped.processId).toBeNull()
   })
+
+  it('maps whitespace-only process ids and languages to null and empty arrays', () => {
+    const mapped = fromRegisteredJudgerListItemContract({
+      judgerId: 'judge-3',
+      requestedPrefix: 'judge',
+      host: ' worker-host ',
+      processId: '   ',
+      supportedLanguages: ['   ', ''],
+      registeredAt: '2026-04-29T12:00:00Z',
+      lastHeartbeatAt: '2026-04-29T12:05:00Z',
+    })
+
+    expect(mapped.processId).toBeNull()
+    expect(mapped.supportedLanguages).toEqual([])
+  })
 })

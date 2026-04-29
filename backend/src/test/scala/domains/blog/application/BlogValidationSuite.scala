@@ -21,10 +21,26 @@ class BlogValidationSuite extends FunSuite:
     assertEquals(result, Left("Blog title is required."))
   }
 
+  test("validateCreate rejects blank content") {
+    val request = CreateBlogRequest(BlogTitle("Title"), BlogContent("   "), BlogVisibility.Public)
+
+    val result = BlogValidation.validateCreate(request)
+
+    assertEquals(result, Left("Blog content is required."))
+  }
+
   test("validateUpdate rejects blank content") {
     val request = UpdateBlogRequest(BlogTitle("Title"), BlogContent("   "), BlogVisibility.Private)
 
     val result = BlogValidation.validateUpdate(request)
 
     assertEquals(result, Left("Blog content is required."))
+  }
+
+  test("validateUpdate rejects blank titles") {
+    val request = UpdateBlogRequest(BlogTitle("   "), BlogContent("content"), BlogVisibility.Private)
+
+    val result = BlogValidation.validateUpdate(request)
+
+    assertEquals(result, Left("Blog title is required."))
   }

@@ -4,10 +4,21 @@ import munit.FunSuite
 
 class SubmissionVerdictFilterSuite extends FunSuite:
 
-  test("parse accepts supported values after trimming") {
-    val result = SubmissionVerdictFilter.parse(" accepted ")
+  test("parse accepts every supported value") {
+    val cases = List(
+      "all" -> SubmissionVerdictFilter.All,
+      "pending" -> SubmissionVerdictFilter.Pending,
+      "accepted" -> SubmissionVerdictFilter.Accepted,
+      "wrong_answer" -> SubmissionVerdictFilter.WrongAnswer,
+      "compile_error" -> SubmissionVerdictFilter.CompileError,
+      "runtime_error" -> SubmissionVerdictFilter.RuntimeError,
+      "time_limit_exceeded" -> SubmissionVerdictFilter.TimeLimitExceeded,
+      "system_error" -> SubmissionVerdictFilter.SystemError
+    )
 
-    assertEquals(result, Right(SubmissionVerdictFilter.Accepted))
+    cases.foreach { (raw, expected) =>
+      assertEquals(SubmissionVerdictFilter.parse(s" $raw "), Right(expected))
+    }
   }
 
   test("parse rejects unsupported values") {
@@ -21,6 +32,14 @@ class SubmissionVerdictFilterSuite extends FunSuite:
     )
   }
 
-  test("toDatabase matches the expected wire value") {
-    assertEquals(SubmissionVerdictFilter.toDatabase(SubmissionVerdictFilter.TimeLimitExceeded), "time_limit_exceeded")
+  test("toDatabase round-trips representative values") {
+    val cases = List(
+      SubmissionVerdictFilter.All -> "all",
+      SubmissionVerdictFilter.Accepted -> "accepted",
+      SubmissionVerdictFilter.TimeLimitExceeded -> "time_limit_exceeded"
+    )
+
+    cases.foreach { (value, expected) =>
+      assertEquals(SubmissionVerdictFilter.toDatabase(value), expected)
+    }
   }

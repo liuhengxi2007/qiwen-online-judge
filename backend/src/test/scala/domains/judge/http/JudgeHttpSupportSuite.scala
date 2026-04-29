@@ -34,3 +34,23 @@ class JudgeHttpSupportSuite extends FunSuite:
 
     assertEquals(response.status, Status.Unauthorized)
   }
+
+  test("withJudgeToken rejects requests with the wrong token value") {
+    val request = Request[IO]().putHeaders(Header.Raw(CIString("x-judge-token"), "wrong-token"))
+
+    val response = JudgeHttpSupport
+      .withJudgeToken(request, config)(IO.pure(Response[IO](status = Status.Ok)))
+      .unsafeRunSync()
+
+    assertEquals(response.status, Status.Unauthorized)
+  }
+
+  test("withJudgeToken ignores unrelated headers when the judge token is absent") {
+    val request = Request[IO]().putHeaders(Header.Raw(CIString("x-request-id"), "abc"))
+
+    val response = JudgeHttpSupport
+      .withJudgeToken(request, config)(IO.pure(Response[IO](status = Status.Ok)))
+      .unsafeRunSync()
+
+    assertEquals(response.status, Status.Unauthorized)
+  }

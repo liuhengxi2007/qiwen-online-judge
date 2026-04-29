@@ -12,6 +12,13 @@ describe('user-parsers', () => {
     }
   })
 
+  it('preserves internal spaces in user search queries', () => {
+    expect(parseUserSearchQuery('  alice bob  ')).toEqual({
+      ok: true,
+      value: 'alice bob',
+    })
+  })
+
   it('rejects blank user search queries', () => {
     expect(parseUserSearchQuery('   ')).toEqual({
       ok: false,

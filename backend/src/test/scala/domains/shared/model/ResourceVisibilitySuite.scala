@@ -14,6 +14,8 @@ class ResourceVisibilitySuite extends FunSuite:
     assertEquals(ResourceVisibility.fromDatabase("friends-only"), None)
   }
 
-  test("toDatabase returns the persisted representation") {
+  test("toDatabase returns the persisted representation for every enum case") {
+    assertEquals(ResourceVisibility.toDatabase(ResourceVisibility.Private), "private")
     assertEquals(ResourceVisibility.toDatabase(ResourceVisibility.Group), "group")
+    assertEquals(ResourceVisibility.toDatabase(ResourceVisibility.Public), "public")
   }
