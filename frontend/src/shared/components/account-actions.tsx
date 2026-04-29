@@ -8,7 +8,11 @@ import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { useI18n } from '@/shared/i18n/i18n'
 
-export function AccountActions() {
+type AccountActionsProps = {
+  showSignOutLabel?: boolean
+}
+
+export function AccountActions({ showSignOutLabel = false }: AccountActionsProps) {
   const { t } = useI18n()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
@@ -39,12 +43,14 @@ export function AccountActions() {
         variant="outline"
         size="sm"
         className="rounded-xl border-slate-300 bg-white px-3"
+        aria-label={t('dashboard.signOut')}
+        title={t('dashboard.signOut')}
         onClick={() => {
           void signOut()
         }}
       >
         <LogOut className="size-4" />
-        {t('dashboard.signOut')}
+        {showSignOutLabel ? t('dashboard.signOut') : null}
       </Button>
     </div>
   )

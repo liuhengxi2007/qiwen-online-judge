@@ -34,7 +34,7 @@ export function DashboardPage() {
               })}
             </h1>
           </div>
-          <AccountActions />
+          <AccountActions showSignOutLabel />
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
