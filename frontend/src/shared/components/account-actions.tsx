@@ -32,7 +32,7 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <div className="inline-flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+      <div className="inline-flex items-center rounded-xl border border-slate-300 bg-white shadow-sm">
         <Link
           className="inline-flex items-center px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
           to={`/user/${usernameValue(session.username)}`}

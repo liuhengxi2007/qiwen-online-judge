@@ -28,7 +28,7 @@ export const enMessageMessages: Record<string, string> = {
   'messages.sending': 'Sending...',
   'messages.sendFailed': 'Unable to send message.',
   'messages.loadFailed': 'Unable to load conversation.',
-  'messages.readStatus.sent': 'Sent',
+  'messages.readStatus.unread': 'Unread',
   'messages.readStatus.read': 'Read',
   'messages.blockListTitle': 'Message blocks',
   'messages.blockListDescription': 'Blocked users cannot send you new direct messages.',

@@ -28,7 +28,7 @@ export const zhCnMessageMessages: Record<string, string> = {
   'messages.sending': '发送中...',
   'messages.sendFailed': '发送消息失败。',
   'messages.loadFailed': '加载会话失败。',
-  'messages.readStatus.sent': '已发送',
+  'messages.readStatus.unread': '未读',
   'messages.readStatus.read': '已读',
   'messages.blockListTitle': '私信黑名单',
   'messages.blockListDescription': '被拉黑的用户不能再给你发送新的私信。',

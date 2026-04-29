@@ -189,7 +189,7 @@ export function MessageConversationPage() {
                       <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
                       <div className={`mt-2 flex items-center gap-2 text-xs ${isOwn ? 'text-cyan-900' : 'text-slate-500'}`}>
                         <span>{new Date(message.createdAt).toLocaleString()}</span>
-                        {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.sent')}</span> : null}
+                        {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.unread')}</span> : null}
                       </div>
                     </div>
                   </div>
