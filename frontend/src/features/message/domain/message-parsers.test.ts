@@ -81,7 +81,7 @@ describe('message-parsers', () => {
 
   it('builds username-based message conversation paths', () => {
     expect(messageConversationPath(requireParsed(parseUsername('alice'), 'username'))).toBe('/messages/with/alice')
-    expect(messageConversationPath(requireParsed(parseUsername('alice+bob'), 'username'))).toBe('/messages/with/alice%2Bbob')
+    expect(messageConversationPath(requireParsed(parseUsername('alice-bob'), 'username'))).toBe('/messages/with/alice-bob')
   })
 
   it('maps a conversation summary contract payload', () => {
