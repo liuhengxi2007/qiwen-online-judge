@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { requireParsed } from '@/features/auth/domain/auth-parsers'
+import { parseUsername } from '@/features/auth/domain/auth'
 import {
   fromDirectMessage,
   fromMessageConversationSummary,
@@ -78,8 +80,8 @@ describe('message-parsers', () => {
   })
 
   it('builds username-based message conversation paths', () => {
-    expect(messageConversationPath('alice')).toBe('/messages/with/alice')
-    expect(messageConversationPath('alice+bob')).toBe('/messages/with/alice%2Bbob')
+    expect(messageConversationPath(requireParsed(parseUsername('alice'), 'username'))).toBe('/messages/with/alice')
+    expect(messageConversationPath(requireParsed(parseUsername('alice+bob'), 'username'))).toBe('/messages/with/alice%2Bbob')
   })
 
   it('maps a conversation summary contract payload', () => {
