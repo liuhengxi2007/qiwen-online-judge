@@ -104,7 +104,7 @@ object BlogMutationCommands:
     request: CreateBlogCommentRequest
   ): IO[CreateBlogCommentResult] =
     BlogTable.insertComment(connection, blogId, parentCommentId, actor.username, request.content).map {
-      case Some(blog) => CreateBlogCommentResult.Created(blog)
+      case Some((blog, createdCommentId)) => CreateBlogCommentResult.Created(blog, createdCommentId)
       case None => CreateBlogCommentResult.BlogNotFound
     }
 

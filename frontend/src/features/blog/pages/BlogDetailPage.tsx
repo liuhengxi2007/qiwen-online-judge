@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useParams, Navigate, Link } from 'react-router-dom'
 import { NotebookPen, ThumbsDown, ThumbsUp } from 'lucide-react'
 
@@ -36,6 +37,21 @@ export function BlogDetailPage() {
     setBlog: query.setBlog,
     onDeleted: () => navigate('/blogs'),
   })
+
+  useEffect(() => {
+    if (!query.blog || !window.location.hash) {
+      return
+    }
+
+    const element = document.getElementById(window.location.hash.slice(1))
+    if (!element) {
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      element.scrollIntoView({ block: 'center' })
+    })
+  }, [query.blog])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />

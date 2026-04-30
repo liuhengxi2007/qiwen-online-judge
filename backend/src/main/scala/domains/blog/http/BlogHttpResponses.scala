@@ -76,7 +76,7 @@ object BlogHttpResponses:
         errorResponse(Status.BadRequest, message)
       case BlogCommands.CreateBlogCommentResult.BlogNotFound =>
         errorResponse(Status.NotFound, ApiMessages.blogNotFound)
-      case BlogCommands.CreateBlogCommentResult.Created(blog) =>
+      case BlogCommands.CreateBlogCommentResult.Created(blog, _) =>
         IO.pure(Response[IO](status = Status.Created).withEntity(blog.asJson))
 
   def mapVoteCommentResult(result: BlogCommands.VoteBlogCommentResult): IO[Response[IO]] =

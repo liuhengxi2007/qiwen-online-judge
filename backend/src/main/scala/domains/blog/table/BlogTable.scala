@@ -3,7 +3,7 @@ package domains.blog.table
 import cats.effect.IO
 import domains.auth.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*
 import domains.problem.model.ProblemSlug
@@ -320,7 +320,7 @@ object BlogTable:
     parentCommentId: Option[BlogCommentId],
     authorUsername: Username,
     content: BlogCommentContent
-  ): IO[Option[BlogDetail]] =
+  ): IO[Option[(BlogDetail, BlogCommentId)]] =
     IO.blocking {
       val now = Instant.now()
       val statement = connection.prepareStatement(if parentCommentId.isDefined then insertReplySql else insertCommentSql)
@@ -343,12 +343,74 @@ object BlogTable:
             statement.setLong(6, blogId.value)
             statement.setString(7, authorUsername.value)
         val resultSet = statement.executeQuery()
-        try resultSet.next()
+        try
+          if resultSet.next() then Some(BlogCommentId(resultSet.getLong("public_id")))
+          else None
         finally resultSet.close()
       finally statement.close()
     }.flatMap {
-      case false => IO.pure(None)
-      case true => findById(connection, blogId, authorUsername)
+      case None => IO.pure(None)
+      case Some(createdCommentId) =>
+        findById(connection, blogId, authorUsername).map(_.map(_ -> createdCommentId))
+    }
+
+  def findCommentNotificationContext(
+    connection: Connection,
+    blogId: BlogId,
+    triggerCommentId: BlogCommentId
+  ): IO[Option[BlogCommentNotificationContext]] =
+    for
+      maybeBlogContext <- IO.blocking {
+        val statement = connection.prepareStatement(findCommentNotificationBlogContextSql)
+        try
+          statement.setLong(1, blogId.value)
+          statement.setLong(2, triggerCommentId.value)
+          val resultSet = statement.executeQuery()
+          try
+            if resultSet.next() then
+              Some(
+                (
+                  parseColumn("blogs.title", resultSet.getString("blog_title"), BlogTitle.parse),
+                  Username.canonical(resultSet.getString("blog_author_username")),
+                  resultSet.getString("trigger_comment_content")
+                )
+              )
+            else None
+          finally resultSet.close()
+        finally statement.close()
+      }
+      ancestors <- maybeBlogContext match
+        case None => IO.pure(Nil)
+        case Some(_) =>
+          IO.blocking {
+            val statement = connection.prepareStatement(listCommentNotificationAncestorsSql)
+            try
+              statement.setLong(1, blogId.value)
+              statement.setLong(2, triggerCommentId.value)
+              val resultSet = statement.executeQuery()
+              try
+                Iterator
+                  .continually(resultSet.next())
+                  .takeWhile(identity)
+                  .map(_ =>
+                    BlogCommentNotificationAncestor(
+                      commentId = BlogCommentId(resultSet.getLong("public_id")),
+                      authorUsername = Username.canonical(resultSet.getString("author_username"))
+                    )
+                  )
+                  .toList
+              finally resultSet.close()
+            finally statement.close()
+          }
+    yield maybeBlogContext.map { case (blogTitle, blogAuthorUsername, triggerCommentContent) =>
+      BlogCommentNotificationContext(
+        blogId = blogId,
+        blogTitle = blogTitle,
+        blogAuthorUsername = blogAuthorUsername,
+        triggerCommentId = triggerCommentId,
+        triggerCommentContent = triggerCommentContent,
+        ancestors = ancestors
+      )
     }
 
   def voteComment(

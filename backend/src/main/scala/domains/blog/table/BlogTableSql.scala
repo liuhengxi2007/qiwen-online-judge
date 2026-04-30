@@ -261,7 +261,7 @@ object BlogTableSql:
       |from blogs
       |where public_id = ?
       |  and (visibility = 'public' or author_username = ?)
-      |returning public_id, content, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
+      |returning public_id
       |""".stripMargin
 
   val insertReplySql: String =
@@ -272,7 +272,44 @@ object BlogTableSql:
       |join blog_comments parent_comment on parent_comment.blog_id = b.id and parent_comment.public_id = ?
       |where b.public_id = ?
       |  and (b.visibility = 'public' or b.author_username = ?)
-      |returning public_id, content, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
+      |returning public_id
+      |""".stripMargin
+
+  val findCommentNotificationBlogContextSql: String =
+    """
+      |select b.public_id as blog_public_id,
+      |       b.title as blog_title,
+      |       b.author_username as blog_author_username,
+      |       c.content as trigger_comment_content
+      |from blogs b
+      |join blog_comments c on c.blog_id = b.id
+      |where b.public_id = ?
+      |  and c.public_id = ?
+      |""".stripMargin
+
+  val listCommentNotificationAncestorsSql: String =
+    """
+      |with recursive ancestor_chain as (
+      |  select parent.public_id,
+      |         parent.parent_comment_id,
+      |         parent.author_username,
+      |         1 as depth
+      |  from blog_comments child
+      |  join blogs b on b.id = child.blog_id
+      |  join blog_comments parent on parent.id = child.parent_comment_id
+      |  where b.public_id = ?
+      |    and child.public_id = ?
+      |  union all
+      |  select parent.public_id,
+      |         parent.parent_comment_id,
+      |         parent.author_username,
+      |         ancestor_chain.depth + 1
+      |  from ancestor_chain
+      |  join blog_comments parent on parent.id = ancestor_chain.parent_comment_id
+      |)
+      |select public_id, author_username
+      |from ancestor_chain
+      |order by depth asc
       |""".stripMargin
 
   val findCommentVoteSql: String =

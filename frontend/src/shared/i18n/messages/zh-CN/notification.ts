@@ -1,0 +1,15 @@
+export const zhCnNotificationMessages: Record<string, string> = {
+  'notifications.pageTitle': '气温在线评测 - 通知',
+  'notifications.heading': '通知',
+  'notifications.description': '这里会显示与你内容相关的动态。未读：{{unreadCount}}。',
+  'notifications.listTitle': '通知列表',
+  'notifications.listDescription': '回复及其他账号动态会显示在这里。',
+  'notifications.empty': '还没有通知。',
+  'notifications.unread': '未读',
+  'notifications.markAllRead': '全部已读',
+  'notifications.markingRead': '标记中...',
+  'notifications.markAllReadFailed': '无法将通知标记为已读。',
+  'notifications.systemActor': '系统',
+  'notifications.blogReply.title': '{{actor}} 回复了你',
+  'notifications.blogReply.body': '《{{blogTitle}}》有了新的回复：{{contentPreview}}',
+}

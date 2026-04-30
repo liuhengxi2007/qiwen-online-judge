@@ -74,6 +74,7 @@ export function BlogCommentThread({
     return (
       <div
         key={comment.id}
+        id={`comment-${blogCommentIdValue(comment.id)}`}
         className={
           depth === 0
             ? 'rounded-3xl border border-slate-200 bg-white p-4'

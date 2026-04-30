@@ -6,6 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.model.Username
 import domains.blog.application.BlogCommands
 import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.notification.application.NotificationEventHub
 import domains.problem.model.ProblemSlug
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
@@ -15,15 +16,16 @@ import org.http4s.dsl.io.*
 
 object BlogRouter:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
+  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
+    val plans = BlogHttpPlanDefinitions.plans(notificationEventHub)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "blogs" =>
         handlers.execute(
           request,
           request.uri.query.params.get("username").map(Username.canonical),
-          BlogHttpPlanDefinitions.listBlogs
+          plans("ListBlogs").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[Option[Username], BlogCommands.ListBlogsResult]]
         )
 
       case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blogs" =>
@@ -31,14 +33,14 @@ object BlogRouter:
           case Left(message) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(problemSlug) =>
-            handlers.execute(request, problemSlug, BlogHttpPlanDefinitions.listProblemBlogs)
+            handlers.execute(request, problemSlug, plans("ListProblemBlogs").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[ProblemSlug, BlogCommands.ListBlogsResult]])
 
       case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" =>
         ProblemSlug.parse(rawProblemSlug) match
           case Left(message) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(problemSlug) =>
-            handlers.execute(request, problemSlug, BlogHttpPlanDefinitions.listPendingProblemBlogs)
+            handlers.execute(request, problemSlug, plans("ListPendingProblemBlogs").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[ProblemSlug, BlogCommands.ListBlogsResult]])
 
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
@@ -47,7 +49,7 @@ object BlogRouter:
           case (_, Left(message)) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.submitBlogToProblem)
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans("SubmitBlogToProblem").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.BlogProblemLinkInput, BlogCommands.SubmitBlogToProblemResult]])
 
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId / "accept" =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
@@ -56,7 +58,7 @@ object BlogRouter:
           case (_, Left(message)) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.acceptBlogProblemSubmission)
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans("AcceptBlogProblemSubmission").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.BlogProblemLinkInput, BlogCommands.AcceptBlogProblemSubmissionResult]])
 
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
@@ -65,7 +67,7 @@ object BlogRouter:
           case (_, Left(message)) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.linkBlogToProblem)
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans("LinkBlogToProblem").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.BlogProblemLinkInput, BlogCommands.LinkBlogToProblemResult]])
 
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId / "delete" =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
@@ -74,12 +76,12 @@ object BlogRouter:
           case (_, Left(message)) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), BlogHttpPlanDefinitions.unlinkBlogFromProblem)
+            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans("UnlinkBlogFromProblem").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.BlogProblemLinkInput, BlogCommands.UnlinkBlogFromProblemResult]])
 
       case request @ POST -> Root / "api" / "blogs" =>
         handlers.executeDecoded[CreateBlogRequest, CreateBlogRequest, BlogCommands.CreateBlogResult](
           request,
-          BlogHttpPlanDefinitions.createBlog
+          plans("CreateBlog").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[CreateBlogRequest, BlogCommands.CreateBlogResult]]
         )(identity)
 
       case request @ GET -> Root / "api" / "blogs" / rawBlogId =>
@@ -87,7 +89,7 @@ object BlogRouter:
           case Left(message) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(blogId) =>
-            handlers.execute(request, blogId, BlogHttpPlanDefinitions.getBlog)
+            handlers.execute(request, blogId, plans("GetBlog").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[BlogId, BlogCommands.GetBlogResult]])
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "vote" =>
         BlogId.parse(rawBlogId) match
@@ -96,7 +98,7 @@ object BlogRouter:
           case Right(blogId) =>
             handlers.executeDecoded[VoteBlogRequest, BlogHttpPlans.VoteBlogInput, BlogCommands.VoteBlogResult](
               request,
-              BlogHttpPlanDefinitions.voteBlog
+              plans("VoteBlog").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.VoteBlogInput, BlogCommands.VoteBlogResult]]
             )(voteRequest => BlogHttpPlans.VoteBlogInput(blogId, voteRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "update" =>
@@ -105,14 +107,14 @@ object BlogRouter:
           case Right(blogId) =>
             handlers.executeDecoded[UpdateBlogRequest, BlogHttpPlans.UpdateBlogInput, BlogCommands.UpdateBlogResult](
               request,
-              BlogHttpPlanDefinitions.updateBlog
+              plans("UpdateBlog").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.UpdateBlogInput, BlogCommands.UpdateBlogResult]]
             )(updateRequest => BlogHttpPlans.UpdateBlogInput(blogId, updateRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "delete" =>
         BlogId.parse(rawBlogId) match
           case Left(message) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(blogId) =>
-            handlers.execute(request, blogId, BlogHttpPlanDefinitions.deleteBlog)
+            handlers.execute(request, blogId, plans("DeleteBlog").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogId, BlogCommands.DeleteBlogResult]])
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" =>
         BlogId.parse(rawBlogId) match
@@ -121,7 +123,7 @@ object BlogRouter:
           case Right(blogId) =>
             handlers.executeDecoded[CreateBlogCommentRequest, BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult](
               request,
-              BlogHttpPlanDefinitions.createBlogComment
+              plans("CreateBlogComment").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult]]
             )(commentRequest => BlogHttpPlans.CreateBlogCommentInput(blogId, None, commentRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "replies" =>
@@ -133,7 +135,7 @@ object BlogRouter:
           case (Right(blogId), Right(commentId)) =>
             handlers.executeDecoded[CreateBlogCommentRequest, BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult](
               request,
-              BlogHttpPlanDefinitions.createBlogComment
+              plans("CreateBlogComment").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult]]
             )(commentRequest => BlogHttpPlans.CreateBlogCommentInput(blogId, Some(commentId), commentRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "vote" =>
@@ -145,7 +147,7 @@ object BlogRouter:
           case (Right(blogId), Right(commentId)) =>
             handlers.executeDecoded[VoteBlogCommentRequest, BlogHttpPlans.VoteBlogCommentInput, BlogCommands.VoteBlogCommentResult](
               request,
-              BlogHttpPlanDefinitions.voteBlogComment
+              plans("VoteBlogComment").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.VoteBlogCommentInput, BlogCommands.VoteBlogCommentResult]]
             )(voteRequest => BlogHttpPlans.VoteBlogCommentInput(blogId, commentId, voteRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "update" =>
@@ -155,7 +157,7 @@ object BlogRouter:
           case (Right(blogId), Right(commentId)) =>
             handlers.executeDecoded[UpdateBlogCommentRequest, BlogHttpPlans.UpdateBlogCommentInput, BlogCommands.UpdateBlogCommentResult](
               request,
-              BlogHttpPlanDefinitions.updateBlogComment
+              plans("UpdateBlogComment").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.UpdateBlogCommentInput, BlogCommands.UpdateBlogCommentResult]]
             )(updateRequest => BlogHttpPlans.UpdateBlogCommentInput(blogId, commentId, updateRequest))
 
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "delete" =>
@@ -163,5 +165,5 @@ object BlogRouter:
           case (Left(message), _) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (_, Left(message)) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case (Right(blogId), Right(commentId)) =>
-            handlers.execute(request, BlogHttpPlans.DeleteBlogCommentInput(blogId, commentId), BlogHttpPlanDefinitions.deleteBlogComment)
+            handlers.execute(request, BlogHttpPlans.DeleteBlogCommentInput(blogId, commentId), plans("DeleteBlogComment").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[BlogHttpPlans.DeleteBlogCommentInput, BlogCommands.DeleteBlogCommentResult]])
     }

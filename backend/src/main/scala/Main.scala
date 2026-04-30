@@ -18,6 +18,8 @@ import domains.submission.table.SubmissionTable
 import domains.judger.table.JudgerTable
 import domains.message.application.MessageEventHub
 import domains.message.table.MessageTable
+import domains.notification.application.NotificationEventHub
+import domains.notification.table.NotificationTable
 import domains.usergroup.table.UserGroupTable
 
 object Main extends IOApp.Simple:
@@ -41,6 +43,7 @@ object Main extends IOApp.Simple:
         .getOrElse(cats.effect.Resource.pure[IO, SessionCache](SessionCache.noop))
       sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession, sessionCache))
       messageEventHub <- MessageEventHub.resource
+      notificationEventHub <- NotificationEventHub.resource
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       _ <- cats.effect.Resource.eval {
@@ -68,11 +71,15 @@ object Main extends IOApp.Simple:
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
             _ <- MessageTable.initialize(connection)
+            _ <- NotificationTable.initialize(connection)
             _ <- ResourceAccessGrantTable.initialize(connection)
           yield ()
         }
       }
-      httpApp = CORS.policy.withAllowOriginAll(ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, messageEventHub))
+      httpApp =
+        CORS.policy.withAllowOriginAll(
+          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, messageEventHub, notificationEventHub)
+        )
       server <- serverResource(httpApp)
     yield server
 

@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, Mail } from 'lucide-react'
+import { Bell, LogOut, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { logout as logoutRequest } from '@/features/auth/api/auth-client'
 import { usernameValue } from '@/features/auth/domain/auth'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
+import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { useI18n } from '@/shared/i18n/i18n'
 
@@ -19,6 +20,7 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
   const session = useAuthStore((state) => state.session)
   const clearSession = useAuthStore((state) => state.clearSession)
   const totalUnreadCount = useMessageStore((state) => state.totalUnreadCount)
+  const unreadNotificationCount = useNotificationStore((state) => state.unreadCount)
 
   if (!session) {
     return null
@@ -40,6 +42,20 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
           <span className="font-semibold text-slate-950">
             {formatUserDisplayLabel(session, session.preferences.displayMode)}
           </span>
+        </Link>
+        <span aria-hidden className="h-5 w-px bg-slate-200" />
+        <Link
+          aria-label={t('nav.openProfileNotifications')}
+          className="relative inline-flex items-center justify-center px-3 py-1.5 text-slate-700 transition hover:bg-amber-50 hover:text-amber-950"
+          title={t('nav.openProfileNotifications')}
+          to="/notifications"
+        >
+          <Bell className="size-4" />
+          {unreadNotificationCount > 0 ? (
+            <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold leading-5 text-white">
+              {String(unreadNotificationCount)}
+            </span>
+          ) : null}
         </Link>
         <span aria-hidden className="h-5 w-px bg-slate-200" />
         <Link

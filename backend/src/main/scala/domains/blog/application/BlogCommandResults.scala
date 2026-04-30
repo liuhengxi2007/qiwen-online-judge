@@ -50,7 +50,7 @@ object BlogCommandResults:
   enum CreateBlogCommentResult:
     case ValidationFailed(message: String)
     case BlogNotFound
-    case Created(blog: BlogDetail)
+    case Created(blog: BlogDetail, createdCommentId: domains.blog.model.BlogCommentId)
 
   enum VoteBlogCommentResult:
     case NotFound

@@ -4,7 +4,10 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.blog.application.BlogCommands
+import domains.blog.application.BlogCommands.CreateBlogCommentResult
+import domains.blog.table.BlogTable
 import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.problem.model.ProblemSlug
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 
@@ -116,7 +119,8 @@ object BlogHttpPlans:
 
   final case class CreateBlogCommentInput(blogId: BlogId, parentCommentId: Option[BlogCommentId], request: CreateBlogCommentRequest)
 
-  case object CreateBlogComment extends TransactionAuthenticatedHttpPlan[CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult]:
+  final class CreateBlogCommentPlan(notificationEventHub: NotificationEventHub)
+      extends TransactionAuthenticatedHttpPlan[CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult]:
 
     override val name: String = "CreateBlogComment"
 
@@ -125,7 +129,21 @@ object BlogHttpPlans:
       actor: AuthUser,
       input: CreateBlogCommentInput
     ): IO[BlogCommands.CreateBlogCommentResult] =
-      BlogCommands.createBlogComment(connection, actor, input.blogId, input.parentCommentId, input.request)
+      BlogCommands.createBlogComment(connection, actor, input.blogId, input.parentCommentId, input.request).flatTap {
+        case CreateBlogCommentResult.Created(_, createdCommentId) =>
+          BlogTable.findCommentNotificationContext(connection, input.blogId, createdCommentId).flatMap {
+            case Some(context) =>
+              NotificationCommands.createBlogReplyNotifications(connection, actor, context).flatMap(recipients =>
+                recipients.foldLeft(IO.unit)((acc, username) =>
+                  acc *> notificationEventHub.publish(username, NotificationStreamEvent.NotificationsChanged)
+                )
+              )
+            case None =>
+              IO.unit
+          }
+        case _ =>
+          IO.unit
+      }
 
   final case class VoteBlogCommentInput(blogId: BlogId, commentId: BlogCommentId, request: VoteBlogCommentRequest)
 

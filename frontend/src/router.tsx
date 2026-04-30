@@ -16,6 +16,8 @@ import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemS
 import { MessageConversationPage } from '@/features/message/pages/MessageConversationPage'
 import { MessageInboxPage } from '@/features/message/pages/MessageInboxPage'
 import { useMessageRealtimeConnection } from '@/features/message/hooks/use-message-realtime-connection'
+import { useNotificationRealtimeConnection } from '@/features/notification/hooks/use-notification-realtime-connection'
+import { NotificationPage } from '@/features/notification/pages/NotificationPage'
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
 import { ForbiddenPage } from '@/shared/pages/ForbiddenPage'
@@ -43,6 +45,7 @@ function GuestOnlyRoute({ element }: { element: ReactElement }) {
 function AuthenticatedRoute({ element }: { element: ReactElement }) {
   const session = useAuthStore((state) => state.session)
   useMessageRealtimeConnection()
+  useNotificationRealtimeConnection()
   return session ? element : <Navigate replace to="/login" />
 }
 
@@ -118,6 +121,10 @@ export const router = createBrowserRouter([
   {
     path: '/problem-sets/:slug',
     element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
+  },
+  {
+    path: '/notifications',
+    element: <AuthenticatedRoute element={<NotificationPage />} />,
   },
   {
     path: '/messages',

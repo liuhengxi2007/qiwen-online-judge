@@ -15,6 +15,7 @@ import { enRanklistMessages } from '@/shared/i18n/messages/en/ranklist'
 import { enResourceAccessMessages } from '@/shared/i18n/messages/en/resourceAccess'
 import { enApiMessages } from '@/shared/i18n/messages/en/api'
 import { enMessageMessages } from '@/shared/i18n/messages/en/message'
+import { enNotificationMessages } from '@/shared/i18n/messages/en/notification'
 
 export const enMessages: Record<string, string> = {
   ...enCommonMessages,
@@ -34,4 +35,5 @@ export const enMessages: Record<string, string> = {
   ...enResourceAccessMessages,
   ...enApiMessages,
   ...enMessageMessages,
+  ...enNotificationMessages,
 }
