@@ -59,6 +59,7 @@ export function readAuthSession(): SessionResponse | null {
         displayMode: displayModeResult.value,
         locale: localeResult.value,
         problemTitleDisplayMode: problemTitleDisplayModeResult.value,
+        autoMarkMessageRead: parsed.preferences.autoMarkMessageRead,
       },
       siteManager: parsed.siteManager,
       problemManager: parsed.problemManager,
@@ -79,6 +80,7 @@ function isStoredAuthSessionValue(
     displayMode: string
     locale: string
     problemTitleDisplayMode: string
+    autoMarkMessageRead: boolean
   }
   siteManager: boolean
   problemManager: boolean
@@ -98,6 +100,7 @@ function isStoredAuthSessionValue(
     typeof (record.preferences as { displayMode?: unknown }).displayMode === 'string' &&
     typeof (record.preferences as { locale?: unknown }).locale === 'string' &&
     typeof (record.preferences as { problemTitleDisplayMode?: unknown }).problemTitleDisplayMode === 'string' &&
+    typeof (record.preferences as { autoMarkMessageRead?: unknown }).autoMarkMessageRead === 'boolean' &&
     typeof record.siteManager === 'boolean' &&
     typeof record.problemManager === 'boolean'
   )

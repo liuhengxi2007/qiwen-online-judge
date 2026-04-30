@@ -122,6 +122,7 @@ object AuthHttpPlans:
                         displayMode = domains.user.model.UserDisplayMode.DisplayName,
                         locale = domains.user.model.UserLocale.En,
                         problemTitleDisplayMode = domains.problem.model.ProblemTitleDisplayMode.Title,
+                        autoMarkMessageRead = false,
                         password = input.password
                       )
                       .flatMap(createdUser =>

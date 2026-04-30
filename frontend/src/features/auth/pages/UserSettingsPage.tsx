@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { UserAccountPageShell } from '@/features/auth/components/user-account-page-shell'
 import { UserPermissionsCard } from '@/features/auth/components/user-permissions-card'
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
@@ -48,6 +49,7 @@ export function UserSettingsPage() {
     displayMode,
     locale,
     problemTitleDisplayMode,
+    autoMarkMessageRead,
     currentPassword,
     newPassword,
     confirmNewPassword,
@@ -61,6 +63,7 @@ export function UserSettingsPage() {
     setDisplayMode,
     setLocale,
     setProblemTitleDisplayMode,
+    setAutoMarkMessageRead,
     setCurrentPassword,
     setNewPassword,
     setConfirmNewPassword,
@@ -277,6 +280,17 @@ export function UserSettingsPage() {
               </SelectContent>
             </Select>
             <p className="text-sm text-slate-500">{t('userSettings.problemTitleDisplayModeHelp')}</p>
+          </div>
+          <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="space-y-1">
+              <Label htmlFor="settings-auto-mark-message-read">{t('userSettings.autoMarkMessageRead')}</Label>
+              <p className="text-sm text-slate-500">{t('userSettings.autoMarkMessageReadHelp')}</p>
+            </div>
+            <Switch
+              id="settings-auto-mark-message-read"
+              checked={autoMarkMessageRead}
+              onCheckedChange={setAutoMarkMessageRead}
+            />
           </div>
           <Button
             type="button"

@@ -38,9 +38,10 @@ object AuthUserTableSupport:
           statement.setString(4, UserDisplayMode.toDatabase(UserDisplayMode.DisplayName))
           statement.setString(5, UserLocale.toDatabase(UserLocale.En))
           statement.setString(6, ProblemTitleDisplayMode.toDatabase(ProblemTitleDisplayMode.Title))
-          statement.setString(7, passwordHash.value)
-          statement.setBoolean(8, seedAdminUser.siteManager)
-          statement.setBoolean(9, seedAdminUser.problemManager)
+          statement.setBoolean(7, false)
+          statement.setString(8, passwordHash.value)
+          statement.setBoolean(9, seedAdminUser.siteManager)
+          statement.setBoolean(10, seedAdminUser.problemManager)
           statement.executeUpdate()
         finally statement.close()
       }
@@ -64,6 +65,7 @@ object AuthUserTableSupport:
         ProblemTitleDisplayMode
           .fromDatabase(resultSet.getString("problem_title_display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
+      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")

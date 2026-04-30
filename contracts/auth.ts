@@ -13,6 +13,7 @@ export type UserPreferences = {
   displayMode: UserDisplayMode
   locale: UserLocale
   problemTitleDisplayMode: ProblemTitleDisplayMode
+  autoMarkMessageRead: boolean
 }
 
 export type AuthUserListItem = {

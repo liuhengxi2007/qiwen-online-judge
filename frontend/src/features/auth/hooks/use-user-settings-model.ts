@@ -143,6 +143,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
       displayMode: state.displayMode,
       locale: state.locale,
       problemTitleDisplayMode: state.problemTitleDisplayMode,
+      autoMarkMessageRead: state.autoMarkMessageRead,
     })
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', section: 'preferences', message: validation.message })
@@ -215,6 +216,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     setLocale: (value: UserLocale) => dispatch({ type: 'set_locale', value }),
     setProblemTitleDisplayMode: (value: ProblemTitleDisplayMode) =>
       dispatch({ type: 'set_problem_title_display_mode', value }),
+    setAutoMarkMessageRead: (value: boolean) => dispatch({ type: 'set_auto_mark_message_read', value }),
     setCurrentPassword: (value: string) => dispatch({ type: 'set_current_password', value }),
     setNewPassword: (value: string) => dispatch({ type: 'set_new_password', value }),
     setConfirmNewPassword: (value: string) => dispatch({ type: 'set_confirm_new_password', value }),

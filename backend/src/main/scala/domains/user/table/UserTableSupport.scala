@@ -26,6 +26,7 @@ object UserTableSupport:
         ProblemTitleDisplayMode
           .fromDatabase(resultSet.getString("problem_title_display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
+      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")

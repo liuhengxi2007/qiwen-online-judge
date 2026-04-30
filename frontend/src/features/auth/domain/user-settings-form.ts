@@ -25,6 +25,7 @@ export type UserPreferencesDraft = {
   displayMode: UserDisplayMode
   locale: UserLocale
   problemTitleDisplayMode: ProblemTitleDisplayMode
+  autoMarkMessageRead: boolean
 }
 
 export type UserAccountDraft = {
@@ -85,6 +86,7 @@ export function validateUserPreferencesDraft(
         displayMode: displayModeResult.value,
         locale: localeResult.value,
         problemTitleDisplayMode: problemTitleDisplayModeResult.value,
+        autoMarkMessageRead: draft.autoMarkMessageRead,
       },
     },
   }

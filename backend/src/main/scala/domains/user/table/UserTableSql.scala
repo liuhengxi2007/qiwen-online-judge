@@ -10,14 +10,14 @@ object UserTableSql:
 
   val findByUsernameSql: String =
     """
-      |select username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager
+      |select username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
       |from auth_users
       |where lower(username) = lower(?)
       |""".stripMargin
 
   val listUsersSql: String =
     s"""
-      |select username, display_name, email, display_mode, locale, problem_title_display_mode, site_manager, problem_manager
+      |select username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, site_manager, problem_manager
       |from auth_users
       |where $searchPredicate
       |order by username asc
@@ -117,15 +117,15 @@ object UserTableSql:
       |update auth_users
       |set site_manager = ?, problem_manager = ?
       |where username = ?
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager
+      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
       |""".stripMargin
 
   val updateSettingsSql: String =
     """
       |update auth_users
-      |set display_name = ?, email = ?, display_mode = ?, locale = ?, problem_title_display_mode = ?, password_hash = ?
+      |set display_name = ?, email = ?, display_mode = ?, locale = ?, problem_title_display_mode = ?, auto_mark_message_read = ?, password_hash = ?
       |where username = ?
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, password_hash, site_manager, problem_manager
+      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
       |""".stripMargin
 
   val deleteSql: String =

@@ -108,6 +108,7 @@ object UserMutationCommands:
                 displayMode = targetUser.displayMode,
                 locale = targetUser.locale,
                 problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                autoMarkMessageRead = targetUser.autoMarkMessageRead,
                 newPassword = None
               )
             case UpdateUserSettingsCommand.UpdateOwnPreferences(_, request) =>
@@ -119,6 +120,7 @@ object UserMutationCommands:
                 displayMode = request.preferences.displayMode,
                 locale = request.preferences.locale,
                 problemTitleDisplayMode = request.preferences.problemTitleDisplayMode,
+                autoMarkMessageRead = request.preferences.autoMarkMessageRead,
                 newPassword = None
               )
             case UpdateUserSettingsCommand.UpdateOwnAccount(actor, request) =>
@@ -132,6 +134,7 @@ object UserMutationCommands:
                 displayMode = targetUser.displayMode,
                 locale = targetUser.locale,
                 problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                autoMarkMessageRead = targetUser.autoMarkMessageRead,
                 newPassword = None
               )
             case UpdateUserSettingsCommand.UpdateManagedPreferences(_, request) =>
@@ -143,6 +146,7 @@ object UserMutationCommands:
                 displayMode = request.preferences.displayMode,
                 locale = request.preferences.locale,
                 problemTitleDisplayMode = request.preferences.problemTitleDisplayMode,
+                autoMarkMessageRead = request.preferences.autoMarkMessageRead,
                 newPassword = None
               )
             case UpdateUserSettingsCommand.UpdateManagedAccount(_, request) =>
@@ -154,6 +158,7 @@ object UserMutationCommands:
                 displayMode = targetUser.displayMode,
                 locale = targetUser.locale,
                 problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+                autoMarkMessageRead = targetUser.autoMarkMessageRead,
                 newPassword = request.newPassword
               )
       }
@@ -195,6 +200,7 @@ object UserMutationCommands:
           displayMode = targetUser.displayMode,
           locale = targetUser.locale,
           problemTitleDisplayMode = targetUser.problemTitleDisplayMode,
+          autoMarkMessageRead = targetUser.autoMarkMessageRead,
           newPassword = request.newPassword
         )
     }
@@ -207,6 +213,7 @@ object UserMutationCommands:
     displayMode: UserDisplayMode,
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,
+    autoMarkMessageRead: Boolean,
     newPassword: Option[domains.auth.model.PlaintextPassword]
   ): IO[UpdateUserSettingsResult] =
     val passwordChanged = newPassword.nonEmpty
@@ -222,6 +229,7 @@ object UserMutationCommands:
         displayMode = displayMode,
         locale = locale,
         problemTitleDisplayMode = problemTitleDisplayMode,
+        autoMarkMessageRead = autoMarkMessageRead,
         passwordHash = nextPasswordHash
       )
     yield updatedUser match

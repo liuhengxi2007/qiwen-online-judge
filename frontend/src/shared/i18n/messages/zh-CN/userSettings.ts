@@ -16,6 +16,8 @@ export const zhCnUserSettingsMessages: Record<string, string> = {
   'userSettings.problemTitleDisplayMode.title': '题目名称',
   'userSettings.problemTitleDisplayMode.slug': '题目标识',
   'userSettings.problemTitleDisplayMode.titleWithSlug': '题目名称 + 标识',
+  'userSettings.autoMarkMessageRead': '打开会话即标记已读',
+  'userSettings.autoMarkMessageReadHelp': '开启后，打开会话并看到未读消息时，会自动将整个会话标记为已读。',
   'userSettings.profileTitle': '资料设置',
   'userSettings.profileDescription': '该页面绑定到当前登录账号对应的路由。',
   'userSettings.profileFormTitle': '资料',

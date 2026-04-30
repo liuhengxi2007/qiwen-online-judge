@@ -7,7 +7,8 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class UserPreferences(
   displayMode: UserDisplayMode,
   locale: UserLocale,
-  problemTitleDisplayMode: ProblemTitleDisplayMode
+  problemTitleDisplayMode: ProblemTitleDisplayMode,
+  autoMarkMessageRead: Boolean
 )
 
 object UserPreferences:

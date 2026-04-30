@@ -16,6 +16,8 @@ export const enUserSettingsMessages: Record<string, string> = {
   'userSettings.problemTitleDisplayMode.title': 'Problem title',
   'userSettings.problemTitleDisplayMode.slug': 'Problem slug',
   'userSettings.problemTitleDisplayMode.titleWithSlug': 'Problem title + slug',
+  'userSettings.autoMarkMessageRead': 'Mark messages read on open',
+  'userSettings.autoMarkMessageReadHelp': 'Automatically mark a conversation as read when you open it and unread messages are visible.',
   'userSettings.profileTitle': 'Profile Settings',
   'userSettings.profileDescription': 'This page is scoped to the signed-in account route.',
   'userSettings.profileFormTitle': 'Profile',

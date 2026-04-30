@@ -9,6 +9,7 @@ final case class AuthUser(
   displayMode: UserDisplayMode,
   locale: UserLocale,
   problemTitleDisplayMode: domains.problem.model.ProblemTitleDisplayMode,
+  autoMarkMessageRead: Boolean,
   passwordHash: PasswordHash,
   siteManager: Boolean,
   problemManager: Boolean

@@ -191,6 +191,7 @@ object UserTable:
     displayMode: UserDisplayMode,
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,
+    autoMarkMessageRead: Boolean,
     passwordHash: PasswordHash
   ): IO[Option[AuthUser]] =
     IO.blocking {
@@ -201,8 +202,9 @@ object UserTable:
         statement.setString(3, UserDisplayMode.toDatabase(displayMode))
         statement.setString(4, UserLocale.toDatabase(locale))
         statement.setString(5, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
-        statement.setString(6, passwordHash.value)
-        statement.setString(7, username.value.trim)
+        statement.setBoolean(6, autoMarkMessageRead)
+        statement.setString(7, passwordHash.value)
+        statement.setString(8, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try

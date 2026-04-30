@@ -46,6 +46,7 @@ object AuthUserTable:
     displayMode: UserDisplayMode,
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,
+    autoMarkMessageRead: Boolean,
     password: PlaintextPassword
   ): IO[AuthUser] =
     for
@@ -59,9 +60,10 @@ object AuthUserTable:
           statement.setString(4, UserDisplayMode.toDatabase(displayMode))
           statement.setString(5, UserLocale.toDatabase(locale))
           statement.setString(6, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
-          statement.setString(7, passwordHash.value)
-          statement.setBoolean(8, false)
+          statement.setBoolean(7, autoMarkMessageRead)
+          statement.setString(8, passwordHash.value)
           statement.setBoolean(9, false)
+          statement.setBoolean(10, false)
 
           val resultSet = statement.executeQuery()
           try

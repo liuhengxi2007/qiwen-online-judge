@@ -15,6 +15,7 @@ object AuthUserTableSchema:
       |  display_mode varchar(64) not null default 'display_name',
       |  locale varchar(32) not null default 'en',
       |  problem_title_display_mode varchar(64) not null default 'title',
+      |  auto_mark_message_read boolean not null default false,
       |  password_hash varchar(255) not null,
       |  site_manager boolean not null default false,
       |  problem_manager boolean not null default false
@@ -123,6 +124,22 @@ object AuthUserTableSchema:
       |end $$;
       |""".stripMargin
 
+  val addAutoMarkMessageReadColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'auto_mark_message_read'
+      |  ) then
+      |    alter table auth_users add column auto_mark_message_read boolean not null default false;
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
   val backfillEmailSql: String =
     """
       |update auth_users
@@ -185,6 +202,7 @@ object AuthUserTableSchema:
         statement.execute(addDisplayModeColumnSql)
         statement.execute(addLocaleColumnSql)
         statement.execute(addProblemTitleDisplayModeColumnSql)
+        statement.execute(addAutoMarkMessageReadColumnSql)
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
         statement.executeUpdate(backfillEmailSql)

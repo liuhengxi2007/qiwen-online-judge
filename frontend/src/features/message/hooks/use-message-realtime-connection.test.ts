@@ -71,6 +71,7 @@ function createSession(): SessionResponse {
       displayMode: 'display_name',
       locale: 'en',
       problemTitleDisplayMode: 'title',
+      autoMarkMessageRead: false,
     },
     siteManager: false,
     problemManager: false,

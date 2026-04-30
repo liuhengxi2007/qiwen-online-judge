@@ -167,6 +167,7 @@ export function toUpdateOwnPreferencesRequestContract(
       displayMode: userDisplayModeValue(request.preferences.displayMode),
       locale: userLocaleValue(request.preferences.locale),
       problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
+      autoMarkMessageRead: request.preferences.autoMarkMessageRead,
     },
   }
 }
@@ -197,6 +198,7 @@ export function toUpdateManagedUserPreferencesRequestContract(
       displayMode: userDisplayModeValue(request.preferences.displayMode),
       locale: userLocaleValue(request.preferences.locale),
       problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
+      autoMarkMessageRead: request.preferences.autoMarkMessageRead,
     },
   }
 }

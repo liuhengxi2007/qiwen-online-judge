@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { MessageCircle, SendHorizontal, ShieldBan } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
@@ -42,9 +42,50 @@ export function MessageConversationPage() {
   const [isMarkingConversationRead, setIsMarkingConversationRead] = useState(false)
   const [pendingReadMessageId, setPendingReadMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<MessageConversationId | null>(null)
+  const isAutoMarkingConversationReadRef = useRef(false)
 
   const parsedRouteUsername = routeUsername ? parseUsername(routeUsername) : null
   const targetUsername = parsedRouteUsername && parsedRouteUsername.ok ? parsedRouteUsername.value : null
+  const autoMarkMessageRead = session?.preferences.autoMarkMessageRead ?? false
+
+  async function syncConversationReadState(
+    activeConversationId: MessageConversationId,
+    response: MessageHistoryResponse,
+    options: { autoMarkRead?: boolean } = {},
+  ): Promise<MessageHistoryResponse> {
+    const shouldAutoMarkRead = options.autoMarkRead ?? true
+    if (
+      !shouldAutoMarkRead ||
+      !autoMarkMessageRead ||
+      response.conversation.unreadCount <= 0 ||
+      isAutoMarkingConversationReadRef.current
+    ) {
+      return response
+    }
+
+    isAutoMarkingConversationReadRef.current = true
+    setIsMarkingConversationRead(true)
+    try {
+      await markConversationRead(activeConversationId, { mode: 'conversation' })
+      void refreshInbox()
+      return await getConversationHistory(activeConversationId)
+    } finally {
+      isAutoMarkingConversationReadRef.current = false
+      setIsMarkingConversationRead(false)
+    }
+  }
+
+  async function refreshConversationState(
+    activeConversationId: MessageConversationId,
+    options: { autoMarkRead?: boolean } = {},
+  ): Promise<void> {
+    const response = await getConversationHistory(activeConversationId)
+    const syncedResponse = await syncConversationReadState(activeConversationId, response, options)
+    setHistory(syncedResponse)
+    setErrorMessage('')
+    setSendErrorMessage('')
+    void refreshInbox()
+  }
 
   useEffect(() => {
     if (!targetUsername) {
@@ -65,13 +106,10 @@ export function MessageConversationPage() {
         }
         const activeConversationId = conversation.id
         setConversationId(activeConversationId)
-        const response = await getConversationHistory(activeConversationId)
+        await refreshConversationState(activeConversationId)
         if (cancelled) {
           return
         }
-        setHistory(response)
-        setErrorMessage('')
-        setSendErrorMessage('')
       } catch (error) {
         if (!cancelled) {
           setConversationId(null)
@@ -89,7 +127,7 @@ export function MessageConversationPage() {
     return () => {
       cancelled = true
     }
-  }, [refreshInbox, t, targetUsername])
+  }, [autoMarkMessageRead, refreshInbox, t, targetUsername])
 
   useEffect(() => {
     if (!conversationId) {
@@ -106,13 +144,7 @@ export function MessageConversationPage() {
         return
       }
 
-      void getConversationHistory(activeConversationId)
-        .then((response) => {
-          setHistory(response)
-          setErrorMessage('')
-          setSendErrorMessage('')
-          void refreshInbox()
-        })
+      void refreshConversationState(activeConversationId)
         .catch((error) => {
           setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
         })
@@ -120,7 +152,7 @@ export function MessageConversationPage() {
 
     window.addEventListener(messageStreamEventName, handleRealtimeEvent as EventListener)
     return () => window.removeEventListener(messageStreamEventName, handleRealtimeEvent as EventListener)
-  }, [conversationId, refreshInbox, t])
+  }, [autoMarkMessageRead, conversationId, refreshInbox, t])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -154,11 +186,7 @@ export function MessageConversationPage() {
       .then(async () => {
         setDraft('')
         await markConversationRead(conversationId, { mode: 'conversation' })
-        const response = await getConversationHistory(conversationId)
-        setHistory(response)
-        setErrorMessage('')
-        setSendErrorMessage('')
-        void refreshInbox()
+        await refreshConversationState(conversationId, { autoMarkRead: false })
       })
       .catch((error) => {
         if (error instanceof HttpClientError && error.code === 'api.error.message.blocked_by_recipient') {
@@ -215,7 +243,7 @@ export function MessageConversationPage() {
                   </CardDescription>
                 </div>
               </div>
-              {conversation ? (
+              {conversation && !autoMarkMessageRead ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -270,7 +298,7 @@ export function MessageConversationPage() {
                       <div className={`mt-2 flex items-center gap-2 text-xs ${isOwn ? 'text-cyan-900' : 'text-slate-500'}`}>
                         <span>{new Date(message.createdAt).toLocaleString()}</span>
                         {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.unread')}</span> : null}
-                        {isUnreadIncoming ? (
+                        {isUnreadIncoming && !autoMarkMessageRead ? (
                           <Button
                             type="button"
                             variant="ghost"

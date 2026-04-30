@@ -156,6 +156,7 @@ class MessageMutationCommandsSuite extends FunSuite:
       displayMode = UserDisplayMode.DisplayName,
       locale = UserLocale.En,
       problemTitleDisplayMode = ProblemTitleDisplayMode.Title,
+      autoMarkMessageRead = false,
       passwordHash = PasswordHash("hashed"),
       siteManager = false,
       problemManager = false

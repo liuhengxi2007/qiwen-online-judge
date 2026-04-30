@@ -26,6 +26,7 @@ export type UserSettingsState = {
   displayMode: UserDisplayMode
   locale: UserLocale
   problemTitleDisplayMode: ProblemTitleDisplayMode
+  autoMarkMessageRead: boolean
   currentPassword: string
   newPassword: string
   confirmNewPassword: string
@@ -43,6 +44,7 @@ export type UserSettingsAction =
   | { type: 'set_display_mode'; value: UserDisplayMode }
   | { type: 'set_locale'; value: UserLocale }
   | { type: 'set_problem_title_display_mode'; value: ProblemTitleDisplayMode }
+  | { type: 'set_auto_mark_message_read'; value: boolean }
   | { type: 'set_current_password'; value: string }
   | { type: 'set_new_password'; value: string }
   | { type: 'set_confirm_new_password'; value: string }
@@ -88,6 +90,7 @@ export const initialUserSettingsState: UserSettingsState = {
   displayMode: 'display_name',
   locale: 'en',
   problemTitleDisplayMode: 'title',
+  autoMarkMessageRead: false,
   currentPassword: '',
   newPassword: '',
   confirmNewPassword: '',
@@ -112,6 +115,7 @@ export function reduceUserSettingsState(
         problemTitleDisplayMode: action.editedUser
           ? problemTitleDisplayModeValue(action.editedUser.preferences.problemTitleDisplayMode)
           : 'title',
+        autoMarkMessageRead: action.editedUser ? action.editedUser.preferences.autoMarkMessageRead : false,
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
@@ -128,6 +132,7 @@ export function reduceUserSettingsState(
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         locale: userLocaleValue(action.user.preferences.locale),
         problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
+        autoMarkMessageRead: action.user.preferences.autoMarkMessageRead,
         loadErrorMessage: '',
       }
     case 'query_failed':
@@ -163,6 +168,12 @@ export function reduceUserSettingsState(
       return {
         ...state,
         problemTitleDisplayMode: action.value,
+        sections: clearSectionFeedback(state.sections, 'preferences'),
+      }
+    case 'set_auto_mark_message_read':
+      return {
+        ...state,
+        autoMarkMessageRead: action.value,
         sections: clearSectionFeedback(state.sections, 'preferences'),
       }
     case 'set_current_password':
@@ -204,6 +215,7 @@ export function reduceUserSettingsState(
         displayMode: userDisplayModeValue(action.user.preferences.displayMode),
         locale: userLocaleValue(action.user.preferences.locale),
         problemTitleDisplayMode: problemTitleDisplayModeValue(action.user.preferences.problemTitleDisplayMode),
+        autoMarkMessageRead: action.user.preferences.autoMarkMessageRead,
         currentPassword: action.section === 'account' ? '' : state.currentPassword,
         newPassword: action.section === 'account' ? '' : state.newPassword,
         confirmNewPassword: action.section === 'account' ? '' : state.confirmNewPassword,

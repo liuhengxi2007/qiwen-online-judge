@@ -81,7 +81,8 @@ object AuthHttpResponses:
         UserPreferences(
           displayMode = user.displayMode,
           locale = user.locale,
-          problemTitleDisplayMode = user.problemTitleDisplayMode
+          problemTitleDisplayMode = user.problemTitleDisplayMode,
+          autoMarkMessageRead = user.autoMarkMessageRead
         ),
       siteManager = user.siteManager,
       problemManager = user.problemManager
@@ -105,7 +106,8 @@ object AuthHttpResponses:
         UserPreferences(
           displayMode = user.displayMode,
           locale = user.locale,
-          problemTitleDisplayMode = user.problemTitleDisplayMode
+          problemTitleDisplayMode = user.problemTitleDisplayMode,
+          autoMarkMessageRead = user.autoMarkMessageRead
         ),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
@@ -121,7 +123,8 @@ object AuthHttpResponses:
         UserPreferences(
           displayMode = user.displayMode,
           locale = user.locale,
-          problemTitleDisplayMode = user.problemTitleDisplayMode
+          problemTitleDisplayMode = user.problemTitleDisplayMode,
+          autoMarkMessageRead = user.autoMarkMessageRead
         ),
       siteManager = user.siteManager,
       problemManager = user.problemManager,
