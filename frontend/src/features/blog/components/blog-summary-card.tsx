@@ -2,10 +2,11 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { blogIdValue, blogTitleValue, type BlogSummary } from '@/features/blog/domain/blog'
+import { blogScoreClassName } from '@/features/blog/components/blog-support'
 import { formatProblemTitleDisplay, useProblemTitleDisplayMode, problemSlugValue } from '@/features/problem/domain/problem'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/i18n'
-import { blogScoreClassName, formatBlogDate } from '@/features/blog/components/blog-support'
 
 type BlogSummaryCardProps = {
   blog: BlogSummary
@@ -68,7 +69,7 @@ export function BlogSummaryCard({
               {t('blog.vote.score', { score: String(blog.score) })}
             </p>
           ) : null}
-          {showDate ? <p className="text-sm text-slate-500">{formatBlogDate(blog.createdAt)}</p> : null}
+          {showDate ? <DateTimeText className="text-sm text-slate-500" value={blog.createdAt} /> : null}
           {actions}
         </div>
       </div>

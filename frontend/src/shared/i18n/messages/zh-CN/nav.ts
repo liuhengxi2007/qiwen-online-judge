@@ -7,7 +7,6 @@ export const zhCnNavMessages: Record<string, string> = {
   'nav.problem': '题目详情',
   'nav.problemSets': '题单',
   'nav.messages': '私信',
-  'nav.siteManageShort': '站点管理',
   'nav.openProfileMessages': '打开收件箱',
   'nav.openProfileNotifications': '打开通知',
   'nav.submissions': '提交',

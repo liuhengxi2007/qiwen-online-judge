@@ -11,13 +11,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { usernameValue } from '@/features/auth/domain/auth'
 import { blogContentValue, blogTitleValue, parseBlogId, type BlogVisibility } from '@/features/blog/domain/blog'
 import { BlogCommentThread } from '@/features/blog/components/blog-comment-thread'
-import { blogScoreClassName, formatBlogDate } from '@/features/blog/components/blog-support'
+import { blogScoreClassName } from '@/features/blog/components/blog-support'
 import { useBlogDetailQuery } from '@/features/blog/hooks/use-blog-detail-query'
 import { useBlogDetailPageModel } from '@/features/blog/hooks/use-blog-detail-page-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
@@ -188,7 +189,7 @@ export function BlogDetailPage() {
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-3 sm:items-end">
-                    <p className="text-sm text-slate-500">{formatBlogDate(query.blog.createdAt)}</p>
+                    <DateTimeText className="text-sm text-slate-500" value={query.blog.createdAt} />
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`text-sm font-semibold ${blogScoreClassName(query.blog.score)}`}>
                         {t('blog.vote.score', { score: String(query.blog.score) })}

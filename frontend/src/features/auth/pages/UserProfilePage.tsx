@@ -17,6 +17,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
+import { formatDateTime, formatUtcOffsetTitle } from '@/shared/lib/date-time'
 
 const acceptedProblemsPerPage = 10
 
@@ -225,7 +226,9 @@ export function UserProfilePage() {
                               {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
                             </Link>
                             <p className="mt-1 text-sm text-emerald-700">
-                              {t('userProfile.acceptedAt', { acceptedAt: new Date(problem.acceptedAt).toLocaleString() })}
+                              <span title={formatUtcOffsetTitle(problem.acceptedAt)}>
+                                {t('userProfile.acceptedAt', { acceptedAt: formatDateTime(problem.acceptedAt) })}
+                              </span>
                             </p>
                           </div>
                         ))}

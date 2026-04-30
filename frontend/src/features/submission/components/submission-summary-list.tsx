@@ -16,9 +16,9 @@ import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
-  formatSubmissionDateTime,
 } from '@/features/submission/components/submission-support'
 import { usernameValue, type SessionResponse } from '@/features/auth/domain/auth'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/i18n'
 import { SubmissionPaginationControls } from '@/features/submission/components/submission-pagination-controls'
@@ -122,7 +122,7 @@ export function SubmissionSummaryList({
                   <div>
                     <dt className="text-slate-500">{t('common.submittedAt')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{formatSubmissionDateTime(submission.submittedAt)}</span>
+                      <DateTimeText className="block min-h-[1.625rem] w-full py-1" value={submission.submittedAt} />
                     </dd>
                   </div>
                   <div>

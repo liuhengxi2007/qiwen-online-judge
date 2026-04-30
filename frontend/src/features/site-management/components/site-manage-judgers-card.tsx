@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
@@ -58,8 +59,8 @@ export function SiteManageJudgersCard({ model }: { model: SiteManageModel }) {
                   <TableCell>{judger.host}</TableCell>
                   <TableCell>{judger.processId ?? t('siteManage.notAvailable')}</TableCell>
                   <TableCell>{judger.supportedLanguages.join(', ') || t('siteManage.notAvailable')}</TableCell>
-                  <TableCell>{new Date(judger.registeredAt).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(judger.lastHeartbeatAt).toLocaleString()}</TableCell>
+                  <TableCell><DateTimeText value={judger.registeredAt} /></TableCell>
+                  <TableCell><DateTimeText value={judger.lastHeartbeatAt} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

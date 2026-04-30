@@ -12,6 +12,7 @@ import { useNotificationStore } from '@/features/notification/stores/use-notific
 import { HttpClientError } from '@/shared/api/http-client'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -142,7 +143,7 @@ export function NotificationPage() {
                             {t('notifications.unread')}
                           </span>
                         ) : null}
-                        <span className="text-xs uppercase tracking-[0.16em] text-slate-500">{new Date(notification.createdAt).toLocaleString()}</span>
+                        <DateTimeText className="text-xs uppercase tracking-[0.16em] text-slate-500" value={notification.createdAt} />
                       </div>
                       <p className="text-base font-semibold text-slate-950">
                         {t(notification.titleKey, notificationTranslationValues(notification.payload, actorDisplayName))}

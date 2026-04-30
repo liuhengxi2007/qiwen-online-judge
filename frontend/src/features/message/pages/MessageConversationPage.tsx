@@ -16,6 +16,7 @@ import { messageStreamEventName } from '@/features/message/hooks/use-message-rea
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -296,7 +297,7 @@ export function MessageConversationPage() {
                     >
                       <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
                       <div className={`mt-2 flex items-center gap-2 text-xs ${isOwn ? 'text-cyan-900' : 'text-slate-500'}`}>
-                        <span>{new Date(message.createdAt).toLocaleString()}</span>
+                        <DateTimeText value={message.createdAt} />
                         {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.unread')}</span> : null}
                         {isUnreadIncoming && !autoMarkMessageRead ? (
                           <Button

@@ -14,7 +14,6 @@ type NavItem = {
     | 'orange'
     | 'amber'
     | 'sky'
-    | 'fuchsia'
     | 'cyan'
 }
 
@@ -44,10 +43,6 @@ function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
       active: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
       idle: 'text-sky-800 hover:bg-sky-50',
     },
-    fuchsia: {
-      active: 'bg-fuchsia-300 text-fuchsia-950 hover:bg-fuchsia-400',
-      idle: 'text-fuchsia-800 hover:bg-fuchsia-50',
-    },
     cyan: {
       active: 'bg-cyan-300 text-cyan-950 hover:bg-cyan-400',
       idle: 'text-cyan-800 hover:bg-cyan-50',
@@ -75,11 +70,6 @@ export function AppSectionBar() {
     { to: '/ranklist', label: t('nav.ranklist'), tone: 'amber' },
     { to: '/user-groups', label: t('nav.userGroups'), tone: 'sky' },
   ]
-
-  if (session.siteManager) {
-    items.push({ to: '/site-manage', label: t('nav.siteManageShort'), tone: 'fuchsia' })
-  }
-
   return (
     <div className="mb-8 rounded-[1.5rem] border border-slate-200/80 bg-slate-100/90 px-3 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

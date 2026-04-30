@@ -7,7 +7,6 @@ export const enNavMessages: Record<string, string> = {
   'nav.problem': 'Problem',
   'nav.problemSets': 'Problem Sets',
   'nav.messages': 'Messages',
-  'nav.siteManageShort': 'Site Mgmt',
   'nav.openProfileMessages': 'Open inbox',
   'nav.openProfileNotifications': 'Open notifications',
   'nav.submissions': 'Submissions',

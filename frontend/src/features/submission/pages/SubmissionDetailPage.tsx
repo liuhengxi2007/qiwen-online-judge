@@ -19,7 +19,6 @@ import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
-  formatSubmissionDateTime,
 } from '@/features/submission/components/submission-support'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
@@ -27,6 +26,7 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -222,9 +222,7 @@ export function SubmissionDetailPage() {
                 </div>
                 <div>
                   <p className="text-slate-500">{t('common.submittedAt')}</p>
-                  <p className="mt-1 font-medium text-slate-900">
-                    {formatSubmissionDateTime(submissionQuery.submission.submittedAt)}
-                  </p>
+                  <DateTimeText className="mt-1 font-medium text-slate-900" value={submissionQuery.submission.submittedAt} />
                 </div>
                 <div>
                   <p className="text-slate-500">{t('submission.list.timeUsed')}</p>

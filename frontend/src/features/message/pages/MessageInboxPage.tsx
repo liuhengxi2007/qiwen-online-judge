@@ -18,6 +18,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
+import { DateTimeText } from '@/shared/components/date-time-text'
 
 export function MessageInboxPage() {
   const { t } = useI18n()
@@ -202,7 +203,7 @@ export function MessageInboxPage() {
                     <p className="mt-3 line-clamp-2 text-sm text-slate-700">
                       {conversation.lastMessagePreview ?? t('messages.noMessagesYet')}
                     </p>
-                    <p className="mt-2 text-xs text-slate-500">{new Date(conversation.lastMessageAt).toLocaleString()}</p>
+                    <DateTimeText className="mt-2 text-xs text-slate-500" value={conversation.lastMessageAt} />
                   </Link>
                 ))}
               </div>

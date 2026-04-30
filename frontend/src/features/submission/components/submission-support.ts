@@ -1,3 +1,5 @@
+import { formatDateTime, formatUtcOffsetTitle } from '@/shared/lib/date-time'
+
 export function formatOptionalDurationMs(value: number | null): string {
   if (value === null) {
     return '--'
@@ -30,9 +32,9 @@ export function formatCodeLength(value: number): string {
   return `${value} B`
 }
 
-export function formatSubmissionDateTime(value: string): string {
-  return new Date(value).toLocaleString()
-}
+export const formatSubmissionDateTime = formatDateTime
+
+export const formatSubmissionDateTimeTitle = formatUtcOffsetTitle
 
 function formatWithReadablePrecision(value: number): string {
   if (value < 1) {

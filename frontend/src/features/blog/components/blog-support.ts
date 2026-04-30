@@ -1,9 +1,8 @@
-export function formatBlogDate(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+import { formatDateTime, formatUtcOffsetTitle } from '@/shared/lib/date-time'
+
+export const formatBlogDate = formatDateTime
+
+export const formatBlogDateTitle = formatUtcOffsetTitle
 
 export function blogScoreClassName(score: number): string {
   if (score > 0) {
