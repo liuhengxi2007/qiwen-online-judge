@@ -28,7 +28,7 @@ object MessageRouter:
 
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "messages" / "inbox" =>
-        handlers.execute(request, (), plans("ListInbox").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[Unit, domains.message.model.MessageInboxResponse]])
+        handlers.execute(request, (), plans.listInbox)
 
       case request @ GET -> Root / "api" / "messages" / "conversations" / conversationId / "messages" =>
         MessageConversationId.parse(conversationId) match
@@ -39,13 +39,13 @@ object MessageRouter:
             handlers.execute(
               request,
               MessageHttpPlans.HistoryInput(parsedConversationId, beforeMessageId, limit),
-              plans("GetConversationHistory").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[MessageHttpPlans.HistoryInput, GetConversationHistoryResult]]
+              plans.getConversationHistory
             )
 
       case request @ POST -> Root / "api" / "messages" / "conversations" =>
         handlers.executeDecoded[CreateConversationRequest, CreateConversationRequest, CreateConversationResult](
           request,
-          plans("CreateConversation").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[CreateConversationRequest, CreateConversationResult]]
+          plans.createConversation
         )(identity)
 
       case request @ POST -> Root / "api" / "messages" / "conversations" / conversationId / "messages" =>
@@ -58,7 +58,7 @@ object MessageRouter:
               MessageHttpPlans.SendMessageOutput
             ](
               request,
-              plans("SendMessage").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[(MessageConversationId, SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput]]
+              plans.sendMessage
             )(body => (parsedConversationId, body))
 
       case request @ POST -> Root / "api" / "messages" / "conversations" / conversationId / "read" =>
@@ -71,37 +71,35 @@ object MessageRouter:
               MessageHttpPlans.MarkConversationReadOutput
             ](
               request,
-              plans("MarkConversationRead").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[(MessageConversationId, MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput]]
+              plans.markConversationRead
             )(body => (parsedConversationId, body))
 
       case request @ POST -> Root / "api" / "messages" / "read-all" =>
         handlers.execute(
           request,
           (),
-          plans("MarkAllMessagesRead").asInstanceOf[
-            domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult]
-          ]
+          plans.markAllMessagesRead
         )
 
       case request @ GET -> Root / "api" / "messages" / "blocks" =>
         handlers.execute(
           request,
           (),
-          plans("ListBlocks").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[Unit, List[domains.message.model.MessageBlockEntry]]]
+          plans.listBlocks
         )
 
       case request @ POST -> Root / "api" / "messages" / "blocks" / targetUsername =>
         handlers.execute(
           request,
           Username.canonical(targetUsername),
-          plans("AddBlock").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[Username, AddBlockResult]]
+          plans.addBlock
         )
 
       case request @ POST -> Root / "api" / "messages" / "blocks" / targetUsername / "remove" =>
         handlers.execute(
           request,
           Username.canonical(targetUsername),
-          plans("RemoveBlock").asInstanceOf[domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[Username, RemoveBlockResult]]
+          plans.removeBlock
         )
 
       case request @ GET -> Root / "api" / "messages" / "events" =>

@@ -3,6 +3,7 @@ package domains.problem.http
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
+import domains.problem.application.ProblemDataStorage.*
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
 import domains.shared.http.ApiMessages
@@ -112,10 +113,10 @@ object ProblemHttpResponses:
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
         IO.pure(Response[IO](status = Status.Ok))
 
-  def downloadOutputResponse(output: DownloadProblemDataOutput): IO[Response[IO]] =
+  def downloadOutputResponse(problemDataStorage: ProblemDataStorage, output: DownloadProblemDataOutput): IO[Response[IO]] =
     output.authorization match
       case ProblemCommands.AuthorizeProblemDataDownloadResult.Authorized =>
-        downloadDataResponse(output.problemSlug, output.filename)
+        downloadDataResponse(problemDataStorage, output.problemSlug, output.filename)
       case other =>
         mapAuthorizeDownloadResult(other)
 
@@ -139,8 +140,8 @@ object ProblemHttpResponses:
       case ProblemCommands.ClearProblemDataResult.Cleared(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
-  def downloadDataResponse(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
-    ProblemDataStorage.readFile(problemSlug, filename).flatMap {
+  def downloadDataResponse(problemDataStorage: ProblemDataStorage, problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
+    problemDataStorage.readFile(problemSlug, filename).flatMap {
       case None =>
         errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
       case Some((sanitizedFilename, bytes)) =>
@@ -155,8 +156,8 @@ object ProblemHttpResponses:
         )
     }
 
-  def downloadDataPathResponse(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Response[IO]] =
-    ProblemDataStorage.readPath(problemSlug, path).flatMap {
+  def downloadDataPathResponse(problemDataStorage: ProblemDataStorage, problemSlug: ProblemSlug, path: ProblemDataPath): IO[Response[IO]] =
+    problemDataStorage.readPath(problemSlug, path).flatMap {
       case None =>
         errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
       case Some((storedPath, bytes)) =>

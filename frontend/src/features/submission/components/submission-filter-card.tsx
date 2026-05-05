@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { isSubmissionSort, isSubmissionVerdictFilter } from '@/features/submission/domain/submission'
 import type {
   SubmissionSort,
   SubmissionSortDirection,
@@ -196,7 +197,14 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
 
           <div className="space-y-2">
             <Label htmlFor="submission-verdict-filter">{t('submission.filter.verdict')}</Label>
-            <Select value={activeVerdictFilter} onValueChange={(value) => props.onVerdictFilterChange(value as SubmissionVerdictFilter)}>
+            <Select
+              value={activeVerdictFilter}
+              onValueChange={(value) => {
+                if (isSubmissionVerdictFilter(value)) {
+                  props.onVerdictFilterChange(value)
+                }
+              }}
+            >
               <SelectTrigger id="submission-verdict-filter" className="min-w-32 rounded-2xl border-slate-300 bg-white">
                 <SelectValue />
               </SelectTrigger>
@@ -213,7 +221,14 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
           <div className="space-y-2">
             <Label htmlFor="submission-sort">{t('submission.filter.sort')}</Label>
             <div className="flex flex-wrap gap-2">
-              <Select value={activeSort} onValueChange={(value) => props.onSortChange(value as SubmissionSort)}>
+              <Select
+                value={activeSort}
+                onValueChange={(value) => {
+                  if (isSubmissionSort(value)) {
+                    props.onSortChange(value)
+                  }
+                }}
+              >
                 <SelectTrigger id="submission-sort" className="min-w-40 flex-1 rounded-2xl border-slate-300 bg-white">
                   <SelectValue />
                 </SelectTrigger>

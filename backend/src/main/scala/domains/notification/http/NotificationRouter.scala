@@ -29,18 +29,14 @@ object NotificationRouter:
         handlers.execute(
           request,
           (),
-          plans("ListNotifications").asInstanceOf[
-            domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[Unit, domains.notification.model.NotificationListResponse]
-          ]
+          plans.listNotifications
         )
 
       case request @ GET -> Root / "api" / "notifications" / "unread-count" =>
         handlers.execute(
           request,
           (),
-          plans("GetUnreadCount").asInstanceOf[
-            domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.Plain[Unit, domains.notification.model.NotificationUnreadCountResponse]
-          ]
+          plans.getUnreadCount
         )
 
       case request @ POST -> Root / "api" / "notifications" / rawNotificationId / "read" =>
@@ -50,24 +46,14 @@ object NotificationRouter:
             handlers.execute(
               request,
               notificationId,
-              plans("MarkNotificationRead").asInstanceOf[
-                domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[
-                  NotificationId,
-                  domains.notification.application.NotificationCommands.MarkNotificationReadResult
-                ]
-              ]
+              plans.markNotificationRead
             )
 
       case request @ POST -> Root / "api" / "notifications" / "read-all" =>
         handlers.execute(
           request,
           (),
-          plans("MarkAllNotificationsRead").asInstanceOf[
-            domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan.WithTransaction[
-              Unit,
-              domains.notification.application.NotificationCommands.MarkAllNotificationsReadResult
-            ]
-          ]
+          plans.markAllNotificationsRead
         )
 
       case request @ GET -> Root / "api" / "notifications" / "events" =>

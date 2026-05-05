@@ -10,8 +10,6 @@ import {
   problemSlugValue,
   shouldShowProblemSlugSupplement,
   useProblemTitleDisplayMode,
-  type ProblemSlug,
-  type ProblemTitle,
 } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { useI18n } from '@/shared/i18n/i18n'
@@ -20,16 +18,13 @@ type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
-  const titleText = formatProblemTitleDisplay(
-    (model.problem?.title ?? 'Problem') as ProblemTitle,
-    (model.problem?.slug ?? 'problem') as ProblemSlug,
-    problemTitleDisplayMode,
-  )
 
   if (!model.problem) {
     return null
   }
+
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
+  const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

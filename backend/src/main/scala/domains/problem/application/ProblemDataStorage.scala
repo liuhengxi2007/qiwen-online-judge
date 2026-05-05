@@ -20,67 +20,40 @@ object ProblemDataStorage:
 
   type ProblemDataSnapshot = Map[ProblemDataPath, Array[Byte]]
 
-  @volatile private var current: ProblemDataStorage = LocalProblemDataStorage
+  extension (storage: ProblemDataStorage)
 
-  def install(storage: ProblemDataStorage): Unit =
-    current = storage
-
-  def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]] =
-    current.listPaths(problemSlug)
-
-  def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest] =
-    current.describeManifest(problemSlug)
-
-  def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath] =
-    current.writePath(problemSlug, path, bytes)
-
-  def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]] =
-    current.readPath(problemSlug, path)
-
-  def deletePath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Boolean] =
-    current.deletePath(problemSlug, path)
-
-  def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
-    current.snapshotDirectory(problemSlug)
-
-  def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
-    current.deleteAllFiles(problemSlug)
-
-  def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
-    current.restoreDirectory(problemSlug, snapshot)
-
-  def listFiles(problemSlug: ProblemSlug): IO[List[ProblemDataFilename]] =
-    listPaths(problemSlug).flatMap { paths =>
-      IO.fromEither(
-        paths
-          .traverse(path => ProblemDataFilename.parse(path.fileName))
-          .left
-          .map(message => IllegalArgumentException(message))
-      )
-    }
-
-  def writeFile(problemSlug: ProblemSlug, filename: ProblemDataFilename, bytes: Array[Byte]): IO[ProblemDataFilename] =
-    writePath(problemSlug, ProblemDataPath.fromFilename(filename), bytes)
-      .flatMap(path =>
+    def listFiles(problemSlug: ProblemSlug): IO[List[ProblemDataFilename]] =
+      storage.listPaths(problemSlug).flatMap { paths =>
         IO.fromEither(
-          ProblemDataFilename
-            .parse(path.fileName)
+          paths
+            .traverse(path => ProblemDataFilename.parse(path.fileName))
             .left
             .map(message => IllegalArgumentException(message))
         )
-      )
+      }
 
-  def readFile(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Option[(ProblemDataFilename, Array[Byte])]] =
-    readPath(problemSlug, ProblemDataPath.fromFilename(filename)).flatMap {
-      case None => IO.pure(None)
-      case Some((path, bytes)) =>
-        IO.fromEither(
-          ProblemDataFilename
-            .parse(path.fileName)
-            .left
-            .map(message => IllegalArgumentException(message))
-        ).map(parsed => Some((parsed, bytes)))
-    }
+    def writeFile(problemSlug: ProblemSlug, filename: ProblemDataFilename, bytes: Array[Byte]): IO[ProblemDataFilename] =
+      storage.writePath(problemSlug, ProblemDataPath.fromFilename(filename), bytes)
+        .flatMap(path =>
+          IO.fromEither(
+            ProblemDataFilename
+              .parse(path.fileName)
+              .left
+              .map(message => IllegalArgumentException(message))
+          )
+        )
 
-  def deleteFile(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Boolean] =
-    deletePath(problemSlug, ProblemDataPath.fromFilename(filename))
+    def readFile(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Option[(ProblemDataFilename, Array[Byte])]] =
+      storage.readPath(problemSlug, ProblemDataPath.fromFilename(filename)).flatMap {
+        case None => IO.pure(None)
+        case Some((path, bytes)) =>
+          IO.fromEither(
+            ProblemDataFilename
+              .parse(path.fileName)
+              .left
+              .map(message => IllegalArgumentException(message))
+          ).map(parsed => Some((parsed, bytes)))
+      }
+
+    def deleteFile(problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Boolean] =
+      storage.deletePath(problemSlug, ProblemDataPath.fromFilename(filename))

@@ -11,8 +11,8 @@ import org.typelevel.ci.CIString
 
 object JudgeProblemDataDownload:
 
-  def response(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Response[IO]] =
-    ProblemDataStorage.readPath(problemSlug, path).flatMap {
+  def response(problemDataStorage: ProblemDataStorage, problemSlug: ProblemSlug, path: ProblemDataPath): IO[Response[IO]] =
+    problemDataStorage.readPath(problemSlug, path).flatMap {
       case None =>
         errorResponse(Status.NotFound, ApiMessages.problemDataFileNotFound)
       case Some((storedPath, bytes)) =>

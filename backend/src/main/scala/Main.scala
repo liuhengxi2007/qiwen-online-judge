@@ -46,8 +46,8 @@ object Main extends IOApp.Simple:
       notificationEventHub <- NotificationEventHub.resource
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
-      _ <- cats.effect.Resource.eval {
-        val storage =
+      problemDataStorage <- cats.effect.Resource.eval {
+        IO.delay {
           problemDataStorageConfig.backend match
             case ProblemDataStorageBackend.Local =>
               LocalProblemDataStorage(problemDataStorageConfig.localRootDirectory)
@@ -55,7 +55,7 @@ object Main extends IOApp.Simple:
               problemDataStorageConfig.minio match
                 case Some(config) => MinioProblemDataStorage(config)
                 case None => throw IllegalStateException("MinIO storage backend requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET.")
-        IO.delay(ProblemDataStorage.install(storage))
+        }
       }
       _ <- cats.effect.Resource.eval {
         databaseSession.withTransactionConnection { connection =>
@@ -78,7 +78,7 @@ object Main extends IOApp.Simple:
       }
       httpApp =
         CORS.policy.withAllowOriginAll(
-          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, messageEventHub, notificationEventHub)
+          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, messageEventHub, notificationEventHub)
         )
       server <- serverResource(httpApp)
     yield server

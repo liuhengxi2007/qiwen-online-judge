@@ -11,6 +11,7 @@ import domains.problem.application.ProblemCommandSupport.*
 import java.time.Instant
 
 object ProblemDataCommands:
+  import ProblemDataStorage.*
 
   private def sha256Hex(bytes: Array[Byte]): String =
     java.security.MessageDigest
@@ -20,6 +21,7 @@ object ProblemDataCommands:
       .mkString
 
   private def writePreparedFiles(
+    problemDataStorage: ProblemDataStorage,
     problemSlug: domains.problem.model.ProblemSlug,
     preparedFiles: List[domains.shared.upload.PreparedUploadFile]
   ): IO[Unit] =
@@ -28,7 +30,7 @@ object ProblemDataCommands:
         case Left(message) =>
           IO.raiseError(IllegalArgumentException(message))
         case Right(path) =>
-          ProblemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
+          problemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
     }
 
   private def summaryFilenameFor(
@@ -41,6 +43,7 @@ object ProblemDataCommands:
       .flatMap(file => ProblemDataFilename.parse(file.path.fileName))
 
   def uploadProblemDataFile(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
@@ -55,9 +58,10 @@ object ProblemDataCommands:
           case Left(message) =>
             IO.pure(UpdateProblemDataResult.ValidationFailed(message))
           case Right(summaryFilename) =>
-            persistPreparedUpload(connection, actor, problemSlug, List(preparedFile), summaryFilename)
+            persistPreparedUpload(problemDataStorage, connection, actor, problemSlug, List(preparedFile), summaryFilename)
 
   def uploadProblemDataArchive(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
@@ -72,9 +76,10 @@ object ProblemDataCommands:
           case Left(message) =>
             IO.pure(UpdateProblemDataResult.ValidationFailed(message))
           case Right(summaryFilename) =>
-            persistPreparedUpload(connection, actor, problemSlug, preparedFiles, summaryFilename)
+            persistPreparedUpload(problemDataStorage, connection, actor, problemSlug, preparedFiles, summaryFilename)
 
   private def persistPreparedUpload(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
@@ -92,8 +97,8 @@ object ProblemDataCommands:
               IO.pure(UpdateProblemDataResult.Forbidden)
             case true =>
               for
-                snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-                result <- writePreparedFiles(problem.slug, preparedFiles)
+                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+                result <- writePreparedFiles(problemDataStorage, problem.slug, preparedFiles)
                   .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
                   .flatMap(_ => ProblemDataFileTable.replaceForProblem(connection, problem.id, toManifestEntries(preparedFiles), Instant.now()))
                   .flatMap(_ =>
@@ -105,13 +110,14 @@ object ProblemDataCommands:
                       .map(UpdateProblemDataResult.Updated(_))
                   )
                   .handleErrorWith { error =>
-                    ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                   }
               yield result
           }
     yield result
 
   def listProblemData(
+    problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
@@ -125,7 +131,7 @@ object ProblemDataCommands:
             case false =>
               IO.pure(ListProblemDataResult.Forbidden)
             case true =>
-              ProblemDataStorage
+              problemDataStorage
                 .listFiles(problem.slug)
                 .map(files => ListProblemDataResult.Listed(ProblemDataFileListResponse(files)))
           }
@@ -133,10 +139,12 @@ object ProblemDataCommands:
     }
 
   def authorizeProblemDataDownload(
+    problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[AuthorizeProblemDataDownloadResult] =
+    val _ = problemDataStorage
     databaseSession.withTransactionConnection { connection =>
       ProblemTable.findBySlug(connection, problemSlug).flatMap {
         case None =>
@@ -171,16 +179,18 @@ object ProblemDataCommands:
     }
 
   def deleteProblemData(
+    problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
     filename: ProblemDataFilename
   ): IO[DeleteProblemDataResult] =
     databaseSession.withTransactionConnection(connection =>
-      deleteProblemData(connection, actor, problemSlug, filename)
+      deleteProblemData(problemDataStorage, connection, actor, problemSlug, filename)
     )
 
   def deleteProblemData(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
@@ -195,8 +205,8 @@ object ProblemDataCommands:
             IO.pure(DeleteProblemDataResult.Forbidden)
           case true =>
             for
-              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-              result <- ProblemDataStorage.deleteFile(problem.slug, filename).flatMap {
+              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+              result <- problemDataStorage.deleteFile(problem.slug, filename).flatMap {
                 case false =>
                   IO.pure(DeleteProblemDataResult.DataFileNotFound)
                 case true =>
@@ -211,7 +221,7 @@ object ProblemDataCommands:
                         .map(DeleteProblemDataResult.Deleted(_))
                     )
                     .handleErrorWith { error =>
-                      ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                      problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                     }
               }
             yield result
@@ -219,6 +229,7 @@ object ProblemDataCommands:
     }
 
   def deleteProblemDataPath(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
@@ -233,8 +244,8 @@ object ProblemDataCommands:
             IO.pure(DeleteProblemDataResult.Forbidden)
           case true =>
             for
-              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-              result <- ProblemDataStorage.deletePath(problem.slug, path).flatMap {
+              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+              result <- problemDataStorage.deletePath(problem.slug, path).flatMap {
                 case false =>
                   IO.pure(DeleteProblemDataResult.DataFileNotFound)
                 case true =>
@@ -249,7 +260,7 @@ object ProblemDataCommands:
                         .map(DeleteProblemDataResult.Deleted(_))
                     )
                     .handleErrorWith { error =>
-                      ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                      problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                     }
               }
             yield result
@@ -257,15 +268,17 @@ object ProblemDataCommands:
     }
 
   def clearProblemData(
+    problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ClearProblemDataResult] =
     databaseSession.withTransactionConnection(connection =>
-      clearProblemData(connection, actor, problemSlug)
+      clearProblemData(problemDataStorage, connection, actor, problemSlug)
     )
 
   def clearProblemData(
+    problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
@@ -279,8 +292,8 @@ object ProblemDataCommands:
             IO.pure(ClearProblemDataResult.Forbidden)
           case true =>
             for
-              snapshot <- ProblemDataStorage.snapshotDirectory(problem.slug)
-              result <- ProblemDataStorage
+              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+              result <- problemDataStorage
                 .deleteAllFiles(problem.slug)
                 .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
                 .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
@@ -292,7 +305,7 @@ object ProblemDataCommands:
                     .map(ClearProblemDataResult.Cleared(_))
                 )
                 .handleErrorWith { error =>
-                  ProblemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                  problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
                 }
             yield result
         }

@@ -1,6 +1,8 @@
 export type { ParseResult } from '@/features/auth/domain/auth'
 export {
+  fromConversationReadStreamPayload,
   fromDirectMessage,
+  fromInboxChangedStreamPayload,
   fromMessageBlockEntry,
   fromMessageConversationSummary,
   fromMessageHistoryResponse,
@@ -20,6 +22,7 @@ export {
 export type { Username } from '@/features/auth/domain/auth'
 export type { CreateConversationRequest } from '@/features/message/model/CreateConversationRequest'
 export type { ConversationMessageFacts } from '@/features/message/model/ConversationMessageFacts'
+export type { ConversationReadStreamPayload } from '@/features/message/domain/message-parsers'
 export type { DirectMessage } from '@/features/message/model/DirectMessage'
 export type { MarkConversationReadRequest } from '@/features/message/model/MarkConversationReadRequest'
 export type { MessageBlockEntry } from '@/features/message/model/MessageBlockEntry'

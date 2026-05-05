@@ -6,10 +6,17 @@ import domains.shared.http.AuthenticatedHttpPlanRegistry
 object NotificationHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
-  def plans(notificationEventHub: NotificationEventHub): Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
-    List(
-      Plain(NotificationHttpPlans.ListNotifications, NotificationHttpResponses.listResponse),
-      Plain(NotificationHttpPlans.GetUnreadCount, NotificationHttpResponses.unreadCountResponse),
-      WithTransaction(new NotificationHttpPlans.MarkNotificationReadPlan(notificationEventHub), NotificationHttpResponses.markReadResponse),
-      WithTransaction(new NotificationHttpPlans.MarkAllNotificationsReadPlan(notificationEventHub), NotificationHttpResponses.markAllReadResponse)
-    ).map(plan => plan.name -> plan).toMap
+  final case class RegisteredPlans(
+    listNotifications: Plain[Unit, domains.notification.model.NotificationListResponse],
+    getUnreadCount: Plain[Unit, domains.notification.model.NotificationUnreadCountResponse],
+    markNotificationRead: WithTransaction[domains.notification.model.NotificationId, domains.notification.application.NotificationCommands.MarkNotificationReadResult],
+    markAllNotificationsRead: WithTransaction[Unit, domains.notification.application.NotificationCommands.MarkAllNotificationsReadResult]
+  )
+
+  def plans(notificationEventHub: NotificationEventHub): RegisteredPlans =
+    RegisteredPlans(
+      listNotifications = Plain(NotificationHttpPlans.ListNotifications, NotificationHttpResponses.listResponse),
+      getUnreadCount = Plain(NotificationHttpPlans.GetUnreadCount, NotificationHttpResponses.unreadCountResponse),
+      markNotificationRead = WithTransaction(new NotificationHttpPlans.MarkNotificationReadPlan(notificationEventHub), NotificationHttpResponses.markReadResponse),
+      markAllNotificationsRead = WithTransaction(new NotificationHttpPlans.MarkAllNotificationsReadPlan(notificationEventHub), NotificationHttpResponses.markAllReadResponse)
+    )

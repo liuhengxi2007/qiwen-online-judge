@@ -3,6 +3,7 @@ package domains.judge.http
 import cats.effect.{Clock, IO}
 import database.DatabaseSession
 import domains.judge.application.{JudgeCommands, JudgeConfig}
+import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataPath, ProblemSlug}
 import domains.submission.model.SubmissionId
 import judgeprotocol.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
@@ -12,7 +13,8 @@ import org.http4s.dsl.Http4sDsl
 
 final class JudgeHttpHandlers(
   databaseSession: DatabaseSession,
-  judgeConfig: JudgeConfig
+  judgeConfig: JudgeConfig,
+  problemDataStorage: ProblemDataStorage
 )(using dsl: Http4sDsl[IO]):
 
   import dsl.*
@@ -49,7 +51,7 @@ final class JudgeHttpHandlers(
       val maybePath = request.uri.query.params.get("path").flatMap(raw => ProblemDataPath.parse(raw).toOption)
       (maybeProblemSlug, maybePath) match
         case (Some(problemSlug), Some(path)) =>
-          JudgeProblemDataDownload.response(problemSlug, path)
+          JudgeProblemDataDownload.response(problemDataStorage, problemSlug, path)
         case _ =>
           JudgeHttpResponses.validationErrorResponse("Valid problemSlug and path query parameters are required.")
     }

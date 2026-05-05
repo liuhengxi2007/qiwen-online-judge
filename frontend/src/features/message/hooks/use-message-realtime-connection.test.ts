@@ -166,17 +166,68 @@ describe('useMessageRealtimeConnection', () => {
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1))
     const eventSource = MockEventSource.instances[0]
 
-    eventSource?.emit('message_received', { kind: 'message' })
-    eventSource?.emit('conversation_read', { kind: 'read' })
-    eventSource?.emit('inbox_changed', { kind: 'inbox' })
+    eventSource?.emit('message_received', {
+      id: '46ef1556-0d91-4a53-9cd0-ac7d71037b5b',
+      conversationId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+      sender: { username: 'alice', displayName: 'Alice' },
+      recipientUsername: 'bob',
+      content: 'Hello',
+      createdAt: '2026-05-05T00:00:00Z',
+      readAt: null,
+    })
+    eventSource?.emit('conversation_read', {
+      conversationId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+      readUpToMessageId: '46ef1556-0d91-4a53-9cd0-ac7d71037b5b',
+      readerUsername: 'bob',
+    })
+    eventSource?.emit('inbox_changed', {})
 
     await waitFor(() => expect(refreshInbox).toHaveBeenCalledTimes(4))
     expect(receivedEvents).toHaveLength(3)
     expect(receivedEvents.map((event) => event.detail)).toEqual([
-      { type: 'message_received', payload: { kind: 'message' } },
-      { type: 'conversation_read', payload: { kind: 'read' } },
-      { type: 'inbox_changed', payload: { kind: 'inbox' } },
+      {
+        type: 'message_received',
+        payload: {
+          id: '46ef1556-0d91-4a53-9cd0-ac7d71037b5b',
+          conversationId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          sender: { username: 'alice', displayName: 'Alice' },
+          recipientUsername: 'bob',
+          content: 'Hello',
+          createdAt: '2026-05-05T00:00:00Z',
+          readAt: null,
+        },
+      },
+      {
+        type: 'conversation_read',
+        payload: {
+          conversationId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          readUpToMessageId: '46ef1556-0d91-4a53-9cd0-ac7d71037b5b',
+          readerUsername: 'bob',
+        },
+      },
+      { type: 'inbox_changed', payload: {} },
     ])
+
+    rendered.unmount()
+  })
+
+  it('ignores malformed server events without refreshing inbox or dispatching custom events', async () => {
+    const harness = await loadHarness()
+    const { refreshInbox } = configureLoggedInStores(harness)
+    const receivedEvents: CustomEvent[] = []
+    window.addEventListener(harness.messageStreamEventName, (event) => {
+      receivedEvents.push(event as CustomEvent)
+    })
+
+    const rendered = renderHook(() => harness.useMessageRealtimeConnection(), { reactStrictMode: false })
+    await waitFor(() => expect(MockEventSource.instances).toHaveLength(1))
+    const eventSource = MockEventSource.instances[0]
+
+    eventSource?.emit('message_received', { bad: 'payload' })
+
+    await act(async () => {})
+    expect(refreshInbox).toHaveBeenCalledTimes(1)
+    expect(receivedEvents).toHaveLength(0)
 
     rendered.unmount()
   })

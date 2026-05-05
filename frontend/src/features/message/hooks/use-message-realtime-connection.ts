@@ -1,20 +1,54 @@
 import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
+import {
+  fromConversationReadStreamPayload,
+  fromDirectMessage,
+  fromInboxChangedStreamPayload,
+  type ConversationReadStreamPayload,
+  type DirectMessage,
+} from '@/features/message/domain/message'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 
 export const messageStreamEventName = 'qiwen:message-stream-event'
 
-type MessageStreamEventDetail =
-  | { type: 'message_received'; payload: unknown }
-  | { type: 'conversation_read'; payload: unknown }
-  | { type: 'inbox_changed'; payload: unknown }
+export type MessageStreamEventDetail =
+  | { type: 'message_received'; payload: DirectMessage }
+  | { type: 'conversation_read'; payload: ConversationReadStreamPayload }
+  | { type: 'inbox_changed'; payload: Record<string, never> }
 
 let eventSource: EventSource | null = null
 let subscriberCount = 0
 
 function dispatchMessageStreamEvent(detail: MessageStreamEventDetail) {
   window.dispatchEvent(new CustomEvent<MessageStreamEventDetail>(messageStreamEventName, { detail }))
+}
+
+function decodeEventPayload(type: 'message_received' | 'conversation_read' | 'inbox_changed', rawData: string): MessageStreamEventDetail | null {
+  try {
+    const parsed = JSON.parse(rawData) as unknown
+    switch (type) {
+      case 'message_received':
+        return { type, payload: fromDirectMessage(parsed) }
+      case 'conversation_read':
+        return { type, payload: fromConversationReadStreamPayload(parsed) }
+      case 'inbox_changed':
+        return { type, payload: fromInboxChangedStreamPayload(parsed) }
+    }
+  } catch (error) {
+    console.error(`Failed to decode ${type} event.`, error)
+    return null
+  }
+}
+
+function handleIncomingEvent(type: 'message_received' | 'conversation_read' | 'inbox_changed', event: Event, refreshInbox: () => Promise<void>) {
+  const decoded = decodeEventPayload(type, (event as MessageEvent).data)
+  if (!decoded) {
+    return
+  }
+
+  void refreshInbox()
+  dispatchMessageStreamEvent(decoded)
 }
 
 function ensureEventSource(refreshInbox: () => Promise<void>) {
@@ -25,18 +59,15 @@ function ensureEventSource(refreshInbox: () => Promise<void>) {
   eventSource = new EventSource('/api/messages/events', { withCredentials: true })
 
   eventSource.addEventListener('message_received', (event) => {
-    void refreshInbox()
-    dispatchMessageStreamEvent({ type: 'message_received', payload: JSON.parse((event as MessageEvent).data) })
+    handleIncomingEvent('message_received', event, refreshInbox)
   })
 
   eventSource.addEventListener('conversation_read', (event) => {
-    void refreshInbox()
-    dispatchMessageStreamEvent({ type: 'conversation_read', payload: JSON.parse((event as MessageEvent).data) })
+    handleIncomingEvent('conversation_read', event, refreshInbox)
   })
 
   eventSource.addEventListener('inbox_changed', (event) => {
-    void refreshInbox()
-    dispatchMessageStreamEvent({ type: 'inbox_changed', payload: JSON.parse((event as MessageEvent).data) })
+    handleIncomingEvent('inbox_changed', event, refreshInbox)
   })
 }
 

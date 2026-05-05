@@ -12,7 +12,7 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { createConversation, getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/api/message-client'
 import type { MessageConversationId, MessageHistoryResponse } from '@/features/message/domain/message'
 import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/domain/message'
-import { messageStreamEventName } from '@/features/message/hooks/use-message-realtime-connection'
+import { messageStreamEventName, type MessageStreamEventDetail } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -20,11 +20,6 @@ import { DateTimeText } from '@/shared/components/date-time-text'
 import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
-
-type MessageStreamEventDetail =
-  | { type: 'message_received'; payload: { conversationId?: string } }
-  | { type: 'conversation_read'; payload: { conversationId?: string } }
-  | { type: 'inbox_changed'; payload: unknown }
 
 const minimumIncomingMessagesBeforeBlockShortcut = 5
 

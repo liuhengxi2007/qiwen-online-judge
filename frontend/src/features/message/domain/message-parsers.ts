@@ -14,6 +14,12 @@ import type { MessageId } from '@/features/message/model/MessageId'
 import type { MessageInboxResponse } from '@/features/message/model/MessageInboxResponse'
 import type { SendDirectMessageRequest } from '@/features/message/model/SendDirectMessageRequest'
 
+export type ConversationReadStreamPayload = {
+  conversationId: MessageConversationId
+  readUpToMessageId: MessageId
+  readerUsername: Username
+}
+
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const maxMessageLength = 5000
 
@@ -159,6 +165,26 @@ export function fromMessageBlockEntry(value: unknown): MessageBlockEntry {
     user: readUserIdentity(value.user, 'blocked user'),
     createdAt: readString(value.createdAt, 'block created at'),
   }
+}
+
+export function fromConversationReadStreamPayload(value: unknown): ConversationReadStreamPayload {
+  if (!isRecord(value)) {
+    throw new Error('Invalid conversation read event payload.')
+  }
+
+  return {
+    conversationId: requireParsed(parseMessageConversationId(readString(value.conversationId, 'conversation read conversation id')), 'conversation read conversation id'),
+    readUpToMessageId: requireParsed(parseMessageId(readString(value.readUpToMessageId, 'conversation read message id')), 'conversation read message id'),
+    readerUsername: requireParsed(parseUsername(readString(value.readerUsername, 'conversation read reader username')), 'conversation read reader username'),
+  }
+}
+
+export function fromInboxChangedStreamPayload(value: unknown): Record<string, never> {
+  if (!isRecord(value)) {
+    throw new Error('Invalid inbox changed event payload.')
+  }
+
+  return {}
 }
 
 export function toCreateConversationRequest(request: CreateConversationRequest): { targetUsername: string } {
