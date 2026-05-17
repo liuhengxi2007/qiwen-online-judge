@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+<<<<<<< HEAD
 import { CheckCircle2, FileCode2, PauseCircle, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
+=======
+import { CheckCircle2, FileCode2, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
+>>>>>>> origin/main
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -18,7 +22,11 @@ import {
 import { parseProblemDataPath, type ProblemSlug } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { HttpClientError } from '@/shared/api/http-client'
+<<<<<<< HEAD
 import { useI18n } from '@/shared/i18n/use-i18n'
+=======
+import { useI18n } from '@/shared/i18n/i18n'
+>>>>>>> origin/main
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
@@ -75,6 +83,14 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
     setErrorMessage('')
     setStatusMessage('')
 
+<<<<<<< HEAD
+=======
+    if (!validation.ok) {
+      setErrorMessage(t('problem.data.judgeConfig.validationBlocksSave'))
+      return
+    }
+
+>>>>>>> origin/main
     setIsSaving(true)
     try {
       const result = await saveProblemDataText(problemSlug, judgeDataPath, content)
@@ -148,7 +164,11 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             </Button>
             <Button
               type="button"
+<<<<<<< HEAD
               disabled={isSaving || isLoading || !isDirty}
+=======
+              disabled={isSaving || isLoading || !isDirty || !validation.ok}
+>>>>>>> origin/main
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
                 void saveConfig()
@@ -157,6 +177,7 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
               <Save className="size-4" />
               {isSaving ? t('problem.data.judgeConfig.saving') : t('problem.data.judgeConfig.save')}
             </Button>
+<<<<<<< HEAD
             {model.problem?.ready ? (
               <Button
                 type="button"
@@ -183,6 +204,8 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
                 {model.isSavingReady ? t('problem.data.ready.saving') : t('problem.data.ready.setReady')}
               </Button>
             )}
+=======
+>>>>>>> origin/main
           </div>
         </div>
 

@@ -75,6 +75,7 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.data.uploading': '正在上传数据...',
   'problem.data.upload': '上传数据文件',
   'problem.data.fileOverwriteWarning': '上传 {{filename}} 会覆盖同一路径的现有文件。',
+<<<<<<< HEAD
   'problem.data.archiveOverwriteWarning': '上传 zip 压缩包会增量覆盖路径相同的文件，其他已有文件会保留。',
   'problem.data.ready.ready': '已就绪，可评测',
   'problem.data.ready.notReady': '未就绪，暂不评测',
@@ -84,6 +85,9 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.data.ready.setSucceeded': '题目数据已就绪，可开始评测。',
   'problem.data.ready.unsetSucceeded': '题目数据已标记为未就绪。',
   'problem.data.ready.saveFailed': '无法更新就绪状态。',
+=======
+  'problem.data.archiveOverwriteWarning': '上传 zip 压缩包可能会覆盖路径相同的现有文件。',
+>>>>>>> origin/main
   'problem.data.judgeConfig.title': 'judge.yaml 编辑器',
   'problem.data.judgeConfig.description': '编辑题目数据根目录下的评测配置。',
   'problem.data.judgeConfig.reload': '重新加载',

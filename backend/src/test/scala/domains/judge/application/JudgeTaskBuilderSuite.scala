@@ -1,16 +1,23 @@
 package domains.judge.application
 
 import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry}
+<<<<<<< HEAD
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy}
 import domains.user.model.UserIdentity
 import domains.auth.model.{DisplayName, Username}
+=======
+import domains.problem.model.{ProblemDataPath, ProblemId, ProblemSlug}
+>>>>>>> origin/main
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.table.ClaimedSubmission
 import munit.FunSuite
 
 import java.nio.charset.StandardCharsets
+<<<<<<< HEAD
 import java.time.Instant
+=======
+>>>>>>> origin/main
 import java.util.UUID
 
 class JudgeTaskBuilderSuite extends FunSuite:
@@ -33,6 +40,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   )
 
+<<<<<<< HEAD
   private val problem = domains.problem.model.ProblemDetail(
     id = claimedSubmission.problemId,
     slug = claimedSubmission.problemSlug,
@@ -50,6 +58,8 @@ class JudgeTaskBuilderSuite extends FunSuite:
     updatedAt = Instant.EPOCH
   )
 
+=======
+>>>>>>> origin/main
   test("parseConfigBytes accepts enum aggregation names") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
@@ -110,6 +120,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   }
 
+<<<<<<< HEAD
   test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
@@ -136,6 +147,8 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   }
 
+=======
+>>>>>>> origin/main
   private def entry(path: String): ProblemDataManifestEntry =
     ProblemDataManifestEntry(ProblemDataPath(path), sizeBytes = 1L, sha256 = path)
 
