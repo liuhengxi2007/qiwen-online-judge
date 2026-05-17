@@ -7,6 +7,7 @@ import type { SubmissionLanguage } from '@/features/submission/model/SubmissionL
 import type { SubmissionSourceCode } from '@/features/submission/model/SubmissionSourceCode'
 import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
 import type { SubmissionVerdict } from '@/features/submission/model/SubmissionVerdict'
+import type { JudgeResult } from '@/features/submission/model/JudgeResult'
 
 export type SubmissionDetail = {
   id: SubmissionId
@@ -21,6 +22,8 @@ export type SubmissionDetail = {
   judgeMessage: string | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
+  score: number | null
+  judgeResult: JudgeResult | null
   codeLength: number
   sourceCode: SubmissionSourceCode
   submittedAt: string

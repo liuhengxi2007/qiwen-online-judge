@@ -54,10 +54,12 @@ object SubmissionTable:
         statement.setNull(7, java.sql.Types.LONGVARCHAR)
         statement.setNull(8, java.sql.Types.BIGINT)
         statement.setNull(9, java.sql.Types.BIGINT)
-        statement.setString(10, sourceCode.value)
-        statement.setTimestamp(11, Timestamp.from(now))
-        statement.setNull(12, java.sql.Types.TIMESTAMP)
-        statement.setNull(13, java.sql.Types.TIMESTAMP)
+        statement.setNull(10, java.sql.Types.NUMERIC)
+        statement.setNull(11, java.sql.Types.VARCHAR)
+        statement.setString(12, sourceCode.value)
+        statement.setTimestamp(13, Timestamp.from(now))
+        statement.setNull(14, java.sql.Types.TIMESTAMP)
+        statement.setNull(15, java.sql.Types.TIMESTAMP)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -77,6 +79,8 @@ object SubmissionTable:
               judgeMessage = Option(resultSet.getString("judge_message")),
               timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
               memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+              score = readOptionalBigDecimal(resultSet, "score"),
+              judgeResult = readOptionalJudgeResult(resultSet, "judge_result"),
               codeLength = sourceCode.value.getBytes(StandardCharsets.UTF_8).length,
               sourceCode = sourceCode,
               submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
@@ -185,9 +189,11 @@ object SubmissionTable:
         setOptionalJudgeMessage(statement, 3, judgeState.judgeMessage)
         setOptionalLong(statement, 4, judgeState.timeUsedMs)
         setOptionalLong(statement, 5, judgeState.memoryUsedKb)
-        setOptionalTimestamp(statement, 6, judgeState.startedAt)
-        setOptionalTimestamp(statement, 7, judgeState.finishedAt)
-        statement.setLong(8, submissionId.value)
+        setOptionalBigDecimal(statement, 6, judgeState.score)
+        setOptionalJudgeResult(statement, 7, judgeState.judgeResult)
+        setOptionalTimestamp(statement, 8, judgeState.startedAt)
+        setOptionalTimestamp(statement, 9, judgeState.finishedAt)
+        statement.setLong(10, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

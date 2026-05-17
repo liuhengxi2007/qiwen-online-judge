@@ -1,16 +1,21 @@
 package domains.judge.application
 
 import cats.effect.IO
-import domains.problem.application.ProblemDataManifest
+import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataStorage}
 import domains.problem.model.ProblemDataPath
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.submission.table.ClaimedSubmission
-import judgeprotocol.model.{JudgeTask, JudgeTaskFileRef, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
+import judgeprotocol.model.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
+import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
+
+import scala.jdk.CollectionConverters.*
+import scala.util.Try
 
 object JudgeTaskBuilder:
 
   def buildJudgeTask(
     connection: java.sql.Connection,
+    problemDataStorage: ProblemDataStorage,
     claimedSubmission: ClaimedSubmission
   ): IO[Either[String, JudgeTask]] =
     for
@@ -18,70 +23,267 @@ object JudgeTaskBuilder:
       manifest <- problem match
         case None => IO.pure(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
         case Some(foundProblem) => ProblemDataFileTable.manifestForProblem(connection, foundProblem.id, claimedSubmission.problemSlug)
-      testcases <- loadTestcases(manifest)
+      config <- loadConfig(problemDataStorage, claimedSubmission, manifest)
     yield
       problem match
         case None =>
           Left("Problem not found for claimed submission.")
-        case Some(_) if testcases.isEmpty =>
-          Left("No valid testcases were found for this problem.")
-        case Some(_) =>
-          Right(
-            JudgeTask(
-              submissionId = SubmissionId(claimedSubmission.id.value),
-              problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
-              language = toProtocolLanguage(claimedSubmission.language),
-              sourceCode = SubmissionSourceCode(claimedSubmission.sourceCode.value),
-              timeLimitMs = ProblemTimeLimitMs(claimedSubmission.timeLimitMs),
-              spaceLimitMb = ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb),
-              problemDataVersion = manifest.version,
-              testcases = testcases
-            )
-          )
-
-  private def loadTestcases(manifest: ProblemDataManifest): IO[List[JudgeTaskTestcase]] =
-    val testcaseFiles = manifest.entries
-      .filter(_.path.value.toLowerCase.endsWith(".in"))
-      .sortBy(_.path.value)
-    testcaseFiles.foldLeft(IO.pure(List.empty[JudgeTaskTestcase])) { (accIO, inputEntry) =>
-      for
-        acc <- accIO
-        maybeTestcase <- loadTestcase(inputEntry, manifest.entries)
-      yield maybeTestcase match
-        case Some(testcase) => acc :+ testcase
-        case None => acc
-    }
-
-  private def loadTestcase(
-    inputEntry: domains.problem.application.ProblemDataManifestEntry,
-    allEntries: List[domains.problem.application.ProblemDataManifestEntry]
-  ): IO[Option[JudgeTaskTestcase]] =
-    val testcaseName = inputEntry.path.fileName.stripSuffix(".in")
-    val candidateOutputPaths =
-      List(
-        inputEntry.path.value.stripSuffix(".in") + ".out",
-        inputEntry.path.value.stripSuffix(".in") + ".ans"
-      ).flatMap(candidate => ProblemDataPath.parse(candidate).toOption)
-    val maybeOutput = candidateOutputPaths.view.flatMap(candidate => allEntries.find(_.path == candidate)).headOption
-    IO.pure(
-      maybeOutput.map(outputEntry =>
-        JudgeTaskTestcase(
-          name = TestcaseName(testcaseName),
-          input = JudgeTaskFileRef(
-            path = inputEntry.path.value,
-            sizeBytes = inputEntry.sizeBytes,
-            sha256 = inputEntry.sha256
-          ),
-          expectedOutput = JudgeTaskFileRef(
-            path = outputEntry.path.value,
-            sizeBytes = outputEntry.sizeBytes,
-            sha256 = outputEntry.sha256
-          )
-        )
-      )
-    )
+        case Some(_) => config
 
   private def toProtocolLanguage(language: domains.submission.model.SubmissionLanguage): SubmissionLanguage =
     language match
       case domains.submission.model.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
       case domains.submission.model.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
+
+  private def loadConfig(
+    problemDataStorage: ProblemDataStorage,
+    claimedSubmission: ClaimedSubmission,
+    manifest: ProblemDataManifest
+  ): IO[Either[String, JudgeTask]] =
+    ProblemDataPath.parse("judge.yaml") match
+      case Left(message) => IO.pure(Left(message))
+      case Right(configPath) =>
+        problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
+          case None => Left("judge.yaml is required at the problem data root.")
+          case Some((_, bytes)) =>
+            parseYaml(bytes).flatMap { root =>
+              buildFromYaml(claimedSubmission, manifest, root)
+            }
+        }
+
+  private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =
+    Try {
+        val settings = LoadSettings.builder().setLabel("judge.yaml").build()
+        val loaded = Load(settings).loadFromString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
+        toScalaMap(loaded)
+      }
+      .toEither
+      .left
+      .map(error => s"Invalid judge.yaml: ${error.getMessage}")
+
+  private def buildFromYaml(
+    claimedSubmission: ClaimedSubmission,
+    manifest: ProblemDataManifest,
+    root: Map[String, Any]
+  ): Either[String, JudgeTask] =
+    for
+      version <- intAt(root, "version").flatMap(value => Either.cond(value == 1, value, "judge.yaml version must be 1."))
+      roundingScale <- optionalIntAt(root, "roundingScale").map(_.getOrElse(6))
+      _ <- Either.cond(roundingScale >= 0 && roundingScale <= 18, (), "roundingScale must be between 0 and 18.")
+      rootLimits <- limitsAt(root).map(_.orElse(Some(JudgeTaskLimits(ProblemTimeLimitMs(claimedSubmission.timeLimitMs), ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb)))))
+      rootChecker <- checkerAt(root)
+      rootAggregation <- aggregationAt(root)
+      subtaskMaps <- listOfMapsAt(root, "subtasks")
+      _ <- Either.cond(subtaskMaps.nonEmpty, (), "judge.yaml must define at least one subtask.")
+      subtaskRatios <- ratiosFor(subtaskMaps)
+      subtasks <- sequence(subtaskMaps.zip(subtaskRatios).zipWithIndex.map { case ((subtaskMap, subtaskRatio), subtaskIndex) =>
+        buildSubtask(manifest, subtaskMap, subtaskIndex, subtaskRatio, rootLimits, rootChecker, rootAggregation)
+      })
+      taskAggregation = rootAggregation.subtasks.getOrElse(defaultAggregation)
+    yield
+      JudgeTask(
+        submissionId = SubmissionId(claimedSubmission.id.value),
+        problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
+        language = toProtocolLanguage(claimedSubmission.language),
+        sourceCode = SubmissionSourceCode(claimedSubmission.sourceCode.value),
+        problemDataVersion = manifest.version,
+        roundingScale = roundingScale,
+        aggregation = taskAggregation,
+        subtasks = subtasks
+      )
+
+  private def buildSubtask(
+    manifest: ProblemDataManifest,
+    raw: Map[String, Any],
+    index: Int,
+    scoreRatio: BigDecimal,
+    parentLimits: Option[JudgeTaskLimits],
+    parentChecker: Option[JudgeTaskChecker],
+    parentAggregation: AggregationConfig
+  ): Either[String, JudgeTaskSubtask] =
+    for
+      name <- optionalStringAt(raw, "name").map(_.getOrElse(s"subtask-${index + 1}"))
+      limits <- limitsAt(raw).map(_.orElse(parentLimits))
+      checker <- checkerAt(raw).map(_.orElse(parentChecker))
+      aggregation <- aggregationAt(raw).map(parentAggregation.merge)
+      testcaseMaps <- listOfMapsAt(raw, "testcases")
+      _ <- Either.cond(testcaseMaps.nonEmpty, (), s"Subtask $name must define at least one testcase.")
+      testcaseRatios <- ratiosFor(testcaseMaps)
+      testcases <- sequence(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
+        buildTestcase(manifest, testcaseMap, testcaseIndex, testcaseRatio, limits, checker, name)
+      })
+    yield JudgeTaskSubtask(name = name, scoreRatio = scoreRatio, aggregation = aggregation.testcases.getOrElse(defaultAggregation), testcases = testcases)
+
+  private def buildTestcase(
+    manifest: ProblemDataManifest,
+    raw: Map[String, Any],
+    index: Int,
+    scoreRatio: BigDecimal,
+    parentLimits: Option[JudgeTaskLimits],
+    parentChecker: Option[JudgeTaskChecker],
+    subtaskName: String
+  ): Either[String, JudgeTaskTestcase] =
+    for
+      name <- optionalStringAt(raw, "name").map(_.getOrElse(s"${index + 1}"))
+      limits <- limitsAt(raw).map(_.orElse(parentLimits)).flatMap(_.toRight(s"Limits are required for testcase $subtaskName/$name."))
+      checker <- checkerAt(raw).map(_.orElse(parentChecker)).flatMap(_.toRight(s"Checker is required for testcase $subtaskName/$name."))
+      resolvedChecker <- resolveChecker(manifest, checker)
+      inputPath <- optionalStringAt(raw, "input")
+      answerPath <- optionalStringAt(raw, "answer").flatMap(_.toRight(s"Answer file is required for testcase $subtaskName/$name."))
+      inputRef <- inputPath match
+        case None => Right(None)
+        case Some(path) => findFile(manifest, path, s"Input file for testcase $subtaskName/$name").map(Some(_))
+      answerRef <- findFile(manifest, answerPath, s"Answer file for testcase $subtaskName/$name")
+    yield JudgeTaskTestcase(TestcaseName(name), scoreRatio, limits, resolvedChecker, inputRef, answerRef)
+
+  private def checkerAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskChecker]] =
+    optionalMapAt(raw, "checker").flatMap {
+      case None => Right(None)
+      case Some(checker) =>
+        stringAt(checker, "type").flatMap {
+          case "builtin" =>
+            stringAt(checker, "name").flatMap {
+              case "exact" => Right(Some(JudgeTaskChecker("builtin", Some("exact"), None)))
+              case other => Left(s"Unsupported builtin checker: $other.")
+            }
+          case "cpp" =>
+            stringAt(checker, "path").flatMap(path =>
+              ProblemDataPath.parse(path)
+                .left.map(message => s"Invalid checker path: $message")
+                .map(_ => Some(JudgeTaskChecker("cpp", None, Some(JudgeTaskFileRef(path, 0L, "")))))
+            )
+          case other => Left(s"Unsupported checker type: $other.")
+        }
+    }
+
+  private def limitsAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskLimits]] =
+    optionalMapAt(raw, "limits").flatMap {
+      case None => Right(None)
+      case Some(limits) =>
+        for
+          timeMs <- intAt(limits, "timeMs").flatMap(ProblemTimeLimitMs.parse)
+          memoryMb <- intAt(limits, "memoryMb").flatMap(ProblemSpaceLimitMb.parse)
+        yield Some(JudgeTaskLimits(timeMs, memoryMb))
+    }
+
+  private final case class AggregationConfig(testcases: Option[JudgeTaskAggregation], subtasks: Option[JudgeTaskAggregation]):
+    def merge(child: AggregationConfig): AggregationConfig =
+      AggregationConfig(testcases = child.testcases.orElse(testcases), subtasks = child.subtasks.orElse(subtasks))
+
+  private def aggregationAt(raw: Map[String, Any]): Either[String, AggregationConfig] =
+    optionalMapAt(raw, "aggregation").flatMap {
+      case None => Right(AggregationConfig(None, None))
+      case Some(aggregation) =>
+        for
+          testcases <- optionalStringAt(aggregation, "testcases").flatMap(_.map(parseAggregation).sequence)
+          subtasks <- optionalStringAt(aggregation, "subtasks").flatMap(_.map(parseAggregation).sequence)
+        yield AggregationConfig(testcases, subtasks)
+    }
+
+  private val allowedAggregations = Set("min,max,max", "min,sum,max", "sum,max,max", "sum,sum,max")
+  private val defaultAggregation = JudgeTaskAggregation("sum", "max", "max")
+
+  private def parseAggregation(raw: String): Either[String, JudgeTaskAggregation] =
+    val normalized = raw.replace(" ", "")
+    normalized.split(",", -1).toList match
+      case score :: time :: memory :: Nil if allowedAggregations.contains(normalized) => Right(JudgeTaskAggregation(score, time, memory))
+      case _ => Left(s"Unsupported aggregation: $raw.")
+
+  private def findFile(manifest: ProblemDataManifest, rawPath: String, label: String): Either[String, JudgeTaskFileRef] =
+    for
+      path <- ProblemDataPath.parse(rawPath).left.map(message => s"$label has invalid path: $message")
+      entry <- manifest.entries.find(_.path == path).toRight(s"$label does not exist: $rawPath.")
+    yield fileRef(entry)
+
+  private def resolveChecker(manifest: ProblemDataManifest, checker: JudgeTaskChecker): Either[String, JudgeTaskChecker] =
+    checker.`type` match
+      case "cpp" =>
+        checker.source match
+          case Some(source) => findFile(manifest, source.path, "Checker source file").map(ref => checker.copy(source = Some(ref)))
+          case None => Left("C++ checker source path is required.")
+      case _ => Right(checker)
+
+  private def fileRef(entry: ProblemDataManifestEntry): JudgeTaskFileRef =
+    JudgeTaskFileRef(entry.path.value, entry.sizeBytes, entry.sha256)
+
+  private def ratiosFor(items: List[Map[String, Any]]): Either[String, List[BigDecimal]] =
+    val explicit = items.map(optionalDecimalAt(_, "scoreRatio"))
+    sequence(explicit).flatMap { ratios =>
+      val missingCount = ratios.count(_.isEmpty)
+      val explicitSum = ratios.flatten.sum
+      if explicitSum > BigDecimal(1) then Left("scoreRatio values among siblings must not sum above 1.")
+      else
+        val fallback = if missingCount == 0 then BigDecimal(0) else (BigDecimal(1) - explicitSum) / BigDecimal(missingCount)
+        Right(ratios.map(_.getOrElse(fallback)))
+    }
+
+  private def toScalaMap(value: Any): Map[String, Any] =
+    value match
+      case map: java.util.Map[?, ?] =>
+        map.asScala.toMap.collect { case (key: String, value) => key -> toScalaValue(value) }
+      case _ => Map.empty
+
+  private def toScalaValue(value: Any): Any =
+    value match
+      case map: java.util.Map[?, ?] => toScalaMap(map)
+      case list: java.util.List[?] => list.asScala.toList.map(toScalaValue)
+      case other => other
+
+  private def optionalMapAt(raw: Map[String, Any], key: String): Either[String, Option[Map[String, Any]]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(map: Map[?, ?]) => Right(Some(map.asInstanceOf[Map[String, Any]]))
+      case Some(_) => Left(s"$key must be an object.")
+
+  private def listOfMapsAt(raw: Map[String, Any], key: String): Either[String, List[Map[String, Any]]] =
+    raw.get(key) match
+      case Some(items: List[?]) =>
+        sequence(items.zipWithIndex.map {
+          case (map: Map[?, ?], _) => Right(map.asInstanceOf[Map[String, Any]])
+          case (_, index) => Left(s"$key[$index] must be an object.")
+        })
+      case Some(_) => Left(s"$key must be a list.")
+      case None => Left(s"$key is required.")
+
+  private def stringAt(raw: Map[String, Any], key: String): Either[String, String] =
+    optionalStringAt(raw, key).flatMap(_.toRight(s"$key is required."))
+
+  private def optionalStringAt(raw: Map[String, Any], key: String): Either[String, Option[String]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value: String) if value.trim.nonEmpty => Right(Some(value.trim))
+      case Some(_: String) => Left(s"$key must not be empty.")
+      case Some(_) => Left(s"$key must be a string.")
+
+  private def intAt(raw: Map[String, Any], key: String): Either[String, Int] =
+    optionalIntAt(raw, key).flatMap(_.toRight(s"$key is required."))
+
+  private def optionalIntAt(raw: Map[String, Any], key: String): Either[String, Option[Int]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value: Integer) => Right(Some(value.intValue))
+      case Some(value: java.lang.Long) if value >= Int.MinValue && value <= Int.MaxValue => Right(Some(value.intValue))
+      case Some(value: java.math.BigInteger) if value.bitLength < 31 => Right(Some(value.intValue))
+      case Some(value) => Left(s"$key must be an integer, found ${value.getClass.getSimpleName}.")
+
+  private def optionalDecimalAt(raw: Map[String, Any], key: String): Either[String, Option[BigDecimal]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value: java.lang.Integer) => validateRatio(BigDecimal(value.intValue), key).map(Some(_))
+      case Some(value: java.lang.Long) => validateRatio(BigDecimal(value.longValue), key).map(Some(_))
+      case Some(value: java.math.BigInteger) => validateRatio(BigDecimal(value), key).map(Some(_))
+      case Some(value: java.math.BigDecimal) => validateRatio(BigDecimal(value), key).map(Some(_))
+      case Some(value: java.lang.Double) => validateRatio(BigDecimal(value.doubleValue), key).map(Some(_))
+      case Some(value) => Left(s"$key must be a number, found ${value.getClass.getSimpleName}.")
+
+  private def validateRatio(value: BigDecimal, key: String): Either[String, BigDecimal] =
+    Either.cond(value >= 0 && value <= 1, value, s"$key must be between 0 and 1.")
+
+  private def sequence[A](items: List[Either[String, A]]): Either[String, List[A]] =
+    items.foldRight(Right(Nil): Either[String, List[A]])((item, acc) => item.flatMap(value => acc.map(value :: _)))
+
+  extension [A](option: Option[Either[String, A]])
+    private def sequence: Either[String, Option[A]] =
+      option match
+        case Some(value) => value.map(Some(_))
+        case None => Right(None)

@@ -20,6 +20,7 @@ final case class SubmissionSummary(
   verdict: Option[SubmissionVerdict],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
+  score: Option[BigDecimal],
   codeLength: Int,
   submittedAt: Instant,
   startedAt: Option[Instant],

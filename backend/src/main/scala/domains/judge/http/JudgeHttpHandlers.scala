@@ -25,7 +25,7 @@ final class JudgeHttpHandlers(
         claimRequest <- request.as[ClaimJudgeTaskRequest]
         claimedAt <- Clock[IO].realTimeInstant
         response <- JudgeCommands
-          .claimTask(databaseSession, judgeConfig, claimRequest.judgerId, claimedAt)
+          .claimTask(databaseSession, judgeConfig, problemDataStorage, claimRequest.judgerId, claimedAt)
           .flatMap(JudgeHttpResponses.mapClaimResult)
       yield response
     }

@@ -189,37 +189,120 @@ object JudgeTaskFileRef:
   given Encoder[JudgeTaskFileRef] = deriveEncoder[JudgeTaskFileRef]
   given Decoder[JudgeTaskFileRef] = deriveDecoder[JudgeTaskFileRef]
 
+final case class JudgeTaskLimits(
+  timeMs: ProblemTimeLimitMs,
+  memoryMb: ProblemSpaceLimitMb
+)
+
+object JudgeTaskLimits:
+  given Encoder[JudgeTaskLimits] = deriveEncoder[JudgeTaskLimits]
+  given Decoder[JudgeTaskLimits] = deriveDecoder[JudgeTaskLimits]
+
+final case class JudgeTaskChecker(
+  `type`: String,
+  name: Option[String],
+  source: Option[JudgeTaskFileRef]
+)
+
+object JudgeTaskChecker:
+  given Encoder[JudgeTaskChecker] = deriveEncoder[JudgeTaskChecker]
+  given Decoder[JudgeTaskChecker] = deriveDecoder[JudgeTaskChecker]
+
+final case class JudgeTaskAggregation(
+  score: String,
+  time: String,
+  memory: String
+)
+
+object JudgeTaskAggregation:
+  given Encoder[JudgeTaskAggregation] = deriveEncoder[JudgeTaskAggregation]
+  given Decoder[JudgeTaskAggregation] = deriveDecoder[JudgeTaskAggregation]
+
 final case class JudgeTaskTestcase(
   name: TestcaseName,
-  input: JudgeTaskFileRef,
-  expectedOutput: JudgeTaskFileRef
+  scoreRatio: BigDecimal,
+  limits: JudgeTaskLimits,
+  checker: JudgeTaskChecker,
+  input: Option[JudgeTaskFileRef],
+  answer: JudgeTaskFileRef
 )
 
 object JudgeTaskTestcase:
   given Encoder[JudgeTaskTestcase] = deriveEncoder[JudgeTaskTestcase]
   given Decoder[JudgeTaskTestcase] = deriveDecoder[JudgeTaskTestcase]
 
+final case class JudgeTaskSubtask(
+  name: String,
+  scoreRatio: BigDecimal,
+  aggregation: JudgeTaskAggregation,
+  testcases: List[JudgeTaskTestcase]
+)
+
+object JudgeTaskSubtask:
+  given Encoder[JudgeTaskSubtask] = deriveEncoder[JudgeTaskSubtask]
+  given Decoder[JudgeTaskSubtask] = deriveDecoder[JudgeTaskSubtask]
+
 final case class JudgeTask(
   submissionId: SubmissionId,
   problemSlug: ProblemSlug,
   language: SubmissionLanguage,
   sourceCode: SubmissionSourceCode,
-  timeLimitMs: ProblemTimeLimitMs,
-  spaceLimitMb: ProblemSpaceLimitMb,
   problemDataVersion: String,
-  testcases: List[JudgeTaskTestcase]
+  roundingScale: Int,
+  aggregation: JudgeTaskAggregation,
+  subtasks: List[JudgeTaskSubtask]
 )
 
 object JudgeTask:
   given Encoder[JudgeTask] = deriveEncoder[JudgeTask]
   given Decoder[JudgeTask] = deriveDecoder[JudgeTask]
 
+final case class JudgeTestcaseResult(
+  name: String,
+  score: BigDecimal,
+  verdict: SubmissionVerdict,
+  message: Option[String],
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long]
+)
+
+object JudgeTestcaseResult:
+  given Encoder[JudgeTestcaseResult] = deriveEncoder[JudgeTestcaseResult]
+  given Decoder[JudgeTestcaseResult] = deriveDecoder[JudgeTestcaseResult]
+
+final case class JudgeSubtaskResult(
+  name: String,
+  score: BigDecimal,
+  verdict: SubmissionVerdict,
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long],
+  testcases: List[JudgeTestcaseResult]
+)
+
+object JudgeSubtaskResult:
+  given Encoder[JudgeSubtaskResult] = deriveEncoder[JudgeSubtaskResult]
+  given Decoder[JudgeSubtaskResult] = deriveDecoder[JudgeSubtaskResult]
+
+final case class JudgeResult(
+  score: BigDecimal,
+  verdict: SubmissionVerdict,
+  timeUsedMs: Option[Long],
+  memoryUsedKb: Option[Long],
+  subtasks: List[JudgeSubtaskResult]
+)
+
+object JudgeResult:
+  given Encoder[JudgeResult] = deriveEncoder[JudgeResult]
+  given Decoder[JudgeResult] = deriveDecoder[JudgeResult]
+
 final case class ReportJudgeResultRequest(
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
   judgeMessage: Option[String],
   timeUsedMs: Option[Long],
-  memoryUsedKb: Option[Long]
+  memoryUsedKb: Option[Long],
+  score: Option[BigDecimal],
+  judgeResult: Option[JudgeResult]
 )
 
 object ReportJudgeResultRequest:

@@ -18,6 +18,8 @@ object SubmissionTableSchema:
       |  judge_message text,
       |  time_used_ms bigint,
       |  memory_used_kb bigint,
+      |  score numeric,
+      |  judge_result jsonb,
       |  source_code text not null,
       |  submitted_at timestamp not null,
       |  started_at timestamp,
@@ -107,6 +109,26 @@ object SubmissionTableSchema:
       |      and column_name = 'finished_at'
       |  ) then
       |    alter table submissions add column finished_at timestamp;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'score'
+      |  ) then
+      |    alter table submissions add column score numeric;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'judge_result'
+      |  ) then
+      |    alter table submissions add column judge_result jsonb;
       |  end if;
       |end $$;
       |""".stripMargin

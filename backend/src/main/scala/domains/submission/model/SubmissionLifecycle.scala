@@ -1,5 +1,6 @@
 package domains.submission.model
 
+import judgeprotocol.model.JudgeResult
 import java.time.Instant
 
 final case class SubmissionJudgeState(
@@ -8,6 +9,8 @@ final case class SubmissionJudgeState(
   judgeMessage: Option[String],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
+  score: Option[BigDecimal],
+  judgeResult: Option[JudgeResult],
   startedAt: Option[Instant],
   finishedAt: Option[Instant]
 )
@@ -20,6 +23,8 @@ object SubmissionJudgeState:
       judgeMessage = None,
       timeUsedMs = None,
       memoryUsedKb = None,
+      score = None,
+      judgeResult = None,
       startedAt = None,
       finishedAt = None
     )
@@ -31,6 +36,8 @@ object SubmissionJudgeState:
       judgeMessage = submission.judgeMessage,
       timeUsedMs = submission.timeUsedMs,
       memoryUsedKb = submission.memoryUsedKb,
+      score = submission.score,
+      judgeResult = submission.judgeResult,
       startedAt = submission.startedAt,
       finishedAt = submission.finishedAt
     )
@@ -40,7 +47,9 @@ final case class SubmissionJudgeCompletion(
   verdict: Option[SubmissionVerdict],
   judgeMessage: Option[String],
   timeUsedMs: Option[Long],
-  memoryUsedKb: Option[Long]
+  memoryUsedKb: Option[Long],
+  score: Option[BigDecimal],
+  judgeResult: Option[JudgeResult]
 )
 
 object SubmissionLifecycle:
@@ -52,11 +61,13 @@ object SubmissionLifecycle:
           state.copy(
             status = SubmissionStatus.Running,
             verdict = None,
-            judgeMessage = None,
-            timeUsedMs = None,
-            memoryUsedKb = None,
-            startedAt = Some(startedAt),
-            finishedAt = None
+                judgeMessage = None,
+                timeUsedMs = None,
+                memoryUsedKb = None,
+                score = None,
+                judgeResult = None,
+                startedAt = Some(startedAt),
+                finishedAt = None
           )
         )
       case _ =>
@@ -78,6 +89,8 @@ object SubmissionLifecycle:
                 judgeMessage = completion.judgeMessage,
                 timeUsedMs = completion.timeUsedMs,
                 memoryUsedKb = completion.memoryUsedKb,
+                score = completion.score,
+                judgeResult = completion.judgeResult,
                 finishedAt = Some(finishedAt)
               )
             )

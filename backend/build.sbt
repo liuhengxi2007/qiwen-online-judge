@@ -16,6 +16,7 @@ lazy val root = (project in file("."))
       "org.http4s" %% "http4s-circe" % "0.23.27",
       "io.circe" %% "circe-generic" % "0.14.9",
       "io.circe" %% "circe-parser" % "0.14.9",
+      "org.snakeyaml" % "snakeyaml-engine" % "2.8",
       "io.minio" % "minio" % "8.5.17",
       "redis.clients" % "jedis" % "5.2.0",
       "com.zaxxer" % "HikariCP" % "5.1.0",

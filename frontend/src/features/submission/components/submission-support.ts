@@ -32,6 +32,16 @@ export function formatCodeLength(value: number): string {
   return `${value} B`
 }
 
+export function formatOptionalScore(value: number | null): string {
+  if (value === null) {
+    return '--'
+  }
+
+  return `${new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 6,
+  }).format(value * 100)}`
+}
+
 export const formatSubmissionDateTime = formatDateTime
 
 export const formatSubmissionDateTimeTitle = formatUtcOffsetTitle

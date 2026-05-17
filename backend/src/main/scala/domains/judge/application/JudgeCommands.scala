@@ -3,6 +3,7 @@ package domains.judge.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.judger.table.JudgerTable
+import domains.problem.application.ProblemDataStorage
 import domains.submission.model.{SubmissionId, SubmissionJudgeCompletion, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
 import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
@@ -24,6 +25,7 @@ object JudgeCommands:
   def claimTask(
     databaseSession: DatabaseSession,
     judgeConfig: JudgeConfig,
+    problemDataStorage: ProblemDataStorage,
     judgerId: JudgerId,
     claimedAt: Instant
   ): IO[ClaimJudgeTaskResult] =
@@ -40,7 +42,7 @@ object JudgeCommands:
                 case None =>
                   IO.pure(ClaimJudgeTaskResult.NoTask)
                 case Some(claimedSubmission) =>
-                  JudgeTaskBuilder.buildJudgeTask(connection, claimedSubmission).flatMap {
+                  JudgeTaskBuilder.buildJudgeTask(connection, problemDataStorage, claimedSubmission).flatMap {
                     case Left(message) =>
                       SubmissionLifecycle
                         .completeJudging(
@@ -50,7 +52,9 @@ object JudgeCommands:
                             verdict = Some(SubmissionVerdict.SystemError),
                             judgeMessage = Some(s"${judgerId.value}: $message"),
                             timeUsedMs = None,
-                            memoryUsedKb = None
+                            memoryUsedKb = None,
+                            score = None,
+                            judgeResult = None
                           ),
                           claimedAt
                         )
@@ -89,7 +93,9 @@ object JudgeCommands:
                     verdict = request.verdict.map(fromProtocolVerdict),
                     judgeMessage = request.judgeMessage,
                     timeUsedMs = request.timeUsedMs,
-                    memoryUsedKb = request.memoryUsedKb
+                    memoryUsedKb = request.memoryUsedKb,
+                    score = request.score,
+                    judgeResult = request.judgeResult
                   ),
                   completedAt
                 )

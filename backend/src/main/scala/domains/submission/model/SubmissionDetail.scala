@@ -4,6 +4,7 @@ import domains.user.model.UserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import judgeprotocol.model.JudgeResult
 
 import java.time.Instant
 import scala.util.Try
@@ -21,6 +22,8 @@ final case class SubmissionDetail(
   judgeMessage: Option[String],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
+  score: Option[BigDecimal],
+  judgeResult: Option[JudgeResult],
   codeLength: Int,
   sourceCode: SubmissionSourceCode,
   submittedAt: Instant,

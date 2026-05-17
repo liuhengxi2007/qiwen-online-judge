@@ -16,6 +16,7 @@ import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
+  formatOptionalScore,
 } from '@/features/submission/components/submission-support'
 import { usernameValue, type SessionResponse } from '@/features/auth/domain/auth'
 import { DateTimeText } from '@/shared/components/date-time-text'
@@ -67,7 +68,7 @@ export function SubmissionSummaryList({
               className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
             >
               <CardContent className="py-3.5">
-                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,6fr)_minmax(0,6fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,6fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
+                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,6fr)_minmax(0,6fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,6fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
                   <div>
                     <dt className="text-slate-500">{t('submission.list.id')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
@@ -135,6 +136,12 @@ export function SubmissionSummaryList({
                     <dt className="text-slate-500">{t('submission.list.spaceUsed')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
                       <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalMemoryKb(submission.memoryUsedKb)}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">{t('submission.list.score')}</dt>
+                    <dd className="mt-1 font-medium text-slate-900">
+                      <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalScore(submission.score)}</span>
                     </dd>
                   </div>
                   <div>

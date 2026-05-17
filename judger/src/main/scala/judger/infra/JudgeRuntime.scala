@@ -117,7 +117,9 @@ object JudgeRuntimeSupport:
       verdict = Some(verdict),
       judgeMessage = Option.when(message.nonEmpty)(message),
       timeUsedMs = None,
-      memoryUsedKb = None
+      memoryUsedKb = None,
+      score = None,
+      judgeResult = None
     )
 
   def systemError(message: String): ReportJudgeResultRequest =
@@ -126,7 +128,9 @@ object JudgeRuntimeSupport:
       verdict = Some(SubmissionVerdict.SystemError),
       judgeMessage = Some(message),
       timeUsedMs = None,
-      memoryUsedKb = None
+      memoryUsedKb = None,
+      score = None,
+      judgeResult = None
     )
 
   def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =

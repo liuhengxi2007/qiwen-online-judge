@@ -14,11 +14,13 @@ import {
   submissionJudgeStateLabel,
   submissionLanguageLabel,
   submissionSourceCodeValue,
+  submissionVerdictLabel,
 } from '@/features/submission/domain/submission'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
+  formatOptionalScore,
 } from '@/features/submission/components/submission-support'
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
@@ -237,11 +239,72 @@ export function SubmissionDetailPage() {
                   </p>
                 </div>
                 <div>
+                  <p className="text-slate-500">{t('submission.list.score')}</p>
+                  <p className="mt-1 font-medium text-slate-900">
+                    {formatOptionalScore(submissionQuery.submission.score)}
+                  </p>
+                </div>
+                <div>
                   <p className="text-slate-500">{t('submission.list.codeLength')}</p>
                   <p className="mt-1 font-medium text-slate-900">{formatCodeLength(submissionQuery.submission.codeLength)}</p>
                 </div>
               </CardContent>
             </Card>
+
+            {submissionQuery.submission.judgeResult ? (
+              <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+                <CardHeader>
+                  <CardTitle className="text-xl text-slate-950">{t('submission.detail.judgeResult')}</CardTitle>
+                  <CardDescription>
+                    {submissionVerdictLabel(submissionQuery.submission.judgeResult.verdict)}{' '}
+                    · {formatOptionalScore(submissionQuery.submission.judgeResult.score)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {submissionQuery.submission.judgeResult.subtasks.map((subtask) => (
+                    <div key={subtask.name} className="rounded-lg border border-slate-200">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                        <div>
+                          <p className="font-medium text-slate-950">{subtask.name}</p>
+                          <p className="text-sm text-slate-500">
+                            {submissionVerdictLabel(subtask.verdict)} · {formatOptionalScore(subtask.score)}
+                          </p>
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {formatOptionalDurationMs(subtask.timeUsedMs)} · {formatOptionalMemoryKb(subtask.memoryUsedKb)}
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[720px] text-left text-sm">
+                          <thead className="bg-slate-50 text-slate-500">
+                            <tr>
+                              <th className="px-4 py-2 font-medium">{t('submission.detail.testcases')}</th>
+                              <th className="px-4 py-2 font-medium">{t('common.verdict')}</th>
+                              <th className="px-4 py-2 font-medium">{t('submission.list.score')}</th>
+                              <th className="px-4 py-2 font-medium">{t('submission.list.timeUsed')}</th>
+                              <th className="px-4 py-2 font-medium">{t('submission.list.spaceUsed')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {subtask.testcases.map((testcase) => (
+                              <tr key={testcase.name} className="border-t border-slate-100">
+                                <td className="px-4 py-2 font-medium text-slate-900">{testcase.name}</td>
+                                <td className="px-4 py-2 text-slate-700">
+                                  {submissionVerdictLabel(testcase.verdict)}
+                                </td>
+                                <td className="px-4 py-2 text-slate-700">{formatOptionalScore(testcase.score)}</td>
+                                <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
+                                <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
 
             {submissionQuery.submission.judgeMessage ? (
               <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

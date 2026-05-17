@@ -30,6 +30,7 @@ export {
 } from '@/features/submission/domain/submission-contract'
 
 export type { CreateSubmissionRequest } from '@/features/submission/model/CreateSubmissionRequest'
+export type { JudgeResult, JudgeSubtaskResult, JudgeTestcaseResult } from '@/features/submission/model/JudgeResult'
 export type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'
 export type { SubmissionId } from '@/features/submission/model/SubmissionId'
 export type { SubmissionListRequest } from '@/features/submission/model/SubmissionListRequest'

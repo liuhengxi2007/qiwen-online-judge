@@ -19,6 +19,7 @@ export type SubmissionSummary = {
   verdict: SubmissionVerdict | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
+  score: number | null
   codeLength: number
   submittedAt: string
   startedAt: string | null

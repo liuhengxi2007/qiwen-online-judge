@@ -3,6 +3,9 @@ package domains.submission.table
 import domains.auth.table.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict}
+import io.circe.parser.decode
+import io.circe.syntax.*
+import judgeprotocol.model.JudgeResult
 
 import java.sql.{PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
@@ -22,6 +25,7 @@ object SubmissionTableSupport:
       verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
       timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
       memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+      score = readOptionalBigDecimal(resultSet, "score"),
       codeLength = resultSet.getInt("code_length"),
       submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
       startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
@@ -42,6 +46,8 @@ object SubmissionTableSupport:
       judgeMessage = Option(resultSet.getString("judge_message")),
       timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
       memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+      score = readOptionalBigDecimal(resultSet, "score"),
+      judgeResult = readOptionalJudgeResult(resultSet, "judge_result"),
       codeLength = resultSet.getInt("code_length"),
       sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
       submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
@@ -76,6 +82,24 @@ object SubmissionTableSupport:
       case Some(currentValue) => statement.setLong(parameterIndex, currentValue)
       case None => statement.setNull(parameterIndex, java.sql.Types.BIGINT)
 
+  def setOptionalBigDecimal(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    value: Option[BigDecimal]
+  ): Unit =
+    value match
+      case Some(currentValue) => statement.setBigDecimal(parameterIndex, currentValue.bigDecimal)
+      case None => statement.setNull(parameterIndex, java.sql.Types.NUMERIC)
+
+  def setOptionalJudgeResult(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    value: Option[JudgeResult]
+  ): Unit =
+    value match
+      case Some(currentValue) => statement.setString(parameterIndex, currentValue.asJson.noSpaces)
+      case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
+
   def setOptionalTimestamp(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -94,3 +118,11 @@ object SubmissionTableSupport:
   def readOptionalLong(resultSet: ResultSet, columnName: String): Option[Long] =
     val value = resultSet.getLong(columnName)
     if resultSet.wasNull() then None else Some(value)
+
+  def readOptionalBigDecimal(resultSet: ResultSet, columnName: String): Option[BigDecimal] =
+    Option(resultSet.getBigDecimal(columnName)).map(BigDecimal(_))
+
+  def readOptionalJudgeResult(resultSet: ResultSet, columnName: String): Option[JudgeResult] =
+    Option(resultSet.getString(columnName)).map { raw =>
+      decode[JudgeResult](raw).fold(error => throw IllegalStateException(s"Invalid judge result JSON: ${error.getMessage}"), identity)
+    }

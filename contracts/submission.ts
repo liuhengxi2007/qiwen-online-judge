@@ -20,6 +20,32 @@ export type SubmissionSort = 'submitted' | 'time' | 'memory' | 'code_length'
 
 export type SubmissionSortDirection = 'asc' | 'desc'
 
+export type JudgeTestcaseResult = {
+  name: string
+  score: number
+  verdict: SubmissionVerdict
+  message: string | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+}
+
+export type JudgeSubtaskResult = {
+  name: string
+  score: number
+  verdict: SubmissionVerdict
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  testcases: JudgeTestcaseResult[]
+}
+
+export type JudgeResult = {
+  score: number
+  verdict: SubmissionVerdict
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  subtasks: JudgeSubtaskResult[]
+}
+
 export type CreateSubmissionRequest = {
   problemSlug: string
   language: SubmissionLanguage
@@ -48,6 +74,7 @@ export type SubmissionSummary = {
   verdict: SubmissionVerdict | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
+  score: number | null
   codeLength: number
   submittedAt: string
   startedAt: string | null
@@ -67,6 +94,8 @@ export type SubmissionDetail = {
   judgeMessage: string | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
+  score: number | null
+  judgeResult: JudgeResult | null
   codeLength: number
   sourceCode: string
   submittedAt: string

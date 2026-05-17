@@ -55,6 +55,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
         verdict: detail.verdict,
         timeUsedMs: detail.timeUsedMs,
         memoryUsedKb: detail.memoryUsedKb,
+        score: detail.score,
         startedAt: detail.startedAt,
         finishedAt: detail.finishedAt,
       }
