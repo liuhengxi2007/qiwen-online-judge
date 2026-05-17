@@ -18,12 +18,12 @@ type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
 
   return (

@@ -33,12 +33,12 @@ export function ProblemDetailHeaderCard({
   setManagementPanel,
 }: ProblemDetailHeaderCardProps) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
 
   return (

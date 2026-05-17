@@ -7,16 +7,19 @@ import type { SubmissionListRequest, SubmissionListResponse } from '@/features/s
 import { useSubmissionPageModel } from '@/features/submission/hooks/use-submission-page-model'
 
 const queryState = vi.hoisted(() => ({
-  implementation: (_request: SubmissionListRequest) => ({
-    response: {
-      items: [] as SubmissionListResponse['items'],
-      page: 1,
-      pageSize: 10,
-      totalItems: 0,
-    },
-    isLoading: false,
-    errorMessage: '',
-  }),
+  implementation: (request: SubmissionListRequest) => {
+    void request
+    return {
+      response: {
+        items: [] as SubmissionListResponse['items'],
+        page: 1,
+        pageSize: 10,
+        totalItems: 0,
+      },
+      isLoading: false,
+      errorMessage: '',
+    }
+  },
 }))
 
 vi.mock('@/features/submission/hooks/use-submission-list-query', () => ({

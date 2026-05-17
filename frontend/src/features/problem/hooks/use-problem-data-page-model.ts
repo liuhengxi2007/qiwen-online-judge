@@ -33,6 +33,7 @@ type DeleteResult = { ok: true } | { ok: false; message: string }
 export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug)
+  const problem = detailQuery.problem
   const replaceProblem = detailQuery.replaceProblem
   const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
   const uploadWarningMessage = (() => {
@@ -56,16 +57,16 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   })()
 
   useEffect(() => {
-    if (!detailQuery.problem) {
+    if (!problem) {
       return
     }
 
     dispatch({
       type: 'problem_hydrated',
-      timeLimitMs: detailQuery.problem.timeLimitMs,
-      spaceLimitMb: detailQuery.problem.spaceLimitMb,
+      timeLimitMs: problem.timeLimitMs,
+      spaceLimitMb: problem.spaceLimitMb,
     })
-  }, [detailQuery.problem?.id, detailQuery.problem?.spaceLimitMb, detailQuery.problem?.timeLimitMs])
+  }, [problem])
 
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
@@ -182,7 +183,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   }, [loadFiles, problemSlug, replaceProblem])
 
   const saveLimits = useCallback(async (): Promise<DeleteResult> => {
-    const currentProblem = detailQuery.problem
+    const currentProblem = problem
     if (!currentProblem) {
       const message = t('problem.data.loadFailed')
       dispatch({ type: 'limits_save_failed', message })
@@ -225,10 +226,10 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'limits_save_failed', message })
       return { ok: false, message }
     }
-  }, [detailQuery.problem, problemSlug, replaceProblem, state.spaceLimitMb, state.timeLimitMs, t])
+  }, [problem, problemSlug, replaceProblem, state.spaceLimitMb, state.timeLimitMs, t])
 
   return {
-    problem: detailQuery.problem,
+    problem,
     isProblemLoading: detailQuery.isLoading,
     problemErrorMessage: detailQuery.errorMessage,
     timeLimitMs: state.timeLimitMs,
@@ -251,6 +252,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch(message ? { type: 'load_failed', message } : { type: 'error_cleared' }),
     setSuccessMessage: (message: string) =>
       dispatch(message ? { type: 'upload_succeeded', message } : { type: 'success_cleared' }),
+    replaceProblem,
+    loadFiles,
     uploadSelectedFile,
     deleteDataFile,
     deleteDataPath,

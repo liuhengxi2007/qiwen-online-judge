@@ -14,12 +14,12 @@ type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
 
 export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemDetailQuery }) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!detailQuery.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(detailQuery.problem.title, detailQuery.problem.slug, problemTitleDisplayMode)
 
   return (

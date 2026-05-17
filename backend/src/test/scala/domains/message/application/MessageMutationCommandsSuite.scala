@@ -5,6 +5,7 @@ import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Us
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, CreateConversationRequest, DirectMessage, MarkConversationReadMode, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
 import domains.problem.model.ProblemTitleDisplayMode
+import domains.shared.model.PageRequest
 import domains.user.model.{UserDisplayMode, UserIdentity, UserLocale}
 import munit.FunSuite
 
@@ -218,7 +219,7 @@ class MessageMutationCommandsSuite extends FunSuite:
     ): IO[Option[MessageConversationSummary]] =
       IO.pure(summaryForUser)
 
-    override def listInbox(connection: Connection, actorUsername: Username): IO[MessageInboxResponse] =
+    override def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse] =
       IO.raiseError(new UnsupportedOperationException("not used in this suite"))
 
     override def findOtherParticipant(
