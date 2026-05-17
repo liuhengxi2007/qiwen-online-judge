@@ -1,10 +1,11 @@
 package domains.problem.application
 
 import cats.effect.IO
+import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.judge.application.JudgeTaskBuilder
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, ProblemDataUploadResult}
+import domains.problem.model.{ProblemDataFileListResponse, ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail, ProblemSlug}
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
@@ -26,12 +27,12 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     preparedFiles: List[domains.shared.upload.PreparedUploadFile]
   ): IO[Unit] =
-    preparedFiles.foldLeft(IO.unit) { (accIo, preparedFile) =>
-      accIo *> (ProblemDataUploadPreparation.toProblemDataPath(preparedFile.path) match
-        case Left(message) =>
-          IO.raiseError(IllegalArgumentException(message))
-        case Right(path) =>
-          problemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
+    preparedFiles.traverse_ { preparedFile =>
+      IO.fromEither(
+        ProblemDataUploadPreparation
+          .toProblemDataPath(preparedFile.path)
+          .leftMap(message => IllegalArgumentException(message))
+      ).flatMap(path => problemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
     }
 
   private def summaryFilenameFor(
@@ -42,6 +43,18 @@ object ProblemDataCommands:
       .lastOption
       .toRight("Uploaded archive does not contain any files.")
       .flatMap(file => ProblemDataFilename.parse(file.path.fileName))
+
+  private def withManageableProblemForUpdate[A](
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug
+  )(notFound: A, forbidden: A)(useProblem: ProblemDetail => IO[A]): IO[A] =
+    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
+      case None =>
+        IO.pure(notFound)
+      case Some(problem) =>
+        canManageProblem(connection, actor, problem).ifM(useProblem(problem), IO.pure(forbidden))
+    }
 
   def uploadProblemDataFile(
     problemDataStorage: ProblemDataStorage,
@@ -87,36 +100,29 @@ object ProblemDataCommands:
     preparedFiles: List[domains.shared.upload.PreparedUploadFile],
     summaryFilename: ProblemDataFilename
   ): IO[UpdateProblemDataResult] =
-    for
-      maybeProblem <- ProblemTable.findBySlugForUpdate(connection, problemSlug)
-      result <- maybeProblem match
-        case None =>
-          IO.pure(UpdateProblemDataResult.ProblemNotFound)
-        case Some(problem) =>
-          canManageProblem(connection, actor, problem).flatMap {
-            case false =>
-              IO.pure(UpdateProblemDataResult.Forbidden)
-            case true =>
-              for
-                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-                now = Instant.now()
-                result <- writePreparedFiles(problemDataStorage, problem.slug, preparedFiles)
-                  .flatMap(_ => ProblemTable.updateData(connection, problem.id, now, summaryFilename))
-                  .flatMap(_ => ProblemDataFileTable.upsertForProblem(connection, problem.id, toManifestEntries(preparedFiles), now))
-                  .flatMap(_ =>
-                    ProblemTable
-                      .findBySlug(connection, problem.slug)
-                      .map(updatedProblemOrError("Problem disappeared after data update"))
-                      .map(_.copy(canManage = true))
-                      .map(problem => ProblemDataUploadResult(problem, preparedFiles.length))
-                      .map(UpdateProblemDataResult.Updated(_))
-                  )
-                  .handleErrorWith { error =>
-                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                  }
-              yield result
+    withManageableProblemForUpdate(connection, actor, problemSlug)(
+      UpdateProblemDataResult.ProblemNotFound,
+      UpdateProblemDataResult.Forbidden
+    ) { problem =>
+      for
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        now = Instant.now()
+        result <- writePreparedFiles(problemDataStorage, problem.slug, preparedFiles)
+          .flatMap(_ => ProblemTable.updateData(connection, problem.id, now, summaryFilename))
+          .flatMap(_ => ProblemDataFileTable.upsertForProblem(connection, problem.id, toManifestEntries(preparedFiles), now))
+          .flatMap(_ =>
+            ProblemTable
+              .findBySlug(connection, problem.slug)
+              .map(updatedProblemOrError("Problem disappeared after data update"))
+              .map(_.copy(canManage = true))
+              .map(problem => ProblemDataUploadResult(problem, preparedFiles.length))
+              .map(UpdateProblemDataResult.Updated(_))
+          )
+          .handleErrorWith { error =>
+            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
           }
-    yield result
+      yield result
+    }
 
   def listProblemData(
     problemDataStorage: ProblemDataStorage,
@@ -198,36 +204,31 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     filename: ProblemDataFilename
   ): IO[DeleteProblemDataResult] =
-    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
-      case None =>
-        IO.pure(DeleteProblemDataResult.ProblemNotFound)
-      case Some(problem) =>
-        canManageProblem(connection, actor, problem).flatMap {
+    withManageableProblemForUpdate(connection, actor, problemSlug)(
+      DeleteProblemDataResult.ProblemNotFound,
+      DeleteProblemDataResult.Forbidden
+    ) { problem =>
+      for
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        result <- problemDataStorage.deleteFile(problem.slug, filename).flatMap {
           case false =>
-            IO.pure(DeleteProblemDataResult.Forbidden)
+            IO.pure(DeleteProblemDataResult.DataFileNotFound)
           case true =>
-            for
-              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-              result <- problemDataStorage.deleteFile(problem.slug, filename).flatMap {
-                case false =>
-                  IO.pure(DeleteProblemDataResult.DataFileNotFound)
-                case true =>
-                  ProblemDataFileTable.deleteForProblemPath(connection, problem.id, ProblemDataPath.fromFilename(filename))
-                    .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
-                    .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
-                    .flatMap(_ =>
-                      ProblemTable
-                        .findBySlug(connection, problem.slug)
-                        .map(updatedProblemOrError("Problem disappeared after data deletion"))
-                        .map(_.copy(canManage = true))
-                        .map(DeleteProblemDataResult.Deleted(_))
-                    )
-                    .handleErrorWith { error =>
-                      problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                    }
+            ProblemDataFileTable.deleteForProblemPath(connection, problem.id, ProblemDataPath.fromFilename(filename))
+              .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
+              .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
+              .flatMap(_ =>
+                ProblemTable
+                  .findBySlug(connection, problem.slug)
+                  .map(updatedProblemOrError("Problem disappeared after data deletion"))
+                  .map(_.copy(canManage = true))
+                  .map(DeleteProblemDataResult.Deleted(_))
+              )
+              .handleErrorWith { error =>
+                problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
               }
-            yield result
         }
+      yield result
     }
 
   def deleteProblemDataPath(
@@ -237,41 +238,34 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     path: ProblemDataPath
   ): IO[DeleteProblemDataResult] =
-    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
-      case None =>
-        IO.pure(DeleteProblemDataResult.ProblemNotFound)
-      case Some(problem) =>
-        canManageProblem(connection, actor, problem).flatMap {
-          case false =>
-            IO.pure(DeleteProblemDataResult.Forbidden)
-          case true =>
-            for
-              entries <- ProblemDataFileTable.listForProblem(connection, problem.id)
-              pathsToDelete = entries.map(_.path).filter(entryPath => entryPath == path || entryPath.value.startsWith(s"${path.value}/"))
-              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-              result <-
-                if pathsToDelete.isEmpty then
-                  IO.pure(DeleteProblemDataResult.DataFileNotFound)
-                else
-                  pathsToDelete
-                    .foldLeft(IO.unit)((accIo, pathToDelete) => accIo *> problemDataStorage.deletePath(problem.slug, pathToDelete).void)
-                    .flatMap(_ =>
-                      pathsToDelete.foldLeft(IO.unit)((accIo, pathToDelete) => accIo *> ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete))
-                    )
-                    .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
-                    .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
-                    .flatMap(_ =>
-                      ProblemTable
-                        .findBySlug(connection, problem.slug)
-                        .map(updatedProblemOrError("Problem disappeared after data deletion"))
-                        .map(_.copy(canManage = true))
-                        .map(DeleteProblemDataResult.Deleted(_))
-                    )
-                    .handleErrorWith { error =>
-                      problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                    }
-            yield result
-        }
+    withManageableProblemForUpdate(connection, actor, problemSlug)(
+      DeleteProblemDataResult.ProblemNotFound,
+      DeleteProblemDataResult.Forbidden
+    ) { problem =>
+      for
+        entries <- ProblemDataFileTable.listForProblem(connection, problem.id)
+        pathsToDelete = entries.map(_.path).filter(entryPath => entryPath == path || entryPath.value.startsWith(s"${path.value}/"))
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        result <-
+          if pathsToDelete.isEmpty then
+            IO.pure(DeleteProblemDataResult.DataFileNotFound)
+          else
+            pathsToDelete
+              .traverse_(pathToDelete => problemDataStorage.deletePath(problem.slug, pathToDelete).void)
+              .flatMap(_ => pathsToDelete.traverse_(pathToDelete => ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete)))
+              .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
+              .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
+              .flatMap(_ =>
+                ProblemTable
+                  .findBySlug(connection, problem.slug)
+                  .map(updatedProblemOrError("Problem disappeared after data deletion"))
+                  .map(_.copy(canManage = true))
+                  .map(DeleteProblemDataResult.Deleted(_))
+              )
+              .handleErrorWith { error =>
+                problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+              }
+      yield result
     }
 
   def clearProblemData(
@@ -290,32 +284,27 @@ object ProblemDataCommands:
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ClearProblemDataResult] =
-    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
-      case None =>
-        IO.pure(ClearProblemDataResult.ProblemNotFound)
-      case Some(problem) =>
-        canManageProblem(connection, actor, problem).flatMap {
-          case false =>
-            IO.pure(ClearProblemDataResult.Forbidden)
-          case true =>
-            for
-              snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-              result <- problemDataStorage
-                .deleteAllFiles(problem.slug)
-                .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
-                .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
-                .flatMap(_ =>
-                  ProblemTable
-                    .findBySlug(connection, problem.slug)
-                    .map(updatedProblemOrError("Problem disappeared after clearing data"))
-                    .map(_.copy(canManage = true))
-                    .map(ClearProblemDataResult.Cleared(_))
-                )
-                .handleErrorWith { error =>
-                  problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                }
-            yield result
-        }
+    withManageableProblemForUpdate(connection, actor, problemSlug)(
+      ClearProblemDataResult.ProblemNotFound,
+      ClearProblemDataResult.Forbidden
+    ) { problem =>
+      for
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        result <- problemDataStorage
+          .deleteAllFiles(problem.slug)
+          .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
+          .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
+          .flatMap(_ =>
+            ProblemTable
+              .findBySlug(connection, problem.slug)
+              .map(updatedProblemOrError("Problem disappeared after clearing data"))
+              .map(_.copy(canManage = true))
+              .map(ClearProblemDataResult.Cleared(_))
+          )
+          .handleErrorWith { error =>
+            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+          }
+      yield result
     }
 
   def setProblemDataReady(
@@ -325,59 +314,72 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug,
     ready: Boolean
   ): IO[SetProblemReadyResult] =
-    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
-      case None =>
-        IO.pure(SetProblemReadyResult.ProblemNotFound)
-      case Some(problem) =>
-        canManageProblem(connection, actor, problem).flatMap {
-          case false =>
-            IO.pure(SetProblemReadyResult.Forbidden)
-          case true if !ready =>
-            ProblemTable
-              .updateDataReady(connection, problem.id, Instant.now(), summaryFilenameForEntries(Nil).orElse(problem.data.value), ready = false)
-              .flatMap(_ =>
-                ProblemTable
-                  .findBySlug(connection, problem.slug)
-                  .map(updatedProblemOrError("Problem disappeared after ready update"))
-                  .map(_.copy(canManage = true))
-                  .map(SetProblemReadyResult.Updated(_))
-              )
-          case true =>
-            val judgeYamlPath = ProblemDataPath("judge.yaml")
-            for
-              manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
-              maybeConfig <- problemDataStorage.readPath(problem.slug, judgeYamlPath)
-              result <- maybeConfig match
-                case None =>
-                  IO.pure(SetProblemReadyResult.ValidationFailed("judge.yaml is required at the problem data root."))
-                case Some((_, bytes)) =>
-                  JudgeTaskBuilder.validateReadyConfigBytes(bytes, problem, manifest) match
-                    case Left(message) =>
-                      IO.pure(SetProblemReadyResult.ValidationFailed(message))
-                    case Right(validation) =>
-                      val retainedPaths = validation.retainedPaths
-                      val retainedEntries = manifest.entries.filter(entry => retainedPaths.contains(entry.path))
-                      val redundantPaths = manifest.entries.map(_.path).filterNot(retainedPaths.contains)
-                      for
-                        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-                        result <- redundantPaths
-                          .foldLeft(IO.unit)((accIo, path) => accIo *> problemDataStorage.deletePath(problem.slug, path).void)
-                          .flatMap(_ => ProblemDataFileTable.deleteExceptPaths(connection, problem.id, retainedPaths))
-                          .flatMap(_ => ProblemTable.updateDataReady(connection, problem.id, Instant.now(), summaryFilenameForEntries(retainedEntries), ready = true))
-                          .flatMap(_ =>
-                            ProblemTable
-                              .findBySlug(connection, problem.slug)
-                              .map(updatedProblemOrError("Problem disappeared after ready update"))
-                              .map(_.copy(canManage = true))
-                              .map(SetProblemReadyResult.Updated(_))
-                          )
-                          .handleErrorWith { error =>
-                            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                          }
-                      yield result
-            yield result
-        }
+    withManageableProblemForUpdate(connection, actor, problemSlug)(
+      SetProblemReadyResult.ProblemNotFound,
+      SetProblemReadyResult.Forbidden
+    ) { problem =>
+      if ready then markProblemReady(problemDataStorage, connection, problem)
+      else markProblemNotReady(connection, problem)
     }
+
+  private def markProblemNotReady(connection: java.sql.Connection, problem: ProblemDetail): IO[SetProblemReadyResult] =
+    ProblemTable
+      .updateDataReady(connection, problem.id, Instant.now(), problem.data.value, ready = false)
+      .flatMap(_ => refreshedManagedProblem(connection, problem, "Problem disappeared after ready update"))
+      .map(SetProblemReadyResult.Updated(_))
+
+  private def markProblemReady(
+    problemDataStorage: ProblemDataStorage,
+    connection: java.sql.Connection,
+    problem: ProblemDetail
+  ): IO[SetProblemReadyResult] =
+    val judgeYamlPath = ProblemDataPath("judge.yaml")
+    for
+      manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
+      maybeConfig <- problemDataStorage.readPath(problem.slug, judgeYamlPath)
+      result <- maybeConfig match
+        case None =>
+          IO.pure(SetProblemReadyResult.ValidationFailed("judge.yaml is required at the problem data root."))
+        case Some((_, bytes)) =>
+          JudgeTaskBuilder
+            .validateReadyConfigBytes(bytes, problem, manifest)
+            .fold(
+              message => IO.pure(SetProblemReadyResult.ValidationFailed(message)),
+              validation => retainReadyFiles(problemDataStorage, connection, problem, manifest.entries, validation.retainedPaths)
+            )
+    yield result
+
+  private def retainReadyFiles(
+    problemDataStorage: ProblemDataStorage,
+    connection: java.sql.Connection,
+    problem: ProblemDetail,
+    entries: List[ProblemDataManifestEntry],
+    retainedPaths: Set[ProblemDataPath]
+  ): IO[SetProblemReadyResult] =
+    val retainedEntries = entries.filter(entry => retainedPaths.contains(entry.path))
+    val redundantPaths = entries.map(_.path).filterNot(retainedPaths.contains)
+    for
+      snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+      result <- redundantPaths
+        .traverse_(path => problemDataStorage.deletePath(problem.slug, path).void)
+        .flatMap(_ => ProblemDataFileTable.deleteExceptPaths(connection, problem.id, retainedPaths))
+        .flatMap(_ => ProblemTable.updateDataReady(connection, problem.id, Instant.now(), summaryFilenameForEntries(retainedEntries), ready = true))
+        .flatMap(_ => refreshedManagedProblem(connection, problem, "Problem disappeared after ready update"))
+        .map(SetProblemReadyResult.Updated(_))
+        .handleErrorWith { error =>
+          problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+        }
+    yield result
+
+  private def refreshedManagedProblem(
+    connection: java.sql.Connection,
+    problem: ProblemDetail,
+    missingMessage: String
+  ): IO[ProblemDetail] =
+    ProblemTable
+      .findBySlug(connection, problem.slug)
+      .map(updatedProblemOrError(missingMessage))
+      .map(_.copy(canManage = true))
 
   private def buildTreeResponse(entries: List[ProblemDataManifestEntry]): ProblemDataTreeResponse =
     val directoryNodes =

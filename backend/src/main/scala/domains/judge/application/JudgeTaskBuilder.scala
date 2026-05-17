@@ -1,6 +1,7 @@
 package domains.judge.application
 
 import cats.effect.IO
+import cats.syntax.all.*
 import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataStorage}
 import domains.problem.model.ProblemDataPath
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
@@ -82,13 +83,8 @@ object JudgeTaskBuilder:
           List(testcase.input.map(_.path), Some(testcase.answer.path), testcase.checker.source.map(_.path)).flatten
         }
       rawPaths
-        .foldLeft(Right(Set(ProblemDataPath("judge.yaml"))): Either[String, Set[ProblemDataPath]]) { (acc, rawPath) =>
-          for
-            paths <- acc
-            path <- ProblemDataPath.parse(rawPath)
-          yield paths + path
-        }
-        .map(ReadyValidation(_))
+        .traverse(ProblemDataPath.parse)
+        .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml")))
     }
 
   private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =
