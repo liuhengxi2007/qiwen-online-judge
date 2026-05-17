@@ -17,6 +17,13 @@ Rules:
 - if backend and a worker need shared Scala types, extract a small dedicated shared protocol module
 - shared protocol modules may contain typed values, parsing, and codecs
 - shared protocol modules must not contain SQL, routers, command handlers, or service orchestration
+- judger language runtimes should only prepare executable artifacts and describe the sandbox run command
+- judger testcase traversal, output comparison, verdict selection, score or usage aggregation, and result reporting must stay in shared worker logic
+
+Current judger language support:
+
+- `cpp17`
+- `python3`, prepared as bytecode and executed from the generated `.pyc` artifact
 
 Prefer:
 

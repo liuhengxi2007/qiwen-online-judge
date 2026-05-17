@@ -65,6 +65,7 @@ The current cache layout is:
 - `JUDGER_ID_PREFIX`
 - `POLL_INTERVAL_MS`
 - `CXX`
+- `PYTHON3`
 - `ISOLATE_BIN`
 - `ISOLATE_BOX_ID`
 - `ISOLATE_PREFER_CGROUPS`
