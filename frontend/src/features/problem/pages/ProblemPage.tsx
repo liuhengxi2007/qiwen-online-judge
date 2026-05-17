@@ -19,23 +19,18 @@ import {
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
+import {
+  buildPageNumbers,
+  calculateTotalPages,
+  getPageCorrection,
+  parsePositivePage,
+} from '@/shared/domain/pagination'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 
 const problemsPerPage = 10
-
-function buildPageNumbers(currentPage: number, totalPages: number): number[] {
-  const firstPage = Math.max(1, currentPage - 2)
-  const lastPage = Math.min(totalPages, currentPage + 2)
-  return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index)
-}
-
-function parsePositivePage(value: string | null): number {
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
-}
 
 export function ProblemPage() {
   const { t } = useI18n()
@@ -69,7 +64,7 @@ export function ProblemPage() {
       pageSize: problemsPerPage,
     },
   })
-  const totalPages = Math.max(1, Math.ceil(model.totalItems / model.pageSize))
+  const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
@@ -77,16 +72,23 @@ export function ProblemPage() {
   }, [activeQuery])
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      const nextSearchParams = new URLSearchParams(searchParams)
-      if (totalPages <= 1) {
-        nextSearchParams.delete('page')
-      } else {
-        nextSearchParams.set('page', String(totalPages))
-      }
-      setSearchParams(nextSearchParams)
+    if (model.isLoading) {
+      return
     }
-  }, [currentPage, searchParams, setSearchParams, totalPages])
+
+    const correction = getPageCorrection(currentPage, totalPages)
+    if (correction.kind === 'none') {
+      return
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (correction.kind === 'delete') {
+      nextSearchParams.delete('page')
+    } else {
+      nextSearchParams.set('page', String(correction.page))
+    }
+    setSearchParams(nextSearchParams)
+  }, [currentPage, model.isLoading, searchParams, setSearchParams, totalPages])
 
   function applyQuery() {
     const nextSearchParams = new URLSearchParams(searchParams)

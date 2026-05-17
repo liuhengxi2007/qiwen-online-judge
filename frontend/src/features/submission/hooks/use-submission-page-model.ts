@@ -34,6 +34,12 @@ import {
   type SubmissionSummary,
   type SubmissionVerdictFilter,
 } from '@/features/submission/domain/submission'
+import {
+  buildPageNumbers,
+  calculateTotalPages,
+  getPageCorrection,
+  parsePositivePage,
+} from '@/shared/domain/pagination'
 
 function defaultSortDirection(sort: SubmissionSort): SubmissionSortDirection {
   switch (sort) {
@@ -46,19 +52,8 @@ function defaultSortDirection(sort: SubmissionSort): SubmissionSortDirection {
   }
 }
 
-function buildPageNumbers(currentPage: number, totalPages: number): number[] {
-  const firstPage = Math.max(1, currentPage - 2)
-  const lastPage = Math.min(totalPages, currentPage + 2)
-  return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index)
-}
-
 function shouldShowTypingSuggestions(value: string): boolean {
   return value.trim().length > 0
-}
-
-function parsePositivePage(value: string | null): number {
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
 }
 
 const submissionsPerPage = 10
@@ -151,7 +146,7 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   }
   const submissionQuery = useSubmissionListQuery(request)
   const currentPageSubmissions = submissionQuery.response.items
-  const totalPages = Math.max(1, Math.ceil(submissionQuery.response.totalItems / submissionQuery.response.pageSize))
+  const totalPages = calculateTotalPages(submissionQuery.response.totalItems, submissionQuery.response.pageSize)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
   const showUserSuggestionPanel =
     isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput)
@@ -172,16 +167,23 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   }, [activeProblemQuery, hasFixedProblemFilter])
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      const nextSearchParams = new URLSearchParams(searchParams)
-      if (totalPages <= 1) {
-        nextSearchParams.delete('page')
-      } else {
-        nextSearchParams.set('page', String(totalPages))
-      }
-      setSearchParams(nextSearchParams)
+    if (submissionQuery.isLoading) {
+      return
     }
-  }, [currentPage, searchParams, setSearchParams, totalPages])
+
+    const correction = getPageCorrection(currentPage, totalPages)
+    if (correction.kind === 'none') {
+      return
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (correction.kind === 'delete') {
+      nextSearchParams.delete('page')
+    } else {
+      nextSearchParams.set('page', String(correction.page))
+    }
+    setSearchParams(nextSearchParams)
+  }, [currentPage, searchParams, setSearchParams, submissionQuery.isLoading, totalPages])
 
   useEffect(() => {
     if (!isUserSuggestionEnabled || !isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {

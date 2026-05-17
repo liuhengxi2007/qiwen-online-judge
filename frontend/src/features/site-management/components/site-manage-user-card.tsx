@@ -17,6 +17,7 @@ import {
 } from '@/features/user/domain/user'
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
+import { buildPageNumbers } from '@/shared/domain/pagination'
 import { useI18n } from '@/shared/i18n/i18n'
 
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
@@ -32,12 +33,6 @@ type SiteManageUserCardProps = {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
-}
-
-function buildPageNumbers(currentPage: number, totalPages: number): number[] {
-  const firstPage = Math.max(1, currentPage - 2)
-  const lastPage = Math.min(totalPages, currentPage + 2)
-  return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index)
 }
 
 export function SiteManageUserCard({
