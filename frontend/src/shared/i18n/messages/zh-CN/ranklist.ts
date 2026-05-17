@@ -1,6 +1,6 @@
 export const zhCnRanklistMessages: Record<string, string> = {
-  'ranklist.pageTitle': '气温在线评测 - 贡献排名',
-  'ranklist.heading': '贡献排名',
+  'ranklist.pageTitle': '气温在线评测 - 排行榜',
+  'ranklist.heading': '排行榜',
   'ranklist.loading': '正在加载排行榜...',
   'ranklist.empty': '当前还没有排行数据。',
   'ranklist.unavailable': '排行榜当前不可用。',

@@ -1,6 +1,6 @@
 export const enRanklistMessages: Record<string, string> = {
-  'ranklist.pageTitle': 'Qiwen Online Judge - Contribution ranking',
-  'ranklist.heading': 'Contribution ranking',
+  'ranklist.pageTitle': 'Qiwen Online Judge - Ranklist',
+  'ranklist.heading': 'Ranklist',
   'ranklist.loading': 'Loading ranklist...',
   'ranklist.empty': 'No ranklist entries are available yet.',
   'ranklist.unavailable': 'This ranklist is currently unavailable.',
