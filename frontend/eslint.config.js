@@ -20,9 +20,6 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      'react-hooks/globals': 'off',
-      'react-hooks/rules-of-hooks': 'warn',
-      'react-hooks/set-state-in-effect': 'off',
       'react-refresh/only-export-components': [
         'error',
         { allowConstantExport: true },
@@ -31,12 +28,6 @@ export default defineConfig([
   },
   {
     files: ['src/components/ui/**/*.tsx'],
-    rules: {
-      'react-refresh/only-export-components': 'off',
-    },
-  },
-  {
-    files: ['src/router.tsx', 'src/shared/i18n/i18n.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

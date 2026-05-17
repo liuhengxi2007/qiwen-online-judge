@@ -63,7 +63,6 @@ object JudgeTaskBuilder:
       buildFromYaml(claimedSubmission, manifest, root)
     }
 
-<<<<<<< HEAD
   def validateReadyConfigBytes(
     bytes: Array[Byte],
     problem: domains.problem.model.ProblemDetail,
@@ -88,8 +87,6 @@ object JudgeTaskBuilder:
         .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml")))
     }
 
-=======
->>>>>>> origin/main
   private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =
     Try {
         val settings = LoadSettings.builder().setLabel("judge.yaml").build()

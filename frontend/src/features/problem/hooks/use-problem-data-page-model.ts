@@ -55,21 +55,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       : ''
   })()
 
-<<<<<<< HEAD
-=======
-  useEffect(() => {
-    if (!problem) {
-      return
-    }
-
-    dispatch({
-      type: 'problem_hydrated',
-      timeLimitMs: problem.timeLimitMs,
-      spaceLimitMb: problem.spaceLimitMb,
-    })
-  }, [problem])
-
->>>>>>> origin/main
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
     try {
@@ -184,33 +169,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     }
   }, [loadFiles, problemSlug, replaceProblem])
 
-<<<<<<< HEAD
   const setReady = useCallback(async (ready: boolean): Promise<ReadyResult> => {
     dispatch({ type: 'ready_save_started' })
-=======
-  const saveLimits = useCallback(async (): Promise<DeleteResult> => {
-    const currentProblem = problem
-    if (!currentProblem) {
-      const message = t('problem.data.loadFailed')
-      dispatch({ type: 'limits_save_failed', message })
-      return { ok: false, message }
-    }
-
-    dispatch({ type: 'limits_save_started' })
-
-    const timeLimitResult = parseProblemTimeLimitMs(state.timeLimitMs)
-    if (!timeLimitResult.ok) {
-      dispatch({ type: 'limits_save_failed', message: timeLimitResult.error })
-      return { ok: false, message: timeLimitResult.error }
-    }
-
-    const spaceLimitResult = parseProblemSpaceLimitMb(state.spaceLimitMb)
-    if (!spaceLimitResult.ok) {
-      dispatch({ type: 'limits_save_failed', message: spaceLimitResult.error })
-      return { ok: false, message: spaceLimitResult.error }
-    }
-
->>>>>>> origin/main
     try {
       const updatedProblem = await setProblemDataReady(problemSlug, ready)
       replaceProblem(updatedProblem)
@@ -225,11 +185,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'ready_save_failed', message })
       return { ok: false, message }
     }
-<<<<<<< HEAD
   }, [loadFiles, problemSlug, replaceProblem, t])
-=======
-  }, [problem, problemSlug, replaceProblem, state.spaceLimitMb, state.timeLimitMs, t])
->>>>>>> origin/main
 
   return {
     problem,
