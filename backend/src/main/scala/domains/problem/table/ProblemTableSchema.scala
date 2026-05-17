@@ -15,6 +15,7 @@ object ProblemTableSchema:
       |  statement_text text not null,
       |  data_name varchar(255),
       |  data_bytes bytea,
+      |  ready boolean not null default false,
       |  time_limit_ms integer not null default 1000,
       |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
@@ -114,6 +115,20 @@ object ProblemTableSchema:
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'problems'
+      |      and column_name = 'ready'
+      |  ) then
+      |    alter table problems add column ready boolean;
+      |  end if;
+      |
+      |  update problems
+      |  set ready = false
+      |  where ready is null;
+      |
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
       |      and column_name = 'data_name'
       |  ) then
       |    alter table problems add column data_name varchar(255);
@@ -183,6 +198,18 @@ object ProblemTableSchema:
       |alter column space_limit_mb set default 256
       |""".stripMargin
 
+  val setReadyNotNullSql: String =
+    """
+      |alter table problems
+      |alter column ready set not null
+      |""".stripMargin
+
+  val setReadyDefaultSql: String =
+    """
+      |alter table problems
+      |alter column ready set default false
+      |""".stripMargin
+
   val setBaseAccessNotNullSql: String =
     """
       |alter table problems
@@ -242,6 +269,8 @@ object ProblemTableSchema:
         statement.execute(addVisibilityColumnSql)
         statement.execute(addBaseAccessColumnSql)
         statement.execute(addDataAndLimitColumnsSql)
+        statement.execute(setReadyDefaultSql)
+        statement.execute(setReadyNotNullSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
         statement.execute(addOthersSubmissionAccessColumnSql)

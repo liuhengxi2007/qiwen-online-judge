@@ -58,3 +58,9 @@ object ProblemCommandResults:
     case Forbidden
     case ProblemNotFound
     case Cleared(problem: ProblemDetail)
+
+  enum SetProblemReadyResult:
+    case Forbidden
+    case ValidationFailed(message: String)
+    case ProblemNotFound
+    case Updated(problem: ProblemDetail)

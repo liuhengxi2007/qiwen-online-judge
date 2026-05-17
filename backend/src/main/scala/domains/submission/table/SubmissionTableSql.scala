@@ -217,8 +217,10 @@ object SubmissionTableSql:
       |with next_submission as (
       |  select s.id
       |  from submissions s
+      |  join problems p on p.id = s.problem_id
       |  where s.status = 'queued'
       |    and s.language in ($placeholders)
+      |    and p.ready = true
       |  order by s.submitted_at asc, s.public_id asc
       |  for update skip locked
       |  limit 1

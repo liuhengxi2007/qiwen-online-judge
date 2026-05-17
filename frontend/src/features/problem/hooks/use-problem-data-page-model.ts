@@ -6,15 +6,13 @@ import {
   deleteProblemDataPath,
   listProblemDataFiles,
   listProblemDataTree,
+  setProblemDataReady,
   uploadProblemDataArchive,
   uploadProblemDataFile,
-  updateProblem,
 } from '@/features/problem/api/problem-client'
 import {
   parseProblemDataFilename,
   problemDataPathValue,
-  parseProblemSpaceLimitMb,
-  parseProblemTimeLimitMs,
   problemDataFilenameValue,
   type ProblemDataFilename,
   type ProblemSlug,
@@ -29,6 +27,7 @@ import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UploadResult = { ok: true } | { ok: false; message: string }
 type DeleteResult = { ok: true } | { ok: false; message: string }
+type ReadyResult = { ok: true } | { ok: false; message: string }
 
 export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const { t } = useI18n()
@@ -55,18 +54,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       ? t('problem.data.fileOverwriteWarning', { filename: selectedFile.name })
       : ''
   })()
-
-  useEffect(() => {
-    if (!problem) {
-      return
-    }
-
-    dispatch({
-      type: 'problem_hydrated',
-      timeLimitMs: problem.timeLimitMs,
-      spaceLimitMb: problem.spaceLimitMb,
-    })
-  }, [problem])
 
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
@@ -182,59 +169,29 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     }
   }, [loadFiles, problemSlug, replaceProblem])
 
-  const saveLimits = useCallback(async (): Promise<DeleteResult> => {
-    const currentProblem = problem
-    if (!currentProblem) {
-      const message = t('problem.data.loadFailed')
-      dispatch({ type: 'limits_save_failed', message })
-      return { ok: false, message }
-    }
-
-    dispatch({ type: 'limits_save_started' })
-
-    const timeLimitResult = parseProblemTimeLimitMs(state.timeLimitMs)
-    if (!timeLimitResult.ok) {
-      dispatch({ type: 'limits_save_failed', message: timeLimitResult.error })
-      return { ok: false, message: timeLimitResult.error }
-    }
-
-    const spaceLimitResult = parseProblemSpaceLimitMb(state.spaceLimitMb)
-    if (!spaceLimitResult.ok) {
-      dispatch({ type: 'limits_save_failed', message: spaceLimitResult.error })
-      return { ok: false, message: spaceLimitResult.error }
-    }
-
+  const setReady = useCallback(async (ready: boolean): Promise<ReadyResult> => {
+    dispatch({ type: 'ready_save_started' })
     try {
-      const updatedProblem = await updateProblem(problemSlug, {
-        title: currentProblem.title,
-        statement: currentProblem.statement,
-        timeLimitMs: timeLimitResult.value,
-        spaceLimitMb: spaceLimitResult.value,
-        accessPolicy: currentProblem.accessPolicy,
-        othersSubmissionAccess: currentProblem.othersSubmissionAccess,
-      })
+      const updatedProblem = await setProblemDataReady(problemSlug, ready)
       replaceProblem(updatedProblem)
       dispatch({
-        type: 'limits_save_succeeded',
-        timeLimitMs: updatedProblem.timeLimitMs,
-        spaceLimitMb: updatedProblem.spaceLimitMb,
-        message: t('problem.message.updateSuccess'),
+        type: 'ready_save_succeeded',
+        message: ready ? t('problem.data.ready.setSucceeded') : t('problem.data.ready.unsetSucceeded'),
       })
+      await loadFiles()
       return { ok: true }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('problem.message.updateFailed')
-      dispatch({ type: 'limits_save_failed', message })
+      const message = error instanceof HttpClientError ? error.message : t('problem.data.ready.saveFailed')
+      dispatch({ type: 'ready_save_failed', message })
       return { ok: false, message }
     }
-  }, [problem, problemSlug, replaceProblem, state.spaceLimitMb, state.timeLimitMs, t])
+  }, [loadFiles, problemSlug, replaceProblem, t])
 
   return {
     problem,
     isProblemLoading: detailQuery.isLoading,
     problemErrorMessage: detailQuery.errorMessage,
-    timeLimitMs: state.timeLimitMs,
-    spaceLimitMb: state.spaceLimitMb,
-    isSavingLimits: state.isSavingLimits,
+    isSavingReady: state.isSavingReady,
     selectedFile: state.selectedFile,
     isUploading: state.isUploading,
     isLoadingFiles: state.isLoadingFiles,
@@ -245,8 +202,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     errorMessage: state.errorMessage,
     successMessage: state.successMessage,
     uploadWarningMessage,
-    setTimeLimitMs: (value: number) => dispatch({ type: 'time_limit_set', value }),
-    setSpaceLimitMb: (value: number) => dispatch({ type: 'space_limit_set', value }),
     setSelectedFile: (file: File | null) => dispatch({ type: 'selected_file_set', file }),
     setErrorMessage: (message: string) =>
       dispatch(message ? { type: 'load_failed', message } : { type: 'error_cleared' }),
@@ -258,6 +213,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     deleteDataFile,
     deleteDataPath,
     clearAllDataFiles,
-    saveLimits,
+    setReady,
   }
 }

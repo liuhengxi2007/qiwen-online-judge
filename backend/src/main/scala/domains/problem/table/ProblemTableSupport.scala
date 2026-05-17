@@ -50,6 +50,7 @@ object ProblemTableSupport:
       slug = parseColumn("problems.slug", resultSet.getString("slug"), ProblemSlug.parse),
       title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
       data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
+      ready = resultSet.getBoolean("ready"),
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
@@ -74,6 +75,7 @@ object ProblemTableSupport:
       title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
       statement = parseColumn("problems.statement_text", resultSet.getString("statement_text"), ProblemStatementText.parse),
       data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
+      ready = resultSet.getBoolean("ready"),
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =

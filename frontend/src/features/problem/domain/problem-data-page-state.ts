@@ -1,9 +1,7 @@
 import type { ProblemDataFilename, ProblemDataTreeNode } from '@/features/problem/domain/problem'
 
 export type ProblemDataPageState = {
-  timeLimitMs: number
-  spaceLimitMb: number
-  isSavingLimits: boolean
+  isSavingReady: boolean
   selectedFile: File | null
   isUploading: boolean
   isLoadingFiles: boolean
@@ -16,12 +14,9 @@ export type ProblemDataPageState = {
 }
 
 export type ProblemDataPageAction =
-  | { type: 'problem_hydrated'; timeLimitMs: number; spaceLimitMb: number }
-  | { type: 'time_limit_set'; value: number }
-  | { type: 'space_limit_set'; value: number }
-  | { type: 'limits_save_started' }
-  | { type: 'limits_save_succeeded'; timeLimitMs: number; spaceLimitMb: number; message: string }
-  | { type: 'limits_save_failed'; message: string }
+  | { type: 'ready_save_started' }
+  | { type: 'ready_save_succeeded'; message: string }
+  | { type: 'ready_save_failed'; message: string }
   | { type: 'selected_file_set'; file: File | null }
   | { type: 'load_started' }
   | { type: 'load_succeeded'; files: ProblemDataFilename[]; tree: ProblemDataTreeNode[] }
@@ -39,9 +34,7 @@ export type ProblemDataPageAction =
   | { type: 'success_cleared' }
 
 export const initialProblemDataPageState: ProblemDataPageState = {
-  timeLimitMs: 1000,
-  spaceLimitMb: 256,
-  isSavingLimits: false,
+  isSavingReady: false,
   selectedFile: null,
   isUploading: false,
   isLoadingFiles: true,
@@ -58,29 +51,12 @@ export function reduceProblemDataPageState(
   action: ProblemDataPageAction,
 ): ProblemDataPageState {
   switch (action.type) {
-    case 'problem_hydrated':
-      return {
-        ...state,
-        timeLimitMs: action.timeLimitMs,
-        spaceLimitMb: action.spaceLimitMb,
-      }
-    case 'time_limit_set':
-      return { ...state, timeLimitMs: action.value }
-    case 'space_limit_set':
-      return { ...state, spaceLimitMb: action.value }
-    case 'limits_save_started':
-      return { ...state, isSavingLimits: true, errorMessage: '', successMessage: '' }
-    case 'limits_save_succeeded':
-      return {
-        ...state,
-        timeLimitMs: action.timeLimitMs,
-        spaceLimitMb: action.spaceLimitMb,
-        isSavingLimits: false,
-        errorMessage: '',
-        successMessage: action.message,
-      }
-    case 'limits_save_failed':
-      return { ...state, isSavingLimits: false, errorMessage: action.message, successMessage: '' }
+    case 'ready_save_started':
+      return { ...state, isSavingReady: true, errorMessage: '', successMessage: '' }
+    case 'ready_save_succeeded':
+      return { ...state, isSavingReady: false, errorMessage: '', successMessage: action.message }
+    case 'ready_save_failed':
+      return { ...state, isSavingReady: false, errorMessage: action.message, successMessage: '' }
     case 'selected_file_set':
       return { ...state, selectedFile: action.file }
     case 'load_started':

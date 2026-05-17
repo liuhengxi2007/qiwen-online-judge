@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, FileCode2, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
+import { CheckCircle2, FileCode2, PauseCircle, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -75,11 +75,6 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
     setErrorMessage('')
     setStatusMessage('')
 
-    if (!validation.ok) {
-      setErrorMessage(t('problem.data.judgeConfig.validationBlocksSave'))
-      return
-    }
-
     setIsSaving(true)
     try {
       const result = await saveProblemDataText(problemSlug, judgeDataPath, content)
@@ -153,7 +148,7 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             </Button>
             <Button
               type="button"
-              disabled={isSaving || isLoading || !isDirty || !validation.ok}
+              disabled={isSaving || isLoading || !isDirty}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
                 void saveConfig()
@@ -162,6 +157,32 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
               <Save className="size-4" />
               {isSaving ? t('problem.data.judgeConfig.saving') : t('problem.data.judgeConfig.save')}
             </Button>
+            {model.problem?.ready ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={model.isSavingReady}
+                className="rounded-2xl border-amber-300 bg-white text-amber-800"
+                onClick={() => {
+                  void model.setReady(false)
+                }}
+              >
+                <PauseCircle className="size-4" />
+                {model.isSavingReady ? t('problem.data.ready.saving') : t('problem.data.ready.markNotReady')}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                disabled={model.isSavingReady || isLoading || isDirty || !validation.ok}
+                className="rounded-2xl bg-emerald-700 text-white hover:bg-emerald-800"
+                onClick={() => {
+                  void model.setReady(true)
+                }}
+              >
+                <CheckCircle2 className="size-4" />
+                {model.isSavingReady ? t('problem.data.ready.saving') : t('problem.data.ready.setReady')}
+              </Button>
+            )}
           </div>
         </div>
 

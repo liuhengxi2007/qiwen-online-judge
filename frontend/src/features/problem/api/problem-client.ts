@@ -220,6 +220,14 @@ export async function clearProblemData(problemSlug: ProblemSlug): Promise<Proble
   )
 }
 
+export async function setProblemDataReady(problemSlug: ProblemSlug, ready: boolean): Promise<ProblemDetail> {
+  return postJson(
+    `/api/problems/${problemSlugValue(problemSlug)}/data/ready`,
+    fromProblemDetailContract,
+    { ready },
+  )
+}
+
 export function problemDataDownloadUrl(problemSlug: ProblemSlug, filename: ProblemDataFilename): string {
   return `/api/problems/${problemSlugValue(problemSlug)}/data/${encodeURIComponent(filename)}`
 }

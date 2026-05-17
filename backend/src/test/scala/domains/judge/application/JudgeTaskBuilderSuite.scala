@@ -1,12 +1,16 @@
 package domains.judge.application
 
 import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.model.{ProblemDataPath, ProblemId, ProblemSlug}
+import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.shared.access.{BaseAccess, ResourceAccessPolicy}
+import domains.user.model.UserIdentity
+import domains.auth.model.{DisplayName, Username}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.table.ClaimedSubmission
 import munit.FunSuite
 
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.util.UUID
 
 class JudgeTaskBuilderSuite extends FunSuite:
@@ -27,6 +31,23 @@ class JudgeTaskBuilderSuite extends FunSuite:
       entry("sample/1.in"),
       entry("sample/1.ans")
     )
+  )
+
+  private val problem = domains.problem.model.ProblemDetail(
+    id = claimedSubmission.problemId,
+    slug = claimedSubmission.problemSlug,
+    title = ProblemTitle("Sample Problem"),
+    statement = ProblemStatementText("Solve it."),
+    data = ProblemData(None),
+    ready = false,
+    timeLimitMs = ProblemTimeLimitMs(1000),
+    spaceLimitMb = ProblemSpaceLimitMb(256),
+    accessPolicy = ResourceAccessPolicy(BaseAccess.OwnerOnly, Nil, Nil),
+    othersSubmissionAccess = OthersSubmissionAccess.None,
+    creator = UserIdentity(Username("owner"), DisplayName("Owner")),
+    canManage = true,
+    createdAt = Instant.EPOCH,
+    updatedAt = Instant.EPOCH
   )
 
   test("parseConfigBytes accepts enum aggregation names") {
@@ -86,6 +107,32 @@ class JudgeTaskBuilderSuite extends FunSuite:
     assertEquals(
       result.left.toOption,
       Some("Unsupported aggregation: sum,max,max. Expected one of: min_max_max, min_sum_max, sum_max_max, sum_sum_max.")
+    )
+  }
+
+  test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {
+    val result = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 1
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - name: sample
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+
+    assertEquals(
+      result.map(_.retainedPaths),
+      Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
     )
   }
 

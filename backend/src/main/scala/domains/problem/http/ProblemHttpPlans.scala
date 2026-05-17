@@ -7,10 +7,18 @@ import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSuggestion, UpdateProblemRequest}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import io.circe.syntax.*
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.sql.Connection
 
 object ProblemHttpPlans:
+
+  final case class SetProblemReadyRequest(ready: Boolean)
+
+  object SetProblemReadyRequest:
+    given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
+    given Encoder[SetProblemReadyRequest] = deriveEncoder[SetProblemReadyRequest]
 
   final case class DownloadProblemDataOutput(
     problemSlug: ProblemSlug,
@@ -144,6 +152,20 @@ object ProblemHttpPlans:
     ): IO[ProblemCommands.ClearProblemDataResult] =
       ProblemCommands
         .clearProblemData(problemDataStorage, connection, actor, input)
+
+  final class SetProblemReadyPlan(problemDataStorage: ProblemDataStorage)
+      extends TransactionAuthenticatedHttpPlan[(ProblemSlug, SetProblemReadyRequest), ProblemCommands.SetProblemReadyResult]:
+
+    override val name: String = "SetProblemReady"
+
+    override def execute(
+      connection: Connection,
+      actor: AuthUser,
+      input: (ProblemSlug, SetProblemReadyRequest)
+    ): IO[ProblemCommands.SetProblemReadyResult] =
+      val (problemSlug, request) = input
+      ProblemCommands
+        .setProblemDataReady(problemDataStorage, connection, actor, problemSlug, request.ready)
 
   case object UpdateProblem extends TransactionAuthenticatedHttpPlan[(ProblemSlug, UpdateProblemRequest), ProblemCommands.UpdateProblemResult]:
 

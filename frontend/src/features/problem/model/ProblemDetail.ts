@@ -16,6 +16,7 @@ export type ProblemDetail = AuditFields & {
   title: ProblemTitle
   statement: ProblemStatementText
   data: ProblemData
+  ready: boolean
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy

@@ -8,6 +8,7 @@ export type ProblemSummary = {
   slug: string
   title: string
   data: string | null
+  ready: boolean
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
@@ -34,6 +35,7 @@ export type ProblemDetail = {
   title: string
   statement: string
   data: string | null
+  ready: boolean
   timeLimitMs: number
   spaceLimitMb: number
   accessPolicy: ResourceAccessPolicy
@@ -47,6 +49,10 @@ export type ProblemDetail = {
 export type ProblemDataUploadResult = {
   problem: ProblemDetail
   uploadedFileCount: number
+}
+
+export type SetProblemReadyRequest = {
+  ready: boolean
 }
 
 export type CreateProblemRequest = {

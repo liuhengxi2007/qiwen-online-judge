@@ -6,6 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpSessionSupport
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.model.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemDataFilename, ProblemDataPath, ProblemListRequest, ProblemSearchQuery, ProblemSlug, UpdateProblemRequest}
+import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.shared.model.PageRequest
 import domains.shared.http.AuthenticatedHttpExecutor
 import fs2.text
@@ -118,6 +119,16 @@ object ProblemRouter:
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
             handlers.execute(request, parsedProblemSlug, plans.clearProblemData)
+
+      case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / "ready" =>
+        ProblemSlug.parse(problemSlug) match
+          case Left(message) =>
+            ProblemHttpResponses.validationErrorResponse(message)
+          case Right(parsedProblemSlug) =>
+            handlers.executeDecoded[SetProblemReadyRequest, (ProblemSlug, SetProblemReadyRequest), ProblemCommands.SetProblemReadyResult](
+              request,
+              plans.setProblemReady
+            ) { readyRequest => (parsedProblemSlug, readyRequest) }
 
       case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / "files" =>
         ProblemSlug.parse(problemSlug) match

@@ -140,6 +140,17 @@ object ProblemHttpResponses:
       case ProblemCommands.ClearProblemDataResult.Cleared(problem) =>
         IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
 
+  def mapSetReadyResult(result: ProblemCommands.SetProblemReadyResult): IO[Response[IO]] =
+    result match
+      case ProblemCommands.SetProblemReadyResult.Forbidden =>
+        hiddenProblemResponse
+      case ProblemCommands.SetProblemReadyResult.ProblemNotFound =>
+        hiddenProblemResponse
+      case ProblemCommands.SetProblemReadyResult.ValidationFailed(message) =>
+        errorResponse(Status.BadRequest, message)
+      case ProblemCommands.SetProblemReadyResult.Updated(problem) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(problem.asJson))
+
   def downloadDataResponse(problemDataStorage: ProblemDataStorage, problemSlug: ProblemSlug, filename: ProblemDataFilename): IO[Response[IO]] =
     problemDataStorage.readFile(problemSlug, filename).flatMap {
       case None =>

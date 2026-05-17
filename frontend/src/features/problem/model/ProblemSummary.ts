@@ -14,6 +14,7 @@ export type ProblemSummary = AuditFields & {
   slug: ProblemSlug
   title: ProblemTitle
   data: ProblemData
+  ready: boolean
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy

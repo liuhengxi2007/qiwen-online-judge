@@ -13,6 +13,7 @@ final case class ProblemSummary(
   slug: ProblemSlug,
   title: ProblemTitle,
   data: ProblemData,
+  ready: Boolean,
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,

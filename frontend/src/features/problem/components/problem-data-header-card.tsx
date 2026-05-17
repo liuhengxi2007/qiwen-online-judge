@@ -1,12 +1,8 @@
-import { HardDriveUpload } from 'lucide-react'
+import { CheckCircle2, HardDriveUpload, PauseCircle } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   formatProblemTitleDisplay,
-  problemDataFilenameValue,
   problemSlugValue,
   shouldShowProblemSlugSupplement,
   useProblemTitleDisplayMode,
@@ -43,57 +39,20 @@ export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-slate-50 px-5 py-4">
-            <Label className="text-sm text-slate-500" htmlFor="problem-data-time-limit">
-              {t('problem.data.timeLimit')}
-            </Label>
-            <Input
-              id="problem-data-time-limit"
-              className="mt-2 bg-white"
-              min={1}
-              type="number"
-              value={model.timeLimitMs}
-              onChange={(event) => {
-                model.setTimeLimitMs(Number(event.target.value))
-              }}
-            />
-          </div>
-          <div className="rounded-2xl bg-slate-50 px-5 py-4">
-            <Label className="text-sm text-slate-500" htmlFor="problem-data-space-limit">
-              {t('problem.data.spaceLimit')}
-            </Label>
-            <Input
-              id="problem-data-space-limit"
-              className="mt-2 bg-white"
-              min={1}
-              type="number"
-              value={model.spaceLimitMb}
-              onChange={(event) => {
-                model.setSpaceLimitMb(Number(event.target.value))
-              }}
-            />
-          </div>
-          <div className="rounded-2xl bg-slate-50 px-5 py-4">
-            <p className="text-sm text-slate-500">{t('problem.data.latestFile')}</p>
-            <p className="mt-2 text-base font-medium text-slate-900">
-              {model.problem.data.value
-                ? problemDataFilenameValue(model.problem.data.value)
-                : t('problem.data.noDataUploaded')}
-            </p>
-          </div>
+      <CardContent>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          {model.problem.ready ? (
+            <>
+              <CheckCircle2 className="size-4 text-emerald-600" />
+              <span className="text-emerald-700">{t('problem.data.ready.ready')}</span>
+            </>
+          ) : (
+            <>
+              <PauseCircle className="size-4 text-amber-600" />
+              <span className="text-amber-700">{t('problem.data.ready.notReady')}</span>
+            </>
+          )}
         </div>
-        <Button
-          type="button"
-          className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-          disabled={model.isSavingLimits}
-          onClick={() => {
-            void model.saveLimits()
-          }}
-        >
-          {model.isSavingLimits ? t('problem.detail.savingContent') : t('problem.data.saveLimits')}
-        </Button>
       </CardContent>
     </Card>
   )

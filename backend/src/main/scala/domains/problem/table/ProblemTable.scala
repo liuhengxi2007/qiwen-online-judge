@@ -65,8 +65,14 @@ object ProblemTable:
     )
 
   def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
+    findBySlugWithSql(connection, slug, findBySlugSql)
+
+  def findBySlugForUpdate(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
+    findBySlugWithSql(connection, slug, findBySlugForUpdateSql)
+
+  private def findBySlugWithSql(connection: Connection, slug: ProblemSlug, sql: String): IO[Option[ProblemDetail]] =
     IO.blocking {
-      val statement = connection.prepareStatement(findBySlugSql)
+      val statement = connection.prepareStatement(sql)
       try
         statement.setString(1, slug.value)
         val resultSet = statement.executeQuery()
@@ -199,6 +205,27 @@ object ProblemTable:
           case None => statement.setNull(1, java.sql.Types.VARCHAR)
         statement.setTimestamp(2, Timestamp.from(updatedAt))
         statement.setObject(3, problemId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  def updateDataReady(
+    connection: Connection,
+    problemId: ProblemId,
+    updatedAt: Instant,
+    filename: Option[ProblemDataFilename],
+    ready: Boolean
+  ): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateDataReadySql)
+      try
+        filename match
+          case Some(value) => statement.setString(1, value.value)
+          case None => statement.setNull(1, java.sql.Types.VARCHAR)
+        statement.setBoolean(2, ready)
+        statement.setTimestamp(3, Timestamp.from(updatedAt))
+        statement.setObject(4, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

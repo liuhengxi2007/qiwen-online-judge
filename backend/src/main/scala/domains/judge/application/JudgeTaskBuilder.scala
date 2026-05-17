@@ -13,6 +13,10 @@ import scala.util.Try
 
 object JudgeTaskBuilder:
 
+  final case class ReadyValidation(
+    retainedPaths: Set[ProblemDataPath]
+  )
+
   def buildJudgeTask(
     connection: java.sql.Connection,
     problemDataStorage: ProblemDataStorage,
@@ -56,6 +60,35 @@ object JudgeTaskBuilder:
   ): Either[String, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
       buildFromYaml(claimedSubmission, manifest, root)
+    }
+
+  def validateReadyConfigBytes(
+    bytes: Array[Byte],
+    problem: domains.problem.model.ProblemDetail,
+    manifest: ProblemDataManifest
+  ): Either[String, ReadyValidation] =
+    val claimedSubmission = ClaimedSubmission(
+      id = domains.submission.model.SubmissionId(0L),
+      problemId = problem.id,
+      problemSlug = problem.slug,
+      language = domains.submission.model.SubmissionLanguage.Cpp17,
+      sourceCode = domains.submission.model.SubmissionSourceCode("int main() { return 0; }"),
+      timeLimitMs = problem.timeLimitMs.value,
+      spaceLimitMb = problem.spaceLimitMb.value
+    )
+    parseConfigBytes(bytes, claimedSubmission, manifest).flatMap { task =>
+      val rawPaths =
+        task.subtasks.flatMap(_.testcases).flatMap { testcase =>
+          List(testcase.input.map(_.path), Some(testcase.answer.path), testcase.checker.source.map(_.path)).flatten
+        }
+      rawPaths
+        .foldLeft(Right(Set(ProblemDataPath("judge.yaml"))): Either[String, Set[ProblemDataPath]]) { (acc, rawPath) =>
+          for
+            paths <- acc
+            path <- ProblemDataPath.parse(rawPath)
+          yield paths + path
+        }
+        .map(ReadyValidation(_))
     }
 
   private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =

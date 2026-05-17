@@ -18,6 +18,7 @@ object ProblemHttpPlanDefinitions:
     deleteProblemData: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.model.ProblemDataFilename), domains.problem.application.ProblemCommands.DeleteProblemDataResult],
     deleteProblemDataPath: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.model.DeleteProblemDataPathRequest), domains.problem.application.ProblemCommands.DeleteProblemDataResult],
     clearProblemData: WithTransaction[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.ClearProblemDataResult],
+    setProblemReady: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest), domains.problem.application.ProblemCommands.SetProblemReadyResult],
     updateProblem: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.model.UpdateProblemRequest), domains.problem.application.ProblemCommands.UpdateProblemResult],
     deleteProblem: WithTransaction[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.DeleteProblemResult]
   )
@@ -37,6 +38,7 @@ object ProblemHttpPlanDefinitions:
       deleteProblemData = WithTransaction(new ProblemHttpPlans.DeleteProblemDataPlan(problemDataStorage), ProblemHttpResponses.mapDeleteDataResult),
       deleteProblemDataPath = WithTransaction(new ProblemHttpPlans.DeleteProblemDataPathPlan(problemDataStorage), ProblemHttpResponses.mapDeleteDataResult),
       clearProblemData = WithTransaction(new ProblemHttpPlans.ClearProblemDataPlan(problemDataStorage), ProblemHttpResponses.mapClearDataResult),
+      setProblemReady = WithTransaction(new ProblemHttpPlans.SetProblemReadyPlan(problemDataStorage), ProblemHttpResponses.mapSetReadyResult),
       updateProblem = WithTransaction(ProblemHttpPlans.UpdateProblem, ProblemHttpResponses.mapUpdateResult),
       deleteProblem = WithTransaction(ProblemHttpPlans.DeleteProblem, ProblemHttpResponses.mapDeleteResult)
     )

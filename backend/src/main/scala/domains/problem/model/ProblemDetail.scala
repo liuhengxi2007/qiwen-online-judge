@@ -14,6 +14,7 @@ final case class ProblemDetail(
   title: ProblemTitle,
   statement: ProblemStatementText,
   data: ProblemData,
+  ready: Boolean,
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,

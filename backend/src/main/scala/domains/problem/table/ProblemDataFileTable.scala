@@ -22,6 +22,16 @@ object ProblemDataFileTable:
       accIo *> insert(connection, problemId, entry, createdAt)
     }
 
+  def upsertForProblem(
+    connection: Connection,
+    problemId: ProblemId,
+    entries: List[ProblemDataManifestEntry],
+    createdAt: Instant
+  ): IO[Unit] =
+    entries.foldLeft(IO.unit) { (accIo, entry) =>
+      accIo *> upsert(connection, problemId, entry, createdAt)
+    }
+
   def listForProblem(connection: Connection, problemId: ProblemId): IO[List[ProblemDataManifestEntry]] =
     IO.blocking {
       val statement = connection.prepareStatement(ProblemDataFileTableSql.listSql)
@@ -59,6 +69,21 @@ object ProblemDataFileTable:
       finally statement.close()
     }
 
+  def deleteExceptPaths(connection: Connection, problemId: ProblemId, paths: Set[ProblemDataPath]): IO[Unit] =
+    if paths.isEmpty then deleteAllForProblem(connection, problemId)
+    else
+      IO.blocking {
+        val statement = connection.prepareStatement(ProblemDataFileTableSql.deleteExceptPathsSql(paths.size))
+        try
+          statement.setObject(1, problemId.value)
+          paths.toList.sortBy(_.value).zipWithIndex.foreach { case (path, index) =>
+            statement.setString(index + 2, path.value)
+          }
+          statement.executeUpdate()
+          ()
+        finally statement.close()
+      }
+
   def manifestForProblem(connection: Connection, problemId: ProblemId, problemSlug: ProblemSlug): IO[ProblemDataManifest] =
     listForProblem(connection, problemId).map(entries => ProblemDataManifest.fromEntries(problemSlug, entries))
 
@@ -70,6 +95,25 @@ object ProblemDataFileTable:
   ): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(ProblemDataFileTableSql.insertSql)
+      try
+        statement.setObject(1, problemId.value)
+        statement.setString(2, entry.path.value)
+        statement.setLong(3, entry.sizeBytes)
+        statement.setString(4, entry.sha256)
+        statement.setTimestamp(5, java.sql.Timestamp.from(createdAt))
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  private def upsert(
+    connection: Connection,
+    problemId: ProblemId,
+    entry: ProblemDataManifestEntry,
+    createdAt: Instant
+  ): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(ProblemDataFileTableSql.upsertSql)
       try
         statement.setObject(1, problemId.value)
         statement.setString(2, entry.path.value)
