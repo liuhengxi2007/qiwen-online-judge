@@ -4,7 +4,7 @@ import { updateUserGroupMemberRole } from '@/features/usergroup/api/usergroup-cl
 import type { UserGroupDetail, UserGroupRole, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import type { Username } from '@/features/auth/domain/auth'
 import { HttpClientError } from '@/shared/api/http-client'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useUserGroupUpdateMemberRoleAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()

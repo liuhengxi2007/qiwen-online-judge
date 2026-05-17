@@ -14,7 +14,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import type { SubmissionLanguage } from '@/features/submission/domain/submission'
 import { isSubmissionLanguage } from '@/features/submission/domain/submission'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemSubmitEditorCardProps = {
   errorMessage: string

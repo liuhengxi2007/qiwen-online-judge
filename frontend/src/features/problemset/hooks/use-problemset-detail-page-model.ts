@@ -19,7 +19,7 @@ import { useProblemSetEditorState } from '@/features/problemset/hooks/use-proble
 import { useProblemSetLinkProblemAction } from '@/features/problemset/hooks/use-problemset-link-problem-action'
 import { useProblemSetRemoveProblemAction } from '@/features/problemset/hooks/use-problemset-remove-problem-action'
 import { useProblemSetUpdateAction } from '@/features/problemset/hooks/use-problemset-update-action'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, canManageProblems: boolean) {
   const { t } = useI18n()

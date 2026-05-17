@@ -10,7 +10,7 @@ import { useSiteManageModel } from '@/features/site-management/hooks/use-site-ma
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { parseUserSearchQuery } from '@/features/user/domain/user'
 import { calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function SiteManagePage() {
   const { t } = useI18n()

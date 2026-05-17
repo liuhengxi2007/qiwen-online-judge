@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
+import { useEffect } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
@@ -7,16 +8,19 @@ import type { SubmissionListRequest, SubmissionListResponse } from '@/features/s
 import { useSubmissionPageModel } from '@/features/submission/hooks/use-submission-page-model'
 
 const queryState = vi.hoisted(() => ({
-  implementation: (_request: SubmissionListRequest) => ({
-    response: {
-      items: [] as SubmissionListResponse['items'],
-      page: 1,
-      pageSize: 10,
-      totalItems: 0,
-    },
-    isLoading: false,
-    errorMessage: '',
-  }),
+  implementation: (request: SubmissionListRequest) => {
+    void request
+    return {
+      response: {
+        items: [] as SubmissionListResponse['items'],
+        page: 1,
+        pageSize: 10,
+        totalItems: 0,
+      },
+      isLoading: false,
+      errorMessage: '',
+    }
+  },
 }))
 
 vi.mock('@/features/submission/hooks/use-submission-list-query', () => ({
@@ -34,7 +38,10 @@ vi.mock('@/features/user/api/user-client', () => ({
 let currentSearch = ''
 
 function LocationCapture() {
-  currentSearch = useLocation().search
+  const location = useLocation()
+  useEffect(() => {
+    currentSearch = location.search
+  }, [location.search])
   return null
 }
 

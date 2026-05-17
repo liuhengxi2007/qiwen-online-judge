@@ -5,13 +5,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ProblemDataFilesCard } from '@/features/problem/components/problem-data-files-card'
 import { ProblemDataHeaderCard } from '@/features/problem/components/problem-data-header-card'
 import { ProblemDataUploadCard } from '@/features/problem/components/problem-data-upload-card'
+import { ProblemJudgeConfigEditorCard } from '@/features/problem/components/problem-judge-config-editor-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseProblemSlug, problemSlugValue } from '@/features/problem/domain/problem'
+import { parseProblemSlug, problemSlugValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function ProblemDataPage() {
   const { t } = useI18n()
@@ -32,10 +33,15 @@ export function ProblemDataPage() {
     return <Navigate replace to="/problems" />
   }
 
-  const model = useProblemDataPageModel(slugResult.value)
+  return <ProblemDataPageContent problemSlug={slugResult.value} />
+}
+
+function ProblemDataPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+  const { t } = useI18n()
+  const model = useProblemDataPageModel(problemSlug)
 
   if (!model.isProblemLoading && model.problem && !model.problem.canManage) {
-    return <Navigate replace to={`/problems/${problemSlugValue(slugResult.value)}`} />
+    return <Navigate replace to={`/problems/${problemSlugValue(problemSlug)}`} />
   }
 
   return (
@@ -60,7 +66,8 @@ export function ProblemDataPage() {
           <div className="space-y-6">
             <ProblemDataHeaderCard model={model} />
             <ProblemDataUploadCard model={model} />
-            <ProblemDataFilesCard model={model} problemSlug={slugResult.value} />
+            <ProblemJudgeConfigEditorCard model={model} problemSlug={problemSlug} />
+            <ProblemDataFilesCard model={model} problemSlug={problemSlug} />
           </div>
         ) : (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

@@ -5,7 +5,7 @@ import { updateProblemSet } from '@/features/problemset/api/problemset-client'
 import { validateProblemSetUpdateDraft } from '@/features/problemset/domain/problemset-form'
 import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useProblemSetUpdateAction(problemSetSlug: ProblemSetSlug) {
   const { t } = useI18n()

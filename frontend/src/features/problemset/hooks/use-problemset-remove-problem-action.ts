@@ -4,7 +4,7 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { removeProblemFromProblemSet } from '@/features/problemset/api/problemset-client'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug) {
   const { t } = useI18n()

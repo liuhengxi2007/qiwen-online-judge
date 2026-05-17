@@ -15,7 +15,7 @@ import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-pro
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 
@@ -33,12 +33,12 @@ export function ProblemDetailHeaderCard({
   setManagementPanel,
 }: ProblemDetailHeaderCardProps) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
 
   return (

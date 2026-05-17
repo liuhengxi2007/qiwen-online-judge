@@ -10,7 +10,7 @@ import {
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemSetDetailHeaderCardProps = {
   problemSet: ProblemSetDetail

@@ -12,18 +12,18 @@ import {
   useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!model.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
 
   return (

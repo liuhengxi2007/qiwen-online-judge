@@ -18,7 +18,7 @@ import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
 
 const problemSetsPerPage = 10

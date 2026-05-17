@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ProblemSetContentEditorCard } from '@/features/problemset/components/problem-set-content-editor-card'
 import { ProblemSetDeleteCard } from '@/features/problemset/components/problem-set-delete-card'
 import { ProblemSetLinkProblemCard } from '@/features/problemset/components/problem-set-link-problem-card'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type EditProblemSetDialogProps = {
   open: boolean

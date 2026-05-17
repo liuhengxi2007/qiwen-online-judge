@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 

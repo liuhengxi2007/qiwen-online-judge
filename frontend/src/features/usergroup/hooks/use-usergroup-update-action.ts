@@ -4,7 +4,7 @@ import { updateUserGroup } from '@/features/usergroup/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { validateUserGroupUpdateDraft } from '@/features/usergroup/domain/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()

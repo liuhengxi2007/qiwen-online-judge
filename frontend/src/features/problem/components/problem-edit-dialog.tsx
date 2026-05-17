@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type SubmissionPaginationControlsProps = {
   currentPage: number

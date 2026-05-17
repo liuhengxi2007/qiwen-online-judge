@@ -16,7 +16,7 @@ import {
   resolveUserSettingsRoutePolicy,
   toForbiddenRedirect,
 } from '@/features/auth/lib/route-policy'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'

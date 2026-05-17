@@ -22,7 +22,7 @@ import { DateTimeText } from '@/shared/components/date-time-text'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function BlogDetailPage() {
   const { t } = useI18n()

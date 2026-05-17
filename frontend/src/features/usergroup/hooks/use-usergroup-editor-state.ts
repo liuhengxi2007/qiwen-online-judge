@@ -11,7 +11,7 @@ export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
 
   useEffect(() => {
     dispatch({ type: 'hydrate', userGroup })
-  }, [userGroup?.id])
+  }, [userGroup])
 
   return {
     ...state,

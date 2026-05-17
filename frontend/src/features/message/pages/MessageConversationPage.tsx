@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { MessageCircle, SendHorizontal, ShieldBan } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
@@ -19,7 +19,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 const minimumIncomingMessagesBeforeBlockShortcut = 5
 
@@ -46,11 +46,11 @@ export function MessageConversationPage() {
   const targetUsername = parsedRouteUsername && parsedRouteUsername.ok ? parsedRouteUsername.value : null
   const autoMarkMessageRead = session?.preferences.autoMarkMessageRead ?? false
 
-  async function syncConversationReadState(
+  const syncConversationReadState = useCallback(async (
     activeConversationId: MessageConversationId,
     response: MessageHistoryResponse,
     options: { autoMarkRead?: boolean } = {},
-  ): Promise<MessageHistoryResponse> {
+  ): Promise<MessageHistoryResponse> => {
     const shouldAutoMarkRead = options.autoMarkRead ?? true
     if (
       !shouldAutoMarkRead ||
@@ -71,19 +71,19 @@ export function MessageConversationPage() {
       isAutoMarkingConversationReadRef.current = false
       setIsMarkingConversationRead(false)
     }
-  }
+  }, [autoMarkMessageRead, refreshInbox])
 
-  async function refreshConversationState(
+  const refreshConversationState = useCallback(async (
     activeConversationId: MessageConversationId,
     options: { autoMarkRead?: boolean } = {},
-  ): Promise<void> {
+  ): Promise<void> => {
     const response = await getConversationHistory(activeConversationId)
     const syncedResponse = await syncConversationReadState(activeConversationId, response, options)
     setHistory(syncedResponse)
     setErrorMessage('')
     setSendErrorMessage('')
     void refreshInbox()
-  }
+  }, [refreshInbox, syncConversationReadState])
 
   useEffect(() => {
     if (!targetUsername) {
@@ -125,7 +125,7 @@ export function MessageConversationPage() {
     return () => {
       cancelled = true
     }
-  }, [autoMarkMessageRead, refreshInbox, t, targetUsername])
+  }, [refreshConversationState, t, targetUsername])
 
   useEffect(() => {
     if (!conversationId) {
@@ -150,7 +150,7 @@ export function MessageConversationPage() {
 
     window.addEventListener(messageStreamEventName, handleRealtimeEvent as EventListener)
     return () => window.removeEventListener(messageStreamEventName, handleRealtimeEvent as EventListener)
-  }, [autoMarkMessageRead, conversationId, refreshInbox, t])
+  }, [conversationId, refreshConversationState, t])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />

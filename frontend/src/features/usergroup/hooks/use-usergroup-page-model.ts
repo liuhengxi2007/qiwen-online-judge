@@ -9,12 +9,15 @@ import { translateMessage } from '@/shared/i18n/messages'
 import type { PageRequest } from '@/shared/model/Pagination'
 
 export function useUserGroupPageModel(pageRequest: PageRequest) {
+  const page = pageRequest.page
+  const pageSize = pageRequest.pageSize
   const [state, dispatch] = useReducer(reduceUserGroupPageState, initialUserGroupPageState)
 
   useEffect(() => {
     let cancelled = false
+    const nextPageRequest = { page, pageSize }
     dispatch({ type: 'load_started' })
-    void listUserGroups(pageRequest)
+    void listUserGroups(nextPageRequest)
       .then((response) => {
         if (cancelled) {
           return
@@ -31,7 +34,7 @@ export function useUserGroupPageModel(pageRequest: PageRequest) {
     return () => {
       cancelled = true
     }
-  }, [pageRequest.page, pageRequest.pageSize])
+  }, [page, pageSize])
 
   return state
 }

@@ -46,10 +46,17 @@ object JudgeTaskBuilder:
         problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
           case None => Left("judge.yaml is required at the problem data root.")
           case Some((_, bytes)) =>
-            parseYaml(bytes).flatMap { root =>
-              buildFromYaml(claimedSubmission, manifest, root)
-            }
+            parseConfigBytes(bytes, claimedSubmission, manifest)
         }
+
+  private[application] def parseConfigBytes(
+    bytes: Array[Byte],
+    claimedSubmission: ClaimedSubmission,
+    manifest: ProblemDataManifest
+  ): Either[String, JudgeTask] =
+    parseYaml(bytes).flatMap { root =>
+      buildFromYaml(claimedSubmission, manifest, root)
+    }
 
   private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =
     Try {
@@ -180,14 +187,17 @@ object JudgeTaskBuilder:
         yield AggregationConfig(testcases, subtasks)
     }
 
-  private val allowedAggregations = Set("min,max,max", "min,sum,max", "sum,max,max", "sum,sum,max")
+  private val allowedAggregations = Vector(
+    "min_max_max" -> JudgeTaskAggregation("min", "max", "max"),
+    "min_sum_max" -> JudgeTaskAggregation("min", "sum", "max"),
+    "sum_max_max" -> JudgeTaskAggregation("sum", "max", "max"),
+    "sum_sum_max" -> JudgeTaskAggregation("sum", "sum", "max")
+  )
+  private val allowedAggregationByName = allowedAggregations.toMap
   private val defaultAggregation = JudgeTaskAggregation("sum", "max", "max")
 
   private def parseAggregation(raw: String): Either[String, JudgeTaskAggregation] =
-    val normalized = raw.replace(" ", "")
-    normalized.split(",", -1).toList match
-      case score :: time :: memory :: Nil if allowedAggregations.contains(normalized) => Right(JudgeTaskAggregation(score, time, memory))
-      case _ => Left(s"Unsupported aggregation: $raw.")
+    allowedAggregationByName.get(raw.trim).toRight(s"Unsupported aggregation: $raw. Expected one of: ${allowedAggregations.map(_._1).mkString(", ")}.")
 
   private def findFile(manifest: ProblemDataManifest, rawPath: String, label: String): Either[String, JudgeTaskFileRef] =
     for

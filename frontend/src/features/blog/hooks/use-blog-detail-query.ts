@@ -16,11 +16,6 @@ export function useBlogDetailQuery(blogId: BlogId | null) {
 
   useEffect(() => {
     if (!blogId) {
-      setQueryState({
-        blogId: null,
-        blog: null,
-        errorMessage: 'invalid',
-      })
       return
     }
 

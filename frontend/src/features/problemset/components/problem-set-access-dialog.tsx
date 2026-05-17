@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessSummary, type ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemSetAccessDialogProps = {
   open: boolean

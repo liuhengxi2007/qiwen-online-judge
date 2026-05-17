@@ -7,6 +7,8 @@ import type { ProblemSlug } from '@/features/problem/domain/problem'
 import type { PageRequest } from '@/shared/model/Pagination'
 
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null, pageRequest: PageRequest) {
+  const page = pageRequest.page
+  const pageSize = pageRequest.pageSize
   const [queryState, setQueryState] = useState<{
     key: string | null
     blogs: BlogSummary[]
@@ -17,17 +19,18 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
   }>({
     key: null,
     blogs: [],
-    page: pageRequest.page,
-    pageSize: pageRequest.pageSize,
+    page,
+    pageSize,
     totalItems: 0,
     errorMessage: '',
   })
   const [reloadToken, setReloadToken] = useState(0)
-  const queryKey = `${authorUsername ?? ''}:${problemSlug ?? ''}:${pageRequest.page}:${pageRequest.pageSize}:${reloadToken}`
+  const queryKey = `${authorUsername ?? ''}:${problemSlug ?? ''}:${page}:${pageSize}:${reloadToken}`
 
   useEffect(() => {
     let cancelled = false
-    const loadBlogs = problemSlug === null ? listBlogs(authorUsername, pageRequest) : listProblemBlogs(problemSlug, pageRequest)
+    const nextPageRequest = { page, pageSize }
+    const loadBlogs = problemSlug === null ? listBlogs(authorUsername, nextPageRequest) : listProblemBlogs(problemSlug, nextPageRequest)
 
     void loadBlogs
       .then((response) => {
@@ -52,8 +55,8 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
         setQueryState({
           key: queryKey,
           blogs: [],
-          page: pageRequest.page,
-          pageSize: pageRequest.pageSize,
+          page,
+          pageSize,
           totalItems: 0,
           errorMessage: 'Unable to load blogs.',
         })
@@ -62,12 +65,12 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
     return () => {
       cancelled = true
     }
-  }, [authorUsername, pageRequest.page, pageRequest.pageSize, problemSlug, queryKey])
+  }, [authorUsername, page, pageSize, problemSlug, queryKey])
 
   return {
     blogs: queryState.key === queryKey ? queryState.blogs : [],
-    page: queryState.key === queryKey ? queryState.page : pageRequest.page,
-    pageSize: queryState.key === queryKey ? queryState.pageSize : pageRequest.pageSize,
+    page: queryState.key === queryKey ? queryState.page : page,
+    pageSize: queryState.key === queryKey ? queryState.pageSize : pageSize,
     totalItems: queryState.key === queryKey ? queryState.totalItems : 0,
     isLoading: queryState.key !== queryKey,
     errorMessage: queryState.key === queryKey ? queryState.errorMessage : '',

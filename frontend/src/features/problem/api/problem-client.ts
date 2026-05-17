@@ -28,7 +28,7 @@ import {
   toCreateProblemRequestContract,
   toUpdateProblemRequestContract,
 } from '@/features/problem/domain/problem'
-import { decodeSuccessResponse, postJson, postMultipart, requestJson } from '@/shared/api/http-client'
+import { HttpClientError, decodeSuccessResponse, postJson, postMultipart, requestJson } from '@/shared/api/http-client'
 
 export async function listProblems(request: ProblemListRequest): Promise<ProblemListResponse> {
   const url = new URL('/api/problems', window.location.origin)
@@ -86,6 +86,37 @@ export async function uploadProblemDataFile(
   const formData = new FormData()
   formData.set('file', file)
   formData.set('path', problemDataFilenameValue(filename))
+
+  return postMultipart(
+    `/api/problems/${problemSlugValue(problemSlug)}/data/files`,
+    fromProblemDataUploadResultContract,
+    formData,
+  )
+}
+
+export async function readProblemDataText(problemSlug: ProblemSlug, path: ProblemDataPath): Promise<string> {
+  const response = await fetch(problemDataPathDownloadUrl(problemSlug, path), {
+    credentials: 'same-origin',
+  })
+
+  if (!response.ok) {
+    throw new HttpClientError(
+      response.status === 404 ? 'not-found' : response.status === 403 ? 'forbidden' : response.status === 401 ? 'unauthorized' : 'http',
+      response.statusText || `Unable to read ${problemDataPathValue(path)}.`,
+    )
+  }
+
+  return response.text()
+}
+
+export async function saveProblemDataText(
+  problemSlug: ProblemSlug,
+  path: ProblemDataPath,
+  content: string,
+): Promise<ProblemDataUploadResult> {
+  const formData = new FormData()
+  formData.set('file', new File([content], path.split('/').slice(-1)[0] || 'data.txt', { type: 'text/plain' }))
+  formData.set('path', problemDataPathValue(path))
 
   return postMultipart(
     `/api/problems/${problemSlugValue(problemSlug)}/data/files`,

@@ -18,7 +18,7 @@ import {
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { buildPageNumbers } from '@/shared/domain/pagination'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
 

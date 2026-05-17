@@ -6,9 +6,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseUserGroupSlug,
+  type UserGroupSlug,
   userGroupDescriptionValue,
   userGroupNameValue,
 } from '@/features/usergroup/domain/usergroup'
+import type { Username } from '@/features/auth/domain/auth'
 import { UserGroupAddMemberCard } from '@/features/usergroup/components/usergroup-add-member-card'
 import { UserGroupDeleteCard } from '@/features/usergroup/components/usergroup-delete-card'
 import { UserGroupEditCard } from '@/features/usergroup/components/usergroup-edit-card'
@@ -20,7 +22,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function UserGroupDetailPage() {
   const { t } = useI18n()
@@ -41,7 +43,20 @@ export function UserGroupDetailPage() {
     return <Navigate replace to="/user-groups" />
   }
 
-  const model = useUserGroupDetailPageModel(slugResult.value, user.username, user.siteManager)
+  return <UserGroupDetailPageContent isSiteManager={user.siteManager} userGroupSlug={slugResult.value} viewerUsername={user.username} />
+}
+
+function UserGroupDetailPageContent({
+  isSiteManager,
+  userGroupSlug,
+  viewerUsername,
+}: {
+  isSiteManager: boolean
+  userGroupSlug: UserGroupSlug
+  viewerUsername: Username
+}) {
+  const { t } = useI18n()
+  const model = useUserGroupDetailPageModel(userGroupSlug, viewerUsername, isSiteManager)
   const [ownershipTargetUsername, setOwnershipTargetUsername] = useState<string | null>(null)
   const ownershipTargetMember =
     ownershipTargetUsername === null

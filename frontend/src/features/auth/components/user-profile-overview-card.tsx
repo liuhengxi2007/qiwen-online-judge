@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { displayNameValue, emailAddressValue, usernameValue, type SessionResponse, type Username } from '@/features/auth/domain/auth'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserProfileOverviewCardProps = {
   icon: ReactNode

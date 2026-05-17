@@ -6,7 +6,7 @@ import { problemDataPathDownloadUrl } from '@/features/problem/api/problem-clien
 import { problemDataPathValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 

@@ -39,12 +39,15 @@ function reducer(state: ProblemSetPageState, action: ProblemSetPageAction): Prob
 }
 
 export function useProblemSetPageModel(pageRequest: PageRequest) {
+  const page = pageRequest.page
+  const pageSize = pageRequest.pageSize
   const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
     let cancelled = false
+    const nextPageRequest = { page, pageSize }
     dispatch({ type: 'load_started' })
-    void listProblemSets(pageRequest)
+    void listProblemSets(nextPageRequest)
       .then((response) => {
         if (cancelled) {
           return
@@ -61,7 +64,7 @@ export function useProblemSetPageModel(pageRequest: PageRequest) {
     return () => {
       cancelled = true
     }
-  }, [pageRequest.page, pageRequest.pageSize])
+  }, [page, pageSize])
 
   return state
 }

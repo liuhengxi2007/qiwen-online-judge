@@ -25,7 +25,7 @@ import type {
 } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type SubmitSettingsParams =
   | {

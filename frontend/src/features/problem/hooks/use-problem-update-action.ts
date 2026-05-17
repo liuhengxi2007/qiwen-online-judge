@@ -4,7 +4,7 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { updateProblem } from '@/features/problem/api/problem-client'
 import { validateProblemUpdateDraft } from '@/features/problem/domain/problem-form'
 import type { OthersSubmissionAccess, ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useProblemUpdateAction(problemSlug: ProblemSlug) {

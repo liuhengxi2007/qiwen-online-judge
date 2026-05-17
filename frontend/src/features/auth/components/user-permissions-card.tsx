@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { SessionResponse } from '@/features/auth/domain/auth'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserPermissionsCardProps = {
   user: SessionResponse | null

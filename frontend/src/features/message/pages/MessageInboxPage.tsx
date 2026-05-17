@@ -17,7 +17,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
 
@@ -68,8 +68,6 @@ export function MessageInboxPage() {
 
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSuggestions([])
-      setSearchError('')
       return
     }
 
@@ -87,6 +85,9 @@ export function MessageInboxPage() {
 
     return () => window.clearTimeout(timeoutId)
   }, [searchQuery, t])
+
+  const visibleSuggestions = searchQuery.trim() ? suggestions : []
+  const visibleSearchError = searchQuery.trim() ? searchError : ''
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -124,9 +125,9 @@ export function MessageInboxPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {searchError ? (
+              {visibleSearchError ? (
                 <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                  <AlertDescription className="text-rose-700">{searchError}</AlertDescription>
+                  <AlertDescription className="text-rose-700">{visibleSearchError}</AlertDescription>
                 </Alert>
               ) : null}
               <div className="space-y-2">
@@ -140,7 +141,7 @@ export function MessageInboxPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  {suggestions
+                  {visibleSuggestions
                     .filter((suggestion) => suggestion.username !== session.username)
                     .map((suggestion) => (
                       <button

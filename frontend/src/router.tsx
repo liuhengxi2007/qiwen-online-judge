@@ -1,7 +1,5 @@
-import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
-import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { BlogPage, ProblemBlogPage, UserBlogPage } from '@/features/blog/pages/BlogPage'
 import { BlogDetailPage } from '@/features/blog/pages/BlogDetailPage'
 import { CreateBlogPage } from '@/features/blog/pages/CreateBlogPage'
@@ -15,8 +13,6 @@ import { ProblemSubmitPage } from '@/features/problem/pages/ProblemSubmitPage'
 import { CreateProblemSetPage } from '@/features/problemset/pages/CreateProblemSetPage'
 import { MessageConversationPage } from '@/features/message/pages/MessageConversationPage'
 import { MessageInboxPage } from '@/features/message/pages/MessageInboxPage'
-import { useMessageRealtimeConnection } from '@/features/message/hooks/use-message-realtime-connection'
-import { useNotificationRealtimeConnection } from '@/features/notification/hooks/use-notification-realtime-connection'
 import { NotificationPage } from '@/features/notification/pages/NotificationPage'
 import { ProblemSetDetailPage } from '@/features/problemset/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/features/problemset/pages/ProblemSetPage'
@@ -30,24 +26,7 @@ import { UserSettingsPage } from '@/features/auth/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/features/usergroup/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/features/usergroup/pages/UserGroupDetailPage'
 import { UserGroupPage } from '@/features/usergroup/pages/UserGroupPage'
-import { useAuthStore } from '@/features/auth/stores/use-auth-store'
-
-function RootRedirect() {
-  const session = useAuthStore((state) => state.session)
-  return session ? <DashboardPage /> : <Navigate replace to="/login" />
-}
-
-function GuestOnlyRoute({ element }: { element: ReactElement }) {
-  const session = useAuthStore((state) => state.session)
-  return session ? <Navigate replace to="/" /> : element
-}
-
-function AuthenticatedRoute({ element }: { element: ReactElement }) {
-  const session = useAuthStore((state) => state.session)
-  useMessageRealtimeConnection()
-  useNotificationRealtimeConnection()
-  return session ? element : <Navigate replace to="/login" />
-}
+import { AuthenticatedRoute, GuestOnlyRoute, RootRedirect } from '@/route-components'
 
 export const router = createBrowserRouter([
   {

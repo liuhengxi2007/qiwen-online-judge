@@ -7,7 +7,7 @@ import { ProblemSetAccessDialog } from '@/features/problemset/components/problem
 import { ProblemSetDetailHeaderCard } from '@/features/problemset/components/problem-set-detail-header-card'
 import { ProblemSetLinkedProblemsCard } from '@/features/problemset/components/problem-set-linked-problems-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseProblemSetSlug, problemSetDescriptionValue, problemSetTitleValue } from '@/features/problemset/domain/problemset'
+import { parseProblemSetSlug, problemSetDescriptionValue, problemSetTitleValue, type ProblemSetSlug } from '@/features/problemset/domain/problemset'
 import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-problemset-detail-page-model'
 import {
   grantedGroupsInputFromAccessPolicy,
@@ -18,7 +18,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function ProblemSetDetailPage() {
   const { t } = useI18n()
@@ -39,8 +39,18 @@ export function ProblemSetDetailPage() {
     return <Navigate replace to="/problem-sets" />
   }
 
-  const canManageProblems = user.siteManager || user.problemManager
-  const model = useProblemSetDetailPageModel(slugResult.value, canManageProblems)
+  return <ProblemSetDetailPageContent canManageProblems={user.siteManager || user.problemManager} problemSetSlug={slugResult.value} />
+}
+
+function ProblemSetDetailPageContent({
+  canManageProblems,
+  problemSetSlug,
+}: {
+  canManageProblems: boolean
+  problemSetSlug: ProblemSetSlug
+}) {
+  const { t } = useI18n()
+  const model = useProblemSetDetailPageModel(problemSetSlug, canManageProblems)
   const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const hasUnsavedChanges =
     model.problemSet !== null &&

@@ -8,6 +8,7 @@ import { ProblemSubmitHeaderCard } from '@/features/problem/components/problem-s
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseProblemSlug,
+  type ProblemSlug,
 } from '@/features/problem/domain/problem'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { createSubmission } from '@/features/submission/api/submission-client'
@@ -21,7 +22,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = [
   { value: 'cpp17', label: 'C++17' },
@@ -33,7 +34,6 @@ export function ProblemSubmitPage() {
   usePageTitle(t('problem.submit.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -48,7 +48,13 @@ export function ProblemSubmitPage() {
     return <Navigate replace to="/problems" />
   }
 
-  const detailQuery = useProblemDetailQuery(slugResult.value)
+  return <ProblemSubmitPageContent problemSlug={slugResult.value} />
+}
+
+function ProblemSubmitPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+  const { t } = useI18n()
+  const navigate = useNavigate()
+  const detailQuery = useProblemDetailQuery(problemSlug)
   const [language, setLanguage] = useState<SubmissionLanguage>('cpp17')
   const [sourceCode, setSourceCode] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
@@ -116,7 +122,7 @@ export function ProblemSubmitPage() {
                 setStatusMessage('')
 
                 void createSubmission({
-                  problemSlug: slugResult.value,
+                  problemSlug,
                   language,
                   sourceCode: sourceCodeResult.value,
                 })

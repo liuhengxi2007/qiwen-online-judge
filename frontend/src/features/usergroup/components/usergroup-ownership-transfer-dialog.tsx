@@ -1,7 +1,7 @@
 import { displayNameValue } from '@/features/auth/domain/auth'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 

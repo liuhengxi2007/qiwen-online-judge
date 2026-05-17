@@ -12,7 +12,7 @@ import {
 } from '@/features/blog/domain/blog'
 import { blogScoreClassName } from '@/features/blog/components/blog-support'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type BlogCommentThreadProps = {
   comments: BlogCommentSummary[]

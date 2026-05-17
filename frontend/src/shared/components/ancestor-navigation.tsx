@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type AncestorLink = {
   to: string

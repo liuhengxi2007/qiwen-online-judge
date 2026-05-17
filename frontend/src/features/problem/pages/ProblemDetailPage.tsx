@@ -4,7 +4,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseProblemSlug, problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
+import { parseProblemSlug, problemStatementTextValue, problemTitleValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import { ProblemAccessDialog } from '@/features/problem/components/problem-access-dialog'
 import { ProblemDetailHeaderCard } from '@/features/problem/components/problem-detail-header-card'
 import { ProblemEditDialog } from '@/features/problem/components/problem-edit-dialog'
@@ -20,15 +20,10 @@ import {
 } from '@/shared/domain/resource-access-input'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function ProblemDetailPage() {
   const { t } = useI18n()
-  const othersSubmissionAccessOptions = [
-    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
-    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
-    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
-  ] as const
   usePageTitle(t('problem.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
   const { slug } = useParams<{ slug: string }>()
@@ -46,7 +41,17 @@ export function ProblemDetailPage() {
     return <Navigate replace to="/problems" />
   }
 
-  const model = useProblemDetailPageModel(slugResult.value)
+  return <ProblemDetailPageContent problemSlug={slugResult.value} />
+}
+
+function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+  const { t } = useI18n()
+  const othersSubmissionAccessOptions = [
+    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
+    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
+    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
+  ] as const
+  const model = useProblemDetailPageModel(problemSlug)
   const canManageProblem = model.canManage
   const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')

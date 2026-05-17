@@ -7,7 +7,7 @@ import { AccountActions } from '@/shared/components/account-actions'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function DashboardPage() {
   const { t } = useI18n()

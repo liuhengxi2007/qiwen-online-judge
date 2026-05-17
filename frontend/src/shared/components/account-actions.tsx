@@ -8,7 +8,7 @@ import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type AccountActionsProps = {
   showSignOutLabel?: boolean

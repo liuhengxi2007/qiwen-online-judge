@@ -17,7 +17,7 @@ import { useUserGroupEditorState } from '@/features/usergroup/hooks/use-usergrou
 import { useUserGroupRemoveMemberAction } from '@/features/usergroup/hooks/use-usergroup-remove-member-action'
 import { useUserGroupUpdateMemberRoleAction } from '@/features/usergroup/hooks/use-usergroup-update-member-role-action'
 import { useUserGroupUpdateAction } from '@/features/usergroup/hooks/use-usergroup-update-action'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewerUsername: Username, isSiteManager: boolean) {
   const { t } = useI18n()

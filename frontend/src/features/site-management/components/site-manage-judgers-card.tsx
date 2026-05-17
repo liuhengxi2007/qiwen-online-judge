@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { DateTimeText } from '@/shared/components/date-time-text'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
 

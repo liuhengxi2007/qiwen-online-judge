@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserAccountPageShellProps = {
   heading: string

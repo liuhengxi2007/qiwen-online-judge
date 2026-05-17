@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 

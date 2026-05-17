@@ -12,7 +12,7 @@ import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 function normalizePage(rawPage: string | null): number {
   const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1

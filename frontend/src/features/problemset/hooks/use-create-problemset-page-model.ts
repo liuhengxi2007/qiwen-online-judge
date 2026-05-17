@@ -6,7 +6,7 @@ import type { ProblemSetSummary } from '@/features/problemset/domain/problemset'
 import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type CreateProblemSetPageState = {
   isSubmitting: boolean

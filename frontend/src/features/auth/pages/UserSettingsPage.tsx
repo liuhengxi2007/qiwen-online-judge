@@ -13,22 +13,18 @@ import { UserAccountPageShell } from '@/features/auth/components/user-account-pa
 import { UserPermissionsCard } from '@/features/auth/components/user-permissions-card'
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
 import { displayNameValue, usernameValue, type UserIdentity } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/model/SessionResponse'
 import { addMessageBlock, listMessageBlocks, removeMessageBlock } from '@/features/message/api/message-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/features/auth/hooks/use-user-settings-model'
 import { listUserSuggestions } from '@/features/user/api/user-client'
 import { HttpClientError } from '@/shared/api/http-client'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function UserSettingsPage() {
   const { t } = useI18n()
   usePageTitle(t('userSettings.pageTitle'))
-  const [blockSuggestions, setBlockSuggestions] = useState<UserIdentity[]>([])
-  const [blockSearch, setBlockSearch] = useState('')
-  const [blockErrorMessage, setBlockErrorMessage] = useState('')
-  const [isUpdatingBlocks, setIsUpdatingBlocks] = useState(false)
-  const [blockedUsers, setBlockedUsers] = useState<import('@/features/message/domain/message').MessageBlockEntry[]>([])
   const { username: routeUsername } = useParams<{ username: string }>()
   const { hash } = useLocation()
   const { session: viewer, setSession: setViewer, navigationIntent: guardNavigationIntent } =
@@ -42,6 +38,26 @@ export function UserSettingsPage() {
     return <Navigate replace to="/login" />
   }
 
+  return <UserSettingsPageContent hash={hash} routeUsername={routeUsername} setViewer={setViewer} viewer={viewer} />
+}
+
+function UserSettingsPageContent({
+  hash,
+  routeUsername,
+  setViewer,
+  viewer,
+}: {
+  hash: string
+  routeUsername?: string
+  setViewer: (session: SessionResponse | null) => void
+  viewer: SessionResponse
+}) {
+  const { t } = useI18n()
+  const [blockSuggestions, setBlockSuggestions] = useState<UserIdentity[]>([])
+  const [blockSearch, setBlockSearch] = useState('')
+  const [blockErrorMessage, setBlockErrorMessage] = useState('')
+  const [isUpdatingBlocks, setIsUpdatingBlocks] = useState(false)
+  const [blockedUsers, setBlockedUsers] = useState<import('@/features/message/domain/message').MessageBlockEntry[]>([])
   const {
     displayedUser,
     displayName,
@@ -74,16 +90,8 @@ export function UserSettingsPage() {
     setViewer,
   })
 
-  if (modelNavigationIntent) {
-    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
-  }
-
   useEffect(() => {
     if (!isEditingOwnSettings) {
-      setBlockedUsers([])
-      setBlockSearch('')
-      setBlockSuggestions([])
-      setBlockErrorMessage('')
       return
     }
 
@@ -99,7 +107,6 @@ export function UserSettingsPage() {
 
   useEffect(() => {
     if (!isEditingOwnSettings || !blockSearch.trim()) {
-      setBlockSuggestions([])
       return
     }
 
@@ -117,6 +124,8 @@ export function UserSettingsPage() {
     return () => window.clearTimeout(timeoutId)
   }, [blockSearch, isEditingOwnSettings, t, viewer.username])
 
+  const visibleBlockSuggestions = isEditingOwnSettings && blockSearch.trim() ? blockSuggestions : []
+
   useEffect(() => {
     if (!isEditingOwnSettings || hash !== '#message-blocks') {
       return
@@ -128,6 +137,10 @@ export function UserSettingsPage() {
 
     return () => window.cancelAnimationFrame(frameId)
   }, [hash, isEditingOwnSettings])
+
+  if (modelNavigationIntent) {
+    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
+  }
 
   return (
     <UserAccountPageShell
@@ -428,7 +441,7 @@ export function UserSettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                {blockSuggestions.map((suggestion) => (
+                {visibleBlockSuggestions.map((suggestion) => (
                   <button
                     key={usernameValue(suggestion.username)}
                     type="button"

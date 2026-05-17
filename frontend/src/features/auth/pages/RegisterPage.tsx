@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useRegisterModel } from '@/features/auth/hooks/use-register-model'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function RegisterPage() {
   const { t } = useI18n()

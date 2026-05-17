@@ -10,7 +10,7 @@ import { blogIdValue, parseBlogId, type BlogId, type BlogSummary } from '@/featu
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import type { Username } from '@/features/auth/domain/auth'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import type { PageRequest } from '@/shared/model/Pagination'
 
 type UseBlogPageModelArgs = {

@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { contributionTextClassName } from '@/features/auth/domain/contribution-style'
 import { displayNameValue, parseUsername, userContributionValue, usernameValue } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/model/SessionResponse'
 import { messageConversationPath } from '@/features/message/domain/message'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { problemSlugValue } from '@/features/problem/domain/problem'
@@ -16,17 +17,13 @@ import { resolveUserProfileRoutePolicy } from '@/features/auth/lib/route-policy'
 import { AppSectionBar } from '@/shared/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { formatDateTime, formatUtcOffsetTitle } from '@/shared/lib/date-time'
 
 const acceptedProblemsPerPage = 10
 
 export function UserProfilePage() {
   const { t } = useI18n()
-  const navigate = useNavigate()
-  const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
-  const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   usePageTitle(t('userProfile.pageTitle'))
   const { username: routeUsername } = useParams<{ username: string }>()
   const { session: viewer, navigationIntent: guardNavigationIntent } = useSessionGuard()
@@ -39,6 +36,15 @@ export function UserProfilePage() {
     return <Navigate replace to="/login" />
   }
 
+  return <UserProfilePageContent routeUsername={routeUsername} viewer={viewer} />
+}
+
+function UserProfilePageContent({ routeUsername, viewer }: { routeUsername?: string; viewer: SessionResponse }) {
+  const { t } = useI18n()
+  const navigate = useNavigate()
+  const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
+  const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const parsedRouteUsername = routeUsername ? parseUsername(routeUsername) : null
   const routePolicy = resolveUserProfileRoutePolicy({
     viewerUsername: viewer.username,

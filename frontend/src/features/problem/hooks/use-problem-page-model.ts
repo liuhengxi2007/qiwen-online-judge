@@ -9,6 +9,9 @@ function requestKey(request: ProblemListRequest): string {
 }
 
 export function useProblemPageModel(request: ProblemListRequest) {
+  const query = request.query
+  const page = request.pageRequest.page
+  const pageSize = request.pageRequest.pageSize
   const key = requestKey(request)
   const [state, setState] = useState<{
     key: string
@@ -19,8 +22,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
     key: '',
     response: {
       items: [],
-      page: request.pageRequest.page,
-      pageSize: request.pageRequest.pageSize,
+      page,
+      pageSize,
       totalItems: 0,
     },
     isLoading: true,
@@ -29,12 +32,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
 
   useEffect(() => {
     let cancelled = false
-    setState((currentState) => ({
-      ...currentState,
-      isLoading: true,
-      errorMessage: '',
-    }))
-    void listProblems(request)
+    const nextRequest = { query, pageRequest: { page, pageSize } }
+    void listProblems(nextRequest)
       .then((response) => {
         if (cancelled) {
           return
@@ -54,8 +53,8 @@ export function useProblemPageModel(request: ProblemListRequest) {
           key,
           response: {
             items: [],
-            page: request.pageRequest.page,
-            pageSize: request.pageRequest.pageSize,
+            page,
+            pageSize,
             totalItems: 0,
           },
           isLoading: false,
@@ -66,12 +65,12 @@ export function useProblemPageModel(request: ProblemListRequest) {
     return () => {
       cancelled = true
     }
-  }, [key])
+  }, [key, page, pageSize, query])
 
   return {
     problems: state.key === key ? state.response.items : [],
-    page: state.key === key ? state.response.page : request.pageRequest.page,
-    pageSize: state.key === key ? state.response.pageSize : request.pageRequest.pageSize,
+    page: state.key === key ? state.response.page : page,
+    pageSize: state.key === key ? state.response.pageSize : pageSize,
     totalItems: state.key === key ? state.response.totalItems : 0,
     isLoading: state.isLoading || state.key !== key,
     errorMessage: state.key === key ? state.errorMessage : '',

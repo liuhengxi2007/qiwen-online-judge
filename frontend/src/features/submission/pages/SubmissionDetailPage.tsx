@@ -10,6 +10,7 @@ import { deleteSubmission, rejudgeSubmission } from '@/features/submission/api/s
 import {
   isTerminalSubmissionStatus,
   parseSubmissionId,
+  type SubmissionId,
   submissionIdValue,
   submissionJudgeStateLabel,
   submissionLanguageLabel,
@@ -31,18 +32,13 @@ import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function SubmissionDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('submission.detail.pageTitle'))
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
   const { submissionId } = useParams<{ submissionId: string }>()
-  const [actionErrorMessage, setActionErrorMessage] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isRejudging, setIsRejudging] = useState(false)
-  const [deleted, setDeleted] = useState(false)
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -57,8 +53,17 @@ export function SubmissionDetailPage() {
   if (!submissionIdResult.ok) {
     return <Navigate replace to="/submissions" />
   }
-  const currentSubmissionId = submissionIdResult.value
 
+  return <SubmissionDetailPageContent currentSubmissionId={submissionIdResult.value} />
+}
+
+function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissionId: SubmissionId }) {
+  const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
+  const [actionErrorMessage, setActionErrorMessage] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isRejudging, setIsRejudging] = useState(false)
+  const [deleted, setDeleted] = useState(false)
   const submissionQuery = useSubmissionDetailQuery(currentSubmissionId)
 
   if (deleted) {

@@ -22,7 +22,7 @@ import {
   type BlogVote,
 } from '@/features/blog/domain/blog'
 import { parseProblemSlug } from '@/features/problem/domain/problem'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UseBlogDetailPageModelArgs = {
   blog: BlogDetail | null

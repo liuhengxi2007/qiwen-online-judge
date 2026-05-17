@@ -28,19 +28,14 @@ import {
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 const problemsPerPage = 10
 
 export function ProblemPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.pageTitle'))
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const { session: user, navigationIntent } = useSessionGuard()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const activeQuery = searchParams.get('q')?.trim() ?? ''
-  const [queryInput, setQueryInput] = useState(activeQuery)
-  const currentPage = parsePositivePage(searchParams.get('page'))
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -50,7 +45,16 @@ export function ProblemPage() {
     return <Navigate replace to="/login" />
   }
 
-  const canCreate = user.siteManager || user.problemManager
+  return <ProblemPageContent canCreate={user.siteManager || user.problemManager} />
+}
+
+function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
+  const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeQuery = searchParams.get('q')?.trim() ?? ''
+  const [queryInput, setQueryInput] = useState(activeQuery)
+  const currentPage = parsePositivePage(searchParams.get('page'))
   const model = useProblemPageModel({
     query: (() => {
       if (!activeQuery) {

@@ -19,13 +19,12 @@ import { ResourceAccessEditor } from '@/shared/components/resource-access-editor
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function CreateProblemSetPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -35,7 +34,12 @@ export function CreateProblemSetPage() {
     return <Navigate replace to="/login" />
   }
 
-  const canCreate = user.siteManager || user.problemManager
+  return <CreateProblemSetPageContent canCreate={user.siteManager || user.problemManager} />
+}
+
+function CreateProblemSetPageContent({ canCreate }: { canCreate: boolean }) {
+  const { t } = useI18n()
+  const navigate = useNavigate()
   const model = useCreateProblemSetPageModel(canCreate)
   const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write')
   const deferredDescription = useDeferredValue(model.description)

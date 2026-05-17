@@ -4,7 +4,7 @@ import type { Username } from '@/features/auth/domain/auth'
 import { removeUserGroupMember } from '@/features/usergroup/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import { HttpClientError } from '@/shared/api/http-client'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()

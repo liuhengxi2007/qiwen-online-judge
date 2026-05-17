@@ -22,6 +22,8 @@ function requestKey(request: SubmissionListRequest): string {
 
 export function useSubmissionListQuery(request: SubmissionListRequest) {
   const key = requestKey(request)
+  const fallbackPage = request.pageRequest.page
+  const fallbackPageSize = request.pageRequest.pageSize
   const [queryState, setQueryState] = useState<{
     key: string
     response: SubmissionListResponse
@@ -30,8 +32,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     key: '',
     response: {
       items: [],
-      page: request.pageRequest.page,
-      pageSize: request.pageRequest.pageSize,
+      page: fallbackPage,
+      pageSize: fallbackPageSize,
       totalItems: 0,
     },
     errorMessage: '',
@@ -41,10 +43,11 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     let cancelled = false
     let intervalId: number | null = null
     let refreshInFlight = false
+    const activeRequest = JSON.parse(key) as SubmissionListRequest
     let currentResponse: SubmissionListResponse = {
       items: [],
-      page: request.pageRequest.page,
-      pageSize: request.pageRequest.pageSize,
+      page: activeRequest.pageRequest.page,
+      pageSize: activeRequest.pageRequest.pageSize,
       totalItems: 0,
     }
 
@@ -114,7 +117,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     }
 
     const load = () => {
-      void listSubmissions(request)
+      void listSubmissions(activeRequest)
         .then((loadedResponse) => {
           if (cancelled) {
             return
@@ -137,8 +140,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
             key,
             response: {
               items: [],
-              page: request.pageRequest.page,
-              pageSize: request.pageRequest.pageSize,
+              page: activeRequest.pageRequest.page,
+              pageSize: activeRequest.pageRequest.pageSize,
               totalItems: 0,
             },
             errorMessage: 'Unable to load submissions.',
@@ -163,8 +166,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
         ? queryState.response
         : {
             items: [],
-            page: request.pageRequest.page,
-            pageSize: request.pageRequest.pageSize,
+            page: fallbackPage,
+            pageSize: fallbackPageSize,
             totalItems: 0,
           },
     isLoading: queryState.key !== key,

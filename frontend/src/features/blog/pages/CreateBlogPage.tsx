@@ -18,7 +18,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function CreateBlogPage() {
   const { t } = useI18n()

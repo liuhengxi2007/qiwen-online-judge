@@ -16,7 +16,7 @@ import type {
 import type { UserIdentity } from '@/features/user/domain/user'
 import { displayNameValue, usernameValue } from '@/features/user/domain/user'
 import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { Files } from 'lucide-react'
 
 type SubmissionFilterCardProps = {

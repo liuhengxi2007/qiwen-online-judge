@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { ResourceAccessEditor } from '@/shared/components/resource-access-editor'
 import { resourceAccessSummary } from '@/shared/domain/resource-lifecycle'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 

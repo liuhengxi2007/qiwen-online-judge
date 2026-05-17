@@ -95,19 +95,36 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
   const problemQueryParam = searchParams.get('problem')?.trim() ?? ''
-  const [usernameFilterInput, setUsernameFilterInput] = useState('')
-  const [problemFilterInput, setProblemFilterInput] = useState('')
-  const [isUsernameFilterFocused, setIsUsernameFilterFocused] = useState(false)
-  const [isProblemFilterFocused, setIsProblemFilterFocused] = useState(false)
+  const [usernameDraft, setUsernameDraft] = useState({
+    query: usernameQueryParam,
+    value: usernameQueryParam,
+    selected: usernameQueryParam || null,
+    focused: false,
+  })
+  const [problemDraft, setProblemDraft] = useState({
+    query: problemQueryParam,
+    value: problemQueryParam,
+    focused: false,
+  })
   const [isUserSuggestionEnabled, setIsUserSuggestionEnabled] = useState(false)
   const [isProblemSuggestionEnabled, setIsProblemSuggestionEnabled] = useState(false)
   const [isLoadingUserSuggestions, setIsLoadingUserSuggestions] = useState(false)
   const [isLoadingProblemSuggestions, setIsLoadingProblemSuggestions] = useState(false)
-  const [selectedUsernameSuggestion, setSelectedUsernameSuggestion] = useState<string | null>(null)
   const [userSuggestions, setUserSuggestions] = useState<UserIdentity[]>([])
   const [problemSuggestions, setProblemSuggestions] = useState<ProblemSuggestion[]>([])
   const hasFixedProblemFilter = fixedProblemSlugFilter !== undefined
   const activeProblemQuery = hasFixedProblemFilter ? problemSlugValue(fixedProblemSlugFilter) : problemQueryParam
+  const usernameFilterInput = usernameDraft.query === usernameQueryParam ? usernameDraft.value : usernameQueryParam
+  const selectedUsernameSuggestion =
+    usernameDraft.query === usernameQueryParam ? usernameDraft.selected : usernameQueryParam || null
+  const isUsernameFilterFocused = usernameDraft.query === usernameQueryParam && usernameDraft.focused
+  const problemFilterInput =
+    hasFixedProblemFilter
+      ? activeProblemQuery
+      : problemDraft.query === problemQueryParam
+        ? problemDraft.value
+        : problemQueryParam
+  const isProblemFilterFocused = !hasFixedProblemFilter && problemDraft.query === problemQueryParam && problemDraft.focused
   const activeSort = (() => {
     const rawSort = searchParams.get('sort')
     return rawSort && isSubmissionSort(rawSort) ? rawSort : 'submitted'
@@ -152,19 +169,8 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput)
   const showProblemSuggestionPanel =
     isProblemSuggestionEnabled && isProblemFilterFocused && shouldShowTypingSuggestions(problemFilterInput)
-
-  useEffect(() => {
-    setUsernameFilterInput(usernameQueryParam)
-    setSelectedUsernameSuggestion(usernameQueryParam || null)
-    setIsUsernameFilterFocused(false)
-  }, [usernameQueryParam])
-
-  useEffect(() => {
-    if (!hasFixedProblemFilter) {
-      setProblemFilterInput(activeProblemQuery)
-    }
-    setIsProblemFilterFocused(false)
-  }, [activeProblemQuery, hasFixedProblemFilter])
+  const visibleUserSuggestions = showUserSuggestionPanel ? userSuggestions : []
+  const visibleProblemSuggestions = showProblemSuggestionPanel ? problemSuggestions : []
 
   useEffect(() => {
     if (submissionQuery.isLoading) {
@@ -187,8 +193,6 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
 
   useEffect(() => {
     if (!isUserSuggestionEnabled || !isUsernameFilterFocused || !shouldShowTypingSuggestions(usernameFilterInput)) {
-      setUserSuggestions([])
-      setIsLoadingUserSuggestions(false)
       return
     }
 
@@ -212,15 +216,12 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
 
     return () => {
       cancelled = true
-      setIsLoadingUserSuggestions(false)
       window.clearTimeout(timeoutId)
     }
   }, [isUserSuggestionEnabled, isUsernameFilterFocused, usernameFilterInput])
 
   useEffect(() => {
     if (!isProblemSuggestionEnabled || !isProblemFilterFocused || !shouldShowTypingSuggestions(problemFilterInput) || hasFixedProblemFilter) {
-      setProblemSuggestions([])
-      setIsLoadingProblemSuggestions(false)
       return
     }
 
@@ -244,7 +245,6 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
 
     return () => {
       cancelled = true
-      setIsLoadingProblemSuggestions(false)
       window.clearTimeout(timeoutId)
     }
   }, [hasFixedProblemFilter, isProblemSuggestionEnabled, isProblemFilterFocused, problemFilterInput])
@@ -261,14 +261,11 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   }
 
   function updateUsernameFilterInput(value: string) {
-    setUsernameFilterInput(value)
-    setSelectedUsernameSuggestion(null)
-    setIsUsernameFilterFocused(true)
+    setUsernameDraft({ query: usernameQueryParam, value, selected: null, focused: true })
   }
 
   function updateProblemFilterInput(value: string) {
-    setProblemFilterInput(value)
-    setIsProblemFilterFocused(true)
+    setProblemDraft({ query: problemQueryParam, value, focused: true })
   }
 
   function applyFilters() {
@@ -291,17 +288,24 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     }
 
     nextSearchParams.delete('page')
-    setIsUsernameFilterFocused(false)
-    setIsProblemFilterFocused(false)
+    const nextUsernameQuery = selectedUsernameSuggestion ?? trimmedUsernameInput
+    setUsernameDraft({
+      query: nextUsernameQuery,
+      value: nextUsernameQuery,
+      selected: nextUsernameQuery || null,
+      focused: false,
+    })
+    setProblemDraft({
+      query: hasFixedProblemFilter ? problemQueryParam : problemFilterInput.trim(),
+      value: hasFixedProblemFilter ? problemQueryParam : problemFilterInput.trim(),
+      focused: false,
+    })
     setSearchParams(nextSearchParams)
   }
 
   function clearFilters() {
-    setUsernameFilterInput('')
-    setSelectedUsernameSuggestion(null)
-    setProblemFilterInput('')
-    setIsUsernameFilterFocused(false)
-    setIsProblemFilterFocused(false)
+    setUsernameDraft({ query: '', value: '', selected: null, focused: false })
+    setProblemDraft({ query: '', value: '', focused: false })
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.delete('username')
     nextSearchParams.delete('problem')
@@ -366,10 +370,10 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     isProblemFilterFocused,
     isUserSuggestionEnabled,
     isProblemSuggestionEnabled,
-    isLoadingUserSuggestions,
-    isLoadingProblemSuggestions,
-    userSuggestions,
-    problemSuggestions,
+    isLoadingUserSuggestions: showUserSuggestionPanel && isLoadingUserSuggestions,
+    isLoadingProblemSuggestions: showProblemSuggestionPanel && isLoadingProblemSuggestions,
+    userSuggestions: visibleUserSuggestions,
+    problemSuggestions: visibleProblemSuggestions,
     hasFixedProblemFilter,
     activeProblemQuery,
     activeSort,
@@ -387,30 +391,31 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     verdictFilterLabel,
     updateUsernameFilterInput,
     updateProblemFilterInput,
-    setIsUsernameFilterFocused,
-    setIsProblemFilterFocused,
+    setIsUsernameFilterFocused: (focused: boolean) => {
+      setUsernameDraft((draft) => ({ ...draft, query: usernameQueryParam, focused }))
+    },
+    setIsProblemFilterFocused: (focused: boolean) => {
+      setProblemDraft((draft) => ({ ...draft, query: problemQueryParam, focused }))
+    },
     setIsUserSuggestionEnabled: (checked: boolean) => {
       setIsUserSuggestionEnabled(checked)
-      setIsUsernameFilterFocused(checked)
+      setUsernameDraft((draft) => ({ ...draft, query: usernameQueryParam, focused: checked }))
       if (!checked) {
         setUserSuggestions([])
       }
     },
     setIsProblemSuggestionEnabled: (checked: boolean) => {
       setIsProblemSuggestionEnabled(checked)
-      setIsProblemFilterFocused(checked)
+      setProblemDraft((draft) => ({ ...draft, query: problemQueryParam, focused: checked }))
       if (!checked) {
         setProblemSuggestions([])
       }
     },
     selectUsernameSuggestion: (username: string) => {
-      setUsernameFilterInput(username)
-      setSelectedUsernameSuggestion(username)
-      setIsUsernameFilterFocused(false)
+      setUsernameDraft({ query: usernameQueryParam, value: username, selected: username, focused: false })
     },
     selectProblemSuggestion: (slug: string) => {
-      setProblemFilterInput(slug)
-      setIsProblemFilterFocused(false)
+      setProblemDraft({ query: problemQueryParam, value: slug, focused: false })
     },
     applyFilters,
     clearFilters,

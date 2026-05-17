@@ -10,6 +10,8 @@ import { translateMessage } from '@/shared/i18n/messages'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
   const requestKey = JSON.stringify(userListRequest)
+  const fallbackUserPage = userListRequest.pageRequest.page
+  const fallbackUserPageSize = userListRequest.pageRequest.pageSize
   const [queryState, setQueryState] = useState<{
     enabled: boolean | null
     requestKey: string
@@ -45,7 +47,9 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
 
     let isCancelled = false
 
-    void listUsers(userListRequest)
+    const activeUserListRequest = JSON.parse(requestKey) as UserListRequest
+
+    void listUsers(activeUserListRequest)
       .then((loadedUsers) => {
         if (isCancelled) {
           return
@@ -74,8 +78,8 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
             enabled: siteManagerEnabled,
             requestKey,
             users: [],
-            userPage: userListRequest.pageRequest.page,
-            userPageSize: userListRequest.pageRequest.pageSize,
+            userPage: activeUserListRequest.pageRequest.page,
+            userPageSize: activeUserListRequest.pageRequest.pageSize,
             totalUsers: 0,
             userListError: '',
             navigationIntent: toSiteManageDeniedRedirect(),
@@ -89,8 +93,8 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
           enabled: siteManagerEnabled,
           requestKey,
           users: [],
-          userPage: userListRequest.pageRequest.page,
-          userPageSize: userListRequest.pageRequest.pageSize,
+          userPage: activeUserListRequest.pageRequest.page,
+          userPageSize: activeUserListRequest.pageRequest.pageSize,
           totalUsers: 0,
           userListError: translateMessage('siteManage.usersLoadFailed'),
           usersLoaded: true,
@@ -150,11 +154,11 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
     userPage:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.userPage
-        : userListRequest.pageRequest.page,
+        : fallbackUserPage,
     userPageSize:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.userPageSize
-        : userListRequest.pageRequest.pageSize,
+        : fallbackUserPageSize,
     totalUsers:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
         ? queryState.totalUsers

@@ -21,7 +21,7 @@ import {
 import { usernameValue, type SessionResponse } from '@/features/auth/domain/auth'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { SubmissionPaginationControls } from '@/features/submission/components/submission-pagination-controls'
 
 type SubmissionSummaryListProps = {

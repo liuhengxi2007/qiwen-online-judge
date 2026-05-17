@@ -20,18 +20,12 @@ import { ResourceAccessEditor } from '@/shared/components/resource-access-editor
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function CreateProblemPage() {
   const { t } = useI18n()
-  const othersSubmissionAccessOptions = [
-    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
-    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
-    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
-  ] as const
   usePageTitle(t('problem.create.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const navigate = useNavigate()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -41,7 +35,17 @@ export function CreateProblemPage() {
     return <Navigate replace to="/login" />
   }
 
-  const canCreate = user.siteManager || user.problemManager
+  return <CreateProblemPageContent canCreate={user.siteManager || user.problemManager} />
+}
+
+function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
+  const { t } = useI18n()
+  const othersSubmissionAccessOptions = [
+    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
+    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
+    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
+  ] as const
+  const navigate = useNavigate()
   const model = useCreateProblemPageModel(canCreate)
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')
   const deferredStatement = useDeferredValue(model.statement)

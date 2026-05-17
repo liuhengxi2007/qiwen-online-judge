@@ -8,18 +8,18 @@ import {
   shouldShowProblemSlugSupplement,
   useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
 
 export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemDetailQuery }) {
   const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
 
   if (!detailQuery.problem) {
     return null
   }
 
-  const problemTitleDisplayMode = useProblemTitleDisplayMode()
   const titleText = formatProblemTitleDisplay(detailQuery.problem.title, detailQuery.problem.slug, problemTitleDisplayMode)
 
   return (

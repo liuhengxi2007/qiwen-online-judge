@@ -9,7 +9,7 @@ import {
 import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { useI18n } from '@/shared/i18n/i18n'
+import { useI18n } from '@/shared/i18n/use-i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useCreateProblemPageModel(canCreate: boolean) {
