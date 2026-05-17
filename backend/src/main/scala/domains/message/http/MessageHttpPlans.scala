@@ -8,16 +8,16 @@ import domains.message.application.MessageCommandResults.{AddBlockResult, Create
 import domains.message.application.{JdbcMessageRepository, MessageCommands, MessageEventHub, MessageStreamEvent}
 import domains.message.model.{CreateConversationRequest, MarkConversationReadRequest, MessageConversationId, MessageId, SendDirectMessageRequest}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import domains.shared.model.PageRequest
 
 import java.sql.Connection
 
 object MessageHttpPlans:
 
-  case object ListInbox extends PlainAuthenticatedHttpPlan[Unit, domains.message.model.MessageInboxResponse]:
+  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.model.MessageInboxResponse]:
     override val name: String = "ListInbox"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.message.model.MessageInboxResponse] =
-      val _ = input
-      MessageCommands.listInbox(databaseSession, actor, JdbcMessageRepository)
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.model.MessageInboxResponse] =
+      MessageCommands.listInbox(databaseSession, actor, input, JdbcMessageRepository)
 
   final case class HistoryInput(
     conversationId: MessageConversationId,

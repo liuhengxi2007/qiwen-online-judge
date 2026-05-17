@@ -1,3 +1,5 @@
 package domains.blog.model
 
-type BlogListResponse = List[BlogSummary]
+import domains.shared.model.PageResponse
+
+type BlogListResponse = PageResponse[BlogSummary]

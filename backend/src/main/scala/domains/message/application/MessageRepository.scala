@@ -3,6 +3,7 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.shared.model.PageRequest
 
 import java.sql.Connection
 
@@ -21,7 +22,7 @@ trait MessageRepository:
     conversationId: MessageConversationId
   ): IO[Option[MessageConversationSummary]]
 
-  def listInbox(connection: Connection, actorUsername: Username): IO[MessageInboxResponse]
+  def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse]
 
   def findOtherParticipant(
     connection: Connection,

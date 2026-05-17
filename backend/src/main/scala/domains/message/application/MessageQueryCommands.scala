@@ -6,6 +6,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
 import domains.message.model.{MessageConversationId, MessageHistoryResponse, MessageId, MessageInboxResponse}
+import domains.shared.model.PageRequest
 
 object MessageQueryCommands:
   private val defaultHistoryLimit = 50
@@ -14,10 +15,11 @@ object MessageQueryCommands:
   def listInbox(
     databaseSession: DatabaseSession,
     actor: AuthUser,
+    pageRequest: PageRequest,
     repository: MessageRepository = defaultRepository
   ): IO[MessageInboxResponse] =
     databaseSession.withTransactionConnection(connection =>
-      repository.listInbox(connection, actor.username)
+      repository.listInbox(connection, actor.username, pageRequest.normalized)
     )
 
   def getConversationHistory(

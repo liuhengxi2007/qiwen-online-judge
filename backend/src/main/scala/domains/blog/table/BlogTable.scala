@@ -7,6 +7,7 @@ import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotific
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.BlogTableSupport.*
 import domains.problem.model.ProblemSlug
+import domains.shared.model.{PageRequest, PageResponse}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -58,12 +59,16 @@ object BlogTable:
       finally statement.close()
     }
 
-  def listAll(connection: Connection, viewerUsername: Username): IO[List[BlogSummary]] =
-    IO.blocking {
+  def listAll(connection: Connection, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
+    val normalizedPageRequest = pageRequest.normalized
+    for
+      summaries <- IO.blocking {
       val statement = connection.prepareStatement(listSql)
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, viewerUsername.value)
+        statement.setInt(3, normalizedPageRequest.pageSize)
+        statement.setInt(4, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -74,15 +79,21 @@ object BlogTable:
           enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
-    }
+      }
+      totalItems <- countBlogs(connection, countListSql, statement => statement.setString(1, viewerUsername.value))
+    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
-  def listByAuthor(connection: Connection, authorUsername: Username, viewerUsername: Username): IO[List[BlogSummary]] =
-    IO.blocking {
+  def listByAuthor(connection: Connection, authorUsername: Username, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
+    val normalizedPageRequest = pageRequest.normalized
+    for
+      summaries <- IO.blocking {
       val statement = connection.prepareStatement(listByAuthorSql)
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, authorUsername.value)
         statement.setString(3, viewerUsername.value)
+        statement.setInt(4, normalizedPageRequest.pageSize)
+        statement.setInt(5, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -93,15 +104,24 @@ object BlogTable:
           enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
-    }
+      }
+      totalItems <- countBlogs(connection, countListByAuthorSql, statement =>
+        statement.setString(1, authorUsername.value)
+        statement.setString(2, viewerUsername.value)
+      )
+    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
-  def listByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username): IO[List[BlogSummary]] =
-    IO.blocking {
+  def listByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
+    val normalizedPageRequest = pageRequest.normalized
+    for
+      summaries <- IO.blocking {
       val statement = connection.prepareStatement(listByProblemSql)
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, problemSlug.value)
         statement.setString(3, viewerUsername.value)
+        statement.setInt(4, normalizedPageRequest.pageSize)
+        statement.setInt(5, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -112,14 +132,23 @@ object BlogTable:
           enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
-    }
+      }
+      totalItems <- countBlogs(connection, countListByProblemSql, statement =>
+        statement.setString(1, problemSlug.value)
+        statement.setString(2, viewerUsername.value)
+      )
+    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
-  def listPendingByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username): IO[List[BlogSummary]] =
-    IO.blocking {
+  def listPendingByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
+    val normalizedPageRequest = pageRequest.normalized
+    for
+      summaries <- IO.blocking {
       val statement = connection.prepareStatement(listPendingByProblemSql)
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, problemSlug.value)
+        statement.setInt(3, normalizedPageRequest.pageSize)
+        statement.setInt(4, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -128,6 +157,19 @@ object BlogTable:
             .map(_ => readBlogSummary(resultSet))
             .toList
           enrichSummaries(connection)(summaries)
+        finally resultSet.close()
+      finally statement.close()
+      }
+      totalItems <- countBlogs(connection, countListPendingByProblemSql, statement => statement.setString(1, problemSlug.value))
+    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+
+  private def countBlogs(connection: Connection, sql: String, bind: java.sql.PreparedStatement => Unit): IO[Long] =
+    IO.blocking {
+      val statement = connection.prepareStatement(sql)
+      try
+        bind(statement)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then resultSet.getLong("total_items") else 0L
         finally resultSet.close()
       finally statement.close()
     }

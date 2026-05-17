@@ -153,6 +153,9 @@ export function fromMessageInboxResponse(value: unknown): MessageInboxResponse {
   return {
     conversations: value.conversations.map(fromMessageConversationSummary),
     totalUnreadCount: readNumber(value.totalUnreadCount, 'total unread count'),
+    page: readNumber(value.page, 'message inbox page'),
+    pageSize: readNumber(value.pageSize, 'message inbox page size'),
+    totalItems: readNumber(value.totalItems, 'message inbox total items'),
   }
 }
 

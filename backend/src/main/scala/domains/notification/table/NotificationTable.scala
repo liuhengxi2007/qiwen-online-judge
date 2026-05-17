@@ -5,6 +5,7 @@ import domains.auth.model.Username
 import domains.notification.model.{NotificationId, NotificationKind, NotificationListResponse, NotificationPayload, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*
 import domains.notification.table.NotificationTableSupport.readNotificationSummary
+import domains.shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -48,19 +49,34 @@ object NotificationTable:
       finally statement.close()
     }
 
-  def listForRecipient(connection: Connection, recipientUsername: Username): IO[NotificationListResponse] =
+  def listForRecipient(connection: Connection, recipientUsername: Username, pageRequest: PageRequest): IO[NotificationListResponse] =
+    val normalizedPageRequest = pageRequest.normalized
     for
       notifications <- IO.blocking {
         val statement = connection.prepareStatement(listByRecipientSql)
         try
           statement.setString(1, recipientUsername.value)
+          statement.setInt(2, normalizedPageRequest.pageSize)
+          statement.setInt(3, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
           val resultSet = statement.executeQuery()
           try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readNotificationSummary(resultSet)).toList
           finally resultSet.close()
         finally statement.close()
       }
       unreadCount <- countUnreadForRecipient(connection, recipientUsername)
-    yield NotificationListResponse(notifications = notifications, unreadCount = unreadCount)
+      totalItems <- countForRecipient(connection, recipientUsername)
+    yield NotificationListResponse(notifications, unreadCount, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+
+  def countForRecipient(connection: Connection, recipientUsername: Username): IO[Long] =
+    IO.blocking {
+      val statement = connection.prepareStatement(countByRecipientSql)
+      try
+        statement.setString(1, recipientUsername.value)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then resultSet.getLong("total_items") else 0L
+        finally resultSet.close()
+      finally statement.close()
+    }
 
   def countUnreadForRecipient(connection: Connection, recipientUsername: Username): IO[Int] =
     IO.blocking {

@@ -84,7 +84,12 @@ export function fromBlogDetailContract(blog: BlogDetailContract): BlogDetail {
 }
 
 export function fromBlogListResponseContract(response: BlogListResponseContract): BlogListResponse {
-  return response.map(fromBlogSummaryContract)
+  return {
+    items: response.items.map(fromBlogSummaryContract),
+    page: response.page,
+    pageSize: response.pageSize,
+    totalItems: response.totalItems,
+  }
 }
 
 export function toCreateBlogRequestContract(request: CreateBlogRequest): CreateBlogRequestContract {

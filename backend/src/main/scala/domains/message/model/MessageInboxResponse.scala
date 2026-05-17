@@ -5,7 +5,10 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class MessageInboxResponse(
   conversations: List[MessageConversationSummary],
-  totalUnreadCount: Int
+  totalUnreadCount: Int,
+  page: Int,
+  pageSize: Int,
+  totalItems: Long
 )
 
 object MessageInboxResponse:

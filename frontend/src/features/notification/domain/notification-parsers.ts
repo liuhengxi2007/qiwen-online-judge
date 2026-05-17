@@ -141,6 +141,9 @@ export function fromNotificationListResponse(value: unknown): NotificationListRe
   return {
     notifications: value.notifications.map(fromNotificationSummaryContract),
     unreadCount: readNumber(value.unreadCount, 'notification unread count'),
+    page: readNumber(value.page, 'notification page'),
+    pageSize: readNumber(value.pageSize, 'notification page size'),
+    totalItems: readNumber(value.totalItems, 'notification total items'),
   }
 }
 

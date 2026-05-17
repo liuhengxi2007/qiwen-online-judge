@@ -12,8 +12,8 @@ object BlogHttpResponses:
 
   def mapListResult(result: BlogCommands.ListBlogsResult): IO[Response[IO]] =
     result match
-      case BlogCommands.ListBlogsResult.Listed(blogs) =>
-        IO.pure(Response[IO](status = Status.Ok).withEntity(blogs.asJson))
+      case BlogCommands.ListBlogsResult.Listed(response) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def mapCreateResult(result: BlogCommands.CreateBlogResult): IO[Response[IO]] =
     result match

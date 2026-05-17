@@ -9,6 +9,7 @@ import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, Crea
 import domains.notification.application.NotificationEventHub
 import domains.problem.model.ProblemSlug
 import domains.shared.http.AuthenticatedHttpExecutor
+import domains.shared.model.PageRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -24,7 +25,10 @@ object BlogRouter:
       case request @ GET -> Root / "api" / "blogs" =>
         handlers.execute(
           request,
-          request.uri.query.params.get("username").map(Username.canonical),
+          BlogHttpPlans.ListBlogsInput(
+            request.uri.query.params.get("username").map(Username.canonical),
+            parsePageRequest(request.uri.query.params)
+          ),
           plans.listBlogs
         )
 
@@ -33,14 +37,14 @@ object BlogRouter:
           case Left(message) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(problemSlug) =>
-            handlers.execute(request, problemSlug, plans.listProblemBlogs)
+            handlers.execute(request, BlogHttpPlans.ProblemBlogsInput(problemSlug, parsePageRequest(request.uri.query.params)), plans.listProblemBlogs)
 
       case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" =>
         ProblemSlug.parse(rawProblemSlug) match
           case Left(message) =>
             domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
           case Right(problemSlug) =>
-            handlers.execute(request, problemSlug, plans.listPendingProblemBlogs)
+            handlers.execute(request, BlogHttpPlans.ProblemBlogsInput(problemSlug, parsePageRequest(request.uri.query.params)), plans.listPendingProblemBlogs)
 
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
@@ -167,3 +171,12 @@ object BlogRouter:
           case (Right(blogId), Right(commentId)) =>
             handlers.execute(request, BlogHttpPlans.DeleteBlogCommentInput(blogId, commentId), plans.deleteBlogComment)
     }
+
+  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
+    PageRequest(
+      page = parsePositiveInt(queryParams.get("page"), 1),
+      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
+    )
+
+  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
+    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

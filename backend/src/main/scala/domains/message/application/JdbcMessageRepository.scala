@@ -3,6 +3,7 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.shared.model.PageRequest
 import domains.message.table.MessageTable
 
 import java.sql.Connection
@@ -25,8 +26,8 @@ object JdbcMessageRepository extends MessageRepository:
   ): IO[Option[MessageConversationSummary]] =
     MessageTable.findConversationSummaryForUser(connection, actorUsername, conversationId)
 
-  override def listInbox(connection: Connection, actorUsername: Username): IO[MessageInboxResponse] =
-    MessageTable.listInbox(connection, actorUsername)
+  override def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse] =
+    MessageTable.listInbox(connection, actorUsername, pageRequest)
 
   override def findOtherParticipant(
     connection: Connection,

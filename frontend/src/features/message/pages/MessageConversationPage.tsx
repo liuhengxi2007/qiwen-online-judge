@@ -35,6 +35,8 @@ export function MessageConversationPage() {
   const [sendErrorMessage, setSendErrorMessage] = useState('')
   const [draft, setDraft] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false)
+  const [olderMessagesError, setOlderMessagesError] = useState('')
   const [isMarkingConversationRead, setIsMarkingConversationRead] = useState(false)
   const [pendingReadMessageId, setPendingReadMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<MessageConversationId | null>(null)
@@ -194,6 +196,31 @@ export function MessageConversationPage() {
       .finally(() => setIsSending(false))
   }
 
+  const loadOlderMessages = () => {
+    if (!conversationId || !history || history.messages.length === 0 || !history.hasMore) {
+      return
+    }
+    setIsLoadingOlderMessages(true)
+    setOlderMessagesError('')
+    const earliestMessage = history.messages[0]
+    void getConversationHistory(conversationId, { beforeMessageId: earliestMessage.id })
+      .then((response) => {
+        setHistory((current) => {
+          if (!current) {
+            return response
+          }
+          return {
+            ...response,
+            messages: [...response.messages, ...current.messages],
+          }
+        })
+      })
+      .catch((error) => {
+        setOlderMessagesError(error instanceof HttpClientError ? error.message : t('messages.loadOlderFailed'))
+      })
+      .finally(() => setIsLoadingOlderMessages(false))
+  }
+
   const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !isSending) {
       event.preventDefault()
@@ -279,6 +306,18 @@ export function MessageConversationPage() {
             <div className="space-y-3 rounded-3xl bg-slate-50 p-4">
               {isLoading && !history ? <p className="text-sm text-slate-500">{t('common.loading')}</p> : null}
               {!isLoading && history?.messages.length === 0 ? <p className="text-sm text-slate-500">{t('messages.noMessagesYet')}</p> : null}
+              {history?.hasMore && history.messages.length > 0 ? (
+                <div className="flex justify-center">
+                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={isLoadingOlderMessages} onClick={loadOlderMessages}>
+                    {isLoadingOlderMessages ? t('messages.loadingOlder') : t('messages.loadOlder')}
+                  </Button>
+                </div>
+              ) : null}
+              {olderMessagesError ? (
+                <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+                  <AlertDescription className="text-rose-700">{olderMessagesError}</AlertDescription>
+                </Alert>
+              ) : null}
               {history?.messages.map((message) => {
                 const isOwn = message.sender.username === session.username
                 const isUnreadIncoming = !isOwn && message.readAt === null

@@ -10,43 +10,48 @@ import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, Crea
 import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.problem.model.ProblemSlug
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import domains.shared.model.PageRequest
 
 import java.sql.Connection
 
 object BlogHttpPlans:
 
-  case object ListBlogs extends PlainAuthenticatedHttpPlan[Option[Username], BlogCommands.ListBlogsResult]:
+  final case class ListBlogsInput(authorUsername: Option[Username], pageRequest: PageRequest)
+
+  case object ListBlogs extends PlainAuthenticatedHttpPlan[ListBlogsInput, BlogCommands.ListBlogsResult]:
 
     override val name: String = "ListBlogs"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: Option[Username]
+      input: ListBlogsInput
     ): IO[BlogCommands.ListBlogsResult] =
-      BlogCommands.listBlogs(databaseSession, actor, input)
+      BlogCommands.listBlogs(databaseSession, actor, input.authorUsername, input.pageRequest)
 
-  case object ListProblemBlogs extends PlainAuthenticatedHttpPlan[ProblemSlug, BlogCommands.ListBlogsResult]:
+  final case class ProblemBlogsInput(problemSlug: ProblemSlug, pageRequest: PageRequest)
+
+  case object ListProblemBlogs extends PlainAuthenticatedHttpPlan[ProblemBlogsInput, BlogCommands.ListBlogsResult]:
 
     override val name: String = "ListProblemBlogs"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: ProblemSlug
+      input: ProblemBlogsInput
     ): IO[BlogCommands.ListBlogsResult] =
-      BlogCommands.listProblemBlogs(databaseSession, actor, input)
+      BlogCommands.listProblemBlogs(databaseSession, actor, input.problemSlug, input.pageRequest)
 
-  case object ListPendingProblemBlogs extends PlainAuthenticatedHttpPlan[ProblemSlug, BlogCommands.ListBlogsResult]:
+  case object ListPendingProblemBlogs extends PlainAuthenticatedHttpPlan[ProblemBlogsInput, BlogCommands.ListBlogsResult]:
 
     override val name: String = "ListPendingProblemBlogs"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: ProblemSlug
+      input: ProblemBlogsInput
     ): IO[BlogCommands.ListBlogsResult] =
-      BlogCommands.listPendingProblemBlogs(databaseSession, actor, input)
+      BlogCommands.listPendingProblemBlogs(databaseSession, actor, input.problemSlug, input.pageRequest)
 
   case object CreateBlog extends TransactionAuthenticatedHttpPlan[CreateBlogRequest, BlogCommands.CreateBlogResult]:
 

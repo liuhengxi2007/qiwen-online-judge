@@ -109,6 +109,14 @@ object MessageTableSql:
       |) unread on true
       |where lower(mc.participant_a_username) = lower(?) or lower(mc.participant_b_username) = lower(?)
       |order by mc.last_message_at desc, mc.created_at desc, mc.id desc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countInboxSql: String =
+    """
+      |select count(*) as total_items
+      |from message_conversations mc
+      |where lower(mc.participant_a_username) = lower(?) or lower(mc.participant_b_username) = lower(?)
       |""".stripMargin
 
   val listUnreadMessageCountsSql: String =

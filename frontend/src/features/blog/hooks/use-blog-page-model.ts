@@ -11,20 +11,23 @@ import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import type { Username } from '@/features/auth/domain/auth'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import { useI18n } from '@/shared/i18n/i18n'
+import type { PageRequest } from '@/shared/model/Pagination'
 
 type UseBlogPageModelArgs = {
   authorUsernameFilter?: Username
   problemSlugFilter?: ProblemSlug
   canManageProblemLinks: boolean
+  pageRequest: PageRequest
 }
 
 export function useBlogPageModel({
   authorUsernameFilter,
   problemSlugFilter,
   canManageProblemLinks,
+  pageRequest,
 }: UseBlogPageModelArgs) {
   const { t } = useI18n()
-  const model = useBlogListQuery(authorUsernameFilter ?? null, problemSlugFilter ?? null)
+  const model = useBlogListQuery(authorUsernameFilter ?? null, problemSlugFilter ?? null, pageRequest)
   const [linkBlogId, setLinkBlogId] = useState('')
   const [linkMessage, setLinkMessage] = useState('')
   const [isLinking, setIsLinking] = useState(false)
@@ -44,10 +47,10 @@ export function useBlogPageModel({
 
     setIsLoadingPending(true)
     setPendingMessage('')
-    void listPendingProblemBlogs(problemSlugFilter)
-      .then((blogs) => {
+    void listPendingProblemBlogs(problemSlugFilter, { page: 1, pageSize: 10 })
+      .then((response) => {
         if (!cancelled) {
-          setPendingBlogs(blogs)
+          setPendingBlogs(response.items)
           setIsLoadingPending(false)
         }
       })

@@ -12,16 +12,16 @@ import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[Unit, PageResponse[domains.usergroup.model.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.model.UserGroupSummary]]:
 
     override val name: String = "ListUserGroups"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: Unit
+      input: PageRequest
     ): IO[PageResponse[domains.usergroup.model.UserGroupSummary]] =
-      UserGroupCommands.listUserGroups(databaseSession, actor, PageRequest())
+      UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[UserGroupSlug, UserGroupCommands.GetUserGroupResult]:
 

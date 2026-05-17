@@ -5,14 +5,16 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.notification.model.{NotificationListResponse, NotificationUnreadCountResponse}
 import domains.notification.table.NotificationTable
+import domains.shared.model.PageRequest
 
 object NotificationQueryCommands:
 
   def listNotifications(
     databaseSession: DatabaseSession,
-    actor: AuthUser
+    actor: AuthUser,
+    pageRequest: PageRequest
   ): IO[NotificationListResponse] =
-    databaseSession.withTransactionConnection(connection => NotificationTable.listForRecipient(connection, actor.username))
+    databaseSession.withTransactionConnection(connection => NotificationTable.listForRecipient(connection, actor.username, pageRequest.normalized))
 
   def getUnreadCount(
     databaseSession: DatabaseSession,

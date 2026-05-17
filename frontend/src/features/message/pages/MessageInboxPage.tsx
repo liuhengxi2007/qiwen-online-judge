@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Inbox, MessageSquareMore, Search } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -19,6 +19,9 @@ import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
 import { DateTimeText } from '@/shared/components/date-time-text'
+import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+
+const conversationsPerPage = 10
 
 export function MessageInboxPage() {
   const { t } = useI18n()
@@ -27,6 +30,8 @@ export function MessageInboxPage() {
   const { session, navigationIntent } = useSessionGuard()
   const conversations = useMessageStore((state) => state.conversations)
   const totalUnreadCount = useMessageStore((state) => state.totalUnreadCount)
+  const totalItems = useMessageStore((state) => state.totalItems)
+  const pageSize = useMessageStore((state) => state.pageSize)
   const isLoadingInbox = useMessageStore((state) => state.isLoadingInbox)
   const inboxError = useMessageStore((state) => state.inboxError)
   const refreshInbox = useMessageStore((state) => state.refreshInbox)
@@ -35,10 +40,31 @@ export function MessageInboxPage() {
   const [searchError, setSearchError] = useState('')
   const [inboxActionError, setInboxActionError] = useState('')
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentPage = parsePositivePage(searchParams.get('page'))
+  const totalPages = calculateTotalPages(totalItems, pageSize)
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
-    void refreshInbox()
-  }, [refreshInbox])
+    void refreshInbox({ page: currentPage, pageSize: conversationsPerPage })
+  }, [currentPage, refreshInbox])
+
+  useEffect(() => {
+    if (isLoadingInbox) {
+      return
+    }
+    const correction = getPageCorrection(currentPage, totalPages)
+    if (correction.kind === 'none') {
+      return
+    }
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (correction.kind === 'delete') {
+      nextSearchParams.delete('page')
+    } else {
+      nextSearchParams.set('page', String(correction.page))
+    }
+    setSearchParams(nextSearchParams)
+  }, [currentPage, isLoadingInbox, searchParams, setSearchParams, totalPages])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -157,7 +183,7 @@ export function MessageInboxPage() {
                     void markAllMessagesRead()
                       .then(async () => {
                         setInboxActionError('')
-                        await refreshInbox()
+                        await refreshInbox({ page: currentPage, pageSize: conversationsPerPage })
                       })
                       .catch((error) => {
                         setInboxActionError(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
@@ -207,6 +233,27 @@ export function MessageInboxPage() {
                   </Link>
                 ))}
               </div>
+              {!isLoadingInbox && conversations.length > 0 && totalPages > 1 ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === 1} onClick={() => {
+                    const nextSearchParams = new URLSearchParams(searchParams)
+                    nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
+                    setSearchParams(nextSearchParams)
+                  }}>{t('common.pagination.previous')}</Button>
+                  {pageNumbers.map((page) => (
+                    <Button key={page} type="button" variant={page === currentPage ? 'default' : 'outline'} className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'} onClick={() => {
+                      const nextSearchParams = new URLSearchParams(searchParams)
+                      nextSearchParams.set('page', String(page))
+                      setSearchParams(nextSearchParams)
+                    }}>{page}</Button>
+                  ))}
+                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === totalPages} onClick={() => {
+                    const nextSearchParams = new URLSearchParams(searchParams)
+                    nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
+                    setSearchParams(nextSearchParams)
+                  }}>{t('common.pagination.next')}</Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

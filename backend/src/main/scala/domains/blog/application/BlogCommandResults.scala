@@ -1,6 +1,6 @@
 package domains.blog.application
 
-import domains.blog.model.{BlogDetail, BlogSummary}
+import domains.blog.model.{BlogDetail, BlogListResponse, BlogSummary}
 
 object BlogCommandResults:
 
@@ -9,7 +9,7 @@ object BlogCommandResults:
     case Created(blog: BlogSummary)
 
   enum ListBlogsResult:
-    case Listed(blogs: List[BlogSummary])
+    case Listed(response: BlogListResponse)
 
   enum GetBlogResult:
     case NotFound

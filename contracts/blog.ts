@@ -1,4 +1,5 @@
 import type { UserIdentity } from './auth'
+import type { PageResponse } from './shared'
 
 export type CreateBlogRequest = {
   title: string
@@ -74,4 +75,4 @@ export type BlogDetail = {
   updatedAt: string
 }
 
-export type BlogListResponse = BlogSummary[]
+export type BlogListResponse = PageResponse<BlogSummary>

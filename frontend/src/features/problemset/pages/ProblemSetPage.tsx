@@ -1,4 +1,5 @@
-import { Link, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { BookPlus, Layers3 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -18,11 +19,36 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/shared/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
+import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+
+const problemSetsPerPage = 10
 
 export function ProblemSetPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentPage = parsePositivePage(searchParams.get('page'))
+  const model = useProblemSetPageModel({ page: currentPage, pageSize: problemSetsPerPage })
+  const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
+
+  useEffect(() => {
+    if (model.isLoading) {
+      return
+    }
+    const correction = getPageCorrection(currentPage, totalPages)
+    if (correction.kind === 'none') {
+      return
+    }
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (correction.kind === 'delete') {
+      nextSearchParams.delete('page')
+    } else {
+      nextSearchParams.set('page', String(correction.page))
+    }
+    setSearchParams(nextSearchParams)
+  }, [currentPage, model.isLoading, searchParams, setSearchParams, totalPages])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -33,7 +59,6 @@ export function ProblemSetPage() {
   }
 
   const canCreate = user.siteManager || user.problemManager
-  const model = useProblemSetPageModel()
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fdf8fb_0%,#f4edf7_48%,#ecf3fb_100%)] px-6 py-12 sm:px-8">
@@ -106,6 +131,27 @@ export function ProblemSetPage() {
                   </div>
                 ))
               )}
+              {!model.isLoading && model.problemSets.length > 0 && totalPages > 1 ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === 1} onClick={() => {
+                    const nextSearchParams = new URLSearchParams(searchParams)
+                    nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
+                    setSearchParams(nextSearchParams)
+                  }}>{t('common.pagination.previous')}</Button>
+                  {pageNumbers.map((page) => (
+                    <Button key={page} type="button" variant={page === currentPage ? 'default' : 'outline'} className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'} onClick={() => {
+                      const nextSearchParams = new URLSearchParams(searchParams)
+                      nextSearchParams.set('page', String(page))
+                      setSearchParams(nextSearchParams)
+                    }}>{page}</Button>
+                  ))}
+                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === totalPages} onClick={() => {
+                    const nextSearchParams = new URLSearchParams(searchParams)
+                    nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
+                    setSearchParams(nextSearchParams)
+                  }}>{t('common.pagination.next')}</Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

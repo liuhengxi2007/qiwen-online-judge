@@ -19,9 +19,15 @@ import {
 } from '@/features/usergroup/domain/usergroup'
 import { usernameValue, type Username } from '@/features/auth/domain/auth'
 import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
+import type { PageRequest } from '@/shared/model/Pagination'
 
-export async function listUserGroups(): Promise<UserGroupListResponse> {
-  return requestJson('/api/user-groups', fromUserGroupListResponseContract)
+export async function listUserGroups(pageRequest?: PageRequest): Promise<UserGroupListResponse> {
+  const url = new URL('/api/user-groups', window.location.origin)
+  if (pageRequest) {
+    url.searchParams.set('page', String(pageRequest.page))
+    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+  }
+  return requestJson(url.pathname + url.search, fromUserGroupListResponseContract)
 }
 
 export async function createUserGroup(request: CreateUserGroupRequest): Promise<UserGroupDetail> {

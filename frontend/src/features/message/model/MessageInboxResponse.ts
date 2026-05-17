@@ -3,4 +3,7 @@ import type { MessageConversationSummary } from '@/features/message/model/Messag
 export type MessageInboxResponse = {
   conversations: MessageConversationSummary[]
   totalUnreadCount: number
+  page: number
+  pageSize: number
+  totalItems: number
 }

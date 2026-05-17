@@ -6,16 +6,16 @@ import domains.auth.model.AuthUser
 import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.notification.model.NotificationId
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import domains.shared.model.PageRequest
 
 import java.sql.Connection
 
 object NotificationHttpPlans:
 
-  case object ListNotifications extends PlainAuthenticatedHttpPlan[Unit, domains.notification.model.NotificationListResponse]:
+  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.model.NotificationListResponse]:
     override val name: String = "ListNotifications"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.model.NotificationListResponse] =
-      val _ = input
-      NotificationCommands.listNotifications(databaseSession, actor)
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.model.NotificationListResponse] =
+      NotificationCommands.listNotifications(databaseSession, actor, input)
 
   case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.model.NotificationUnreadCountResponse]:
     override val name: String = "GetUnreadCount"

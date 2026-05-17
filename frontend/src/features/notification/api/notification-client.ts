@@ -6,9 +6,15 @@ import {
   notificationIdValue,
 } from '@/features/notification/domain/notification'
 import { decodeSuccessResponse, postJson, requestJson } from '@/shared/api/http-client'
+import type { PageRequest } from '@/shared/model/Pagination'
 
-export function listNotifications(): Promise<NotificationListResponse> {
-  return requestJson('/api/notifications', fromNotificationListResponse)
+export function listNotifications(pageRequest?: PageRequest): Promise<NotificationListResponse> {
+  const url = new URL('/api/notifications', window.location.origin)
+  if (pageRequest) {
+    url.searchParams.set('page', String(pageRequest.page))
+    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+  }
+  return requestJson(url.pathname + url.search, fromNotificationListResponse)
 }
 
 export function getNotificationUnreadCount(): Promise<NotificationUnreadCountResponse> {

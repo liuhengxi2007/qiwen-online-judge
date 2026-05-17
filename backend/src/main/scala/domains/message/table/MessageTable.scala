@@ -6,6 +6,7 @@ import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt,
 import domains.message.table.MessageTableSchema.initialize
 import domains.message.table.MessageTableSql.*
 import domains.message.table.MessageTableSupport.*
+import domains.shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -80,7 +81,8 @@ object MessageTable:
       finally statement.close()
     }
 
-  def listInbox(connection: Connection, actorUsername: Username): IO[MessageInboxResponse] =
+  def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse] =
+    val normalizedPageRequest = pageRequest.normalized
     for
       conversations <- IO.blocking {
         val statement = connection.prepareStatement(listInboxSql)
@@ -90,6 +92,8 @@ object MessageTable:
           statement.setString(3, actorUsername.value)
           statement.setString(4, actorUsername.value)
           statement.setString(5, actorUsername.value)
+          statement.setInt(6, normalizedPageRequest.pageSize)
+          statement.setInt(7, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
           val resultSet = statement.executeQuery()
           try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readConversationSummary(resultSet)).toList
           finally resultSet.close()
@@ -106,7 +110,17 @@ object MessageTable:
           finally resultSet.close()
         finally statement.close()
       }
-    yield MessageInboxResponse(conversations = conversations, totalUnreadCount = totalUnreadCount)
+      totalItems <- IO.blocking {
+        val statement = connection.prepareStatement(countInboxSql)
+        try
+          statement.setString(1, actorUsername.value)
+          statement.setString(2, actorUsername.value)
+          val resultSet = statement.executeQuery()
+          try if resultSet.next() then resultSet.getLong("total_items") else 0L
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield MessageInboxResponse(conversations, totalUnreadCount, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
   def findOtherParticipant(
     connection: Connection,

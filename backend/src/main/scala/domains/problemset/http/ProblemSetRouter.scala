@@ -19,7 +19,7 @@ object ProblemSetRouter:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" =>
-        handlers.execute(request, (), ProblemSetHttpPlanDefinitions.listProblemSets)
+        handlers.execute(request, parsePageRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
 
       case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
         ProblemSetSlug.parse(problemSetSlug) match
@@ -78,3 +78,12 @@ object ProblemSetRouter:
           case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
             handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
     }
+
+  private def parsePageRequest(queryParams: Map[String, String]): domains.shared.model.PageRequest =
+    domains.shared.model.PageRequest(
+      page = parsePositiveInt(queryParams.get("page"), 1),
+      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
+    )
+
+  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
+    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

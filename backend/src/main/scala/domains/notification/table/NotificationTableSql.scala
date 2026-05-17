@@ -37,6 +37,14 @@ object NotificationTableSql:
       |left join auth_users actor_user on actor_user.username = n.actor_username
       |where n.recipient_username = ?
       |order by n.created_at desc, n.id desc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countByRecipientSql: String =
+    """
+      |select count(*) as total_items
+      |from notifications
+      |where recipient_username = ?
       |""".stripMargin
 
   val countUnreadSql: String =

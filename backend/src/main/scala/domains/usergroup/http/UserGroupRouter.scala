@@ -19,7 +19,7 @@ object UserGroupRouter:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        handlers.execute(request, (), UserGroupHttpPlanDefinitions.listUserGroups)
+        handlers.execute(request, parsePageRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
 
       case request @ GET -> Root / "api" / "user-groups" / groupSlug =>
         UserGroupSlug.parse(groupSlug) match
@@ -94,3 +94,12 @@ object UserGroupRouter:
               UserGroupHttpPlanDefinitions.removeMember
             )
     }
+
+  private def parsePageRequest(queryParams: Map[String, String]): domains.shared.model.PageRequest =
+    domains.shared.model.PageRequest(
+      page = parsePositiveInt(queryParams.get("page"), 1),
+      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
+    )
+
+  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
+    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

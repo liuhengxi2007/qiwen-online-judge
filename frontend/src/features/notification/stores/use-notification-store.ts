@@ -4,15 +4,19 @@ import { getNotificationUnreadCount, listNotifications } from '@/features/notifi
 import type { NotificationId, NotificationSummary } from '@/features/notification/domain/notification'
 import { notificationIdValue } from '@/features/notification/domain/notification'
 import { HttpClientError } from '@/shared/api/http-client'
+import type { PageRequest } from '@/shared/model/Pagination'
 
 type NotificationStoreState = {
   notifications: NotificationSummary[]
   unreadCount: number
+  page: number
+  pageSize: number
+  totalItems: number
   isLoadingList: boolean
   listError: string
   hasLoadedList: boolean
   hasLoadedUnreadCount: boolean
-  refreshNotifications: () => Promise<void>
+  refreshNotifications: (pageRequest?: PageRequest) => Promise<void>
   refreshUnreadCount: () => Promise<void>
   markReadLocal: (notificationId: NotificationId) => void
   markAllReadLocal: () => void
@@ -22,17 +26,23 @@ type NotificationStoreState = {
 export const useNotificationStore = create<NotificationStoreState>((set) => ({
   notifications: [],
   unreadCount: 0,
+  page: 1,
+  pageSize: 10,
+  totalItems: 0,
   isLoadingList: false,
   listError: '',
   hasLoadedList: false,
   hasLoadedUnreadCount: false,
-  refreshNotifications: async () => {
+  refreshNotifications: async (pageRequest) => {
     set((state) => ({ ...state, isLoadingList: true, listError: '' }))
     try {
-      const response = await listNotifications()
+      const response = await listNotifications(pageRequest)
       set({
         notifications: response.notifications,
         unreadCount: response.unreadCount,
+        page: response.page,
+        pageSize: response.pageSize,
+        totalItems: response.totalItems,
         isLoadingList: false,
         listError: '',
         hasLoadedList: true,
@@ -89,6 +99,9 @@ export const useNotificationStore = create<NotificationStoreState>((set) => ({
     set({
       notifications: [],
       unreadCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalItems: 0,
       isLoadingList: false,
       listError: '',
       hasLoadedList: false,

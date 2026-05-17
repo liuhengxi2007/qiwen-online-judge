@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Bell, ChevronRight } from 'lucide-react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,9 @@ import { DateTimeText } from '@/shared/components/date-time-text'
 import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/i18n'
+import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+
+const notificationsPerPage = 10
 
 export function NotificationPage() {
   const { t } = useI18n()
@@ -24,6 +27,8 @@ export function NotificationPage() {
   const { session, navigationIntent } = useSessionGuard()
   const notifications = useNotificationStore((state) => state.notifications)
   const unreadCount = useNotificationStore((state) => state.unreadCount)
+  const totalItems = useNotificationStore((state) => state.totalItems)
+  const pageSize = useNotificationStore((state) => state.pageSize)
   const isLoadingList = useNotificationStore((state) => state.isLoadingList)
   const listError = useNotificationStore((state) => state.listError)
   const refreshNotifications = useNotificationStore((state) => state.refreshNotifications)
@@ -31,10 +36,31 @@ export function NotificationPage() {
   const markAllReadLocal = useNotificationStore((state) => state.markAllReadLocal)
   const [actionError, setActionError] = useState('')
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentPage = parsePositivePage(searchParams.get('page'))
+  const totalPages = calculateTotalPages(totalItems, pageSize)
+  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
-    void refreshNotifications()
-  }, [refreshNotifications])
+    void refreshNotifications({ page: currentPage, pageSize: notificationsPerPage })
+  }, [currentPage, refreshNotifications])
+
+  useEffect(() => {
+    if (isLoadingList) {
+      return
+    }
+    const correction = getPageCorrection(currentPage, totalPages)
+    if (correction.kind === 'none') {
+      return
+    }
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (correction.kind === 'delete') {
+      nextSearchParams.delete('page')
+    } else {
+      nextSearchParams.set('page', String(correction.page))
+    }
+    setSearchParams(nextSearchParams)
+  }, [currentPage, isLoadingList, searchParams, setSearchParams, totalPages])
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -94,6 +120,7 @@ export function NotificationPage() {
                     .then(() => {
                       setActionError('')
                       markAllReadLocal()
+                      void refreshNotifications({ page: currentPage, pageSize: notificationsPerPage })
                     })
                     .catch((error) => {
                       setActionError(error instanceof HttpClientError ? error.message : t('notifications.markAllReadFailed'))
@@ -157,6 +184,27 @@ export function NotificationPage() {
                 )
               })}
             </div>
+            {!isLoadingList && notifications.length > 0 && totalPages > 1 ? (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === 1} onClick={() => {
+                  const nextSearchParams = new URLSearchParams(searchParams)
+                  nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
+                  setSearchParams(nextSearchParams)
+                }}>{t('common.pagination.previous')}</Button>
+                {pageNumbers.map((page) => (
+                  <Button key={page} type="button" variant={page === currentPage ? 'default' : 'outline'} className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'} onClick={() => {
+                    const nextSearchParams = new URLSearchParams(searchParams)
+                    nextSearchParams.set('page', String(page))
+                    setSearchParams(nextSearchParams)
+                  }}>{page}</Button>
+                ))}
+                <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === totalPages} onClick={() => {
+                  const nextSearchParams = new URLSearchParams(searchParams)
+                  nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
+                  setSearchParams(nextSearchParams)
+                }}>{t('common.pagination.next')}</Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </section>

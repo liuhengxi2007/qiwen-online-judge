@@ -13,16 +13,16 @@ import java.sql.Connection
 
 object ProblemSetHttpPlans:
 
-  case object ListProblemSets extends PlainAuthenticatedHttpPlan[Unit, PageResponse[domains.problemset.model.ProblemSetSummary]]:
+  case object ListProblemSets extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.problemset.model.ProblemSetSummary]]:
 
     override val name: String = "ListProblemSets"
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
-      input: Unit
+      input: PageRequest
     ): IO[PageResponse[domains.problemset.model.ProblemSetSummary]] =
-      ProblemSetCommands.listProblemSets(databaseSession, actor, PageRequest())
+      ProblemSetCommands.listProblemSets(databaseSession, actor, input)
 
   case object GetProblemSet extends PlainAuthenticatedHttpPlan[ProblemSetSlug, ProblemSetCommands.GetProblemSetResult]:
 

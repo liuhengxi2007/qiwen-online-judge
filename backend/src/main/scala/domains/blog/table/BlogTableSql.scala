@@ -43,6 +43,14 @@ object BlogTableSql:
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.visibility = 'public' or b.author_username = ?
       |order by b.created_at desc, b.public_id desc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countListSql: String =
+    """
+      |select count(*) as total_items
+      |from blogs b
+      |where b.visibility = 'public' or b.author_username = ?
       |""".stripMargin
 
   val listByAuthorSql: String =
@@ -55,6 +63,15 @@ object BlogTableSql:
       |where b.author_username = ?
       |  and (b.visibility = 'public' or b.author_username = ?)
       |order by b.public_id asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countListByAuthorSql: String =
+    """
+      |select count(*) as total_items
+      |from blogs b
+      |where b.author_username = ?
+      |  and (b.visibility = 'public' or b.author_username = ?)
       |""".stripMargin
 
   val listByProblemSql: String =
@@ -70,6 +87,18 @@ object BlogTableSql:
       |  and bpl.status = 'accepted'
       |  and (b.visibility = 'public' or b.author_username = ?)
       |order by b.created_at desc, b.public_id desc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countListByProblemSql: String =
+    """
+      |select count(*) as total_items
+      |from blogs b
+      |join blog_problem_links bpl on bpl.blog_id = b.id
+      |join problems p on p.id = bpl.problem_id
+      |where p.slug = ?
+      |  and bpl.status = 'accepted'
+      |  and (b.visibility = 'public' or b.author_username = ?)
       |""".stripMargin
 
   val contributionByAuthorSql: String =
@@ -140,6 +169,17 @@ object BlogTableSql:
       |where p.slug = ?
       |  and bpl.status = 'pending'
       |order by bpl.linked_at asc, b.public_id asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  val countListPendingByProblemSql: String =
+    """
+      |select count(*) as total_items
+      |from blogs b
+      |join blog_problem_links bpl on bpl.blog_id = b.id
+      |join problems p on p.id = bpl.problem_id
+      |where p.slug = ?
+      |  and bpl.status = 'pending'
       |""".stripMargin
 
   val linkProblemSql: String =

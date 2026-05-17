@@ -19,22 +19,37 @@ import {
 import type { BlogId } from '@/features/blog/domain/blog'
 import { postJson, requestJson } from '@/shared/api/http-client'
 import { decodeSuccessResponse } from '@/shared/api/http-client'
+import type { PageRequest } from '@/shared/model/Pagination'
 
-export async function listBlogs(authorUsername?: Username | null): Promise<BlogListResponse> {
+export async function listBlogs(authorUsername?: Username | null, pageRequest?: PageRequest): Promise<BlogListResponse> {
   const url = new URL('/api/blogs', window.location.origin)
   if (authorUsername) {
     url.searchParams.set('username', usernameValue(authorUsername))
+  }
+  if (pageRequest) {
+    url.searchParams.set('page', String(pageRequest.page))
+    url.searchParams.set('pageSize', String(pageRequest.pageSize))
   }
 
   return requestJson(url.pathname + url.search, fromBlogListResponseContract)
 }
 
-export async function listProblemBlogs(problemSlug: ProblemSlug): Promise<BlogListResponse> {
-  return requestJson(`/api/problems/${problemSlugValue(problemSlug)}/blogs`, fromBlogListResponseContract)
+export async function listProblemBlogs(problemSlug: ProblemSlug, pageRequest?: PageRequest): Promise<BlogListResponse> {
+  const url = new URL(`/api/problems/${problemSlugValue(problemSlug)}/blogs`, window.location.origin)
+  if (pageRequest) {
+    url.searchParams.set('page', String(pageRequest.page))
+    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+  }
+  return requestJson(url.pathname + url.search, fromBlogListResponseContract)
 }
 
-export async function listPendingProblemBlogs(problemSlug: ProblemSlug): Promise<BlogListResponse> {
-  return requestJson(`/api/problems/${problemSlugValue(problemSlug)}/blog-submissions`, fromBlogListResponseContract)
+export async function listPendingProblemBlogs(problemSlug: ProblemSlug, pageRequest?: PageRequest): Promise<BlogListResponse> {
+  const url = new URL(`/api/problems/${problemSlugValue(problemSlug)}/blog-submissions`, window.location.origin)
+  if (pageRequest) {
+    url.searchParams.set('page', String(pageRequest.page))
+    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+  }
+  return requestJson(url.pathname + url.search, fromBlogListResponseContract)
 }
 
 export async function createBlog(request: CreateBlogRequest): Promise<BlogSummary> {

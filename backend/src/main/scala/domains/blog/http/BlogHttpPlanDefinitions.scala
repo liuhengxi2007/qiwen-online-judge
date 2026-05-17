@@ -8,9 +8,9 @@ object BlogHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listBlogs: Plain[Option[domains.auth.model.Username], domains.blog.application.BlogCommands.ListBlogsResult],
-    listProblemBlogs: Plain[domains.problem.model.ProblemSlug, domains.blog.application.BlogCommands.ListBlogsResult],
-    listPendingProblemBlogs: Plain[domains.problem.model.ProblemSlug, domains.blog.application.BlogCommands.ListBlogsResult],
+    listBlogs: Plain[BlogHttpPlans.ListBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
+    listProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
+    listPendingProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
     createBlog: WithTransaction[domains.blog.model.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
     getBlog: Plain[domains.blog.model.BlogId, domains.blog.application.BlogCommands.GetBlogResult],
     voteBlog: WithTransaction[BlogHttpPlans.VoteBlogInput, domains.blog.application.BlogCommands.VoteBlogResult],

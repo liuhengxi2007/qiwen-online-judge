@@ -7,7 +7,7 @@ object MessageHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listInbox: Plain[Unit, domains.message.model.MessageInboxResponse],
+    listInbox: Plain[domains.shared.model.PageRequest, domains.message.model.MessageInboxResponse],
     getConversationHistory: Plain[MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
     createConversation: WithTransaction[domains.message.model.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
     sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.model.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],

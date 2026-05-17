@@ -179,10 +179,16 @@ describe('message-parsers', () => {
         },
       ],
       totalUnreadCount: 1,
+      page: 2,
+      pageSize: 10,
+      totalItems: 11,
     })
 
     expect(inbox.conversations).toHaveLength(1)
     expect(messageConversationIdValue(inbox.conversations[0].id)).toBe(conversationId)
+    expect(inbox.page).toBe(2)
+    expect(inbox.pageSize).toBe(10)
+    expect(inbox.totalItems).toBe(11)
     expect(inbox.totalUnreadCount).toBe(1)
   })
 
