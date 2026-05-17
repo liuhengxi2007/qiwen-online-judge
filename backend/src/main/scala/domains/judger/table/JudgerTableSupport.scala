@@ -2,7 +2,7 @@ package domains.judger.table
 
 import cats.effect.IO
 import domains.judger.model.RegisteredJudgerListItem
-import judgeprotocol.model.JudgerId
+import judgeprotocol.model.{JudgerId, SubmissionLanguage}
 
 import java.sql.Timestamp
 import java.time.Instant
@@ -61,3 +61,15 @@ object JudgerTableSupport:
       registeredAt = resultSet.getTimestamp("registered_at").toInstant,
       lastHeartbeatAt = resultSet.getTimestamp("last_heartbeat_at").toInstant
     )
+
+  def parseSupportedLanguages(raw: String): List[SubmissionLanguage] =
+    raw
+      .split(",")
+      .toList
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .flatMap {
+        case "cpp17" => Some(SubmissionLanguage.Cpp17)
+        case "python3" => Some(SubmissionLanguage.Python3)
+        case _ => None
+      }

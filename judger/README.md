@@ -29,13 +29,14 @@ WSL:
 - `JUDGER_ID_PREFIX`，默认 `local-judger`
 - `POLL_INTERVAL_MS`，默认 `2000`
 - `CXX`，默认 `g++`
+- `PYTHON3`，默认 `python3`
 - `ISOLATE_BIN`，默认 `isolate`
 - `ISOLATE_BOX_ID`，默认按当前进程 PID 推导
 - `ISOLATE_PREFER_CGROUPS`，默认 `true`；若环境不支持，judger 会自动退回不带 `--cg` 的 isolate
 
 ## 当前范围
 
-当前只支持 `cpp17`。
+当前支持 `cpp17` 和 `python3`。Python3 提交会先编译为 `main.pyc` 字节码，测试点运行阶段执行该字节码文件。
 
 ## 安全执行
 

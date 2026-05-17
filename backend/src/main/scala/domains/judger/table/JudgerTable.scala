@@ -59,6 +59,25 @@ object JudgerTable:
       finally statement.close()
     }
 
+  def findActiveSupportedLanguages(
+    connection: Connection,
+    judgerId: JudgerId,
+    heartbeatTimeoutMs: Long
+  ): IO[Option[List[SubmissionLanguage]]] =
+    IO.blocking {
+      val now = Instant.now()
+      val statement = connection.prepareStatement(findActiveSupportedLanguagesSql)
+      try
+        statement.setString(1, judgerId.value)
+        statement.setTimestamp(2, Timestamp.from(now.minusMillis(heartbeatTimeoutMs)))
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(parseSupportedLanguages(resultSet.getString("supported_languages")))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   def listJudgers(connection: Connection, heartbeatTimeoutMs: Long): IO[List[RegisteredJudgerListItem]] =
     for
       now <- IO.realTimeInstant

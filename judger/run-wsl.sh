@@ -17,6 +17,10 @@ if [[ -z "${CXX:-}" ]]; then
   export CXX="g++"
 fi
 
+if [[ -z "${PYTHON3:-}" ]]; then
+  export PYTHON3="python3"
+fi
+
 if ! command -v java >/dev/null 2>&1; then
   echo "Java is required inside WSL." >&2
   echo "Install it in WSL, for example: sudo apt update && sudo apt install -y openjdk-21-jdk" >&2
@@ -44,6 +48,13 @@ if ! command -v "${CXX}" >/dev/null 2>&1; then
 fi
 
 export CXX="$(command -v "${CXX}")"
+
+if ! command -v "${PYTHON3}" >/dev/null 2>&1; then
+  echo "Python 3 interpreter '${PYTHON3}' was not found inside WSL." >&2
+  exit 1
+fi
+
+export PYTHON3="$(command -v "${PYTHON3}")"
 
 if ! command -v "${ISOLATE_BIN:-isolate}" >/dev/null 2>&1; then
   echo "isolate is required for safe judging inside WSL." >&2

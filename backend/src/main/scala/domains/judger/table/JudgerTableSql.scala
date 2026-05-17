@@ -30,6 +30,14 @@ object JudgerTableSql:
       |  and last_heartbeat_at >= ?
       |""".stripMargin
 
+  val findActiveSupportedLanguagesSql: String =
+    """
+      |select supported_languages
+      |from judgers
+      |where judger_id = ?
+      |  and last_heartbeat_at >= ?
+      |""".stripMargin
+
   val listJudgersSql: String =
     """
       |select judger_id, requested_prefix, host, process_id, supported_languages, registered_at, last_heartbeat_at

@@ -135,15 +135,24 @@ object SubmissionTable:
       finally statement.close()
     }
 
-  def claimNextCpp17(connection: Connection, runningState: SubmissionJudgeState): IO[Option[ClaimedSubmission]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(claimNextCpp17Sql)
+  def claimNextForLanguages(
+    connection: Connection,
+    languages: List[SubmissionLanguage],
+    runningState: SubmissionJudgeState
+  ): IO[Option[ClaimedSubmission]] =
+    if languages.isEmpty then IO.pure(None)
+    else IO.blocking {
+      val statement = connection.prepareStatement(claimNextForLanguagesSql(languages.size))
       try
-        statement.setString(1, SubmissionStatus.toDatabase(runningState.status))
-        setOptionalTimestamp(statement, 2, runningState.startedAt)
-        setOptionalTimestamp(statement, 3, runningState.finishedAt)
-        setOptionalVerdict(statement, 4, runningState.verdict)
-        setOptionalJudgeMessage(statement, 5, runningState.judgeMessage)
+        languages.zipWithIndex.foreach { case (language, index) =>
+          statement.setString(index + 1, SubmissionLanguage.toDatabase(language))
+        }
+        val stateStartIndex = languages.size + 1
+        statement.setString(stateStartIndex, SubmissionStatus.toDatabase(runningState.status))
+        setOptionalTimestamp(statement, stateStartIndex + 1, runningState.startedAt)
+        setOptionalTimestamp(statement, stateStartIndex + 2, runningState.finishedAt)
+        setOptionalVerdict(statement, stateStartIndex + 3, runningState.verdict)
+        setOptionalJudgeMessage(statement, stateStartIndex + 4, runningState.judgeMessage)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then

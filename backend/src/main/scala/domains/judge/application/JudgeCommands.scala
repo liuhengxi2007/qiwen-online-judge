@@ -2,6 +2,7 @@ package domains.judge.application
 
 import cats.effect.IO
 import database.DatabaseSession
+import domains.judger.table.JudgerTable
 import domains.submission.model.{SubmissionId, SubmissionJudgeCompletion, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
 import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
@@ -20,8 +21,9 @@ object JudgeCommands:
     case SubmissionNotFound
     case Updated
 
-  def claimCpp17Task(
+  def claimTask(
     databaseSession: DatabaseSession,
+    judgeConfig: JudgeConfig,
     judgerId: JudgerId,
     claimedAt: Instant
   ): IO[ClaimJudgeTaskResult] =
@@ -30,33 +32,38 @@ object JudgeCommands:
         IO.pure(ClaimJudgeTaskResult.ValidationFailed(message))
       case Right(runningState) =>
         databaseSession.withTransactionConnection { connection =>
-          SubmissionTable.claimNextCpp17(connection, runningState).flatMap {
+          JudgerTable.findActiveSupportedLanguages(connection, judgerId, judgeConfig.heartbeatTimeoutMs).flatMap {
             case None =>
-              IO.pure(ClaimJudgeTaskResult.NoTask)
-            case Some(claimedSubmission) =>
-              JudgeTaskBuilder.buildJudgeTask(connection, claimedSubmission).flatMap {
-                case Left(message) =>
-                  SubmissionLifecycle
-                    .completeJudging(
-                      runningState,
-                      SubmissionJudgeCompletion(
-                        status = SubmissionStatus.Failed,
-                        verdict = Some(SubmissionVerdict.SystemError),
-                        judgeMessage = Some(s"${judgerId.value}: $message"),
-                        timeUsedMs = None,
-                        memoryUsedKb = None
-                      ),
-                      claimedAt
-                    )
-                    .fold(
-                      lifecycleMessage => IO.pure(ClaimJudgeTaskResult.ValidationFailed(lifecycleMessage)),
-                      failedState =>
-                        SubmissionTable
-                          .updateJudgeState(connection, claimedSubmission.id, failedState)
-                          .as(ClaimJudgeTaskResult.ValidationFailed(message))
-                    )
-                case Right(task) =>
-                  IO.pure(ClaimJudgeTaskResult.Claimed(task))
+              IO.pure(ClaimJudgeTaskResult.ValidationFailed(s"Judger ${judgerId.value} is not registered or its lease expired."))
+            case Some(supportedLanguages) =>
+              SubmissionTable.claimNextForLanguages(connection, supportedLanguages.flatMap(toSubmissionLanguage), runningState).flatMap {
+                case None =>
+                  IO.pure(ClaimJudgeTaskResult.NoTask)
+                case Some(claimedSubmission) =>
+                  JudgeTaskBuilder.buildJudgeTask(connection, claimedSubmission).flatMap {
+                    case Left(message) =>
+                      SubmissionLifecycle
+                        .completeJudging(
+                          runningState,
+                          SubmissionJudgeCompletion(
+                            status = SubmissionStatus.Failed,
+                            verdict = Some(SubmissionVerdict.SystemError),
+                            judgeMessage = Some(s"${judgerId.value}: $message"),
+                            timeUsedMs = None,
+                            memoryUsedKb = None
+                          ),
+                          claimedAt
+                        )
+                        .fold(
+                          lifecycleMessage => IO.pure(ClaimJudgeTaskResult.ValidationFailed(lifecycleMessage)),
+                          failedState =>
+                            SubmissionTable
+                              .updateJudgeState(connection, claimedSubmission.id, failedState)
+                              .as(ClaimJudgeTaskResult.ValidationFailed(message))
+                        )
+                    case Right(task) =>
+                      IO.pure(ClaimJudgeTaskResult.Claimed(task))
+                  }
               }
           }
         }
@@ -113,3 +120,8 @@ object JudgeCommands:
       case judgeprotocol.model.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
       case judgeprotocol.model.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
       case judgeprotocol.model.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
+
+  private def toSubmissionLanguage(language: judgeprotocol.model.SubmissionLanguage): Option[domains.submission.model.SubmissionLanguage] =
+    language match
+      case judgeprotocol.model.SubmissionLanguage.Cpp17 => Some(domains.submission.model.SubmissionLanguage.Cpp17)
+      case judgeprotocol.model.SubmissionLanguage.Python3 => Some(domains.submission.model.SubmissionLanguage.Python3)

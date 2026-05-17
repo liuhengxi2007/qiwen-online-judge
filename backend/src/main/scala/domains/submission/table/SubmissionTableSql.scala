@@ -210,13 +210,14 @@ object SubmissionTableSql:
       |where s.public_id = ?
       |""".stripMargin
 
-  val claimNextCpp17Sql: String =
-    """
+  def claimNextForLanguagesSql(languageCount: Int): String =
+    val placeholders = List.fill(languageCount)("?").mkString(", ")
+    s"""
       |with next_submission as (
       |  select s.id
       |  from submissions s
       |  where s.status = 'queued'
-      |    and s.language = 'cpp17'
+      |    and s.language in ($placeholders)
       |  order by s.submitted_at asc, s.public_id asc
       |  for update skip locked
       |  limit 1

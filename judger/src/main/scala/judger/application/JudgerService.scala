@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.kernel.Ref
 import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judger.config.{AppConfig, RegisteredJudger}
-import judger.infra.{Cpp17JudgeExecutor, JudgeHttpClient, ProblemDataCache}
+import judger.infra.{Cpp17Runtime, JudgeExecutor, JudgeHttpClient, ProblemDataCache, Python3Runtime}
 import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.DurationLong
@@ -36,17 +36,9 @@ final class JudgerService(
     val resultIo =
       task.language match
         case SubmissionLanguage.Cpp17 =>
-          Cpp17JudgeExecutor.judge(task, config, problemDataCache)
-        case other =>
-          IO.pure(
-            ReportJudgeResultRequest(
-              status = SubmissionStatus.Failed,
-              verdict = Some(SubmissionVerdict.SystemError),
-              judgeMessage = Some(s"Unsupported language on this judger: ${SubmissionLanguage.render(other)}."),
-              timeUsedMs = None,
-              memoryUsedKb = None
-            )
-          )
+          JudgeExecutor.judge(task, config, problemDataCache, Cpp17Runtime)
+        case SubmissionLanguage.Python3 =>
+          JudgeExecutor.judge(task, config, problemDataCache, Python3Runtime)
 
     resultIo.flatMap { result =>
       httpClient.reportResult(task.submissionId, result) *>
