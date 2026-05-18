@@ -1,12 +1,16 @@
-import { parseUsername } from '@/features/auth/domain/auth'
-import { parseUserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
 
 type AccessPolicyBuildResult =
   | { ok: true; value: ResourceAccessPolicy }
   | { ok: false; message: string }
 
+type AccessSubjectParsers = {
+  parseUsername: (token: string) => { ok: true; value: string } | { ok: false; error: string }
+  parseUserGroupSlug: (token: string) => { ok: true; value: string } | { ok: false; error: string }
+}
+
 export function buildResourceAccessPolicy(
+  parsers: AccessSubjectParsers,
   baseAccess: BaseAccess,
   grantedUsersInput: string,
   grantedGroupsInput: string,
@@ -15,7 +19,7 @@ export function buildResourceAccessPolicy(
 ): AccessPolicyBuildResult {
   const parsedUsers = parseSubjects(
     parseAccessSubjectInput(grantedUsersInput),
-    parseUsername,
+    parsers.parseUsername,
     (username) => ({ kind: 'user' as const, username }),
   )
   if (!parsedUsers.ok) {
@@ -24,7 +28,7 @@ export function buildResourceAccessPolicy(
 
   const parsedGroups = parseSubjects(
     parseAccessSubjectInput(grantedGroupsInput),
-    parseUserGroupSlug,
+    parsers.parseUserGroupSlug,
     (slug) => ({ kind: 'user_group' as const, slug }),
   )
   if (!parsedGroups.ok) {
@@ -33,7 +37,7 @@ export function buildResourceAccessPolicy(
 
   const parsedManagerUsers = parseSubjects(
     parseAccessSubjectInput(grantedManagerUsersInput),
-    parseUsername,
+    parsers.parseUsername,
     (username) => ({ kind: 'user' as const, username }),
   )
   if (!parsedManagerUsers.ok) {
@@ -42,7 +46,7 @@ export function buildResourceAccessPolicy(
 
   const parsedManagerGroups = parseSubjects(
     parseAccessSubjectInput(grantedManagerGroupsInput),
-    parseUserGroupSlug,
+    parsers.parseUserGroupSlug,
     (slug) => ({ kind: 'user_group' as const, slug }),
   )
   if (!parsedManagerGroups.ok) {

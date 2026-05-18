@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
-import { AccountActions } from '@/shared/components/account-actions'
+import { AccountActions } from '@/features/auth/components/account-actions'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type NavItem = {

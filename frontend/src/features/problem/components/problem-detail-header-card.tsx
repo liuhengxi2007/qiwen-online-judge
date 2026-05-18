@@ -12,7 +12,7 @@ import {
   useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'

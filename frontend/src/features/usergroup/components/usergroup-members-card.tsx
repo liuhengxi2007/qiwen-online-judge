@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { displayNameValue } from '@/features/auth/domain/auth'
 import type { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>

@@ -9,6 +9,7 @@ import {
 import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
 import { validateProblemDraft } from '@/features/problem/domain/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 
@@ -16,7 +17,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
   const { t } = useI18n()
   const accessPolicyResult = buildResourceAccessPolicy(
-    state.baseAccess,
+    resourceAccessSubjectParsers,    state.baseAccess,
     state.grantedUsersInput,
     state.grantedGroupsInput,
     state.managerUsersInput,

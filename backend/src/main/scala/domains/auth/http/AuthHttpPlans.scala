@@ -113,17 +113,21 @@ object AuthHttpPlans:
                   case Some(validationError) =>
                     IO.pure(RegisterOutput.ValidationFailed(validationError))
                   case None =>
-                    AuthUserTable
-                      .insert(
-                        connection,
-                        username = input.username,
-                        displayName = input.displayName,
-                        email = input.email,
-                        displayMode = domains.user.model.UserDisplayMode.DisplayName,
-                        locale = domains.user.model.UserLocale.En,
-                        problemTitleDisplayMode = domains.problem.model.ProblemTitleDisplayMode.Title,
-                        autoMarkMessageRead = false,
-                        password = input.password
+                    PasswordHasher
+                      .hashPassword(input.password)
+                      .flatMap(passwordHash =>
+                        AuthUserTable
+                          .insert(
+                            connection,
+                            username = input.username,
+                            displayName = input.displayName,
+                            email = input.email,
+                            displayMode = domains.user.model.UserDisplayMode.DisplayName,
+                            locale = domains.user.model.UserLocale.En,
+                            problemTitleDisplayMode = domains.problem.model.ProblemTitleDisplayMode.Title,
+                            autoMarkMessageRead = false,
+                            passwordHash = passwordHash
+                          )
                       )
                       .flatMap(createdUser =>
                         context.sessionStore

@@ -2,7 +2,7 @@ package domains.problem.application
 
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
+import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataPath, ProblemSlug}
 
 import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import java.security.MessageDigest

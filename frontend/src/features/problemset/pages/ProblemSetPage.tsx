@@ -13,10 +13,10 @@ import {
   problemSetTitleValue,
 } from '@/features/problemset/domain/problemset'
 import { useProblemSetPageModel } from '@/features/problemset/hooks/use-problemset-page-model'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'

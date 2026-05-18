@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import { useUserGroupPageModel } from '@/features/usergroup/hooks/use-usergroup-page-model'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'

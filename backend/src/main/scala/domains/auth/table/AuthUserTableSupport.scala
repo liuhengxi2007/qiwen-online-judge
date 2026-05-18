@@ -1,7 +1,6 @@
 package domains.auth.table
 
 import cats.effect.IO
-import domains.auth.application.PasswordHasher
 import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{UserDisplayMode, UserLocale}
@@ -26,9 +25,8 @@ object AuthUserTableSupport:
   def missingInsertResult(entityName: String): Nothing =
     throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
-  def seedAdmin(connection: java.sql.Connection): IO[Unit] =
+  def seedAdmin(connection: java.sql.Connection, passwordHash: PasswordHash): IO[Unit] =
     for
-      passwordHash <- PasswordHasher.hashPassword(seedAdminUser.password)
       _ <- IO.blocking {
         val statement = connection.prepareStatement(AuthUserTableSql.seedAuthAdminSql)
         try

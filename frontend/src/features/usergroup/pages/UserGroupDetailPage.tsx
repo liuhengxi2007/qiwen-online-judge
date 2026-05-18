@@ -18,7 +18,7 @@ import { UserGroupMembersCard } from '@/features/usergroup/components/usergroup-
 import { UserGroupOwnershipTransferDialog } from '@/features/usergroup/components/usergroup-ownership-transfer-dialog'
 import { UserGroupSummaryCard } from '@/features/usergroup/components/usergroup-summary-card'
 import { useUserGroupDetailPageModel } from '@/features/usergroup/hooks/use-usergroup-detail-page-model'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'

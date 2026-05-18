@@ -1,5 +1,5 @@
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type SignedInUserProps = {

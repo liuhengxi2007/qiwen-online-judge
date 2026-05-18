@@ -44,6 +44,9 @@ object Main extends IOApp.Simple:
       sessionStore <- cats.effect.Resource.eval(SessionStore.create(databaseSession, sessionCache))
       messageEventHub <- MessageEventHub.resource
       notificationEventHub <- NotificationEventHub.resource
+      seedAdminPasswordHash <- cats.effect.Resource.eval(
+        domains.auth.application.PasswordHasher.hashPassword(domains.auth.table.AuthUserTableSupport.seedAdminUser.password)
+      )
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       problemDataStorage <- cats.effect.Resource.eval {
@@ -61,7 +64,7 @@ object Main extends IOApp.Simple:
         databaseSession.withTransactionConnection { connection =>
           for
             _ <- logger.info("Initializing database schema")
-            _ <- AuthUserTable.initialize(connection)
+            _ <- AuthUserTable.initialize(connection, seedAdminPasswordHash)
             _ <- SessionTable.initialize(connection, domains.auth.application.SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemDataFileTable.initialize(connection)

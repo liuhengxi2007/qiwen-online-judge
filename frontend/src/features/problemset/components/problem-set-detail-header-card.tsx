@@ -8,7 +8,7 @@ import {
   type ProblemSetDetail,
 } from '@/features/problemset/domain/problemset'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

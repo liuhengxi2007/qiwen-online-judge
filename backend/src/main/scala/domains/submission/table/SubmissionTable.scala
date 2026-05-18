@@ -6,7 +6,6 @@ import domains.user.model.UserIdentity
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.application.SubmissionPolicy
 import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionListRequest, SubmissionListResponse, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict, SubmissionVerdictFilter}
 import domains.submission.table.SubmissionTableSchema.*
 import domains.submission.table.SubmissionTableSql.*
@@ -92,14 +91,19 @@ object SubmissionTable:
       finally statement.close()
     }
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
+  def listVisibleTo(
+    connection: Connection,
+    actor: AuthUser,
+    request: SubmissionListRequest,
+    hasGlobalViewOverride: Boolean
+  ): IO[SubmissionListResponse] =
     val normalizedPageRequest = request.pageRequest.normalized
     val normalizedRequest = request.copy(pageRequest = normalizedPageRequest)
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSql)
         try
-          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = false)
+          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = false, hasGlobalViewOverride)
           val resultSet = statement.executeQuery()
           try if resultSet.next() then resultSet.getLong("total_items") else 0L
           finally resultSet.close()
@@ -108,7 +112,7 @@ object SubmissionTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSql(normalizedRequest.sort, normalizedRequest.direction))
         try
-          val nextIndex = bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true)
+          val nextIndex = bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true, hasGlobalViewOverride)
           statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
           statement.setInt(nextIndex + 1, (normalizedRequest.pageRequest.page - 1) * normalizedRequest.pageRequest.pageSize)
           val resultSet = statement.executeQuery()
@@ -213,13 +217,14 @@ object SubmissionTable:
     statement: PreparedStatement,
     actor: AuthUser,
     request: SubmissionListRequest,
-    includeDetailVisibility: Boolean
+    includeDetailVisibility: Boolean,
+    hasGlobalViewOverride: Boolean
   ): Int =
     val afterDetailVisibility =
-      if includeDetailVisibility then bindVisibility(statement, 1, actor)
+      if includeDetailVisibility then bindVisibility(statement, 1, actor, hasGlobalViewOverride)
       else 1
 
-    val afterSummaryVisibility = bindVisibility(statement, afterDetailVisibility, actor)
+    val afterSummaryVisibility = bindVisibility(statement, afterDetailVisibility, actor, hasGlobalViewOverride)
     val afterUserQuery = bindUserQuery(statement, afterSummaryVisibility, request.userQuery)
     val afterProblemQuery = bindProblemQuery(statement, afterUserQuery, request.problemQuery)
 
@@ -242,13 +247,14 @@ object SubmissionTable:
   private def bindVisibility(
     statement: PreparedStatement,
     startIndex: Int,
-    actor: AuthUser
+    actor: AuthUser,
+    hasGlobalViewOverride: Boolean
   ): Int =
-    val afterGlobalOverride = bindBoolean(statement, startIndex, SubmissionPolicy.hasGlobalViewOverride(actor))
+    val afterGlobalOverride = bindBoolean(statement, startIndex, hasGlobalViewOverride)
     val afterOwnUsername = bindString(statement, afterGlobalOverride, actor.username.value)
     val afterProblemViewerGrant = bindString(statement, afterOwnUsername, actor.username.value)
     val afterProblemGroupGrant = bindString(statement, afterProblemViewerGrant, actor.username.value)
-    val afterProblemSetOverride = bindBoolean(statement, afterProblemGroupGrant, SubmissionPolicy.hasGlobalViewOverride(actor))
+    val afterProblemSetOverride = bindBoolean(statement, afterProblemGroupGrant, hasGlobalViewOverride)
     val afterProblemSetViewerGrant = bindString(statement, afterProblemSetOverride, actor.username.value)
     bindString(statement, afterProblemSetViewerGrant, actor.username.value)
 

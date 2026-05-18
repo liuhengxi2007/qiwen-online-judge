@@ -154,6 +154,14 @@ These backend HTTP-facing models must stay aligned with `contracts/`.
 - `UserGroupRole`
 - `AddUserGroupMemberRole`
 
+### Notification
+
+- `NotificationKind`
+- `BlogReplyNotificationPayload`
+- `NotificationSummary`
+- `NotificationListResponse`
+- `NotificationUnreadCountResponse`
+
 ## What Must Stay Backend-Local
 
 Do not force these into `contracts/`.

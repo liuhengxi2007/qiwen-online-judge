@@ -11,7 +11,7 @@ import {
   type BlogVote,
 } from '@/features/blog/domain/blog'
 import { blogScoreClassName } from '@/features/blog/components/blog-support'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type BlogCommentThreadProps = {

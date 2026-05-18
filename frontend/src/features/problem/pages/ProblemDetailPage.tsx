@@ -9,7 +9,7 @@ import { ProblemAccessDialog } from '@/features/problem/components/problem-acces
 import { ProblemDetailHeaderCard } from '@/features/problem/components/problem-detail-header-card'
 import { ProblemEditDialog } from '@/features/problem/components/problem-edit-dialog'
 import { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import {
   grantedGroupsInputFromAccessPolicy,

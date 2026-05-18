@@ -5,7 +5,7 @@ import { blogIdValue, blogTitleValue, type BlogSummary } from '@/features/blog/d
 import { blogScoreClassName } from '@/features/blog/components/blog-support'
 import { formatProblemTitleDisplay, useProblemTitleDisplayMode, problemSlugValue } from '@/features/problem/domain/problem'
 import { DateTimeText } from '@/shared/components/date-time-text'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type BlogSummaryCardProps = {

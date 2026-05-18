@@ -6,7 +6,7 @@ import { SubmissionFilterCard } from '@/features/submission/components/submissio
 import { SubmissionSummaryList } from '@/features/submission/components/submission-summary-list'
 import { useSubmissionPageModel } from '@/features/submission/hooks/use-submission-page-model'
 import { parseProblemSlug, type ProblemSlug } from '@/features/problem/domain/problem'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'

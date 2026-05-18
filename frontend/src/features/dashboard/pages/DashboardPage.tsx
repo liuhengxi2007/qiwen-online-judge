@@ -3,8 +3,8 @@ import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } fro
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AccountActions } from '@/shared/components/account-actions'
-import { formatUserDisplayLabel } from '@/shared/components/user-display-label'
+import { AccountActions } from '@/features/auth/components/account-actions'
+import { formatUserDisplayLabel } from '@/features/user/components/user-display-label'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useI18n } from '@/shared/i18n/use-i18n'

@@ -4,6 +4,7 @@ import type {
   ProblemDetail as ProblemDetailModel,
 } from '@/features/problem/domain/problem'
 import { problemStatementTextValue, problemTitleValue } from '@/features/problem/domain/problem'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import {
   buildResourceAccessPolicy,
   grantedGroupsInputFromAccessPolicy,
@@ -67,6 +68,7 @@ export function buildProblemAccessUpdateDraft(
 
 export function buildProblemDetailAccessPolicy(editor: ProblemEditorAccessState) {
   const accessPolicyResult = buildResourceAccessPolicy(
+    resourceAccessSubjectParsers,
     editor.baseAccess,
     editor.grantedUsersInput,
     editor.grantedGroupsInput,

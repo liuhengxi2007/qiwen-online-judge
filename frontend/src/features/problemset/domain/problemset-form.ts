@@ -6,6 +6,7 @@ import {
   type UpdateProblemSetRequest,
 } from '@/features/problemset/domain/problemset'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export type ProblemSetDraft = {
@@ -35,7 +36,7 @@ export function validateProblemSetDraft(
     return { ok: false, message: descriptionResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const accessPolicyResult = buildResourceAccessPolicy(resourceAccessSubjectParsers, draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }
@@ -72,7 +73,7 @@ export function validateProblemSetUpdateDraft(
     return { ok: false, message: descriptionResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
+  const accessPolicyResult = buildResourceAccessPolicy(resourceAccessSubjectParsers, draft.baseAccess, draft.grantedUsersInput, draft.grantedGroupsInput)
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }

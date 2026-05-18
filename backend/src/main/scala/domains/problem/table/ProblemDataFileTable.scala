@@ -2,8 +2,7 @@ package domains.problem.table
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.model.{ProblemDataPath, ProblemId, ProblemSlug}
+import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataPath, ProblemId, ProblemSlug}
 
 import java.sql.Connection
 import java.time.Instant

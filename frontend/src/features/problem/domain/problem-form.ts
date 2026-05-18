@@ -7,6 +7,7 @@ import {
   parseProblemTitle,
 } from '@/features/problem/domain/problem'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemDraft = {
@@ -54,7 +55,7 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
   }
 
   const accessPolicyResult = buildResourceAccessPolicy(
-    draft.baseAccess,
+    resourceAccessSubjectParsers,    draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,
     draft.managerUsersInput,
@@ -115,7 +116,7 @@ export function validateProblemUpdateDraft(
   }
 
   const accessPolicyResult = buildResourceAccessPolicy(
-    draft.baseAccess,
+    resourceAccessSubjectParsers,    draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,
     draft.managerUsersInput,

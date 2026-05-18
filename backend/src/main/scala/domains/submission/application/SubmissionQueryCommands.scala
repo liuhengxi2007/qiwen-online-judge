@@ -20,7 +20,7 @@ object SubmissionQueryCommands:
   ): IO[ListSubmissionsResult] =
     databaseSession.withTransactionConnection { connection =>
       SubmissionTable
-        .listVisibleTo(connection, actor, request)
+        .listVisibleTo(connection, actor, request, SubmissionPolicy.hasGlobalViewOverride(actor))
         .map(submissions => ListSubmissionsResult.Listed(submissions))
     }
 

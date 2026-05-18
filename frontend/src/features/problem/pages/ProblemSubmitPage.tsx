@@ -18,7 +18,7 @@ import {
   submissionIdValue,
 } from '@/features/submission/domain/submission'
 import { HttpClientError } from '@/shared/api/http-client'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/shared/hooks/use-page-title'

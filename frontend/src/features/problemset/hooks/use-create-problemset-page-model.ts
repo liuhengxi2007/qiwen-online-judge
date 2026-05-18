@@ -5,6 +5,7 @@ import { createProblemSet } from '@/features/problemset/api/problemset-client'
 import type { ProblemSetSummary } from '@/features/problemset/domain/problemset'
 import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
@@ -81,7 +82,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
   const accessPolicyResult = buildResourceAccessPolicy(
-    state.baseAccess,
+    resourceAccessSubjectParsers,    state.baseAccess,
     state.grantedUsersInput,
     state.grantedGroupsInput,
   )

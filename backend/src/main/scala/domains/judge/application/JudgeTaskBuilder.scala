@@ -2,7 +2,8 @@ package domains.judge.application
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataStorage}
+import domains.problem.application.ProblemDataStorage
+import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.ProblemDataPath
 import domains.problem.table.{ProblemDataFileTable, ProblemTable}
 import domains.submission.table.ClaimedSubmission

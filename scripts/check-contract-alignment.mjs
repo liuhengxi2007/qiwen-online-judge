@@ -65,6 +65,20 @@ function extractScalaStringCases(source, enumName) {
   return [...match[1].matchAll(/case "([^"]+)"/g)].map((entry) => entry[1])
 }
 
+function extractScalaParseStringCases(source, enumName) {
+  const pattern = new RegExp(`object ${enumName}:[\\s\\S]*?def parse\\(raw: String\\): Either\\[String, ${enumName}\\] =[\\s\\S]*?raw match([\\s\\S]*?)case other =>`, 'm')
+  const match = source.match(pattern)
+  if (!match) {
+    throw new Error(`Unable to find Scala parse mappings for ${enumName}`)
+  }
+
+  return [...match[1].matchAll(/case "([^"]+)"/g)].map((entry) => entry[1])
+}
+
+function extractScalaNestedPayloadFields(source, className) {
+  return ['kind', ...extractScalaCaseClassFields(source, className)]
+}
+
 function extractScalaPageResponseFields(source) {
   const pattern = /final case class PageResponse\[A\]\(([^)]*)\)/m
   const match = source.match(pattern)
@@ -98,6 +112,7 @@ function run() {
   const contractProblemSet = read('contracts/problemset.ts')
   const contractSubmission = read('contracts/submission.ts')
   const contractUserGroup = read('contracts/usergroup.ts')
+  const contractNotification = read('contracts/notification.ts')
 
   const backendSharedError = read('backend/src/main/scala/domains/shared/model/ErrorResponse.scala')
   const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
@@ -177,6 +192,14 @@ function run() {
     UserGroupMember: read('backend/src/main/scala/domains/usergroup/model/UserGroupMember.scala'),
     UserGroupSummary: read('backend/src/main/scala/domains/usergroup/model/UserGroupSummary.scala'),
     UserGroupDetail: read('backend/src/main/scala/domains/usergroup/model/UserGroupDetail.scala'),
+  }
+
+  const notificationFiles = {
+    NotificationKind: read('backend/src/main/scala/domains/notification/model/NotificationKind.scala'),
+    NotificationPayload: read('backend/src/main/scala/domains/notification/model/NotificationPayload.scala'),
+    NotificationSummary: read('backend/src/main/scala/domains/notification/model/NotificationSummary.scala'),
+    NotificationListResponse: read('backend/src/main/scala/domains/notification/model/NotificationListResponse.scala'),
+    NotificationUnreadCountResponse: read('backend/src/main/scala/domains/notification/model/NotificationUnreadCountResponse.scala'),
   }
 
   assertSameFields(
@@ -379,6 +402,35 @@ function run() {
       `usergroup.${contractType}`,
       extractTsObjectTypeFields(contractUserGroup, contractType),
       extractScalaCaseClassFields(userGroupFiles[scalaType], scalaType),
+      errors,
+    )
+  }
+
+  assertSameFields(
+    'notification.NotificationKind',
+    extractTsUnionLiterals(contractNotification, 'NotificationKind'),
+    extractScalaParseStringCases(notificationFiles.NotificationKind, 'NotificationKind'),
+    errors,
+  )
+
+  assertSameFields(
+    'notification.BlogReplyNotificationPayload',
+    extractTsObjectTypeFields(contractNotification, 'BlogReplyNotificationPayload'),
+    extractScalaNestedPayloadFields(notificationFiles.NotificationPayload, 'BlogReply'),
+    errors,
+  )
+
+  const notificationMappings = [
+    ['NotificationSummary', 'NotificationSummary'],
+    ['NotificationListResponse', 'NotificationListResponse'],
+    ['NotificationUnreadCountResponse', 'NotificationUnreadCountResponse'],
+  ]
+
+  for (const [contractType, scalaType] of notificationMappings) {
+    assertSameFields(
+      `notification.${contractType}`,
+      extractTsObjectTypeFields(contractNotification, contractType),
+      extractScalaCaseClassFields(notificationFiles[scalaType], scalaType),
       errors,
     )
   }

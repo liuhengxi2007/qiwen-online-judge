@@ -1,5 +1,6 @@
 import type { ProblemSetDetail } from '@/features/problemset/domain/problemset'
 import { problemSetDescriptionValue, problemSetTitleValue } from '@/features/problemset/domain/problemset'
+import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
 import { buildResourceAccessPolicy, grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
@@ -42,6 +43,7 @@ export function buildProblemSetAccessUpdateDraft(
 
 export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditorState) {
   const accessPolicyResult = buildResourceAccessPolicy(
+    resourceAccessSubjectParsers,
     editor.baseAccess,
     editor.grantedUsersInput,
     editor.grantedGroupsInput,

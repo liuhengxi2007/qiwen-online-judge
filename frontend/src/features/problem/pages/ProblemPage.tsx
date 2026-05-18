@@ -17,7 +17,7 @@ import {
   shouldShowProblemSlugSupplement,
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import {
   buildPageNumbers,
@@ -26,7 +26,7 @@ import {
   parsePositivePage,
 } from '@/shared/domain/pagination'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

@@ -17,6 +17,7 @@ Current checks cover:
 - problemset transport models
 - submission transport models
 - usergroup transport models
+- notification transport models
 
 The check is intentionally structural:
 

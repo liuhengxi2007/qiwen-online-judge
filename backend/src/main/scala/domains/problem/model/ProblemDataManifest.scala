@@ -1,6 +1,4 @@
-package domains.problem.application
-
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
+package domains.problem.model
 
 final case class ProblemDataManifestEntry(
   path: ProblemDataPath,

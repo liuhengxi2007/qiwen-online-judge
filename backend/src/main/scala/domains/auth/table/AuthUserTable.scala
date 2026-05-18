@@ -1,12 +1,11 @@
 package domains.auth.table
 
-import domains.auth.application.PasswordHasher
 import cats.effect.IO
 import domains.auth.model.{
   AuthUser,
   DisplayName,
   EmailAddress,
-  PlaintextPassword,
+  PasswordHash,
   Username
 }
 import domains.problem.model.ProblemTitleDisplayMode
@@ -19,10 +18,10 @@ import java.sql.Connection
 
 object AuthUserTable:
 
-  def initialize(connection: Connection): IO[Unit] =
+  def initialize(connection: Connection, seedAdminPasswordHash: PasswordHash): IO[Unit] =
     for
       _ <- AuthUserTableSchema.initializeSchema(connection)
-      _ <- seedAdmin(connection)
+      _ <- seedAdmin(connection, seedAdminPasswordHash)
     yield ()
 
   def findByUsername(connection: Connection, username: Username): IO[Option[AuthUser]] =
@@ -47,29 +46,26 @@ object AuthUserTable:
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,
     autoMarkMessageRead: Boolean,
-    password: PlaintextPassword
+    passwordHash: PasswordHash
   ): IO[AuthUser] =
-    for
-      passwordHash <- PasswordHasher.hashPassword(password)
-      user <- IO.blocking {
-        val statement = connection.prepareStatement(insertAuthUserSql)
-        try
-          statement.setString(1, username.value.trim)
-          statement.setString(2, displayName.value.trim)
-          statement.setString(3, email.value.trim)
-          statement.setString(4, UserDisplayMode.toDatabase(displayMode))
-          statement.setString(5, UserLocale.toDatabase(locale))
-          statement.setString(6, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
-          statement.setBoolean(7, autoMarkMessageRead)
-          statement.setString(8, passwordHash.value)
-          statement.setBoolean(9, false)
-          statement.setBoolean(10, false)
+    IO.blocking {
+      val statement = connection.prepareStatement(insertAuthUserSql)
+      try
+        statement.setString(1, username.value.trim)
+        statement.setString(2, displayName.value.trim)
+        statement.setString(3, email.value.trim)
+        statement.setString(4, UserDisplayMode.toDatabase(displayMode))
+        statement.setString(5, UserLocale.toDatabase(locale))
+        statement.setString(6, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
+        statement.setBoolean(7, autoMarkMessageRead)
+        statement.setString(8, passwordHash.value)
+        statement.setBoolean(9, false)
+        statement.setBoolean(10, false)
 
-          val resultSet = statement.executeQuery()
-          try
-            if resultSet.next() then readAuthUser(resultSet)
-            else missingInsertResult("user")
-          finally resultSet.close()
-        finally statement.close()
-      }
-    yield user
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then readAuthUser(resultSet)
+          else missingInsertResult("user")
+        finally resultSet.close()
+      finally statement.close()
+    }

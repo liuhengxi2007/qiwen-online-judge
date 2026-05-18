@@ -14,7 +14,7 @@ import type { MessageConversationId, MessageHistoryResponse } from '@/features/m
 import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/domain/message'
 import { messageStreamEventName, type MessageStreamEventDetail } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { HttpClientError } from '@/shared/api/http-client'

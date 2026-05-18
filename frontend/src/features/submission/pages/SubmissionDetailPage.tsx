@@ -26,11 +26,11 @@ import {
 import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { DateTimeText } from '@/shared/components/date-time-text'
-import { UserProfileLink } from '@/shared/components/user-profile-link'
+import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

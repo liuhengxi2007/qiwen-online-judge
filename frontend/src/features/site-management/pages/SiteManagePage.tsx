@@ -3,7 +3,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { SiteManageJudgersCard } from '@/features/site-management/components/site-manage-judgers-card'
 import { SiteManageUserCard } from '@/features/site-management/components/site-manage-user-card'
-import { AppSectionBar } from '@/shared/components/app-section-bar'
+import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
