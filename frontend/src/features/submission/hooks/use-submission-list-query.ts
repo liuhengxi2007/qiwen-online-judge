@@ -15,8 +15,10 @@ function requestKey(request: SubmissionListRequest): string {
     verdict: request.verdict,
     sort: request.sort,
     direction: request.direction,
-    page: request.pageRequest.page,
-    pageSize: request.pageRequest.pageSize,
+    pageRequest: {
+      page: request.pageRequest.page,
+      pageSize: request.pageRequest.pageSize,
+    },
   })
 }
 
