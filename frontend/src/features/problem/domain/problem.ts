@@ -39,6 +39,7 @@ export {
 } from '@/features/problem/domain/problem-contract'
 
 export type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
+export type { DeleteProblemDataPathRequest } from '@/features/problem/model/DeleteProblemDataPathRequest'
 export type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
 export type { ProblemData } from '@/features/problem/model/ProblemData'
 export type { ProblemDataFileListResponse } from '@/features/problem/model/ProblemDataFileListResponse'

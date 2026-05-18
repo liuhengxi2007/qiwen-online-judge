@@ -1,6 +1,7 @@
 import type { SuccessResponse } from '@contracts/shared'
 import type {
   CreateProblemRequest,
+  DeleteProblemDataPathRequest,
   ProblemDataFileListResponse,
   ProblemDataFilename,
   ProblemDataPath,
@@ -205,10 +206,11 @@ export async function deleteProblemData(problemSlug: ProblemSlug, filename: Prob
 }
 
 export async function deleteProblemDataPath(problemSlug: ProblemSlug, path: ProblemDataPath): Promise<ProblemDetail> {
+  const request: DeleteProblemDataPathRequest = { path }
   return postJson(
     `/api/problems/${problemSlugValue(problemSlug)}/data/file/delete`,
     fromProblemDetailContract,
-    { path: problemDataPathValue(path) },
+    { path: problemDataPathValue(request.path) },
   )
 }
 

@@ -1,5 +1,5 @@
 import { messages, fallbackLocale, resolveLocale, translateMessage } from '@/shared/i18n/messages'
-import type { ApiMessageParam } from '@contracts/shared'
+import type { ApiMessageParam } from '@/shared/model/ApiMessageParam'
 
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
 export type JsonDecoder<T> = {

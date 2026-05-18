@@ -8,7 +8,6 @@ import scala.util.Try
 final case class ProblemSetId(value: UUID)
 
 object ProblemSetId:
-  def random(): ProblemSetId = ProblemSetId(UUID.randomUUID())
 
   given Encoder[ProblemSetId] = Encoder.encodeString.contramap(_.value.toString)
   given Decoder[ProblemSetId] = Decoder.decodeString.emap { value =>

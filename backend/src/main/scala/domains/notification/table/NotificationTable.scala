@@ -9,6 +9,7 @@ import domains.shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
+import java.util.UUID
 import io.circe.syntax.*
 
 object NotificationTable:
@@ -30,7 +31,7 @@ object NotificationTable:
     IO.blocking {
       val statement = connection.prepareStatement(insertSql)
       try
-        statement.setObject(1, NotificationId.random().value)
+        statement.setObject(1, NotificationId(UUID.randomUUID()).value)
         statement.setString(2, recipientUsername.value)
         actorUsername match
           case Some(username) => statement.setString(3, username.value)

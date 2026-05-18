@@ -15,6 +15,7 @@ import domains.problemset.table.ProblemSetTableSupport.*
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
+import java.util.UUID
 
 object ProblemSetTable:
 
@@ -85,9 +86,10 @@ object ProblemSetTable:
   def insert(connection: Connection, creatorUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
     IO.blocking {
       val now = Instant.now()
+      val problemSetId = ProblemSetId(UUID.randomUUID())
       val statement = connection.prepareStatement(insertSql)
       try
-        statement.setObject(1, ProblemSetId.random().value)
+        statement.setObject(1, problemSetId.value)
         statement.setString(2, request.slug.value)
         statement.setString(3, request.title.value)
         statement.setString(4, request.description.value)

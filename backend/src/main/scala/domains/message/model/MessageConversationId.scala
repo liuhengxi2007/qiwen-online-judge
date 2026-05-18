@@ -8,7 +8,6 @@ import scala.util.Try
 final case class MessageConversationId(value: UUID)
 
 object MessageConversationId:
-  def random(): MessageConversationId = MessageConversationId(UUID.randomUUID())
 
   def parse(raw: String): Either[String, MessageConversationId] =
     Try(UUID.fromString(raw.trim)).toEither.left.map(_.getMessage).map(MessageConversationId(_))

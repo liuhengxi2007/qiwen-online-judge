@@ -10,6 +10,7 @@ import domains.usergroup.table.UserGroupTableSupport.*
 
 import java.sql.{Connection, ResultSet, SQLException, Timestamp}
 import java.time.Instant
+import java.util.UUID
 
 object UserGroupTable:
 
@@ -90,7 +91,7 @@ object UserGroupTable:
   def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroup] =
     IO.blocking {
       val now = Instant.now()
-      val groupId = UserGroupId.random()
+      val groupId = UserGroupId(UUID.randomUUID())
       val statement = connection.prepareStatement(insertSql)
       try
         statement.setObject(1, groupId.value)

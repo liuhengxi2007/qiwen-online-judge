@@ -78,6 +78,10 @@ export type ProblemDataFileListResponse = {
   items: string[]
 }
 
+export type DeleteProblemDataPathRequest = {
+  path: string
+}
+
 export type ProblemDataTreeNodeKind = 'file' | 'directory'
 
 export type ProblemDataTreeNode = {

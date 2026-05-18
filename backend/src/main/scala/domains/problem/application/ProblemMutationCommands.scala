@@ -3,7 +3,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.{DatabaseSession, ResourceAccessGrantTable}
 import domains.auth.model.AuthUser
-import domains.problem.model.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.model.{CreateProblemRequest, ProblemId, UpdateProblemRequest}
 import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.ProblemCommandSupport.*
@@ -11,6 +11,7 @@ import domains.problem.application.ProblemDecisions.*
 import domains.shared.access.{ResourceId, ResourceKind}
 
 import java.time.Instant
+import java.util.UUID
 
 object ProblemMutationCommands:
 
@@ -47,11 +48,13 @@ object ProblemMutationCommands:
               case CreateProblemDecision.ValidationFailed(message) =>
                 IO.pure(CreateProblemResult.ValidationFailed(message))
               case CreateProblemDecision.Create =>
-                val problemId = domains.problem.model.ProblemId.random()
-                val now = Instant.now()
-                ProblemTable
-                  .insert(connection, problemId, now, actor.username, sanitizePolicy(validRequest))
-                  .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
+                for
+                  problemId <- IO.delay(ProblemId(UUID.randomUUID()))
+                  now <- IO.realTimeInstant
+                  result <- ProblemTable
+                    .insert(connection, problemId, now, actor.username, sanitizePolicy(validRequest))
+                    .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
+                yield result
           yield result
 
   def updateProblem(

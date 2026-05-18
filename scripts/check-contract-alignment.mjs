@@ -79,6 +79,10 @@ function extractScalaNestedPayloadFields(source, className) {
   return ['kind', ...extractScalaCaseClassFields(source, className)]
 }
 
+function extractScalaApiMessageParamKinds(source) {
+  return [...source.matchAll(/"kind" -> Json\.fromString\("([^"]+)"\)/g)].map((entry) => entry[1])
+}
+
 function extractScalaPageResponseFields(source) {
   const pattern = /final case class PageResponse\[A\]\(([^)]*)\)/m
   const match = source.match(pattern)
@@ -116,6 +120,7 @@ function run() {
 
   const backendSharedError = read('backend/src/main/scala/domains/shared/model/ErrorResponse.scala')
   const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
+  const backendSharedApiMessageParam = read('backend/src/main/scala/domains/shared/model/ApiMessageParam.scala')
   const backendSharedPagination = read('backend/src/main/scala/domains/shared/model/Pagination.scala')
   const backendSharedLifecycle = read('backend/src/main/scala/domains/shared/model/ResourceLifecycle.scala')
   const backendSharedBaseAccess = read('backend/src/main/scala/domains/shared/access/BaseAccess.scala')
@@ -160,6 +165,7 @@ function run() {
   const problemFiles = {
     CreateProblemRequest: read('backend/src/main/scala/domains/problem/model/CreateProblemRequest.scala'),
     UpdateProblemRequest: read('backend/src/main/scala/domains/problem/model/UpdateProblemRequest.scala'),
+    DeleteProblemDataPathRequest: read('backend/src/main/scala/domains/problem/model/DeleteProblemDataPathRequest.scala'),
     ProblemSummary: read('backend/src/main/scala/domains/problem/model/ProblemSummary.scala'),
     ProblemDetail: read('backend/src/main/scala/domains/problem/model/ProblemDetail.scala'),
   }
@@ -237,6 +243,13 @@ function run() {
     errors,
   )
 
+  assertSameFields(
+    'shared.ApiMessageParam',
+    extractTsUnionLiterals(contractShared, 'ApiMessageParam'),
+    extractScalaApiMessageParamKinds(backendSharedApiMessageParam),
+    errors,
+  )
+
   const authMappings = [
     ['LoginRequest', 'LoginRequest'],
     ['LoginResponse', 'LoginResponse'],
@@ -306,6 +319,7 @@ function run() {
   const problemMappings = [
     ['CreateProblemRequest', 'CreateProblemRequest'],
     ['UpdateProblemRequest', 'UpdateProblemRequest'],
+    ['DeleteProblemDataPathRequest', 'DeleteProblemDataPathRequest'],
     ['ProblemSummary', 'ProblemSummary'],
     ['ProblemDetail', 'ProblemDetail'],
   ]

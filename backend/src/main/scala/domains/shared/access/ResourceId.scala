@@ -8,7 +8,6 @@ import scala.util.Try
 final case class ResourceId(value: UUID)
 
 object ResourceId:
-  def random(): ResourceId = ResourceId(UUID.randomUUID())
 
   given Encoder[ResourceId] = Encoder.encodeString.contramap(_.value.toString)
   given Decoder[ResourceId] = Decoder.decodeString.emap { value =>

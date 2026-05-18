@@ -1,4 +1,4 @@
-import type { ApiMessageParam } from '@contracts/shared'
+import type { ApiMessageParam } from '@/shared/model/ApiMessageParam'
 
 export type ErrorResponse = {
   code: string | null

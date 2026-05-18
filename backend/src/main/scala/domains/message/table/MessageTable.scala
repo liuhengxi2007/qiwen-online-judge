@@ -10,6 +10,7 @@ import domains.shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
+import java.util.UUID
 
 object MessageTable:
 
@@ -40,7 +41,7 @@ object MessageTable:
         })
       case None =>
         for
-          conversationId <- IO.pure(MessageConversationId.random())
+          conversationId <- IO.delay(MessageConversationId(UUID.randomUUID()))
           now <- IO.realTimeInstant
           _ <- IO.blocking {
             val statement = connection.prepareStatement(insertConversationSql)
@@ -203,7 +204,7 @@ object MessageTable:
     content: MessageContent
   ): IO[DirectMessage] =
     for
-      messageId <- IO.pure(MessageId.random())
+      messageId <- IO.delay(MessageId(UUID.randomUUID()))
       now <- IO.realTimeInstant
       _ <- IO.blocking {
         val statement = connection.prepareStatement(insertMessageSql)
