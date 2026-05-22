@@ -90,16 +90,13 @@ The frontend development server proxies API requests to the backend. If the fron
 Run these before committing related changes:
 
 ```bash
-node scripts/check-contract-alignment.mjs
-node scripts/check-api-alignment.mjs
-node scripts/check-structure-boundaries.mjs
+node scripts/check-all.mjs
 npm --prefix frontend run typecheck
 cd backend && sbt compile
 ```
 
-Use the contract alignment check whenever mirrored frontend/backend request, response, model, or shared type files change.
-Use the API alignment check whenever frontend or backend endpoint files under `http/api` change.
-Use the structure boundary check after moving files across frontend or backend layers, and to catch generated or backup files before commit.
+`scripts/check-all.mjs` runs all `scripts/check-*.mjs` checks.
+Run it whenever mirrored frontend/backend request, response, model, or shared type files change, whenever endpoint files under `http/api` change, and after moving files across frontend or backend layers.
 
 ## Current Development Direction
 
