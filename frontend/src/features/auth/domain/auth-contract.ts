@@ -1,10 +1,3 @@
-import type {
-  LoginRequest as LoginRequestContract,
-  LoginResponse as LoginResponseContract,
-  RegisterRequest as RegisterRequestContract,
-  RegisterResponse as RegisterResponseContract,
-  SessionResponse as SessionResponseContract,
-} from '@contracts/auth'
 import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
 import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
 import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
@@ -23,6 +16,46 @@ import {
   requireParsed,
   usernameValue,
 } from '@/features/auth/domain/auth-parsers'
+
+type UserPreferencesContract = {
+  displayMode: 'display_name' | 'username' | 'display_name_with_username'
+  locale: 'en' | 'zh-CN'
+  problemTitleDisplayMode: 'title' | 'slug' | 'title_with_slug'
+  autoMarkMessageRead: boolean
+}
+
+type LoginRequestContract = {
+  username: string
+  password: string
+}
+
+type LoginResponseContract = {
+  displayName: string
+  username: string
+  email: string
+  preferences: UserPreferencesContract
+  siteManager: boolean
+  problemManager: boolean
+  message: string
+}
+
+type RegisterRequestContract = {
+  username: string
+  displayName: string
+  email: string
+  password: string
+}
+
+type RegisterResponseContract = LoginResponseContract
+
+type SessionResponseContract = {
+  displayName: string
+  username: string
+  email: string
+  preferences: UserPreferencesContract
+  siteManager: boolean
+  problemManager: boolean
+}
 
 export {
   fromAuthUserListItemContract,

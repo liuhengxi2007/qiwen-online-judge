@@ -1,15 +1,3 @@
-import type {
-  BlogListResponse as BlogListResponseContract,
-  BlogCommentSummary as BlogCommentSummaryContract,
-  BlogDetail as BlogDetailContract,
-  BlogSummary as BlogSummaryContract,
-  CreateBlogCommentRequest as CreateBlogCommentRequestContract,
-  CreateBlogRequest as CreateBlogRequestContract,
-  UpdateBlogCommentRequest as UpdateBlogCommentRequestContract,
-  UpdateBlogRequest as UpdateBlogRequestContract,
-  VoteBlogCommentRequest as VoteBlogCommentRequestContract,
-  VoteBlogRequest as VoteBlogRequestContract,
-} from '@contracts/blog'
 import { fromUserIdentityContract } from '@/features/auth/domain/auth'
 import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
 import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
@@ -38,6 +26,94 @@ import {
   parseBlogTitle,
   requireParsed,
 } from '@/features/blog/domain/blog-parsers'
+
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type BlogVisibilityContract = 'public' | 'private'
+type BlogVoteContract = 'up' | 'down'
+
+type BlogProblemReferenceContract = {
+  slug: string
+  title: string
+}
+
+type CreateBlogRequestContract = {
+  title: string
+  content: string
+  visibility: BlogVisibilityContract
+}
+
+type UpdateBlogRequestContract = {
+  title: string
+  content: string
+  visibility: BlogVisibilityContract
+}
+
+type VoteBlogRequestContract = {
+  vote: BlogVoteContract
+}
+
+type CreateBlogCommentRequestContract = {
+  content: string
+}
+
+type UpdateBlogCommentRequestContract = {
+  content: string
+}
+
+type VoteBlogCommentRequestContract = {
+  vote: BlogVoteContract
+}
+
+type BlogCommentSummaryContract = {
+  id: number
+  parentId: number | null
+  content: string
+  author: UserIdentityContract
+  score: number
+  viewerVote: BlogVoteContract | null
+  createdAt: string
+  updatedAt: string
+}
+
+type BlogSummaryContract = {
+  id: number
+  title: string
+  content: string
+  author: UserIdentityContract
+  visibility: BlogVisibilityContract
+  relatedProblems: BlogProblemReferenceContract[]
+  score: number
+  viewerVote: BlogVoteContract | null
+  createdAt: string
+  updatedAt: string
+}
+
+type BlogDetailContract = {
+  id: number
+  title: string
+  content: string
+  author: UserIdentityContract
+  visibility: BlogVisibilityContract
+  relatedProblems: BlogProblemReferenceContract[]
+  score: number
+  viewerVote: BlogVoteContract | null
+  comments: BlogCommentSummaryContract[]
+  createdAt: string
+  updatedAt: string
+}
+
+type BlogListResponseContract = PageResponseContract<BlogSummaryContract>
 
 export function fromBlogSummaryContract(blog: BlogSummaryContract): BlogSummary {
   return {

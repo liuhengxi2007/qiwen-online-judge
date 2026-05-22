@@ -1,10 +1,3 @@
-import type {
-  CreateSubmissionRequest as CreateSubmissionRequestContract,
-  SubmissionDetail as SubmissionDetailContract,
-  SubmissionListRequest as SubmissionListRequestContract,
-  SubmissionListResponse as SubmissionListResponseContract,
-  SubmissionSummary as SubmissionSummaryContract,
-} from '@contracts/submission'
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
 import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
@@ -25,6 +18,91 @@ import {
   submissionSourceCodeValue,
   submissionUserQueryValue,
 } from '@/features/submission/domain/submission-parsers'
+import type { JudgeResult } from '@/features/submission/model/JudgeResult'
+
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type SubmissionLanguageContract = 'cpp17' | 'python3'
+type SubmissionStatusContract = 'queued' | 'running' | 'completed' | 'failed'
+type SubmissionVerdictContract =
+  | 'accepted'
+  | 'wrong_answer'
+  | 'compile_error'
+  | 'runtime_error'
+  | 'time_limit_exceeded'
+  | 'system_error'
+type SubmissionVerdictFilterContract = 'all' | 'pending' | SubmissionVerdictContract
+type SubmissionSortContract = 'submitted' | 'time' | 'memory' | 'code_length'
+type SubmissionSortDirectionContract = 'asc' | 'desc'
+
+type CreateSubmissionRequestContract = {
+  problemSlug: string
+  language: SubmissionLanguageContract
+  sourceCode: string
+}
+
+type SubmissionListRequestContract = {
+  userQuery: string | null
+  problemQuery: string | null
+  verdict: SubmissionVerdictFilterContract
+  sort: SubmissionSortContract
+  direction: SubmissionSortDirectionContract
+  page: number
+  pageSize: number
+}
+
+type SubmissionSummaryContract = {
+  id: number
+  problemId: string
+  problemSlug: string
+  problemTitle: string
+  canViewDetail: boolean
+  submitter: UserIdentityContract
+  language: SubmissionLanguageContract
+  status: SubmissionStatusContract
+  verdict: SubmissionVerdictContract | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  score: number | null
+  codeLength: number
+  submittedAt: string
+  startedAt: string | null
+  finishedAt: string | null
+}
+
+type SubmissionDetailContract = {
+  id: number
+  problemId: string
+  problemSlug: string
+  problemTitle: string
+  canManage: boolean
+  submitter: UserIdentityContract
+  language: SubmissionLanguageContract
+  status: SubmissionStatusContract
+  verdict: SubmissionVerdictContract | null
+  judgeMessage: string | null
+  timeUsedMs: number | null
+  memoryUsedKb: number | null
+  score: number | null
+  judgeResult: JudgeResult | null
+  codeLength: number
+  sourceCode: string
+  submittedAt: string
+  startedAt: string | null
+  finishedAt: string | null
+}
+
+type SubmissionListResponseContract = PageResponseContract<SubmissionSummaryContract>
 
 export function fromSubmissionDetailContract(submission: SubmissionDetailContract): SubmissionDetail {
   return {

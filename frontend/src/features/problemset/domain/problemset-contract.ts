@@ -1,12 +1,3 @@
-import type {
-  AddProblemToProblemSetRequest as AddProblemToProblemSetRequestContract,
-  CreateProblemSetRequest as CreateProblemSetRequestContract,
-  ProblemSetDetail as ProblemSetDetailContract,
-  ProblemSetListResponse as ProblemSetListResponseContract,
-  ProblemSetProblemSummary as ProblemSetProblemSummaryContract,
-  ProblemSetSummary as ProblemSetSummaryContract,
-  UpdateProblemSetRequest as UpdateProblemSetRequestContract,
-} from '@contracts/problemset'
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import {
   parseProblemId,
@@ -32,6 +23,68 @@ import {
   problemSetTitleValue,
   requireParsed,
 } from '@/features/problemset/domain/problemset-parsers'
+import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type ProblemSetProblemSummaryContract = {
+  id: string
+  slug: string
+  title: string
+  position: number
+}
+
+type ProblemSetSummaryContract = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  accessPolicy: ResourceAccessPolicy
+  creator: UserIdentityContract
+  createdAt: string
+  updatedAt: string
+}
+
+type ProblemSetDetailContract = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  problems: ProblemSetProblemSummaryContract[]
+  accessPolicy: ResourceAccessPolicy
+  creator: UserIdentityContract
+  createdAt: string
+  updatedAt: string
+}
+
+type CreateProblemSetRequestContract = {
+  slug: string
+  title: string
+  description: string
+  accessPolicy: ResourceAccessPolicy
+}
+
+type UpdateProblemSetRequestContract = {
+  title: string
+  description: string
+  accessPolicy: ResourceAccessPolicy
+}
+
+type AddProblemToProblemSetRequestContract = {
+  problemSlug: string
+}
+
+type ProblemSetListResponseContract = PageResponseContract<ProblemSetSummaryContract>
 
 export function fromProblemSetProblemSummaryContract(
   problem: ProblemSetProblemSummaryContract,

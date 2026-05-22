@@ -1,19 +1,3 @@
-import type {
-  AuthUserListItem as AuthUserListItemContract,
-  UserListRequest as UserListRequestContract,
-  UserListResponse as UserListResponseContract,
-  UpdateManagedUserAccountRequest as UpdateManagedUserAccountRequestContract,
-  UpdateManagedUserPreferencesRequest as UpdateManagedUserPreferencesRequestContract,
-  UpdateManagedUserProfileRequest as UpdateManagedUserProfileRequestContract,
-  UpdateOwnAccountRequest as UpdateOwnAccountRequestContract,
-  UpdateOwnPreferencesRequest as UpdateOwnPreferencesRequestContract,
-  UpdateOwnProfileRequest as UpdateOwnProfileRequestContract,
-  UpdateUserPermissionsRequest as UpdateUserPermissionsRequestContract,
-  UserAcceptedRanklistItem as UserAcceptedRanklistItemContract,
-  UserProfileResponse as UserProfileResponseContract,
-  UserRanklistItem as UserRanklistItemContract,
-} from '@contracts/auth'
-import type { PageResponse as PageResponseContract } from '@contracts/shared'
 import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
 import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
 import type { UserListResponse } from '@/features/user/http/response/UserListResponse'
@@ -45,10 +29,97 @@ import {
   userLocaleValue,
 } from '@/features/user/domain/user-parsers'
 
-export function fromUserIdentityContract(response: {
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserIdentityContract = {
   username: string
   displayName: string
-}): UserIdentity {
+}
+
+type UserPreferencesContract = {
+  displayMode: 'display_name' | 'username' | 'display_name_with_username'
+  locale: 'en' | 'zh-CN'
+  problemTitleDisplayMode: 'title' | 'slug' | 'title_with_slug'
+  autoMarkMessageRead: boolean
+}
+
+type AuthUserListItemContract = {
+  username: string
+  displayName: string
+  email: string
+  siteManager: boolean
+  problemManager: boolean
+}
+
+type UserListRequestContract = {
+  query: string | null
+  page: number
+  pageSize: number
+}
+
+type UserAcceptedProblemContract = {
+  slug: string
+  title: string
+  acceptedAt: string
+}
+
+type UserProfileResponseContract = {
+  username: string
+  displayName: string
+  contribution: number
+  acceptedProblems: UserAcceptedProblemContract[]
+}
+
+type UserRanklistItemContract = {
+  user: UserIdentityContract
+  contribution: number
+}
+
+type UserAcceptedRanklistItemContract = {
+  user: UserIdentityContract
+  acceptedCount: number
+}
+
+type UserListResponseContract = PageResponseContract<AuthUserListItemContract>
+
+type UpdateUserPermissionsRequestContract = {
+  siteManager: boolean
+  problemManager: boolean
+}
+
+type UpdateOwnProfileRequestContract = {
+  displayName: string
+}
+
+type UpdateOwnPreferencesRequestContract = {
+  preferences: UserPreferencesContract
+}
+
+type UpdateOwnAccountRequestContract = {
+  email: string
+  currentPassword: string
+  newPassword: string | null
+}
+
+type UpdateManagedUserProfileRequestContract = {
+  displayName: string
+}
+
+type UpdateManagedUserPreferencesRequestContract = {
+  preferences: UserPreferencesContract
+}
+
+type UpdateManagedUserAccountRequestContract = {
+  email: string
+  newPassword: string | null
+}
+
+export function fromUserIdentityContract(response: UserIdentityContract): UserIdentity {
   return {
     username: requireParsed(parseUsername(response.username), 'user identity username'),
     displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),

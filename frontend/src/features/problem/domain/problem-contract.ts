@@ -1,13 +1,3 @@
-import type {
-  ProblemListRequest as ProblemListRequestContract,
-  CreateProblemRequest as CreateProblemRequestContract,
-  ProblemDataUploadResult as ProblemDataUploadResultContract,
-  ProblemDetail as ProblemDetailContract,
-  ProblemListResponse as ProblemListResponseContract,
-  ProblemSuggestion as ProblemSuggestionContract,
-  ProblemSummary as ProblemSummaryContract,
-  UpdateProblemRequest as UpdateProblemRequestContract,
-} from '@contracts/problem'
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
@@ -33,6 +23,90 @@ import {
   problemTitleValue,
   requireParsed,
 } from '@/features/problem/domain/problem-parsers'
+import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type OthersSubmissionAccessContract = 'none' | 'summary' | 'detail'
+
+type ProblemSummaryContract = {
+  id: string
+  slug: string
+  title: string
+  data: string | null
+  ready: boolean
+  timeLimitMs: number
+  spaceLimitMb: number
+  accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccessContract
+  creator: UserIdentityContract
+  createdAt: string
+  updatedAt: string
+}
+
+type ProblemSuggestionContract = {
+  slug: string
+  title: string
+}
+
+type ProblemListRequestContract = {
+  query: string | null
+  page: number
+  pageSize: number
+}
+
+type ProblemDetailContract = {
+  id: string
+  slug: string
+  title: string
+  statement: string
+  data: string | null
+  ready: boolean
+  timeLimitMs: number
+  spaceLimitMb: number
+  accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccessContract
+  creator: UserIdentityContract
+  canManage: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+type ProblemDataUploadResultContract = {
+  problem: ProblemDetailContract
+  uploadedFileCount: number
+}
+
+type CreateProblemRequestContract = {
+  slug: string
+  title: string
+  statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
+  accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccessContract
+}
+
+type UpdateProblemRequestContract = {
+  title: string
+  statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
+  accessPolicy: ResourceAccessPolicy
+  othersSubmissionAccess: OthersSubmissionAccessContract
+}
+
+type ProblemListResponseContract = PageResponseContract<ProblemSummaryContract>
 
 export function fromProblemSummaryContract(problem: ProblemSummaryContract): ProblemSummary {
   return {

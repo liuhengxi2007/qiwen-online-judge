@@ -1,13 +1,3 @@
-import type {
-  AddUserGroupMemberRequest as AddUserGroupMemberRequestContract,
-  CreateUserGroupRequest as CreateUserGroupRequestContract,
-  UpdateUserGroupMemberRoleRequest as UpdateUserGroupMemberRoleRequestContract,
-  UpdateUserGroupRequest as UpdateUserGroupRequestContract,
-  UserGroupDetail as UserGroupDetailContract,
-  UserGroupListResponse as UserGroupListResponseContract,
-  UserGroupMember as UserGroupMemberContract,
-  UserGroupSummary as UserGroupSummaryContract,
-} from '@contracts/usergroup'
 import { parseDisplayName, parseUsername } from '@/features/auth/domain/auth'
 import {
   parseUserGroupDescription,
@@ -28,6 +18,66 @@ import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGro
 import type { UserGroupListResponse } from '@/features/usergroup/http/response/UserGroupListResponse'
 import type { UserGroupMember } from '@/features/usergroup/model/UserGroupMember'
 import type { UserGroupSummary } from '@/features/usergroup/http/response/UserGroupSummary'
+
+type PageResponseContract<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalItems: number
+}
+
+type UserGroupRoleContract = 'owner' | 'manager' | 'member'
+type AddUserGroupMemberRoleContract = 'manager' | 'member'
+
+type UserGroupMemberContract = {
+  username: string
+  displayName: string
+  role: UserGroupRoleContract
+  joinedAt: string
+}
+
+type UserGroupSummaryContract = {
+  id: string
+  slug: string
+  name: string
+  description: string
+  ownerUsername: string
+  createdAt: string
+  updatedAt: string
+}
+
+type UserGroupDetailContract = {
+  id: string
+  slug: string
+  name: string
+  description: string
+  ownerUsername: string
+  members: UserGroupMemberContract[]
+  createdAt: string
+  updatedAt: string
+}
+
+type CreateUserGroupRequestContract = {
+  slug: string
+  name: string
+  description: string
+}
+
+type UpdateUserGroupRequestContract = {
+  name: string
+  description: string
+}
+
+type AddUserGroupMemberRequestContract = {
+  username: string
+  role: AddUserGroupMemberRoleContract
+}
+
+type UpdateUserGroupMemberRoleRequestContract = {
+  role: UserGroupRoleContract
+}
+
+type UserGroupListResponseContract = PageResponseContract<UserGroupSummaryContract>
 
 function requireParsed<T>(result: ParseResult<T>, label: string): T {
   if (!result.ok) {

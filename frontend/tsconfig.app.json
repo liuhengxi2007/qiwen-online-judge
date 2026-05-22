@@ -17,8 +17,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@contracts/*": ["../contracts/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Linting */
@@ -29,5 +28,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "../contracts/**/*.ts"]
+  "include": ["src"]
 }

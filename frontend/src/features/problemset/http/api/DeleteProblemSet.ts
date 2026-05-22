@@ -1,4 +1,4 @@
-import type { SuccessResponse } from '@contracts/shared'
+import type { SuccessResponse } from '@/shared/model/SuccessResponse'
 import type { ProblemSetSlug } from '@/features/problemset/domain/problemset'
 import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
 import {

@@ -124,7 +124,7 @@ Cross-stack type names should align when they represent the same transport shape
 
 Rules:
 
-- HTTP contract types in `contracts/` are the naming source of truth for both frontend and backend boundary models
+- frontend `http/request` and `http/response` types must stay aligned with backend `application/input` and `application/output` boundary models
 - if frontend and backend both expose the same response shape, use the same type name on both sides
 - do not introduce backend-only aliases like `SummaryView`, `ListItem`, or `MemberRecord` when they mean the same thing as an existing contract-facing type
 - do not introduce frontend-only aliases for the same contract shape unless the frontend model has meaningfully different fields or semantics

@@ -1,4 +1,4 @@
-import type { SuccessResponse } from '@contracts/shared'
+import type { SuccessResponse } from '@/shared/model/SuccessResponse'
 import {
   decodeSuccessResponse,
   postJson,

@@ -1,3 +1,5 @@
-import type { ApiMessageParam as ApiMessageParamContract } from '@contracts/shared'
-
-export type ApiMessageParam = ApiMessageParamContract
+export type ApiMessageParam =
+  | { kind: 'text'; value: string }
+  | { kind: 'int'; value: number }
+  | { kind: 'long'; value: number }
+  | { kind: 'bool'; value: boolean }

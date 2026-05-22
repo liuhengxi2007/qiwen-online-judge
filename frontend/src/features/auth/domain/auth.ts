@@ -1,6 +1,6 @@
-import type { ErrorResponse as ErrorResponseContract } from '@contracts/shared'
+import type { ErrorResponse } from '@/shared/model/ErrorResponse'
 
-export type ErrorResponse = ErrorResponseContract
+export type { ErrorResponse }
 
 export type { ParseResult } from '@/features/auth/domain/auth-parsers'
 export {

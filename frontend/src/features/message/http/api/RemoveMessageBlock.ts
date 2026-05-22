@@ -4,7 +4,7 @@ import {
   decodeSuccessResponse,
   postJson,
 } from '@/shared/api/http-client'
-import type { SuccessResponse } from '@contracts/shared'
+import type { SuccessResponse } from '@/shared/model/SuccessResponse'
 
 export function removeMessageBlock(targetUsername: Username): Promise<SuccessResponse> {
   return postJson(

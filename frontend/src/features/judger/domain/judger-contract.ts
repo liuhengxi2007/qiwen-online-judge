@@ -1,5 +1,14 @@
-import type { RegisteredJudgerListItem as RegisteredJudgerListItemContract } from '@contracts/judger'
 import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
+
+type RegisteredJudgerListItemContract = {
+  judgerId: string
+  requestedPrefix: string
+  host: string
+  processId: string | null
+  supportedLanguages: string[]
+  registeredAt: string
+  lastHeartbeatAt: string
+}
 
 export function fromRegisteredJudgerListItemContract(response: RegisteredJudgerListItemContract): RegisteredJudgerListItem {
   return {
