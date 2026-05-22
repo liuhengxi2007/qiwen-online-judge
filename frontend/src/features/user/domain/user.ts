@@ -20,7 +20,7 @@ export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTi
 export type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
 export type { UserListRequest } from '@/features/user/http/request/UserListRequest'
 export type { UserListResponse } from '@/features/user/http/response/UserListResponse'
-export type { UserSearchQuery } from '@/features/user/model/UserSearchQuery'
+export type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
 
 export {
   displayNameValue,

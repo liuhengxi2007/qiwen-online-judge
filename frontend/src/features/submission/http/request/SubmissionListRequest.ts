@@ -1,8 +1,8 @@
-import type { SubmissionProblemQuery } from '@/features/submission/model/SubmissionProblemQuery'
-import type { SubmissionSort } from '@/features/submission/model/SubmissionSort'
-import type { SubmissionSortDirection } from '@/features/submission/model/SubmissionSortDirection'
-import type { SubmissionUserQuery } from '@/features/submission/model/SubmissionUserQuery'
-import type { SubmissionVerdictFilter } from '@/features/submission/model/SubmissionVerdictFilter'
+import type { SubmissionProblemQuery } from '@/features/submission/http/request/SubmissionProblemQuery'
+import type { SubmissionSort } from '@/features/submission/http/request/SubmissionSort'
+import type { SubmissionSortDirection } from '@/features/submission/http/request/SubmissionSortDirection'
+import type { SubmissionUserQuery } from '@/features/submission/http/request/SubmissionUserQuery'
+import type { SubmissionVerdictFilter } from '@/features/submission/http/request/SubmissionVerdictFilter'
 import type { PageRequest } from '@/shared/model/Pagination'
 
 export type SubmissionListRequest = {

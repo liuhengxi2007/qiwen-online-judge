@@ -1,4 +1,4 @@
-package domains.problem.model
+package domains.problem.application.input
 
 
 

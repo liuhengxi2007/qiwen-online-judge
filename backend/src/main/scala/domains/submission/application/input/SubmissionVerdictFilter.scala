@@ -1,7 +1,8 @@
-package domains.submission.model
+package domains.submission.application.input
 
 
 
+import domains.submission.model.SubmissionVerdict
 import io.circe.{Decoder, Encoder}
 
 enum SubmissionVerdictFilter:

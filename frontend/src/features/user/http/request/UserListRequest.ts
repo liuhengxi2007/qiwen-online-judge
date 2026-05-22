@@ -1,4 +1,4 @@
-import type { UserSearchQuery } from '@/features/user/model/UserSearchQuery'
+import type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
 import type { PageRequest } from '@/shared/model/Pagination'
 
 export type UserListRequest = {

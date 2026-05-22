@@ -5,7 +5,8 @@ package domains.blog.table
 import cats.effect.IO
 import domains.auth.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.application.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.application.output.{BlogCommentSummary, BlogDetail, BlogSummary}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.utils.BlogTableSupport.*

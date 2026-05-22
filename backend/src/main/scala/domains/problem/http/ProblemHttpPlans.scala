@@ -6,8 +6,8 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSearchQuery, ProblemSlug}
+import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
+import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.application.output.{ProblemSuggestion}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import io.circe.syntax.*

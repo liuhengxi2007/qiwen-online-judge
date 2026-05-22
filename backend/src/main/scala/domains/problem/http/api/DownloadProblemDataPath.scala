@@ -10,8 +10,8 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSearchQuery, ProblemSlug}
+import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
+import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import shared.model.PageRequest
 import shared.http.AuthenticatedHttpExecutor

@@ -53,7 +53,7 @@ export type { ProblemDetail } from '@/features/problem/http/response/ProblemDeta
 export type { ProblemId } from '@/features/problem/model/ProblemId'
 export type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
 export type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
-export type { ProblemSearchQuery } from '@/features/problem/model/ProblemSearchQuery'
+export type { ProblemSearchQuery } from '@/features/problem/http/request/ProblemSearchQuery'
 export type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
 export type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 export type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'

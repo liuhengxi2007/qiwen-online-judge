@@ -8,9 +8,9 @@ import domains.user.model.UserIdentity
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.submission.application.output.{SubmissionDetail, SubmissionListResponse, SubmissionSummary}
-import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict, SubmissionVerdictFilter}
-import domains.submission.application.input.{SubmissionListRequest}
+import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTableSchema.*
 import domains.submission.table.SubmissionTableSql.*
 import domains.submission.table.utils.SubmissionTableSupport.*
@@ -265,7 +265,7 @@ object SubmissionTable:
   private def bindUserQuery(
     statement: PreparedStatement,
     startIndex: Int,
-    rawQuery: Option[domains.submission.model.SubmissionUserQuery]
+    rawQuery: Option[SubmissionUserQuery]
   ): Int =
     val searchPattern = rawQuery.map(query => LikePatternSql.fromRaw(query.value))
     val afterEnabledFlag = bindBoolean(statement, startIndex, rawQuery.nonEmpty)
@@ -275,7 +275,7 @@ object SubmissionTable:
   private def bindProblemQuery(
     statement: PreparedStatement,
     startIndex: Int,
-    rawQuery: Option[domains.submission.model.SubmissionProblemQuery]
+    rawQuery: Option[SubmissionProblemQuery]
   ): Int =
     val searchPattern = rawQuery.map(query => LikePatternSql.fromRaw(query.value))
     val afterEnabledFlag = bindBoolean(statement, startIndex, rawQuery.nonEmpty)

@@ -18,7 +18,7 @@ export {
   usernameValue,
 } from '@/features/auth/domain/auth-parsers'
 import type { ParseResult } from '@/features/auth/domain/auth-parsers'
-import type { UserSearchQuery } from '@/features/user/model/UserSearchQuery'
+import type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
 
 function createUserSearchQuery(value: string): UserSearchQuery {
   return value as UserSearchQuery

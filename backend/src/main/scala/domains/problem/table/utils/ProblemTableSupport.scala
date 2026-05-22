@@ -5,7 +5,8 @@ package domains.problem.table.utils
 import database.utils.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
-import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.application.input.ProblemSearchQuery
+import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 import shared.sql.LikePatternSql

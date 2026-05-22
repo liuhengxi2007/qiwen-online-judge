@@ -1,12 +1,12 @@
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
-import type { SubmissionProblemQuery } from '@/features/submission/model/SubmissionProblemQuery'
-import type { SubmissionSort } from '@/features/submission/model/SubmissionSort'
-import type { SubmissionSortDirection } from '@/features/submission/model/SubmissionSortDirection'
-import type { SubmissionVerdictFilter } from '@/features/submission/model/SubmissionVerdictFilter'
+import type { SubmissionProblemQuery } from '@/features/submission/http/request/SubmissionProblemQuery'
+import type { SubmissionSort } from '@/features/submission/http/request/SubmissionSort'
+import type { SubmissionSortDirection } from '@/features/submission/http/request/SubmissionSortDirection'
+import type { SubmissionVerdictFilter } from '@/features/submission/http/request/SubmissionVerdictFilter'
 import type { SubmissionSourceCode } from '@/features/submission/model/SubmissionSourceCode'
 import type { SubmissionStatus } from '@/features/submission/model/SubmissionStatus'
-import type { SubmissionUserQuery } from '@/features/submission/model/SubmissionUserQuery'
+import type { SubmissionUserQuery } from '@/features/submission/http/request/SubmissionUserQuery'
 import type { SubmissionVerdict } from '@/features/submission/model/SubmissionVerdict'
 
 type ParseSuccess<T> = { ok: true; value: T }

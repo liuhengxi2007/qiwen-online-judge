@@ -9,7 +9,8 @@ import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
-import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
+import domains.user.application.input.UserSearchQuery
+import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}
 import domains.user.application.input.{UserListRequest}
 import domains.user.table.UserTableSql.*
 import domains.user.table.utils.UserTableSupport.*
