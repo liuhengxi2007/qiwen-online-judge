@@ -1,6 +1,7 @@
 package database
 
 import cats.effect.IO
+import database.utils.ResourceAccessTableSupport.{decodeGrantRoleColumn, decodeResourceKindColumn, encodeGrantRoleColumn, encodeResourceKindColumn}
 import domains.user.model.Username
 import shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
 import domains.usergroup.model.UserGroupSlug
@@ -111,9 +112,9 @@ object ResourceAccessGrantTable:
     IO.blocking {
       val statement = connection.prepareStatement(listForResourceSql)
       try
-        statement.setString(1, ResourceKind.toDatabase(resourceKind))
+        statement.setString(1, encodeResourceKindColumn(resourceKind))
         statement.setObject(2, resourceId.value)
-        statement.setString(3, GrantRole.toDatabase(grantRole))
+        statement.setString(3, encodeGrantRoleColumn(grantRole))
         val resultSet = statement.executeQuery()
         try
           Iterator
@@ -145,7 +146,7 @@ object ResourceAccessGrantTable:
     IO.blocking {
       val statement = connection.prepareStatement(deleteAllForResourceSql)
       try
-        statement.setString(1, ResourceKind.toDatabase(resourceKind))
+        statement.setString(1, encodeResourceKindColumn(resourceKind))
         statement.setObject(2, resourceId.value)
         statement.executeUpdate()
         ()
@@ -160,9 +161,9 @@ object ResourceAccessGrantTable:
     username: Username
   ): IO[Boolean] =
     exists(connection, hasDirectUserGrantSql) { statement =>
-      statement.setString(1, ResourceKind.toDatabase(resourceKind))
+      statement.setString(1, encodeResourceKindColumn(resourceKind))
       statement.setObject(2, resourceId.value)
-      statement.setString(3, GrantRole.toDatabase(grantRole))
+      statement.setString(3, encodeGrantRoleColumn(grantRole))
       statement.setString(4, username.value)
     }
 
@@ -174,9 +175,9 @@ object ResourceAccessGrantTable:
     username: Username
   ): IO[Boolean] =
     exists(connection, hasGrantedUserGroupSql) { statement =>
-      statement.setString(1, ResourceKind.toDatabase(resourceKind))
+      statement.setString(1, encodeResourceKindColumn(resourceKind))
       statement.setObject(2, resourceId.value)
-      statement.setString(3, GrantRole.toDatabase(grantRole))
+      statement.setString(3, encodeGrantRoleColumn(grantRole))
       statement.setString(4, username.value)
     }
 
@@ -189,9 +190,9 @@ object ResourceAccessGrantTable:
     IO.blocking {
       val statement = connection.prepareStatement(deleteForResourceAndRoleSql)
       try
-        statement.setString(1, ResourceKind.toDatabase(resourceKind))
+        statement.setString(1, encodeResourceKindColumn(resourceKind))
         statement.setObject(2, resourceId.value)
-        statement.setString(3, GrantRole.toDatabase(grantRole))
+        statement.setString(3, encodeGrantRoleColumn(grantRole))
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -211,9 +212,9 @@ object ResourceAccessGrantTable:
         grants
           .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
           .foreach { subject =>
-            statement.setString(1, ResourceKind.toDatabase(resourceKind))
+            statement.setString(1, encodeResourceKindColumn(resourceKind))
             statement.setObject(2, resourceId.value)
-            statement.setString(3, GrantRole.toDatabase(grantRole))
+            statement.setString(3, encodeGrantRoleColumn(grantRole))
             statement.setString(4, AccessSubject.subjectKind(subject))
             statement.setString(5, AccessSubject.subjectKey(subject))
             statement.setTimestamp(6, Timestamp.from(now))
@@ -238,13 +239,11 @@ object ResourceAccessGrantTable:
   private def readGrant(resultSet: ResultSet): ResourceAccessGrant =
     ResourceAccessGrant(
       resourceKind =
-        ResourceKind
-          .fromDatabase(resultSet.getString("resource_kind"))
+        decodeResourceKindColumn(resultSet.getString("resource_kind"))
           .getOrElse(throw IllegalStateException(s"Invalid resource_kind: ${resultSet.getString("resource_kind")}")),
       resourceId = ResourceId(resultSet.getObject("resource_id", classOf[java.util.UUID])),
       grantRole =
-        GrantRole
-          .fromDatabase(resultSet.getString("grant_role"))
+        decodeGrantRoleColumn(resultSet.getString("grant_role"))
           .getOrElse(throw IllegalStateException(s"Invalid grant_role: ${resultSet.getString("grant_role")}")),
       subject = parseAccessSubject(resultSet.getString("subject_kind"), resultSet.getString("subject_key")),
       createdAt = resultSet.getTimestamp("created_at").toInstant

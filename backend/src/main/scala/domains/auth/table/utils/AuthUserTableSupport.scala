@@ -34,9 +34,9 @@ object AuthUserTableSupport:
           statement.setString(1, seedAdminUsername.value)
           statement.setString(2, seedAdminDisplayName.value)
           statement.setString(3, seedAdminEmail.value)
-          statement.setString(4, UserDisplayMode.toDatabase(UserDisplayMode.DisplayName))
-          statement.setString(5, UserLocale.toDatabase(UserLocale.En))
-          statement.setString(6, ProblemTitleDisplayMode.toDatabase(ProblemTitleDisplayMode.Title))
+          statement.setString(4, encodeUserDisplayModeColumn(UserDisplayMode.DisplayName))
+          statement.setString(5, encodeUserLocaleColumn(UserLocale.En))
+          statement.setString(6, encodeProblemTitleDisplayModeColumn(ProblemTitleDisplayMode.Title))
           statement.setBoolean(7, false)
           statement.setString(8, passwordHash.value)
           statement.setBoolean(9, seedAdminSiteManager)
@@ -53,19 +53,42 @@ object AuthUserTableSupport:
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
       displayMode =
-        UserDisplayMode
-          .fromDatabase(resultSet.getString("display_mode"))
+        decodeUserDisplayModeColumn(resultSet.getString("display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
       locale =
-        UserLocale
-          .fromDatabase(resultSet.getString("locale"))
+        decodeUserLocaleColumn(resultSet.getString("locale"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
       problemTitleDisplayMode =
-        ProblemTitleDisplayMode
-          .fromDatabase(resultSet.getString("problem_title_display_mode"))
+        decodeProblemTitleDisplayModeColumn(resultSet.getString("problem_title_display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
       autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")
     )
+
+  def encodeUserDisplayModeColumn(value: UserDisplayMode): String =
+    value match
+      case UserDisplayMode.DisplayName => "display_name"
+      case UserDisplayMode.Username => "username"
+      case UserDisplayMode.DisplayNameWithUsername => "display_name_with_username"
+
+  def decodeUserDisplayModeColumn(value: String): Option[UserDisplayMode] =
+    UserDisplayMode.parse(value).toOption
+
+  def encodeUserLocaleColumn(value: UserLocale): String =
+    value match
+      case UserLocale.En => "en"
+      case UserLocale.ZhCn => "zh-CN"
+
+  def decodeUserLocaleColumn(value: String): Option[UserLocale] =
+    UserLocale.parse(value).toOption
+
+  def encodeProblemTitleDisplayModeColumn(value: ProblemTitleDisplayMode): String =
+    value match
+      case ProblemTitleDisplayMode.Title => "title"
+      case ProblemTitleDisplayMode.Slug => "slug"
+      case ProblemTitleDisplayMode.TitleWithSlug => "title_with_slug"
+
+  def decodeProblemTitleDisplayModeColumn(value: String): Option[ProblemTitleDisplayMode] =
+    ProblemTitleDisplayMode.parse(value).toOption

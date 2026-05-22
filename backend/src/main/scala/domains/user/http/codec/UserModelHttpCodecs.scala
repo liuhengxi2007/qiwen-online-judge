@@ -24,10 +24,10 @@ object UserModelHttpCodecs:
   given Encoder[UserContribution] = Encoder.encodeBigDecimal.contramap(_.value)
   given Decoder[UserContribution] = Decoder.decodeBigDecimal.map(UserContribution(_))
 
-  given Encoder[UserLocale] = Encoder.encodeString.contramap(UserLocale.toDatabase)
+  given Encoder[UserLocale] = Encoder.encodeString.contramap(encodeUserLocale)
   given Decoder[UserLocale] = Decoder.decodeString.emap(UserLocale.parse)
 
-  given Encoder[UserDisplayMode] = Encoder.encodeString.contramap(UserDisplayMode.toDatabase)
+  given Encoder[UserDisplayMode] = Encoder.encodeString.contramap(encodeUserDisplayMode)
   given Decoder[UserDisplayMode] = Decoder.decodeString.emap(UserDisplayMode.parse)
 
   given Encoder[UserIdentity] = deriveEncoder[UserIdentity]
@@ -38,3 +38,14 @@ object UserModelHttpCodecs:
 
   given Encoder[UserAcceptedProblem] = deriveEncoder[UserAcceptedProblem]
   given Decoder[UserAcceptedProblem] = deriveDecoder[UserAcceptedProblem]
+
+  private def encodeUserLocale(value: UserLocale): String =
+    value match
+      case UserLocale.En => "en"
+      case UserLocale.ZhCn => "zh-CN"
+
+  private def encodeUserDisplayMode(value: UserDisplayMode): String =
+    value match
+      case UserDisplayMode.DisplayName => "display_name"
+      case UserDisplayMode.Username => "username"
+      case UserDisplayMode.DisplayNameWithUsername => "display_name_with_username"

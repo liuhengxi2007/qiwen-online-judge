@@ -1,6 +1,6 @@
 package database.utils
 
-import shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy}
+import shared.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessPolicy, ResourceKind}
 
 object ResourceAccessTableSupport:
 
@@ -21,6 +21,30 @@ object ResourceAccessTableSupport:
     baseAccess match
       case BaseAccess.Public => "public"
       case BaseAccess.OwnerOnly => "private"
+
+  def encodeBaseAccessColumn(baseAccess: BaseAccess): String =
+    baseAccess match
+      case BaseAccess.OwnerOnly => "owner_only"
+      case BaseAccess.Public => "public"
+
+  def decodeBaseAccessColumn(value: String): Option[BaseAccess] =
+    BaseAccess.parse(value).toOption
+
+  def encodeGrantRoleColumn(grantRole: GrantRole): String =
+    grantRole match
+      case GrantRole.Viewer => "viewer"
+      case GrantRole.Manager => "manager"
+
+  def decodeGrantRoleColumn(value: String): Option[GrantRole] =
+    GrantRole.parse(value).toOption
+
+  def encodeResourceKindColumn(resourceKind: ResourceKind): String =
+    resourceKind match
+      case ResourceKind.Problem => "problem"
+      case ResourceKind.ProblemSet => "problem_set"
+
+  def decodeResourceKindColumn(value: String): Option[ResourceKind] =
+    ResourceKind.parse(value).toOption
 
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

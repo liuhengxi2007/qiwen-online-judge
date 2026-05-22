@@ -205,9 +205,9 @@ object UserTable:
       try
         statement.setString(1, displayName.value.trim)
         statement.setString(2, email.value.trim)
-        statement.setString(3, UserDisplayMode.toDatabase(displayMode))
-        statement.setString(4, UserLocale.toDatabase(locale))
-        statement.setString(5, ProblemTitleDisplayMode.toDatabase(problemTitleDisplayMode))
+        statement.setString(3, encodeUserDisplayModeColumn(displayMode))
+        statement.setString(4, encodeUserLocaleColumn(locale))
+        statement.setString(5, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
         statement.setBoolean(6, autoMarkMessageRead)
         statement.setString(7, passwordHash.value)
         statement.setString(8, username.value.trim)

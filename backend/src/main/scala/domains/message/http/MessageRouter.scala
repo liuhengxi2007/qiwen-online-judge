@@ -22,13 +22,17 @@ import org.http4s.HttpRoutes
 object MessageRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, messageEventHub: MessageEventHub): HttpRoutes[IO] =
-    ListInbox.routes(databaseSession, sessionStore, messageEventHub) <+>
-      GetConversationHistory.routes(databaseSession, sessionStore, messageEventHub) <+>
-      CreateConversation.routes(databaseSession, sessionStore, messageEventHub) <+>
-      SendDirectMessage.routes(databaseSession, sessionStore, messageEventHub) <+>
-      MarkConversationRead.routes(databaseSession, sessionStore, messageEventHub) <+>
-      MarkAllMessagesRead.routes(databaseSession, sessionStore, messageEventHub) <+>
-      ListMessageBlocks.routes(databaseSession, sessionStore, messageEventHub) <+>
-      AddMessageBlock.routes(databaseSession, sessionStore, messageEventHub) <+>
-      RemoveMessageBlock.routes(databaseSession, sessionStore, messageEventHub) <+>
+    val endpointRoutes = List(
+      ListInbox.routes(databaseSession, sessionStore, messageEventHub),
+      GetConversationHistory.routes(databaseSession, sessionStore, messageEventHub),
+      CreateConversation.routes(databaseSession, sessionStore, messageEventHub),
+      SendDirectMessage.routes(databaseSession, sessionStore, messageEventHub),
+      MarkConversationRead.routes(databaseSession, sessionStore, messageEventHub),
+      MarkAllMessagesRead.routes(databaseSession, sessionStore, messageEventHub),
+      ListMessageBlocks.routes(databaseSession, sessionStore, messageEventHub),
+      AddMessageBlock.routes(databaseSession, sessionStore, messageEventHub),
+      RemoveMessageBlock.routes(databaseSession, sessionStore, messageEventHub),
       SubscribeMessageEvents.routes(databaseSession, sessionStore, messageEventHub)
+    )
+
+    endpointRoutes.reduce(_ <+> _)

@@ -21,7 +21,7 @@ object SubmissionLifecycle:
           )
         )
       case _ =>
-        Left(s"Only queued submissions can start judging, but found ${SubmissionStatus.toDatabase(state.status)}.")
+        Left(s"Only queued submissions can start judging, but found ${statusName(state.status)}.")
 
   def completeJudging(
     state: SubmissionJudgeState,
@@ -47,4 +47,11 @@ object SubmissionLifecycle:
           case _ =>
             Left("Judging may only finish with completed or failed status.")
       case _ =>
-        Left(s"Only running submissions can finish judging, but found ${SubmissionStatus.toDatabase(state.status)}.")
+        Left(s"Only running submissions can finish judging, but found ${statusName(state.status)}.")
+
+  private def statusName(status: SubmissionStatus): String =
+    status match
+      case SubmissionStatus.Queued => "queued"
+      case SubmissionStatus.Running => "running"
+      case SubmissionStatus.Completed => "completed"
+      case SubmissionStatus.Failed => "failed"

@@ -11,7 +11,7 @@ import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProb
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
 import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
-import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse
 import domains.problemset.table.ProblemSetTableSchema.*
 import domains.problemset.table.ProblemSetTableSql.*
@@ -98,7 +98,7 @@ object ProblemSetTable:
         statement.setString(3, request.title.value)
         statement.setString(4, request.description.value)
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
+        statement.setString(6, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
         statement.setString(7, creatorUsername.value)
         statement.setTimestamp(8, Timestamp.from(now))
         statement.setTimestamp(9, Timestamp.from(now))
@@ -170,7 +170,7 @@ object ProblemSetTable:
         statement.setString(1, request.title.value)
         statement.setString(2, request.description.value)
         statement.setString(3, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(4, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
+        statement.setString(4, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
         statement.setTimestamp(5, Timestamp.from(now))
         statement.setObject(6, problemSetId.value)
         statement.executeUpdate()

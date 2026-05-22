@@ -3,7 +3,7 @@ package domains.problemset.table.utils
 
 
 import cats.effect.IO
-import database.utils.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
+import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
@@ -22,7 +22,7 @@ object ProblemSetTableSupport:
       title = parseColumn("problem_sets.title", resultSet.getString("title"), ProblemSetTitle.parse),
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -36,7 +36,7 @@ object ProblemSetTableSupport:
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       problems = Nil,
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

@@ -11,7 +11,7 @@ import domains.problem.application.input.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
-import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse
 import domains.problem.table.ProblemTableSchema.*
 import domains.problem.table.ProblemTableSql.*
@@ -144,8 +144,8 @@ object ProblemTable:
         statement.setInt(7, request.timeLimitMs.value)
         statement.setInt(8, request.spaceLimitMb.value)
         statement.setString(9, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(10, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(11, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
+        statement.setString(10, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setString(11, encodeOthersSubmissionAccessColumn(request.othersSubmissionAccess))
         statement.setString(12, creatorUsername.value)
         statement.setTimestamp(13, Timestamp.from(createdAt))
         statement.setTimestamp(14, Timestamp.from(createdAt))
@@ -181,8 +181,8 @@ object ProblemTable:
         statement.setInt(3, request.timeLimitMs.value)
         statement.setInt(4, request.spaceLimitMb.value)
         statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(6, BaseAccess.toDatabase(request.accessPolicy.baseAccess))
-        statement.setString(7, OthersSubmissionAccess.toDatabase(request.othersSubmissionAccess))
+        statement.setString(6, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setString(7, encodeOthersSubmissionAccessColumn(request.othersSubmissionAccess))
         statement.setTimestamp(8, Timestamp.from(updatedAt))
         statement.setObject(9, problemId.value)
         statement.executeUpdate()

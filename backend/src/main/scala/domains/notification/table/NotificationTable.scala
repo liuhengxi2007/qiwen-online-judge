@@ -7,7 +7,7 @@ import domains.user.model.Username
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
 import domains.notification.application.output.{NotificationListResponse, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*
-import domains.notification.table.utils.NotificationTableSupport.readNotificationSummary
+import domains.notification.table.utils.NotificationTableSupport.{encodeNotificationKindColumn, readNotificationSummary}
 import domains.notification.table.utils.NotificationPayloadJsonCodec
 import shared.model.PageRequest
 
@@ -39,7 +39,7 @@ object NotificationTable:
         actorUsername match
           case Some(username) => statement.setString(3, username.value)
           case None => statement.setNull(3, java.sql.Types.VARCHAR)
-        statement.setString(4, NotificationKind.toDatabase(kind))
+        statement.setString(4, encodeNotificationKindColumn(kind))
         statement.setString(5, titleKey)
         statement.setString(6, bodyKey)
         statement.setString(7, NotificationPayloadJsonCodec.encode(payload))

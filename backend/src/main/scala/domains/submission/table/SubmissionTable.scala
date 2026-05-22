@@ -52,8 +52,8 @@ object SubmissionTable:
         statement.setObject(1, UUID.randomUUID())
         statement.setObject(2, problemId.value)
         statement.setString(3, submitterUsername.value)
-        statement.setString(4, SubmissionLanguage.toDatabase(language))
-        statement.setString(5, SubmissionStatus.toDatabase(SubmissionStatus.Queued))
+        statement.setString(4, encodeSubmissionLanguageColumn(language))
+        statement.setString(5, encodeSubmissionStatusColumn(SubmissionStatus.Queued))
         statement.setNull(6, java.sql.Types.VARCHAR)
         statement.setNull(7, java.sql.Types.LONGVARCHAR)
         statement.setNull(8, java.sql.Types.BIGINT)
@@ -79,7 +79,7 @@ object SubmissionTable:
               ),
               language = language,
               status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
-              verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
+              verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
               judgeMessage = Option(resultSet.getString("judge_message")),
               timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
               memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
@@ -158,10 +158,10 @@ object SubmissionTable:
       val statement = connection.prepareStatement(claimNextForLanguagesSql(languages.size))
       try
         languages.zipWithIndex.foreach { case (language, index) =>
-          statement.setString(index + 1, SubmissionLanguage.toDatabase(language))
+          statement.setString(index + 1, encodeSubmissionLanguageColumn(language))
         }
         val stateStartIndex = languages.size + 1
-        statement.setString(stateStartIndex, SubmissionStatus.toDatabase(runningState.status))
+        statement.setString(stateStartIndex, encodeSubmissionStatusColumn(runningState.status))
         setOptionalTimestamp(statement, stateStartIndex + 1, runningState.startedAt)
         setOptionalTimestamp(statement, stateStartIndex + 2, runningState.finishedAt)
         setOptionalVerdict(statement, stateStartIndex + 3, runningState.verdict)
@@ -193,7 +193,7 @@ object SubmissionTable:
     IO.blocking {
       val statement = connection.prepareStatement(updateJudgeStateSql)
       try
-        statement.setString(1, SubmissionStatus.toDatabase(judgeState.status))
+        statement.setString(1, encodeSubmissionStatusColumn(judgeState.status))
         setOptionalVerdict(statement, 2, judgeState.verdict)
         setOptionalJudgeMessage(statement, 3, judgeState.judgeMessage)
         setOptionalLong(statement, 4, judgeState.timeUsedMs)
@@ -247,7 +247,7 @@ object SubmissionTable:
     val afterAllVerdict = bindBoolean(statement, afterProblemQuery, isAllVerdict)
     val afterPendingVerdict = bindBoolean(statement, afterAllVerdict, isPendingVerdict)
     val afterSpecificVerdict = bindBoolean(statement, afterPendingVerdict, specificVerdict.nonEmpty)
-    bindNullableString(statement, afterSpecificVerdict, specificVerdict.map(SubmissionVerdict.toDatabase), java.sql.Types.VARCHAR)
+    bindNullableString(statement, afterSpecificVerdict, specificVerdict.map(encodeSubmissionVerdictColumn), java.sql.Types.VARCHAR)
 
   private def bindVisibility(
     statement: PreparedStatement,

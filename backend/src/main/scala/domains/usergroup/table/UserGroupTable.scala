@@ -179,7 +179,7 @@ object UserGroupTable:
           try
             statement.setObject(1, groupId.value)
             statement.setString(2, request.username.value)
-            statement.setString(3, AddUserGroupMemberRole.toDatabase(request.role))
+            statement.setString(3, encodeAddUserGroupMemberRoleColumn(request.role))
             statement.setTimestamp(4, Timestamp.from(Instant.now()))
             statement.executeUpdate()
             AddMemberTableResult.Added
@@ -201,7 +201,7 @@ object UserGroupTable:
     IO.blocking {
       val statement = connection.prepareStatement(updateMemberRoleSql)
       try
-        statement.setString(1, UserGroupRole.toDatabase(role))
+        statement.setString(1, encodeUserGroupRoleColumn(role))
         statement.setObject(2, groupId.value)
         statement.setString(3, targetUsername.value)
         val updatedRows = statement.executeUpdate()

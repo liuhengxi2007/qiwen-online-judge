@@ -37,7 +37,7 @@ object BlogTable:
         statement.setString(2, authorUsername.value)
         statement.setString(3, title.value)
         statement.setString(4, content.value)
-        statement.setString(5, BlogVisibility.toDatabase(visibility))
+        statement.setString(5, encodeBlogVisibilityColumn(visibility))
         statement.setTimestamp(6, Timestamp.from(now))
         statement.setTimestamp(7, Timestamp.from(now))
         val resultSet = statement.executeQuery()
@@ -246,7 +246,7 @@ object BlogTable:
           val statement = connection.prepareStatement(upsertVoteSql)
           try
             statement.setString(1, username.value)
-            statement.setString(2, BlogVote.toDatabase(vote))
+            statement.setString(2, encodeBlogVoteColumn(vote))
             statement.setTimestamp(3, Timestamp.from(now))
             statement.setTimestamp(4, Timestamp.from(now))
             statement.setLong(5, blogId.value)
@@ -273,7 +273,7 @@ object BlogTable:
       try
         statement.setString(1, title.value)
         statement.setString(2, content.value)
-        statement.setString(3, BlogVisibility.toDatabase(visibility))
+        statement.setString(3, encodeBlogVisibilityColumn(visibility))
         statement.setTimestamp(4, Timestamp.from(Instant.now()))
         statement.setLong(5, blogId.value)
         statement.setString(6, actorUsername.value)
@@ -475,7 +475,7 @@ object BlogTable:
           val statement = connection.prepareStatement(upsertCommentVoteSql)
           try
             statement.setString(1, username.value)
-            statement.setString(2, BlogVote.toDatabase(vote))
+            statement.setString(2, encodeBlogVoteColumn(vote))
             statement.setTimestamp(3, Timestamp.from(now))
             statement.setTimestamp(4, Timestamp.from(now))
             statement.setLong(5, blogId.value)
@@ -579,7 +579,7 @@ object BlogTable:
         statement.setString(3, username.value)
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then BlogVote.fromDatabase(resultSet.getString("vote"))
+          if resultSet.next() then decodeBlogVoteColumn(resultSet.getString("vote"))
           else None
         finally resultSet.close()
       finally statement.close()
@@ -607,7 +607,7 @@ object BlogTable:
         statement.setString(4, username.value)
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then BlogVote.fromDatabase(resultSet.getString("vote"))
+          if resultSet.next() then decodeBlogVoteColumn(resultSet.getString("vote"))
           else None
         finally resultSet.close()
       finally statement.close()

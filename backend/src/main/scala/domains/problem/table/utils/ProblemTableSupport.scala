@@ -2,7 +2,7 @@ package domains.problem.table.utils
 
 
 
-import database.utils.ResourceAccessTableSupport.{parseColumn, parseOptionalColumn}
+import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.problem.application.input.ProblemSearchQuery
@@ -58,9 +58,9 @@ object ProblemTableSupport:
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       othersSubmissionAccess =
-        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
+        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), decodeOthersSubmissionAccessColumn),
       creator = readUserIdentity(resultSet, "creator"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -83,9 +83,9 @@ object ProblemTableSupport:
       timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
       spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), BaseAccess.fromDatabase), Nil, Nil),
+        ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       othersSubmissionAccess =
-        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), OthersSubmissionAccess.fromDatabase),
+        parseOptionalColumn("problems.others_submission_access", resultSet.getString("others_submission_access"), decodeOthersSubmissionAccessColumn),
       creator = readUserIdentity(resultSet, "creator"),
       canManage = false,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -140,6 +140,15 @@ object ProblemTableSupport:
     statement.setString(afterSearchIndex + 1, searchPattern.prefixPattern)
     statement.setString(afterSearchIndex + 2, searchPattern.prefixPattern)
     statement.setString(afterSearchIndex + 3, searchPattern.containsPattern)
+
+  def encodeOthersSubmissionAccessColumn(value: OthersSubmissionAccess): String =
+    value match
+      case OthersSubmissionAccess.None => "none"
+      case OthersSubmissionAccess.Summary => "summary"
+      case OthersSubmissionAccess.Detail => "detail"
+
+  def decodeOthersSubmissionAccessColumn(value: String): Option[OthersSubmissionAccess] =
+    OthersSubmissionAccess.parse(value).toOption
 
   def bindContainingProblemSetVisibilityQuery(
     statement: PreparedStatement,

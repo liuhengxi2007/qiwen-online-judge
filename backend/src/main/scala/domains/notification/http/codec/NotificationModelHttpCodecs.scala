@@ -9,7 +9,7 @@ object NotificationModelHttpCodecs:
   given Encoder[NotificationId] = Encoder.encodeString.contramap(_.value.toString)
   given Decoder[NotificationId] = Decoder.decodeString.emap(NotificationId.parse)
 
-  given Encoder[NotificationKind] = Encoder.encodeString.contramap(NotificationKind.toDatabase)
+  given Encoder[NotificationKind] = Encoder.encodeString.contramap(encodeNotificationKind)
   given Decoder[NotificationKind] = Decoder.decodeString.emap(NotificationKind.parse)
 
   given Encoder[NotificationPayload] = Encoder.instance {
@@ -45,3 +45,7 @@ object NotificationModelHttpCodecs:
       recipientCommentId = recipientCommentId,
       contentPreview = contentPreview
     )
+
+  private def encodeNotificationKind(kind: NotificationKind): String =
+    kind match
+      case NotificationKind.BlogReply => NotificationPayload.BlogReplyKind

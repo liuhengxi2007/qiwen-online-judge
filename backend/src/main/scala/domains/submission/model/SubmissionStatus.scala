@@ -16,18 +16,3 @@ object SubmissionStatus:
       case "completed" => Right(SubmissionStatus.Completed)
       case "failed" => Right(SubmissionStatus.Failed)
       case _ => Left("Submission status must be one of: queued, running, completed, failed.")
-
-  def fromDatabase(value: String): Option[SubmissionStatus] =
-    value match
-      case "queued" => Some(SubmissionStatus.Queued)
-      case "running" => Some(SubmissionStatus.Running)
-      case "completed" => Some(SubmissionStatus.Completed)
-      case "failed" => Some(SubmissionStatus.Failed)
-      case _ => None
-
-  def toDatabase(value: SubmissionStatus): String =
-    value match
-      case SubmissionStatus.Queued => "queued"
-      case SubmissionStatus.Running => "running"
-      case SubmissionStatus.Completed => "completed"
-      case SubmissionStatus.Failed => "failed"

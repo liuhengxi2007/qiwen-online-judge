@@ -8,15 +8,9 @@ enum UserGroupRole:
   case Member
 
 object UserGroupRole:
-  def fromDatabase(value: String): Option[UserGroupRole] =
-    value match
-      case "owner" => Some(UserGroupRole.Owner)
-      case "manager" => Some(UserGroupRole.Manager)
-      case "member" => Some(UserGroupRole.Member)
-      case _ => None
-
-  def toDatabase(value: UserGroupRole): String =
-    value match
-      case UserGroupRole.Owner => "owner"
-      case UserGroupRole.Manager => "manager"
-      case UserGroupRole.Member => "member"
+  def parse(value: String): Either[String, UserGroupRole] =
+    value.trim match
+      case "owner" => Right(UserGroupRole.Owner)
+      case "manager" => Right(UserGroupRole.Manager)
+      case "member" => Right(UserGroupRole.Member)
+      case _ => Left("User group role must be one of: owner, manager, member.")

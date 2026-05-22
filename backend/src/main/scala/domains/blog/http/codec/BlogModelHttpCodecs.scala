@@ -25,11 +25,21 @@ object BlogModelHttpCodecs:
   given Encoder[BlogCommentContent] = Encoder.encodeString.contramap(_.value)
   given Decoder[BlogCommentContent] = Decoder.decodeString.emap(BlogCommentContent.parse)
 
-  given Encoder[BlogVisibility] = Encoder.encodeString.contramap(BlogVisibility.toDatabase)
+  given Encoder[BlogVisibility] = Encoder.encodeString.contramap(encodeBlogVisibility)
   given Decoder[BlogVisibility] = Decoder.decodeString.emap(BlogVisibility.parse)
 
-  given Encoder[BlogVote] = Encoder.encodeString.contramap(BlogVote.toDatabase)
+  given Encoder[BlogVote] = Encoder.encodeString.contramap(encodeBlogVote)
   given Decoder[BlogVote] = Decoder.decodeString.emap(BlogVote.parse)
 
   given Encoder[BlogProblemReference] = deriveEncoder[BlogProblemReference]
   given Decoder[BlogProblemReference] = deriveDecoder[BlogProblemReference]
+
+  private def encodeBlogVisibility(value: BlogVisibility): String =
+    value match
+      case BlogVisibility.Public => "public"
+      case BlogVisibility.Private => "private"
+
+  private def encodeBlogVote(value: BlogVote): String =
+    value match
+      case BlogVote.Up => "up"
+      case BlogVote.Down => "down"

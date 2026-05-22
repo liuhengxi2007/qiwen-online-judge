@@ -7,11 +7,6 @@ enum NotificationStatus:
   case Read
 
 object NotificationStatus:
-  def toDatabase(status: NotificationStatus): String =
-    status match
-      case NotificationStatus.Unread => "unread"
-      case NotificationStatus.Read => "read"
-
   def parse(raw: String): Either[String, NotificationStatus] =
     raw match
       case "unread" => Right(NotificationStatus.Unread)

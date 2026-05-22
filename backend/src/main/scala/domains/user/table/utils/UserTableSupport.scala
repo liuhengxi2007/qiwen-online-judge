@@ -20,16 +20,13 @@ object UserTableSupport:
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
       displayMode =
-        UserDisplayMode
-          .fromDatabase(resultSet.getString("display_mode"))
+        decodeUserDisplayModeColumn(resultSet.getString("display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
       locale =
-        UserLocale
-          .fromDatabase(resultSet.getString("locale"))
+        decodeUserLocaleColumn(resultSet.getString("locale"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
       problemTitleDisplayMode =
-        ProblemTitleDisplayMode
-          .fromDatabase(resultSet.getString("problem_title_display_mode"))
+        decodeProblemTitleDisplayModeColumn(resultSet.getString("problem_title_display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
       autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
@@ -81,6 +78,32 @@ object UserTableSupport:
     statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
     statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3
+
+  def encodeUserDisplayModeColumn(value: UserDisplayMode): String =
+    value match
+      case UserDisplayMode.DisplayName => "display_name"
+      case UserDisplayMode.Username => "username"
+      case UserDisplayMode.DisplayNameWithUsername => "display_name_with_username"
+
+  def decodeUserDisplayModeColumn(value: String): Option[UserDisplayMode] =
+    UserDisplayMode.parse(value).toOption
+
+  def encodeUserLocaleColumn(value: UserLocale): String =
+    value match
+      case UserLocale.En => "en"
+      case UserLocale.ZhCn => "zh-CN"
+
+  def decodeUserLocaleColumn(value: String): Option[UserLocale] =
+    UserLocale.parse(value).toOption
+
+  def encodeProblemTitleDisplayModeColumn(value: ProblemTitleDisplayMode): String =
+    value match
+      case ProblemTitleDisplayMode.Title => "title"
+      case ProblemTitleDisplayMode.Slug => "slug"
+      case ProblemTitleDisplayMode.TitleWithSlug => "title_with_slug"
+
+  def decodeProblemTitleDisplayModeColumn(value: String): Option[ProblemTitleDisplayMode] =
+    ProblemTitleDisplayMode.parse(value).toOption
 
   private def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

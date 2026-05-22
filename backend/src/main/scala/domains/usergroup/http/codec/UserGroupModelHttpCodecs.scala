@@ -29,15 +29,22 @@ object UserGroupModelHttpCodecs:
   given Encoder[UserGroupDescription] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserGroupDescription] = Decoder.decodeString.emap(UserGroupDescription.parse)
 
-  given Encoder[UserGroupRole] = Encoder.encodeString.contramap(UserGroupRole.toDatabase)
-  given Decoder[UserGroupRole] = Decoder.decodeString.emap { value =>
-    UserGroupRole.fromDatabase(value).toRight(s"Unknown user group role: $value")
-  }
+  given Encoder[UserGroupRole] = Encoder.encodeString.contramap(encodeUserGroupRole)
+  given Decoder[UserGroupRole] = Decoder.decodeString.emap(UserGroupRole.parse)
 
-  given Encoder[AddUserGroupMemberRole] = Encoder.encodeString.contramap(AddUserGroupMemberRole.toDatabase)
-  given Decoder[AddUserGroupMemberRole] = Decoder.decodeString.emap { value =>
-    AddUserGroupMemberRole.fromDatabase(value).toRight(s"Unknown add-user-group-member role: $value")
-  }
+  given Encoder[AddUserGroupMemberRole] = Encoder.encodeString.contramap(encodeAddUserGroupMemberRole)
+  given Decoder[AddUserGroupMemberRole] = Decoder.decodeString.emap(AddUserGroupMemberRole.parse)
 
   given Encoder[UserGroupMember] = deriveEncoder[UserGroupMember]
   given Decoder[UserGroupMember] = deriveDecoder[UserGroupMember]
+
+  private def encodeUserGroupRole(value: UserGroupRole): String =
+    value match
+      case UserGroupRole.Owner => "owner"
+      case UserGroupRole.Manager => "manager"
+      case UserGroupRole.Member => "member"
+
+  private def encodeAddUserGroupMemberRole(value: AddUserGroupMemberRole): String =
+    value match
+      case AddUserGroupMemberRole.Manager => "manager"
+      case AddUserGroupMemberRole.Member => "member"

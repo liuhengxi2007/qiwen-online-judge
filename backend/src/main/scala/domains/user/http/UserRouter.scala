@@ -22,14 +22,18 @@ import org.http4s.HttpRoutes
 object UserRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    ListUsers.routes(databaseSession, sessionStore) <+>
-      ListUserSuggestions.routes(databaseSession, sessionStore) <+>
-      GetUserProfile.routes(databaseSession, sessionStore) <+>
-      GetUserSettings.routes(databaseSession, sessionStore) <+>
-      ListContributionRanklist.routes(databaseSession, sessionStore) <+>
-      ListAcceptedRanklist.routes(databaseSession, sessionStore) <+>
-      UpdateUserPermissions.routes(databaseSession, sessionStore) <+>
-      UpdateUserProfile.routes(databaseSession, sessionStore) <+>
-      UpdateUserPreferences.routes(databaseSession, sessionStore) <+>
-      UpdateUserAccount.routes(databaseSession, sessionStore) <+>
+    val endpointRoutes = List(
+      ListUsers.routes(databaseSession, sessionStore),
+      ListUserSuggestions.routes(databaseSession, sessionStore),
+      GetUserProfile.routes(databaseSession, sessionStore),
+      GetUserSettings.routes(databaseSession, sessionStore),
+      ListContributionRanklist.routes(databaseSession, sessionStore),
+      ListAcceptedRanklist.routes(databaseSession, sessionStore),
+      UpdateUserPermissions.routes(databaseSession, sessionStore),
+      UpdateUserProfile.routes(databaseSession, sessionStore),
+      UpdateUserPreferences.routes(databaseSession, sessionStore),
+      UpdateUserAccount.routes(databaseSession, sessionStore),
       DeleteUser.routes(databaseSession, sessionStore)
+    )
+
+    endpointRoutes.reduce(_ <+> _)

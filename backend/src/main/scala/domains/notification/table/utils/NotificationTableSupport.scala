@@ -28,6 +28,10 @@ object NotificationTableSupport:
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
 
+  def encodeNotificationKindColumn(kind: NotificationKind): String =
+    kind match
+      case NotificationKind.BlogReply => NotificationPayload.BlogReplyKind
+
   private def decodePayload(raw: String): NotificationPayload =
     NotificationPayloadJsonCodec.decode(raw)
 

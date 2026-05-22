@@ -20,7 +20,7 @@ object BlogTableSupport:
       visibility = parseColumn("blogs.visibility", resultSet.getString("visibility"), BlogVisibility.parse),
       relatedProblems = Nil,
       score = resultSet.getInt("score"),
-      viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(BlogVote.fromDatabase),
+      viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(decodeBlogVoteColumn),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -38,10 +38,23 @@ object BlogTableSupport:
       content = parseColumn("blog_comments.content", resultSet.getString("content"), BlogCommentContent.parse),
       author = readUserIdentity(resultSet, "author"),
       score = resultSet.getInt("score"),
-      viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(BlogVote.fromDatabase),
+      viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(decodeBlogVoteColumn),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
+
+  def encodeBlogVisibilityColumn(visibility: BlogVisibility): String =
+    visibility match
+      case BlogVisibility.Public => "public"
+      case BlogVisibility.Private => "private"
+
+  def encodeBlogVoteColumn(vote: BlogVote): String =
+    vote match
+      case BlogVote.Up => "up"
+      case BlogVote.Down => "down"
+
+  def decodeBlogVoteColumn(value: String): Option[BlogVote] =
+    BlogVote.parse(value).toOption
 
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)

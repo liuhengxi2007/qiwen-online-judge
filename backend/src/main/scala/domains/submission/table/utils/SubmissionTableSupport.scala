@@ -25,7 +25,7 @@ object SubmissionTableSupport:
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
-      verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
+      verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
       timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
       memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
       score = readOptionalBigDecimal(resultSet, "score"),
@@ -45,7 +45,7 @@ object SubmissionTableSupport:
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
-      verdict = Option(resultSet.getString("verdict")).flatMap(SubmissionVerdict.fromDatabase),
+      verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
       judgeMessage = Option(resultSet.getString("judge_message")),
       timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
       memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
@@ -64,8 +64,32 @@ object SubmissionTableSupport:
     verdict: Option[SubmissionVerdict]
   ): Unit =
     verdict match
-      case Some(value) => statement.setString(parameterIndex, SubmissionVerdict.toDatabase(value))
+      case Some(value) => statement.setString(parameterIndex, encodeSubmissionVerdictColumn(value))
       case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
+
+  def encodeSubmissionLanguageColumn(value: SubmissionLanguage): String =
+    value match
+      case SubmissionLanguage.Cpp17 => "cpp17"
+      case SubmissionLanguage.Python3 => "python3"
+
+  def encodeSubmissionStatusColumn(value: SubmissionStatus): String =
+    value match
+      case SubmissionStatus.Queued => "queued"
+      case SubmissionStatus.Running => "running"
+      case SubmissionStatus.Completed => "completed"
+      case SubmissionStatus.Failed => "failed"
+
+  def encodeSubmissionVerdictColumn(value: SubmissionVerdict): String =
+    value match
+      case SubmissionVerdict.Accepted => "accepted"
+      case SubmissionVerdict.WrongAnswer => "wrong_answer"
+      case SubmissionVerdict.CompileError => "compile_error"
+      case SubmissionVerdict.RuntimeError => "runtime_error"
+      case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdict.SystemError => "system_error"
+
+  def decodeSubmissionVerdictColumn(value: String): Option[SubmissionVerdict] =
+    SubmissionVerdict.parse(value).toOption
 
   def setOptionalJudgeMessage(
     statement: PreparedStatement,

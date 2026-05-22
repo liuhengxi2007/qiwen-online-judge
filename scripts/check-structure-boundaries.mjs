@@ -8,6 +8,8 @@ const frontendBlockedModelSegments = new Set(['http', 'hooks', 'components', 'pa
 const frontendBlockedDomainSegments = new Set(['hooks', 'components', 'pages'])
 const backendBlockedModelSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
+const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
+const backendModelPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
 
 const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
@@ -106,6 +108,13 @@ function checkBackendModelFile(filePath, errors) {
     if (hasBlockedSegment(importedPath.replace(/[{}]/g, '.').replace(/,/g, '.'), backendBlockedModelSegments)) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend layer "${importedPath}"`)
     }
+    if (backendWireCodecImportPattern.test(importedPath)) {
+      errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
+    }
+  }
+
+  for (const match of source.matchAll(backendModelPersistenceHelperPattern)) {
+    errors.push(`${filePath}:${lineNumber(source, match.index ?? 0)} defines persistence helper "${match[0].trim()}"`)
   }
 }
 
@@ -231,6 +240,10 @@ function run() {
   for (const filePath of walk('backend/src/main/scala/shared/model', new Set(['.scala']))) {
     checkBackendModelFile(filePath, errors)
     checkBackendModelFileShape(filePath, errors)
+  }
+
+  for (const filePath of walk('backend/src/main/scala/shared/access', new Set(['.scala']))) {
+    checkBackendModelFile(filePath, errors)
   }
 
   checkTrackedResidues(errors)

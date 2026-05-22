@@ -6,15 +6,9 @@ enum ResourceVisibility:
   case Public
 
 object ResourceVisibility:
-  def fromDatabase(value: String): Option[ResourceVisibility] =
-    value match
-      case "private" => Some(ResourceVisibility.Private)
-      case "group" => Some(ResourceVisibility.Group)
-      case "public" => Some(ResourceVisibility.Public)
-      case _ => None
-
-  def toDatabase(value: ResourceVisibility): String =
-    value match
-      case ResourceVisibility.Private => "private"
-      case ResourceVisibility.Group => "group"
-      case ResourceVisibility.Public => "public"
+  def parse(value: String): Either[String, ResourceVisibility] =
+    value.trim match
+      case "private" => Right(ResourceVisibility.Private)
+      case "group" => Right(ResourceVisibility.Group)
+      case "public" => Right(ResourceVisibility.Public)
+      case _ => Left("Resource visibility must be one of: private, group, public.")

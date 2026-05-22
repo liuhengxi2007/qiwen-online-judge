@@ -28,10 +28,10 @@ object ProblemModelHttpCodecs:
   given Encoder[ProblemSpaceLimitMb] = Encoder.encodeInt.contramap(_.value)
   given Decoder[ProblemSpaceLimitMb] = Decoder.decodeInt.emap(ProblemSpaceLimitMb.parse)
 
-  given Encoder[ProblemTitleDisplayMode] = Encoder.encodeString.contramap(ProblemTitleDisplayMode.toDatabase)
+  given Encoder[ProblemTitleDisplayMode] = Encoder.encodeString.contramap(encodeProblemTitleDisplayMode)
   given Decoder[ProblemTitleDisplayMode] = Decoder.decodeString.emap(ProblemTitleDisplayMode.parse)
 
-  given Encoder[OthersSubmissionAccess] = Encoder.encodeString.contramap(OthersSubmissionAccess.toDatabase)
+  given Encoder[OthersSubmissionAccess] = Encoder.encodeString.contramap(encodeOthersSubmissionAccess)
   given Decoder[OthersSubmissionAccess] = Decoder.decodeString.emap(OthersSubmissionAccess.parse)
 
   given Encoder[ProblemDataFilename] = Encoder.encodeString.contramap(_.value)
@@ -56,3 +56,15 @@ object ProblemModelHttpCodecs:
 
   given Encoder[ProblemDataTreeNode] = deriveEncoder[ProblemDataTreeNode]
   given Decoder[ProblemDataTreeNode] = deriveDecoder[ProblemDataTreeNode]
+
+  private def encodeProblemTitleDisplayMode(value: ProblemTitleDisplayMode): String =
+    value match
+      case ProblemTitleDisplayMode.Title => "title"
+      case ProblemTitleDisplayMode.Slug => "slug"
+      case ProblemTitleDisplayMode.TitleWithSlug => "title_with_slug"
+
+  private def encodeOthersSubmissionAccess(value: OthersSubmissionAccess): String =
+    value match
+      case OthersSubmissionAccess.None => "none"
+      case OthersSubmissionAccess.Summary => "summary"
+      case OthersSubmissionAccess.Detail => "detail"

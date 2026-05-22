@@ -12,14 +12,3 @@ object BlogVisibility:
       case "public" => Right(BlogVisibility.Public)
       case "private" => Right(BlogVisibility.Private)
       case _ => Left("Blog visibility must be public or private.")
-
-  def toDatabase(visibility: BlogVisibility): String =
-    visibility match
-      case BlogVisibility.Public => "public"
-      case BlogVisibility.Private => "private"
-
-  def fromDatabase(value: String): Option[BlogVisibility] =
-    value match
-      case "public" => Some(BlogVisibility.Public)
-      case "private" => Some(BlogVisibility.Private)
-      case _ => None

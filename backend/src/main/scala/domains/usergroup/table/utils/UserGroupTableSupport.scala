@@ -4,7 +4,7 @@ package domains.usergroup.table.utils
 
 import cats.effect.IO
 import domains.user.model.{DisplayName, Username}
-import domains.usergroup.model.{UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
 import domains.usergroup.application.output.{UserGroupSummary}
 
 import java.sql.ResultSet
@@ -49,9 +49,23 @@ object UserGroupTableSupport:
     UserGroupMember(
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
-      role = parseOptionalColumn("user_group_memberships.role", resultSet.getString("role"), UserGroupRole.fromDatabase),
+      role = parseOptionalColumn("user_group_memberships.role", resultSet.getString("role"), decodeUserGroupRoleColumn),
       joinedAt = resultSet.getTimestamp("joined_at").toInstant
     )
+
+  def encodeAddUserGroupMemberRoleColumn(value: AddUserGroupMemberRole): String =
+    value match
+      case AddUserGroupMemberRole.Manager => "manager"
+      case AddUserGroupMemberRole.Member => "member"
+
+  def encodeUserGroupRoleColumn(value: UserGroupRole): String =
+    value match
+      case UserGroupRole.Owner => "owner"
+      case UserGroupRole.Manager => "manager"
+      case UserGroupRole.Member => "member"
+
+  def decodeUserGroupRoleColumn(value: String): Option[UserGroupRole] =
+    UserGroupRole.parse(value).toOption
 
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
