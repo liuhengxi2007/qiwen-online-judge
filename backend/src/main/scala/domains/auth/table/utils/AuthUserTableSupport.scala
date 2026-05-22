@@ -4,7 +4,7 @@ package domains.auth.table.utils
 
 import domains.auth.table.AuthUserTableSql
 import cats.effect.IO
-import domains.auth.model.{AuthSeedUser, AuthUser, EmailAddress, PasswordHash, PlaintextPassword}
+import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, PlaintextPassword}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{UserDisplayMode, UserLocale}
@@ -16,15 +16,12 @@ object AuthUserTableSupport:
 
   private val logger = Slf4jLogger.getLogger[IO]
 
-  val seedAdminUser: AuthSeedUser =
-    AuthSeedUser(
-      username = Username.canonical("admin"),
-      displayName = DisplayName("Admin User"),
-      email = EmailAddress("admin@example.com"),
-      password = PlaintextPassword("password123"),
-      siteManager = true,
-      problemManager = true
-    )
+  private val seedAdminUsername: Username = Username.canonical("admin")
+  private val seedAdminDisplayName: DisplayName = DisplayName("Admin User")
+  private val seedAdminEmail: EmailAddress = EmailAddress("admin@example.com")
+  val seedAdminPlaintextPassword: PlaintextPassword = PlaintextPassword("password123")
+  private val seedAdminSiteManager: Boolean = true
+  private val seedAdminProblemManager: Boolean = true
 
   def missingInsertResult(entityName: String): Nothing =
     throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
@@ -34,20 +31,20 @@ object AuthUserTableSupport:
       _ <- IO.blocking {
         val statement = connection.prepareStatement(AuthUserTableSql.seedAuthAdminSql)
         try
-          statement.setString(1, seedAdminUser.username.value)
-          statement.setString(2, seedAdminUser.displayName.value)
-          statement.setString(3, seedAdminUser.email.value)
+          statement.setString(1, seedAdminUsername.value)
+          statement.setString(2, seedAdminDisplayName.value)
+          statement.setString(3, seedAdminEmail.value)
           statement.setString(4, UserDisplayMode.toDatabase(UserDisplayMode.DisplayName))
           statement.setString(5, UserLocale.toDatabase(UserLocale.En))
           statement.setString(6, ProblemTitleDisplayMode.toDatabase(ProblemTitleDisplayMode.Title))
           statement.setBoolean(7, false)
           statement.setString(8, passwordHash.value)
-          statement.setBoolean(9, seedAdminUser.siteManager)
-          statement.setBoolean(10, seedAdminUser.problemManager)
+          statement.setBoolean(9, seedAdminSiteManager)
+          statement.setBoolean(10, seedAdminProblemManager)
           statement.executeUpdate()
         finally statement.close()
       }
-      _ <- logger.info(s"Ensured seeded auth user exists, username=${seedAdminUser.username.value}")
+      _ <- logger.info(s"Ensured seeded auth user exists, username=${seedAdminUsername.value}")
     yield ()
 
   def readAuthUser(resultSet: ResultSet): AuthUser =

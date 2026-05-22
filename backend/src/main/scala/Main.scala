@@ -45,7 +45,7 @@ object Main extends IOApp.Simple:
       messageEventHub <- MessageEventHub.resource
       notificationEventHub <- NotificationEventHub.resource
       seedAdminPasswordHash <- cats.effect.Resource.eval(
-        domains.auth.application.PasswordHasher.hashPassword(domains.auth.table.utils.AuthUserTableSupport.seedAdminUser.password)
+        domains.auth.application.PasswordHasher.hashPassword(domains.auth.table.utils.AuthUserTableSupport.seedAdminPlaintextPassword)
       )
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
