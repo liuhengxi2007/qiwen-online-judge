@@ -4,11 +4,11 @@ package domains.auth.http
 
 import cats.effect.IO
 import domains.auth.model.{AuthUser, SessionToken}
-import domains.auth.http.response.{LoginResponse, RegisterResponse, SessionResponse}
-import domains.judger.http.response.RegisteredJudgerListItem
+import domains.auth.application.view.{LoginResponse, RegisterResponse, SessionResponse}
+import domains.judger.application.view.RegisteredJudgerListItem
 import domains.shared.http.ApiMessages
 import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.user.http.response.{AuthUserListItem}
+import domains.user.application.view.{AuthUserListItem}
 import domains.user.model.{UserPreferences}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}

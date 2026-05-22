@@ -2,7 +2,7 @@ package domains.submission.model
 
 
 
-import domains.submission.http.response.SubmissionDetail
+import domains.submission.application.view.SubmissionDetail
 import judgeprotocol.model.JudgeResult
 import java.time.Instant
 

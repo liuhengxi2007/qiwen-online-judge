@@ -17,9 +17,9 @@ import java.sql.Connection
 
 object MessageHttpPlans:
 
-  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.http.response.MessageInboxResponse]:
+  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.application.view.MessageInboxResponse]:
     override val name: String = "ListInbox"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.http.response.MessageInboxResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.application.view.MessageInboxResponse] =
       MessageCommands.listInbox(databaseSession, actor, input, JdbcMessageRepository)
 
   final case class HistoryInput(
@@ -98,9 +98,9 @@ object MessageHttpPlans:
         publishReceipts *> messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
       }
 
-  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.http.response.MessageBlockEntry]]:
+  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.application.view.MessageBlockEntry]]:
     override val name: String = "ListBlocks"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.http.response.MessageBlockEntry]] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.application.view.MessageBlockEntry]] =
       val _ = input
       MessageCommands.listBlocks(databaseSession, actor, JdbcMessageRepository)
 

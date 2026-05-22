@@ -3,7 +3,7 @@ package domains.judger.table
 
 
 import cats.effect.IO
-import domains.judger.http.response.RegisteredJudgerListItem
+import domains.judger.application.view.RegisteredJudgerListItem
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
 import domains.judger.table.JudgerTableSchema.*
 import domains.judger.table.JudgerTableSql.*

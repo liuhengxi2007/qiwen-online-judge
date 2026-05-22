@@ -8,7 +8,7 @@ import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Si
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
-import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.application.view.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
 import domains.user.http.request.{UserListRequest}
 import domains.user.table.UserTableSql.*

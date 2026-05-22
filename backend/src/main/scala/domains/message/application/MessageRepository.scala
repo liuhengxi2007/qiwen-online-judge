@@ -4,7 +4,7 @@ package domains.message.application
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.http.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.application.view.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.shared.model.PageRequest
 

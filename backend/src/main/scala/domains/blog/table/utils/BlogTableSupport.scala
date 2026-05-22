@@ -4,7 +4,7 @@ package domains.blog.table.utils
 
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
-import domains.blog.http.response.{BlogCommentSummary, BlogSummary}
+import domains.blog.application.view.{BlogCommentSummary, BlogSummary}
 import domains.problem.model.{ProblemSlug, ProblemTitle}
 
 import java.sql.ResultSet

@@ -5,7 +5,7 @@ package domains.notification.table
 import cats.effect.IO
 import domains.auth.model.Username
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
-import domains.notification.http.response.{NotificationListResponse, NotificationSummary}
+import domains.notification.application.view.{NotificationListResponse, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*
 import domains.notification.table.utils.NotificationTableSupport.readNotificationSummary
 import domains.shared.model.PageRequest

@@ -5,11 +5,11 @@ package domains.user.http
 import cats.effect.IO
 import domains.auth.http.AuthHttpResponses
 import domains.auth.model.{AuthUser}
-import domains.auth.http.response.{SessionResponse}
+import domains.auth.application.view.{SessionResponse}
 import domains.shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
-import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.application.view.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.model.{UserIdentity}
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*

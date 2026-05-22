@@ -5,7 +5,7 @@ package domains.user.table.utils
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import domains.shared.sql.LikePatternSql
-import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
+import domains.user.application.view.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
 import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
 
 import java.sql.{PreparedStatement, ResultSet}

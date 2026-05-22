@@ -14,14 +14,14 @@ import java.sql.Connection
 
 object NotificationHttpPlans:
 
-  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.http.response.NotificationListResponse]:
+  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.application.view.NotificationListResponse]:
     override val name: String = "ListNotifications"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.http.response.NotificationListResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.application.view.NotificationListResponse] =
       NotificationCommands.listNotifications(databaseSession, actor, input)
 
-  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.http.response.NotificationUnreadCountResponse]:
+  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.application.view.NotificationUnreadCountResponse]:
     override val name: String = "GetUnreadCount"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.http.response.NotificationUnreadCountResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.application.view.NotificationUnreadCountResponse] =
       val _ = input
       NotificationCommands.getUnreadCount(databaseSession, actor)
 

@@ -128,14 +128,14 @@ function run() {
 
   const authFiles = {
     LoginRequest: read('backend/src/main/scala/domains/auth/http/request/LoginRequest.scala'),
-    LoginResponse: read('backend/src/main/scala/domains/auth/http/response/LoginResponse.scala'),
+    LoginResponse: read('backend/src/main/scala/domains/auth/application/view/LoginResponse.scala'),
     RegisterRequest: read('backend/src/main/scala/domains/auth/http/request/RegisterRequest.scala'),
-    RegisterResponse: read('backend/src/main/scala/domains/auth/http/response/RegisterResponse.scala'),
-    SessionResponse: read('backend/src/main/scala/domains/auth/http/response/SessionResponse.scala'),
+    RegisterResponse: read('backend/src/main/scala/domains/auth/application/view/RegisterResponse.scala'),
+    SessionResponse: read('backend/src/main/scala/domains/auth/application/view/SessionResponse.scala'),
   }
 
   const userFiles = {
-    AuthUserListItem: read('backend/src/main/scala/domains/user/http/response/AuthUserListItem.scala'),
+    AuthUserListItem: read('backend/src/main/scala/domains/user/application/view/AuthUserListItem.scala'),
     UpdateOwnProfileRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnProfileRequest.scala'),
     UpdateOwnPreferencesRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnPreferencesRequest.scala'),
     UpdateOwnAccountRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnAccountRequest.scala'),
@@ -143,11 +143,11 @@ function run() {
     UpdateManagedUserPreferencesRequest: read('backend/src/main/scala/domains/user/http/request/UpdateManagedUserPreferencesRequest.scala'),
     UpdateManagedUserAccountRequest: read('backend/src/main/scala/domains/user/http/request/UpdateManagedUserAccountRequest.scala'),
     UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/user/http/request/UpdateUserPermissionsRequest.scala'),
-    UserProfileResponse: read('backend/src/main/scala/domains/user/http/response/UserProfileResponse.scala'),
+    UserProfileResponse: read('backend/src/main/scala/domains/user/application/view/UserProfileResponse.scala'),
   }
 
   const judgerFiles = {
-    RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/http/response/RegisteredJudgerListItem.scala'),
+    RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/application/view/RegisteredJudgerListItem.scala'),
   }
 
   const blogFiles = {
@@ -157,26 +157,26 @@ function run() {
     CreateBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/CreateBlogCommentRequest.scala'),
     UpdateBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/UpdateBlogCommentRequest.scala'),
     VoteBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/VoteBlogCommentRequest.scala'),
-    BlogCommentSummary: read('backend/src/main/scala/domains/blog/http/response/BlogCommentSummary.scala'),
-    BlogSummary: read('backend/src/main/scala/domains/blog/http/response/BlogSummary.scala'),
-    BlogDetail: read('backend/src/main/scala/domains/blog/http/response/BlogDetail.scala'),
+    BlogCommentSummary: read('backend/src/main/scala/domains/blog/application/view/BlogCommentSummary.scala'),
+    BlogSummary: read('backend/src/main/scala/domains/blog/application/view/BlogSummary.scala'),
+    BlogDetail: read('backend/src/main/scala/domains/blog/application/view/BlogDetail.scala'),
   }
 
   const problemFiles = {
     CreateProblemRequest: read('backend/src/main/scala/domains/problem/http/request/CreateProblemRequest.scala'),
     UpdateProblemRequest: read('backend/src/main/scala/domains/problem/http/request/UpdateProblemRequest.scala'),
     DeleteProblemDataPathRequest: read('backend/src/main/scala/domains/problem/http/request/DeleteProblemDataPathRequest.scala'),
-    ProblemSummary: read('backend/src/main/scala/domains/problem/http/response/ProblemSummary.scala'),
-    ProblemDetail: read('backend/src/main/scala/domains/problem/http/response/ProblemDetail.scala'),
+    ProblemSummary: read('backend/src/main/scala/domains/problem/application/view/ProblemSummary.scala'),
+    ProblemDetail: read('backend/src/main/scala/domains/problem/application/view/ProblemDetail.scala'),
   }
 
   const problemSetFiles = {
     CreateProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/CreateProblemSetRequest.scala'),
     UpdateProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/UpdateProblemSetRequest.scala'),
     AddProblemToProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/AddProblemToProblemSetRequest.scala'),
-    ProblemSetProblemSummary: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetProblemSummary.scala'),
-    ProblemSetSummary: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetSummary.scala'),
-    ProblemSetDetail: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetDetail.scala'),
+    ProblemSetProblemSummary: read('backend/src/main/scala/domains/problemset/application/view/ProblemSetProblemSummary.scala'),
+    ProblemSetSummary: read('backend/src/main/scala/domains/problemset/application/view/ProblemSetSummary.scala'),
+    ProblemSetDetail: read('backend/src/main/scala/domains/problemset/application/view/ProblemSetDetail.scala'),
   }
 
   const submissionFiles = {
@@ -184,8 +184,8 @@ function run() {
     SubmissionStatus: read('backend/src/main/scala/domains/submission/model/SubmissionStatus.scala'),
     SubmissionVerdict: read('backend/src/main/scala/domains/submission/model/SubmissionVerdict.scala'),
     CreateSubmissionRequest: read('backend/src/main/scala/domains/submission/http/request/CreateSubmissionRequest.scala'),
-    SubmissionSummary: read('backend/src/main/scala/domains/submission/http/response/SubmissionSummary.scala'),
-    SubmissionDetail: read('backend/src/main/scala/domains/submission/http/response/SubmissionDetail.scala'),
+    SubmissionSummary: read('backend/src/main/scala/domains/submission/application/view/SubmissionSummary.scala'),
+    SubmissionDetail: read('backend/src/main/scala/domains/submission/application/view/SubmissionDetail.scala'),
   }
 
   const userGroupFiles = {
@@ -196,16 +196,16 @@ function run() {
     AddUserGroupMemberRequest: read('backend/src/main/scala/domains/usergroup/http/request/AddUserGroupMemberRequest.scala'),
     UpdateUserGroupMemberRoleRequest: read('backend/src/main/scala/domains/usergroup/http/request/UpdateUserGroupMemberRoleRequest.scala'),
     UserGroupMember: read('backend/src/main/scala/domains/usergroup/model/UserGroupMember.scala'),
-    UserGroupSummary: read('backend/src/main/scala/domains/usergroup/http/response/UserGroupSummary.scala'),
-    UserGroupDetail: read('backend/src/main/scala/domains/usergroup/http/response/UserGroupDetail.scala'),
+    UserGroupSummary: read('backend/src/main/scala/domains/usergroup/application/view/UserGroupSummary.scala'),
+    UserGroupDetail: read('backend/src/main/scala/domains/usergroup/application/view/UserGroupDetail.scala'),
   }
 
   const notificationFiles = {
     NotificationKind: read('backend/src/main/scala/domains/notification/model/NotificationKind.scala'),
     NotificationPayload: read('backend/src/main/scala/domains/notification/model/NotificationPayload.scala'),
-    NotificationSummary: read('backend/src/main/scala/domains/notification/http/response/NotificationSummary.scala'),
-    NotificationListResponse: read('backend/src/main/scala/domains/notification/http/response/NotificationListResponse.scala'),
-    NotificationUnreadCountResponse: read('backend/src/main/scala/domains/notification/http/response/NotificationUnreadCountResponse.scala'),
+    NotificationSummary: read('backend/src/main/scala/domains/notification/application/view/NotificationSummary.scala'),
+    NotificationListResponse: read('backend/src/main/scala/domains/notification/application/view/NotificationListResponse.scala'),
+    NotificationUnreadCountResponse: read('backend/src/main/scala/domains/notification/application/view/NotificationUnreadCountResponse.scala'),
   }
 
   assertSameFields(

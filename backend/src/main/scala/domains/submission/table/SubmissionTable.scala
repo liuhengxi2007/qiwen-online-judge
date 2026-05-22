@@ -8,7 +8,7 @@ import domains.user.model.UserIdentity
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.http.response.{SubmissionDetail, SubmissionListResponse, SubmissionSummary}
+import domains.submission.application.view.{SubmissionDetail, SubmissionListResponse, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict, SubmissionVerdictFilter}
 import domains.submission.http.request.{SubmissionListRequest}
 import domains.submission.table.SubmissionTableSchema.*

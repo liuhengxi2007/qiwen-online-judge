@@ -6,7 +6,7 @@ import cats.effect.IO
 import domains.auth.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
-import domains.blog.http.response.{BlogCommentSummary, BlogDetail, BlogSummary}
+import domains.blog.application.view.{BlogCommentSummary, BlogDetail, BlogSummary}
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.utils.BlogTableSupport.*
 import domains.problem.model.ProblemSlug

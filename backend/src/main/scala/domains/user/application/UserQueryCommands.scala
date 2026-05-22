@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.http.response.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
+import domains.user.application.view.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
 import domains.user.model.{UserContribution, UserIdentity, UserSearchQuery}
 import domains.user.http.request.{UserListRequest}
 import domains.user.table.UserTable

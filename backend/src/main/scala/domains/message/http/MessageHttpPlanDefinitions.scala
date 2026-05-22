@@ -9,13 +9,13 @@ object MessageHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listInbox: Plain[domains.shared.model.PageRequest, domains.message.http.response.MessageInboxResponse],
+    listInbox: Plain[domains.shared.model.PageRequest, domains.message.application.view.MessageInboxResponse],
     getConversationHistory: Plain[MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
     createConversation: WithTransaction[domains.message.http.request.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
     sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.http.request.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],
     markConversationRead: WithTransaction[(domains.message.model.MessageConversationId, domains.message.http.request.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
     markAllMessagesRead: WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult],
-    listBlocks: Plain[Unit, List[domains.message.http.response.MessageBlockEntry]],
+    listBlocks: Plain[Unit, List[domains.message.application.view.MessageBlockEntry]],
     addBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
     removeBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
   )

@@ -2,7 +2,7 @@ package domains.blog.application
 
 
 
-import domains.blog.http.response.{BlogDetail, BlogListResponse, BlogSummary}
+import domains.blog.application.view.{BlogDetail, BlogListResponse, BlogSummary}
 
 object BlogCommandResults:
 

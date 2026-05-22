@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
-import domains.problem.http.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.application.view.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.http.request.{ProblemListRequest}
 import domains.problem.model.{ProblemSearchQuery}
 import domains.problem.table.ProblemTable

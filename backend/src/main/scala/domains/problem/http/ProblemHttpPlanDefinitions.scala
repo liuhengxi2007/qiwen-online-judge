@@ -10,8 +10,8 @@ object ProblemHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listProblems: Plain[domains.problem.http.request.ProblemListRequest, domains.shared.model.PageResponse[domains.problem.http.response.ProblemSummary]],
-    listProblemSuggestions: Plain[domains.problem.model.ProblemSearchQuery, List[domains.problem.http.response.ProblemSuggestion]],
+    listProblems: Plain[domains.problem.http.request.ProblemListRequest, domains.shared.model.PageResponse[domains.problem.application.view.ProblemSummary]],
+    listProblemSuggestions: Plain[domains.problem.model.ProblemSearchQuery, List[domains.problem.application.view.ProblemSuggestion]],
     createProblem: WithTransaction[domains.problem.http.request.CreateProblemRequest, domains.problem.application.ProblemCommands.CreateProblemResult],
     getProblem: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.GetProblemResult],
     listProblemData: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.ListProblemDataResult],

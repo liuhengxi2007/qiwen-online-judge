@@ -15,7 +15,7 @@ import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.http.response.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.application.view.UserGroupSummary]]:
 
     override val name: String = "ListUserGroups"
 
@@ -23,7 +23,7 @@ object UserGroupHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.usergroup.http.response.UserGroupSummary]] =
+    ): IO[PageResponse[domains.usergroup.application.view.UserGroupSummary]] =
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[UserGroupSlug, UserGroupCommands.GetUserGroupResult]:

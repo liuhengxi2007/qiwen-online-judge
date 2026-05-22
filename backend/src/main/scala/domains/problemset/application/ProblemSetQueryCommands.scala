@@ -5,7 +5,7 @@ package domains.problemset.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problemset.http.response.ProblemSetSummary
+import domains.problemset.application.view.ProblemSetSummary
 import domains.problemset.table.ProblemSetTable
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.problemset.application.ProblemSetCommandResults.*

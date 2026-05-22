@@ -26,12 +26,12 @@ object ProblemHttpResponses:
     domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def listProblemsResponse(
-    response: domains.shared.model.PageResponse[domains.problem.http.response.ProblemSummary]
+    response: domains.shared.model.PageResponse[domains.problem.application.view.ProblemSummary]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def listProblemSuggestionsResponse(
-    response: List[domains.problem.http.response.ProblemSuggestion]
+    response: List[domains.problem.application.view.ProblemSuggestion]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 

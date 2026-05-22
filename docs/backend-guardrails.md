@@ -48,8 +48,6 @@ For `http`:
   one HTTP endpoint route fragment, including path matching, input parsing/decoding, plan execution, and response mapping for that endpoint
 - `request/<Name>.scala`
   inbound HTTP wire payloads decoded from request bodies or query-derived request shapes
-- `response/<Name>.scala`
-  outbound HTTP wire payloads such as summaries, details, list responses, unread counts, upload results, and session/profile responses
 - `*HttpHandlers.scala`
   request decoding, auth/session wrapping, command invocation
 - `*HttpResponses.scala`
@@ -57,7 +55,13 @@ For `http`:
 - `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
 
+For `application/view`:
+
+- `<Name>.scala`
+  read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
+
 Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
+Non-HTTP layers must not import from `http.response`; use `application/view` for read/output shapes that application, table, or model code needs to name.
 
 For `table`:
 

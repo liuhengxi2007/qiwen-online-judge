@@ -12,10 +12,10 @@ import org.http4s.{Response, Status}
 
 object NotificationHttpResponses:
 
-  def listResponse(result: domains.notification.http.response.NotificationListResponse): IO[Response[IO]] =
+  def listResponse(result: domains.notification.application.view.NotificationListResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(result.asJson))
 
-  def unreadCountResponse(result: domains.notification.http.response.NotificationUnreadCountResponse): IO[Response[IO]] =
+  def unreadCountResponse(result: domains.notification.application.view.NotificationUnreadCountResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(result.asJson))
 
   def markReadResponse(result: NotificationCommands.MarkNotificationReadResult): IO[Response[IO]] =
