@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import type { UserGroupMember, UserGroupRole } from '@/features/usergroup/domain/usergroup'
 
 export type UserGroupViewerPermissions = {

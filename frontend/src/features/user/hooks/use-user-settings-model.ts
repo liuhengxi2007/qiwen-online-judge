@@ -1,17 +1,15 @@
 import { useEffect, useReducer } from 'react'
 
-import {
-  parseUsername,
-  type SessionResponse,
-} from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/domain/auth'
+import { parseUsername } from '@/features/user/domain/user'
 import {
   initialUserSettingsState,
   reduceUserSettingsState,
   type UserSettingsSection,
-} from '@/features/auth/domain/user-settings-state'
-import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/features/auth/domain/user-settings-form'
-import { useUserSettingsQuery } from '@/features/auth/hooks/use-user-settings-query'
-import { useUserSettingsMutation } from '@/features/auth/hooks/use-user-settings-mutation'
+} from '@/features/user/domain/user-settings-state'
+import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/features/user/domain/user-settings-form'
+import { useUserSettingsQuery } from '@/features/user/hooks/use-user-settings-query'
+import { useUserSettingsMutation } from '@/features/user/hooks/use-user-settings-mutation'
 import {
   resolveUserSettingsRoutePolicy,
   toForbiddenRedirect,

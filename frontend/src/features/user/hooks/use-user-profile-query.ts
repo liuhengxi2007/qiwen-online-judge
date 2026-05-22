@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
 import { UserClientError, getUserProfile } from '@/features/user/http/api/user-client'

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { UserClientError, updateUserPermissions } from '@/features/user/http/api/user-client'
 import type { AuthUserListItem, UpdateUserPermissionsRequest } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'

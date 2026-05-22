@@ -7,6 +7,9 @@ const frontendFeaturesRoot = resolve(root, 'frontend/src/features')
 const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
+const allowedBackendOnlyEndpoints = new Map([
+  ['judger', new Set(['RecordJudgerHeartbeat', 'RegisterJudger'])],
+])
 
 function listDirectories(path) {
   return readdirSync(path)
@@ -52,6 +55,10 @@ function difference(left, right) {
   return left.filter((entry) => !rightSet.has(entry))
 }
 
+function allowedBackendOnlyNames(domain) {
+  return allowedBackendOnlyEndpoints.get(domain) ?? new Set()
+}
+
 function formatList(entries) {
   return entries.length === 0 ? '(none)' : entries.join(', ')
 }
@@ -81,7 +88,8 @@ function run() {
     const frontendEndpoints = frontendEndpointNames(domain)
     const backendEndpoints = backendEndpointNames(domain)
     const frontendOnly = difference(frontendEndpoints, backendEndpoints)
-    const backendOnly = difference(backendEndpoints, frontendEndpoints)
+    const allowedBackendOnly = allowedBackendOnlyNames(domain)
+    const backendOnly = difference(backendEndpoints, frontendEndpoints).filter((endpoint) => !allowedBackendOnly.has(endpoint))
 
     if (frontendOnly.length > 0 || backendOnly.length > 0) {
       errors.push(

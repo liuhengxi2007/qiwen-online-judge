@@ -10,14 +10,11 @@ object AuthHttpPlanDefinitions:
     AuthenticatedPlain,
     AuthenticatedWithTransaction,
     PublicPlain,
-    PublicWithTransaction,
-    SiteManagerPlain,
-    SiteManagerWithTransaction
+    PublicWithTransaction
   }
 
   val session = AuthenticatedPlain(AuthHttpPlans.Session, AuthHttpResponses.sessionResponse)
   val logout = PublicPlain(AuthHttpPlans.Logout, AuthHttpResponses.loggedOutResponse)
-  val listJudgers = SiteManagerPlain(AuthHttpPlans.ListJudgers, AuthHttpResponses.listJudgersResponse)
   val login = PublicWithTransaction(AuthHttpPlans.Login, AuthHttpResponses.loginResponse)
   val register = PublicWithTransaction(AuthHttpPlans.Register, AuthHttpResponses.registerResponse)
 
@@ -25,7 +22,6 @@ object AuthHttpPlanDefinitions:
     List(
       session,
       logout,
-      listJudgers,
       login,
       register
     ).map(plan => plan.name -> plan).toMap

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { requireParsed } from '@/features/auth/domain/auth-parsers'
-import { parseUsername } from '@/features/auth/domain/auth'
+import { requireParsed } from '@/features/user/domain/user'
+import { parseUsername } from '@/features/user/domain/user'
 import {
   fromDirectMessage,
   fromMessageConversationSummary,

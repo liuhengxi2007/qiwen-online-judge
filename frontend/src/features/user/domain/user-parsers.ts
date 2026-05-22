@@ -4,6 +4,7 @@ export {
   emailAddressValue,
   parseDisplayName,
   parseEmailAddress,
+  parsePlaintextPassword,
   parseProblemTitleDisplayMode,
   parseUserContribution,
   parseUserDisplayMode,

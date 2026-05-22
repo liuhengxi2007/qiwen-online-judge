@@ -10,7 +10,7 @@ import {
   userGroupDescriptionValue,
   userGroupNameValue,
 } from '@/features/usergroup/domain/usergroup'
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { UserGroupAddMemberCard } from '@/features/usergroup/components/usergroup-add-member-card'
 import { UserGroupDeleteCard } from '@/features/usergroup/components/usergroup-delete-card'
 import { UserGroupEditCard } from '@/features/usergroup/components/usergroup-edit-card'

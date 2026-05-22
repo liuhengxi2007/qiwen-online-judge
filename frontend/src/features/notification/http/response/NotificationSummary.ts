@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/auth/domain/auth'
+import type { UserIdentity } from '@/features/user/domain/user'
 import type { NotificationId } from '@/features/notification/model/NotificationId'
 import type { NotificationKind } from '@/features/notification/model/NotificationKind'
 import type { NotificationPayload } from '@/features/notification/model/NotificationPayload'

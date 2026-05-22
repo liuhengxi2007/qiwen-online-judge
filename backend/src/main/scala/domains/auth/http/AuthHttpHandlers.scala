@@ -6,7 +6,6 @@ import domains.auth.http.utils.AuthHttpSessionSupport
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.judge.application.JudgeConfig
 import domains.auth.http.AuthHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
@@ -14,11 +13,10 @@ import org.http4s.dsl.Http4sDsl
 
 final class AuthHttpHandlers(
   databaseSession: DatabaseSession,
-  sessionStore: SessionStore,
-  judgeConfig: JudgeConfig
+  sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  private val context = AuthHttpContext(databaseSession, sessionStore, judgeConfig)
+  private val context = AuthHttpContext(databaseSession, sessionStore)
 
   private def runPlan[Input, Output](
     request: Request[IO],

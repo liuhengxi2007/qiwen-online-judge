@@ -1,6 +1,6 @@
 # Backend Contract Alignment
 
-This document defines how backend HTTP-facing Scala models stay aligned with frontend transport models without a repository-level `contracts/` source tree.
+This document defines how backend HTTP-facing Scala models stay aligned with frontend transport models through mirrored files and alignment checks.
 
 The goal is:
 

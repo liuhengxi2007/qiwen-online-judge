@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { listBlogs, listProblemBlogs } from '@/features/blog/http/api/blog-client'
 import type { BlogSummary } from '@/features/blog/domain/blog'
 import type { ProblemSlug } from '@/features/problem/domain/problem'

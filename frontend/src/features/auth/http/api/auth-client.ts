@@ -1,6 +1,5 @@
 export { HttpClientError as AuthClientError } from '@/shared/api/http-client'
 export * from './GetSession'
-export * from './ListRegisteredJudgers'
 export * from './Login'
 export * from './Logout'
 export * from './Register'

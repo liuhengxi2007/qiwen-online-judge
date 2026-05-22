@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { canRemoveUserGroupMember, resolveUserGroupViewerPermissions } from '@/features/usergroup/domain/usergroup-permissions'
 import type { UserGroupDetail } from '@/features/usergroup/domain/usergroup'
 

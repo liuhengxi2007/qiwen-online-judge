@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { SessionResponse, Username } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
 import { UserClientError, getUserSettings } from '@/features/user/http/api/user-client'

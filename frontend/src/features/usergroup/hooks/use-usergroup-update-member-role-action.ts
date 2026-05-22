@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 import { updateUserGroupMemberRole } from '@/features/usergroup/http/api/usergroup-client'
 import type { UserGroupDetail, UserGroupRole, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
-import type { Username } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

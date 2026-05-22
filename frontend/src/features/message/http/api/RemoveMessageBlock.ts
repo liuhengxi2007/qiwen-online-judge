@@ -1,5 +1,5 @@
 import type { Username } from '@/features/message/domain/message'
-import { usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/user/domain/user'
 import {
   decodeSuccessResponse,
   postJson,

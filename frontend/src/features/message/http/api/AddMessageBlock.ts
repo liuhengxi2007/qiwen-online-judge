@@ -3,7 +3,7 @@ import type {
   Username,
 } from '@/features/message/domain/message'
 import { fromMessageBlockEntry } from '@/features/message/domain/message'
-import { usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/user/domain/user'
 import { postJson } from '@/shared/api/http-client'
 
 export function addMessageBlock(targetUsername: Username): Promise<MessageBlockEntry> {

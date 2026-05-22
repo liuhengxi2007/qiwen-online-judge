@@ -14,7 +14,7 @@ import {
   type UpdateOwnProfileRequest,
   type UserDisplayMode,
   type UserLocale,
-} from '@/features/auth/domain/auth'
+} from '@/features/user/domain/user'
 import { translateMessage } from '@/shared/i18n/messages'
 
 export type UserProfileDraft = {

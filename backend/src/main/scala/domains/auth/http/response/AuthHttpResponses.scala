@@ -6,7 +6,6 @@ import cats.effect.IO
 import domains.auth.application.output.{LoginResponse, RegisterResponse, SessionResponse}
 import domains.auth.http.AuthHttpPlans
 import domains.auth.model.{AuthUser, SessionToken}
-import domains.judger.application.output.RegisteredJudgerListItem
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.user.application.output.{AuthUserListItem}
@@ -141,9 +140,6 @@ object AuthHttpResponses:
 
   def listUsersResponse(users: List[AuthUserListItem]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
-
-  def listJudgersResponse(judgers: List[RegisteredJudgerListItem]): IO[Response[IO]] =
-    IO.pure(Response[IO](status = Status.Ok).withEntity(judgers.asJson))
 
   def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
     loggedOutResponse(output.clearedSessionCookie)

@@ -7,6 +7,8 @@ import domains.judger.http.response.JudgerRegistryHttpResponses
 import domains.judger.http.utils.JudgerRegistryHttpSupport
 import cats.effect.IO
 import database.DatabaseSession
+import domains.auth.application.SessionStore
+import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.judge.application.JudgeConfig
 import domains.judger.application.JudgerRegistryCommands
 import judgeprotocol.model.{JudgerHeartbeatRequest, JudgerId, RegisterJudgerRequest}
@@ -16,7 +18,8 @@ import org.http4s.dsl.Http4sDsl
 
 final class JudgerRegistryHttpHandlers(
   databaseSession: DatabaseSession,
-  judgeConfig: JudgeConfig
+  judgeConfig: JudgeConfig,
+  sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
   import dsl.*
@@ -43,4 +46,12 @@ final class JudgerRegistryHttpHandlers(
               .heartbeat(databaseSession, judgeConfig, judgerId)
               .flatMap(JudgerRegistryHttpResponses.mapHeartbeatResult)
           yield response
+    }
+
+  def listRegistered(request: Request[IO]): IO[Response[IO]] =
+    AuthHttpSessionSupport.withSiteManager(databaseSession, sessionStore, request) { actor =>
+      val _ = actor
+      JudgerRegistryCommands
+        .listRegistered(databaseSession, judgeConfig)
+        .flatMap(JudgerRegistryHttpResponses.listRegisteredJudgersResponse)
     }

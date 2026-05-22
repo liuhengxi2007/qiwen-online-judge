@@ -4,7 +4,6 @@
 
 - `frontend/`: Vite + React 19 app. Business code lives in `src/features/<domain>`, shared UI and utilities in `src/shared` and `src/components/ui`.
 - `backend/`: Scala 3 + Cats Effect + http4s service. Each domain is split into `model`, `application`, `http`, and `table` under `src/main/scala/domains/<domain>`.
-- `contracts/`: cross-stack transport types. Keep names aligned with mirrored frontend/backend model files.
 - `judger/` and `judge-protocol-scala/`: judge worker and shared protocol code.
 - `docs/architecture-guardrails.md`: source of truth for layering, type mirroring, and shared-code rules.
 - `scripts/`: maintenance scripts such as `check-contract-alignment.mjs` and `calc-loc.mjs`.
@@ -30,7 +29,7 @@
 ## Testing Guidelines
 
 - Run `npm run typecheck` before frontend commits and `sbt compile` before backend commits.
-- If you touch mirrored types or contracts, also run `node scripts/check-contract-alignment.mjs`.
+- If you touch mirrored frontend/backend types, also run `node scripts/check-contract-alignment.mjs`.
 - Keep tests or checks close to the changed layer; do not skip validation for “small” refactors.
 
 ## Commit & Pull Request Guidelines
@@ -56,7 +55,7 @@
 - Validate with the cheapest effective command first:
   - frontend: `npm run typecheck`
   - backend: `sbt compile`
-  - contracts: `node scripts/check-contract-alignment.mjs`
+  - mirrored types: `node scripts/check-contract-alignment.mjs`
 - When investigating UI copy or routing, search exact keys or route fragments first, for example:
   - `rg -n "site-manage-denied|toForbiddenRedirect" frontend/src`
   - `rg -n "common.cancel" frontend/src`

@@ -1,4 +1,4 @@
-import type { DisplayName, Username } from '@/features/auth/domain/auth'
+import type { DisplayName, Username } from '@/features/user/domain/user'
 import type { AuthUserListItem } from '@/features/user/domain/user'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 

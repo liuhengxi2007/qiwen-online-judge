@@ -3,8 +3,8 @@ import { useCallback, useState } from 'react'
 import {
   toAuthSession,
   type SessionResponse,
-  type Username,
 } from '@/features/auth/domain/auth'
+import type { Username } from '@/features/user/domain/user'
 import { logout } from '@/features/auth/http/api/auth-client'
 import {
   UserClientError,

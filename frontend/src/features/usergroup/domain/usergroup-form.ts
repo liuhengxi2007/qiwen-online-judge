@@ -1,4 +1,4 @@
-import { parseUsername, type Username } from '@/features/auth/domain/auth'
+import { parseUsername, type Username } from '@/features/user/domain/user'
 import {
   parseUserGroupDescription,
   parseUserGroupName,

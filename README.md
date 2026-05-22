@@ -2,7 +2,7 @@
 
 Qiwen Online Judge is a type-safe online judge project with a React frontend, a Scala/http4s backend, PostgreSQL persistence, and an independent judge worker.
 
-The project is organized by business domain rather than by technical layer. Cross-stack contracts are currently maintained by mirrored frontend/backend files and checked by scripts; `contracts/` is reserved for future centralized contract definitions. Worker processes communicate with the backend through stable network protocols instead of importing backend internals.
+The project is organized by business domain rather than by technical layer. Cross-stack transport shapes are maintained by mirrored frontend/backend files and checked by scripts. Worker processes communicate with the backend through stable network protocols instead of importing backend internals.
 
 ## Features
 
@@ -20,7 +20,6 @@ The project is organized by business domain rather than by technical layer. Cros
 
 - `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Feature code lives under `frontend/src/features/<domain>`.
 - `backend/`: Scala 3, Cats Effect, http4s, Circe, PostgreSQL. Domain code lives under `backend/src/main/scala/domains/<domain>`.
-- `contracts/`: reserved for future centralized HTTP transport contracts. Today, active contracts are mirrored in frontend/backend request, response, model, and shared files and validated by scripts.
 - `judger/`: independent judge worker process.
 - `judge-protocol-scala/`: shared Scala protocol module used across backend and worker boundaries.
 - `docs/`: architecture, type-safety, contract-alignment, lifecycle, and worker guardrails.
@@ -98,7 +97,7 @@ npm --prefix frontend run typecheck
 cd backend && sbt compile
 ```
 
-Use the contract check whenever a file in `contracts/`, backend `model/`, or frontend `model/` changes.
+Use the contract alignment check whenever mirrored frontend/backend request, response, model, or shared type files change.
 Use the API alignment check whenever frontend or backend endpoint files under `http/api` change.
 Use the structure boundary check after moving files across frontend or backend layers, and to catch generated or backup files before commit.
 
@@ -108,7 +107,7 @@ The stable direction is to keep extending features by domain:
 
 - New backend domains should use `model`, `application`, `http`, and `table`.
 - New frontend domains should use `model`, `domain`, `http/api`, `hooks`, and `pages`.
-- New cross-process judge behavior should go through `judge-protocol-scala` or HTTP contracts, not backend internals.
+- New cross-process judge behavior should go through `judge-protocol-scala` or stable HTTP protocol types, not backend internals.
 - New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).
 
 Generated dependency/build output such as `node_modules/`, `dist/`, and `target/` should not be committed.

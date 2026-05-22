@@ -3,7 +3,7 @@ import { fromRegisteredJudgerListItemContract } from '@/features/judger/domain/j
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listRegisteredJudgers(): Promise<RegisteredJudgerListItem[]> {
-  return requestJson('/api/auth/judgers', (value) => {
+  return requestJson('/api/judgers', (value) => {
     if (!Array.isArray(value)) {
       throw new Error('Invalid registered judger list payload.')
     }

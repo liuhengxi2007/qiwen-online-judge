@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/user/domain/user'
 import { blogContentValue, blogTitleValue, parseBlogId, type BlogVisibility } from '@/features/blog/domain/blog'
 import { BlogCommentThread } from '@/features/blog/components/blog-comment-thread'
 import { blogScoreClassName } from '@/features/blog/components/blog-support'

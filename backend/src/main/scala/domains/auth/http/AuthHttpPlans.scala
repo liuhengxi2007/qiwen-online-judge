@@ -10,8 +10,6 @@ import domains.auth.application.input.{LoginRequest, RegisterRequest}
 import domains.auth.application.output.SessionResponse
 import domains.auth.model.*
 import domains.auth.table.AuthUserTable
-import domains.judger.application.output.RegisteredJudgerListItem
-import domains.judger.table.JudgerTable
 import domains.usergroup.model.UserGroupSlug
 import domains.usergroup.table.UserGroupTable
 
@@ -55,20 +53,6 @@ object AuthHttpPlans:
           context.sessionStore.deleteSession(token).as(LogoutOutput(AuthHttpResponses.clearedSessionCookie))
         case None =>
           IO.pure(LogoutOutput(AuthHttpResponses.clearedSessionCookie))
-
-  case object ListJudgers extends SiteManagerPlainAuthHttpPlan[Unit, List[RegisteredJudgerListItem]]:
-
-    override val name: String = "ListJudgers"
-
-    override def execute(
-      context: AuthHttpContext,
-      actor: SiteManagerUser,
-      input: Unit
-    ): IO[List[RegisteredJudgerListItem]] =
-      val _ = actor
-      context.databaseSession.withTransactionConnection(connection =>
-        JudgerTable.listJudgers(connection, context.judgeConfig.heartbeatTimeoutMs)
-      )
 
   case object Login extends PublicTransactionAuthHttpPlan[LoginRequest, LoginOutput]:
 

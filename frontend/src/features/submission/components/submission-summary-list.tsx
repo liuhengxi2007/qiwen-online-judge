@@ -18,7 +18,8 @@ import {
   formatOptionalMemoryKb,
   formatOptionalScore,
 } from '@/features/submission/components/submission-support'
-import { usernameValue, type SessionResponse } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/user/domain/user'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'

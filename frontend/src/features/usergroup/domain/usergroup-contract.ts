@@ -1,4 +1,4 @@
-import { parseDisplayName, parseUsername } from '@/features/auth/domain/auth'
+import { parseDisplayName, parseUsername } from '@/features/user/domain/user'
 import {
   parseUserGroupDescription,
   parseUserGroupId,

@@ -1,4 +1,4 @@
-export type { ParseResult } from '@/features/auth/domain/auth'
+export type { ParseResult } from '@/features/user/domain/user'
 export {
   fromConversationReadStreamPayload,
   fromDirectMessage,
@@ -19,7 +19,7 @@ export {
   toSendDirectMessageRequest,
 } from '@/features/message/domain/message-parsers'
 
-export type { Username } from '@/features/auth/domain/auth'
+export type { Username } from '@/features/user/domain/user'
 export type { CreateConversationRequest } from '@/features/message/http/request/CreateConversationRequest'
 export type { ConversationMessageFacts } from '@/features/message/http/response/ConversationMessageFacts'
 export type { ConversationReadStreamPayload } from '@/features/message/domain/message-parsers'

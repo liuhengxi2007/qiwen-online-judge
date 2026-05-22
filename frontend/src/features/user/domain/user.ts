@@ -21,12 +21,14 @@ export type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/featu
 export type { UserListRequest } from '@/features/user/http/request/UserListRequest'
 export type { UserListResponse } from '@/features/user/http/response/UserListResponse'
 export type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
+export type { ParseResult } from '@/features/user/domain/user-parsers'
 
 export {
   displayNameValue,
   emailAddressValue,
   parseDisplayName,
   parseEmailAddress,
+  parsePlaintextPassword,
   parseProblemTitleDisplayMode,
   parseUserContribution,
   parseUserDisplayMode,
@@ -35,6 +37,7 @@ export {
   parseUsername,
   plaintextPasswordValue,
   problemTitleDisplayModeValue,
+  requireParsed,
   userContributionValue,
   userDisplayModeValue,
   userLocaleValue,

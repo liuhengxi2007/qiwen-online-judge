@@ -1,5 +1,5 @@
-import { fromUserIdentityContract } from '@/features/auth/domain/auth-contract'
-import { requireParsed } from '@/features/auth/domain/auth-parsers'
+import { fromUserIdentityContract } from '@/features/user/domain/user'
+import { requireParsed } from '@/features/user/domain/user'
 import {
   blogTitleValue,
   parseBlogCommentId,

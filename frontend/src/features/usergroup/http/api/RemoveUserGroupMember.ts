@@ -9,7 +9,7 @@ import {
 import {
   usernameValue,
   type Username,
-} from '@/features/auth/domain/auth'
+} from '@/features/user/domain/user'
 import { postJson } from '@/shared/api/http-client'
 
 export async function removeUserGroupMember(userGroupSlug: UserGroupSlug, targetUsername: Username): Promise<UserGroupDetail> {

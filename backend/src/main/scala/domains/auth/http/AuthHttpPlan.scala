@@ -6,14 +6,12 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.model.{AuthUser, SiteManagerUser}
-import domains.judge.application.JudgeConfig
 
 import java.sql.Connection
 
 final case class AuthHttpContext(
   databaseSession: DatabaseSession,
-  sessionStore: SessionStore,
-  judgeConfig: JudgeConfig
+  sessionStore: SessionStore
 )
 
 trait AuthHttpPlan[Input, Output]:

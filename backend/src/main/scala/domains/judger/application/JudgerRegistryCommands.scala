@@ -5,6 +5,7 @@ package domains.judger.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig
+import domains.judger.application.output.RegisteredJudgerListItem
 import domains.judger.table.JudgerTable
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse}
 
@@ -44,6 +45,14 @@ object JudgerRegistryCommands:
         case true => HeartbeatResult.Updated
         case false => HeartbeatResult.JudgerNotFound
       }
+    }
+
+  def listRegistered(
+    databaseSession: DatabaseSession,
+    judgeConfig: JudgeConfig
+  ): IO[List[RegisteredJudgerListItem]] =
+    databaseSession.withTransactionConnection { connection =>
+      JudgerTable.listJudgers(connection, judgeConfig.heartbeatTimeoutMs)
     }
 
   private def validateRegisterRequest(request: RegisterJudgerRequest): Either[String, RegisterJudgerRequest] =

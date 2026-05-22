@@ -1,6 +1,5 @@
 import type { BlogListResponse } from '@/features/blog/domain/blog'
-import type { Username } from '@/features/auth/domain/auth'
-import { usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue, type Username } from '@/features/user/domain/user'
 import { fromBlogListResponseContract } from '@/features/blog/domain/blog'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'

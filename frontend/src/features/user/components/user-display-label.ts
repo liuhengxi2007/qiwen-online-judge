@@ -1,4 +1,4 @@
-import { displayNameValue, usernameValue, type UserDisplayMode } from '@/features/auth/domain/auth'
+import { displayNameValue, usernameValue, type UserDisplayMode } from '@/features/user/domain/user'
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
 
 type UserDisplayIdentity = Pick<UserIdentity, 'displayName' | 'username'>

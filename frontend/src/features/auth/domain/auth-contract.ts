@@ -57,21 +57,6 @@ type SessionResponseContract = {
   problemManager: boolean
 }
 
-export {
-  fromAuthUserListItemContract,
-  fromUserAcceptedRanklistResponseContract,
-  fromUserIdentityContract,
-  fromUserProfileResponseContract,
-  fromUserRanklistResponseContract,
-  toUpdateManagedUserAccountRequestContract,
-  toUpdateManagedUserPreferencesRequestContract,
-  toUpdateManagedUserProfileRequestContract,
-  toUpdateOwnAccountRequestContract,
-  toUpdateOwnPreferencesRequestContract,
-  toUpdateOwnProfileRequestContract,
-  toUpdateUserPermissionsRequestContract,
-} from '@/features/user/domain/user-contract'
-
 export function toLoginRequestContract(request: LoginRequest): LoginRequestContract {
   return {
     username: usernameValue(request.username),

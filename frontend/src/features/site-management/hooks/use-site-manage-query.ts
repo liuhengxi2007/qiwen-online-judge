@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { AuthClientError, listRegisteredJudgers } from '@/features/auth/http/api/auth-client'
+import { JudgerClientError, listRegisteredJudgers } from '@/features/judger/http/api/judger-client'
 import { UserClientError, listUsers } from '@/features/user/http/api/user-client'
 import type { AuthUserListItem, UserListRequest } from '@/features/user/domain/user'
 import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
@@ -120,7 +120,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'forbidden') {
+        if (error instanceof JudgerClientError && error.kind === 'forbidden') {
           setQueryState((currentState) => ({
             ...currentState,
             enabled: siteManagerEnabled,

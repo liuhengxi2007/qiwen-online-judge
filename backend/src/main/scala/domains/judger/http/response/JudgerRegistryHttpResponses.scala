@@ -4,6 +4,7 @@ package domains.judger.http.response
 
 import cats.effect.IO
 import domains.judger.application.JudgerRegistryCommands
+import domains.judger.application.output.RegisteredJudgerListItem
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import io.circe.syntax.*
@@ -33,3 +34,6 @@ object JudgerRegistryHttpResponses:
         errorResponse(Status.NotFound, ApiMessages.judgerNotFoundOrExpired)
       case JudgerRegistryCommands.HeartbeatResult.Updated =>
         successResponse(Status.Ok, ApiMessages.judgerHeartbeatRecorded)
+
+  def listRegisteredJudgersResponse(judgers: List[RegisteredJudgerListItem]): IO[Response[IO]] =
+    IO.pure(Response[IO](status = Status.Ok).withEntity(judgers.asJson))

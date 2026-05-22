@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { usernameValue } from '@/features/auth/domain/auth'
+import { usernameValue } from '@/features/user/domain/user'
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { formatUserDisplayLabel } from '@/features/user/components/user-display-label'

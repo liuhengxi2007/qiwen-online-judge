@@ -4,6 +4,8 @@ import {
   problemTitleDisplayModeValue,
   userDisplayModeValue,
   userLocaleValue,
+} from '@/features/user/domain/user'
+import {
   type SessionResponse,
 } from '@/features/auth/domain/auth'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'

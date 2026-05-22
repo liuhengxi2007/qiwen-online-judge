@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/auth/domain/auth'
+import type { UserIdentity } from '@/features/user/domain/user'
 import type { BlogContent } from '@/features/blog/model/BlogContent'
 import type { BlogId } from '@/features/blog/model/BlogId'
 import type { BlogProblemReference } from '@/features/blog/model/BlogProblemReference'

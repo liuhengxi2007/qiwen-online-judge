@@ -24,9 +24,9 @@ object ApiRouter:
   ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
       domains.system.health.HealthRouter.routes <+>
-        domains.auth.http.AuthRouter.routes(databaseSession, sessionStore, judgeConfig) <+>
+        domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+>
         domains.user.http.UserRouter.routes(databaseSession, sessionStore) <+>
-        domains.judger.http.JudgerRegistryRouter.routes(databaseSession, judgeConfig) <+>
+        domains.judger.http.JudgerRegistryRouter.routes(databaseSession, judgeConfig, sessionStore) <+>
         domains.judge.http.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage) <+>
         domains.problem.http.ProblemRouter.routes(databaseSession, sessionStore, problemDataStorage) <+>
         domains.problemset.http.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
