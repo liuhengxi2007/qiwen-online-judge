@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/utils'
 
 function Sheet(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="sheet" {...props} />
@@ -29,7 +29,7 @@ function SheetOverlay({
     <DialogPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out',
+        'fixed inset-0 z-50 bg-black/40 ',
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ function SheetOverlay({
 }
 
 const sheetVariants = cva(
-  'fixed z-50 gap-4 bg-background p-6 shadow-lg transition data-[state=open]:animate-in data-[state=closed]:animate-out',
+  'fixed z-50 gap-4 bg-white p-6 shadow-lg transition ',
   {
     variants: {
       side: {
@@ -70,7 +70,7 @@ function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute top-4 right-4 rounded-full p-1 text-muted-foreground transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <DialogPrimitive.Close className="absolute top-4 right-4 rounded-full p-1 text-slate-500 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
           <X className="size-4" />
           <span className="sr-only">关闭</span>
         </DialogPrimitive.Close>
@@ -97,7 +97,7 @@ function SheetTitle({ className, ...props }: ComponentProps<typeof DialogPrimiti
   return (
     <DialogPrimitive.Title
       data-slot="sheet-title"
-      className={cn('text-foreground font-semibold', className)}
+      className={cn('text-slate-900 font-semibold', className)}
       {...props}
     />
   )
@@ -110,7 +110,7 @@ function SheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="sheet-description"
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-slate-500', className)}
       {...props}
     />
   )

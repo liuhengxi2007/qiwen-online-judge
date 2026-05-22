@@ -1,15 +1,15 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { HTMLAttributes } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/utils'
 
 const alertVariants = cva(
   'relative w-full rounded-lg border px-4 py-3 text-sm grid gap-1',
   {
     variants: {
       variant: {
-        default: 'bg-card text-card-foreground',
-        destructive: 'border-destructive/50 text-destructive [&_svg]:text-destructive',
+        default: 'bg-white text-slate-900',
+        destructive: 'border-red-300 text-red-600 [&_svg]:text-red-600',
       },
     },
     defaultVariants: {
@@ -31,7 +31,7 @@ function AlertTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>)
 }
 
 function AlertDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <div className={cn('text-sm text-muted-foreground [&_p]:leading-relaxed', className)} {...props} />
+  return <div className={cn('text-sm text-slate-500 [&_p]:leading-relaxed', className)} {...props} />
 }
 
 export { Alert, AlertDescription, AlertTitle }

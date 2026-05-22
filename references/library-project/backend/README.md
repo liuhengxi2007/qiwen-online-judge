@@ -1,15 +1,15 @@
-# backend-sample
+# library backend
 
-一个基于 Scala 3、Cats Effect、http4s、Circe 的后端样本项目。
+Scala 3 + Cats Effect + http4s + Circe + JDBC/PostgreSQL 的图书馆借书系统后端。
 
 ## 目录结构
 
-- `src/main/scala/Main.scala`: 主程序，启动 http4s 服务
-- `src/main/scala/routes`: 路由定义与总路由分发
-- `src/main/scala/api`: `plan` 定义与具体业务实现
-- `src/main/scala/database`: 通用数据库连接与事务管理
-- `src/main/scala/tables`: 每张表一个文件，集中维护建表 SQL、常见 SQL 和表操作
-- `src/main/scala/objects`: 请求/响应类型定义
+- `src/main/scala/Main.scala`: 主程序，启动 http4s 服务并初始化数据库表
+- `src/main/scala/routes`: 系统级总路由和健康检查
+- `src/main/scala/system`: 数据库连接池、事务、通用错误对象等系统基础代码
+- `src/main/scala/system/api`: APIMessage 通用分发器和基类
+- `src/main/scala/services/user`: 用户微服务，包含 `api`、`objects`、`tables`
+- `src/main/scala/services/books`: 图书微服务，包含 `api`、`objects`、`tables`
 
 ## 运行
 
@@ -21,6 +21,12 @@ sbt run
 
 - `http://0.0.0.0:8080`
 
+如果 8080 被占用，可以用环境变量改端口：
+
+```bash
+HTTP_PORT=8081 sbt run
+```
+
 数据库默认连接：
 
 - `host = 127.0.0.1`
@@ -28,24 +34,6 @@ sbt run
 - `databaseName = 当前项目目录名，把 '-' 自动转成 '_'`
 - 用户名：`db`
 - 密码：`root`
-
-例如当前项目目录是 `backend-sample`，默认数据库名就会是 `backend_sample`。如果目录名推导失败，则会退回到 [DatabaseDefaults.scala](/home/yang/projects/commons/backend-sample/src/main/scala/database/DatabaseDefaults.scala#L1) 里的常量 `DefaultDatabaseName`。所以当前默认 JDBC URL 是：
-
-- `jdbc:postgresql://127.0.0.1:5432/backend_sample`
-
-如果你换到别的项目，默认会优先使用那个项目目录名生成数据库名。比如目录是 `user-center`，默认就会尝试连：
-
-- `jdbc:postgresql://127.0.0.1:5432/user_center`
-
-如果你不想按项目目录名推导，可以显式覆盖：
-
-数据库连接策略：
-
-- 应用启动时初始化 PostgreSQL 连接池
-- 普通 plan 不会申请数据库连接
-- 带 `Connection` 的 plan 会在 route 层自动申请一个事务连接
-- 该 plan 成功时提交事务，失败时回滚事务
-- 请求结束后连接归还给连接池，不是直接废弃整个连接
 
 也可以通过环境变量覆盖：
 
@@ -57,7 +45,16 @@ sbt run
 - `DB_MAX_POOL_SIZE`
 - `DB_CONNECTION_TIMEOUT_MS`
 
-## API 示例
+启动时会自动创建：
+
+- `library_users`
+- `library_user_sessions`
+- `books`
+- `borrow_records`
+
+如果 `books` 表为空，会插入几条示例图书。
+
+## API
 
 ### 健康检查
 
@@ -65,35 +62,48 @@ sbt run
 curl http://127.0.0.1:8080/api/health
 ```
 
-### EchoPlanner
+### 注册管理员
 
 ```bash
-curl -X POST http://127.0.0.1:8080/api/EchoPlanner \
+curl -X POST http://127.0.0.1:8080/api/registeruserapi \
   -H 'Content-Type: application/json' \
-  -d '{"message":"hello world","uppercase":true}'
+  -d '{"username":"admin","password":"Admin@123","role":"admin"}'
 ```
 
-### SaveDemoNotePlanner
-
-这个接口演示：
-
-- 类型系统到数据库：`NoteTitle`、`NoteBody`、`NoteStatus` 写入 PostgreSQL
-- 数据库到类型系统：插入后把返回结果反序列化成 `DemoNote`
+### 登录
 
 ```bash
-curl -X POST http://127.0.0.1:8080/api/SaveDemoNotePlanner \
+curl -X POST http://127.0.0.1:8080/api/loginuserapi \
   -H 'Content-Type: application/json' \
-  -d '{"title":"first note","body":"stored by jdbc","status":"draft"}'
+  -d '{"username":"admin","password":"Admin@123"}'
 ```
 
-初始化数据表：
+后续需要登录的接口在 JSON body 中显式传入：
 
-[NoteTable.scala](/home/yang/projects/commons/backend-sample/src/main/scala/tables/NoteTable.scala#L1) 里提供了 `initTableSql`，可以直接拿去执行；这个文件同时也保留了插入、按 ID 查询、列表查询的常用 SQL 示例。
+```bash
+"userToken": "<token>"
+```
 
-## 日志
+### 图书
 
-服务启动后可以在控制台看到：
+```bash
+curl -X POST http://127.0.0.1:8080/api/listbooksapi \
+  -H 'Content-Type: application/json' \
+  -d '{"keyword":""}'
 
-- 服务启动日志
-- 每个 API 的访问日志
-- http4s 中间件输出的请求日志和响应日志
+curl -X POST http://127.0.0.1:8080/api/createbookapi \
+  -H 'Content-Type: application/json' \
+  -d '{"userToken":"<token>","title":"数据库系统概念","author":"Abraham Silberschatz","isbn":"9787111375296","category":"computer","stock":3,"summary":"数据库系统教材。"}'
+```
+
+### 借书和还书
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/borrowbookapi \
+  -H 'Content-Type: application/json' \
+  -d '{"userToken":"<token>","bookId":"<bookId>","readerName":"张三"}'
+
+curl -X POST http://127.0.0.1:8080/api/returnborrowrecordapi \
+  -H 'Content-Type: application/json' \
+  -d '{"userToken":"<token>","recordId":"<recordId>"}'
+```

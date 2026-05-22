@@ -1,12 +1,12 @@
 import type { HTMLAttributes } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/utils'
 
 function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="card"
-      className={cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm', className)}
+      className={cn('bg-white text-slate-900 flex flex-col gap-6 rounded-xl border py-6 shadow-sm', className)}
       {...props}
     />
   )
@@ -36,7 +36,7 @@ function CardDescription({ className, ...props }: HTMLAttributes<HTMLDivElement>
   return (
     <div
       data-slot="card-description"
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-slate-500', className)}
       {...props}
     />
   )

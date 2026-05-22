@@ -1,9 +1,9 @@
 import type { HTMLAttributes } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/utils'
 
 function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('animate-pulse rounded-md bg-muted', className)} {...props} />
+  return <div className={cn('animate-pulse rounded-md bg-slate-100', className)} {...props} />
 }
 
 export { Skeleton }

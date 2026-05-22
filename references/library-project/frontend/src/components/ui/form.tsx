@@ -12,7 +12,7 @@ import type { ComponentProps, HTMLAttributes } from 'react'
 import { createContext, useContext, useId } from 'react'
 
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/utils'
 
 const Form = FormProvider
 
@@ -80,7 +80,7 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
 
   return (
     <Label
-      className={cn(error && 'text-destructive', className)}
+      className={cn(error && 'text-red-600', className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -106,7 +106,7 @@ function FormDescription({ className, ...props }: HTMLAttributes<HTMLParagraphEl
   return (
     <p
       id={formDescriptionId}
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-slate-500', className)}
       {...props}
     />
   )
@@ -123,7 +123,7 @@ function FormMessage({ className, children, ...props }: HTMLAttributes<HTMLParag
   return (
     <p
       id={formMessageId}
-      className={cn('text-sm font-medium text-destructive', className)}
+      className={cn('text-sm font-medium text-red-600', className)}
       {...props}
     >
       {body}
