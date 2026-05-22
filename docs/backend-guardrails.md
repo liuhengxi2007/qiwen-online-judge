@@ -46,22 +46,25 @@ For `http`:
   thin aggregator that combines endpoint API route files
 - `api/<Name>.scala`
   one HTTP endpoint route fragment, including path matching, input parsing/decoding, plan execution, and response mapping for that endpoint
-- `request/<Name>.scala`
-  inbound HTTP wire payloads decoded from request bodies or query-derived request shapes
 - `*HttpHandlers.scala`
   request decoding, auth/session wrapping, command invocation
-- `*HttpResponses.scala`
+- `response/*HttpResponses.scala`
   translation from command results to HTTP responses
 - `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
 
-For `application/view`:
+For `application/input`:
+
+- `<Name>.scala`
+  typed command/query inputs decoded by HTTP endpoints and consumed by application/table code, including inbound request bodies and query-derived list filters
+
+For `application/output`:
 
 - `<Name>.scala`
   read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
 
 Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
-Non-HTTP layers must not import from `http.response`; use `application/view` for read/output shapes that application, table, or model code needs to name.
+Non-HTTP layers must not import from `http.request` or `http.response`; use `application/input` for inputs and `application/output` for read/output shapes that application, table, or model code needs to name.
 
 For `table`:
 

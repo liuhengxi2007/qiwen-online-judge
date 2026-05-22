@@ -2,7 +2,7 @@ package domains.blog.application
 
 
 
-import domains.blog.http.request.{CreateBlogRequest, UpdateBlogRequest}
+import domains.blog.application.input.{CreateBlogRequest, UpdateBlogRequest}
 
 object BlogValidation:
 

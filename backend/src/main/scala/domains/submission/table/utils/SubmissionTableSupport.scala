@@ -4,7 +4,7 @@ package domains.submission.table.utils
 
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.application.view.{SubmissionDetail, SubmissionSummary}
+import domains.submission.application.output.{SubmissionDetail, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import io.circe.parser.decode
 import io.circe.syntax.*

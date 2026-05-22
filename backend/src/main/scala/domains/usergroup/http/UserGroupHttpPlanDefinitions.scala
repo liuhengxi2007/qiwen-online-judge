@@ -1,5 +1,7 @@
 package domains.usergroup.http
 
+import domains.usergroup.http.response.UserGroupHttpResponses
+
 
 
 import domains.shared.http.AuthenticatedHttpPlanRegistry

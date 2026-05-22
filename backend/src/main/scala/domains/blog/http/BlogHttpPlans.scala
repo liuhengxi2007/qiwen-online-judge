@@ -9,7 +9,7 @@ import domains.blog.application.BlogCommands
 import domains.blog.application.BlogCommands.CreateBlogCommentResult
 import domains.blog.table.BlogTable
 import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.http.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.problem.model.ProblemSlug
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}

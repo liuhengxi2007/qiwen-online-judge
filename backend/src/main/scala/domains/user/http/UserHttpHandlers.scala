@@ -1,5 +1,7 @@
 package domains.user.http
 
+import domains.user.http.response.UserHttpResponses
+
 
 
 import cats.effect.IO
@@ -8,7 +10,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.http.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

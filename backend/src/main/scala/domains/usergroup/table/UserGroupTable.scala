@@ -5,9 +5,9 @@ package domains.usergroup.table
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
-import domains.usergroup.http.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
-import domains.usergroup.application.view.{UserGroupSummary}
+import domains.usergroup.application.output.{UserGroupSummary}
 import domains.usergroup.table.UserGroupTableSchema.*
 import domains.usergroup.table.UserGroupTableSql.*
 import domains.usergroup.table.utils.UserGroupTableSupport.*

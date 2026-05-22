@@ -9,7 +9,7 @@ import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.auth.model.Username
 import domains.shared.http.AuthenticatedHttpExecutor
-import domains.usergroup.http.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*

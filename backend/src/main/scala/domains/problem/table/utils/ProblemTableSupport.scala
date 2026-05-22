@@ -6,7 +6,7 @@ import database.utils.ResourceAccessTableSupport.{parseColumn, parseOptionalColu
 import domains.auth.model.AuthUser
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.problem.application.view.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 import domains.shared.sql.LikePatternSql
 

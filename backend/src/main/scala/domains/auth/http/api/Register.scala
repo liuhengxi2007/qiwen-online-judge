@@ -7,7 +7,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.judge.application.JudgeConfig
-import domains.auth.http.request.{LoginRequest, RegisterRequest}
+import domains.auth.application.input.{LoginRequest, RegisterRequest}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

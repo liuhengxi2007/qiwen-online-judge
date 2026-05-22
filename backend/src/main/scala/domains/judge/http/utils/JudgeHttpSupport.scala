@@ -1,6 +1,6 @@
 package domains.judge.http.utils
 
-import domains.judge.http.JudgeHttpResponses
+import domains.judge.http.response.JudgeHttpResponses
 import cats.effect.IO
 import domains.judge.application.JudgeConfig
 import domains.shared.http.utils.InternalTokenHttpSupport

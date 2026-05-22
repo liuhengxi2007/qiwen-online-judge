@@ -9,7 +9,7 @@ import domains.problem.model.OthersSubmissionAccess
 import domains.problem.application.utils.ProblemCommandSupport.canManageProblem
 import domains.problem.table.ProblemTable
 import domains.submission.model.{SubmissionId}
-import domains.submission.http.request.{SubmissionListRequest}
+import domains.submission.application.input.{SubmissionListRequest}
 import domains.submission.table.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
 import domains.submission.application.utils.SubmissionCommandSupport.*

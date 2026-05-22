@@ -1,5 +1,7 @@
 package domains.judge.http
 
+import domains.judge.http.response.JudgeHttpResponses
+
 import domains.judge.http.utils.JudgeHttpSupport
 import cats.effect.{Clock, IO}
 import database.DatabaseSession

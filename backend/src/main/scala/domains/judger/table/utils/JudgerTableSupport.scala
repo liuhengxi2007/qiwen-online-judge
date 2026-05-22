@@ -4,7 +4,7 @@ package domains.judger.table.utils
 
 import domains.judger.table.JudgerTableSql
 import cats.effect.IO
-import domains.judger.application.view.RegisteredJudgerListItem
+import domains.judger.application.output.RegisteredJudgerListItem
 import judgeprotocol.model.{JudgerId, SubmissionLanguage}
 
 import java.sql.Timestamp

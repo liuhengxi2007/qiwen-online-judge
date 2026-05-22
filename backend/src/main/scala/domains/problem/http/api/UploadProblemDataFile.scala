@@ -1,5 +1,7 @@
 package domains.problem.http.api
 
+import domains.problem.http.response.ProblemHttpResponses
+
 
 
 import domains.problem.http.*
@@ -8,7 +10,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.http.request.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
+import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSearchQuery, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.shared.model.PageRequest

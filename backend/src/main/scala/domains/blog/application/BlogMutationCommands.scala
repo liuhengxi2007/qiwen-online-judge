@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.http.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.blog.table.BlogTable
 import domains.problem.application.ProblemPolicy
 import domains.problem.model.ProblemSlug

@@ -1,5 +1,7 @@
 package domains.problem.http
 
+import domains.problem.http.response.ProblemHttpResponses
+
 
 
 import domains.problem.application.ProblemDataStorage
@@ -10,18 +12,18 @@ object ProblemHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listProblems: Plain[domains.problem.http.request.ProblemListRequest, domains.shared.model.PageResponse[domains.problem.application.view.ProblemSummary]],
-    listProblemSuggestions: Plain[domains.problem.model.ProblemSearchQuery, List[domains.problem.application.view.ProblemSuggestion]],
-    createProblem: WithTransaction[domains.problem.http.request.CreateProblemRequest, domains.problem.application.ProblemCommands.CreateProblemResult],
+    listProblems: Plain[domains.problem.application.input.ProblemListRequest, domains.shared.model.PageResponse[domains.problem.application.output.ProblemSummary]],
+    listProblemSuggestions: Plain[domains.problem.model.ProblemSearchQuery, List[domains.problem.application.output.ProblemSuggestion]],
+    createProblem: WithTransaction[domains.problem.application.input.CreateProblemRequest, domains.problem.application.ProblemCommands.CreateProblemResult],
     getProblem: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.GetProblemResult],
     listProblemData: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.ListProblemDataResult],
     listProblemDataTree: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.ListProblemDataTreeResult],
     downloadProblemData: Plain[(domains.problem.model.ProblemSlug, domains.problem.model.ProblemDataFilename), domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput],
     deleteProblemData: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.model.ProblemDataFilename), domains.problem.application.ProblemCommands.DeleteProblemDataResult],
-    deleteProblemDataPath: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.http.request.DeleteProblemDataPathRequest), domains.problem.application.ProblemCommands.DeleteProblemDataResult],
+    deleteProblemDataPath: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.application.input.DeleteProblemDataPathRequest), domains.problem.application.ProblemCommands.DeleteProblemDataResult],
     clearProblemData: WithTransaction[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.ClearProblemDataResult],
     setProblemReady: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest), domains.problem.application.ProblemCommands.SetProblemReadyResult],
-    updateProblem: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.http.request.UpdateProblemRequest), domains.problem.application.ProblemCommands.UpdateProblemResult],
+    updateProblem: WithTransaction[(domains.problem.model.ProblemSlug, domains.problem.application.input.UpdateProblemRequest), domains.problem.application.ProblemCommands.UpdateProblemResult],
     deleteProblem: WithTransaction[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.DeleteProblemResult]
   )
 

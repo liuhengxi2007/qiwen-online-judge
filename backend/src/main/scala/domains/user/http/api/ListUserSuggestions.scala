@@ -1,5 +1,7 @@
 package domains.user.http.api
 
+import domains.user.http.response.UserHttpResponses
+
 
 
 import domains.user.http.*
@@ -10,7 +12,7 @@ import domains.auth.model.Username
 import domains.shared.model.PageRequest
 import domains.user.application.UserMutationCommands
 import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}
-import domains.user.http.request.{UpdateUserPermissionsRequest, UserListRequest}
+import domains.user.application.input.{UpdateUserPermissionsRequest, UserListRequest}
 import domains.user.model.{UserSearchQuery}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*

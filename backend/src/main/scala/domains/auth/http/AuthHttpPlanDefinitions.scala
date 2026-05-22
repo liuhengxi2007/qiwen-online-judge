@@ -1,5 +1,7 @@
 package domains.auth.http
 
+import domains.auth.http.response.AuthHttpResponses
+
 
 
 object AuthHttpPlanDefinitions:

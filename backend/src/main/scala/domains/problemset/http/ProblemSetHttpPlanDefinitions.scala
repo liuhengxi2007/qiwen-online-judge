@@ -1,5 +1,7 @@
 package domains.problemset.http
 
+import domains.problemset.http.response.ProblemSetHttpResponses
+
 
 
 import domains.shared.http.AuthenticatedHttpPlanRegistry

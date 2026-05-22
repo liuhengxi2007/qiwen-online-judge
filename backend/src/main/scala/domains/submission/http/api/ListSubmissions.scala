@@ -1,5 +1,7 @@
 package domains.submission.http.api
 
+import domains.submission.http.response.SubmissionHttpResponses
+
 
 
 import domains.submission.http.*
@@ -8,7 +10,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.submission.application.SubmissionCommands
 import domains.shared.model.PageRequest
-import domains.submission.http.request.{CreateSubmissionRequest, SubmissionListRequest}
+import domains.submission.application.input.{CreateSubmissionRequest, SubmissionListRequest}
 import domains.submission.model.{SubmissionId, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes

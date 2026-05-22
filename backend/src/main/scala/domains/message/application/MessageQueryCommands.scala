@@ -8,7 +8,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
 import domains.message.model.{MessageConversationId, MessageId}
-import domains.message.application.view.{MessageHistoryResponse, MessageInboxResponse}
+import domains.message.application.output.{MessageHistoryResponse, MessageInboxResponse}
 import domains.shared.model.PageRequest
 
 object MessageQueryCommands:
@@ -59,7 +59,7 @@ object MessageQueryCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     repository: MessageRepository = defaultRepository
-  ): IO[List[domains.message.application.view.MessageBlockEntry]] =
+  ): IO[List[domains.message.application.output.MessageBlockEntry]] =
     databaseSession.withTransactionConnection(connection =>
       repository.listBlocks(connection, actor.username)
     )

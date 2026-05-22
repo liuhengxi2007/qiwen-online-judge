@@ -6,7 +6,7 @@ import domains.problemset.application.{ProblemSetAccessDecision, ProblemSetAcces
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.auth.table.AuthUserTable
-import domains.problemset.http.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
 import domains.shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
 import domains.usergroup.table.UserGroupTable

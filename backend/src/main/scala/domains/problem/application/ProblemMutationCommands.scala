@@ -5,7 +5,7 @@ package domains.problem.application
 import cats.effect.IO
 import database.{DatabaseSession, ResourceAccessGrantTable}
 import domains.auth.model.AuthUser
-import domains.problem.http.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemId}
 import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*

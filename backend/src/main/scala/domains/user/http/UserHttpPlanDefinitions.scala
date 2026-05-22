@@ -1,5 +1,7 @@
 package domains.user.http
 
+import domains.user.http.response.UserHttpResponses
+
 
 
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan.{AuthenticatedPlain, AuthenticatedWithTransaction, SiteManagerPlain, SiteManagerWithTransaction}

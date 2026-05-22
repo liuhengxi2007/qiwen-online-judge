@@ -6,7 +6,7 @@ import domains.submission.application.SubmissionPolicy
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.problem.model.{OthersSubmissionAccess}
-import domains.problem.application.view.{ProblemDetail}
+import domains.problem.application.output.{ProblemDetail}
 import domains.problem.table.ProblemTable
 import domains.shared.access.AccessPolicyEvaluator
 import domains.usergroup.table.UserGroupTable

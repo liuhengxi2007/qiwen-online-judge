@@ -31,7 +31,7 @@ For the main business domains (`problem`, `problemset`, `submission`, `usergroup
   executes inside `withTransactionConnection`
 
 Plans should return typed outputs, not raw `Response[IO]`.
-Response mapping belongs in `*HttpPlanDefinitions.scala` and `*HttpResponses.scala`.
+Response mapping belongs in `*HttpPlanDefinitions.scala` and `http/response/*HttpResponses.scala`.
 Shared HTTP-only helpers belong in `http/utils`, not beside endpoint API files.
 
 ## Auth Exception

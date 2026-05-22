@@ -2,7 +2,7 @@ package domains.auth.http.utils
 
 
 
-import domains.auth.http.AuthHttpResponses
+import domains.auth.http.response.AuthHttpResponses
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore

@@ -1,5 +1,7 @@
 package domains.problemset.http.api
 
+import domains.problemset.http.response.ProblemSetHttpResponses
+
 
 
 import domains.problemset.http.*
@@ -8,7 +10,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.problemset.application.ProblemSetCommands
 import domains.problem.model.ProblemSlug
-import domains.problemset.http.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
 import domains.shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes

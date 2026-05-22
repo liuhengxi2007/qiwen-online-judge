@@ -1,5 +1,7 @@
 package domains.blog.http
 
+import domains.blog.http.response.BlogHttpResponses
+
 
 
 import domains.notification.application.NotificationEventHub
@@ -13,7 +15,7 @@ object BlogHttpPlanDefinitions:
     listBlogs: Plain[BlogHttpPlans.ListBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
     listProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
     listPendingProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
-    createBlog: WithTransaction[domains.blog.http.request.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
+    createBlog: WithTransaction[domains.blog.application.input.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
     getBlog: Plain[domains.blog.model.BlogId, domains.blog.application.BlogCommands.GetBlogResult],
     voteBlog: WithTransaction[BlogHttpPlans.VoteBlogInput, domains.blog.application.BlogCommands.VoteBlogResult],
     updateBlog: WithTransaction[BlogHttpPlans.UpdateBlogInput, domains.blog.application.BlogCommands.UpdateBlogResult],

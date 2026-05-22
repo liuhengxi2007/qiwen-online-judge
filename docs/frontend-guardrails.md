@@ -178,17 +178,17 @@ Rules:
 - validation that combines multiple fields or encodes business workflow should still live outside mirrored type files
 - do not keep one large aggregate model file on one side while splitting the same mirrored types into many files on the other side
 - do not introduce frontend-only or backend-only aliases for a mirrored type
-- do not put API-only payload DTOs in `model/`; use the domain HTTP request folder for inbound backend payloads, backend `application/view` for outbound read shapes, and frontend HTTP response folders for received payload types
+- do not put API-only payload DTOs in `model/`; use backend `application/input` for inbound/request-shaped inputs, backend `application/output` for outbound read shapes, and frontend HTTP request/response folders for transport payload types
 
 Required path rules:
 
-- backend HTTP request payload:
-  `backend/src/main/scala/domains/<domain>/http/request/<Name>.scala`
+- backend application input:
+  `backend/src/main/scala/domains/<domain>/application/input/<Name>.scala`
 - frontend HTTP request payload:
   `frontend/src/features/<domain>/http/request/<Name>.ts`
 
-- backend application view / response shape:
-  `backend/src/main/scala/domains/<domain>/application/view/<Name>.scala`
+- backend application output / response shape:
+  `backend/src/main/scala/domains/<domain>/application/output/<Name>.scala`
 - frontend HTTP response payload:
   `frontend/src/features/<domain>/http/response/<Name>.ts`
 

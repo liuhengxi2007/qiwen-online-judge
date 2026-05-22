@@ -6,8 +6,8 @@ import domains.problem.application.{ProblemAccessDecision, ProblemAccessFacts, P
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.auth.table.AuthUserTable
-import domains.problem.http.request.{CreateProblemRequest, UpdateProblemRequest}
-import domains.problem.application.view.{ProblemDetail}
+import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.application.output.{ProblemDetail}
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{ProblemSet, ProblemSetSlug}
 import domains.problemset.table.ProblemSetTable

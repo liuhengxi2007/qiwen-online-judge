@@ -1,14 +1,16 @@
 package domains.auth.http
 
+import domains.auth.http.response.AuthHttpResponses
+
 
 
 import cats.effect.IO
 import domains.auth.application.{PasswordHasher, UsernameRules}
-import domains.auth.http.request.{LoginRequest, RegisterRequest}
-import domains.auth.application.view.SessionResponse
+import domains.auth.application.input.{LoginRequest, RegisterRequest}
+import domains.auth.application.output.SessionResponse
 import domains.auth.model.*
 import domains.auth.table.AuthUserTable
-import domains.judger.application.view.RegisteredJudgerListItem
+import domains.judger.application.output.RegisteredJudgerListItem
 import domains.judger.table.JudgerTable
 import domains.usergroup.model.UserGroupSlug
 import domains.usergroup.table.UserGroupTable

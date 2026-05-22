@@ -66,7 +66,7 @@ object JudgeTaskBuilder:
 
   def validateReadyConfigBytes(
     bytes: Array[Byte],
-    problem: domains.problem.application.view.ProblemDetail,
+    problem: domains.problem.application.output.ProblemDetail,
     manifest: ProblemDataManifest
   ): Either[String, ReadyValidation] =
     val claimedSubmission = ClaimedSubmission(

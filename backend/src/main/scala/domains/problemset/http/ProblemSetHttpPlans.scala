@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.problem.model.ProblemSlug
 import domains.problemset.application.ProblemSetCommands
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
-import domains.problemset.http.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
 import domains.shared.model.{PageRequest, PageResponse}
 
@@ -16,7 +16,7 @@ import java.sql.Connection
 
 object ProblemSetHttpPlans:
 
-  case object ListProblemSets extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.problemset.application.view.ProblemSetSummary]]:
+  case object ListProblemSets extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.problemset.application.output.ProblemSetSummary]]:
 
     override val name: String = "ListProblemSets"
 
@@ -24,7 +24,7 @@ object ProblemSetHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.problemset.application.view.ProblemSetSummary]] =
+    ): IO[PageResponse[domains.problemset.application.output.ProblemSetSummary]] =
       ProblemSetCommands.listProblemSets(databaseSession, actor, input)
 
   case object GetProblemSet extends PlainAuthenticatedHttpPlan[ProblemSetSlug, ProblemSetCommands.GetProblemSetResult]:

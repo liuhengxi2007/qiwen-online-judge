@@ -1,5 +1,7 @@
 package domains.message.http.api
 
+import domains.message.http.response.MessageHttpResponses
+
 
 
 import domains.message.http.*
@@ -10,7 +12,7 @@ import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.auth.model.Username
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, RemoveBlockResult}
 import domains.message.application.{MessageEventHub, MessageStreamEvent}
-import domains.message.http.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
 import domains.message.model.{MessageConversationId, MessageId}
 import domains.shared.http.AuthenticatedHttpExecutor
 import domains.shared.model.PageRequest

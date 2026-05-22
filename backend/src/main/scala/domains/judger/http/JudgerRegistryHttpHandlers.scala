@@ -1,5 +1,7 @@
 package domains.judger.http
 
+import domains.judger.http.response.JudgerRegistryHttpResponses
+
 
 
 import domains.judger.http.utils.JudgerRegistryHttpSupport

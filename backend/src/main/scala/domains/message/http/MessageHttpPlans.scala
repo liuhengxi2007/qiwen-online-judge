@@ -8,7 +8,7 @@ import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.application.{JdbcMessageRepository, MessageCommands, MessageEventHub, MessageStreamEvent}
-import domains.message.http.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
 import domains.message.model.{MessageConversationId, MessageId}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.shared.model.PageRequest
@@ -17,9 +17,9 @@ import java.sql.Connection
 
 object MessageHttpPlans:
 
-  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.application.view.MessageInboxResponse]:
+  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.application.output.MessageInboxResponse]:
     override val name: String = "ListInbox"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.application.view.MessageInboxResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.application.output.MessageInboxResponse] =
       MessageCommands.listInbox(databaseSession, actor, input, JdbcMessageRepository)
 
   final case class HistoryInput(
@@ -98,9 +98,9 @@ object MessageHttpPlans:
         publishReceipts *> messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
       }
 
-  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.application.view.MessageBlockEntry]]:
+  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.application.output.MessageBlockEntry]]:
     override val name: String = "ListBlocks"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.application.view.MessageBlockEntry]] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.application.output.MessageBlockEntry]] =
       val _ = input
       MessageCommands.listBlocks(databaseSession, actor, JdbcMessageRepository)
 

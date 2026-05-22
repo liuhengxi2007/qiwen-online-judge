@@ -5,7 +5,7 @@ package domains.usergroup.table.utils
 import cats.effect.IO
 import domains.auth.model.{DisplayName, Username}
 import domains.usergroup.model.{UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
-import domains.usergroup.application.view.{UserGroupSummary}
+import domains.usergroup.application.output.{UserGroupSummary}
 
 import java.sql.ResultSet
 
