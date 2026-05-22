@@ -2,8 +2,6 @@ package domains.usergroup.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum UserGroupRole:
   case Owner
   case Manager
@@ -22,8 +20,3 @@ object UserGroupRole:
       case UserGroupRole.Owner => "owner"
       case UserGroupRole.Manager => "manager"
       case UserGroupRole.Member => "member"
-
-  given Encoder[UserGroupRole] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[UserGroupRole] = Decoder.decodeString.emap { value =>
-    fromDatabase(value).toRight(s"Unknown user group role: $value")
-  }

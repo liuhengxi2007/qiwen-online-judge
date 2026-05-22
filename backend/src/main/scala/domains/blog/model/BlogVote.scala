@@ -2,8 +2,6 @@ package domains.blog.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum BlogVote:
   case Up
   case Down
@@ -25,6 +23,3 @@ object BlogVote:
       case "up" => Some(BlogVote.Up)
       case "down" => Some(BlogVote.Down)
       case _ => None
-
-  given Encoder[BlogVote] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[BlogVote] = Decoder.decodeString.emap(parse)

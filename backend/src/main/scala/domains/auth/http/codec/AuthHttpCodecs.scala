@@ -2,10 +2,14 @@ package domains.auth.http.codec
 
 import domains.auth.application.input.*
 import domains.auth.application.output.*
+import domains.auth.http.codec.AuthModelHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 object AuthHttpCodecs:
+  export AuthModelHttpCodecs.given
+
   given Encoder[LoginRequest] = deriveEncoder[LoginRequest]
   given Decoder[LoginRequest] = deriveDecoder[LoginRequest]
   given Encoder[RegisterRequest] = deriveEncoder[RegisterRequest]

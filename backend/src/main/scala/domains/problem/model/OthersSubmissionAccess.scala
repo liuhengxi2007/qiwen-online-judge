@@ -2,8 +2,6 @@ package domains.problem.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum OthersSubmissionAccess:
   case None
   case Summary
@@ -29,6 +27,3 @@ object OthersSubmissionAccess:
       case OthersSubmissionAccess.None => "none"
       case OthersSubmissionAccess.Summary => "summary"
       case OthersSubmissionAccess.Detail => "detail"
-
-  given Encoder[OthersSubmissionAccess] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[OthersSubmissionAccess] = Decoder.decodeString.emap(parse)

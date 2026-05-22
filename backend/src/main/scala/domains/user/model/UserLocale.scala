@@ -2,8 +2,6 @@ package domains.user.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum UserLocale:
   case En
   case ZhCn
@@ -25,6 +23,3 @@ object UserLocale:
     value match
       case UserLocale.En => "en"
       case UserLocale.ZhCn => "zh-CN"
-
-  given Encoder[UserLocale] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[UserLocale] = Decoder.decodeString.emap(parse)

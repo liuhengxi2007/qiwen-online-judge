@@ -2,8 +2,6 @@ package domains.submission.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 import scala.util.Try
 
 final case class SubmissionId(value: Long)
@@ -18,8 +16,3 @@ object SubmissionId:
         if value < 1 then Left("Submission id is invalid.")
         else Right(SubmissionId(value))
       }
-
-  given Encoder[SubmissionId] = Encoder.encodeLong.contramap(_.value)
-  given Decoder[SubmissionId] = Decoder.decodeLong.emap { value =>
-    if value < 1 then Left("Submission id is invalid.") else Right(SubmissionId(value))
-  }

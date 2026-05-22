@@ -8,7 +8,6 @@ import domains.notification.model.{NotificationKind, NotificationPayload, Notifi
 import domains.notification.application.output.{NotificationSummary}
 
 import java.sql.ResultSet
-import io.circe.parser.decode
 
 object NotificationTableSupport:
 
@@ -30,10 +29,7 @@ object NotificationTableSupport:
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
 
   private def decodePayload(raw: String): NotificationPayload =
-    decode[NotificationPayload](raw).fold(
-      error => throw IllegalStateException(s"Invalid notification payload: ${error.getMessage}"),
-      identity
-    )
+    NotificationPayloadJsonCodec.decode(raw)
 
   private def readOptionalUsername(resultSet: ResultSet, prefix: String): Option[Username] =
     Option(resultSet.getString(s"${prefix}_username")).map(Username.canonical)

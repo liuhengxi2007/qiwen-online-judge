@@ -2,6 +2,10 @@ package domains.blog.http.codec
 
 import domains.blog.application.input.*
 import domains.blog.application.output.*
+import domains.blog.http.codec.BlogModelHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs.given
+import shared.http.codec.SharedHttpCodecs
+import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -9,6 +13,9 @@ import java.time.Instant
 import scala.util.Try
 
 object BlogHttpCodecs:
+  export BlogModelHttpCodecs.given
+  export SharedHttpCodecs.given
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)

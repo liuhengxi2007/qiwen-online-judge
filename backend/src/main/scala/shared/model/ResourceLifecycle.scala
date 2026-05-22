@@ -2,8 +2,6 @@ package shared.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum ResourceVisibility:
   case Private
   case Group
@@ -22,8 +20,3 @@ object ResourceVisibility:
       case ResourceVisibility.Private => "private"
       case ResourceVisibility.Group => "group"
       case ResourceVisibility.Public => "public"
-
-  given Encoder[ResourceVisibility] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[ResourceVisibility] = Decoder.decodeString.emap { value =>
-    fromDatabase(value).toRight(s"Unknown resource visibility: $value")
-  }

@@ -8,12 +8,12 @@ import domains.notification.model.{NotificationId, NotificationKind, Notificatio
 import domains.notification.application.output.{NotificationListResponse, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*
 import domains.notification.table.utils.NotificationTableSupport.readNotificationSummary
+import domains.notification.table.utils.NotificationPayloadJsonCodec
 import shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
-import io.circe.syntax.*
 
 object NotificationTable:
 
@@ -42,7 +42,7 @@ object NotificationTable:
         statement.setString(4, NotificationKind.toDatabase(kind))
         statement.setString(5, titleKey)
         statement.setString(6, bodyKey)
-        statement.setString(7, payload.asJson.noSpaces)
+        statement.setString(7, NotificationPayloadJsonCodec.encode(payload))
         statement.setString(8, targetPath)
         targetAnchor match
           case Some(anchor) => statement.setString(9, anchor)

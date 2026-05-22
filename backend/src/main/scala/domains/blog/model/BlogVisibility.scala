@@ -2,8 +2,6 @@ package domains.blog.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum BlogVisibility:
   case Public
   case Private
@@ -25,6 +23,3 @@ object BlogVisibility:
       case "public" => Some(BlogVisibility.Public)
       case "private" => Some(BlogVisibility.Private)
       case _ => None
-
-  given Encoder[BlogVisibility] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[BlogVisibility] = Decoder.decodeString.emap(parse)

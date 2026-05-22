@@ -2,8 +2,6 @@ package domains.submission.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum SubmissionVerdict:
   case Accepted
   case WrongAnswer
@@ -44,6 +42,3 @@ object SubmissionVerdict:
       case SubmissionVerdict.RuntimeError => "runtime_error"
       case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
       case SubmissionVerdict.SystemError => "system_error"
-
-  given Encoder[SubmissionVerdict] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionVerdict] = Decoder.decodeString.emap(parse)

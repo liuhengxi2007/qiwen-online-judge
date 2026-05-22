@@ -1,7 +1,11 @@
 package domains.usergroup.http.codec
 
+import domains.user.http.codec.UserModelHttpCodecs.given
 import domains.usergroup.application.input.*
 import domains.usergroup.application.output.*
+import domains.usergroup.http.codec.UserGroupModelHttpCodecs.given
+import shared.http.codec.SharedHttpCodecs
+import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -9,6 +13,9 @@ import java.time.Instant
 import scala.util.Try
 
 object UserGroupHttpCodecs:
+  export UserGroupModelHttpCodecs.given
+  export SharedHttpCodecs.given
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)

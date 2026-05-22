@@ -3,7 +3,6 @@ package domains.problem.model
 
 
 import shared.upload.StoredFilePath
-import io.circe.{Decoder, Encoder}
 
 final case class ProblemDataPath(value: String):
   def fileName: String =
@@ -18,6 +17,3 @@ object ProblemDataPath:
 
   def fromFilename(filename: ProblemDataFilename): ProblemDataPath =
     ProblemDataPath(filename.value)
-
-  given Encoder[ProblemDataPath] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ProblemDataPath] = Decoder.decodeString.emap(parse)

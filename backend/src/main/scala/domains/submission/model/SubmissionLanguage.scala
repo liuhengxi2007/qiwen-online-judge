@@ -2,8 +2,6 @@ package domains.submission.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum SubmissionLanguage:
   case Cpp17
   case Python3
@@ -25,6 +23,3 @@ object SubmissionLanguage:
     value match
       case SubmissionLanguage.Cpp17 => "cpp17"
       case SubmissionLanguage.Python3 => "python3"
-
-  given Encoder[SubmissionLanguage] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionLanguage] = Decoder.decodeString.emap(parse)

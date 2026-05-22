@@ -2,8 +2,6 @@ package domains.submission.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum SubmissionStatus:
   case Queued
   case Running
@@ -33,6 +31,3 @@ object SubmissionStatus:
       case SubmissionStatus.Running => "running"
       case SubmissionStatus.Completed => "completed"
       case SubmissionStatus.Failed => "failed"
-
-  given Encoder[SubmissionStatus] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionStatus] = Decoder.decodeString.emap(parse)

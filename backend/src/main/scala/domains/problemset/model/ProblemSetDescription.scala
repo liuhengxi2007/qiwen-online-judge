@@ -2,8 +2,6 @@ package domains.problemset.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 final case class ProblemSetDescription(value: String)
 
 object ProblemSetDescription:
@@ -11,6 +9,3 @@ object ProblemSetDescription:
     val normalized = raw.trim
     if normalized.length > 2000 then Left("Problem set description must be at most 2000 characters.")
     else Right(ProblemSetDescription(normalized))
-
-  given Encoder[ProblemSetDescription] = Encoder.encodeString.contramap(_.value)
-  given Decoder[ProblemSetDescription] = Decoder.decodeString.emap(parse)

@@ -2,8 +2,6 @@ package domains.usergroup.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 final case class UserGroupSlug(value: String)
 
 object UserGroupSlug:
@@ -15,6 +13,3 @@ object UserGroupSlug:
     else if normalized.length < 3 || normalized.length > 64 then Left("User group slug must be between 3 and 64 characters.")
     else if !slugPattern.matches(normalized) then Left("User group slug may contain only lowercase letters, numbers, and hyphens.")
     else Right(UserGroupSlug(normalized))
-
-  given Encoder[UserGroupSlug] = Encoder.encodeString.contramap(_.value)
-  given Decoder[UserGroupSlug] = Decoder.decodeString.emap(parse)

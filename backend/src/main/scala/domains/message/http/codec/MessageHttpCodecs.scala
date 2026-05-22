@@ -2,6 +2,9 @@ package domains.message.http.codec
 
 import domains.message.application.input.*
 import domains.message.application.output.*
+import domains.message.http.codec.MessageModelHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs
+import domains.user.http.codec.UserModelHttpCodecs.given
 import io.circe.{Decoder, DecodingFailure, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -9,6 +12,9 @@ import java.time.Instant
 import scala.util.Try
 
 object MessageHttpCodecs:
+  export MessageModelHttpCodecs.given
+  export UserModelHttpCodecs.given
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
 

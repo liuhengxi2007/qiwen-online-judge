@@ -1,13 +1,20 @@
 package domains.user.http.codec
 
+import domains.auth.http.codec.AuthModelHttpCodecs.given
 import domains.user.application.input.*
 import domains.user.application.output.*
 import shared.model.PageRequest
+import shared.http.codec.SharedHttpCodecs
+import shared.http.codec.SharedHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs.given
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.syntax.*
 
 object UserHttpCodecs:
+  export UserModelHttpCodecs.given
+  export SharedHttpCodecs.given
+
   given Encoder[UserSearchQuery] = Encoder.encodeString.contramap(_.value)
   given Decoder[UserSearchQuery] = Decoder.decodeString.emap(UserSearchQuery.parse)
 

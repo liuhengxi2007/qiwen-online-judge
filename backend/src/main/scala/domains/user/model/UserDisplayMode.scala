@@ -2,8 +2,6 @@ package domains.user.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum UserDisplayMode:
   case DisplayName
   case Username
@@ -30,6 +28,3 @@ object UserDisplayMode:
       case UserDisplayMode.DisplayName => "display_name"
       case UserDisplayMode.Username => "username"
       case UserDisplayMode.DisplayNameWithUsername => "display_name_with_username"
-
-  given Encoder[UserDisplayMode] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[UserDisplayMode] = Decoder.decodeString.emap(parse)

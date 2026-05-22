@@ -1,7 +1,12 @@
 package domains.problemset.http.codec
 
+import domains.problem.http.codec.ProblemModelHttpCodecs.given
 import domains.problemset.application.input.*
 import domains.problemset.application.output.*
+import domains.problemset.http.codec.ProblemSetModelHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs.given
+import shared.http.codec.SharedHttpCodecs
+import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -9,6 +14,9 @@ import java.time.Instant
 import scala.util.Try
 
 object ProblemSetHttpCodecs:
+  export ProblemSetModelHttpCodecs.given
+  export SharedHttpCodecs.given
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)

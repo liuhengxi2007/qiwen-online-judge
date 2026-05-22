@@ -2,8 +2,6 @@ package domains.notification.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 import java.util.UUID
 import scala.util.Try
 
@@ -13,6 +11,3 @@ object NotificationId:
 
   def parse(raw: String): Either[String, NotificationId] =
     Try(UUID.fromString(raw.trim)).toEither.left.map(_.getMessage).map(NotificationId(_))
-
-  given Encoder[NotificationId] = Encoder.encodeString.contramap(_.value.toString)
-  given Decoder[NotificationId] = Decoder.decodeString.emap(parse)

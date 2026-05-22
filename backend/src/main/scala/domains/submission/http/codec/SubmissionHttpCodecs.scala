@@ -1,8 +1,13 @@
 package domains.submission.http.codec
 
+import domains.problem.http.codec.ProblemModelHttpCodecs.given
 import domains.submission.application.input.*
 import domains.submission.application.output.*
+import domains.submission.http.codec.SubmissionModelHttpCodecs.given
+import domains.user.http.codec.UserModelHttpCodecs.given
 import shared.model.PageRequest
+import shared.http.codec.SharedHttpCodecs
+import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.syntax.*
@@ -11,6 +16,9 @@ import java.time.Instant
 import scala.util.Try
 
 object SubmissionHttpCodecs:
+  export SubmissionModelHttpCodecs.given
+  export SharedHttpCodecs.given
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)

@@ -2,8 +2,6 @@ package shared.upload
 
 
 
-import io.circe.{Decoder, Encoder}
-
 final case class StoredFilePath(value: String):
   def fileName: String =
     value.split('/').lastOption.getOrElse(value)
@@ -28,6 +26,3 @@ object StoredFilePath:
       else if segments.exists(_.length > 255) then
         Left("Each stored file path segment must be at most 255 characters.")
       else Right(StoredFilePath(segments.mkString(separator)))
-
-  given Encoder[StoredFilePath] = Encoder.encodeString.contramap(_.value)
-  given Decoder[StoredFilePath] = Decoder.decodeString.emap(parse)

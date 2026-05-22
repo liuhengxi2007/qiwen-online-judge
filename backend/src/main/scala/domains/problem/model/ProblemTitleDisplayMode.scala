@@ -2,8 +2,6 @@ package domains.problem.model
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum ProblemTitleDisplayMode:
   case Title
   case Slug
@@ -29,6 +27,3 @@ object ProblemTitleDisplayMode:
       case ProblemTitleDisplayMode.Title => "title"
       case ProblemTitleDisplayMode.Slug => "slug"
       case ProblemTitleDisplayMode.TitleWithSlug => "title_with_slug"
-
-  given Encoder[ProblemTitleDisplayMode] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[ProblemTitleDisplayMode] = Decoder.decodeString.emap(parse)
