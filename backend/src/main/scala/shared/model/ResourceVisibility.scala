@@ -1,7 +1,5 @@
 package shared.model
 
-
-
 enum ResourceVisibility:
   case Private
   case Group

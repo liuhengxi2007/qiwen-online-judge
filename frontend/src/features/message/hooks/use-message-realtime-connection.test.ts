@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { DisplayName, Username } from '@/features/user/model/UserValues'
-import type { EmailAddress } from '@/features/auth/model/AuthValues'
+import type { DisplayName } from '@/features/user/model/DisplayName'
+import type { Username } from '@/features/user/model/Username'
+import type { EmailAddress } from '@/features/auth/model/EmailAddress'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 
 class MockEventSource {

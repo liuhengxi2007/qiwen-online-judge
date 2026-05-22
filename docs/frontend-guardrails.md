@@ -226,12 +226,13 @@ The mapping must be simple enough that a script can derive one side from the oth
 Prefer:
 
 - `ProblemSummary.scala` and `ProblemSummary.ts`
-- `SubmissionLifecycle.scala` and `SubmissionLifecycle.ts`
+- `SubmissionJudgeState.scala` and `SubmissionJudgeState.ts`
 - `AccessPolicy.scala` and `AccessPolicy.ts`
 
 Avoid:
 
 - `Problem.scala` on one side and `ProblemTypes.ts` on the other
+- one `model/` file defining multiple top-level model types
 - one side using `ProblemListItem` while the other uses `ProblemSummary`
 - one mirrored type file quietly becoming a feature-level dumping ground for unrelated helpers
 

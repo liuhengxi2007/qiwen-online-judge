@@ -8,9 +8,3 @@ export type SubmissionJudgeState = {
   startedAt: string | null
   finishedAt: string | null
 }
-
-export type SubmissionJudgeCompletion = {
-  status: SubmissionStatus
-  verdict: SubmissionVerdict | null
-  judgeMessage: string | null
-}

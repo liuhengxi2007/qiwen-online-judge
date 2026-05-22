@@ -1,6 +1,5 @@
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
-
-export type ProblemDataTreeNodeKind = 'file' | 'directory'
+import type { ProblemDataTreeNodeKind } from '@/features/problem/model/ProblemDataTreeNodeKind'
 
 export type ProblemDataTreeNode = {
   path: ProblemDataPath

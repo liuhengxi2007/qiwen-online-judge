@@ -1,5 +1,6 @@
-export type { PageRequest, PageResponse } from '@/shared/model/Pagination'
-import type { PageRequest } from '@/shared/model/Pagination'
+export type { PageRequest } from '@/shared/model/PageRequest'
+export type { PageResponse } from '@/shared/model/PageResponse'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 20

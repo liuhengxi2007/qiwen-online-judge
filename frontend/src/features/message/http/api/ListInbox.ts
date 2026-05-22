@@ -1,7 +1,7 @@
 import type { MessageInboxResponse } from '@/features/message/domain/message'
 import { fromMessageInboxResponse } from '@/features/message/http/codec'
 import { requestJson } from '@/shared/api/http-client'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export function listInbox(pageRequest?: PageRequest): Promise<MessageInboxResponse> {
   const url = new URL('/api/messages/inbox', window.location.origin)

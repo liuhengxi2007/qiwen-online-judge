@@ -2,7 +2,8 @@ import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTi
 import type { UserContribution } from '@/features/user/model/UserContribution'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
-import type { DisplayName, Username } from '@/features/user/model/UserValues'
+import type { DisplayName } from '@/features/user/model/DisplayName'
+import type { Username } from '@/features/user/model/Username'
 import type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
 import type { ParseResult } from '@/shared/domain/parsing'
 

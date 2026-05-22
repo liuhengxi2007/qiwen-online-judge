@@ -1,4 +1,5 @@
-import type { EmailAddress, PlaintextPassword } from '@/features/auth/model/AuthValues'
+import type { EmailAddress } from '@/features/auth/model/EmailAddress'
+import type { PlaintextPassword } from '@/features/auth/model/PlaintextPassword'
 
 export type UpdateManagedUserAccountRequest = {
   email: EmailAddress

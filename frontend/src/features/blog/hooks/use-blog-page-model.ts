@@ -11,7 +11,7 @@ import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import type { Username } from '@/features/user/domain/user'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import { useI18n } from '@/shared/i18n/use-i18n'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 type UseBlogPageModelArgs = {
   authorUsernameFilter?: Username

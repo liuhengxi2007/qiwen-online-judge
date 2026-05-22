@@ -1,5 +1,5 @@
 import type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export type UserListRequest = {
   query: UserSearchQuery | null

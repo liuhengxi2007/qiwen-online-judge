@@ -1,4 +1,4 @@
-import type { Username } from '@/features/user/model/UserValues'
+import type { Username } from '@/features/user/model/Username'
 import type { UserGroupDescription } from '@/features/usergroup/model/UserGroupDescription'
 import type { UserGroupId } from '@/features/usergroup/model/UserGroupId'
 import type { UserGroupMember } from '@/features/usergroup/model/UserGroupMember'

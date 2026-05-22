@@ -10,5 +10,3 @@ object Username:
 
   def canonical(raw: String): Username =
     new Username(normalize(raw))
-
-final case class DisplayName(value: String)

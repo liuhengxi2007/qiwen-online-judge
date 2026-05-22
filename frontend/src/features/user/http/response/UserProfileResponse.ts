@@ -1,4 +1,5 @@
-import type { DisplayName, Username } from '@/features/user/model/UserValues'
+import type { DisplayName } from '@/features/user/model/DisplayName'
+import type { Username } from '@/features/user/model/Username'
 import type { UserAcceptedProblem } from '@/features/user/model/UserAcceptedProblem'
 import type { UserContribution } from '@/features/user/model/UserContribution'
 

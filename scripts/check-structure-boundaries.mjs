@@ -50,6 +50,11 @@ function lineNumber(source, index) {
   return source.slice(0, index).split('\n').length
 }
 
+function basenameWithoutExtension(filePath) {
+  const basename = filePath.split('/').at(-1) ?? filePath
+  return basename.replace(/\.[^.]+$/, '')
+}
+
 function resolveFrontendSpecifier(filePath, specifier) {
   if (specifier.startsWith('@/')) {
     return `frontend/src/${specifier.slice(2)}`
@@ -114,6 +119,50 @@ function checkBackendApplicationBoundaryFile(filePath, errors) {
   }
 }
 
+function extractFrontendTopLevelModelTypes(source) {
+  const cleanSource = source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|\s)\/\/.*$/gm, '')
+
+  return [...cleanSource.matchAll(/^export\s+(?:type|interface)\s+([A-Za-z_$][\w$]*)/gm)].map(
+    (match) => match[1],
+  )
+}
+
+function extractBackendTopLevelModelTypes(source) {
+  const cleanSource = source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|\s)\/\/.*$/gm, '')
+
+  return [
+    ...cleanSource.matchAll(/^(?:final\s+case\s+class|enum|sealed\s+trait|type)\s+([A-Za-z_$][\w$]*)/gm),
+  ].map((match) => match[1])
+}
+
+function checkOneTopLevelModelType(filePath, types, errors) {
+  if (types.length === 0) {
+    return
+  }
+
+  if (types.length > 1) {
+    errors.push(`${filePath} defines multiple top-level model types: ${types.join(', ')}`)
+    return
+  }
+
+  const expectedName = basenameWithoutExtension(filePath)
+  if (types[0] !== expectedName) {
+    errors.push(`${filePath} defines ${types[0]}, but model file basename must match the type name`)
+  }
+}
+
+function checkFrontendModelFileShape(filePath, errors) {
+  checkOneTopLevelModelType(filePath, extractFrontendTopLevelModelTypes(read(filePath)), errors)
+}
+
+function checkBackendModelFileShape(filePath, errors) {
+  checkOneTopLevelModelType(filePath, extractBackendTopLevelModelTypes(read(filePath)), errors)
+}
+
 function trackedFiles() {
   const result = spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
   if (result.status !== 0 || !result.stdout) {
@@ -155,6 +204,7 @@ function run() {
   for (const filePath of walk('frontend/src/features', new Set(['.ts', '.tsx']))) {
     if (/^frontend\/src\/features\/[^/]+\/model\//.test(filePath)) {
       checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
+      checkFrontendModelFileShape(filePath, errors)
     }
 
     if (/^frontend\/src\/features\/[^/]+\/domain\//.test(filePath)) {
@@ -164,11 +214,13 @@ function run() {
 
   for (const filePath of walk('frontend/src/shared/model', new Set(['.ts', '.tsx']))) {
     checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
+    checkFrontendModelFileShape(filePath, errors)
   }
 
   for (const filePath of walk('backend/src/main/scala/domains', new Set(['.scala']))) {
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/model\//.test(filePath)) {
       checkBackendModelFile(filePath, errors)
+      checkBackendModelFileShape(filePath, errors)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
@@ -178,6 +230,7 @@ function run() {
 
   for (const filePath of walk('backend/src/main/scala/shared/model', new Set(['.scala']))) {
     checkBackendModelFile(filePath, errors)
+    checkBackendModelFileShape(filePath, errors)
   }
 
   checkTrackedResidues(errors)

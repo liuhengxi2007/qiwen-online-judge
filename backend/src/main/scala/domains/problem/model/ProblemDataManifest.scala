@@ -1,13 +1,5 @@
 package domains.problem.model
 
-
-
-final case class ProblemDataManifestEntry(
-  path: ProblemDataPath,
-  sizeBytes: Long,
-  sha256: String
-)
-
 final case class ProblemDataManifest(
   problemSlug: ProblemSlug,
   entries: List[ProblemDataManifestEntry],

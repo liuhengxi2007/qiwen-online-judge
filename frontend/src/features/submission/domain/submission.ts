@@ -21,7 +21,9 @@ export {
   submissionVerdictLabel,
 } from '@/features/submission/domain/submission-parsers'
 export type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
-export type { JudgeResult, JudgeSubtaskResult, JudgeTestcaseResult } from '@/features/submission/model/JudgeResult'
+export type { JudgeResult } from '@/features/submission/model/JudgeResult'
+export type { JudgeSubtaskResult } from '@/features/submission/model/JudgeSubtaskResult'
+export type { JudgeTestcaseResult } from '@/features/submission/model/JudgeTestcaseResult'
 export type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
 export type { SubmissionId } from '@/features/submission/model/SubmissionId'
 export type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'

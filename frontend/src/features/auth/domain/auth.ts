@@ -15,7 +15,8 @@ export {
   isSiteManagerSession,
   toAuthSession,
 } from '@/features/auth/domain/auth-session'
-export type { EmailAddress, PlaintextPassword } from '@/features/auth/model/AuthValues'
+export type { EmailAddress } from '@/features/auth/model/EmailAddress'
+export type { PlaintextPassword } from '@/features/auth/model/PlaintextPassword'
 export type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
 export type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
 export type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'

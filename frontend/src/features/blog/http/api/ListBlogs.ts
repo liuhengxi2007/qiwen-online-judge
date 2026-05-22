@@ -2,7 +2,7 @@ import type { BlogListResponse } from '@/features/blog/domain/blog'
 import { usernameValue, type Username } from '@/features/user/domain/user'
 import { fromBlogListResponseContract } from '@/features/blog/http/codec'
 import { requestJson } from '@/shared/api/http-client'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export async function listBlogs(authorUsername?: Username | null, pageRequest?: PageRequest): Promise<BlogListResponse> {
   const url = new URL('/api/blogs', window.location.origin)

@@ -3,7 +3,7 @@ import type { SubmissionSort } from '@/features/submission/http/request/Submissi
 import type { SubmissionSortDirection } from '@/features/submission/http/request/SubmissionSortDirection'
 import type { SubmissionUserQuery } from '@/features/submission/http/request/SubmissionUserQuery'
 import type { SubmissionVerdictFilter } from '@/features/submission/http/request/SubmissionVerdictFilter'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export type SubmissionListRequest = {
   userQuery: SubmissionUserQuery | null

@@ -4,7 +4,7 @@ import { getNotificationUnreadCount, listNotifications } from '@/features/notifi
 import type { NotificationId, NotificationSummary } from '@/features/notification/domain/notification'
 import { notificationIdValue } from '@/features/notification/domain/notification'
 import { HttpClientError } from '@/shared/api/http-client'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 type NotificationStoreState = {
   notifications: NotificationSummary[]

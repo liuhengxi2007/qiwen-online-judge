@@ -4,7 +4,7 @@ import type { Username } from '@/features/user/domain/user'
 import { listBlogs, listProblemBlogs } from '@/features/blog/http/api/blog-client'
 import type { BlogSummary } from '@/features/blog/domain/blog'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null, pageRequest: PageRequest) {
   const page = pageRequest.page

@@ -6,7 +6,7 @@ import {
   reduceUserGroupPageState,
 } from '@/features/usergroup/domain/usergroup-page-state'
 import { translateMessage } from '@/shared/i18n/messages'
-import type { PageRequest } from '@/shared/model/Pagination'
+import type { PageRequest } from '@/shared/model/PageRequest'
 
 export function useUserGroupPageModel(pageRequest: PageRequest) {
   const page = pageRequest.page
