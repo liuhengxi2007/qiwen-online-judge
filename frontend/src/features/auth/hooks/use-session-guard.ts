@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { asSiteManagerSession } from '@/features/auth/domain/auth'
-import { AuthClientError, getSession, logout as logoutRequest } from '@/features/auth/api/auth-client'
+import { AuthClientError, getSession, logout as logoutRequest } from '@/features/auth/http/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import {
   toSessionExpiredRedirect,

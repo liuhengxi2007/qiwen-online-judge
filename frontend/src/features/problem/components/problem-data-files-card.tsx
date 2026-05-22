@@ -2,7 +2,7 @@ import { ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { problemDataPathDownloadUrl } from '@/features/problem/api/problem-client'
+import { problemDataPathDownloadUrl } from '@/features/problem/http/api/problem-client'
 import { problemDataPathValue, type ProblemSlug } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'

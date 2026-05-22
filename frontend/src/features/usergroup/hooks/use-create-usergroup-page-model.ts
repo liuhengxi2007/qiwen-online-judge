@@ -1,6 +1,6 @@
 import { useCallback, useReducer } from 'react'
 
-import { createUserGroup } from '@/features/usergroup/api/usergroup-client'
+import { createUserGroup } from '@/features/usergroup/http/api/usergroup-client'
 import type { UserGroupDetail } from '@/features/usergroup/domain/usergroup'
 import {
   initialCreateUserGroupPageState,

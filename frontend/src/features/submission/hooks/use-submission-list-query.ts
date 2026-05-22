@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { getSubmission, listSubmissions } from '@/features/submission/api/submission-client'
+import { getSubmission, listSubmissions } from '@/features/submission/http/api/submission-client'
 import {
   isTerminalSubmissionStatus,
   type SubmissionListRequest,

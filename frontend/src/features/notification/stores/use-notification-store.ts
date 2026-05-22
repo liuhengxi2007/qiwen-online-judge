@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import { getNotificationUnreadCount, listNotifications } from '@/features/notification/api/notification-client'
+import { getNotificationUnreadCount, listNotifications } from '@/features/notification/http/api/notification-client'
 import type { NotificationId, NotificationSummary } from '@/features/notification/domain/notification'
 import { notificationIdValue } from '@/features/notification/domain/notification'
 import { HttpClientError } from '@/shared/api/http-client'

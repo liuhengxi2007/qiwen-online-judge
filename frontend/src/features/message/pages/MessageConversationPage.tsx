@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea'
 import { parseUsername, usernameValue } from '@/features/auth/domain/auth'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { createConversation, getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/api/message-client'
+import { createConversation, getConversationHistory, markConversationRead, sendDirectMessage } from '@/features/message/http/api/message-client'
 import type { MessageConversationId, MessageHistoryResponse } from '@/features/message/domain/message'
 import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/domain/message'
 import { messageStreamEventName, type MessageStreamEventDetail } from '@/features/message/hooks/use-message-realtime-connection'

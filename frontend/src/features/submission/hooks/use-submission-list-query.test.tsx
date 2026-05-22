@@ -9,7 +9,7 @@ const submissionClient = vi.hoisted(() => ({
   listSubmissions: vi.fn(),
 }))
 
-vi.mock('@/features/submission/api/submission-client', () => submissionClient)
+vi.mock('@/features/submission/http/api/submission-client', () => submissionClient)
 
 function emptyResponseFor(request: SubmissionListRequest): SubmissionListResponse {
   return {

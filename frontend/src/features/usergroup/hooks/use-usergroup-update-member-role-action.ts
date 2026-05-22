@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { updateUserGroupMemberRole } from '@/features/usergroup/api/usergroup-client'
+import { updateUserGroupMemberRole } from '@/features/usergroup/http/api/usergroup-client'
 import type { UserGroupDetail, UserGroupRole, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import type { Username } from '@/features/auth/domain/auth'
 import { HttpClientError } from '@/shared/api/http-client'

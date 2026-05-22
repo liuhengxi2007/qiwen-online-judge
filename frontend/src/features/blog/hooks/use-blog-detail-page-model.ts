@@ -9,7 +9,7 @@ import {
   updateBlogComment,
   voteBlog,
   voteBlogComment,
-} from '@/features/blog/api/blog-client'
+} from '@/features/blog/http/api/blog-client'
 import {
   blogCommentContentValue,
   parseBlogCommentContent,

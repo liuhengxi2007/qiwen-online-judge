@@ -5,7 +5,7 @@ import {
   linkBlogToProblem,
   listPendingProblemBlogs,
   unlinkBlogFromProblem,
-} from '@/features/blog/api/blog-client'
+} from '@/features/blog/http/api/blog-client'
 import { blogIdValue, parseBlogId, type BlogId, type BlogSummary } from '@/features/blog/domain/blog'
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import type { Username } from '@/features/auth/domain/auth'

@@ -6,6 +6,12 @@ Use this command to verify that backend HTTP-facing Scala models have not drifte
 node scripts/check-contract-alignment.mjs
 ```
 
+Use this command to verify that frontend and backend endpoint API file basenames stay aligned.
+
+```bash
+node scripts/check-api-alignment.mjs
+```
+
 Current checks cover:
 
 - shared transport models
@@ -28,3 +34,5 @@ The check is intentionally structural:
 It does not replace runtime tests or schema generation.
 
 It is a low-cost drift detector for normal repository changes.
+
+The API alignment check compares `frontend/src/features/*/http/api/*.ts` with `backend/src/main/scala/domains/*/http/api/*.scala`, ignoring frontend `*-client.ts` barrels and explicit backend-only domains such as judge integration endpoints.

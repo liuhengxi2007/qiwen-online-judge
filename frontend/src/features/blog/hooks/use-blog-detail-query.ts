@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { getBlog } from '@/features/blog/api/blog-client'
+import { getBlog } from '@/features/blog/http/api/blog-client'
 import type { BlogDetail, BlogId } from '@/features/blog/domain/blog'
 
 export function useBlogDetailQuery(blogId: BlogId | null) {

@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Bell, LogOut, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { logout as logoutRequest } from '@/features/auth/api/auth-client'
+import { logout as logoutRequest } from '@/features/auth/http/api/auth-client'
 import { usernameValue } from '@/features/auth/domain/auth'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { useMessageStore } from '@/features/message/stores/use-message-store'

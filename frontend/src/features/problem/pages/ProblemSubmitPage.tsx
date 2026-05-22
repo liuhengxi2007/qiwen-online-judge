@@ -11,7 +11,7 @@ import {
   type ProblemSlug,
 } from '@/features/problem/domain/problem'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
-import { createSubmission } from '@/features/submission/api/submission-client'
+import { createSubmission } from '@/features/submission/http/api/submission-client'
 import {
   type SubmissionLanguage,
   parseSubmissionSourceCode,

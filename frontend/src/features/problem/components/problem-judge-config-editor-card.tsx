@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   readProblemDataText,
   saveProblemDataText,
-} from '@/features/problem/api/problem-client'
+} from '@/features/problem/http/api/problem-client'
 import {
   judgeConfigPath,
   judgeConfigTemplate,

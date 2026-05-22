@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Username } from '@/features/auth/domain/auth'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
-import { UserClientError, getUserProfile } from '@/features/user/api/user-client'
+import { UserClientError, getUserProfile } from '@/features/user/http/api/user-client'
 import type { UserProfileResponse } from '@/features/user/domain/user'
 import { translateMessage } from '@/shared/i18n/messages'
 

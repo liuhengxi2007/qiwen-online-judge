@@ -9,7 +9,7 @@ import {
   setProblemDataReady,
   uploadProblemDataArchive,
   uploadProblemDataFile,
-} from '@/features/problem/api/problem-client'
+} from '@/features/problem/http/api/problem-client'
 import {
   parseProblemDataFilename,
   problemDataPathValue,

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
-import { deleteProblem } from '@/features/problem/api/problem-client'
+import { deleteProblem } from '@/features/problem/http/api/problem-client'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 
 export function useProblemDeleteAction(problemSlug: ProblemSlug) {

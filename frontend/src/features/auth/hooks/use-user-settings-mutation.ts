@@ -5,7 +5,7 @@ import {
   type SessionResponse,
   type Username,
 } from '@/features/auth/domain/auth'
-import { logout } from '@/features/auth/api/auth-client'
+import { logout } from '@/features/auth/http/api/auth-client'
 import {
   UserClientError,
   updateManagedUserAccount,
@@ -14,7 +14,7 @@ import {
   updateOwnUserAccount,
   updateOwnUserPreferences,
   updateOwnUserProfile,
-} from '@/features/user/api/user-client'
+} from '@/features/user/http/api/user-client'
 import type {
   UpdateManagedUserAccountRequest,
   UpdateManagedUserPreferencesRequest,

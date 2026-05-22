@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import { getUserGroup } from '@/features/usergroup/api/usergroup-client'
+import { getUserGroup } from '@/features/usergroup/http/api/usergroup-client'
 import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
 import {
   initialUserGroupDetailQueryState,

@@ -1,7 +1,7 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { listProblemSuggestions } from '@/features/problem/api/problem-client'
+import { listProblemSuggestions } from '@/features/problem/http/api/problem-client'
 import type { ProblemSuggestion } from '@/features/problem/domain/problem'
 import {
   formatProblemTitleDisplay,
@@ -10,7 +10,7 @@ import {
   type ProblemSlug,
   useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
-import { listUserSuggestions } from '@/features/user/api/user-client'
+import { listUserSuggestions } from '@/features/user/http/api/user-client'
 import type { UserIdentity } from '@/features/user/domain/user'
 import {
   formatCodeLength,

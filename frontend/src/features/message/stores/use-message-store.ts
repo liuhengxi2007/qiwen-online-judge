@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import { listInbox } from '@/features/message/api/message-client'
+import { listInbox } from '@/features/message/http/api/message-client'
 import type { MessageConversationSummary } from '@/features/message/domain/message'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'

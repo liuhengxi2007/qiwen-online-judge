@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { listProblems } from '@/features/problem/api/problem-client'
+import { listProblems } from '@/features/problem/http/api/problem-client'
 import type { ProblemListRequest, ProblemListResponse } from '@/features/problem/domain/problem'
 import { translateMessage } from '@/shared/i18n/messages'
 

@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import { getSubmission } from '@/features/submission/api/submission-client'
+import { getSubmission } from '@/features/submission/http/api/submission-client'
 import { isTerminalSubmissionStatus, type SubmissionDetail, type SubmissionId } from '@/features/submission/domain/submission'
 import { HttpClientError } from '@/shared/api/http-client'
 

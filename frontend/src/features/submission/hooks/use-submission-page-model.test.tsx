@@ -27,11 +27,11 @@ vi.mock('@/features/submission/hooks/use-submission-list-query', () => ({
   useSubmissionListQuery: (request: SubmissionListRequest) => queryState.implementation(request),
 }))
 
-vi.mock('@/features/problem/api/problem-client', () => ({
+vi.mock('@/features/problem/http/api/problem-client', () => ({
   listProblemSuggestions: vi.fn(),
 }))
 
-vi.mock('@/features/user/api/user-client', () => ({
+vi.mock('@/features/user/http/api/user-client', () => ({
   listUserSuggestions: vi.fn(),
 }))
 

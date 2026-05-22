@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
-import { createProblem } from '@/features/problem/api/problem-client'
+import { createProblem } from '@/features/problem/http/api/problem-client'
 import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,

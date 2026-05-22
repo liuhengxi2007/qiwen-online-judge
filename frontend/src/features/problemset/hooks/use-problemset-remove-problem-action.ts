@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
-import { removeProblemFromProblemSet } from '@/features/problemset/api/problemset-client'
+import { removeProblemFromProblemSet } from '@/features/problemset/http/api/problemset-client'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
 import { useI18n } from '@/shared/i18n/use-i18n'

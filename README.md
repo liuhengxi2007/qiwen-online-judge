@@ -91,18 +91,20 @@ Run these before committing related changes:
 
 ```bash
 node scripts/check-contract-alignment.mjs
+node scripts/check-api-alignment.mjs
 npm --prefix frontend run typecheck
 cd backend && sbt compile
 ```
 
 Use the contract check whenever a file in `contracts/`, backend `model/`, or frontend `model/` changes.
+Use the API alignment check whenever frontend or backend endpoint files under `http/api` change.
 
 ## Current Development Direction
 
 The stable direction is to keep extending features by domain:
 
 - New backend domains should use `model`, `application`, `http`, and `table`.
-- New frontend domains should use `model`, `domain`, `api`, `hooks`, and `pages`.
+- New frontend domains should use `model`, `domain`, `http/api`, `hooks`, and `pages`.
 - New cross-process judge behavior should go through `judge-protocol-scala` or HTTP contracts, not backend internals.
 - New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).
 

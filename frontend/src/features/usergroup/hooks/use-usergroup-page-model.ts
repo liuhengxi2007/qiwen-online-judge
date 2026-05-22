@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import { listUserGroups } from '@/features/usergroup/api/usergroup-client'
+import { listUserGroups } from '@/features/usergroup/http/api/usergroup-client'
 import {
   initialUserGroupPageState,
   reduceUserGroupPageState,

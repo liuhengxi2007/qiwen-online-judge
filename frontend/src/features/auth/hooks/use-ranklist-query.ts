@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { listAcceptedRanklist, listContributionRanklist } from '@/features/user/api/user-client'
+import { listAcceptedRanklist, listContributionRanklist } from '@/features/user/http/api/user-client'
 import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user'
 import { translateMessage } from '@/shared/i18n/messages'
 

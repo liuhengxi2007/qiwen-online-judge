@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { toAuthSession, type RegisterRequest, type RegisterResponse } from '@/features/auth/domain/auth'
-import { register } from '@/features/auth/api/auth-client'
+import { register } from '@/features/auth/http/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 

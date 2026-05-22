@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { AuthClientError, listRegisteredJudgers } from '@/features/auth/api/auth-client'
-import { UserClientError, listUsers } from '@/features/user/api/user-client'
+import { AuthClientError, listRegisteredJudgers } from '@/features/auth/http/api/auth-client'
+import { UserClientError, listUsers } from '@/features/user/http/api/user-client'
 import type { AuthUserListItem, UserListRequest } from '@/features/user/domain/user'
 import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'

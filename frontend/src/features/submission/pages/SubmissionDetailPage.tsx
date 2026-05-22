@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { deleteSubmission, rejudgeSubmission } from '@/features/submission/api/submission-client'
+import { deleteSubmission, rejudgeSubmission } from '@/features/submission/http/api/submission-client'
 import {
   isTerminalSubmissionStatus,
   parseSubmissionId,

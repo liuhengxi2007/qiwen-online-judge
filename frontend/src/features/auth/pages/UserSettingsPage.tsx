@@ -14,11 +14,11 @@ import { UserPermissionsCard } from '@/features/auth/components/user-permissions
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
 import { displayNameValue, usernameValue, type UserIdentity } from '@/features/auth/domain/auth'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
-import { addMessageBlock, listMessageBlocks, removeMessageBlock } from '@/features/message/api/message-client'
+import { addMessageBlock, listMessageBlocks, removeMessageBlock } from '@/features/message/http/api/message-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useUserSettingsModel } from '@/features/auth/hooks/use-user-settings-model'
-import { listUserSuggestions } from '@/features/user/api/user-client'
+import { listUserSuggestions } from '@/features/user/http/api/user-client'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
