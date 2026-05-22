@@ -6,8 +6,8 @@ import cats.effect.IO
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.shared.model.{PageRequest, PageResponse}
-import domains.shared.sql.LikePatternSql
+import shared.model.{PageRequest, PageResponse}
+import shared.sql.LikePatternSql
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
 import domains.user.application.input.{UserListRequest}

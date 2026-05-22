@@ -5,7 +5,7 @@ import domains.blog.http.response.BlogHttpResponses
 
 
 import domains.notification.application.NotificationEventHub
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object BlogHttpPlanDefinitions:
 

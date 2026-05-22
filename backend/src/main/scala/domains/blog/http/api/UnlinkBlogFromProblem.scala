@@ -12,8 +12,8 @@ import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.NotificationEventHub
 import domains.problem.model.ProblemSlug
-import domains.shared.http.AuthenticatedHttpExecutor
-import domains.shared.model.PageRequest
+import shared.http.AuthenticatedHttpExecutor
+import shared.model.PageRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -29,9 +29,9 @@ object UnlinkBlogFromProblem:
       case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId / "delete" =>
         (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
           case (Left(message), _) =>
-            domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case (_, Left(message)) =>
-            domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case (Right(problemSlug), Right(blogId)) =>
             handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.unlinkBlogFromProblem)
     }

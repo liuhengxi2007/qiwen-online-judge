@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.blog.table.BlogTable
-import domains.shared.model.{PageRequest, PageResponse}
+import shared.model.{PageRequest, PageResponse}
 import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
 import domains.user.model.{UserContribution, UserIdentity, UserSearchQuery}
 import domains.user.application.input.{UserListRequest}

@@ -2,7 +2,7 @@ package domains.submission.application.input
 
 import domains.submission.model.*
 
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.syntax.*
 

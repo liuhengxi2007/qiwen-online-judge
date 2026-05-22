@@ -6,8 +6,8 @@ import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
 import domains.problemset.model.{ProblemSet}
 import domains.problemset.application.output.{ProblemSetDetail}
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -18,9 +18,9 @@ object ProblemSetHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.problemSetNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+    shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def listProblemSetsResponse(response: domains.shared.model.PageResponse[domains.problemset.application.output.ProblemSetSummary]): IO[Response[IO]] =
+  def listProblemSetsResponse(response: shared.model.PageResponse[domains.problemset.application.output.ProblemSetSummary]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =

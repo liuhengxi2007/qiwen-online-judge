@@ -4,7 +4,7 @@ package domains.user.table.utils
 
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
-import domains.shared.sql.LikePatternSql
+import shared.sql.LikePatternSql
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
 import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
 

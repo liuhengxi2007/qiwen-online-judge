@@ -2,7 +2,7 @@ package domains.blog.table
 
 
 
-import domains.shared.sql.UserIdentitySql
+import shared.sql.UserIdentitySql
 
 object BlogTableSql:
 

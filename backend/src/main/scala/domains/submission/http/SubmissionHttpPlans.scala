@@ -5,7 +5,7 @@ package domains.submission.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.submission.application.SubmissionCommands
 import domains.submission.application.input.{CreateSubmissionRequest, SubmissionListRequest}
 import domains.submission.model.{SubmissionId}

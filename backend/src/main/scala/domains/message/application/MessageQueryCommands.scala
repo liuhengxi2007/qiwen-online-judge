@@ -9,7 +9,7 @@ import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
 import domains.message.model.{MessageConversationId, MessageId}
 import domains.message.application.output.{MessageHistoryResponse, MessageInboxResponse}
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 
 object MessageQueryCommands:
   private val defaultHistoryLimit = 50

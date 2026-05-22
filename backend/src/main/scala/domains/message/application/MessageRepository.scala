@@ -6,7 +6,7 @@ import cats.effect.IO
 import domains.auth.model.Username
 import domains.message.application.output.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 
 import java.sql.Connection
 

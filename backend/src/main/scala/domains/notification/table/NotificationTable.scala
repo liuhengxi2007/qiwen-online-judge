@@ -8,7 +8,7 @@ import domains.notification.model.{NotificationId, NotificationKind, Notificatio
 import domains.notification.application.output.{NotificationListResponse, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*
 import domains.notification.table.utils.NotificationTableSupport.readNotificationSummary
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

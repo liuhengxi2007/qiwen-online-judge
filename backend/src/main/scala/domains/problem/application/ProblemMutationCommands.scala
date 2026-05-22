@@ -11,7 +11,7 @@ import domains.problem.table.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
-import domains.shared.access.{ResourceId, ResourceKind}
+import shared.access.{ResourceId, ResourceKind}
 
 import java.time.Instant
 import java.util.UUID

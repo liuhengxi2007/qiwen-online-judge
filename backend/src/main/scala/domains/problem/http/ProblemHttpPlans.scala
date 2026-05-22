@@ -9,7 +9,7 @@ import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSearchQuery, ProblemSlug}
 import domains.problem.application.output.{ProblemSuggestion}
-import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import io.circe.syntax.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -30,7 +30,7 @@ object ProblemHttpPlans:
     authorization: ProblemCommands.AuthorizeProblemDataDownloadResult
   )
 
-  case object ListProblems extends PlainAuthenticatedHttpPlan[ProblemListRequest, domains.shared.model.PageResponse[domains.problem.application.output.ProblemSummary]]:
+  case object ListProblems extends PlainAuthenticatedHttpPlan[ProblemListRequest, shared.model.PageResponse[domains.problem.application.output.ProblemSummary]]:
 
     override val name: String = "ListProblems"
 
@@ -38,7 +38,7 @@ object ProblemHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: ProblemListRequest
-    ): IO[domains.shared.model.PageResponse[domains.problem.application.output.ProblemSummary]] =
+    ): IO[shared.model.PageResponse[domains.problem.application.output.ProblemSummary]] =
       ProblemCommands.listProblems(databaseSession, actor, input)
 
   case object CreateProblem extends TransactionAuthenticatedHttpPlan[CreateProblemRequest, ProblemCommands.CreateProblemResult]:

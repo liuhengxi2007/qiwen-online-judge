@@ -14,8 +14,8 @@ import domains.message.application.MessageCommandResults.{AddBlockResult, Create
 import domains.message.application.{MessageEventHub, MessageStreamEvent}
 import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
 import domains.message.model.{MessageConversationId, MessageId}
-import domains.shared.http.AuthenticatedHttpExecutor
-import domains.shared.model.PageRequest
+import shared.http.AuthenticatedHttpExecutor
+import shared.model.PageRequest
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*

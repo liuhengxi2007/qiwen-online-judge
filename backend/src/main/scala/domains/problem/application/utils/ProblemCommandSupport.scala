@@ -11,7 +11,7 @@ import domains.problem.application.output.{ProblemDetail}
 import domains.problem.table.ProblemTable
 import domains.problemset.model.{ProblemSet, ProblemSetSlug}
 import domains.problemset.table.ProblemSetTable
-import domains.shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
+import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
 import domains.usergroup.table.UserGroupTable
 
 object ProblemCommandSupport:

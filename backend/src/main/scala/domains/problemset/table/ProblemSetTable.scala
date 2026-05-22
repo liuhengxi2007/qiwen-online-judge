@@ -10,9 +10,9 @@ import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.{ProblemSetProblemSummary, ProblemSetSummary}
-import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
+import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
-import domains.shared.model.PageResponse
+import shared.model.PageResponse
 import domains.problemset.table.ProblemSetTableSchema.*
 import domains.problemset.table.ProblemSetTableSql.*
 import domains.problemset.table.utils.ProblemSetTableSupport.*

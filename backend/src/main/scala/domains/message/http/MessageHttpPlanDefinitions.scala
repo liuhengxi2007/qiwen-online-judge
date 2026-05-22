@@ -5,13 +5,13 @@ import domains.message.http.response.MessageHttpResponses
 
 
 import domains.message.application.MessageEventHub
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object MessageHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listInbox: Plain[domains.shared.model.PageRequest, domains.message.application.output.MessageInboxResponse],
+    listInbox: Plain[shared.model.PageRequest, domains.message.application.output.MessageInboxResponse],
     getConversationHistory: Plain[MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
     createConversation: WithTransaction[domains.message.application.input.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
     sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.application.input.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],

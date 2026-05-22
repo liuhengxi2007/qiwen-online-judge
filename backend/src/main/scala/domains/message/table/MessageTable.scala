@@ -9,7 +9,7 @@ import domains.message.model.{ConversationReadReceipt, MessageContent, MessageCo
 import domains.message.table.MessageTableSchema.initialize
 import domains.message.table.MessageTableSql.*
 import domains.message.table.utils.MessageTableSupport.*
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

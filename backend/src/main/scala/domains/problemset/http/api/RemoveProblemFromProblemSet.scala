@@ -12,7 +12,7 @@ import domains.problemset.application.ProblemSetCommands
 import domains.problem.model.ProblemSlug
 import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
-import domains.shared.http.AuthenticatedHttpExecutor
+import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -34,8 +34,8 @@ object RemoveProblemFromProblemSet:
             handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
     }
 
-  private def parsePageRequest(queryParams: Map[String, String]): domains.shared.model.PageRequest =
-    domains.shared.model.PageRequest(
+  private def parsePageRequest(queryParams: Map[String, String]): shared.model.PageRequest =
+    shared.model.PageRequest(
       page = parsePositiveInt(queryParams.get("page"), 1),
       pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
     )

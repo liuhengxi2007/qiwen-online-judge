@@ -8,8 +8,8 @@ import domains.problem.application.ProblemDataStorage
 import domains.problem.application.ProblemDataStorage.*
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import fs2.Stream
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -23,10 +23,10 @@ object ProblemHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.problemNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+    shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def listProblemsResponse(
-    response: domains.shared.model.PageResponse[domains.problem.application.output.ProblemSummary]
+    response: shared.model.PageResponse[domains.problem.application.output.ProblemSummary]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 

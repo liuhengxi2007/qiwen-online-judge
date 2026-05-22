@@ -2,7 +2,7 @@ package domains.problemset.application.input
 
 import domains.problemset.model.*
 
-import domains.shared.access.ResourceAccessPolicy
+import shared.access.ResourceAccessPolicy
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

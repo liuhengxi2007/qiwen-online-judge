@@ -1,6 +1,6 @@
 package database.utils
 
-import domains.shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy}
+import shared.access.{AccessSubject, BaseAccess, ResourceAccessGrant, ResourceAccessPolicy}
 
 object ResourceAccessTableSupport:
 

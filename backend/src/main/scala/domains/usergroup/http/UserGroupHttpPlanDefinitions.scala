@@ -4,7 +4,7 @@ import domains.usergroup.http.response.UserGroupHttpResponses
 
 
 
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object UserGroupHttpPlanDefinitions:
 

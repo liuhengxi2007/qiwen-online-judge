@@ -3,7 +3,7 @@ package domains.problem.application.output
 import domains.problem.model.*
 
 import domains.user.model.UserIdentity
-import domains.shared.access.ResourceAccessPolicy
+import shared.access.ResourceAccessPolicy
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

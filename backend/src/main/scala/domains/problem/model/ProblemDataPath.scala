@@ -2,7 +2,7 @@ package domains.problem.model
 
 
 
-import domains.shared.upload.StoredFilePath
+import shared.upload.StoredFilePath
 import io.circe.{Decoder, Encoder}
 
 final case class ProblemDataPath(value: String):

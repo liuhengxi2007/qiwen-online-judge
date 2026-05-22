@@ -9,9 +9,9 @@ import domains.auth.model.Username
 import domains.problem.application.input.{CreateProblemRequest, ProblemListRequest, UpdateProblemRequest}
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemId, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
-import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
+import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
-import domains.shared.model.PageResponse
+import shared.model.PageResponse
 import domains.problem.table.ProblemTableSchema.*
 import domains.problem.table.ProblemTableSql.*
 import domains.problem.table.utils.ProblemTableSupport.*

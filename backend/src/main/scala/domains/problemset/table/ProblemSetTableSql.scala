@@ -2,7 +2,7 @@ package domains.problemset.table
 
 
 
-import domains.shared.sql.UserIdentitySql
+import shared.sql.UserIdentitySql
 
 object ProblemSetTableSql:
 

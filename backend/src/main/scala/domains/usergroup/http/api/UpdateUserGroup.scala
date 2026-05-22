@@ -10,7 +10,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.auth.model.Username
-import domains.shared.http.AuthenticatedHttpExecutor
+import shared.http.AuthenticatedHttpExecutor
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import org.http4s.HttpRoutes
@@ -39,8 +39,8 @@ object UpdateUserGroup:
             )(updateRequest => (parsedGroupSlug, updateRequest))
     }
 
-  private def parsePageRequest(queryParams: Map[String, String]): domains.shared.model.PageRequest =
-    domains.shared.model.PageRequest(
+  private def parsePageRequest(queryParams: Map[String, String]): shared.model.PageRequest =
+    shared.model.PageRequest(
       page = parsePositiveInt(queryParams.get("page"), 1),
       pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
     )

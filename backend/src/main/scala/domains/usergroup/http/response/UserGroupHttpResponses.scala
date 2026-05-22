@@ -3,8 +3,8 @@ package domains.usergroup.http.response
 
 
 import cats.effect.IO
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.usergroup.application.UserGroupCommands
 import domains.usergroup.model.{UserGroup}
 import domains.usergroup.application.output.{UserGroupDetail}
@@ -18,9 +18,9 @@ object UserGroupHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.userGroupNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+    shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def listUserGroupsResponse(response: domains.shared.model.PageResponse[domains.usergroup.application.output.UserGroupSummary]): IO[Response[IO]] =
+  def listUserGroupsResponse(response: shared.model.PageResponse[domains.usergroup.application.output.UserGroupSummary]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =

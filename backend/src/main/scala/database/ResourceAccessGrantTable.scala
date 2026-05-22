@@ -2,7 +2,7 @@ package database
 
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
+import shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
 import domains.usergroup.model.UserGroupSlug
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}

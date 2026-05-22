@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.notification.application.output.{NotificationListResponse, NotificationUnreadCountResponse}
 import domains.notification.table.NotificationTable
-import domains.shared.model.PageRequest
+import shared.model.PageRequest
 
 object NotificationQueryCommands:
 

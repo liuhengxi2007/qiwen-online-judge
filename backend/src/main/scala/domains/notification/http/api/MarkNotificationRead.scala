@@ -9,8 +9,8 @@ import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.model.NotificationId
-import domains.shared.http.AuthenticatedHttpExecutor
-import domains.shared.model.PageRequest
+import shared.http.AuthenticatedHttpExecutor
+import shared.model.PageRequest
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -30,7 +30,7 @@ object MarkNotificationRead:
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "notifications" / rawNotificationId / "read" =>
         NotificationId.parse(rawNotificationId) match
-          case Left(message) => domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+          case Left(message) => shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case Right(notificationId) =>
             handlers.execute(
               request,

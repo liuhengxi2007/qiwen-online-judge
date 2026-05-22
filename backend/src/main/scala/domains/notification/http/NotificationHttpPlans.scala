@@ -7,8 +7,8 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.notification.model.NotificationId
-import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
-import domains.shared.model.PageRequest
+import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import shared.model.PageRequest
 
 import java.sql.Connection
 

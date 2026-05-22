@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.problem.model.{OthersSubmissionAccess}
 import domains.problem.application.output.{ProblemDetail}
 import domains.problem.table.ProblemTable
-import domains.shared.access.AccessPolicyEvaluator
+import shared.access.AccessPolicyEvaluator
 import domains.usergroup.table.UserGroupTable
 
 object SubmissionCommandSupport:

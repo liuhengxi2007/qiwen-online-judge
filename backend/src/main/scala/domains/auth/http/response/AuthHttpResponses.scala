@@ -7,8 +7,8 @@ import domains.auth.application.output.{LoginResponse, RegisterResponse, Session
 import domains.auth.http.AuthHttpPlans
 import domains.auth.model.{AuthUser, SessionToken}
 import domains.judger.application.output.RegisteredJudgerListItem
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.user.application.output.{AuthUserListItem}
 import domains.user.model.{UserPreferences}
 import io.circe.syntax.*
@@ -20,7 +20,7 @@ object AuthHttpResponses:
   private val sessionCookieName = "qiwen_session"
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+    shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def invalidCredentialsResponse: IO[Response[IO]] =
     errorResponse(Status.Unauthorized, ApiMessages.invalidCredentials)

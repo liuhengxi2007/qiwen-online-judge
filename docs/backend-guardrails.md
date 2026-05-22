@@ -10,7 +10,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - User profile, ranklist, settings, permission-management routes, and user-owned persistence/models
 - `src/main/scala/domains/system/health`
   - Health endpoint and response model
-- `src/main/scala/domains/shared`
+- `src/main/scala/shared`
   - Shared models used across domains, including pagination and lifecycle primitives
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
@@ -108,7 +108,7 @@ Avoid:
 
 ## Backend Shared Rules
 
-`domains/shared` should stay smaller than any real business domain.
+`shared` should stay smaller than any real business domain.
 
 Allow only:
 
@@ -147,7 +147,7 @@ Preferred structure for business CRUD domains:
   endpoint-level plan implementations
 - `*HttpPlanDefinitions.scala`
   registered plans plus `toResponse` mapping
-- shared executor in `domains/shared/http`
+- shared executor in `shared/http`
 - thin `*Router.scala`
   aggregator of `http/api/<Name>.scala` endpoint files
 

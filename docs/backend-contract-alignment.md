@@ -190,11 +190,11 @@ Required mappings:
   mirrors
   `frontend/src/features/<domain>/model/<Name>.ts`
 
-- `backend/src/main/scala/domains/shared/model/<Name>.scala`
+- `backend/src/main/scala/shared/model/<Name>.scala`
   mirrors
   `frontend/src/shared/model/<Name>.ts`
 
-- `backend/src/main/scala/domains/shared/access/<Name>.scala`
+- `backend/src/main/scala/shared/access/<Name>.scala`
   mirrors
   `frontend/src/shared/access/<Name>.ts`
   only when that access type is part of the shared frontend-backend contract surface
@@ -244,7 +244,7 @@ Good places:
 
 Bad places:
 
-- `domains/shared/*` as a dumping ground
+- `shared/*` as a dumping ground
 - `table/*` where persistence and transport get mixed
 - domain entities themselves
 

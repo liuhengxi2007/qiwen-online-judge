@@ -118,13 +118,13 @@ function run() {
   const contractUserGroup = read('contracts/usergroup.ts')
   const contractNotification = read('contracts/notification.ts')
 
-  const backendSharedError = read('backend/src/main/scala/domains/shared/http/response/ErrorResponse.scala')
-  const backendSharedSuccess = read('backend/src/main/scala/domains/shared/http/response/SuccessResponse.scala')
-  const backendSharedApiMessageParam = read('backend/src/main/scala/domains/shared/model/ApiMessageParam.scala')
-  const backendSharedPagination = read('backend/src/main/scala/domains/shared/model/Pagination.scala')
-  const backendSharedLifecycle = read('backend/src/main/scala/domains/shared/model/ResourceLifecycle.scala')
-  const backendSharedBaseAccess = read('backend/src/main/scala/domains/shared/access/BaseAccess.scala')
-  const backendSharedResourceAccessPolicy = read('backend/src/main/scala/domains/shared/access/ResourceAccessPolicy.scala')
+  const backendSharedError = read('backend/src/main/scala/shared/http/response/ErrorResponse.scala')
+  const backendSharedSuccess = read('backend/src/main/scala/shared/http/response/SuccessResponse.scala')
+  const backendSharedApiMessageParam = read('backend/src/main/scala/shared/model/ApiMessageParam.scala')
+  const backendSharedPagination = read('backend/src/main/scala/shared/model/Pagination.scala')
+  const backendSharedLifecycle = read('backend/src/main/scala/shared/model/ResourceLifecycle.scala')
+  const backendSharedBaseAccess = read('backend/src/main/scala/shared/access/BaseAccess.scala')
+  const backendSharedResourceAccessPolicy = read('backend/src/main/scala/shared/access/ResourceAccessPolicy.scala')
 
   const authFiles = {
     LoginRequest: read('backend/src/main/scala/domains/auth/application/input/LoginRequest.scala'),

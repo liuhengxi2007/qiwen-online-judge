@@ -13,8 +13,8 @@ import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSearchQuery, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
-import domains.shared.model.PageRequest
-import domains.shared.http.AuthenticatedHttpExecutor
+import shared.model.PageRequest
+import shared.http.AuthenticatedHttpExecutor
 import fs2.text
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*

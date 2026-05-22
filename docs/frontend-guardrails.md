@@ -198,12 +198,12 @@ Required path rules:
   `frontend/src/features/<domain>/model/<Name>.ts`
 
 - backend shared model:
-  `backend/src/main/scala/domains/shared/model/<Name>.scala`
+  `backend/src/main/scala/shared/model/<Name>.scala`
 - frontend shared model:
   `frontend/src/shared/model/<Name>.ts`
 
 - backend shared access:
-  `backend/src/main/scala/domains/shared/access/<Name>.scala`
+  `backend/src/main/scala/shared/access/<Name>.scala`
 - frontend shared access:
   `frontend/src/shared/access/<Name>.ts`
 

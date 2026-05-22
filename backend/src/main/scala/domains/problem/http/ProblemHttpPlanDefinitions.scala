@@ -5,14 +5,14 @@ import domains.problem.http.response.ProblemHttpResponses
 
 
 import domains.problem.application.ProblemDataStorage
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object ProblemHttpPlanDefinitions:
 
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listProblems: Plain[domains.problem.application.input.ProblemListRequest, domains.shared.model.PageResponse[domains.problem.application.output.ProblemSummary]],
+    listProblems: Plain[domains.problem.application.input.ProblemListRequest, shared.model.PageResponse[domains.problem.application.output.ProblemSummary]],
     listProblemSuggestions: Plain[domains.problem.model.ProblemSearchQuery, List[domains.problem.application.output.ProblemSuggestion]],
     createProblem: WithTransaction[domains.problem.application.input.CreateProblemRequest, domains.problem.application.ProblemCommands.CreateProblemResult],
     getProblem: Plain[domains.problem.model.ProblemSlug, domains.problem.application.ProblemCommands.GetProblemResult],

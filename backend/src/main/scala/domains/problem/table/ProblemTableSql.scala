@@ -2,7 +2,7 @@ package domains.problem.table
 
 
 
-import domains.shared.sql.UserIdentitySql
+import shared.sql.UserIdentitySql
 
 object ProblemTableSql:
   val suggestionLimit: Int = 5

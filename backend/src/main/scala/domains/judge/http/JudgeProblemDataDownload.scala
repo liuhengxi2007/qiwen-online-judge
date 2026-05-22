@@ -3,8 +3,8 @@ package domains.judge.http
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataPath, ProblemSlug}
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.errorResponse
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.errorResponse
 import fs2.Stream
 import org.http4s.{Header, Response, Status}
 import org.typelevel.ci.CIString

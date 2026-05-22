@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problemset.application.output.ProblemSetSummary
 import domains.problemset.table.ProblemSetTable
-import domains.shared.model.{PageRequest, PageResponse}
+import shared.model.{PageRequest, PageResponse}
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.utils.ProblemSetCommandSupport.*
 

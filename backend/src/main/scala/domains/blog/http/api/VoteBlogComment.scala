@@ -12,8 +12,8 @@ import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.NotificationEventHub
 import domains.problem.model.ProblemSlug
-import domains.shared.http.AuthenticatedHttpExecutor
-import domains.shared.model.PageRequest
+import shared.http.AuthenticatedHttpExecutor
+import shared.model.PageRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -29,9 +29,9 @@ object VoteBlogComment:
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "vote" =>
         (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
           case (Left(message), _) =>
-            domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case (_, Left(message)) =>
-            domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case (Right(blogId), Right(commentId)) =>
             handlers.executeDecoded[VoteBlogCommentRequest, BlogHttpPlans.VoteBlogCommentInput, BlogCommands.VoteBlogCommentResult](
               request,

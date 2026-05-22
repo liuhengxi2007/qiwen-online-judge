@@ -4,7 +4,7 @@ package domains.user.http
 
 import cats.effect.IO
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
-import domains.shared.model.{PageRequest, PageResponse}
+import shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserListRequest}

@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.auth.table.AuthUserTable
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
-import domains.shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
+import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
 import domains.usergroup.table.UserGroupTable
 
 object ProblemSetCommandSupport:

@@ -11,7 +11,7 @@ import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, Pro
 import domains.problem.application.input.{ProblemListRequest}
 import domains.problem.model.{ProblemSearchQuery}
 import domains.problem.table.ProblemTable
-import domains.shared.model.PageResponse
+import shared.model.PageResponse
 
 object ProblemQueryCommands:
   def listProblems(

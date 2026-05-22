@@ -4,7 +4,7 @@ import domains.problemset.http.response.ProblemSetHttpResponses
 
 
 
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object ProblemSetHttpPlanDefinitions:
 

@@ -7,10 +7,10 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.model.ProblemSlug
 import domains.problemset.application.ProblemSetCommands
-import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
+import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
-import domains.shared.model.{PageRequest, PageResponse}
+import shared.model.{PageRequest, PageResponse}
 
 import java.sql.Connection
 

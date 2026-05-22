@@ -4,8 +4,8 @@ package domains.blog.http.response
 
 import cats.effect.IO
 import domains.blog.application.BlogCommands
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Response, Status}

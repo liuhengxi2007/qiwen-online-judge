@@ -10,7 +10,7 @@ import domains.blog.application.output.{BlogCommentSummary, BlogDetail, BlogSumm
 import domains.blog.table.BlogTableSql.*
 import domains.blog.table.utils.BlogTableSupport.*
 import domains.problem.model.ProblemSlug
-import domains.shared.model.{PageRequest, PageResponse}
+import shared.model.{PageRequest, PageResponse}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

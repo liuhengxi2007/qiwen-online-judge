@@ -6,7 +6,7 @@ import cats.effect.IO
 import domains.auth.http.response.AuthHttpResponses
 import domains.auth.model.{AuthUser}
 import domains.auth.application.output.{SessionResponse}
-import domains.shared.model.PageResponse
+import shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
@@ -116,4 +116,4 @@ object UserHttpResponses:
       case UserMutationCommands.DeleteUserResult.HasOwnedResources =>
         userOwnsResourcesResponse
       case UserMutationCommands.DeleteUserResult.Deleted =>
-        domains.shared.http.utils.HttpResponseSupport.successResponse(Status.Ok, domains.shared.http.ApiMessages.userDeleted)
+        shared.http.utils.HttpResponseSupport.successResponse(Status.Ok, shared.http.ApiMessages.userDeleted)

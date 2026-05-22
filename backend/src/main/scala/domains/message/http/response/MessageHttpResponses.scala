@@ -5,8 +5,8 @@ package domains.message.http.response
 import cats.effect.IO
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.http.MessageHttpPlans.{MarkConversationReadOutput, SendMessageOutput}
-import domains.shared.http.ApiMessages
-import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -17,7 +17,7 @@ object MessageHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.directMessageConversationNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
+    shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def inboxResponse(response: domains.message.application.output.MessageInboxResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))

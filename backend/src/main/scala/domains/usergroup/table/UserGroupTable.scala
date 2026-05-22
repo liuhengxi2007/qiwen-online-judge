@@ -4,7 +4,7 @@ package domains.usergroup.table
 
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
-import domains.shared.model.PageResponse
+import shared.model.PageResponse
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
 import domains.usergroup.application.output.{UserGroupSummary}

@@ -4,7 +4,7 @@ import domains.submission.http.response.SubmissionHttpResponses
 
 
 
-import domains.shared.http.AuthenticatedHttpPlanRegistry
+import shared.http.AuthenticatedHttpPlanRegistry
 
 object SubmissionHttpPlanDefinitions:
 
