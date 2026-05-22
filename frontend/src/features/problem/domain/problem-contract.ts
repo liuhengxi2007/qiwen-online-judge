@@ -9,14 +9,14 @@ import type {
   UpdateProblemRequest as UpdateProblemRequestContract,
 } from '@contracts/problem'
 import { fromUserIdentityContract } from '@/features/user/domain/user'
-import type { CreateProblemRequest } from '@/features/problem/model/CreateProblemRequest'
-import type { ProblemDetail } from '@/features/problem/model/ProblemDetail'
-import type { ProblemDataUploadResult } from '@/features/problem/model/ProblemDataUploadResult'
-import type { ProblemListRequest } from '@/features/problem/model/ProblemListRequest'
-import type { ProblemListResponse } from '@/features/problem/model/ProblemListResponse'
-import type { ProblemSuggestion } from '@/features/problem/model/ProblemSuggestion'
-import type { ProblemSummary } from '@/features/problem/model/ProblemSummary'
-import type { UpdateProblemRequest } from '@/features/problem/model/UpdateProblemRequest'
+import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
+import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
+import type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
+import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
+import type { ProblemSummary } from '@/features/problem/http/response/ProblemSummary'
+import type { UpdateProblemRequest } from '@/features/problem/http/request/UpdateProblemRequest'
 import {
   fromProblemDataContract,
   parseProblemId,

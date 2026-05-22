@@ -1,17 +1,13 @@
 package domains.auth.table
 
+
+
 import cats.effect.IO
-import domains.auth.model.{
-  AuthUser,
-  DisplayName,
-  EmailAddress,
-  PasswordHash,
-  Username
-}
+import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.auth.table.AuthUserTableSchema.*
 import domains.auth.table.AuthUserTableSql.*
-import domains.auth.table.AuthUserTableSupport.*
+import domains.auth.table.utils.AuthUserTableSupport.*
 import domains.user.model.{UserDisplayMode, UserLocale}
 
 import java.sql.Connection

@@ -1,10 +1,14 @@
 package domains.user.http
 
+
+
 import cats.effect.IO
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
-import domains.user.model.{AuthUserListItem, UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserAcceptedRanklistItem, UserIdentity, UserListRequest, UserListResponse, UserRanklistItem, UserSearchQuery}
+import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.http.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserListRequest}
+import domains.user.model.{UserIdentity, UserSearchQuery}
 
 import java.sql.Connection
 

@@ -1,5 +1,7 @@
 package domains.notification.application
 
+
+
 sealed trait NotificationStreamEvent
 
 object NotificationStreamEvent:

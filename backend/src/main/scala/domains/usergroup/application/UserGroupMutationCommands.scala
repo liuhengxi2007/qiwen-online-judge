@@ -1,14 +1,17 @@
 package domains.usergroup.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.auth.table.AuthUserTable
-import domains.usergroup.model.{CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupSlug}
+import domains.usergroup.http.request.{CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.{UserGroupSlug}
 import domains.usergroup.table.UserGroupTable
 import domains.usergroup.application.UserGroupCommandResults.*
 import domains.usergroup.application.UserGroupDecisions.*
-import domains.usergroup.application.UserGroupCommandSupport.*
+import domains.usergroup.application.utils.UserGroupCommandSupport.*
 
 import java.sql.Connection
 

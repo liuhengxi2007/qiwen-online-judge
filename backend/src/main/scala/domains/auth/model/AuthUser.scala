@@ -1,5 +1,7 @@
 package domains.auth.model
 
+
+
 import domains.user.model.{UserDisplayMode, UserLocale}
 
 final case class AuthUser(

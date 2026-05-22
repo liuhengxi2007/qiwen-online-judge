@@ -11,7 +11,9 @@ Keep normal REST routers, then model each HTTP use case as a typed plan.
 Preferred split:
 
 - `*Router.scala`
-  REST path matching only
+  thin domain route aggregator only
+- `api/<Name>.scala`
+  one REST endpoint route fragment, including path matching, request parsing/decoding, executor call, and response mapping for that endpoint
 - `*HttpPlans.scala`
   typed endpoint plans
 - `*HttpPlanDefinitions.scala`
@@ -30,6 +32,7 @@ For the main business domains (`problem`, `problemset`, `submission`, `usergroup
 
 Plans should return typed outputs, not raw `Response[IO]`.
 Response mapping belongs in `*HttpPlanDefinitions.scala` and `*HttpResponses.scala`.
+Shared HTTP-only helpers belong in `http/utils`, not beside endpoint API files.
 
 ## Auth Exception
 

@@ -145,9 +145,23 @@ Avoid:
 When the shape is identical, prefer one name everywhere.
 When the shape is different, prefer different names that make the difference obvious.
 
+## Frontend API Files
+
+Feature API clients should be split one endpoint per file.
+
+Rules:
+
+- endpoint clients live in `src/features/<domain>/http/api/<Name>.ts`
+- each endpoint file exports the idiomatic function name used by hooks and pages, for example `ListProblems.ts` exports `listProblems`
+- the domain `*-client.ts` file is a compatibility barrel that re-exports endpoint files and any existing client error aliases
+- non-JSON boundary helpers, such as download URL builders or realtime event URL helpers, also live in matched API files
+- when a frontend endpoint has a backend route, the frontend and backend API basenames must match exactly, with only the extension differing
+
+Avoid adding new endpoint implementations directly to aggregate `*-client.ts` files.
+
 ## Frontend and Backend Type System Mirror Rule
 
-Frontend and backend model layers must stay fully aligned for shared cross-stack types.
+Frontend and backend cross-stack type layers must stay fully aligned for shared transport and domain types.
 
 This is stricter than "close enough naming".
 
@@ -162,8 +176,19 @@ Rules:
 - validation that combines multiple fields or encodes business workflow should still live outside mirrored type files
 - do not keep one large aggregate model file on one side while splitting the same mirrored types into many files on the other side
 - do not introduce frontend-only or backend-only aliases for a mirrored type
+- do not put API-only payload DTOs in `model/`; use the domain HTTP request/response folders instead
 
 Required path rules:
+
+- backend HTTP request payload:
+  `backend/src/main/scala/domains/<domain>/http/request/<Name>.scala`
+- frontend HTTP request payload:
+  `frontend/src/features/<domain>/http/request/<Name>.ts`
+
+- backend HTTP response payload:
+  `backend/src/main/scala/domains/<domain>/http/response/<Name>.scala`
+- frontend HTTP response payload:
+  `frontend/src/features/<domain>/http/response/<Name>.ts`
 
 - backend domain model:
   `backend/src/main/scala/domains/<domain>/model/<Name>.scala`

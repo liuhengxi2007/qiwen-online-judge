@@ -1,5 +1,7 @@
 package domains.auth.model
 
+
+
 final case class SiteManagerUser private (authUser: AuthUser)
 
 object SiteManagerUser:

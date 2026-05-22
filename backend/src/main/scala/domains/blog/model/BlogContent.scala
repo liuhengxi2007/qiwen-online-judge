@@ -1,5 +1,7 @@
 package domains.blog.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class BlogContent(value: String)

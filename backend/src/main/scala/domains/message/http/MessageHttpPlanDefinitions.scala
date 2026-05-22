@@ -1,5 +1,7 @@
 package domains.message.http
 
+
+
 import domains.message.application.MessageEventHub
 import domains.shared.http.AuthenticatedHttpPlanRegistry
 
@@ -7,13 +9,13 @@ object MessageHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listInbox: Plain[domains.shared.model.PageRequest, domains.message.model.MessageInboxResponse],
+    listInbox: Plain[domains.shared.model.PageRequest, domains.message.http.response.MessageInboxResponse],
     getConversationHistory: Plain[MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
-    createConversation: WithTransaction[domains.message.model.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
-    sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.model.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],
-    markConversationRead: WithTransaction[(domains.message.model.MessageConversationId, domains.message.model.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
+    createConversation: WithTransaction[domains.message.http.request.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
+    sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.http.request.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],
+    markConversationRead: WithTransaction[(domains.message.model.MessageConversationId, domains.message.http.request.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
     markAllMessagesRead: WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult],
-    listBlocks: Plain[Unit, List[domains.message.model.MessageBlockEntry]],
+    listBlocks: Plain[Unit, List[domains.message.http.response.MessageBlockEntry]],
     addBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
     removeBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
   )

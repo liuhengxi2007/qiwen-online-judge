@@ -1,5 +1,7 @@
 package domains.auth.application
 
+
+
 import domains.auth.model.Username
 
 object UsernameRules:

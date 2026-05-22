@@ -1,5 +1,7 @@
 package domains.shared.access
 
+
+
 import io.circe.{Decoder, Encoder}
 
 enum BaseAccess:

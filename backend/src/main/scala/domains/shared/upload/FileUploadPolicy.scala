@@ -1,5 +1,7 @@
 package domains.shared.upload
 
+
+
 enum TextLineEndingPolicy:
   case Preserve
   case NormalizeLfForExtensions(extensions: Set[String])

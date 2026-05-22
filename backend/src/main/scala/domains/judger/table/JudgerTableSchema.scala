@@ -1,5 +1,7 @@
 package domains.judger.table
 
+
+
 import cats.effect.IO
 
 import java.sql.Connection

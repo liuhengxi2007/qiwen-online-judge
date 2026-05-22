@@ -1,11 +1,15 @@
 package domains.user.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.blog.table.BlogTable
 import domains.shared.model.{PageRequest, PageResponse}
-import domains.user.model.{UserAcceptedRanklistItem, UserContribution, UserIdentity, UserListRequest, UserListResponse, UserProfileResponse, UserRanklistItem, UserSearchQuery}
+import domains.user.http.response.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
+import domains.user.model.{UserContribution, UserIdentity, UserSearchQuery}
+import domains.user.http.request.{UserListRequest}
 import domains.user.table.UserTable
 
 object UserQueryCommands:

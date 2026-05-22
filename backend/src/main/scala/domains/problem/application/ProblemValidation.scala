@@ -1,6 +1,9 @@
 package domains.problem.application
 
-import domains.problem.model.{CreateProblemRequest, ProblemDataFilename, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+
+
+import domains.problem.http.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.model.{ProblemDataFilename, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 
 object ProblemValidation:
 

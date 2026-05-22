@@ -1,5 +1,8 @@
 package domains.judger.http
 
+
+
+import domains.judger.http.utils.JudgerRegistryHttpSupport
 import cats.effect.IO
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig

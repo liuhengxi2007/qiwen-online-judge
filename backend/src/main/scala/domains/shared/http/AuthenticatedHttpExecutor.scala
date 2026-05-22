@@ -1,9 +1,11 @@
 package domains.shared.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.AuthHttpSessionSupport
+import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
 import org.http4s.dsl.Http4sDsl

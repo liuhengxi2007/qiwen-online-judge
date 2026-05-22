@@ -1,5 +1,7 @@
 package domains.message.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class MessageContent(value: String)

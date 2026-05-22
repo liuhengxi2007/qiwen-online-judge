@@ -1,14 +1,16 @@
 package domains.problemset.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.table.ProblemTable
-import domains.problemset.model.AddProblemToProblemSetRequest
+import domains.problemset.http.request.AddProblemToProblemSetRequest
 import domains.problemset.table.ProblemSetTable
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetDecisions.*
-import domains.problemset.application.ProblemSetCommandSupport.*
+import domains.problemset.application.utils.ProblemSetCommandSupport.*
 
 import java.sql.Connection
 

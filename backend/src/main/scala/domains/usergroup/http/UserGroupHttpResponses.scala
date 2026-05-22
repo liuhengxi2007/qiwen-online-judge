@@ -1,10 +1,13 @@
 package domains.usergroup.http
 
+
+
 import cats.effect.IO
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{UserGroup, UserGroupDetail}
+import domains.usergroup.model.{UserGroup}
+import domains.usergroup.http.response.{UserGroupDetail}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -15,9 +18,9 @@ object UserGroupHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.userGroupNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def listUserGroupsResponse(response: domains.shared.model.PageResponse[domains.usergroup.model.UserGroupSummary]): IO[Response[IO]] =
+  def listUserGroupsResponse(response: domains.shared.model.PageResponse[domains.usergroup.http.response.UserGroupSummary]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =

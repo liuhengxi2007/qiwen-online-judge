@@ -7,11 +7,11 @@ import type {
 } from '@contracts/submission'
 import { fromUserIdentityContract } from '@/features/user/domain/user'
 import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
-import type { CreateSubmissionRequest } from '@/features/submission/model/CreateSubmissionRequest'
-import type { SubmissionDetail } from '@/features/submission/model/SubmissionDetail'
-import type { SubmissionListRequest } from '@/features/submission/model/SubmissionListRequest'
-import type { SubmissionListResponse } from '@/features/submission/model/SubmissionListResponse'
-import type { SubmissionSummary } from '@/features/submission/model/SubmissionSummary'
+import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
+import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
+import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
+import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
 import {
   isSubmissionSort,
   isSubmissionSortDirection,

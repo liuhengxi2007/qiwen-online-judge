@@ -1,0 +1,15 @@
+import type { Username } from '@/features/message/domain/message'
+import { usernameValue } from '@/features/auth/domain/auth'
+import {
+  decodeSuccessResponse,
+  postJson,
+} from '@/shared/api/http-client'
+import type { SuccessResponse } from '@contracts/shared'
+
+export function removeMessageBlock(targetUsername: Username): Promise<SuccessResponse> {
+  return postJson(
+    `/api/messages/blocks/${encodeURIComponent(usernameValue(targetUsername))}/remove`,
+    decodeSuccessResponse,
+    {},
+  )
+}

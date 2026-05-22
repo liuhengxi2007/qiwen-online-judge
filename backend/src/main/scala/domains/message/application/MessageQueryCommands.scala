@@ -1,11 +1,14 @@
 package domains.message.application
 
+
+
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
-import domains.message.model.{MessageConversationId, MessageHistoryResponse, MessageId, MessageInboxResponse}
+import domains.message.model.{MessageConversationId, MessageId}
+import domains.message.http.response.{MessageHistoryResponse, MessageInboxResponse}
 import domains.shared.model.PageRequest
 
 object MessageQueryCommands:
@@ -56,7 +59,7 @@ object MessageQueryCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     repository: MessageRepository = defaultRepository
-  ): IO[List[domains.message.model.MessageBlockEntry]] =
+  ): IO[List[domains.message.http.response.MessageBlockEntry]] =
     databaseSession.withTransactionConnection(connection =>
       repository.listBlocks(connection, actor.username)
     )

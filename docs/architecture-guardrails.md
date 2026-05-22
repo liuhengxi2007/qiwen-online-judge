@@ -7,9 +7,9 @@ Use this file as the entry point, then continue through the linked topic documen
 ## Core Guides
 
 - [Frontend Guardrails](./frontend-guardrails.md)
-  Frontend structure, shared-code rules, type-safety rules, hook discipline, store boundaries, and feature file templates.
+  Frontend structure, endpoint API file layout, shared-code rules, type-safety rules, hook discipline, store boundaries, and feature file templates.
 - [Backend Guardrails](./backend-guardrails.md)
-  Backend domain layout, file-role templates, functional-core boundaries, shared-layer limits, and HTTP planner rules.
+  Backend domain layout, API route files, file-role templates, functional-core boundaries, shared-layer limits, and HTTP planner rules.
 - [Worker Guardrails](./worker-guardrails.md)
   Boundaries for the `judger` worker and shared protocol extraction rules.
 

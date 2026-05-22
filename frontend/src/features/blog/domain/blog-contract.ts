@@ -11,17 +11,17 @@ import type {
   VoteBlogRequest as VoteBlogRequestContract,
 } from '@contracts/blog'
 import { fromUserIdentityContract } from '@/features/auth/domain/auth'
-import type { BlogCommentSummary } from '@/features/blog/model/BlogCommentSummary'
-import type { BlogDetail } from '@/features/blog/model/BlogDetail'
-import type { BlogListResponse } from '@/features/blog/model/BlogListResponse'
+import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
+import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
 import type { BlogProblemReference } from '@/features/blog/model/BlogProblemReference'
-import type { BlogSummary } from '@/features/blog/model/BlogSummary'
-import type { CreateBlogCommentRequest } from '@/features/blog/model/CreateBlogCommentRequest'
-import type { CreateBlogRequest } from '@/features/blog/model/CreateBlogRequest'
-import type { UpdateBlogCommentRequest } from '@/features/blog/model/UpdateBlogCommentRequest'
-import type { UpdateBlogRequest } from '@/features/blog/model/UpdateBlogRequest'
-import type { VoteBlogCommentRequest } from '@/features/blog/model/VoteBlogCommentRequest'
-import type { VoteBlogRequest } from '@/features/blog/model/VoteBlogRequest'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { CreateBlogCommentRequest } from '@/features/blog/http/request/CreateBlogCommentRequest'
+import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogRequest'
+import type { UpdateBlogCommentRequest } from '@/features/blog/http/request/UpdateBlogCommentRequest'
+import type { UpdateBlogRequest } from '@/features/blog/http/request/UpdateBlogRequest'
+import type { VoteBlogCommentRequest } from '@/features/blog/http/request/VoteBlogCommentRequest'
+import type { VoteBlogRequest } from '@/features/blog/http/request/VoteBlogRequest'
 import {
   parseProblemSlug,
   parseProblemTitle,

@@ -1,5 +1,7 @@
 package domains.message.table
 
+
+
 object MessageTableSql:
   val userExistsSql: String =
     """

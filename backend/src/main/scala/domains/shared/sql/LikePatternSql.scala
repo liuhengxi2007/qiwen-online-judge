@@ -1,5 +1,7 @@
 package domains.shared.sql
 
+
+
 import scala.annotation.tailrec
 
 final case class LikePatternSql(

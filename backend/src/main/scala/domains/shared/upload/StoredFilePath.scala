@@ -1,5 +1,7 @@
 package domains.shared.upload
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class StoredFilePath(value: String):

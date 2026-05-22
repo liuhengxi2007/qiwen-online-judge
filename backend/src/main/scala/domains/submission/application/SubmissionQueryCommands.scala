@@ -1,15 +1,18 @@
 package domains.submission.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.model.OthersSubmissionAccess
-import domains.problem.application.ProblemCommandSupport.canManageProblem
+import domains.problem.application.utils.ProblemCommandSupport.canManageProblem
 import domains.problem.table.ProblemTable
-import domains.submission.model.{SubmissionId, SubmissionListRequest}
+import domains.submission.model.{SubmissionId}
+import domains.submission.http.request.{SubmissionListRequest}
 import domains.submission.table.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
-import domains.submission.application.SubmissionCommandSupport.*
+import domains.submission.application.utils.SubmissionCommandSupport.*
 
 object SubmissionQueryCommands:
 

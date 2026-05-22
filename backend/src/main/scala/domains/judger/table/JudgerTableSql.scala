@@ -1,5 +1,7 @@
 package domains.judger.table
 
+
+
 object JudgerTableSql:
 
   val deleteExpiredSql: String =

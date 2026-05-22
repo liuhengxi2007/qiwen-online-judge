@@ -1,5 +1,7 @@
 package domains.auth.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore

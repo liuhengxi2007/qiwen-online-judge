@@ -1,5 +1,7 @@
 package domains.message.table
 
+
+
 import cats.effect.IO
 
 import java.sql.Connection

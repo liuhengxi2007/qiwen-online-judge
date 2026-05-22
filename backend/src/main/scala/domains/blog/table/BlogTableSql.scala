@@ -1,5 +1,7 @@
 package domains.blog.table
 
+
+
 import domains.shared.sql.UserIdentitySql
 
 object BlogTableSql:

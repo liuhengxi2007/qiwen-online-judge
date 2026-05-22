@@ -1,5 +1,7 @@
 package domains.judger.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig

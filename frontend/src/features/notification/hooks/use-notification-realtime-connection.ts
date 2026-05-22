@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
+import { notificationEventsUrl } from '@/features/notification/api/notification-client'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 
 let eventSource: EventSource | null = null
@@ -11,7 +12,7 @@ function ensureEventSource() {
     return
   }
 
-  eventSource = new EventSource('/api/notifications/events', { withCredentials: true })
+  eventSource = new EventSource(notificationEventsUrl(), { withCredentials: true })
   eventSource.addEventListener('notifications_changed', () => {
     const store = useNotificationStore.getState()
     void store.refreshUnreadCount()

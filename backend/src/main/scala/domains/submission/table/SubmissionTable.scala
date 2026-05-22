@@ -1,15 +1,19 @@
 package domains.submission.table
 
+
+
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.user.model.UserIdentity
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.model.{SubmissionDetail, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionListRequest, SubmissionListResponse, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionSummary, SubmissionVerdict, SubmissionVerdictFilter}
+import domains.submission.http.response.{SubmissionDetail, SubmissionListResponse, SubmissionSummary}
+import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSortDirection, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict, SubmissionVerdictFilter}
+import domains.submission.http.request.{SubmissionListRequest}
 import domains.submission.table.SubmissionTableSchema.*
 import domains.submission.table.SubmissionTableSql.*
-import domains.submission.table.SubmissionTableSupport.*
+import domains.submission.table.utils.SubmissionTableSupport.*
 
 import java.nio.charset.StandardCharsets
 import java.sql.{Connection, PreparedStatement, Timestamp}

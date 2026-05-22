@@ -1,5 +1,7 @@
 package domains.problemset.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class ProblemSetSlug(value: String)

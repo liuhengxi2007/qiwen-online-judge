@@ -1,5 +1,7 @@
 package domains.notification.table
 
+
+
 import domains.shared.sql.UserIdentitySql
 
 object NotificationTableSql:

@@ -1,5 +1,7 @@
 package domains.notification.model
 
+
+
 import domains.blog.model.{BlogCommentId, BlogId, BlogTitle}
 import io.circe.syntax.*
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}

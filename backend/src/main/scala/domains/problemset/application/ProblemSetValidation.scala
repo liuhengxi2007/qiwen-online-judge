@@ -1,7 +1,10 @@
 package domains.problemset.application
 
+
+
 import domains.problem.model.ProblemSlug
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetDescription, ProblemSetSlug, ProblemSetTitle, UpdateProblemSetRequest}
+import domains.problemset.http.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.{ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
 
 object ProblemSetValidation:
 

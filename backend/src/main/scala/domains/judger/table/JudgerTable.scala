@@ -1,11 +1,13 @@
 package domains.judger.table
 
+
+
 import cats.effect.IO
-import domains.judger.model.RegisteredJudgerListItem
+import domains.judger.http.response.RegisteredJudgerListItem
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
 import domains.judger.table.JudgerTableSchema.*
 import domains.judger.table.JudgerTableSql.*
-import domains.judger.table.JudgerTableSupport.*
+import domains.judger.table.utils.JudgerTableSupport.*
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

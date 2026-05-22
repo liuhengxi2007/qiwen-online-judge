@@ -1,5 +1,7 @@
 package domains.auth.application
 
+
+
 import java.time.Duration
 
 final case class SessionConfig(

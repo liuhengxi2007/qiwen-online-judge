@@ -1,8 +1,11 @@
 package domains.message.application
 
+
+
 import cats.effect.{IO, Resource}
 import domains.auth.model.Username
-import domains.message.model.{DirectMessage, MessageConversationId, MessageId}
+import domains.message.http.response.{DirectMessage}
+import domains.message.model.{MessageConversationId, MessageId}
 import fs2.Stream
 import fs2.concurrent.Topic
 

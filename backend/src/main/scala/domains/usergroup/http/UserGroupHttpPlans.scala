@@ -1,18 +1,21 @@
 package domains.usergroup.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest, UserGroupSlug}
+import domains.usergroup.http.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.{UserGroupSlug}
 
 import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.model.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.http.response.UserGroupSummary]]:
 
     override val name: String = "ListUserGroups"
 
@@ -20,7 +23,7 @@ object UserGroupHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.usergroup.model.UserGroupSummary]] =
+    ): IO[PageResponse[domains.usergroup.http.response.UserGroupSummary]] =
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[UserGroupSlug, UserGroupCommands.GetUserGroupResult]:

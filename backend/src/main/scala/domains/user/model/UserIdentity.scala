@@ -1,5 +1,7 @@
 package domains.user.model
 
+
+
 import domains.auth.model.{DisplayName, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

@@ -1,5 +1,7 @@
 package domains.problem.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class ProblemTimeLimitMs(value: Int)

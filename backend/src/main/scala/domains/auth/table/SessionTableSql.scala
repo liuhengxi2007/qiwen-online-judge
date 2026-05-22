@@ -1,5 +1,7 @@
 package domains.auth.table
 
+
+
 object SessionTableSql:
 
   val insertSql: String =

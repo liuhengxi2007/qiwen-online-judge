@@ -118,8 +118,8 @@ function run() {
   const contractUserGroup = read('contracts/usergroup.ts')
   const contractNotification = read('contracts/notification.ts')
 
-  const backendSharedError = read('backend/src/main/scala/domains/shared/model/ErrorResponse.scala')
-  const backendSharedSuccess = read('backend/src/main/scala/domains/shared/model/SuccessResponse.scala')
+  const backendSharedError = read('backend/src/main/scala/domains/shared/http/response/ErrorResponse.scala')
+  const backendSharedSuccess = read('backend/src/main/scala/domains/shared/http/response/SuccessResponse.scala')
   const backendSharedApiMessageParam = read('backend/src/main/scala/domains/shared/model/ApiMessageParam.scala')
   const backendSharedPagination = read('backend/src/main/scala/domains/shared/model/Pagination.scala')
   const backendSharedLifecycle = read('backend/src/main/scala/domains/shared/model/ResourceLifecycle.scala')
@@ -127,85 +127,85 @@ function run() {
   const backendSharedResourceAccessPolicy = read('backend/src/main/scala/domains/shared/access/ResourceAccessPolicy.scala')
 
   const authFiles = {
-    LoginRequest: read('backend/src/main/scala/domains/auth/model/LoginRequest.scala'),
-    LoginResponse: read('backend/src/main/scala/domains/auth/model/LoginResponse.scala'),
-    RegisterRequest: read('backend/src/main/scala/domains/auth/model/RegisterRequest.scala'),
-    RegisterResponse: read('backend/src/main/scala/domains/auth/model/RegisterResponse.scala'),
-    SessionResponse: read('backend/src/main/scala/domains/auth/model/SessionResponse.scala'),
+    LoginRequest: read('backend/src/main/scala/domains/auth/http/request/LoginRequest.scala'),
+    LoginResponse: read('backend/src/main/scala/domains/auth/http/response/LoginResponse.scala'),
+    RegisterRequest: read('backend/src/main/scala/domains/auth/http/request/RegisterRequest.scala'),
+    RegisterResponse: read('backend/src/main/scala/domains/auth/http/response/RegisterResponse.scala'),
+    SessionResponse: read('backend/src/main/scala/domains/auth/http/response/SessionResponse.scala'),
   }
 
   const userFiles = {
-    AuthUserListItem: read('backend/src/main/scala/domains/user/model/AuthUserListItem.scala'),
-    UpdateOwnProfileRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnProfileRequest.scala'),
-    UpdateOwnPreferencesRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnPreferencesRequest.scala'),
-    UpdateOwnAccountRequest: read('backend/src/main/scala/domains/user/model/UpdateOwnAccountRequest.scala'),
-    UpdateManagedUserProfileRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserProfileRequest.scala'),
-    UpdateManagedUserPreferencesRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserPreferencesRequest.scala'),
-    UpdateManagedUserAccountRequest: read('backend/src/main/scala/domains/user/model/UpdateManagedUserAccountRequest.scala'),
-    UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/user/model/UpdateUserPermissionsRequest.scala'),
-    UserProfileResponse: read('backend/src/main/scala/domains/user/model/UserProfileResponse.scala'),
+    AuthUserListItem: read('backend/src/main/scala/domains/user/http/response/AuthUserListItem.scala'),
+    UpdateOwnProfileRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnProfileRequest.scala'),
+    UpdateOwnPreferencesRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnPreferencesRequest.scala'),
+    UpdateOwnAccountRequest: read('backend/src/main/scala/domains/user/http/request/UpdateOwnAccountRequest.scala'),
+    UpdateManagedUserProfileRequest: read('backend/src/main/scala/domains/user/http/request/UpdateManagedUserProfileRequest.scala'),
+    UpdateManagedUserPreferencesRequest: read('backend/src/main/scala/domains/user/http/request/UpdateManagedUserPreferencesRequest.scala'),
+    UpdateManagedUserAccountRequest: read('backend/src/main/scala/domains/user/http/request/UpdateManagedUserAccountRequest.scala'),
+    UpdateUserPermissionsRequest: read('backend/src/main/scala/domains/user/http/request/UpdateUserPermissionsRequest.scala'),
+    UserProfileResponse: read('backend/src/main/scala/domains/user/http/response/UserProfileResponse.scala'),
   }
 
   const judgerFiles = {
-    RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/model/RegisteredJudgerListItem.scala'),
+    RegisteredJudgerListItem: read('backend/src/main/scala/domains/judger/http/response/RegisteredJudgerListItem.scala'),
   }
 
   const blogFiles = {
-    CreateBlogRequest: read('backend/src/main/scala/domains/blog/model/CreateBlogRequest.scala'),
-    UpdateBlogRequest: read('backend/src/main/scala/domains/blog/model/UpdateBlogRequest.scala'),
-    VoteBlogRequest: read('backend/src/main/scala/domains/blog/model/VoteBlogRequest.scala'),
-    CreateBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/CreateBlogCommentRequest.scala'),
-    UpdateBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/UpdateBlogCommentRequest.scala'),
-    VoteBlogCommentRequest: read('backend/src/main/scala/domains/blog/model/VoteBlogCommentRequest.scala'),
-    BlogCommentSummary: read('backend/src/main/scala/domains/blog/model/BlogCommentSummary.scala'),
-    BlogSummary: read('backend/src/main/scala/domains/blog/model/BlogSummary.scala'),
-    BlogDetail: read('backend/src/main/scala/domains/blog/model/BlogDetail.scala'),
+    CreateBlogRequest: read('backend/src/main/scala/domains/blog/http/request/CreateBlogRequest.scala'),
+    UpdateBlogRequest: read('backend/src/main/scala/domains/blog/http/request/UpdateBlogRequest.scala'),
+    VoteBlogRequest: read('backend/src/main/scala/domains/blog/http/request/VoteBlogRequest.scala'),
+    CreateBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/CreateBlogCommentRequest.scala'),
+    UpdateBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/UpdateBlogCommentRequest.scala'),
+    VoteBlogCommentRequest: read('backend/src/main/scala/domains/blog/http/request/VoteBlogCommentRequest.scala'),
+    BlogCommentSummary: read('backend/src/main/scala/domains/blog/http/response/BlogCommentSummary.scala'),
+    BlogSummary: read('backend/src/main/scala/domains/blog/http/response/BlogSummary.scala'),
+    BlogDetail: read('backend/src/main/scala/domains/blog/http/response/BlogDetail.scala'),
   }
 
   const problemFiles = {
-    CreateProblemRequest: read('backend/src/main/scala/domains/problem/model/CreateProblemRequest.scala'),
-    UpdateProblemRequest: read('backend/src/main/scala/domains/problem/model/UpdateProblemRequest.scala'),
-    DeleteProblemDataPathRequest: read('backend/src/main/scala/domains/problem/model/DeleteProblemDataPathRequest.scala'),
-    ProblemSummary: read('backend/src/main/scala/domains/problem/model/ProblemSummary.scala'),
-    ProblemDetail: read('backend/src/main/scala/domains/problem/model/ProblemDetail.scala'),
+    CreateProblemRequest: read('backend/src/main/scala/domains/problem/http/request/CreateProblemRequest.scala'),
+    UpdateProblemRequest: read('backend/src/main/scala/domains/problem/http/request/UpdateProblemRequest.scala'),
+    DeleteProblemDataPathRequest: read('backend/src/main/scala/domains/problem/http/request/DeleteProblemDataPathRequest.scala'),
+    ProblemSummary: read('backend/src/main/scala/domains/problem/http/response/ProblemSummary.scala'),
+    ProblemDetail: read('backend/src/main/scala/domains/problem/http/response/ProblemDetail.scala'),
   }
 
   const problemSetFiles = {
-    CreateProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/CreateProblemSetRequest.scala'),
-    UpdateProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/UpdateProblemSetRequest.scala'),
-    AddProblemToProblemSetRequest: read('backend/src/main/scala/domains/problemset/model/AddProblemToProblemSetRequest.scala'),
-    ProblemSetProblemSummary: read('backend/src/main/scala/domains/problemset/model/ProblemSetProblemSummary.scala'),
-    ProblemSetSummary: read('backend/src/main/scala/domains/problemset/model/ProblemSetSummary.scala'),
-    ProblemSetDetail: read('backend/src/main/scala/domains/problemset/model/ProblemSetDetail.scala'),
+    CreateProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/CreateProblemSetRequest.scala'),
+    UpdateProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/UpdateProblemSetRequest.scala'),
+    AddProblemToProblemSetRequest: read('backend/src/main/scala/domains/problemset/http/request/AddProblemToProblemSetRequest.scala'),
+    ProblemSetProblemSummary: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetProblemSummary.scala'),
+    ProblemSetSummary: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetSummary.scala'),
+    ProblemSetDetail: read('backend/src/main/scala/domains/problemset/http/response/ProblemSetDetail.scala'),
   }
 
   const submissionFiles = {
     SubmissionLanguage: read('backend/src/main/scala/domains/submission/model/SubmissionLanguage.scala'),
     SubmissionStatus: read('backend/src/main/scala/domains/submission/model/SubmissionStatus.scala'),
     SubmissionVerdict: read('backend/src/main/scala/domains/submission/model/SubmissionVerdict.scala'),
-    CreateSubmissionRequest: read('backend/src/main/scala/domains/submission/model/CreateSubmissionRequest.scala'),
-    SubmissionSummary: read('backend/src/main/scala/domains/submission/model/SubmissionSummary.scala'),
-    SubmissionDetail: read('backend/src/main/scala/domains/submission/model/SubmissionDetail.scala'),
+    CreateSubmissionRequest: read('backend/src/main/scala/domains/submission/http/request/CreateSubmissionRequest.scala'),
+    SubmissionSummary: read('backend/src/main/scala/domains/submission/http/response/SubmissionSummary.scala'),
+    SubmissionDetail: read('backend/src/main/scala/domains/submission/http/response/SubmissionDetail.scala'),
   }
 
   const userGroupFiles = {
     UserGroupRole: read('backend/src/main/scala/domains/usergroup/model/UserGroupRole.scala'),
     AddUserGroupMemberRole: read('backend/src/main/scala/domains/usergroup/model/AddUserGroupMemberRole.scala'),
-    CreateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/model/CreateUserGroupRequest.scala'),
-    UpdateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/model/UpdateUserGroupRequest.scala'),
-    AddUserGroupMemberRequest: read('backend/src/main/scala/domains/usergroup/model/AddUserGroupMemberRequest.scala'),
-    UpdateUserGroupMemberRoleRequest: read('backend/src/main/scala/domains/usergroup/model/UpdateUserGroupMemberRoleRequest.scala'),
+    CreateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/http/request/CreateUserGroupRequest.scala'),
+    UpdateUserGroupRequest: read('backend/src/main/scala/domains/usergroup/http/request/UpdateUserGroupRequest.scala'),
+    AddUserGroupMemberRequest: read('backend/src/main/scala/domains/usergroup/http/request/AddUserGroupMemberRequest.scala'),
+    UpdateUserGroupMemberRoleRequest: read('backend/src/main/scala/domains/usergroup/http/request/UpdateUserGroupMemberRoleRequest.scala'),
     UserGroupMember: read('backend/src/main/scala/domains/usergroup/model/UserGroupMember.scala'),
-    UserGroupSummary: read('backend/src/main/scala/domains/usergroup/model/UserGroupSummary.scala'),
-    UserGroupDetail: read('backend/src/main/scala/domains/usergroup/model/UserGroupDetail.scala'),
+    UserGroupSummary: read('backend/src/main/scala/domains/usergroup/http/response/UserGroupSummary.scala'),
+    UserGroupDetail: read('backend/src/main/scala/domains/usergroup/http/response/UserGroupDetail.scala'),
   }
 
   const notificationFiles = {
     NotificationKind: read('backend/src/main/scala/domains/notification/model/NotificationKind.scala'),
     NotificationPayload: read('backend/src/main/scala/domains/notification/model/NotificationPayload.scala'),
-    NotificationSummary: read('backend/src/main/scala/domains/notification/model/NotificationSummary.scala'),
-    NotificationListResponse: read('backend/src/main/scala/domains/notification/model/NotificationListResponse.scala'),
-    NotificationUnreadCountResponse: read('backend/src/main/scala/domains/notification/model/NotificationUnreadCountResponse.scala'),
+    NotificationSummary: read('backend/src/main/scala/domains/notification/http/response/NotificationSummary.scala'),
+    NotificationListResponse: read('backend/src/main/scala/domains/notification/http/response/NotificationListResponse.scala'),
+    NotificationUnreadCountResponse: read('backend/src/main/scala/domains/notification/http/response/NotificationUnreadCountResponse.scala'),
   }
 
   assertSameFields(

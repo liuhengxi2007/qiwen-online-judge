@@ -1,5 +1,7 @@
 package domains.user.model
 
+
+
 import domains.problem.model.ProblemTitleDisplayMode
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

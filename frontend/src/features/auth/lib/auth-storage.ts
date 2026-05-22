@@ -6,7 +6,7 @@ import {
   parseUserLocale,
   parseUsername,
 } from '@/features/auth/domain/auth'
-import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 
 const authUserStorageKey = 'auth_user'
 

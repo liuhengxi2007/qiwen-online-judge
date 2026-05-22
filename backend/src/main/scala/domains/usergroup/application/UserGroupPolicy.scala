@@ -1,5 +1,7 @@
 package domains.usergroup.application
 
+
+
 import domains.auth.model.{AuthUser, Username}
 import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroup, UserGroupRole}
 

@@ -1,5 +1,7 @@
 package domains.submission.http
 
+
+
 import domains.shared.http.AuthenticatedHttpPlanRegistry
 
 object SubmissionHttpPlanDefinitions:

@@ -1,11 +1,14 @@
 package domains.message.table
 
+
+
 import cats.effect.IO
 import domains.auth.model.Username
-import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse}
+import domains.message.http.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.message.table.MessageTableSchema.initialize
 import domains.message.table.MessageTableSql.*
-import domains.message.table.MessageTableSupport.*
+import domains.message.table.utils.MessageTableSupport.*
 import domains.shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}

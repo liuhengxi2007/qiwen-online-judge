@@ -1,8 +1,10 @@
 package domains.submission.http
 
+
+
 import cats.effect.IO
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.submission.application.SubmissionCommands
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -14,7 +16,7 @@ object SubmissionHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.submissionNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def mapListResult(result: SubmissionCommands.ListSubmissionsResult): IO[Response[IO]] =
     result match

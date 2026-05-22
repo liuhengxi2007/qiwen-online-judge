@@ -1,5 +1,7 @@
 package domains.usergroup.table
 
+
+
 object UserGroupTableSql:
 
   val countVisibleSql: String =

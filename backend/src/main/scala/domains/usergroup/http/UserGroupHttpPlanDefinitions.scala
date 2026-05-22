@@ -1,5 +1,7 @@
 package domains.usergroup.http
 
+
+
 import domains.shared.http.AuthenticatedHttpPlanRegistry
 
 object UserGroupHttpPlanDefinitions:

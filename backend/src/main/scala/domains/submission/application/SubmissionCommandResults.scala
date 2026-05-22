@@ -1,6 +1,8 @@
 package domains.submission.application
 
-import domains.submission.model.{SubmissionDetail, SubmissionListResponse}
+
+
+import domains.submission.http.response.{SubmissionDetail, SubmissionListResponse}
 
 object SubmissionCommandResults:
 

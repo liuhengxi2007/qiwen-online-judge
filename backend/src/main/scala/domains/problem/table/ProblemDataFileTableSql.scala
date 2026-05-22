@@ -1,5 +1,7 @@
 package domains.problem.table
 
+
+
 object ProblemDataFileTableSql:
   val insertSql: String =
     """

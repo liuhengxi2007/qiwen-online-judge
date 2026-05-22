@@ -1,5 +1,7 @@
 package domains.usergroup.application
 
+
+
 import domains.usergroup.model.UserGroup
 
 object UserGroupCommandResults:

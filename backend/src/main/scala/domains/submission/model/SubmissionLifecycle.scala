@@ -1,5 +1,8 @@
 package domains.submission.model
 
+
+
+import domains.submission.http.response.SubmissionDetail
 import judgeprotocol.model.JudgeResult
 import java.time.Instant
 

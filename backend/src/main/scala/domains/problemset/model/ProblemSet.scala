@@ -1,5 +1,8 @@
 package domains.problemset.model
 
+
+
+import domains.problemset.http.response.ProblemSetProblemSummary
 import domains.user.model.UserIdentity
 import domains.shared.access.ResourceAccessPolicy
 

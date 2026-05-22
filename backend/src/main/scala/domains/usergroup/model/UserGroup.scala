@@ -1,5 +1,7 @@
 package domains.usergroup.model
 
+
+
 import domains.auth.model.Username
 
 import java.time.Instant

@@ -1,5 +1,7 @@
 package domains.problem.http
 
+
+
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
@@ -7,7 +9,7 @@ import domains.problem.application.ProblemDataStorage.*
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import fs2.Stream
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
@@ -21,15 +23,15 @@ object ProblemHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.problemNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def listProblemsResponse(
-    response: domains.shared.model.PageResponse[domains.problem.model.ProblemSummary]
+    response: domains.shared.model.PageResponse[domains.problem.http.response.ProblemSummary]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def listProblemSuggestionsResponse(
-    response: List[domains.problem.model.ProblemSuggestion]
+    response: List[domains.problem.http.response.ProblemSuggestion]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 

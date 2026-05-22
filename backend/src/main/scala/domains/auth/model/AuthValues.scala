@@ -1,5 +1,7 @@
 package domains.auth.model
 
+
+
 import io.circe.{Decoder, Encoder}
 import java.util.Locale
 

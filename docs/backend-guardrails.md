@@ -25,7 +25,7 @@ For `application`:
 
 - `*CommandResults.scala`
   result ADTs returned by the application layer
-- `*CommandSupport.scala`
+- `utils/*CommandSupport.scala`
   internal helpers shared by multiple commands in the domain
 - `*QueryCommands.scala`
   read-only use cases
@@ -43,13 +43,21 @@ Domain-specific specialized command files are allowed when a domain has one extr
 For `http`:
 
 - `*Router.scala`
-  path matching and route dispatch only
+  thin aggregator that combines endpoint API route files
+- `api/<Name>.scala`
+  one HTTP endpoint route fragment, including path matching, input parsing/decoding, plan execution, and response mapping for that endpoint
+- `request/<Name>.scala`
+  inbound HTTP wire payloads decoded from request bodies or query-derived request shapes
+- `response/<Name>.scala`
+  outbound HTTP wire payloads such as summaries, details, list responses, unread counts, upload results, and session/profile responses
 - `*HttpHandlers.scala`
   request decoding, auth/session wrapping, command invocation
 - `*HttpResponses.scala`
   translation from command results to HTTP responses
-- `*HttpSupport.scala`
+- `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
+
+Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
 
 For `table`:
 
@@ -59,7 +67,7 @@ For `table`:
   DDL, migration, initialization
 - `*TableSql.scala`
   SQL constants
-- `*TableSupport.scala`
+- `utils/*TableSupport.scala`
   row readers, bind helpers, and persistence-local support code
 
 These templates exist to stop large files from mixing routing, orchestration, SQL, migrations, and decoding in one place.
@@ -134,7 +142,9 @@ Preferred structure for business CRUD domains:
   registered plans plus `toResponse` mapping
 - shared executor in `domains/shared/http`
 - thin `*Router.scala`
-  route matching plus executor call
+  aggregator of `http/api/<Name>.scala` endpoint files
+
+Frontend and backend endpoint API basenames should match when both sides expose the endpoint. For example, the frontend `http/api/ListProblems.ts` client function corresponds to backend `http/api/ListProblems.scala`.
 
 `auth/http` is the exception. It keeps its own richer protocol because it needs public, authenticated, and site-manager plan families.
 

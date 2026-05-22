@@ -1,5 +1,7 @@
 package domains.shared.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser

@@ -1,5 +1,7 @@
 package domains.usergroup.table
 
+
+
 import cats.effect.IO
 
 import java.sql.Connection

@@ -1,5 +1,7 @@
 package domains.notification.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
@@ -12,14 +14,14 @@ import java.sql.Connection
 
 object NotificationHttpPlans:
 
-  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.model.NotificationListResponse]:
+  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.http.response.NotificationListResponse]:
     override val name: String = "ListNotifications"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.model.NotificationListResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.http.response.NotificationListResponse] =
       NotificationCommands.listNotifications(databaseSession, actor, input)
 
-  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.model.NotificationUnreadCountResponse]:
+  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.http.response.NotificationUnreadCountResponse]:
     override val name: String = "GetUnreadCount"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.model.NotificationUnreadCountResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.http.response.NotificationUnreadCountResponse] =
       val _ = input
       NotificationCommands.getUnreadCount(databaseSession, actor)
 

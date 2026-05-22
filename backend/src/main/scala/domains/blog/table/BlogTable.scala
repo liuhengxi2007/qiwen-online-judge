@@ -1,11 +1,14 @@
 package domains.blog.table
 
+
+
 import cats.effect.IO
 import domains.auth.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogCommentSummary, BlogContent, BlogDetail, BlogId, BlogProblemReference, BlogSummary, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.http.response.{BlogCommentSummary, BlogDetail, BlogSummary}
 import domains.blog.table.BlogTableSql.*
-import domains.blog.table.BlogTableSupport.*
+import domains.blog.table.utils.BlogTableSupport.*
 import domains.problem.model.ProblemSlug
 import domains.shared.model.{PageRequest, PageResponse}
 

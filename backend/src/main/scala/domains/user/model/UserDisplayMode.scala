@@ -1,5 +1,7 @@
 package domains.user.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 enum UserDisplayMode:

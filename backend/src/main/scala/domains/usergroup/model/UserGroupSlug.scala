@@ -1,5 +1,7 @@
 package domains.usergroup.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 final case class UserGroupSlug(value: String)

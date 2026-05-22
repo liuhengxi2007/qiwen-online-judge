@@ -1,5 +1,8 @@
 package domains.auth.table
 
+
+
+import domains.auth.table.utils.SessionTableSupport
 import cats.effect.IO
 
 import java.sql.Connection

@@ -1,5 +1,5 @@
 import type { RegisteredJudgerListItem as RegisteredJudgerListItemContract } from '@contracts/judger'
-import type { RegisteredJudgerListItem } from '@/features/judger/model/RegisteredJudgerListItem'
+import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
 
 export function fromRegisteredJudgerListItemContract(response: RegisteredJudgerListItemContract): RegisteredJudgerListItem {
   return {

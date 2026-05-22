@@ -1,11 +1,15 @@
 package domains.auth.http
 
+
+
 import cats.effect.IO
-import domains.auth.model.{AuthUser, LoginResponse, RegisterResponse, SessionResponse, SessionToken}
-import domains.judger.model.RegisteredJudgerListItem
+import domains.auth.model.{AuthUser, SessionToken}
+import domains.auth.http.response.{LoginResponse, RegisterResponse, SessionResponse}
+import domains.judger.http.response.RegisteredJudgerListItem
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.user.model.{AuthUserListItem, UserPreferences}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.user.http.response.{AuthUserListItem}
+import domains.user.model.{UserPreferences}
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -15,7 +19,7 @@ object AuthHttpResponses:
   private val sessionCookieName = "qiwen_session"
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def invalidCredentialsResponse: IO[Response[IO]] =
     errorResponse(Status.Unauthorized, ApiMessages.invalidCredentials)

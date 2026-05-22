@@ -14,13 +14,13 @@ import {
   parseProblemTitle,
   problemSlugValue,
 } from '@/features/problem/domain/problem'
-import type { AddProblemToProblemSetRequest } from '@/features/problemset/model/AddProblemToProblemSetRequest'
-import type { CreateProblemSetRequest } from '@/features/problemset/model/CreateProblemSetRequest'
-import type { ProblemSetDetail } from '@/features/problemset/model/ProblemSetDetail'
-import type { ProblemSetListResponse } from '@/features/problemset/model/ProblemSetListResponse'
-import type { ProblemSetProblemSummary } from '@/features/problemset/model/ProblemSetProblemSummary'
-import type { ProblemSetSummary } from '@/features/problemset/model/ProblemSetSummary'
-import type { UpdateProblemSetRequest } from '@/features/problemset/model/UpdateProblemSetRequest'
+import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/request/AddProblemToProblemSetRequest'
+import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
+import type { ProblemSetProblemSummary } from '@/features/problemset/http/response/ProblemSetProblemSummary'
+import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
+import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
 import {
   parseProblemSetDescription,
   parseProblemSetId,

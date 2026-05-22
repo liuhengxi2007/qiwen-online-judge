@@ -1,5 +1,7 @@
 package domains.blog.model
 
+
+
 import domains.problem.model.{ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

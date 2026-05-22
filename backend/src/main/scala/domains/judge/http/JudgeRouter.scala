@@ -1,28 +1,19 @@
 package domains.judge.http
 
 import cats.effect.IO
+import cats.syntax.semigroupk.*
 import database.DatabaseSession
-import domains.judge.application.{JudgeCommands, JudgeConfig}
+import domains.judge.application.JudgeConfig
 import domains.problem.application.ProblemDataStorage
-import domains.submission.model.SubmissionId
-import judgeprotocol.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
+import domains.judge.http.api.ClaimJudgeTask
+import domains.judge.http.api.DownloadJudgeProblemData
+import domains.judge.http.api.CompleteJudgeSubmission
+import domains.problem.application.ProblemDataStorage
 import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
 
 object JudgeRouter:
 
   def routes(databaseSession: DatabaseSession, judgeConfig: JudgeConfig, problemDataStorage: ProblemDataStorage): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new JudgeHttpHandlers(databaseSession, judgeConfig, problemDataStorage)
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "internal" / "judge" / "claim" =>
-        handlers.claim(request)
-
-      case request @ GET -> Root / "api" / "internal" / "judge" / "problem-data" =>
-        handlers.downloadProblemData(request)
-
-      case request @ POST -> Root / "api" / "internal" / "judge" / "submissions" / rawSubmissionId / "complete" =>
-        handlers.completeSubmission(request, rawSubmissionId)
-    }
+    ClaimJudgeTask.routes(databaseSession, judgeConfig, problemDataStorage) <+>
+      DownloadJudgeProblemData.routes(databaseSession, judgeConfig, problemDataStorage) <+>
+      CompleteJudgeSubmission.routes(databaseSession, judgeConfig, problemDataStorage)

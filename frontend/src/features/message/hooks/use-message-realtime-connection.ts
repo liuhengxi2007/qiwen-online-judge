@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
+import { messageEventsUrl } from '@/features/message/api/message-client'
 import {
   fromConversationReadStreamPayload,
   fromDirectMessage,
@@ -56,7 +57,7 @@ function ensureEventSource(refreshInbox: () => Promise<void>) {
     return
   }
 
-  eventSource = new EventSource('/api/messages/events', { withCredentials: true })
+  eventSource = new EventSource(messageEventsUrl(), { withCredentials: true })
 
   eventSource.addEventListener('message_received', (event) => {
     handleIncomingEvent('message_received', event, refreshInbox)

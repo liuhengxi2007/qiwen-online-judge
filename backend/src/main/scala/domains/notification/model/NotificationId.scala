@@ -1,5 +1,7 @@
 package domains.notification.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 import java.util.UUID

@@ -1,5 +1,7 @@
 package domains.blog.model
 
+
+
 import domains.auth.model.Username
 
 final case class BlogCommentNotificationAncestor(

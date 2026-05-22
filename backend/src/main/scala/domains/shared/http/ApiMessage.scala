@@ -1,5 +1,7 @@
 package domains.shared.http
 
+
+
 import domains.shared.model.ApiMessageParams
 
 final case class ApiMessage(

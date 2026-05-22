@@ -1,5 +1,7 @@
 package domains.user.table
 
+
+
 object UserTableSql:
   val suggestionLimit: Int = 5
 

@@ -1,11 +1,14 @@
 package domains.user.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.PasswordHasher
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PlaintextPassword, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserDisplayMode, UserLocale, UserPreferences}
+import domains.user.http.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
+import domains.user.model.{UserDisplayMode, UserLocale, UserPreferences}
 import domains.user.table.UserTable
 
 import java.sql.Connection

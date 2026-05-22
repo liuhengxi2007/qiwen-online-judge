@@ -1,17 +1,21 @@
 package domains.problemset.table
 
+
+
 import database.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{CreateProblemSetRequest, ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetSummary, ProblemSetTitle, UpdateProblemSetRequest}
+import domains.problemset.http.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.http.response.{ProblemSetProblemSummary, ProblemSetSummary}
 import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
-import database.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import domains.shared.model.PageResponse
 import domains.problemset.table.ProblemSetTableSchema.*
 import domains.problemset.table.ProblemSetTableSql.*
-import domains.problemset.table.ProblemSetTableSupport.*
+import domains.problemset.table.utils.ProblemSetTableSupport.*
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant

@@ -1,7 +1,10 @@
 package domains.message.application
 
+
+
 import domains.auth.model.Username
-import domains.message.model.{ConversationReadReceipt, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse, MessageId}
+import domains.message.model.{ConversationReadReceipt, MessageId}
+import domains.message.http.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse}
 
 object MessageCommandResults:
 

@@ -1,12 +1,16 @@
 package domains.usergroup.table
 
+
+
 import cats.effect.IO
 import domains.auth.model.{AuthUser, DisplayName, Username}
 import domains.shared.model.PageResponse
-import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug, UserGroupSummary}
+import domains.usergroup.http.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.http.response.{UserGroupSummary}
 import domains.usergroup.table.UserGroupTableSchema.*
 import domains.usergroup.table.UserGroupTableSql.*
-import domains.usergroup.table.UserGroupTableSupport.*
+import domains.usergroup.table.utils.UserGroupTableSupport.*
 
 import java.sql.{Connection, ResultSet, SQLException, Timestamp}
 import java.time.Instant

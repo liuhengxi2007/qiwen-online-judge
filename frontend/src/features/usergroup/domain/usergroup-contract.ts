@@ -20,14 +20,14 @@ import {
   userGroupNameValue,
   userGroupSlugValue,
 } from '@/features/usergroup/domain/usergroup-parsers'
-import type { AddUserGroupMemberRequest } from '@/features/usergroup/model/AddUserGroupMemberRequest'
-import type { CreateUserGroupRequest } from '@/features/usergroup/model/CreateUserGroupRequest'
-import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/model/UpdateUserGroupMemberRoleRequest'
-import type { UpdateUserGroupRequest } from '@/features/usergroup/model/UpdateUserGroupRequest'
-import type { UserGroupDetail } from '@/features/usergroup/model/UserGroupDetail'
-import type { UserGroupListResponse } from '@/features/usergroup/model/UserGroupListResponse'
+import type { AddUserGroupMemberRequest } from '@/features/usergroup/http/request/AddUserGroupMemberRequest'
+import type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'
+import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/http/request/UpdateUserGroupMemberRoleRequest'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/http/request/UpdateUserGroupRequest'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupListResponse } from '@/features/usergroup/http/response/UserGroupListResponse'
 import type { UserGroupMember } from '@/features/usergroup/model/UserGroupMember'
-import type { UserGroupSummary } from '@/features/usergroup/model/UserGroupSummary'
+import type { UserGroupSummary } from '@/features/usergroup/http/response/UserGroupSummary'
 
 function requireParsed<T>(result: ParseResult<T>, label: string): T {
   if (!result.ok) {

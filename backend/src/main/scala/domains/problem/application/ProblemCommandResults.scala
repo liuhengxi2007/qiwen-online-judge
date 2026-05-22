@@ -1,6 +1,8 @@
 package domains.problem.application
 
-import domains.problem.model.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
+
+
+import domains.problem.http.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 
 object ProblemCommandResults:
 

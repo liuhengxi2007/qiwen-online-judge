@@ -1,5 +1,7 @@
 package domains.auth.table
 
+
+
 object AuthUserTableSql:
 
   val seedAuthAdminSql: String =

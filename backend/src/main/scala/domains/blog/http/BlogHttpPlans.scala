@@ -1,12 +1,15 @@
 package domains.blog.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.blog.application.BlogCommands
 import domains.blog.application.BlogCommands.CreateBlogCommentResult
 import domains.blog.table.BlogTable
-import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.model.{BlogCommentId, BlogId}
+import domains.blog.http.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.{NotificationCommands, NotificationEventHub, NotificationStreamEvent}
 import domains.problem.model.ProblemSlug
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}

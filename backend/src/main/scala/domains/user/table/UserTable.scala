@@ -1,14 +1,18 @@
 package domains.user.table
 
+
+
 import cats.effect.IO
-import domains.auth.table.UserIdentityTableSupport.readUserIdentity
+import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.shared.model.{PageRequest, PageResponse}
 import domains.shared.sql.LikePatternSql
-import domains.user.model.{AuthUserListItem, UserAcceptedProblem, UserAcceptedRanklistItem, UserDisplayMode, UserIdentity, UserListRequest, UserListResponse, UserLocale, UserRanklistItem, UserSearchQuery}
+import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale, UserSearchQuery}
+import domains.user.http.request.{UserListRequest}
 import domains.user.table.UserTableSql.*
-import domains.user.table.UserTableSupport.*
+import domains.user.table.utils.UserTableSupport.*
 
 import java.sql.{Connection, SQLException}
 

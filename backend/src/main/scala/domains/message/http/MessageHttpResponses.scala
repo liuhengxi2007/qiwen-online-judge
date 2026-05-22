@@ -1,10 +1,12 @@
 package domains.message.http
 
+
+
 import cats.effect.IO
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.http.MessageHttpPlans.{MarkConversationReadOutput, SendMessageOutput}
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -15,9 +17,9 @@ object MessageHttpResponses:
     errorResponse(Status.NotFound, ApiMessages.directMessageConversationNotFound)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def inboxResponse(response: domains.message.model.MessageInboxResponse): IO[Response[IO]] =
+  def inboxResponse(response: domains.message.http.response.MessageInboxResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def historyResponse(result: GetConversationHistoryResult): IO[Response[IO]] =
@@ -56,7 +58,7 @@ object MessageHttpResponses:
     val _ = output
     successResponse(Status.Ok, ApiMessages.directMessagesMarkedRead)
 
-  def listBlocksResponse(entries: List[domains.message.model.MessageBlockEntry]): IO[Response[IO]] =
+  def listBlocksResponse(entries: List[domains.message.http.response.MessageBlockEntry]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(entries.asJson))
 
   def addBlockResponse(result: AddBlockResult): IO[Response[IO]] =

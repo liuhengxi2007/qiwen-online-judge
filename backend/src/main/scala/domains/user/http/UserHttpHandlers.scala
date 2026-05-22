@@ -1,12 +1,14 @@
 package domains.user.http
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.AuthHttpSessionSupport
+import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.auth.model.{AuthUser, SiteManagerUser, Username}
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.model.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.http.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

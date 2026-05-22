@@ -1,5 +1,7 @@
 package domains.auth.application
 
+
+
 import cats.effect.{IO, Resource}
 import domains.auth.model.{SessionToken, Username}
 import io.circe.Json

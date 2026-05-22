@@ -1,9 +1,11 @@
 package domains.judger.http
 
+
+
 import cats.effect.IO
 import domains.judger.application.JudgerRegistryCommands
 import domains.shared.http.ApiMessages
-import domains.shared.http.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
+import domains.shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -11,7 +13,7 @@ import org.http4s.circe.CirceEntityEncoder.*
 object JudgerRegistryHttpResponses:
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
+    domains.shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def unauthorizedResponse: IO[Response[IO]] =
     errorResponse(Status.Unauthorized, ApiMessages.judgeTokenInvalid)

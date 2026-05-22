@@ -1,5 +1,7 @@
 package domains.shared.sql
 
+
+
 object UserIdentitySql:
 
   def selectColumns(usernameColumn: String, alias: String, displayNameTableAlias: String): String =

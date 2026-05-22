@@ -1,5 +1,7 @@
 package domains.shared.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 enum ResourceVisibility:

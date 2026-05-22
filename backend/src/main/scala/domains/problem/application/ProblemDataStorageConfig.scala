@@ -1,5 +1,7 @@
 package domains.problem.application
 
+
+
 import java.nio.file.{Path, Paths}
 
 final case class ProblemDataStorageConfig(

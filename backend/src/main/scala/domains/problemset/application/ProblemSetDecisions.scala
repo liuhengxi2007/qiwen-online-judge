@@ -1,6 +1,8 @@
 package domains.problemset.application
 
-import domains.problem.model.ProblemDetail
+
+
+import domains.problem.http.response.ProblemDetail
 import domains.problemset.model.ProblemSet
 
 object ProblemSetDecisions:

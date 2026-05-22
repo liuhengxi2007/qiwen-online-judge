@@ -1,9 +1,13 @@
 package domains.message.application
 
+
+
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, MessageConversationId, SendDirectMessageRequest}
+import domains.message.http.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.http.request.MarkConversationReadMode
+import domains.message.model.MessageConversationId
 
 import java.sql.Connection
 

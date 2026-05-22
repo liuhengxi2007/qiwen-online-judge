@@ -5,11 +5,11 @@ import type {
   RegisterResponse as RegisterResponseContract,
   SessionResponse as SessionResponseContract,
 } from '@contracts/auth'
-import type { LoginRequest } from '@/features/auth/model/LoginRequest'
-import type { LoginResponse } from '@/features/auth/model/LoginResponse'
-import type { RegisterRequest } from '@/features/auth/model/RegisterRequest'
-import type { RegisterResponse } from '@/features/auth/model/RegisterResponse'
-import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
+import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
+import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
+import type { RegisterResponse } from '@/features/auth/http/response/RegisterResponse'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import {
   displayNameValue,
   emailAddressValue,

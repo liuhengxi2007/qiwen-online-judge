@@ -1,12 +1,16 @@
 package domains.user.http
 
+
+
 import cats.effect.IO
 import domains.auth.http.AuthHttpResponses
-import domains.auth.model.{AuthUser, SessionResponse}
+import domains.auth.model.{AuthUser}
+import domains.auth.http.response.{SessionResponse}
 import domains.shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
-import domains.user.model.{AuthUserListItem, UserAcceptedRanklistItem, UserIdentity, UserListResponse, UserRanklistItem}
+import domains.user.http.response.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.model.{UserIdentity}
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Response, Status}
@@ -112,4 +116,4 @@ object UserHttpResponses:
       case UserMutationCommands.DeleteUserResult.HasOwnedResources =>
         userOwnsResourcesResponse
       case UserMutationCommands.DeleteUserResult.Deleted =>
-        domains.shared.http.HttpResponseSupport.successResponse(Status.Ok, domains.shared.http.ApiMessages.userDeleted)
+        domains.shared.http.utils.HttpResponseSupport.successResponse(Status.Ok, domains.shared.http.ApiMessages.userDeleted)

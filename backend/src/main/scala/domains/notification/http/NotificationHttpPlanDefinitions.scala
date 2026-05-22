@@ -1,5 +1,7 @@
 package domains.notification.http
 
+
+
 import domains.notification.application.NotificationEventHub
 import domains.shared.http.AuthenticatedHttpPlanRegistry
 
@@ -7,8 +9,8 @@ object NotificationHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listNotifications: Plain[domains.shared.model.PageRequest, domains.notification.model.NotificationListResponse],
-    getUnreadCount: Plain[Unit, domains.notification.model.NotificationUnreadCountResponse],
+    listNotifications: Plain[domains.shared.model.PageRequest, domains.notification.http.response.NotificationListResponse],
+    getUnreadCount: Plain[Unit, domains.notification.http.response.NotificationUnreadCountResponse],
     markNotificationRead: WithTransaction[domains.notification.model.NotificationId, domains.notification.application.NotificationCommands.MarkNotificationReadResult],
     markAllNotificationsRead: WithTransaction[Unit, domains.notification.application.NotificationCommands.MarkAllNotificationsReadResult]
   )

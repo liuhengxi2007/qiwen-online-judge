@@ -1,5 +1,7 @@
 package domains.blog.model
 
+
+
 import io.circe.{Decoder, Encoder}
 
 enum BlogVisibility:

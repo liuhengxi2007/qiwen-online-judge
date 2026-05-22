@@ -1,7 +1,10 @@
 package domains.usergroup.application
 
+
+
 import domains.auth.model.{AuthUser, Username}
-import domains.usergroup.model.{ManagedUserGroup, UpdateUserGroupMemberRoleRequest, UserGroup, UserGroupRole}
+import domains.usergroup.model.{ManagedUserGroup, UserGroup, UserGroupRole}
+import domains.usergroup.http.request.{UpdateUserGroupMemberRoleRequest}
 
 object UserGroupDecisions:
 

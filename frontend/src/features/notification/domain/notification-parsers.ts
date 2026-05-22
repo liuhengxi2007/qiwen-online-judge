@@ -6,12 +6,12 @@ import {
   parseBlogId,
   parseBlogTitle,
 } from '@/features/blog/domain/blog'
-import type { NotificationListResponse } from '@/features/notification/model/NotificationListResponse'
+import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
 import type { NotificationId } from '@/features/notification/model/NotificationId'
 import type { NotificationKind } from '@/features/notification/model/NotificationKind'
 import type { NotificationPayload } from '@/features/notification/model/NotificationPayload'
-import type { NotificationSummary } from '@/features/notification/model/NotificationSummary'
-import type { NotificationUnreadCountResponse } from '@/features/notification/model/NotificationUnreadCountResponse'
+import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
+import type { NotificationUnreadCountResponse } from '@/features/notification/http/response/NotificationUnreadCountResponse'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 

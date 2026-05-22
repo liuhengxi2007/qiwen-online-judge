@@ -1,11 +1,15 @@
 package domains.problem.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommandResults.*
-import domains.problem.application.ProblemCommandSupport.*
-import domains.problem.model.{ProblemDetail, ProblemListRequest, ProblemSearchQuery, ProblemSuggestion, ProblemSummary}
+import domains.problem.application.utils.ProblemCommandSupport.*
+import domains.problem.http.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.http.request.{ProblemListRequest}
+import domains.problem.model.{ProblemSearchQuery}
 import domains.problem.table.ProblemTable
 import domains.shared.model.PageResponse
 

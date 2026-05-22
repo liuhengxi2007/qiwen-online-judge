@@ -1,5 +1,7 @@
 package domains.auth.application
 
+
+
 final case class SessionCacheConfig(
   redisUrl: String
 )

@@ -1,5 +1,7 @@
 package domains.auth.http
 
+
+
 object AuthHttpPlanDefinitions:
 
   import AuthHttpPlanRegistry.RegisteredPlan.{

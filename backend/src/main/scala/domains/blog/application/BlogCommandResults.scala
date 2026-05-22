@@ -1,6 +1,8 @@
 package domains.blog.application
 
-import domains.blog.model.{BlogDetail, BlogListResponse, BlogSummary}
+
+
+import domains.blog.http.response.{BlogDetail, BlogListResponse, BlogSummary}
 
 object BlogCommandResults:
 

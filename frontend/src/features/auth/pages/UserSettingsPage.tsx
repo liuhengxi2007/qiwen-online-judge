@@ -13,7 +13,7 @@ import { UserAccountPageShell } from '@/features/auth/components/user-account-pa
 import { UserPermissionsCard } from '@/features/auth/components/user-permissions-card'
 import { UserProfileOverviewCard } from '@/features/auth/components/user-profile-overview-card'
 import { displayNameValue, usernameValue, type UserIdentity } from '@/features/auth/domain/auth'
-import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import { addMessageBlock, listMessageBlocks, removeMessageBlock } from '@/features/message/api/message-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'

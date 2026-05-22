@@ -1,5 +1,7 @@
 package domains.auth.application
 
+
+
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{SessionToken, Username}

@@ -1,5 +1,7 @@
 package domains.shared.model
 
+
+
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 
 sealed trait ApiMessageParam

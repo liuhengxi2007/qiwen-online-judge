@@ -1,5 +1,7 @@
 package domains.problem.table
 
+
+
 import cats.effect.IO
 
 import java.sql.Connection

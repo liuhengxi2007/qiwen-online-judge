@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { DisplayName, EmailAddress, Username } from '@/features/auth/model/AuthValues'
-import type { SessionResponse } from '@/features/auth/model/SessionResponse'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 
 class MockEventSource {
   static instances: MockEventSource[] = []

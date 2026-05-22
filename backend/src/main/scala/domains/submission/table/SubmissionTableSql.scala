@@ -1,5 +1,7 @@
 package domains.submission.table
 
+
+
 import domains.submission.model.{SubmissionSort, SubmissionSortDirection}
 import domains.shared.sql.UserIdentitySql
 

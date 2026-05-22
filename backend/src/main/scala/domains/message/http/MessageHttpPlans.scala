@@ -1,12 +1,15 @@
 package domains.message.http
 
+
+
 import cats.syntax.all.*
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, Username}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.application.{JdbcMessageRepository, MessageCommands, MessageEventHub, MessageStreamEvent}
-import domains.message.model.{CreateConversationRequest, MarkConversationReadRequest, MessageConversationId, MessageId, SendDirectMessageRequest}
+import domains.message.http.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.model.{MessageConversationId, MessageId}
 import domains.shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.shared.model.PageRequest
 
@@ -14,9 +17,9 @@ import java.sql.Connection
 
 object MessageHttpPlans:
 
-  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.model.MessageInboxResponse]:
+  case object ListInbox extends PlainAuthenticatedHttpPlan[PageRequest, domains.message.http.response.MessageInboxResponse]:
     override val name: String = "ListInbox"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.model.MessageInboxResponse] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.http.response.MessageInboxResponse] =
       MessageCommands.listInbox(databaseSession, actor, input, JdbcMessageRepository)
 
   final case class HistoryInput(
@@ -95,9 +98,9 @@ object MessageHttpPlans:
         publishReceipts *> messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
       }
 
-  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.model.MessageBlockEntry]]:
+  case object ListBlocks extends PlainAuthenticatedHttpPlan[Unit, List[domains.message.http.response.MessageBlockEntry]]:
     override val name: String = "ListBlocks"
-    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.model.MessageBlockEntry]] =
+    override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.http.response.MessageBlockEntry]] =
       val _ = input
       MessageCommands.listBlocks(databaseSession, actor, JdbcMessageRepository)
 

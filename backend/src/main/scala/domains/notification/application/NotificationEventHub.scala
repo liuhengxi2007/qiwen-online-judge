@@ -1,5 +1,7 @@
 package domains.notification.application
 
+
+
 import cats.effect.{IO, Resource}
 import domains.auth.model.Username
 import fs2.Stream

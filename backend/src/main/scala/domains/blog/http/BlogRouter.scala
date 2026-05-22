@@ -1,182 +1,48 @@
 package domains.blog.http
 
+
+
 import cats.effect.IO
+import cats.syntax.semigroupk.*
 import database.DatabaseSession
+import domains.blog.http.api.ListBlogs
+import domains.blog.http.api.ListProblemBlogs
+import domains.blog.http.api.ListPendingProblemBlogs
+import domains.blog.http.api.SubmitBlogToProblem
+import domains.blog.http.api.AcceptBlogProblemSubmission
+import domains.blog.http.api.LinkBlogToProblem
+import domains.blog.http.api.UnlinkBlogFromProblem
+import domains.blog.http.api.CreateBlog
+import domains.blog.http.api.GetBlog
+import domains.blog.http.api.VoteBlog
+import domains.blog.http.api.UpdateBlog
+import domains.blog.http.api.DeleteBlog
+import domains.blog.http.api.CreateBlogComment
+import domains.blog.http.api.CreateBlogCommentReply
+import domains.blog.http.api.VoteBlogComment
+import domains.blog.http.api.UpdateBlogComment
+import domains.blog.http.api.DeleteBlogComment
 import domains.auth.application.SessionStore
-import domains.auth.model.Username
-import domains.blog.application.BlogCommands
-import domains.blog.model.{BlogCommentId, BlogId, CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.NotificationEventHub
-import domains.problem.model.ProblemSlug
-import domains.shared.http.AuthenticatedHttpExecutor
-import domains.shared.model.PageRequest
 import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
 
 object BlogRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    val plans = BlogHttpPlanDefinitions.plans(notificationEventHub)
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "blogs" =>
-        handlers.execute(
-          request,
-          BlogHttpPlans.ListBlogsInput(
-            request.uri.query.params.get("username").map(Username.canonical),
-            parsePageRequest(request.uri.query.params)
-          ),
-          plans.listBlogs
-        )
-
-      case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blogs" =>
-        ProblemSlug.parse(rawProblemSlug) match
-          case Left(message) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(problemSlug) =>
-            handlers.execute(request, BlogHttpPlans.ProblemBlogsInput(problemSlug, parsePageRequest(request.uri.query.params)), plans.listProblemBlogs)
-
-      case request @ GET -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" =>
-        ProblemSlug.parse(rawProblemSlug) match
-          case Left(message) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(problemSlug) =>
-            handlers.execute(request, BlogHttpPlans.ProblemBlogsInput(problemSlug, parsePageRequest(request.uri.query.params)), plans.listPendingProblemBlogs)
-
-      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId =>
-        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.submitBlogToProblem)
-
-      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-submissions" / rawBlogId / "accept" =>
-        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.acceptBlogProblemSubmission)
-
-      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId =>
-        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.linkBlogToProblem)
-
-      case request @ POST -> Root / "api" / "problems" / rawProblemSlug / "blog-links" / rawBlogId / "delete" =>
-        (ProblemSlug.parse(rawProblemSlug), BlogId.parse(rawBlogId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(problemSlug), Right(blogId)) =>
-            handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.unlinkBlogFromProblem)
-
-      case request @ POST -> Root / "api" / "blogs" =>
-        handlers.executeDecoded[CreateBlogRequest, CreateBlogRequest, BlogCommands.CreateBlogResult](
-          request,
-          plans.createBlog
-        )(identity)
-
-      case request @ GET -> Root / "api" / "blogs" / rawBlogId =>
-        BlogId.parse(rawBlogId) match
-          case Left(message) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            handlers.execute(request, blogId, plans.getBlog)
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "vote" =>
-        BlogId.parse(rawBlogId) match
-          case Left(message) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            handlers.executeDecoded[VoteBlogRequest, BlogHttpPlans.VoteBlogInput, BlogCommands.VoteBlogResult](
-              request,
-              plans.voteBlog
-            )(voteRequest => BlogHttpPlans.VoteBlogInput(blogId, voteRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "update" =>
-        BlogId.parse(rawBlogId) match
-          case Left(message) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            handlers.executeDecoded[UpdateBlogRequest, BlogHttpPlans.UpdateBlogInput, BlogCommands.UpdateBlogResult](
-              request,
-              plans.updateBlog
-            )(updateRequest => BlogHttpPlans.UpdateBlogInput(blogId, updateRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "delete" =>
-        BlogId.parse(rawBlogId) match
-          case Left(message) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            handlers.execute(request, blogId, plans.deleteBlog)
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" =>
-        BlogId.parse(rawBlogId) match
-          case Left(message) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            handlers.executeDecoded[CreateBlogCommentRequest, BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult](
-              request,
-              plans.createBlogComment
-            )(commentRequest => BlogHttpPlans.CreateBlogCommentInput(blogId, None, commentRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "replies" =>
-        (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            handlers.executeDecoded[CreateBlogCommentRequest, BlogHttpPlans.CreateBlogCommentInput, BlogCommands.CreateBlogCommentResult](
-              request,
-              plans.createBlogComment
-            )(commentRequest => BlogHttpPlans.CreateBlogCommentInput(blogId, Some(commentId), commentRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "vote" =>
-        (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
-          case (Left(message), _) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            handlers.executeDecoded[VoteBlogCommentRequest, BlogHttpPlans.VoteBlogCommentInput, BlogCommands.VoteBlogCommentResult](
-              request,
-              plans.voteBlogComment
-            )(voteRequest => BlogHttpPlans.VoteBlogCommentInput(blogId, commentId, voteRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "update" =>
-        (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
-          case (Left(message), _) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            handlers.executeDecoded[UpdateBlogCommentRequest, BlogHttpPlans.UpdateBlogCommentInput, BlogCommands.UpdateBlogCommentResult](
-              request,
-              plans.updateBlogComment
-            )(updateRequest => BlogHttpPlans.UpdateBlogCommentInput(blogId, commentId, updateRequest))
-
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "delete" =>
-        (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
-          case (Left(message), _) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) => domains.shared.http.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            handlers.execute(request, BlogHttpPlans.DeleteBlogCommentInput(blogId, commentId), plans.deleteBlogComment)
-    }
-
-  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
-    PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
+    ListBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      ListProblemBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      ListPendingProblemBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      SubmitBlogToProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      AcceptBlogProblemSubmission.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      LinkBlogToProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      UnlinkBlogFromProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      CreateBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      GetBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      VoteBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      UpdateBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      DeleteBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      CreateBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      CreateBlogCommentReply.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      VoteBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      UpdateBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
+      DeleteBlogComment.routes(databaseSession, sessionStore, notificationEventHub)

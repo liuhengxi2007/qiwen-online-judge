@@ -1,5 +1,7 @@
 package domains.notification.model
 
+
+
 enum NotificationStatus:
   case Unread
   case Read

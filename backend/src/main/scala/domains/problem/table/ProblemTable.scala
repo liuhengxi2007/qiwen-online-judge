@@ -1,16 +1,20 @@
 package domains.problem.table
 
+
+
 import database.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.model.Username
-import domains.problem.model.{CreateProblemRequest, OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemDetail, ProblemId, ProblemListRequest, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemSuggestion, ProblemSummary, ProblemTimeLimitMs, ProblemTitle, UpdateProblemRequest}
+import domains.problem.http.request.{CreateProblemRequest, ProblemListRequest, UpdateProblemRequest}
+import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemId, ProblemSearchQuery, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.http.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
-import database.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import domains.shared.model.PageResponse
 import domains.problem.table.ProblemTableSchema.*
 import domains.problem.table.ProblemTableSql.*
-import domains.problem.table.ProblemTableSupport.*
+import domains.problem.table.utils.ProblemTableSupport.*
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
