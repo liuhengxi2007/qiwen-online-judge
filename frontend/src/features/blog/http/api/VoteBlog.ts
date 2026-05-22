@@ -2,11 +2,11 @@ import type {
   BlogDetail,
   VoteBlogRequest,
 } from '@/features/blog/domain/blog'
+import { blogIdValue } from '@/features/blog/domain/blog'
 import {
-  blogIdValue,
   fromBlogDetailContract,
   toVoteBlogRequestContract,
-} from '@/features/blog/domain/blog'
+} from '@/features/blog/http/codec'
 import type { BlogId } from '@/features/blog/domain/blog'
 import { postJson } from '@/shared/api/http-client'
 

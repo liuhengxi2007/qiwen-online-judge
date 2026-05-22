@@ -2,10 +2,8 @@ import type {
   ProblemDataUploadResult,
   ProblemSlug,
 } from '@/features/problem/domain/problem'
-import {
-  fromProblemDataUploadResultContract,
-  problemSlugValue,
-} from '@/features/problem/domain/problem'
+import { problemSlugValue } from '@/features/problem/domain/problem'
+import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec'
 import { postMultipart } from '@/shared/api/http-client'
 
 export async function uploadProblemDataArchive(

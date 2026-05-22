@@ -3,11 +3,11 @@ import type {
   ProblemSlug,
   UpdateProblemRequest,
 } from '@/features/problem/domain/problem'
+import { problemSlugValue } from '@/features/problem/domain/problem'
 import {
   fromProblemDetailContract,
-  problemSlugValue,
   toUpdateProblemRequestContract,
-} from '@/features/problem/domain/problem'
+} from '@/features/problem/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function updateProblem(problemSlug: ProblemSlug, request: UpdateProblemRequest): Promise<ProblemDetail> {

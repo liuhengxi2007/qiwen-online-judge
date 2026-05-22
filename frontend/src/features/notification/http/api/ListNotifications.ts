@@ -1,5 +1,5 @@
 import type { NotificationListResponse } from '@/features/notification/domain/notification'
-import { fromNotificationListResponse } from '@/features/notification/domain/notification'
+import { fromNotificationListResponse } from '@/features/notification/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'
 

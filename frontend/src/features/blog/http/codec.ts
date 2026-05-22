@@ -1,4 +1,4 @@
-import { fromUserIdentityContract } from '@/features/user/domain/user'
+import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
 import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
 import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'

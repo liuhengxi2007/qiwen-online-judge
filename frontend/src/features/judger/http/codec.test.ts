@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { fromRegisteredJudgerListItemContract } from '@/features/judger/domain/judger-contract'
+import { fromRegisteredJudgerListItemContract } from '@/features/judger/http/codec'
 
-describe('judger-contract', () => {
+describe('judger codec', () => {
   it('trims host process id and supported languages from contract payloads', () => {
     const mapped = fromRegisteredJudgerListItemContract({
       judgerId: 'judge-1',

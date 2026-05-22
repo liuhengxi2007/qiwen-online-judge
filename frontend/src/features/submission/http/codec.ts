@@ -1,4 +1,4 @@
-import { fromUserIdentityContract } from '@/features/user/domain/user'
+import { fromUserIdentityContract } from '@/features/user/http/codec'
 import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
 import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
 import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'

@@ -5,7 +5,7 @@ import type {
 import {
   fromMessageConversationSummary,
   toCreateConversationRequest,
-} from '@/features/message/domain/message'
+} from '@/features/message/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function createConversation(request: CreateConversationRequest): Promise<MessageConversationSummary> {

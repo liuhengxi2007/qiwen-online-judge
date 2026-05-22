@@ -5,7 +5,7 @@ import type {
 import {
   fromRegisterResponseContract,
   toRegisterRequestContract,
-} from '@/features/auth/domain/auth'
+} from '@/features/auth/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function register(request: RegisterRequest): Promise<RegisterResponse> {

@@ -3,11 +3,11 @@ import type {
   ProblemSetDetail,
   ProblemSetSlug,
 } from '@/features/problemset/domain/problemset'
+import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
 import {
   fromProblemSetDetailContract,
-  problemSetSlugValue,
   toAddProblemToProblemSetRequestContract,
-} from '@/features/problemset/domain/problemset'
+} from '@/features/problemset/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function addProblemToProblemSet(

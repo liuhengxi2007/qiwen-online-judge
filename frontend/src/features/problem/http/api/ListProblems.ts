@@ -5,7 +5,7 @@ import type {
 import {
   fromProblemListResponseContract,
   toProblemListRequestContract,
-} from '@/features/problem/domain/problem'
+} from '@/features/problem/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listProblems(request: ProblemListRequest): Promise<ProblemListResponse> {

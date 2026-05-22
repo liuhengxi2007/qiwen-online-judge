@@ -5,11 +5,11 @@ import type {
   ProblemSlug,
 } from '@/features/problem/domain/problem'
 import {
-  fromProblemDataUploadResultContract,
   problemDataFilenameValue,
   problemDataPathValue,
   problemSlugValue,
 } from '@/features/problem/domain/problem'
+import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec'
 import { postMultipart } from '@/shared/api/http-client'
 
 export async function uploadProblemDataFile(

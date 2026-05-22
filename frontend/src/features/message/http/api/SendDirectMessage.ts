@@ -3,11 +3,11 @@ import type {
   MessageConversationId,
   SendDirectMessageRequest,
 } from '@/features/message/domain/message'
+import { messageConversationIdValue } from '@/features/message/domain/message'
 import {
   fromDirectMessage,
-  messageConversationIdValue,
   toSendDirectMessageRequest,
-} from '@/features/message/domain/message'
+} from '@/features/message/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function sendDirectMessage(

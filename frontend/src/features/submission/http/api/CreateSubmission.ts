@@ -5,7 +5,7 @@ import type {
 import {
   fromSubmissionDetailContract,
   toCreateSubmissionRequestContract,
-} from '@/features/submission/domain/submission'
+} from '@/features/submission/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createSubmission(request: CreateSubmissionRequest): Promise<SubmissionDetail> {

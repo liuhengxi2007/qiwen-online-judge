@@ -1,15 +1,15 @@
 import type { SessionResponse } from '@/features/auth/domain/auth'
-import { fromSessionResponseContract } from '@/features/auth/domain/auth'
+import { fromSessionResponseContract } from '@/features/auth/http/codec'
 import type {
   UpdateManagedUserAccountRequest,
   UpdateOwnAccountRequest,
   Username,
 } from '@/features/user/domain/user'
+import { usernameValue } from '@/features/user/domain/user'
 import {
   toUpdateManagedUserAccountRequestContract,
   toUpdateOwnAccountRequestContract,
-  usernameValue,
-} from '@/features/user/domain/user'
+} from '@/features/user/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function updateOwnUserAccount(

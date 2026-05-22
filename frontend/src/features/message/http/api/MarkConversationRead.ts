@@ -3,11 +3,11 @@ import type {
   MessageConversationId,
   MessageConversationSummary,
 } from '@/features/message/domain/message'
+import { messageConversationIdValue } from '@/features/message/domain/message'
 import {
   fromMessageConversationSummary,
-  messageConversationIdValue,
   toMarkConversationReadRequest,
-} from '@/features/message/domain/message'
+} from '@/features/message/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function markConversationRead(

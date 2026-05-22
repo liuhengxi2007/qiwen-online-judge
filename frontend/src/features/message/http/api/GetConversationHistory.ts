@@ -4,10 +4,10 @@ import type {
   MessageId,
 } from '@/features/message/domain/message'
 import {
-  fromMessageHistoryResponse,
   messageConversationIdValue,
   messageIdValue,
 } from '@/features/message/domain/message'
+import { fromMessageHistoryResponse } from '@/features/message/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export function getConversationHistory(

@@ -1,5 +1,5 @@
 import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
-import { fromRegisteredJudgerListItemContract } from '@/features/judger/domain/judger'
+import { fromRegisteredJudgerListItemContract } from '@/features/judger/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listRegisteredJudgers(): Promise<RegisteredJudgerListItem[]> {

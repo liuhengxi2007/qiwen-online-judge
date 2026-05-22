@@ -2,13 +2,13 @@ import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { messageEventsUrl } from '@/features/message/http/api/message-client'
+import type { DirectMessage } from '@/features/message/domain/message'
 import {
   fromConversationReadStreamPayload,
   fromDirectMessage,
   fromInboxChangedStreamPayload,
   type ConversationReadStreamPayload,
-  type DirectMessage,
-} from '@/features/message/domain/message'
+} from '@/features/message/http/codec'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 
 export const messageStreamEventName = 'qiwen:message-stream-event'

@@ -3,11 +3,11 @@ import type {
   UserGroupDetail,
   UserGroupSlug,
 } from '@/features/usergroup/domain/usergroup'
+import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupMemberRoleRequestContract,
-  userGroupSlugValue,
-} from '@/features/usergroup/domain/usergroup'
+} from '@/features/usergroup/http/codec'
 import {
   usernameValue,
   type Username,

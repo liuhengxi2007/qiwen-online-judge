@@ -3,11 +3,11 @@ import type {
   UpdateUserPermissionsRequest,
   Username,
 } from '@/features/user/domain/user'
+import { usernameValue } from '@/features/user/domain/user'
 import {
   fromAuthUserListItemContract,
   toUpdateUserPermissionsRequestContract,
-  usernameValue,
-} from '@/features/user/domain/user'
+} from '@/features/user/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function updateUserPermissions(

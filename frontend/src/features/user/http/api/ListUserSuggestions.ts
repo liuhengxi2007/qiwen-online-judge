@@ -1,8 +1,6 @@
 import type { UserIdentity } from '@/features/user/domain/user'
-import {
-  fromUserIdentityContract,
-  parseUserSearchQuery,
-} from '@/features/user/domain/user'
+import { parseUserSearchQuery } from '@/features/user/domain/user'
+import { fromUserIdentityContract } from '@/features/user/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listUserSuggestions(query: string): Promise<UserIdentity[]> {

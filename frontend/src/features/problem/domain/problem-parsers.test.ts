@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  fromProblemDataContract,
   parseProblemDataFilename,
   parseProblemDataPath,
   parseProblemId,
@@ -126,13 +125,11 @@ describe('problem-parsers', () => {
     })
   })
 
-  it('parses problem search queries and nullable contract data', () => {
+  it('parses problem search queries', () => {
     expect(parseProblemSearchQuery('  dp  ')).toEqual({
       ok: true,
       value: 'dp',
     })
-    expect(fromProblemDataContract(null, 'problem data')).toEqual({ value: null })
-    expect(fromProblemDataContract(' answer.txt ', 'problem data')).toEqual({ value: 'answer.txt' })
   })
 
   it('validates numeric problem limits', () => {

@@ -5,7 +5,7 @@ import type {
 import {
   fromLoginResponseContract,
   toLoginRequestContract,
-} from '@/features/auth/domain/auth'
+} from '@/features/auth/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {

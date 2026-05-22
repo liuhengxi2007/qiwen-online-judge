@@ -1,5 +1,6 @@
-import { fromUserIdentityContract } from '@/features/user/domain/user'
+import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
+import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
 import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
@@ -8,7 +9,7 @@ import type { ProblemSuggestion } from '@/features/problem/http/response/Problem
 import type { ProblemSummary } from '@/features/problem/http/response/ProblemSummary'
 import type { UpdateProblemRequest } from '@/features/problem/http/request/UpdateProblemRequest'
 import {
-  fromProblemDataContract,
+  parseProblemDataFilename,
   parseProblemId,
   parseProblemSlug,
   parseProblemSpaceLimitMb,
@@ -107,6 +108,12 @@ type UpdateProblemRequestContract = {
 }
 
 type ProblemListResponseContract = PageResponseContract<ProblemSummaryContract>
+
+function fromProblemDataContract(rawData: string | null, label: string): ProblemData {
+  return {
+    value: rawData === null ? null : requireParsed(parseProblemDataFilename(rawData), label),
+  }
+}
 
 export function fromProblemSummaryContract(problem: ProblemSummaryContract): ProblemSummary {
   return {

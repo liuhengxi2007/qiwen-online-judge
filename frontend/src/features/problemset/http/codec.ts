@@ -1,4 +1,4 @@
-import { fromUserIdentityContract } from '@/features/user/domain/user'
+import { fromUserIdentityContract } from '@/features/user/http/codec'
 import {
   parseProblemId,
   parseProblemSlug,

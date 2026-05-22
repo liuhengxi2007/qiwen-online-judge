@@ -1,6 +1,6 @@
 import type { BlogListResponse } from '@/features/blog/domain/blog'
 import { usernameValue, type Username } from '@/features/user/domain/user'
-import { fromBlogListResponseContract } from '@/features/blog/domain/blog'
+import { fromBlogListResponseContract } from '@/features/blog/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'
 

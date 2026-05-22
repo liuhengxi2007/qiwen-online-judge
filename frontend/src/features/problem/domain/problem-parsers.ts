@@ -1,4 +1,3 @@
-import type { ProblemData } from '@/features/problem/model/ProblemData'
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
@@ -58,12 +57,6 @@ export function requireParsed<T>(result: ParseResult<T>, label: string): T {
   }
 
   return result.value
-}
-
-export function fromProblemDataContract(rawData: string | null, label: string): ProblemData {
-  return {
-    value: rawData === null ? null : requireParsed(parseProblemDataFilename(rawData), label),
-  }
 }
 
 export function problemIdValue(problemId: ProblemId): string {

@@ -1,7 +1,7 @@
 import type { BlogListResponse } from '@/features/blog/domain/blog'
 import type { ProblemSlug } from '@/features/problem/domain/problem'
 import { problemSlugValue } from '@/features/problem/domain/problem'
-import { fromBlogListResponseContract } from '@/features/blog/domain/blog'
+import { fromBlogListResponseContract } from '@/features/blog/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'
 

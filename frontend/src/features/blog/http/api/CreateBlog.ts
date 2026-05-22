@@ -5,7 +5,7 @@ import type {
 import {
   fromBlogSummaryContract,
   toCreateBlogRequestContract,
-} from '@/features/blog/domain/blog'
+} from '@/features/blog/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createBlog(request: CreateBlogRequest): Promise<BlogSummary> {

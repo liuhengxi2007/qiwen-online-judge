@@ -5,10 +5,10 @@ import type {
   ProblemSlug,
 } from '@/features/problem/domain/problem'
 import {
-  fromProblemDetailContract,
   problemDataPathValue,
   problemSlugValue,
 } from '@/features/problem/domain/problem'
+import { fromProblemDetailContract } from '@/features/problem/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function deleteProblemDataPath(problemSlug: ProblemSlug, path: ProblemDataPath): Promise<ProblemDetail> {

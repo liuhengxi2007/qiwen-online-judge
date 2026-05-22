@@ -1,5 +1,5 @@
 import type { MessageInboxResponse } from '@/features/message/domain/message'
-import { fromMessageInboxResponse } from '@/features/message/domain/message'
+import { fromMessageInboxResponse } from '@/features/message/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/Pagination'
 

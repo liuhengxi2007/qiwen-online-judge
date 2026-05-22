@@ -10,17 +10,6 @@ export {
   userGroupNameValue,
   userGroupSlugValue,
 } from '@/features/usergroup/domain/usergroup-parsers'
-export {
-  fromUserGroupDetailContract,
-  fromUserGroupListResponseContract,
-  fromUserGroupMemberContract,
-  fromUserGroupSummaryContract,
-  toAddUserGroupMemberRequestContract,
-  toCreateUserGroupRequestContract,
-  toUpdateUserGroupMemberRoleRequestContract,
-  toUpdateUserGroupRequestContract,
-} from '@/features/usergroup/domain/usergroup-contract'
-
 export type { AddUserGroupMemberRequest } from '@/features/usergroup/http/request/AddUserGroupMemberRequest'
 export type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
 export type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'

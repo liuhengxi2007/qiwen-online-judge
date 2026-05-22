@@ -5,7 +5,7 @@ import type {
 import {
   fromSubmissionListResponseContract,
   toSubmissionListRequestContract,
-} from '@/features/submission/domain/submission'
+} from '@/features/submission/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listSubmissions(request: SubmissionListRequest): Promise<SubmissionListResponse> {

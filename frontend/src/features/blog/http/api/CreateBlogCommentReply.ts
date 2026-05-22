@@ -2,9 +2,11 @@ import type { BlogCommentId, BlogDetail, BlogId, CreateBlogCommentRequest } from
 import {
   blogCommentIdValue,
   blogIdValue,
+} from '@/features/blog/domain/blog'
+import {
   fromBlogDetailContract,
   toCreateBlogCommentRequestContract,
-} from '@/features/blog/domain/blog'
+} from '@/features/blog/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function createBlogCommentReply(

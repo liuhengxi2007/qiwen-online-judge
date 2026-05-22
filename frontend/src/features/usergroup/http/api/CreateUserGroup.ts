@@ -5,7 +5,7 @@ import type {
 import {
   fromUserGroupDetailContract,
   toCreateUserGroupRequestContract,
-} from '@/features/usergroup/domain/usergroup'
+} from '@/features/usergroup/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createUserGroup(request: CreateUserGroupRequest): Promise<UserGroupDetail> {

@@ -5,7 +5,7 @@ import type {
 import {
   fromProblemSetSummaryContract,
   toCreateProblemSetRequestContract,
-} from '@/features/problemset/domain/problemset'
+} from '@/features/problemset/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createProblemSet(request: CreateProblemSetRequest): Promise<ProblemSetSummary> {

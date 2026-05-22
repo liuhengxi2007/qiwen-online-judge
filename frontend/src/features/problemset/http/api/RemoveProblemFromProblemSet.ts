@@ -3,10 +3,8 @@ import type {
   ProblemSetDetail,
   ProblemSetSlug,
 } from '@/features/problemset/domain/problemset'
-import {
-  fromProblemSetDetailContract,
-  problemSetSlugValue,
-} from '@/features/problemset/domain/problemset'
+import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
+import { fromProblemSetDetailContract } from '@/features/problemset/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export function removeProblemFromProblemSet(

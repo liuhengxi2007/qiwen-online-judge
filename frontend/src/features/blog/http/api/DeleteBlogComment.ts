@@ -5,8 +5,8 @@ import type {
 import {
   blogCommentIdValue,
   blogIdValue,
-  fromBlogDetailContract,
 } from '@/features/blog/domain/blog'
+import { fromBlogDetailContract } from '@/features/blog/http/codec'
 import type { BlogId } from '@/features/blog/domain/blog'
 import { postJson } from '@/shared/api/http-client'
 

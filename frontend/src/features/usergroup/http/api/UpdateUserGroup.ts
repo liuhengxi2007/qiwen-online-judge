@@ -3,11 +3,11 @@ import type {
   UserGroupDetail,
   UserGroupSlug,
 } from '@/features/usergroup/domain/usergroup'
+import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupRequestContract,
-  userGroupSlugValue,
-} from '@/features/usergroup/domain/usergroup'
+} from '@/features/usergroup/http/codec'
 import { postJson } from '@/shared/api/http-client'
 
 export async function updateUserGroup(

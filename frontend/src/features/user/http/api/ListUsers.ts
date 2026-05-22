@@ -5,7 +5,7 @@ import type {
 import {
   fromUserListResponseContract,
   toUserListRequestContract,
-} from '@/features/user/domain/user'
+} from '@/features/user/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listUsers(request: UserListRequest): Promise<UserListResponse> {
