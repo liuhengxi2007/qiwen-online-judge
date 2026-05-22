@@ -1,13 +1,12 @@
 import { useCallback, useReducer } from 'react'
 
 import {
-  parseDisplayName,
   parseEmailAddress,
   parsePlaintextPassword,
-  parseUsername,
   type RegisterRequest,
 } from '@/features/auth/domain/auth'
 import { useRegisterMutation } from '@/features/auth/hooks/use-register-mutation'
+import { parseDisplayName, parseUsername } from '@/features/user/domain/user'
 
 type RegisterState = {
   username: string

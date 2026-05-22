@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { initialSiteManageState, reduceSiteManageState } from '@/features/site-management/domain/site-manage-state'
-import type { Username } from '@/features/auth/model/AuthValues'
+import type { Username } from '@/features/user/model/UserValues'
 import type { AuthUserListItem } from '@/features/user/domain/user'
 
 describe('site-manage-state', () => {

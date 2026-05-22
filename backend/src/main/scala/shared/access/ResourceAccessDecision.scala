@@ -2,7 +2,7 @@ package shared.access
 
 
 
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.usergroup.model.UserGroupSlug
 
 final case class ResourceAccessFacts(

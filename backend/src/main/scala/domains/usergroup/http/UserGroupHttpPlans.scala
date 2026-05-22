@@ -4,7 +4,8 @@ package domains.usergroup.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.Username
 import shared.model.{PageRequest, PageResponse}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.usergroup.application.UserGroupCommands

@@ -3,7 +3,7 @@ package domains.notification.table
 
 
 import cats.effect.IO
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
 import domains.notification.application.output.{NotificationListResponse, NotificationSummary}
 import domains.notification.table.NotificationTableSql.*

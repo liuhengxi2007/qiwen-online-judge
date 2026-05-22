@@ -3,7 +3,7 @@ package domains.usergroup.application
 
 
 import domains.auth.application.UsernameRules
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupDescription, UserGroupName, UserGroupSlug}
 

@@ -1,4 +1,5 @@
-import type { PlaintextPassword, Username } from '@/features/auth/model/AuthValues'
+import type { Username } from '@/features/user/model/UserValues'
+import type { PlaintextPassword } from '@/features/auth/model/AuthValues'
 
 export type LoginRequest = {
   username: Username

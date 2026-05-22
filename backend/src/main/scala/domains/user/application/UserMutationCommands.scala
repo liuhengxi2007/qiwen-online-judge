@@ -5,7 +5,8 @@ package domains.user.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.PasswordHasher
-import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PlaintextPassword, SiteManagerUser, Username}
+import domains.auth.model.{AuthUser, EmailAddress, PlaintextPassword, SiteManagerUser}
+import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
 import domains.user.model.{UserDisplayMode, UserLocale, UserPreferences}
@@ -211,7 +212,7 @@ object UserMutationCommands:
   private def updateSettingsRecord(
     connection: Connection,
     targetUser: AuthUser,
-    displayName: domains.auth.model.DisplayName,
+    displayName: domains.user.model.DisplayName,
     email: domains.auth.model.EmailAddress,
     displayMode: UserDisplayMode,
     locale: UserLocale,

@@ -3,7 +3,8 @@ package domains.auth.application
 
 
 import cats.effect.IO
-import domains.auth.model.{SessionToken, Username}
+import domains.auth.model.SessionToken
+import domains.user.model.Username
 
 import java.time.Instant
 

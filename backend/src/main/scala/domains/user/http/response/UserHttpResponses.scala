@@ -4,13 +4,13 @@ package domains.user.http.response
 
 import cats.effect.IO
 import domains.auth.http.response.AuthHttpResponses
-import domains.auth.model.{AuthUser}
+import domains.auth.model.AuthUser
 import domains.auth.application.output.{SessionResponse}
 import shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
-import domains.user.model.{UserIdentity}
+import domains.user.model.UserIdentity
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Response, Status}

@@ -2,7 +2,7 @@ package domains.auth.application
 
 
 
-import domains.auth.model.Username
+import domains.user.model.Username
 
 object UsernameRules:
 

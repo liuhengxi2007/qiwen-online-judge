@@ -4,18 +4,20 @@ import type { RegisterRequest } from '@/features/auth/http/request/RegisterReque
 import type { RegisterResponse } from '@/features/auth/http/response/RegisterResponse'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import {
-  displayNameValue,
   emailAddressValue,
-  parseDisplayName,
   parseEmailAddress,
+  plaintextPasswordValue,
+} from '@/features/auth/domain/auth-parsers'
+import {
+  displayNameValue,
+  parseDisplayName,
   parseProblemTitleDisplayMode,
   parseUserDisplayMode,
   parseUserLocale,
   parseUsername,
-  plaintextPasswordValue,
   requireParsed,
   usernameValue,
-} from '@/features/auth/domain/auth-parsers'
+} from '@/features/user/domain/user-parsers'
 
 type UserPreferencesContract = {
   displayMode: 'display_name' | 'username' | 'display_name_with_username'

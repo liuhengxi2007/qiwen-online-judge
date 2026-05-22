@@ -1,10 +1,10 @@
 import {
   displayNameValue,
-  emailAddressValue,
   problemTitleDisplayModeValue,
   userDisplayModeValue,
   userLocaleValue,
 } from '@/features/user/domain/user'
+import { emailAddressValue } from '@/features/auth/domain/auth'
 import {
   type SessionResponse,
 } from '@/features/auth/domain/auth'

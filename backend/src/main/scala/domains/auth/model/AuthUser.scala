@@ -2,7 +2,7 @@ package domains.auth.model
 
 
 
-import domains.user.model.{UserDisplayMode, UserLocale}
+import domains.user.model.{DisplayName, UserDisplayMode, UserLocale, Username}
 
 final case class AuthUser(
   username: Username,

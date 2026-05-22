@@ -4,7 +4,8 @@ package domains.user.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser}
+import domains.user.model.Username
 import domains.blog.table.BlogTable
 import shared.model.{PageRequest, PageResponse}
 import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}

@@ -4,7 +4,8 @@ package domains.auth.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{SessionToken, Username}
+import domains.auth.model.SessionToken
+import domains.user.model.Username
 import domains.auth.table.SessionTable
 
 import java.sql.Connection

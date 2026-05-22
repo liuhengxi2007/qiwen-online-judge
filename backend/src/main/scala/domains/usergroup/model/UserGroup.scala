@@ -2,7 +2,7 @@ package domains.usergroup.model
 
 
 
-import domains.auth.model.Username
+import domains.user.model.Username
 
 import java.time.Instant
 

@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { SessionResponse } from '@/features/auth/domain/auth'
-import { displayNameValue, emailAddressValue, usernameValue, type Username } from '@/features/user/domain/user'
+import { emailAddressValue } from '@/features/auth/domain/auth'
+import { displayNameValue, usernameValue, type Username } from '@/features/user/domain/user'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UserProfileOverviewCardProps = {

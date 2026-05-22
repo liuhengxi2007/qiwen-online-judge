@@ -4,7 +4,8 @@ package domains.blog.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.Username
 import domains.blog.application.BlogCommands
 import domains.blog.application.BlogCommands.CreateBlogCommentResult
 import domains.blog.table.BlogTable

@@ -1,28 +1,7 @@
-import type {
-  DisplayName,
-  EmailAddress,
-  PlaintextPassword,
-  Username,
-} from '@/features/auth/model/AuthValues'
-import type { UserContribution } from '@/features/user/model/UserContribution'
-import type { UserLocale } from '@/features/user/model/UserLocale'
-import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
-import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
+import type { EmailAddress, PlaintextPassword } from '@/features/auth/model/AuthValues'
+import type { ParseResult } from '@/shared/domain/parsing'
 
-type ParseSuccess<T> = { ok: true; value: T }
-type ParseFailure = { ok: false; error: string }
-export type ParseResult<T> = ParseSuccess<T> | ParseFailure
-
-const usernamePattern = /^[a-z0-9_-]+$/
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function createUsername(value: string): Username {
-  return value as Username
-}
-
-function createDisplayName(value: string): DisplayName {
-  return value as DisplayName
-}
 
 function createEmailAddress(value: string): EmailAddress {
   return value as EmailAddress
@@ -32,92 +11,12 @@ function createPlaintextPassword(value: string): PlaintextPassword {
   return value as PlaintextPassword
 }
 
-function createUserDisplayMode(value: UserDisplayMode): UserDisplayMode {
-  return value
-}
-
-function createUserLocale(value: UserLocale): UserLocale {
-  return value
-}
-
-function createProblemTitleDisplayMode(value: ProblemTitleDisplayMode): ProblemTitleDisplayMode {
-  return value
-}
-
-function createUserContribution(value: number): UserContribution {
-  return value as UserContribution
-}
-
-export function requireParsed<T>(result: ParseResult<T>, label: string): T {
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function usernameValue(username: Username): string {
-  return username
-}
-
-export function displayNameValue(displayName: DisplayName): string {
-  return displayName
-}
-
 export function emailAddressValue(emailAddress: EmailAddress): string {
   return emailAddress
 }
 
 export function plaintextPasswordValue(password: PlaintextPassword): string {
   return password
-}
-
-export function userDisplayModeValue(displayMode: UserDisplayMode): UserDisplayMode {
-  return displayMode
-}
-
-export function userLocaleValue(locale: UserLocale): UserLocale {
-  return locale
-}
-
-export function problemTitleDisplayModeValue(displayMode: ProblemTitleDisplayMode): ProblemTitleDisplayMode {
-  return displayMode
-}
-
-export function userContributionValue(contribution: UserContribution): number {
-  return contribution
-}
-
-export function parseUsername(rawUsername: string): ParseResult<Username> {
-  const normalized = rawUsername.trim().toLowerCase()
-
-  if (!normalized) {
-    return { ok: false, error: 'Username is required.' }
-  }
-
-  if (normalized.length < 3 || normalized.length > 32) {
-    return { ok: false, error: 'Username must be between 3 and 32 characters.' }
-  }
-
-  if (!usernamePattern.test(normalized)) {
-    return { ok: false, error: 'Username may contain only lowercase letters, numbers, underscores, and hyphens.' }
-  }
-
-  return { ok: true, value: createUsername(normalized) }
-}
-
-export function parseDisplayName(rawDisplayName: string): ParseResult<DisplayName> {
-  const normalized = rawDisplayName.trim()
-
-  if (!normalized) {
-    return { ok: false, error: 'Display name is required.' }
-  }
-
-  if (normalized.length > 120) {
-    return { ok: false, error: 'Display name must be at most 120 characters.' }
-  }
-
-  return { ok: true, value: createDisplayName(normalized) }
 }
 
 export function parseEmailAddress(rawEmailAddress: string): ParseResult<EmailAddress> {
@@ -146,59 +45,4 @@ export function parsePlaintextPassword(rawPassword: string): ParseResult<Plainte
   }
 
   return { ok: true, value: createPlaintextPassword(normalized) }
-}
-
-export function parseUserDisplayMode(rawDisplayMode: string): ParseResult<UserDisplayMode> {
-  const normalized = rawDisplayMode.trim()
-
-  switch (normalized) {
-    case 'display_name':
-    case 'username':
-    case 'display_name_with_username':
-      return { ok: true, value: createUserDisplayMode(normalized) }
-    default:
-      return {
-        ok: false,
-        error: 'Display mode must be one of: display_name, username, display_name_with_username.',
-      }
-  }
-}
-
-export function parseUserLocale(rawLocale: string): ParseResult<UserLocale> {
-  const normalized = rawLocale.trim()
-
-  switch (normalized) {
-    case 'en':
-    case 'zh-CN':
-      return { ok: true, value: createUserLocale(normalized) }
-    default:
-      return {
-        ok: false,
-        error: 'Locale must be one of: en, zh-CN.',
-      }
-  }
-}
-
-export function parseProblemTitleDisplayMode(rawDisplayMode: string): ParseResult<ProblemTitleDisplayMode> {
-  const normalized = rawDisplayMode.trim()
-
-  switch (normalized) {
-    case 'title':
-    case 'slug':
-    case 'title_with_slug':
-      return { ok: true, value: createProblemTitleDisplayMode(normalized) }
-    default:
-      return {
-        ok: false,
-        error: 'Problem title display mode must be one of: title, slug, title_with_slug.',
-      }
-  }
-}
-
-export function parseUserContribution(rawContribution: number): ParseResult<UserContribution> {
-  if (!Number.isFinite(rawContribution)) {
-    return { ok: false, error: 'User contribution must be a finite number.' }
-  }
-
-  return { ok: true, value: createUserContribution(rawContribution) }
 }

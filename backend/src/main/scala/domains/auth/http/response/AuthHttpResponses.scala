@@ -9,7 +9,7 @@ import domains.auth.model.{AuthUser, SessionToken}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.user.application.output.{AuthUserListItem}
-import domains.user.model.{UserPreferences}
+import domains.user.model.UserPreferences
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*

@@ -2,7 +2,7 @@ package domains.message.table.utils
 
 
 
-import domains.auth.model.{DisplayName, Username}
+import domains.user.model.{DisplayName, Username}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.message.application.output.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
 import domains.user.model.UserIdentity

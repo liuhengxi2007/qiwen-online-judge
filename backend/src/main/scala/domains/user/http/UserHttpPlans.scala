@@ -3,7 +3,8 @@ package domains.user.http
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, SiteManagerUser, Username}
+import domains.auth.model.{AuthUser, SiteManagerUser}
+import domains.user.model.Username
 import shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}

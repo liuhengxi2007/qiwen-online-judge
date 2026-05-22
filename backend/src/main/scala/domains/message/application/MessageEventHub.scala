@@ -3,7 +3,7 @@ package domains.message.application
 
 
 import cats.effect.{IO, Resource}
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.message.application.output.{DirectMessage}
 import domains.message.model.{MessageConversationId, MessageId}
 import fs2.Stream

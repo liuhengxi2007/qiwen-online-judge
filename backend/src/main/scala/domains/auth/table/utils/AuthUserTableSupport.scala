@@ -4,7 +4,8 @@ package domains.auth.table.utils
 
 import domains.auth.table.AuthUserTableSql
 import cats.effect.IO
-import domains.auth.model.{AuthSeedUser, AuthUser, DisplayName, EmailAddress, PasswordHash, PlaintextPassword, Username}
+import domains.auth.model.{AuthSeedUser, AuthUser, EmailAddress, PasswordHash, PlaintextPassword}
+import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{UserDisplayMode, UserLocale}
 import org.typelevel.log4cats.slf4j.Slf4jLogger

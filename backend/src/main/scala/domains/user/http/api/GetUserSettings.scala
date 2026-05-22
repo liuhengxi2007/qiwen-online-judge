@@ -6,7 +6,7 @@ import domains.user.http.*
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.model.Username
+import domains.user.model.Username
 import shared.model.PageRequest
 import domains.user.application.UserMutationCommands
 import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}

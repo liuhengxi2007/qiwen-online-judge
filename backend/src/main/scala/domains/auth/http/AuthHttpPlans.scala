@@ -10,6 +10,7 @@ import domains.auth.application.input.{LoginRequest, RegisterRequest}
 import domains.auth.application.output.SessionResponse
 import domains.auth.model.*
 import domains.auth.table.AuthUserTable
+import domains.user.model.{DisplayName, Username}
 import domains.usergroup.model.UserGroupSlug
 import domains.usergroup.table.UserGroupTable
 

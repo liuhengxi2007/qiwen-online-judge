@@ -2,7 +2,8 @@ package domains.user.application.output
 
 import domains.user.model.*
 
-import domains.auth.model.{DisplayName, EmailAddress, Username}
+import domains.auth.model.EmailAddress
+import domains.user.model.{DisplayName, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

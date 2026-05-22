@@ -13,9 +13,9 @@ export type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 export type { UserIdentity } from '@/features/user/model/UserIdentity'
 export type { UserLocale } from '@/features/user/model/UserLocale'
 export type { UserPreferences } from '@/features/user/model/UserPreferences'
+export type { DisplayName, Username } from '@/features/user/model/UserValues'
 export type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
 export type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
-export type { DisplayName, EmailAddress, PlaintextPassword, Username } from '@/features/auth/model/AuthValues'
 export type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 export type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
 export type { UserListRequest } from '@/features/user/http/request/UserListRequest'
@@ -25,17 +25,13 @@ export type { ParseResult } from '@/features/user/domain/user-parsers'
 
 export {
   displayNameValue,
-  emailAddressValue,
   parseDisplayName,
-  parseEmailAddress,
-  parsePlaintextPassword,
   parseProblemTitleDisplayMode,
   parseUserContribution,
   parseUserDisplayMode,
   parseUserLocale,
   parseUserSearchQuery,
   parseUsername,
-  plaintextPasswordValue,
   problemTitleDisplayModeValue,
   requireParsed,
   userContributionValue,

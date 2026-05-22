@@ -18,8 +18,8 @@ object MessageHttpPlanDefinitions:
     markConversationRead: WithTransaction[(domains.message.model.MessageConversationId, domains.message.application.input.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
     markAllMessagesRead: WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult],
     listBlocks: Plain[Unit, List[domains.message.application.output.MessageBlockEntry]],
-    addBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
-    removeBlock: WithTransaction[domains.auth.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
+    addBlock: WithTransaction[domains.user.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
+    removeBlock: WithTransaction[domains.user.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
   )
 
   def plans(messageEventHub: MessageEventHub): RegisteredPlans =

@@ -2,7 +2,7 @@ package domains.message.application
 
 
 
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.message.model.{ConversationReadReceipt, MessageId}
 import domains.message.application.output.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse}
 

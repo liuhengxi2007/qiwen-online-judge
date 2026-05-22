@@ -3,7 +3,8 @@ package domains.submission.table
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql

@@ -3,7 +3,8 @@ package domains.auth.table
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
+import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
+import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.auth.table.AuthUserTableSchema.*
 import domains.auth.table.AuthUserTableSql.*

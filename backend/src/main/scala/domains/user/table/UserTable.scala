@@ -4,7 +4,8 @@ package domains.user.table
 
 import cats.effect.IO
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
-import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, SiteManagerUser, Username}
+import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
+import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql

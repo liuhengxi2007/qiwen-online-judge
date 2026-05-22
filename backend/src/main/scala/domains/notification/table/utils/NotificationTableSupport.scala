@@ -2,7 +2,7 @@ package domains.notification.table.utils
 
 
 
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.notification.model.{NotificationKind, NotificationPayload, NotificationStatus}
 import domains.notification.application.output.{NotificationSummary}

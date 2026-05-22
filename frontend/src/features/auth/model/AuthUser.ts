@@ -1,4 +1,5 @@
-import type { DisplayName, EmailAddress, PasswordHash, Username } from '@/features/auth/model/AuthValues'
+import type { DisplayName, Username } from '@/features/user/model/UserValues'
+import type { EmailAddress, PasswordHash } from '@/features/auth/model/AuthValues'
 
 export type AuthUser = {
   username: Username

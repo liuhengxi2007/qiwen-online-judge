@@ -2,7 +2,8 @@ package domains.submission.application
 
 
 
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.Username
 import domains.problem.model.OthersSubmissionAccess
 
 object SubmissionPolicy:

@@ -4,7 +4,8 @@ package domains.usergroup.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.Username
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import domains.usergroup.table.UserGroupTable

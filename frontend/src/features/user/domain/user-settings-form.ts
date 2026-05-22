@@ -1,7 +1,5 @@
 import {
   parseDisplayName,
-  parseEmailAddress,
-  parsePlaintextPassword,
   parseProblemTitleDisplayMode,
   parseUserDisplayMode,
   parseUserLocale,
@@ -15,6 +13,7 @@ import {
   type UserDisplayMode,
   type UserLocale,
 } from '@/features/user/domain/user'
+import { parseEmailAddress, parsePlaintextPassword } from '@/features/auth/domain/auth'
 import { translateMessage } from '@/shared/i18n/messages'
 
 export type UserProfileDraft = {

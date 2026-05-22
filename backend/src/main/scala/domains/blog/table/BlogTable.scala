@@ -3,7 +3,7 @@ package domains.blog.table
 
 
 import cats.effect.IO
-import domains.auth.model.{DisplayName, Username}
+import domains.user.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
 import domains.blog.application.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}

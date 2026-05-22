@@ -13,16 +13,18 @@ import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
 import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
 import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
+import {
+  emailAddressValue,
+  parseEmailAddress,
+  plaintextPasswordValue,
+} from '@/features/auth/domain/auth-parsers'
 import { parseProblemSlug, parseProblemTitle } from '@/features/problem/domain/problem'
 import {
   displayNameValue,
-  emailAddressValue,
   parseDisplayName,
-  parseEmailAddress,
   parseUserContribution,
   userSearchQueryValue,
   parseUsername,
-  plaintextPasswordValue,
   problemTitleDisplayModeValue,
   requireParsed,
   userDisplayModeValue,

@@ -2,7 +2,7 @@ package domains.usergroup.application.output
 
 import domains.usergroup.model.*
 
-import domains.auth.model.Username
+import domains.user.model.Username
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

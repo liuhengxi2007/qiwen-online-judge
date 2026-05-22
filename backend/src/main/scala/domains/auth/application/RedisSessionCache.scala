@@ -3,7 +3,8 @@ package domains.auth.application
 
 
 import cats.effect.{IO, Resource}
-import domains.auth.model.{SessionToken, Username}
+import domains.auth.model.SessionToken
+import domains.user.model.Username
 import io.circe.Json
 import io.circe.parser.parse
 import redis.clients.jedis.JedisPooled

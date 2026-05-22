@@ -11,10 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   displayNameValue,
-  emailAddressValue,
   usernameValue,
   type AuthUserListItem,
 } from '@/features/user/domain/user'
+import { emailAddressValue } from '@/features/auth/domain/auth'
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { buildPageNumbers } from '@/shared/domain/pagination'

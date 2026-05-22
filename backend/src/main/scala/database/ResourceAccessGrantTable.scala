@@ -1,7 +1,7 @@
 package database
 
 import cats.effect.IO
-import domains.auth.model.Username
+import domains.user.model.Username
 import shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
 import domains.usergroup.model.UserGroupSlug
 

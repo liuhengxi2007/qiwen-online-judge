@@ -1,4 +1,4 @@
-import type { Username } from '@/features/auth/model/AuthValues'
+import type { Username } from '@/features/user/model/UserValues'
 import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
 
 export type AddUserGroupMemberRequest = {

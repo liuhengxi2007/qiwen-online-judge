@@ -1,11 +1,13 @@
 import {
-  parseDisplayName,
   parseEmailAddress,
+} from '@/features/auth/domain/auth'
+import {
+  parseDisplayName,
   parseProblemTitleDisplayMode,
   parseUserDisplayMode,
   parseUserLocale,
   parseUsername,
-} from '@/features/auth/domain/auth'
+} from '@/features/user/domain/user'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 
 const authUserStorageKey = 'auth_user'

@@ -93,7 +93,7 @@ object MessageMutationCommands:
   def addBlock(
     connection: Connection,
     actor: AuthUser,
-    targetUsername: domains.auth.model.Username,
+    targetUsername: domains.user.model.Username,
     repository: MessageRepository = defaultRepository
   ): IO[AddBlockResult] =
     if actor.username == targetUsername then IO.pure(AddBlockResult.CannotBlockSelf)
@@ -106,7 +106,7 @@ object MessageMutationCommands:
   def removeBlock(
     connection: Connection,
     actor: AuthUser,
-    targetUsername: domains.auth.model.Username,
+    targetUsername: domains.user.model.Username,
     repository: MessageRepository = defaultRepository
   ): IO[RemoveBlockResult] =
     repository.removeBlock(connection, actor.username, targetUsername).as(RemoveBlockResult.Removed)

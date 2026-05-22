@@ -9,7 +9,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
-import domains.auth.model.Username
+import domains.user.model.Username
 import shared.http.AuthenticatedHttpExecutor
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}

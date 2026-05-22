@@ -5,7 +5,7 @@ package domains.problemset.table
 import database.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.auth.model.Username
+import domains.user.model.Username
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}

@@ -2,7 +2,7 @@ package domains.user.application.input
 
 import domains.user.model.*
 
-import domains.auth.model.DisplayName
+import domains.user.model.DisplayName
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

@@ -3,7 +3,8 @@ package domains.auth.table
 
 
 import cats.effect.IO
-import domains.auth.model.{SessionToken, Username}
+import domains.auth.model.SessionToken
+import domains.user.model.Username
 import domains.auth.table.SessionTableSchema.*
 import domains.auth.table.SessionTableSql.*
 import domains.auth.table.utils.SessionTableSupport.*

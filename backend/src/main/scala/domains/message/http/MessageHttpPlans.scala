@@ -5,7 +5,8 @@ package domains.message.http
 import cats.syntax.all.*
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, Username}
+import domains.auth.model.AuthUser
+import domains.user.model.Username
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.application.{JdbcMessageRepository, MessageCommands, MessageEventHub, MessageStreamEvent}
 import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
