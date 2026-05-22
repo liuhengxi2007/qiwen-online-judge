@@ -4,6 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.judger.table.JudgerTable
 import domains.problem.application.ProblemDataStorage
+import domains.submission.application.utils.SubmissionJudgeStateSupport
 import domains.submission.model.{SubmissionId, SubmissionJudgeCompletion, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.SubmissionTable
 import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
@@ -87,7 +88,7 @@ object JudgeCommands:
             case Some(submission) =>
               SubmissionLifecycle
                 .completeJudging(
-                  SubmissionJudgeState.fromSubmissionDetail(submission),
+                  SubmissionJudgeStateSupport.fromSubmissionDetail(submission),
                   SubmissionJudgeCompletion(
                     status = fromProtocolStatus(request.status),
                     verdict = request.verdict.map(fromProtocolVerdict),

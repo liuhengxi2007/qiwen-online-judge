@@ -2,7 +2,7 @@
 
 Qiwen Online Judge is a type-safe online judge project with a React frontend, a Scala/http4s backend, PostgreSQL persistence, and an independent judge worker.
 
-The project is organized by business domain rather than by technical layer. HTTP contracts live in `contracts/`, frontend and backend domain models mirror those contracts where appropriate, and worker processes communicate with the backend through stable network protocols instead of importing backend internals.
+The project is organized by business domain rather than by technical layer. Cross-stack contracts are currently maintained by mirrored frontend/backend files and checked by scripts; `contracts/` is reserved for future centralized contract definitions. Worker processes communicate with the backend through stable network protocols instead of importing backend internals.
 
 ## Features
 
@@ -20,11 +20,12 @@ The project is organized by business domain rather than by technical layer. HTTP
 
 - `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Feature code lives under `frontend/src/features/<domain>`.
 - `backend/`: Scala 3, Cats Effect, http4s, Circe, PostgreSQL. Domain code lives under `backend/src/main/scala/domains/<domain>`.
-- `contracts/`: cross-stack HTTP transport contracts.
+- `contracts/`: reserved for future centralized HTTP transport contracts. Today, active contracts are mirrored in frontend/backend request, response, model, and shared files and validated by scripts.
 - `judger/`: independent judge worker process.
 - `judge-protocol-scala/`: shared Scala protocol module used across backend and worker boundaries.
 - `docs/`: architecture, type-safety, contract-alignment, lifecycle, and worker guardrails.
 - `scripts/`: maintenance checks such as contract alignment.
+- `references/library-project/`: archived reference sample only; it is not current application source and is ignored by default ripgrep searches.
 
 ## Architecture Principles
 
@@ -92,12 +93,14 @@ Run these before committing related changes:
 ```bash
 node scripts/check-contract-alignment.mjs
 node scripts/check-api-alignment.mjs
+node scripts/check-structure-boundaries.mjs
 npm --prefix frontend run typecheck
 cd backend && sbt compile
 ```
 
 Use the contract check whenever a file in `contracts/`, backend `model/`, or frontend `model/` changes.
 Use the API alignment check whenever frontend or backend endpoint files under `http/api` change.
+Use the structure boundary check after moving files across frontend or backend layers, and to catch generated or backup files before commit.
 
 ## Current Development Direction
 

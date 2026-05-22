@@ -1,0 +1,11 @@
+references/**
+node_modules/**
+target/**
+dist/**
+frontend/node_modules/**
+frontend/dist/**
+backend/target/**
+judger/target/**
+judger/node_modules/**
+judger/dist/**
+judge-protocol-scala/target/**

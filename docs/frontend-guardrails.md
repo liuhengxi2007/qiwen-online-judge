@@ -161,6 +161,20 @@ Rules:
 
 Avoid adding new endpoint implementations directly to aggregate `*-client.ts` files.
 
+## Frontend Layer Boundaries
+
+Rules:
+
+- `src/features/<domain>/model` must not import `http`, `hooks`, `components`, or `pages`
+- `src/features/<domain>/domain` must not import or re-export `hooks`, `components`, or `pages`
+- React hooks belong in `hooks`, even when they expose display preferences or other domain-adjacent UI state
+- domain barrels may aggregate parsers, display helpers, contract mappers, and model types, but not React hooks or UI components
+- run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers
+
+If a model needs a type that currently lives in `http/response`, either move the
+shared concept into `model` or introduce a model type and let the response layer
+reuse it.
+
 ## Frontend and Backend Type System Mirror Rule
 
 Frontend and backend cross-stack type layers must stay fully aligned for shared transport and domain types.

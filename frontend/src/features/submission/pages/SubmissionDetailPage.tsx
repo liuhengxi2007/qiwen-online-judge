@@ -23,7 +23,8 @@ import {
   formatOptionalMemoryKb,
   formatOptionalScore,
 } from '@/features/submission/components/submission-support'
-import { formatProblemTitleDisplay, problemSlugValue, useProblemTitleDisplayMode } from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay, problemSlugValue } from '@/features/problem/domain/problem'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'

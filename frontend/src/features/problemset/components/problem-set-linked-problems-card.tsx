@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   problemSlugValue,
   shouldShowProblemSlugSupplement,
+} from '@/features/problem/domain/problem'
+import {
   useProblemTitleDisplay,
   useProblemTitleDisplayMode,
-} from '@/features/problem/domain/problem'
+} from '@/features/problem/hooks/use-problem-title-display'
 import {
   type ProblemSetProblemSummary,
 } from '@/features/problemset/domain/problemset'

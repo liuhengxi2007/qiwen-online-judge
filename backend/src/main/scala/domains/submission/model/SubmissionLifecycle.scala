@@ -1,8 +1,5 @@
 package domains.submission.model
 
-
-
-import domains.submission.application.output.SubmissionDetail
 import judgeprotocol.model.JudgeResult
 import java.time.Instant
 
@@ -30,19 +27,6 @@ object SubmissionJudgeState:
       judgeResult = None,
       startedAt = None,
       finishedAt = None
-    )
-
-  def fromSubmissionDetail(submission: SubmissionDetail): SubmissionJudgeState =
-    SubmissionJudgeState(
-      status = submission.status,
-      verdict = submission.verdict,
-      judgeMessage = submission.judgeMessage,
-      timeUsedMs = submission.timeUsedMs,
-      memoryUsedKb = submission.memoryUsedKb,
-      score = submission.score,
-      judgeResult = submission.judgeResult,
-      startedAt = submission.startedAt,
-      finishedAt = submission.finishedAt
     )
 
 final case class SubmissionJudgeCompletion(

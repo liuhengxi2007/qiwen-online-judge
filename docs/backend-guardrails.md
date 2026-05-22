@@ -65,6 +65,7 @@ For `application/output`:
 
 Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
 Non-HTTP layers must not import from `http.request` or `http.response`; use `application/input` for inputs and `application/output` for read/output shapes that application, table, or model code needs to name.
+`model/` must not import `application`, `http`, or `table`; if a model transition needs data from an output shape, put that adapter in `application` support code.
 
 For `table`:
 
@@ -81,6 +82,17 @@ These templates exist to stop large files from mixing routing, orchestration, SQ
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
 Do not move query/mutation orchestration into `model`, HTTP decoding into `application`, or business decisions into `table`.
+
+Current application-adapter exceptions:
+
+- `domains/message/application/JdbcMessageRepository.scala`
+- `domains/problem/application/LocalProblemDataStorage.scala`
+- `domains/problem/application/MinioProblemDataStorage.scala`
+
+These files are allowed to stay in `application` for now because they implement
+domain-owned adapter behavior and moving them to a new infrastructure layer would
+be a separate behavior-risking migration. Do not use this exception as a pattern
+for new JDBC or storage files without documenting the boundary decision first.
 
 ## Functional Core, Imperative Shell
 
@@ -171,11 +183,15 @@ See also:
 
 Future OJ modules should follow the same layout:
 
-- `domains/problemset`
+- `domains/blog`
+- `domains/message`
+- `domains/notification`
 - `domains/problem`
+- `domains/problemset`
 - `domains/submission`
-- `domains/contest`
+- `domains/user`
 - `domains/usergroup`
+- `domains/contest`
 - `domains/hack`
 
 Each domain should own its:

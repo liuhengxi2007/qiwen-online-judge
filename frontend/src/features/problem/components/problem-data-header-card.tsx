@@ -5,9 +5,9 @@ import {
   formatProblemTitleDisplay,
   problemSlugValue,
   shouldShowProblemSlugSupplement,
-  useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>

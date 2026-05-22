@@ -2,7 +2,6 @@ package domains.problemset.model
 
 
 
-import domains.problemset.application.output.ProblemSetProblemSummary
 import domains.user.model.UserIdentity
 import shared.access.ResourceAccessPolicy
 

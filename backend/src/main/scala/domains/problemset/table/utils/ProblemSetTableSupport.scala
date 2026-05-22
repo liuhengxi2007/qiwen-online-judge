@@ -7,8 +7,8 @@ import database.utils.ResourceAccessTableSupport.{parseColumn, parseOptionalColu
 import domains.auth.model.AuthUser
 import domains.auth.table.utils.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
-import domains.problemset.application.output.{ProblemSetProblemSummary, ProblemSetSummary}
+import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.application.output.ProblemSetSummary
 import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 
 import java.sql.{PreparedStatement, ResultSet}

@@ -24,10 +24,6 @@ export {
   shouldShowProblemSlugSupplement,
 } from '@/features/problem/domain/problem-display'
 export {
-  useProblemTitleDisplay,
-  useProblemTitleDisplayMode,
-} from '@/features/problem/hooks/use-problem-title-display'
-export {
   fromProblemDetailContract,
   fromProblemDataUploadResultContract,
   fromProblemListResponseContract,

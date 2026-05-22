@@ -1,84 +1,89 @@
-# backend
+# Qiwen Online Judge Backend
 
-一个基于 Scala 3、Cats Effect、http4s、Circe 的在线评测后端。
+This is the Scala 3 + Cats Effect + http4s backend for Qiwen Online Judge.
 
-## 目录结构
-
-- `src/main/scala/Main.scala`
-  启动 http4s 服务。
-- `src/main/scala/database`
-  共享数据库连接池、事务边界和配置。
-- `src/main/scala/domains/<domain>`
-  按业务域组织代码，而不是按技术层先分。
-
-当前主要域包括：
-
-- `domains/auth`
-- `domains/judge`
-- `domains/judger`
-- `domains/problem`
-- `domains/problemset`
-- `domains/submission`
-- `domains/system`
-- `domains/usergroup`
-- `domains/shared`
-
-## 后端分层规则
-
-每个业务域优先按这四层组织：
-
-- `model`
-  领域类型、HTTP 边界模型、值对象。
-- `application`
-  用例编排、校验、权限决策、结果 ADT。
-- `http`
-  HTTP 路由分发、请求解析、响应映射。
-- `table`
-  PostgreSQL 持久化、SQL、row reader、migration。
-
-详细规则见：
-
-- [architecture-guardrails.md](/mnt/d/thu0/132-typesafe-modern-sys/qiwen-online-judge/docs/architecture-guardrails.md)
-
-## 运行
+## Commands
 
 ```bash
 sbt run
+sbt compile
 ```
 
-默认监听：
+The service listens on `http://0.0.0.0:8080` by default.
 
-- `http://0.0.0.0:8080`
+## Structure
 
-## 数据库默认连接
+- `src/main/scala/Main.scala`
+  Service startup and router wiring.
+- `src/main/scala/database`
+  Shared database configuration, connection/session management, and
+  cross-domain persistence primitives.
+- `src/main/scala/domains/<domain>`
+  Domain-first backend code. Most business domains are split into `model`,
+  `application`, `http`, and `table`.
+- `src/main/scala/shared`
+  Cross-domain primitives such as pagination, access control, shared HTTP
+  execution support, and generic response models.
 
-- `host = 127.0.0.1`
-- `port = 5432`
-- `databaseName = 当前项目目录名，把 '-' 自动转成 '_'`
-- 用户名：`db`
-- 密码：`root`
+Current domains are `auth`, `blog`, `judge`, `judger`, `message`, `notification`,
+`problem`, `problemset`, `submission`, `system`, `user`, and `usergroup`.
 
-可通过环境变量覆盖：
+## Layer Rules
 
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASSWORD`
+- `model`
+  Durable domain entities, value objects, enums, lifecycle types, slugs, ids, and
+  titles. Model files must not import `application`, `http`, or `table`.
+- `application`
+  Use-case orchestration, validation, permission decisions, result ADTs, and
+  domain-owned adapter interfaces.
+- `application/input`
+  Typed command/query inputs decoded at HTTP boundaries and consumed by
+  application/table code.
+- `application/output`
+  Read/output shapes returned by application use cases.
+- `http`
+  Endpoint routing, request decoding, plan execution, and response mapping.
+- `table`
+  PostgreSQL persistence APIs, SQL, schema setup, and row mapping.
+
+`JdbcMessageRepository.scala`, `LocalProblemDataStorage.scala`, and
+`MinioProblemDataStorage.scala` are current application-adapter exceptions. They
+remain in `application` for now to avoid a behavior-changing infrastructure split.
+
+Detailed rules live in [docs/backend-guardrails.md](../docs/backend-guardrails.md).
+
+## Database Configuration
+
+Defaults:
+
+- `DB_HOST=127.0.0.1`
+- `DB_PORT=5432`
+- `DB_NAME` defaults to the repository directory name with `-` replaced by `_`
+- `DB_USER=db`
+- `DB_PASSWORD=root`
+
+Optional overrides:
+
 - `DB_MAX_POOL_SIZE`
 - `DB_CONNECTION_TIMEOUT_MS`
 
-## 数据库连接策略
+`DatabaseSession` owns transaction connection lifecycle. Application commands
+should use `DatabaseSession.withTransactionConnection` rather than managing
+connections directly.
 
-- 应用启动时初始化 PostgreSQL 连接池。
-- `DatabaseSession` 负责事务连接的申请、提交、回滚和归还。
-- `application` 层不直接管理连接生命周期。
-- 路由和 command 之间通过 `DatabaseSession.withTransactionConnection` 建立事务边界。
+## Validation
 
-## 日志
+From the repository root, run the relevant checks before committing:
 
-服务启动后控制台会输出：
+```bash
+npm --prefix frontend run typecheck
+node scripts/check-contract-alignment.mjs
+node scripts/check-api-alignment.mjs
+node scripts/check-structure-boundaries.mjs
+cd backend
+sbt compile
+```
 
-- 服务启动日志
-- 请求访问日志
-- http4s 中间件请求/响应日志
+Run the contract check when mirrored model/input/output types change. Run the API
+alignment check when endpoint files under `http/api` change. Run the structure
+boundary check after moving files across backend layers.

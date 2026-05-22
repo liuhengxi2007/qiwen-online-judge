@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   formatProblemTitleDisplay,
   problemSlugValue,
-  useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import {
   submissionIdValue,
   submissionJudgeStateLabel,

@@ -25,7 +25,7 @@ export type { ProblemSetDescription } from '@/features/problemset/model/ProblemS
 export type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 export type { ProblemSetId } from '@/features/problemset/model/ProblemSetId'
 export type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
-export type { ProblemSetProblemSummary } from '@/features/problemset/http/response/ProblemSetProblemSummary'
+export type { ProblemSetProblemSummary } from '@/features/problemset/model/ProblemSetProblemSummary'
 export type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 export type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
 export type { ProblemSetTitle } from '@/features/problemset/model/ProblemSetTitle'

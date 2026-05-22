@@ -8,8 +8,8 @@ import {
   problemSlugValue,
   problemTitleValue,
   type ProblemSlug,
-  useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { listUserSuggestions } from '@/features/user/http/api/user-client'
 import type { UserIdentity } from '@/features/user/domain/user'
 import {

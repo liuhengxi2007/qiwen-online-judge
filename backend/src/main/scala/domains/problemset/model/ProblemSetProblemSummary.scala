@@ -1,6 +1,4 @@
-package domains.problemset.application.output
-
-import domains.problemset.model.*
+package domains.problemset.model
 
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}

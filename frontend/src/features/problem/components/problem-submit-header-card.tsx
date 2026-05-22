@@ -6,9 +6,9 @@ import {
   formatProblemTitleDisplay,
   problemSlugValue,
   shouldShowProblemSlugSupplement,
-  useProblemTitleDisplayMode,
 } from '@/features/problem/domain/problem'
 import { useI18n } from '@/shared/i18n/use-i18n'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 
 type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
 

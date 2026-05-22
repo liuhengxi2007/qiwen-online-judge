@@ -9,7 +9,7 @@ import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/r
 import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
 import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
-import type { ProblemSetProblemSummary } from '@/features/problemset/http/response/ProblemSetProblemSummary'
+import type { ProblemSetProblemSummary } from '@/features/problemset/model/ProblemSetProblemSummary'
 import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
 import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
 import {

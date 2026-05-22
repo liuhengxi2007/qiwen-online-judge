@@ -12,11 +12,13 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import {
   parseProblemSearchQuery,
   problemSlugValue,
-  useProblemTitleDisplay,
-  useProblemTitleDisplayMode,
   shouldShowProblemSlugSupplement,
 } from '@/features/problem/domain/problem'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
+import {
+  useProblemTitleDisplay,
+  useProblemTitleDisplayMode,
+} from '@/features/problem/hooks/use-problem-title-display'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import {
