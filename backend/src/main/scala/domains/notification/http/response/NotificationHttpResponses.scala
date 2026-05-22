@@ -4,6 +4,7 @@ package domains.notification.http.response
 
 import cats.effect.IO
 import domains.notification.application.NotificationCommands
+import domains.notification.http.codec.NotificationHttpCodecs.given
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*

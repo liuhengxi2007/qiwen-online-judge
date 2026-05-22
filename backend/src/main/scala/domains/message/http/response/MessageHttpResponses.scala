@@ -5,6 +5,7 @@ package domains.message.http.response
 import cats.effect.IO
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
 import domains.message.http.MessageHttpPlans.{MarkConversationReadOutput, SendMessageOutput}
+import domains.message.http.codec.MessageHttpCodecs.given
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*

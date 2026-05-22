@@ -6,6 +6,7 @@ import cats.effect.IO
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.usergroup.application.UserGroupCommands
+import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import domains.usergroup.model.{UserGroup}
 import domains.usergroup.application.output.{UserGroupDetail}
 import io.circe.syntax.*

@@ -10,19 +10,12 @@ import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDat
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.application.output.{ProblemSuggestion}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
-import io.circe.syntax.*
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.sql.Connection
 
 object ProblemHttpPlans:
 
   final case class SetProblemReadyRequest(ready: Boolean)
-
-  object SetProblemReadyRequest:
-    given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
-    given Encoder[SetProblemReadyRequest] = deriveEncoder[SetProblemReadyRequest]
 
   final case class DownloadProblemDataOutput(
     problemSlug: ProblemSlug,

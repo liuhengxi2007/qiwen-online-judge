@@ -3,6 +3,7 @@ package domains.problemset.http.api
 
 
 import domains.problemset.http.*
+import domains.problemset.http.codec.ProblemSetHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -34,4 +35,3 @@ object ListProblemSets:
 
   private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
     rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-

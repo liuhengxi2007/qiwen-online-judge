@@ -4,6 +4,7 @@ package domains.blog.http.response
 
 import cats.effect.IO
 import domains.blog.application.BlogCommands
+import domains.blog.http.codec.BlogHttpCodecs.given
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse}
 import io.circe.syntax.*

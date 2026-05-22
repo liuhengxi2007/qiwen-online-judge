@@ -5,6 +5,7 @@ import domains.problemset.http.response.ProblemSetHttpResponses
 
 
 import domains.problemset.http.*
+import domains.problemset.http.codec.ProblemSetHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -40,4 +41,3 @@ object DeleteProblemSet:
 
   private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
     rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-

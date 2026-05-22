@@ -5,10 +5,12 @@ package domains.auth.http.response
 import cats.effect.IO
 import domains.auth.application.output.{LoginResponse, RegisterResponse, SessionResponse}
 import domains.auth.http.AuthHttpPlans
+import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.model.{AuthUser, SessionToken}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.user.application.output.{AuthUserListItem}
+import domains.user.http.codec.UserHttpCodecs.given
 import domains.user.model.UserPreferences
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}

@@ -3,6 +3,7 @@ package domains.message.http.api
 
 
 import domains.message.http.*
+import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -78,4 +79,3 @@ object SubscribeMessageEvents:
 
   private def toServerSentEventString(event: MessageStreamEvent): String =
     toServerSentEvent(event).renderString + "\n"
-

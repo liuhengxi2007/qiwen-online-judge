@@ -4,6 +4,7 @@ package domains.problemset.http.response
 
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
+import domains.problemset.http.codec.ProblemSetHttpCodecs.given
 import domains.problemset.model.{ProblemSet}
 import domains.problemset.application.output.{ProblemSetDetail}
 import shared.http.ApiMessages

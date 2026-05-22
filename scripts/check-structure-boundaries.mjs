@@ -7,6 +7,7 @@ const root = process.cwd()
 const frontendBlockedModelSegments = new Set(['http', 'hooks', 'components', 'pages'])
 const frontendBlockedDomainSegments = new Set(['hooks', 'components', 'pages'])
 const backendBlockedModelSegments = new Set(['application', 'http', 'table'])
+const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 
 const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
@@ -103,6 +104,16 @@ function checkBackendModelFile(filePath, errors) {
   }
 }
 
+function checkBackendApplicationBoundaryFile(filePath, errors) {
+  const source = read(filePath)
+  for (const entry of extractScalaImports(source)) {
+    const importedPath = entry.line.replace(/^import\s+/, '')
+    if (backendApplicationWireCodecImportPattern.test(importedPath)) {
+      errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
+    }
+  }
+}
+
 function trackedFiles() {
   const result = spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
   if (result.status !== 0 || !result.stdout) {
@@ -158,6 +169,10 @@ function run() {
   for (const filePath of walk('backend/src/main/scala/domains', new Set(['.scala']))) {
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/model\//.test(filePath)) {
       checkBackendModelFile(filePath, errors)
+    }
+
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
+      checkBackendApplicationBoundaryFile(filePath, errors)
     }
   }
 

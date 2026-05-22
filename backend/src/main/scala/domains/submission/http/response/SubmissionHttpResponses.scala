@@ -6,6 +6,7 @@ import cats.effect.IO
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.submission.application.SubmissionCommands
+import domains.submission.http.codec.SubmissionHttpCodecs.given
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*

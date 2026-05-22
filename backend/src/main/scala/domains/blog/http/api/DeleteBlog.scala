@@ -3,6 +3,7 @@ package domains.blog.http.api
 
 
 import domains.blog.http.*
+import domains.blog.http.codec.BlogHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -41,4 +42,3 @@ object DeleteBlog:
 
   private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
     rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-

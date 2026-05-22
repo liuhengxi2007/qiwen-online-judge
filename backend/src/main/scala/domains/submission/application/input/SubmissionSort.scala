@@ -2,8 +2,6 @@ package domains.submission.application.input
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum SubmissionSort:
   case Submitted
   case Time
@@ -33,6 +31,3 @@ object SubmissionSort:
       case SubmissionSort.Time => SubmissionSortDirection.Asc
       case SubmissionSort.Memory => SubmissionSortDirection.Asc
       case SubmissionSort.CodeLength => SubmissionSortDirection.Asc
-
-  given Encoder[SubmissionSort] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionSort] = Decoder.decodeString.emap(parse)

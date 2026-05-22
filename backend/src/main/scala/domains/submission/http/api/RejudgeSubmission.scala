@@ -5,6 +5,7 @@ import domains.submission.http.response.SubmissionHttpResponses
 
 
 import domains.submission.http.*
+import domains.submission.http.codec.SubmissionHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -62,4 +63,3 @@ object RejudgeSubmission:
         value.toIntOption match
           case Some(parsed) if parsed > 0 => Right(parsed)
           case _ => Left(s"$fieldName must be a positive integer.")
-

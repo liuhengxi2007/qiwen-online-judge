@@ -2,8 +2,6 @@ package domains.submission.application.input
 
 
 
-import io.circe.{Decoder, Encoder}
-
 enum SubmissionSortDirection:
   case Asc
   case Desc
@@ -19,6 +17,3 @@ object SubmissionSortDirection:
     value match
       case SubmissionSortDirection.Asc => "asc"
       case SubmissionSortDirection.Desc => "desc"
-
-  given Encoder[SubmissionSortDirection] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionSortDirection] = Decoder.decodeString.emap(parse)

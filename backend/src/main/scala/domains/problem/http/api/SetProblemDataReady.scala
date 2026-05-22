@@ -5,6 +5,7 @@ import domains.problem.http.response.ProblemHttpResponses
 
 
 import domains.problem.http.*
+import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -150,4 +151,3 @@ object SetProblemDataReady:
 
   private def decodeTextPart(part: org.http4s.multipart.Part[IO]): IO[String] =
     part.body.through(text.utf8.decode).compile.string
-

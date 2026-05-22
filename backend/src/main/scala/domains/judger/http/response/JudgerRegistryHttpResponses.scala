@@ -5,6 +5,7 @@ package domains.judger.http.response
 import cats.effect.IO
 import domains.judger.application.JudgerRegistryCommands
 import domains.judger.application.output.RegisteredJudgerListItem
+import domains.judger.http.codec.JudgerRegistryHttpCodecs.given
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import io.circe.syntax.*

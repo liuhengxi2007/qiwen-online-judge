@@ -50,6 +50,8 @@ For `http`:
   request decoding, auth/session wrapping, command invocation
 - `response/*HttpResponses.scala`
   translation from command results to HTTP responses
+- `codec/*HttpCodecs.scala`
+  Circe encoders/decoders for HTTP request and response wire formats
 - `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
 
@@ -57,11 +59,13 @@ For `application/input`:
 
 - `<Name>.scala`
   typed command/query inputs decoded by HTTP endpoints and consumed by application/table code, including inbound request bodies and query-derived list filters
+- do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
 For `application/output`:
 
 - `<Name>.scala`
   read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
+- do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
 Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
 Non-HTTP layers must not import from `http.request` or `http.response`; use `application/input` for inputs and `application/output` for read/output shapes that application, table, or model code needs to name.
@@ -81,7 +85,7 @@ For `table`:
 These templates exist to stop large files from mixing routing, orchestration, SQL, migrations, and decoding in one place.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
-Do not move query/mutation orchestration into `model`, HTTP decoding into `application`, or business decisions into `table`.
+Do not move query/mutation orchestration into `model`, HTTP wire decoding into `application`, or business decisions into `table`.
 
 Current application-adapter exceptions:
 

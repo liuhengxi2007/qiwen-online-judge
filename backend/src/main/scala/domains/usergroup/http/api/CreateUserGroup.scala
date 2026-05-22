@@ -3,6 +3,7 @@ package domains.usergroup.http.api
 
 
 import domains.usergroup.http.*
+import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -37,4 +38,3 @@ object CreateUserGroup:
 
   private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
     rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-

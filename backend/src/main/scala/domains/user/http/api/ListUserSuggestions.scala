@@ -5,6 +5,7 @@ import domains.user.http.response.UserHttpResponses
 
 
 import domains.user.http.*
+import domains.user.http.codec.UserHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -35,4 +36,3 @@ object ListUserSuggestions:
 
   private def parsePageSize(rawPageSize: Option[String]): Int =
     rawPageSize.flatMap(_.toIntOption).filter(_ > 0).getOrElse(10)
-

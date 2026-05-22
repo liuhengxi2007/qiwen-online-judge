@@ -3,6 +3,7 @@ package domains.auth.http.api
 
 
 import domains.auth.http.*
+import domains.auth.http.codec.AuthHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore

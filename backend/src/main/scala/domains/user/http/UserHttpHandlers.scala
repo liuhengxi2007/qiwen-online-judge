@@ -1,6 +1,7 @@
 package domains.user.http
 
 import domains.user.http.response.UserHttpResponses
+import domains.user.http.codec.UserHttpCodecs.given
 
 
 

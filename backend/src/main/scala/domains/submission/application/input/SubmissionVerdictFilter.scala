@@ -3,7 +3,6 @@ package domains.submission.application.input
 
 
 import domains.submission.model.SubmissionVerdict
-import io.circe.{Decoder, Encoder}
 
 enum SubmissionVerdictFilter:
   case All
@@ -41,6 +40,3 @@ object SubmissionVerdictFilter:
       case SubmissionVerdictFilter.RuntimeError => "runtime_error"
       case SubmissionVerdictFilter.TimeLimitExceeded => "time_limit_exceeded"
       case SubmissionVerdictFilter.SystemError => "system_error"
-
-  given Encoder[SubmissionVerdictFilter] = Encoder.encodeString.contramap(toDatabase)
-  given Decoder[SubmissionVerdictFilter] = Decoder.decodeString.emap(parse)

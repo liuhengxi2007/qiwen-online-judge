@@ -3,8 +3,6 @@ package domains.problem.application.input
 import domains.problem.model.*
 
 import shared.access.ResourceAccessPolicy
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class CreateProblemRequest(
   slug: ProblemSlug,
@@ -15,7 +13,3 @@ final case class CreateProblemRequest(
   accessPolicy: ResourceAccessPolicy,
   othersSubmissionAccess: OthersSubmissionAccess
 )
-
-object CreateProblemRequest:
-  given Encoder[CreateProblemRequest] = deriveEncoder[CreateProblemRequest]
-  given Decoder[CreateProblemRequest] = deriveDecoder[CreateProblemRequest]

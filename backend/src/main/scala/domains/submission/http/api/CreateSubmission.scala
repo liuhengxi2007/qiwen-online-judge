@@ -3,6 +3,7 @@ package domains.submission.http.api
 
 
 import domains.submission.http.*
+import domains.submission.http.codec.SubmissionHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -59,4 +60,3 @@ object CreateSubmission:
         value.toIntOption match
           case Some(parsed) if parsed > 0 => Right(parsed)
           case _ => Left(s"$fieldName must be a positive integer.")
-
