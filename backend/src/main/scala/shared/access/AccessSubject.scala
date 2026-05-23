@@ -1,11 +1,8 @@
 package shared.access
 
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
-
 enum AccessSubject:
-  case User(username: Username)
-  case UserGroup(slug: UserGroupSlug)
+  case User(username: AccessUsername)
+  case UserGroup(slug: AccessUserGroupSlug)
 
 object AccessSubject:
   def subjectKind(value: AccessSubject): String =

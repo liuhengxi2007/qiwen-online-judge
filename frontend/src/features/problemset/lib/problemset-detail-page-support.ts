@@ -1,6 +1,6 @@
 import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import { problemSetDescriptionValue, problemSetTitleValue } from '@/features/problemset/lib/problemset-parsers'
-import { resourceAccessSubjectParsers } from '@/features/user/lib/resource-access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/shared/access/access-subject-parsers'
 import { buildResourceAccessPolicy, grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 

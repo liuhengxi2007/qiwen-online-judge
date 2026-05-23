@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import { useMessageInboxActions } from '@/features/message/hooks/use-message-inbox-actions'
+import { useMessageInboxRefresh } from '@/features/message/hooks/use-message-inbox-refresh'
 import { useMessageRecipientSuggestions } from '@/features/message/hooks/use-message-recipient-suggestions'
 import { messageConversationPath, messageConversationIdValue } from '@/features/message/lib/message-parsers'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
@@ -32,7 +33,7 @@ export function MessageInboxPage() {
   const pageSize = useMessageStore((state) => state.pageSize)
   const isLoadingInbox = useMessageStore((state) => state.isLoadingInbox)
   const inboxError = useMessageStore((state) => state.inboxError)
-  const refreshInbox = useMessageStore((state) => state.refreshInbox)
+  const refreshInbox = useMessageInboxRefresh()
   const [searchQuery, setSearchQuery] = useState('')
   const recipientSuggestions = useMessageRecipientSuggestions(searchQuery, t('messages.searchFailed'))
   const inboxActions = useMessageInboxActions({

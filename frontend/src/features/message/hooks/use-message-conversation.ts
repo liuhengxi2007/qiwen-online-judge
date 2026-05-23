@@ -15,7 +15,7 @@ import {
   messageStreamEventName,
   type MessageStreamEventDetail,
 } from '@/features/message/hooks/use-message-realtime-connection'
-import { useMessageStore } from '@/features/message/stores/use-message-store'
+import { useMessageInboxRefresh } from '@/features/message/hooks/use-message-inbox-refresh'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import type { Username } from '@/features/user/model/Username'
 import { HttpClientError } from '@/shared/api/http-client'
@@ -30,7 +30,7 @@ type UseMessageConversationArgs = {
 
 export function useMessageConversation({ session, targetUsername }: UseMessageConversationArgs) {
   const { t } = useI18n()
-  const refreshInbox = useMessageStore((state) => state.refreshInbox)
+  const refreshInbox = useMessageInboxRefresh()
   const [history, setHistory] = useState<MessageHistoryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')

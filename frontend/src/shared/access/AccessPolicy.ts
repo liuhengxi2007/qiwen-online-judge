@@ -1,4 +1,6 @@
 export type { AccessSubject, UserAccessSubject, UserGroupAccessSubject } from './AccessSubject'
+export type { AccessUserGroupSlug } from './AccessUserGroupSlug'
+export type { AccessUsername } from './AccessUsername'
 export type { BaseAccess } from './BaseAccess'
 export type { GrantRole } from './GrantRole'
 export type { ResourceAccessGrant } from './ResourceAccessGrant'

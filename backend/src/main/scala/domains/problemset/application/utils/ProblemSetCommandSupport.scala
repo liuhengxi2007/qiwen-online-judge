@@ -8,7 +8,9 @@ import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
-import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
+import domains.user.model.Username
+import domains.usergroup.model.UserGroupSlug
+import shared.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessFacts, ResourceAccessPolicy}
 import domains.usergroup.application.UserGroupCommands
 
 object ProblemSetCommandSupport:
@@ -24,8 +26,8 @@ object ProblemSetCommandSupport:
           ProblemSetAccessFacts(
             resourceAccess = ResourceAccessFacts(
               policy = problemSet.accessPolicy,
-              actorUsername = actor.username,
-              actorGroupSlugs = viewerGroupSlugs,
+              actorUsername = toAccessUsername(actor.username),
+              actorGroupSlugs = toAccessGroupSlugs(viewerGroupSlugs),
               hasGlobalViewOverride = ProblemSetPolicy.hasGlobalViewOverride(actor),
               hasGlobalManageOverride = ProblemSetPolicy.hasGlobalViewOverride(actor)
             )
@@ -44,11 +46,11 @@ object ProblemSetCommandSupport:
         case None =>
           subject match
             case AccessSubject.User(username) =>
-              AuthCommands.accessPolicyUserExists(connection, username).map(exists =>
+              AuthCommands.accessPolicyUserExists(connection, toUsername(username)).map(exists =>
                 if exists then None else Some(s"Granted user not found: ${username.value}.")
               )
             case AccessSubject.UserGroup(slug) =>
-              UserGroupCommands.accessPolicyUserGroupExists(connection, slug).map(exists =>
+              UserGroupCommands.accessPolicyUserGroupExists(connection, toUserGroupSlug(slug)).map(exists =>
                 if exists then None else Some(s"Granted user group not found: ${slug.value}.")
               )
       }
@@ -70,3 +72,15 @@ object ProblemSetCommandSupport:
 
   def updatedProblemSetOrError(message: String)(maybeProblemSet: Option[ProblemSet]): ProblemSet =
     maybeProblemSet.getOrElse(throw new IllegalStateException(message))
+
+  private def toAccessUsername(username: Username): AccessUsername =
+    AccessUsername(username.value)
+
+  private def toAccessGroupSlugs(slugs: Set[UserGroupSlug]): Set[AccessUserGroupSlug] =
+    slugs.map(slug => AccessUserGroupSlug(slug.value))
+
+  private def toUsername(username: AccessUsername): Username =
+    Username(username.value)
+
+  private def toUserGroupSlug(slug: AccessUserGroupSlug): UserGroupSlug =
+    UserGroupSlug(slug.value)

@@ -4,10 +4,12 @@ import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
 } from '@/shared/access/resource-access-policy-codec'
+import {
+  accessUserGroupSlugValue,
+  accessUsernameValue,
+  resourceAccessSubjectParsers,
+} from '@/shared/access/access-subject-parsers'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/features/user/lib/resource-access-subject-parsers'
-import { usernameValue } from '@/features/user/lib/user-parsers'
-import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 
 describe('resource access policy codec', () => {
   it('decodes and encodes access subjects through branded domain values', () => {
@@ -23,8 +25,8 @@ describe('resource access policy codec', () => {
     const viewerUser = policy.viewerGrants.find((grant) => grant.kind === 'user')
     const viewerGroup = policy.viewerGrants.find((grant) => grant.kind === 'user_group')
 
-    expect(viewerUser?.kind === 'user' ? usernameValue(viewerUser.username) : null).toBe('alice_01')
-    expect(viewerGroup?.kind === 'user_group' ? userGroupSlugValue(viewerGroup.slug) : null).toBe('sample-group')
+    expect(viewerUser?.kind === 'user' ? accessUsernameValue(viewerUser.username) : null).toBe('alice_01')
+    expect(viewerGroup?.kind === 'user_group' ? accessUserGroupSlugValue(viewerGroup.slug) : null).toBe('sample-group')
     expect(toResourceAccessPolicyContract(policy)).toEqual({
       baseAccess: 'owner_only',
       viewerGrants: [

@@ -11,7 +11,7 @@ import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
-} from '@/features/submission/components/submission-support'
+} from '@/features/submission/lib/submission-display'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import { DateTimeText } from '@/shared/components/date-time-text'

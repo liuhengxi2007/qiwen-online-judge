@@ -1,7 +1,5 @@
 package shared.http.codec
 
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
 import shared.access.*
 import shared.model.*
 import shared.upload.StoredFilePath
@@ -80,14 +78,14 @@ object SharedHttpCodecs:
     cursor.downField("kind").as[String].flatMap {
       case "user" =>
         cursor.downField("username").as[String].flatMap { value =>
-          Username.parse(value)
+          AccessUsername.parse(value)
             .left
             .map(message => DecodingFailure(message, cursor.downField("username").history))
             .map(AccessSubject.User(_))
         }
       case "user_group" =>
         cursor.downField("slug").as[String].flatMap { value =>
-          UserGroupSlug.parse(value).left.map(message => DecodingFailure(message, cursor.history)).map(AccessSubject.UserGroup(_))
+          AccessUserGroupSlug.parse(value).left.map(message => DecodingFailure(message, cursor.history)).map(AccessSubject.UserGroup(_))
         }
       case other =>
         Left(DecodingFailure(s"Unknown access subject kind: $other", cursor.history))

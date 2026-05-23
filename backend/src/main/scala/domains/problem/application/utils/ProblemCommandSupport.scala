@@ -9,7 +9,9 @@ import domains.auth.model.AuthUser
 import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.application.output.{ProblemDetail}
 import domains.problemset.application.ProblemSetCommands
-import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
+import domains.user.model.Username
+import domains.usergroup.model.UserGroupSlug
+import shared.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessFacts, ResourceAccessPolicy}
 import domains.usergroup.application.UserGroupCommands
 
 object ProblemCommandSupport:
@@ -45,8 +47,8 @@ object ProblemCommandSupport:
     UserGroupCommands.accessActorGroupSlugs(connection, actor.username).flatMap { actorGroupSlugs =>
       val resourceAccessFacts = ResourceAccessFacts(
         policy = problem.accessPolicy,
-        actorUsername = actor.username,
-        actorGroupSlugs = actorGroupSlugs,
+        actorUsername = toAccessUsername(actor.username),
+        actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
         hasGlobalViewOverride = ProblemPolicy.hasGlobalViewOverride(actor),
         hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
       )
@@ -77,8 +79,8 @@ object ProblemCommandSupport:
           ProblemAccessFacts(
             resourceAccess = ResourceAccessFacts(
               policy = problem.accessPolicy,
-              actorUsername = actor.username,
-              actorGroupSlugs = actorGroupSlugs,
+              actorUsername = toAccessUsername(actor.username),
+              actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
               hasGlobalViewOverride = ProblemPolicy.hasGlobalViewOverride(actor),
               hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
             ),
@@ -98,11 +100,11 @@ object ProblemCommandSupport:
         case None =>
           subject match
             case AccessSubject.User(username) =>
-              AuthCommands.accessPolicyUserExists(connection, username).map(exists =>
+              AuthCommands.accessPolicyUserExists(connection, toUsername(username)).map(exists =>
                 if exists then None else Some(s"Granted user not found: ${username.value}.")
               )
             case AccessSubject.UserGroup(slug) =>
-              UserGroupCommands.accessPolicyUserGroupExists(connection, slug).map(exists =>
+              UserGroupCommands.accessPolicyUserGroupExists(connection, toUserGroupSlug(slug)).map(exists =>
                 if exists then None else Some(s"Granted user group not found: ${slug.value}.")
               )
       }
@@ -121,3 +123,15 @@ object ProblemCommandSupport:
       managerGrants = accessPolicy.managerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
     )
+
+  private def toAccessUsername(username: Username): AccessUsername =
+    AccessUsername(username.value)
+
+  private def toAccessGroupSlugs(slugs: Set[UserGroupSlug]): Set[AccessUserGroupSlug] =
+    slugs.map(slug => AccessUserGroupSlug(slug.value))
+
+  private def toUsername(username: AccessUsername): Username =
+    Username(username.value)
+
+  private def toUserGroupSlug(slug: AccessUserGroupSlug): UserGroupSlug =
+    UserGroupSlug(slug.value)

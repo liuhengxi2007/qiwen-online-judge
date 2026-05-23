@@ -85,6 +85,11 @@ async function loadHarness() {
   MockEventSource.instances = []
   globalThis.EventSource = MockEventSource as unknown as typeof EventSource
 
+  const refreshInbox = vi.fn().mockResolvedValue(undefined)
+  vi.doMock('@/features/message/hooks/use-message-inbox-refresh', () => ({
+    useMessageInboxRefresh: () => refreshInbox,
+  }))
+
   const authStoreModule = await import('@/features/auth/stores/use-auth-store')
   const messageStoreModule = await import('@/features/message/stores/use-message-store')
   const hookModule = await import('@/features/message/hooks/use-message-realtime-connection')
@@ -94,17 +99,17 @@ async function loadHarness() {
     useMessageStore: messageStoreModule.useMessageStore,
     useMessageRealtimeConnection: hookModule.useMessageRealtimeConnection,
     messageStreamEventName: hookModule.messageStreamEventName,
+    refreshInbox,
   }
 }
 
-function configureLoggedInStores(harness: Harness, refreshInbox = vi.fn().mockResolvedValue(undefined), clear = vi.fn()) {
+function configureLoggedInStores(harness: Harness, clear = vi.fn()) {
   harness.useAuthStore.setState({ session: createSession() })
   harness.useMessageStore.setState({
     hasLoadedInbox: false,
-    refreshInbox,
     clear,
   })
-  return { refreshInbox, clear }
+  return { refreshInbox: harness.refreshInbox, clear }
 }
 
 describe('useMessageRealtimeConnection', () => {
@@ -140,18 +145,16 @@ describe('useMessageRealtimeConnection', () => {
 
   it('does not refresh inbox on mount after inbox has already loaded', async () => {
     const harness = await loadHarness()
-    const refreshInbox = vi.fn().mockResolvedValue(undefined)
     harness.useAuthStore.setState({ session: createSession() })
     harness.useMessageStore.setState({
       hasLoadedInbox: true,
-      refreshInbox,
       clear: vi.fn(),
     })
 
     const rendered = renderHook(() => harness.useMessageRealtimeConnection(), { reactStrictMode: false })
 
     await waitFor(() => expect(MockEventSource.instances).toHaveLength(1))
-    expect(refreshInbox).not.toHaveBeenCalled()
+    expect(harness.refreshInbox).not.toHaveBeenCalled()
 
     rendered.unmount()
   })

@@ -1,9 +1,7 @@
 import { create } from 'zustand'
 
-import { listInbox } from '@/features/message/http/api/message-client'
+import type { MessageInboxResponse } from '@/features/message/http/response/MessageInboxResponse'
 import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
-import { HttpClientError } from '@/shared/api/http-client'
-import type { PageRequest } from '@/shared/model/PageRequest'
 
 type MessageStoreState = {
   conversations: MessageConversationSummary[]
@@ -14,7 +12,9 @@ type MessageStoreState = {
   isLoadingInbox: boolean
   inboxError: string
   hasLoadedInbox: boolean
-  refreshInbox: (pageRequest?: PageRequest) => Promise<void>
+  beginInboxLoad: () => void
+  replaceInbox: (inbox: MessageInboxResponse) => void
+  failInboxLoad: (message: string) => void
   clear: () => void
 }
 
@@ -27,29 +27,25 @@ export const useMessageStore = create<MessageStoreState>((set) => ({
   isLoadingInbox: false,
   inboxError: '',
   hasLoadedInbox: false,
-  refreshInbox: async (pageRequest) => {
-    set((state) => ({ ...state, isLoadingInbox: true, inboxError: '' }))
-    try {
-      const inbox = await listInbox(pageRequest)
-      set({
-        conversations: inbox.conversations,
-        totalUnreadCount: inbox.totalUnreadCount,
-        page: inbox.page,
-        pageSize: inbox.pageSize,
-        totalItems: inbox.totalItems,
-        isLoadingInbox: false,
-        inboxError: '',
-        hasLoadedInbox: true,
-      })
-    } catch (error) {
-      set((state) => ({
-        ...state,
-        isLoadingInbox: false,
-        inboxError: error instanceof HttpClientError ? error.message : 'Unable to load messages.',
-        hasLoadedInbox: true,
-      }))
-    }
-  },
+  beginInboxLoad: () => set((state) => ({ ...state, isLoadingInbox: true, inboxError: '' })),
+  replaceInbox: (inbox) =>
+    set({
+      conversations: inbox.conversations,
+      totalUnreadCount: inbox.totalUnreadCount,
+      page: inbox.page,
+      pageSize: inbox.pageSize,
+      totalItems: inbox.totalItems,
+      isLoadingInbox: false,
+      inboxError: '',
+      hasLoadedInbox: true,
+    }),
+  failInboxLoad: (message) =>
+    set((state) => ({
+      ...state,
+      isLoadingInbox: false,
+      inboxError: message,
+      hasLoadedInbox: true,
+    })),
   clear: () =>
     set({
       conversations: [],

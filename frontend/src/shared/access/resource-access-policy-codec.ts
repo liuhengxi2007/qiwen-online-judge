@@ -1,5 +1,9 @@
-import { parseUsername, usernameValue } from '@/features/user/lib/user-parsers'
-import { parseUserGroupSlug, userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
+import {
+  accessUserGroupSlugValue,
+  accessUsernameValue,
+  parseUserGroupSlug,
+  parseUsername,
+} from '@/shared/access/access-subject-parsers'
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
 import { requireParsed } from '@/shared/domain/parsing'
 
@@ -42,12 +46,12 @@ function toAccessSubjectContract(subject: AccessSubject): AccessSubjectContract 
     case 'user':
       return {
         kind: 'user',
-        username: usernameValue(subject.username),
+        username: accessUsernameValue(subject.username),
       }
     case 'user_group':
       return {
         kind: 'user_group',
-        slug: userGroupSlugValue(subject.slug),
+        slug: accessUserGroupSlugValue(subject.slug),
       }
   }
 }

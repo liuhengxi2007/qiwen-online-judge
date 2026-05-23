@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { blogIdValue, blogTitleValue } from '@/features/blog/lib/blog-parsers'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
-import { blogScoreClassName } from '@/features/blog/components/blog-support'
+import { blogScoreClassName } from '@/features/blog/lib/blog-display'
 import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'

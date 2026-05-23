@@ -7,7 +7,7 @@ import { blogCommentContentValue, blogCommentIdValue } from '@/features/blog/lib
 import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
 import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
 import type { BlogVote } from '@/features/blog/model/BlogVote'
-import { blogScoreClassName } from '@/features/blog/components/blog-support'
+import { blogScoreClassName } from '@/features/blog/lib/blog-display'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

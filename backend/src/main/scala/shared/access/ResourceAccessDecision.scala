@@ -1,14 +1,9 @@
 package shared.access
 
-
-
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
-
 final case class ResourceAccessFacts(
   policy: ResourceAccessPolicy,
-  actorUsername: Username,
-  actorGroupSlugs: Set[UserGroupSlug],
+  actorUsername: AccessUsername,
+  actorGroupSlugs: Set[AccessUserGroupSlug],
   hasGlobalViewOverride: Boolean,
   hasGlobalManageOverride: Boolean
 )

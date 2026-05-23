@@ -1,6 +1,6 @@
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
-import type { Username } from '@/features/user/model/Username'
-import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import type { AccessUserGroupSlug } from '@/shared/access/AccessUserGroupSlug'
+import type { AccessUsername } from '@/shared/access/AccessUsername'
 import type { ParseResult } from '@/shared/domain/parsing'
 
 type AccessPolicyBuildResult =
@@ -8,8 +8,8 @@ type AccessPolicyBuildResult =
   | { ok: false; message: string }
 
 type AccessSubjectParsers = {
-  parseUsername: (token: string) => ParseResult<Username>
-  parseUserGroupSlug: (token: string) => ParseResult<UserGroupSlug>
+  parseUsername: (token: string) => ParseResult<AccessUsername>
+  parseUserGroupSlug: (token: string) => ParseResult<AccessUserGroupSlug>
 }
 
 export function buildResourceAccessPolicy(

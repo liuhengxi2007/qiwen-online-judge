@@ -1,11 +1,9 @@
 import { create } from 'zustand'
 
-import { getNotificationUnreadCount, listNotifications } from '@/features/notification/http/api/notification-client'
-import type { NotificationId } from '@/features/notification/model/NotificationId'
+import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
 import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
 import { notificationIdValue } from '@/features/notification/lib/notification-parsers'
-import { HttpClientError } from '@/shared/api/http-client'
-import type { PageRequest } from '@/shared/model/PageRequest'
+import type { NotificationId } from '@/features/notification/model/NotificationId'
 
 type NotificationStoreState = {
   notifications: NotificationSummary[]
@@ -17,8 +15,11 @@ type NotificationStoreState = {
   listError: string
   hasLoadedList: boolean
   hasLoadedUnreadCount: boolean
-  refreshNotifications: (pageRequest?: PageRequest) => Promise<void>
-  refreshUnreadCount: () => Promise<void>
+  beginNotificationsLoad: () => void
+  replaceNotifications: (response: NotificationListResponse) => void
+  failNotificationsLoad: (message: string) => void
+  replaceUnreadCount: (unreadCount: number) => void
+  finishUnreadCountLoad: () => void
   markReadLocal: (notificationId: NotificationId) => void
   markAllReadLocal: () => void
   clear: () => void
@@ -34,45 +35,37 @@ export const useNotificationStore = create<NotificationStoreState>((set) => ({
   listError: '',
   hasLoadedList: false,
   hasLoadedUnreadCount: false,
-  refreshNotifications: async (pageRequest) => {
-    set((state) => ({ ...state, isLoadingList: true, listError: '' }))
-    try {
-      const response = await listNotifications(pageRequest)
-      set({
-        notifications: response.notifications,
-        unreadCount: response.unreadCount,
-        page: response.page,
-        pageSize: response.pageSize,
-        totalItems: response.totalItems,
-        isLoadingList: false,
-        listError: '',
-        hasLoadedList: true,
-        hasLoadedUnreadCount: true,
-      })
-    } catch (error) {
-      set((state) => ({
-        ...state,
-        isLoadingList: false,
-        listError: error instanceof HttpClientError ? error.message : 'Unable to load notifications.',
-        hasLoadedList: true,
-      }))
-    }
-  },
-  refreshUnreadCount: async () => {
-    try {
-      const response = await getNotificationUnreadCount()
-      set((state) => ({
-        ...state,
-        unreadCount: response.unreadCount,
-        hasLoadedUnreadCount: true,
-      }))
-    } catch {
-      set((state) => ({
-        ...state,
-        hasLoadedUnreadCount: true,
-      }))
-    }
-  },
+  beginNotificationsLoad: () => set((state) => ({ ...state, isLoadingList: true, listError: '' })),
+  replaceNotifications: (response) =>
+    set({
+      notifications: response.notifications,
+      unreadCount: response.unreadCount,
+      page: response.page,
+      pageSize: response.pageSize,
+      totalItems: response.totalItems,
+      isLoadingList: false,
+      listError: '',
+      hasLoadedList: true,
+      hasLoadedUnreadCount: true,
+    }),
+  failNotificationsLoad: (message) =>
+    set((state) => ({
+      ...state,
+      isLoadingList: false,
+      listError: message,
+      hasLoadedList: true,
+    })),
+  replaceUnreadCount: (unreadCount) =>
+    set((state) => ({
+      ...state,
+      unreadCount,
+      hasLoadedUnreadCount: true,
+    })),
+  finishUnreadCountLoad: () =>
+    set((state) => ({
+      ...state,
+      hasLoadedUnreadCount: true,
+    })),
   markReadLocal: (notificationId) =>
     set((state) => {
       const nextNotifications = state.notifications.map((notification) =>

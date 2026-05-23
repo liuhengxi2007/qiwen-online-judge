@@ -1,15 +1,10 @@
 package shared.access
 
-
-
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
-
 object AccessPolicyEvaluator:
   def canView(
     policy: ResourceAccessPolicy,
-    viewerUsername: Username,
-    viewerGroupSlugs: Set[UserGroupSlug],
+    viewerUsername: AccessUsername,
+    viewerGroupSlugs: Set[AccessUserGroupSlug],
     isOwner: Boolean,
     hasGlobalOverride: Boolean
   ): Boolean =
@@ -25,8 +20,8 @@ object AccessPolicyEvaluator:
 
   def canManage(
     policy: ResourceAccessPolicy,
-    actorUsername: Username,
-    actorGroupSlugs: Set[UserGroupSlug],
+    actorUsername: AccessUsername,
+    actorGroupSlugs: Set[AccessUserGroupSlug],
     hasGlobalOverride: Boolean
   ): Boolean =
     hasGlobalOverride ||

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { useNotificationActions } from '@/features/notification/hooks/use-notification-actions'
+import { useNotificationRefresh } from '@/features/notification/hooks/use-notification-refresh'
 import { notificationTranslationValues } from '@/features/notification/lib/notification-parsers'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
@@ -30,7 +31,7 @@ export function NotificationPage() {
   const pageSize = useNotificationStore((state) => state.pageSize)
   const isLoadingList = useNotificationStore((state) => state.isLoadingList)
   const listError = useNotificationStore((state) => state.listError)
-  const refreshNotifications = useNotificationStore((state) => state.refreshNotifications)
+  const { refreshNotifications } = useNotificationRefresh()
   const markReadLocal = useNotificationStore((state) => state.markReadLocal)
   const markAllReadLocal = useNotificationStore((state) => state.markAllReadLocal)
   const notificationActions = useNotificationActions({

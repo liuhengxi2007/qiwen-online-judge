@@ -12,7 +12,7 @@ import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
-} from '@/features/submission/components/submission-support'
+} from '@/features/submission/lib/submission-display'
 import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'

@@ -3,8 +3,7 @@ package database.table.resource_access_grant
 import cats.effect.IO
 import database.utils.ResourceAccessTableSupport.{decodeGrantRoleColumn, decodeResourceKindColumn, encodeGrantRoleColumn, encodeResourceKindColumn}
 import domains.user.model.Username
-import shared.access.{AccessSubject, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
-import domains.usergroup.model.UserGroupSlug
+import shared.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
@@ -251,9 +250,9 @@ object ResourceAccessGrantTable:
 
   private def parseAccessSubject(subjectKind: String, subjectKey: String): AccessSubject =
     subjectKind match
-      case "user" => AccessSubject.User(Username.canonical(subjectKey))
+      case "user" => AccessSubject.User(AccessUsername.canonical(subjectKey))
       case "user_group" =>
-        UserGroupSlug
+        AccessUserGroupSlug
           .parse(subjectKey)
           .fold(
             message => throw IllegalStateException(s"Invalid access subject slug: $message"),

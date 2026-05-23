@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { messageEventsUrl } from '@/features/message/http/api/message-client'
 import type { DirectMessage } from '@/features/message/http/response/DirectMessage'
+import { useMessageInboxRefresh } from '@/features/message/hooks/use-message-inbox-refresh'
 import {
   fromConversationReadStreamPayload,
   fromDirectMessage,
@@ -81,7 +82,7 @@ function releaseEventSource() {
 
 export function useMessageRealtimeConnection() {
   const session = useAuthStore((state) => state.session)
-  const refreshInbox = useMessageStore((state) => state.refreshInbox)
+  const refreshInbox = useMessageInboxRefresh()
   const hasLoadedInbox = useMessageStore((state) => state.hasLoadedInbox)
   const clear = useMessageStore((state) => state.clear)
 
