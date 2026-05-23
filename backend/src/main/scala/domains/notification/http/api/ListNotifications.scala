@@ -10,7 +10,7 @@ import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.model.NotificationId
 import shared.http.AuthenticatedHttpExecutor
-import shared.model.PageRequest
+import shared.http.utils.PageRequestQuerySupport
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -31,20 +31,10 @@ object ListNotifications:
       case request @ GET -> Root / "api" / "notifications" =>
         handlers.execute(
           request,
-          parsePageRequest(request.uri.query.params),
+          PageRequestQuerySupport.parsePageRequest(request.uri.query.params),
           plans.listNotifications
         )
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
-    PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-
   private given Encoder[NotificationStreamEvent] = Encoder.instance {
     case NotificationStreamEvent.NotificationsChanged =>
       io.circe.Json.obj()

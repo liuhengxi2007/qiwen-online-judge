@@ -10,6 +10,7 @@ import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.user.model.Username
 import shared.http.AuthenticatedHttpExecutor
+import shared.http.utils.PageRequestQuerySupport
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import org.http4s.HttpRoutes
@@ -24,14 +25,5 @@ object ListUserGroups:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        handlers.execute(request, parsePageRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
+        handlers.execute(request, PageRequestQuerySupport.parsePageRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): shared.model.PageRequest =
-    shared.model.PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

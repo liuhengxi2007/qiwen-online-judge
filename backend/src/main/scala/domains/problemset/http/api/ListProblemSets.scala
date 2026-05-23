@@ -12,6 +12,7 @@ import domains.problem.model.ProblemSlug
 import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
 import shared.http.AuthenticatedHttpExecutor
+import shared.http.utils.PageRequestQuerySupport
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -24,14 +25,5 @@ object ListProblemSets:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" =>
-        handlers.execute(request, parsePageRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
+        handlers.execute(request, PageRequestQuerySupport.parsePageRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): shared.model.PageRequest =
-    shared.model.PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

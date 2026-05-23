@@ -34,12 +34,3 @@ object RemoveProblemFromProblemSet:
           case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
             handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): shared.model.PageRequest =
-    shared.model.PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

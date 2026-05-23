@@ -14,7 +14,6 @@ import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogReque
 import domains.notification.application.NotificationEventHub
 import domains.problem.model.ProblemSlug
 import shared.http.AuthenticatedHttpExecutor
-import shared.model.PageRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -36,12 +35,3 @@ object UnlinkBlogFromProblem:
           case (Right(problemSlug), Right(blogId)) =>
             handlers.execute(request, BlogHttpPlans.BlogProblemLinkInput(problemSlug, blogId), plans.unlinkBlogFromProblem)
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
-    PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)

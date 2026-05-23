@@ -14,7 +14,6 @@ import domains.message.application.{MessageEventHub, MessageStreamEvent}
 import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
 import domains.message.model.{MessageConversationId, MessageId}
 import shared.http.AuthenticatedHttpExecutor
-import shared.model.PageRequest
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -39,16 +38,6 @@ object RemoveMessageBlock:
           plans.removeBlock
         )
     }
-
-  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
-    PageRequest(
-      page = parsePositiveInt(queryParams.get("page"), 1),
-      pageSize = parsePositiveInt(queryParams.get("pageSize"), 10)
-    )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
-    rawValue.flatMap(_.toIntOption).filter(_ > 0).getOrElse(defaultValue)
-
   private given Encoder[MessageStreamEvent] = Encoder.instance {
     case MessageStreamEvent.MessageReceived(message) =>
       message.asJson
