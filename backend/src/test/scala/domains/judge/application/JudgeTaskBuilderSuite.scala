@@ -1,13 +1,13 @@
 package domains.judge.application
 
-import domains.problem.application.{ProblemDataManifest, ProblemDataManifestEntry}
+import domains.problem.application.output.ProblemDetail
+import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.shared.access.{BaseAccess, ResourceAccessPolicy}
-import domains.user.model.UserIdentity
-import domains.auth.model.{DisplayName, Username}
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.table.ClaimedSubmission
 import munit.FunSuite
+import shared.access.{BaseAccess, ResourceAccessPolicy}
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant
@@ -33,7 +33,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   )
 
-  private val problem = domains.problem.model.ProblemDetail(
+  private val problem = ProblemDetail(
     id = claimedSubmission.problemId,
     slug = claimedSubmission.problemSlug,
     title = ProblemTitle("Sample Problem"),

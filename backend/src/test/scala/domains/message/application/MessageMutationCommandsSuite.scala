@@ -1,13 +1,15 @@
 package domains.message.application
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, DisplayName, EmailAddress, PasswordHash, Username}
+import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.{ConversationMessageFacts, ConversationReadReceipt, CreateConversationRequest, DirectMessage, MarkConversationReadMode, MarkConversationReadRequest, MessageBlockEntry, MessageContent, MessageConversationId, MessageConversationSummary, MessageId, MessageInboxResponse, SendDirectMessageRequest}
+import domains.message.application.input.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.application.output.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.shared.model.PageRequest
-import domains.user.model.{UserDisplayMode, UserIdentity, UserLocale}
+import domains.user.model.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, Username}
 import munit.FunSuite
+import shared.model.PageRequest
 
 import java.sql.Connection
 import java.time.Instant

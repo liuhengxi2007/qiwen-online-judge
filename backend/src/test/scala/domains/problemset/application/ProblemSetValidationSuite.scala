@@ -1,9 +1,10 @@
 package domains.problemset.application
 
 import domains.problem.model.ProblemSlug
-import domains.problemset.model.{AddProblemToProblemSetRequest, CreateProblemSetRequest, ProblemSetDescription, ProblemSetSlug, ProblemSetTitle, UpdateProblemSetRequest}
-import domains.shared.access.{BaseAccess, ResourceAccessPolicy}
+import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.{ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
 import munit.FunSuite
+import shared.access.{BaseAccess, ResourceAccessPolicy}
 
 class ProblemSetValidationSuite extends FunSuite:
 

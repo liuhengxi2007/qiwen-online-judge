@@ -3,6 +3,7 @@ package domains.judge.http
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import domains.judge.application.JudgeConfig
+import domains.judge.http.utils.JudgeHttpSupport
 import munit.FunSuite
 import org.http4s.{Header, Request, Response, Status}
 import org.typelevel.ci.CIString

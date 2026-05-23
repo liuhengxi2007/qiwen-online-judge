@@ -1,7 +1,8 @@
 package domains.submission.application
 
 import domains.problem.model.ProblemSlug
-import domains.submission.model.{CreateSubmissionRequest, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.application.input.CreateSubmissionRequest
+import domains.submission.model.{SubmissionLanguage, SubmissionSourceCode}
 import munit.FunSuite
 
 class SubmissionValidationSuite extends FunSuite:

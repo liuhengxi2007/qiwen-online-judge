@@ -1,7 +1,8 @@
 package domains.usergroup.application
 
-import domains.auth.model.Username
-import domains.usergroup.model.{AddUserGroupMemberRequest, AddUserGroupMemberRole, CreateUserGroupRequest, UpdateUserGroupRequest, UserGroupDescription, UserGroupName, UserGroupSlug}
+import domains.user.model.Username
+import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.{AddUserGroupMemberRole, UserGroupDescription, UserGroupName, UserGroupSlug}
 import munit.FunSuite
 
 class UserGroupValidationSuite extends FunSuite:
