@@ -6,16 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { isSubmissionSort, isSubmissionVerdictFilter } from '@/features/submission/domain/submission'
+import { isSubmissionSort, isSubmissionVerdictFilter } from '@/features/submission/lib/submission-parsers'
 import type {
   SubmissionSort,
   SubmissionSortDirection,
   SubmissionVerdictFilter,
   ProblemSuggestion,
 } from '@/features/submission/hooks/use-submission-page-model'
-import type { UserIdentity } from '@/features/user/domain/user'
-import { displayNameValue, usernameValue } from '@/features/user/domain/user'
-import { problemSlugValue, problemTitleValue } from '@/features/problem/domain/problem'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import { displayNameValue, usernameValue } from '@/features/user/lib/user-parsers'
+import { problemSlugValue, problemTitleValue } from '@/features/problem/lib/problem-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { Files } from 'lucide-react'
 

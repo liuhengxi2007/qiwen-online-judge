@@ -8,7 +8,7 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseUserSearchQuery } from '@/features/user/domain/user'
+import { parseUserSearchQuery } from '@/features/user/lib/user-parsers'
 import { calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

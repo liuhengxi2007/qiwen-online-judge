@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { updateProblem } from '@/features/problem/http/api/problem-client'
-import { validateProblemUpdateDraft } from '@/features/problem/domain/problem-form'
-import type { OthersSubmissionAccess, ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
+import { validateProblemUpdateDraft } from '@/features/problem/lib/problem-form'
+import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 

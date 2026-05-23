@@ -1,8 +1,8 @@
-import type { BlogCommentId, BlogDetail, BlogId, CreateBlogCommentRequest } from '@/features/blog/domain/blog'
-import {
-  blogCommentIdValue,
-  blogIdValue,
-} from '@/features/blog/domain/blog'
+import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
+import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import type { BlogId } from '@/features/blog/model/BlogId'
+import type { CreateBlogCommentRequest } from '@/features/blog/http/request/CreateBlogCommentRequest'
+import { blogCommentIdValue, blogIdValue } from '@/features/blog/lib/blog-parsers'
 import {
   fromBlogDetailContract,
   toCreateBlogCommentRequestContract,

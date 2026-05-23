@@ -1,4 +1,4 @@
-import type { UserIdentity } from '@/features/user/domain/user'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import type { BlogCommentContent } from '@/features/blog/model/BlogCommentContent'
 import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
 import type { BlogVote } from '@/features/blog/model/BlogVote'

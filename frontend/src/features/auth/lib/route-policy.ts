@@ -1,4 +1,4 @@
-import type { Username } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 type UserSettingsRoutePolicyArgs = {

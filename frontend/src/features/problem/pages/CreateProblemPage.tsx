@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { problemSlugValue } from '@/features/problem/domain/problem'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useCreateProblemPageModel } from '@/features/problem/hooks/use-create-problem-page-model'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { MarkdownDocument } from '@/shared/components/markdown-document'

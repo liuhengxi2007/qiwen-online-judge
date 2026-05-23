@@ -4,8 +4,8 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 
 const root = process.cwd()
 
-const frontendBlockedModelSegments = new Set(['http', 'hooks', 'components', 'pages'])
-const frontendBlockedDomainSegments = new Set(['hooks', 'components', 'pages'])
+const frontendBlockedModelSegments = new Set(['http', 'lib', 'state', 'hooks', 'components', 'pages'])
+const frontendBlockedPureSegments = new Set(['hooks', 'components', 'pages'])
 const backendBlockedModelSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
@@ -197,6 +197,10 @@ function checkTrackedResidues(errors) {
       errors.push(`${filePath} is a tracked template or misplaced file`)
     }
 
+    if (/^frontend\/src\/features\/[^/]+\/domain\//.test(filePath)) {
+      errors.push(`${filePath} is in removed frontend feature domain layer`)
+    }
+
     if (segments.includes('dist')) {
       errors.push(`${filePath} is tracked generated dist output`)
     }
@@ -216,8 +220,8 @@ function run() {
       checkFrontendModelFileShape(filePath, errors)
     }
 
-    if (/^frontend\/src\/features\/[^/]+\/domain\//.test(filePath)) {
-      checkFrontendFile(filePath, frontendBlockedDomainSegments, errors)
+    if (/^frontend\/src\/features\/[^/]+\/(?:lib|state)\//.test(filePath)) {
+      checkFrontendFile(filePath, frontendBlockedPureSegments, errors)
     }
   }
 

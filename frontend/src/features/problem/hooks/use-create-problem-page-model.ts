@@ -5,11 +5,12 @@ import { createProblem } from '@/features/problem/http/api/problem-client'
 import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
-} from '@/features/problem/domain/create-problem-page-state'
-import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
-import { validateProblemDraft } from '@/features/problem/domain/problem-form'
+} from '@/features/problem/state/create-problem-page-state'
+import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import { validateProblemDraft } from '@/features/problem/lib/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/features/user/lib/resource-access-subject-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 

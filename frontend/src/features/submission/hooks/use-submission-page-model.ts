@@ -2,38 +2,25 @@ import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { listProblemSuggestions } from '@/features/problem/http/api/problem-client'
-import type { ProblemSuggestion } from '@/features/problem/domain/problem'
-import {
-  formatProblemTitleDisplay,
-  problemSlugValue,
-  problemTitleValue,
-  type ProblemSlug,
-} from '@/features/problem/domain/problem'
+import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
+import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
+import { problemSlugValue, problemTitleValue } from '@/features/problem/lib/problem-parsers'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { listUserSuggestions } from '@/features/user/http/api/user-client'
-import type { UserIdentity } from '@/features/user/domain/user'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
 } from '@/features/submission/components/submission-support'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
-import {
-  isSubmissionSort,
-  isSubmissionSortDirection,
-  isSubmissionVerdictFilter,
-  parseSubmissionProblemQuery,
-  parseSubmissionUserQuery,
-  submissionIdValue,
-  submissionLanguageLabel,
-  submissionStatusLabel,
-  submissionVerdictLabel,
-  type SubmissionListRequest,
-  type SubmissionSort,
-  type SubmissionSortDirection,
-  type SubmissionSummary,
-  type SubmissionVerdictFilter,
-} from '@/features/submission/domain/submission'
+import { isSubmissionSort, isSubmissionSortDirection, isSubmissionVerdictFilter, parseSubmissionProblemQuery, parseSubmissionUserQuery, submissionIdValue, submissionLanguageLabel, submissionStatusLabel, submissionVerdictLabel } from '@/features/submission/lib/submission-parsers'
+import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
+import type { SubmissionSort } from '@/features/submission/http/request/SubmissionSort'
+import type { SubmissionSortDirection } from '@/features/submission/http/request/SubmissionSortDirection'
+import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
+import type { SubmissionVerdictFilter } from '@/features/submission/http/request/SubmissionVerdictFilter'
 import {
   buildPageNumbers,
   calculateTotalPages,

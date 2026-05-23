@@ -7,11 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import {
-  problemSetDescriptionValue,
-  problemSetSlugValue,
-  problemSetTitleValue,
-} from '@/features/problemset/domain/problemset'
+import { problemSetDescriptionValue, problemSetSlugValue, problemSetTitleValue } from '@/features/problemset/lib/problemset-parsers'
 import { useProblemSetPageModel } from '@/features/problemset/hooks/use-problemset-page-model'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'

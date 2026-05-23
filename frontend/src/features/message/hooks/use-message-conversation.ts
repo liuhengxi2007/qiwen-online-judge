@@ -7,19 +7,17 @@ import {
   markConversationRead,
   sendDirectMessage,
 } from '@/features/message/http/api/message-client'
-import type { MessageConversationId, MessageHistoryResponse, MessageId } from '@/features/message/domain/message'
-import {
-  messageConversationIdValue,
-  messageIdValue,
-  parseMessageContent,
-} from '@/features/message/domain/message'
+import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
+import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
+import type { MessageId } from '@/features/message/model/MessageId'
+import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/lib/message-parsers'
 import {
   messageStreamEventName,
   type MessageStreamEventDetail,
 } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
-import type { SessionResponse } from '@/features/auth/domain/auth'
-import type { Username } from '@/features/user/domain/user'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { Username } from '@/features/user/model/Username'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

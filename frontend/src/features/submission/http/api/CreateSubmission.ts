@@ -1,7 +1,5 @@
-import type {
-  CreateSubmissionRequest,
-  SubmissionDetail,
-} from '@/features/submission/domain/submission'
+import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
+import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
 import {
   fromSubmissionDetailContract,
   toCreateSubmissionRequestContract,

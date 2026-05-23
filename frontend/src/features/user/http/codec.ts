@@ -12,13 +12,13 @@ import type { UserAcceptedRanklistItem } from '@/features/user/http/response/Use
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
 import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
-import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user-responses'
+import type { PageResponse } from '@/shared/model/PageResponse'
 import {
   emailAddressValue,
   parseEmailAddress,
   plaintextPasswordValue,
-} from '@/features/auth/domain/auth-parsers'
-import { parseProblemSlug, parseProblemTitle } from '@/features/problem/domain/problem'
+} from '@/features/auth/lib/auth-parsers'
+import { parseProblemSlug, parseProblemTitle } from '@/features/problem/lib/problem-parsers'
 import {
   displayNameValue,
   parseDisplayName,
@@ -29,7 +29,7 @@ import {
   requireParsed,
   userDisplayModeValue,
   userLocaleValue,
-} from '@/features/user/domain/user-parsers'
+} from '@/features/user/lib/user-parsers'
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -152,7 +152,7 @@ export function fromUserRanklistItemContract(response: UserRanklistItemContract)
 
 export function fromUserRanklistResponseContract(
   response: PageResponseContract<UserRanklistItemContract>,
-): UserRanklistResponse {
+): PageResponse<UserRanklistItem> {
   if (!Array.isArray(response.items)) {
     throw new Error('Invalid user ranklist payload.')
   }
@@ -174,7 +174,7 @@ export function fromUserAcceptedRanklistItemContract(response: UserAcceptedRankl
 
 export function fromUserAcceptedRanklistResponseContract(
   response: PageResponseContract<UserAcceptedRanklistItemContract>,
-): UserAcceptedRanklistResponse {
+): PageResponse<UserAcceptedRanklistItem> {
   if (!Array.isArray(response.items)) {
     throw new Error('Invalid user accepted ranklist payload.')
   }

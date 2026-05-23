@@ -1,4 +1,4 @@
-import type { SessionResponse } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import { fromSessionResponseContract } from '@/features/auth/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 

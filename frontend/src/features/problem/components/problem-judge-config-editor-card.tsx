@@ -14,8 +14,9 @@ import {
   judgeConfigPath,
   judgeConfigTemplate,
   validateJudgeConfigYaml,
-} from '@/features/problem/domain/problem-judge-config'
-import { parseProblemDataPath, type ProblemSlug } from '@/features/problem/domain/problem'
+} from '@/features/problem/lib/problem-judge-config'
+import { parseProblemDataPath } from '@/features/problem/lib/problem-parsers'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'

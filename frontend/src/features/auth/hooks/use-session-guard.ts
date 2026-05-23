@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { asSiteManagerSession } from '@/features/auth/domain/auth'
+import { asSiteManagerSession } from '@/features/auth/lib/auth-session'
 import { AuthClientError, getSession, logout as logoutRequest } from '@/features/auth/http/api/auth-client'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import {

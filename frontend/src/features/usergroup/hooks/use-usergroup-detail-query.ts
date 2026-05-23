@@ -1,11 +1,12 @@
 import { useEffect, useReducer } from 'react'
 
 import { getUserGroup } from '@/features/usergroup/http/api/usergroup-client'
-import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import {
   initialUserGroupDetailQueryState,
   reduceUserGroupDetailQueryState,
-} from '@/features/usergroup/domain/usergroup-page-state'
+} from '@/features/usergroup/state/usergroup-page-state'
 import { HttpClientError } from '@/shared/api/http-client'
 import { translateMessage } from '@/shared/i18n/messages'
 

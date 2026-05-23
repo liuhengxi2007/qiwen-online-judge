@@ -1,8 +1,6 @@
-import type {
-  ProblemDataUploadResult,
-  ProblemSlug,
-} from '@/features/problem/domain/problem'
-import { problemSlugValue } from '@/features/problem/domain/problem'
+import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec'
 import { postMultipart } from '@/shared/api/http-client'
 

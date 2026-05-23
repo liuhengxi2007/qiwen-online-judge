@@ -1,10 +1,8 @@
 import { useCallback, useState } from 'react'
 
-import {
-  toAuthSession,
-  type SessionResponse,
-} from '@/features/auth/domain/auth'
-import type { Username } from '@/features/user/domain/user'
+import { toAuthSession } from '@/features/auth/lib/auth-session'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { Username } from '@/features/user/model/Username'
 import { logout } from '@/features/auth/http/api/auth-client'
 import {
   UserClientError,
@@ -15,14 +13,12 @@ import {
   updateOwnUserPreferences,
   updateOwnUserProfile,
 } from '@/features/user/http/api/user-client'
-import type {
-  UpdateManagedUserAccountRequest,
-  UpdateManagedUserPreferencesRequest,
-  UpdateManagedUserProfileRequest,
-  UpdateOwnAccountRequest,
-  UpdateOwnPreferencesRequest,
-  UpdateOwnProfileRequest,
-} from '@/features/user/domain/user'
+import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
+import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
+import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
+import type { UpdateOwnAccountRequest } from '@/features/user/http/request/UpdateOwnAccountRequest'
+import type { UpdateOwnPreferencesRequest } from '@/features/user/http/request/UpdateOwnPreferencesRequest'
+import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useI18n } from '@/shared/i18n/use-i18n'

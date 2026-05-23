@@ -6,17 +6,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ProblemSubmitEditorCard } from '@/features/problem/components/problem-submit-editor-card'
 import { ProblemSubmitHeaderCard } from '@/features/problem/components/problem-submit-header-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import {
-  parseProblemSlug,
-  type ProblemSlug,
-} from '@/features/problem/domain/problem'
+import { parseProblemSlug } from '@/features/problem/lib/problem-parsers'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { createSubmission } from '@/features/submission/http/api/submission-client'
-import {
-  type SubmissionLanguage,
-  parseSubmissionSourceCode,
-  submissionIdValue,
-} from '@/features/submission/domain/submission'
+import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
+import { parseSubmissionSourceCode, submissionIdValue } from '@/features/submission/lib/submission-parsers'
 import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'

@@ -1,4 +1,4 @@
-import type { MessageInboxResponse } from '@/features/message/domain/message'
+import type { MessageInboxResponse } from '@/features/message/http/response/MessageInboxResponse'
 import { fromMessageInboxResponse } from '@/features/message/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

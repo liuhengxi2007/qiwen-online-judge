@@ -1,13 +1,13 @@
 import { useEffect, useReducer } from 'react'
 
-import type { SessionResponse } from '@/features/auth/domain/auth'
-import { parseUsername } from '@/features/user/domain/user'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import { parseUsername } from '@/features/user/lib/user-parsers'
 import {
   initialUserSettingsState,
   reduceUserSettingsState,
   type UserSettingsSection,
-} from '@/features/user/domain/user-settings-state'
-import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/features/user/domain/user-settings-form'
+} from '@/features/user/state/user-settings-state'
+import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/features/user/lib/user-settings-form'
 import { useUserSettingsQuery } from '@/features/user/hooks/use-user-settings-query'
 import { useUserSettingsMutation } from '@/features/user/hooks/use-user-settings-mutation'
 import {
@@ -18,14 +18,12 @@ import { useI18n } from '@/shared/i18n/use-i18n'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
-import type {
-  UpdateManagedUserAccountRequest,
-  UpdateManagedUserPreferencesRequest,
-  UpdateManagedUserProfileRequest,
-  UpdateOwnAccountRequest,
-  UpdateOwnPreferencesRequest,
-  UpdateOwnProfileRequest,
-} from '@/features/user/domain/user'
+import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
+import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
+import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
+import type { UpdateOwnAccountRequest } from '@/features/user/http/request/UpdateOwnAccountRequest'
+import type { UpdateOwnPreferencesRequest } from '@/features/user/http/request/UpdateOwnPreferencesRequest'
+import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
 
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse

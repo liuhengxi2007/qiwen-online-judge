@@ -1,9 +1,7 @@
-import type {
-  ProblemDataFilename,
-  ProblemDetail,
-  ProblemSlug,
-} from '@/features/problem/domain/problem'
-import { problemSlugValue } from '@/features/problem/domain/problem'
+import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { fromProblemDetailContract } from '@/features/problem/http/codec'
 import { postJson } from '@/shared/api/http-client'
 

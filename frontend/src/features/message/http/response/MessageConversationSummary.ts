@@ -1,4 +1,5 @@
-import type { UserIdentity, Username } from '@/features/user/domain/user'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import type { Username } from '@/features/user/model/Username'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
 
 export type MessageConversationSummary = {

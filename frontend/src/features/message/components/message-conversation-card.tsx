@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageComposer } from '@/features/message/components/message-composer'
 import { MessageList } from '@/features/message/components/message-list'
-import type { MessageConversationSummary, MessageHistoryResponse, MessageId } from '@/features/message/domain/message'
-import { usernameValue, type Username } from '@/features/user/domain/user'
+import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
+import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
+import type { MessageId } from '@/features/message/model/MessageId'
+import { usernameValue } from '@/features/user/lib/user-parsers'
+import type { Username } from '@/features/user/model/Username'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type MessageConversationCardProps = {

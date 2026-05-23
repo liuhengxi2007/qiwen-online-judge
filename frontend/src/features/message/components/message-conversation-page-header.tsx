@@ -1,6 +1,6 @@
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
-import type { MessageConversationSummary } from '@/features/message/domain/message'
+import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type MessageConversationPageHeaderProps = {

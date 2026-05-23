@@ -1,7 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { SubmissionListRequest, SubmissionListResponse } from '@/features/submission/domain/submission'
+import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
 import { useSubmissionListQuery } from '@/features/submission/hooks/use-submission-list-query'
 
 const submissionClient = vi.hoisted(() => ({

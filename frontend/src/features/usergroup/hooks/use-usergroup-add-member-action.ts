@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react'
 
 import { addUserGroupMember } from '@/features/usergroup/http/api/usergroup-client'
-import type { AddUserGroupMemberRole, UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
-import { validateAddUserGroupMemberDraft } from '@/features/usergroup/domain/usergroup-form'
+import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import { validateAddUserGroupMemberDraft } from '@/features/usergroup/lib/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

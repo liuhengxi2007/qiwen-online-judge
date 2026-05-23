@@ -4,8 +4,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import type { MessageBlockEntry } from '@/features/message/domain/message'
-import { usernameValue, type UserIdentity, type Username } from '@/features/user/domain/user'
+import type { MessageBlockEntry } from '@/features/message/http/response/MessageBlockEntry'
+import { usernameValue } from '@/features/user/lib/user-parsers'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import type { Username } from '@/features/user/model/Username'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type MessageBlockListCardProps = {

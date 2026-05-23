@@ -3,13 +3,13 @@ import { useReducer } from 'react'
 import {
   emptySectionMessageState,
   reduceSectionMessageState,
-} from '@/features/problem/domain/problem-detail-page-state'
+} from '@/features/problem/state/problem-detail-page-state'
 import {
   buildProblemAccessUpdateDraft,
   buildProblemContentUpdateDraft,
   buildProblemDetailAccessPolicy,
-} from '@/features/problem/domain/problem-detail-page-support'
-import type { ProblemSlug } from '@/features/problem/domain/problem'
+} from '@/features/problem/lib/problem-detail-page-support'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useProblemDeleteAction } from '@/features/problem/hooks/use-problem-delete-action'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { useProblemEditorState } from '@/features/problem/hooks/use-problem-editor-state'

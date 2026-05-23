@@ -2,10 +2,10 @@ import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblemSet } from '@/features/problemset/http/api/problemset-client'
-import type { ProblemSetSummary } from '@/features/problemset/domain/problemset'
-import { validateProblemSetDraft } from '@/features/problemset/domain/problemset-form'
+import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
+import { validateProblemSetDraft } from '@/features/problemset/lib/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/features/user/domain/resource-access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/features/user/lib/resource-access-subject-parsers'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

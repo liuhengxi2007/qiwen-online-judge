@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react'
 
-import type { Username } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
 import { UserClientError, updateUserPermissions } from '@/features/user/http/api/user-client'
-import type { AuthUserListItem, UpdateUserPermissionsRequest } from '@/features/user/domain/user'
+import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
+import type { UpdateUserPermissionsRequest } from '@/features/user/http/request/UpdateUserPermissionsRequest'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { translateMessage } from '@/shared/i18n/messages'

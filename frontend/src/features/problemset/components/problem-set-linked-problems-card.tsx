@@ -5,17 +5,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  problemSlugValue,
-  shouldShowProblemSlugSupplement,
-} from '@/features/problem/domain/problem'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
+import { shouldShowProblemSlugSupplement } from '@/features/problem/lib/problem-display'
 import {
   useProblemTitleDisplay,
   useProblemTitleDisplayMode,
 } from '@/features/problem/hooks/use-problem-title-display'
-import {
-  type ProblemSetProblemSummary,
-} from '@/features/problemset/domain/problemset'
+import type { ProblemSetProblemSummary } from '@/features/problemset/model/ProblemSetProblemSummary'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemSetLinkedProblemsCardProps = {

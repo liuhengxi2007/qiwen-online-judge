@@ -11,7 +11,7 @@ import {
   messageContentValue,
   messageConversationIdValue,
   messageIdValue,
-} from '@/features/message/domain/message-parsers'
+} from '@/features/message/lib/message-parsers'
 import type { MessageId as MessageIdValue } from '@/features/message/model/MessageId'
 
 const conversationId = '11111111-1111-4111-8111-111111111111'

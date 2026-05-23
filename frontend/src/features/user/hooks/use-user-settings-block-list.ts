@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { addMessageBlock, listMessageBlocks, removeMessageBlock } from '@/features/message/http/api/message-client'
-import type { MessageBlockEntry } from '@/features/message/domain/message'
-import type { UserIdentity, Username } from '@/features/user/domain/user'
+import type { MessageBlockEntry } from '@/features/message/http/response/MessageBlockEntry'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import type { Username } from '@/features/user/model/Username'
 import { listUserSuggestions } from '@/features/user/http/api/user-client'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'

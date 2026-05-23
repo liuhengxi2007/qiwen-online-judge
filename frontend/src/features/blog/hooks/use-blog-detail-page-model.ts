@@ -10,18 +10,13 @@ import {
   voteBlog,
   voteBlogComment,
 } from '@/features/blog/http/api/blog-client'
-import {
-  blogCommentContentValue,
-  parseBlogCommentContent,
-  parseBlogContent,
-  parseBlogTitle,
-  type BlogCommentId,
-  type BlogCommentSummary,
-  type BlogDetail,
-  type BlogVisibility,
-  type BlogVote,
-} from '@/features/blog/domain/blog'
-import { parseProblemSlug } from '@/features/problem/domain/problem'
+import { blogCommentContentValue, parseBlogCommentContent, parseBlogContent, parseBlogTitle } from '@/features/blog/lib/blog-parsers'
+import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
+import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
+import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import type { BlogVisibility } from '@/features/blog/model/BlogVisibility'
+import type { BlogVote } from '@/features/blog/model/BlogVote'
+import { parseProblemSlug } from '@/features/problem/lib/problem-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type UseBlogDetailPageModelArgs = {

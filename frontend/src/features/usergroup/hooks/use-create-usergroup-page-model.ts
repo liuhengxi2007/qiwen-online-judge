@@ -1,12 +1,12 @@
 import { useCallback, useReducer } from 'react'
 
 import { createUserGroup } from '@/features/usergroup/http/api/usergroup-client'
-import type { UserGroupDetail } from '@/features/usergroup/domain/usergroup'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
 import {
   initialCreateUserGroupPageState,
   reduceCreateUserGroupPageState,
-} from '@/features/usergroup/domain/create-usergroup-page-state'
-import { validateUserGroupDraft } from '@/features/usergroup/domain/usergroup-form'
+} from '@/features/usergroup/state/create-usergroup-page-state'
+import { validateUserGroupDraft } from '@/features/usergroup/lib/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

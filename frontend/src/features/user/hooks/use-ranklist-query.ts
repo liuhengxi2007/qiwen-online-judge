@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { listAcceptedRanklist, listContributionRanklist } from '@/features/user/http/api/user-client'
-import type { UserAcceptedRanklistResponse, UserRanklistResponse } from '@/features/user/domain/user'
+import type { UserAcceptedRanklistItem } from '@/features/user/http/response/UserAcceptedRanklistItem'
+import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
+import type { PageResponse } from '@/shared/model/PageResponse'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseRanklistQueryArgs = {
@@ -12,7 +14,7 @@ type UseRanklistQueryArgs = {
 export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklistQueryArgs) {
   const [contributionState, setContributionState] = useState<{
     page: number | null
-    response: UserRanklistResponse | null
+    response: PageResponse<UserRanklistItem> | null
     errorMessage: string
   }>({
     page: null,
@@ -21,7 +23,7 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
   })
   const [acceptedState, setAcceptedState] = useState<{
     page: number | null
-    response: UserAcceptedRanklistResponse | null
+    response: PageResponse<UserAcceptedRanklistItem> | null
     errorMessage: string
   }>({
     page: null,

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 import { listInbox } from '@/features/message/http/api/message-client'
-import type { MessageConversationSummary } from '@/features/message/domain/message'
+import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

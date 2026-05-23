@@ -23,7 +23,7 @@ import {
   problemTimeLimitMsValue,
   problemTitleValue,
   requireParsed,
-} from '@/features/problem/domain/problem-parsers'
+} from '@/features/problem/lib/problem-parsers'
 import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
 
 type PageResponseContract<TItem> = {

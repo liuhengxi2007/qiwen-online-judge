@@ -1,11 +1,6 @@
-import type {
-  ProblemDataPath,
-  ProblemSlug,
-} from '@/features/problem/domain/problem'
-import {
-  problemDataPathValue,
-  problemSlugValue,
-} from '@/features/problem/domain/problem'
+import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import { problemDataPathValue, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { HttpClientError } from '@/shared/api/http-client'
 
 export async function readProblemDataText(problemSlug: ProblemSlug, path: ProblemDataPath): Promise<string> {

@@ -1,11 +1,9 @@
-import type { SessionResponse } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import { fromSessionResponseContract } from '@/features/auth/http/codec'
-import type {
-  UpdateManagedUserAccountRequest,
-  UpdateOwnAccountRequest,
-  Username,
-} from '@/features/user/domain/user'
-import { usernameValue } from '@/features/user/domain/user'
+import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
+import type { UpdateOwnAccountRequest } from '@/features/user/http/request/UpdateOwnAccountRequest'
+import type { Username } from '@/features/user/model/Username'
+import { usernameValue } from '@/features/user/lib/user-parsers'
 import {
   toUpdateManagedUserAccountRequestContract,
   toUpdateOwnAccountRequestContract,

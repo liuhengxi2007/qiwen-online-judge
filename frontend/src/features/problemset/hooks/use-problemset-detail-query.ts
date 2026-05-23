@@ -1,7 +1,8 @@
 import { useEffect, useReducer } from 'react'
 
 import { getProblemSet } from '@/features/problemset/http/api/problemset-client'
-import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 import { HttpClientError } from '@/shared/api/http-client'
 
 type ProblemSetDetailQueryState = {

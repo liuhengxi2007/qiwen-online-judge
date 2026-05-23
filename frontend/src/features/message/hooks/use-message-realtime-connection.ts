@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { messageEventsUrl } from '@/features/message/http/api/message-client'
-import type { DirectMessage } from '@/features/message/domain/message'
+import type { DirectMessage } from '@/features/message/http/response/DirectMessage'
 import {
   fromConversationReadStreamPayload,
   fromDirectMessage,

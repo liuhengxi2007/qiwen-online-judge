@@ -1,8 +1,6 @@
-import type {
-  UserProfileResponse,
-  Username,
-} from '@/features/user/domain/user'
-import { usernameValue } from '@/features/user/domain/user'
+import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
+import type { Username } from '@/features/user/model/Username'
+import { usernameValue } from '@/features/user/lib/user-parsers'
 import { fromUserProfileResponseContract } from '@/features/user/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 

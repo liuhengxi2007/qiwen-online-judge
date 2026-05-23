@@ -14,7 +14,7 @@ import {
   parseProblemSlug,
   parseProblemTitle,
   requireParsed as requireParsedProblem,
-} from '@/features/problem/domain/problem-parsers'
+} from '@/features/problem/lib/problem-parsers'
 import {
   blogCommentContentValue,
   blogContentValue,
@@ -25,7 +25,7 @@ import {
   parseBlogId,
   parseBlogTitle,
   requireParsed,
-} from '@/features/blog/domain/blog-parsers'
+} from '@/features/blog/lib/blog-parsers'
 
 type PageResponseContract<TItem> = {
   items: TItem[]

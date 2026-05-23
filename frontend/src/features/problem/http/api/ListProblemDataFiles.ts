@@ -1,11 +1,6 @@
-import type {
-  ProblemDataFileListResponse,
-  ProblemSlug,
-} from '@/features/problem/domain/problem'
-import {
-  parseProblemDataFilename,
-  problemSlugValue,
-} from '@/features/problem/domain/problem'
+import type { ProblemDataFileListResponse } from '@/features/problem/http/response/ProblemDataFileListResponse'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import { parseProblemDataFilename, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileListResponse> {

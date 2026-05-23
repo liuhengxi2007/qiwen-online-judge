@@ -1,9 +1,7 @@
-import type {
-  AddUserGroupMemberRequest,
-  UserGroupDetail,
-  UserGroupSlug,
-} from '@/features/usergroup/domain/usergroup'
-import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
+import type { AddUserGroupMemberRequest } from '@/features/usergroup/http/request/AddUserGroupMemberRequest'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {
   fromUserGroupDetailContract,
   toAddUserGroupMemberRequestContract,

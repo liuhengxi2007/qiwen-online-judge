@@ -1,10 +1,11 @@
 import { useEffect, useReducer } from 'react'
 
-import type { OthersSubmissionAccess, ProblemDetail } from '@/features/problem/domain/problem'
+import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import {
   initialProblemEditorState,
   reduceProblemEditorState,
-} from '@/features/problem/domain/problem-editor-state'
+} from '@/features/problem/state/problem-editor-state'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useProblemEditorState(problem: ProblemDetail | null) {

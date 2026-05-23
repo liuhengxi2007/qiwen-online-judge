@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 
 import { getSubmission, listSubmissions } from '@/features/submission/http/api/submission-client'
-import {
-  isTerminalSubmissionStatus,
-  type SubmissionListRequest,
-  type SubmissionListResponse,
-  type SubmissionSummary,
-} from '@/features/submission/domain/submission'
+import { isTerminalSubmissionStatus } from '@/features/submission/lib/submission-parsers'
+import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
+import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
 
 function requestKey(request: SubmissionListRequest): string {
   return JSON.stringify({

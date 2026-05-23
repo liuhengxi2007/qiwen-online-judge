@@ -1,9 +1,7 @@
-import type {
-  UpdateUserGroupRequest,
-  UserGroupDetail,
-  UserGroupSlug,
-} from '@/features/usergroup/domain/usergroup'
-import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/http/request/UpdateUserGroupRequest'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupRequestContract,

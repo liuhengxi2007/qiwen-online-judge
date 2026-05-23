@@ -106,7 +106,7 @@ Preferred pattern:
 
 - raw request payload enters at the boundary
 - boundary parser validates and converts to domain types
-- application/domain code only works with typed values
+- application and business code only works with typed values
 
 Bad examples:
 
@@ -163,12 +163,30 @@ Avoid adding new endpoint implementations directly to aggregate `*-client.ts` fi
 
 ## Frontend Layer Boundaries
 
+Feature layer roles:
+
+- `model`
+  mirrored domain values and stable business concepts; one top-level type per file
+- `lib`
+  pure feature helpers such as parsers, display formatting, validation, permission helpers, and draft builders
+- `state`
+  pure reducer state, actions, and transitions for pages and editors
+- `http`
+  request/response payload types, endpoint clients, and feature boundary codecs
+- `hooks`
+  React orchestration for queries, mutations, reducers, browser state, and side effects
+- `components`
+  feature-owned presentational and interaction UI
+- `pages`
+  route-level page composition
+
 Rules:
 
-- `src/features/<domain>/model` must not import `http`, `hooks`, `components`, or `pages`
-- `src/features/<domain>/domain` must not import or re-export `hooks`, `components`, or `pages`
+- `src/features/<domain>/domain` no longer exists; do not add feature domain barrels or compatibility re-exports
+- `src/features/<domain>/model` must not import `http`, `lib`, `state`, `hooks`, `components`, or `pages`
+- `src/features/<domain>/lib` and `src/features/<domain>/state` must not import `hooks`, `components`, or `pages`
 - React hooks belong in `hooks`, even when they expose display preferences or other domain-adjacent UI state
-- domain barrels may aggregate parsers, display helpers, contract mappers, and model types, but not React hooks or UI components
+- import model, request, response, lib, and state symbols directly from the owning file instead of through barrels
 - run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers
 
 If a model needs a type that currently lives in `http/response`, either move the
@@ -249,7 +267,7 @@ Rules:
 
 - keep parsing, validation, policy, and state transition logic pure when possible
 - isolate IO, HTTP, database, time, randomness, and storage access at the edge
-- domain functions should return data, decisions, or errors, not perform effects directly unless they are boundary services
+- pure core functions should return data, decisions, or errors, not perform effects directly unless they are boundary services
 - compose pure functions in the core, then execute effects in routers, clients, stores, or infrastructure adapters
 - if a helper performs JDBC, clock, randomness, file, or network work, its signature must expose that effect explicitly, typically as `IO[...]`
 
@@ -257,7 +275,7 @@ Preferred layering:
 
 - boundary layer: HTTP handlers, database adapters, browser storage, fetch, clocks
 - application layer: orchestration of use cases
-- domain layer: pure rules, typed data, state transitions
+- pure feature core: rules, typed data, state transitions
 
 Good examples:
 
@@ -316,20 +334,21 @@ For `model`:
 - type definition files stay focused on the mirrored type itself
   lightweight per-type helpers are allowed, but reducers, API clients, and feature orchestration do not belong here
 
-For `domain`:
+For `lib`:
 
-- `<feature>.ts`
-  facade-only file that re-exports the domain surface
 - `<feature>-parsers.ts`
   parsing and value accessors
-- `<feature>-contract.ts`
-  contract-to-domain and domain-to-contract mapping
 - `<feature>-form.ts`
   validation of create or update drafts
-- `<feature>-*-state.ts`
-  reducer state, actions, and pure transitions for page or editor state
 - `<feature>-*-support.ts`
   pure helpers for building drafts, permissions, or derived decisions shared by hooks
+- `<feature>-display.ts`
+  pure display formatting helpers
+
+For `state`:
+
+- `<feature>-*-state.ts`
+  reducer state, actions, and pure transitions for page or editor state
 
 For `hooks`:
 
@@ -338,9 +357,9 @@ For `hooks`:
 - `use-*-action.ts` or `use-*-mutation.ts`
   one remote write flow
 - `use-*-editor-state.ts`
-  thin wrapper around a reducer from `domain/*-state.ts`
+  thin wrapper around a reducer from `state/*-state.ts`
 - `use-*-page-model.ts`
-  page orchestration only; compose queries, actions, and reducers, but keep pure helpers in `domain`
+  page orchestration only; compose queries, actions, and reducers, but keep pure helpers in `lib` and reducers in `state`
 
 For `pages`:
 

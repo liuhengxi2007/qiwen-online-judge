@@ -1,7 +1,7 @@
-import type { BlogDetail } from '@/features/blog/domain/blog'
-import { blogIdValue } from '@/features/blog/domain/blog'
+import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import { blogIdValue } from '@/features/blog/lib/blog-parsers'
 import { fromBlogDetailContract } from '@/features/blog/http/codec'
-import type { BlogId } from '@/features/blog/domain/blog'
+import type { BlogId } from '@/features/blog/model/BlogId'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function getBlog(blogId: BlogId): Promise<BlogDetail> {

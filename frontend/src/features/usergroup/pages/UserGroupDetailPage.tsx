@@ -4,13 +4,9 @@ import { Navigate, useParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import {
-  parseUserGroupSlug,
-  type UserGroupSlug,
-  userGroupDescriptionValue,
-  userGroupNameValue,
-} from '@/features/usergroup/domain/usergroup'
-import type { Username } from '@/features/user/domain/user'
+import { parseUserGroupSlug, userGroupDescriptionValue, userGroupNameValue } from '@/features/usergroup/lib/usergroup-parsers'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import type { Username } from '@/features/user/model/Username'
 import { UserGroupAddMemberCard } from '@/features/usergroup/components/usergroup-add-member-card'
 import { UserGroupDeleteCard } from '@/features/usergroup/components/usergroup-delete-card'
 import { UserGroupEditCard } from '@/features/usergroup/components/usergroup-edit-card'

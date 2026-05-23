@@ -1,17 +1,13 @@
-import type {
-  UpdateUserGroupMemberRoleRequest,
-  UserGroupDetail,
-  UserGroupSlug,
-} from '@/features/usergroup/domain/usergroup'
-import { userGroupSlugValue } from '@/features/usergroup/domain/usergroup'
+import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/http/request/UpdateUserGroupMemberRoleRequest'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupMemberRoleRequestContract,
 } from '@/features/usergroup/http/codec'
-import {
-  usernameValue,
-  type Username,
-} from '@/features/user/domain/user'
+import { usernameValue } from '@/features/user/lib/user-parsers'
+import type { Username } from '@/features/user/model/Username'
 import { postJson } from '@/shared/api/http-client'
 
 export async function updateUserGroupMemberRole(

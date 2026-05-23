@@ -10,17 +10,13 @@ import {
   uploadProblemDataArchive,
   uploadProblemDataFile,
 } from '@/features/problem/http/api/problem-client'
-import {
-  parseProblemDataFilename,
-  problemDataPathValue,
-  problemDataFilenameValue,
-  type ProblemDataFilename,
-  type ProblemSlug,
-} from '@/features/problem/domain/problem'
+import { parseProblemDataFilename, problemDataPathValue, problemDataFilenameValue } from '@/features/problem/lib/problem-parsers'
+import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import {
   initialProblemDataPageState,
   reduceProblemDataPageState,
-} from '@/features/problem/domain/problem-data-page-state'
+} from '@/features/problem/state/problem-data-page-state'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
@@ -132,7 +128,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   )
 
   const deleteDataPath = useCallback(
-    async (path: import('@/features/problem/domain/problem').ProblemDataPath): Promise<DeleteResult> => {
+    async (path: import('@/features/problem/model/ProblemDataPath').ProblemDataPath): Promise<DeleteResult> => {
       dispatch({ type: 'delete_started', filename: path.split('/').slice(-1)[0] as ProblemDataFilename })
 
       try {

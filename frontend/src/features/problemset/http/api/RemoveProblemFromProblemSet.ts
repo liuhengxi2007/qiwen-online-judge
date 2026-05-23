@@ -1,9 +1,7 @@
-import type { ProblemSlug } from '@/features/problem/domain/problem'
-import type {
-  ProblemSetDetail,
-  ProblemSetSlug,
-} from '@/features/problemset/domain/problemset'
-import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
+import { problemSetSlugValue } from '@/features/problemset/lib/problemset-parsers'
 import { fromProblemSetDetailContract } from '@/features/problemset/http/codec'
 import { postJson } from '@/shared/api/http-client'
 

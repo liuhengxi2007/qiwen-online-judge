@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
-import { blogIdValue, blogTitleValue, type BlogSummary } from '@/features/blog/domain/blog'
+import { blogIdValue, blogTitleValue } from '@/features/blog/lib/blog-parsers'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import { blogScoreClassName } from '@/features/blog/components/blog-support'
-import { formatProblemTitleDisplay, problemSlugValue } from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'

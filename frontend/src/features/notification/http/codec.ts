@@ -1,16 +1,12 @@
-import { requireParsed } from '@/features/user/domain/user'
+import { requireParsed } from '@/features/user/lib/user-parsers'
 import { fromUserIdentityContract } from '@/features/user/http/codec'
-import {
-  parseBlogCommentId,
-  parseBlogId,
-  parseBlogTitle,
-} from '@/features/blog/domain/blog'
+import { parseBlogCommentId, parseBlogId, parseBlogTitle } from '@/features/blog/lib/blog-parsers'
 import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
 import type { NotificationKind } from '@/features/notification/model/NotificationKind'
 import type { NotificationPayload } from '@/features/notification/model/NotificationPayload'
 import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
 import type { NotificationUnreadCountResponse } from '@/features/notification/http/response/NotificationUnreadCountResponse'
-import { parseNotificationId } from '@/features/notification/domain/notification-parsers'
+import { parseNotificationId } from '@/features/notification/lib/notification-parsers'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null

@@ -1,7 +1,5 @@
-import type {
-  RegisterRequest,
-  RegisterResponse,
-} from '@/features/auth/domain/auth'
+import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
+import type { RegisterResponse } from '@/features/auth/http/response/RegisterResponse'
 import {
   fromRegisterResponseContract,
   toRegisterRequestContract,

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import type { Username } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
 import { listBlogs, listProblemBlogs } from '@/features/blog/http/api/blog-client'
-import type { BlogSummary } from '@/features/blog/domain/blog'
-import type { ProblemSlug } from '@/features/problem/domain/problem'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { PageRequest } from '@/shared/model/PageRequest'
 
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null, pageRequest: PageRequest) {

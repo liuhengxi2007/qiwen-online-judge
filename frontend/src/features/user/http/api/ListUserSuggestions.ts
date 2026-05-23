@@ -1,5 +1,5 @@
-import type { UserIdentity } from '@/features/user/domain/user'
-import { parseUserSearchQuery } from '@/features/user/domain/user'
+import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import { parseUserSearchQuery } from '@/features/user/lib/user-parsers'
 import { fromUserIdentityContract } from '@/features/user/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 

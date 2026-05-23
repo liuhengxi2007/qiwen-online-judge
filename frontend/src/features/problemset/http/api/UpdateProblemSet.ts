@@ -1,9 +1,7 @@
-import type {
-  ProblemSetDetail,
-  ProblemSetSlug,
-  UpdateProblemSetRequest,
-} from '@/features/problemset/domain/problemset'
-import { problemSetSlugValue } from '@/features/problemset/domain/problemset'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
+import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
+import { problemSetSlugValue } from '@/features/problemset/lib/problemset-parsers'
 import {
   fromProblemSetDetailContract,
   toUpdateProblemSetRequestContract,

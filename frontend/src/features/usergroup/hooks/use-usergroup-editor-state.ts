@@ -1,10 +1,11 @@
 import { useEffect, useReducer } from 'react'
 
-import type { AddUserGroupMemberRole, UserGroupDetail } from '@/features/usergroup/domain/usergroup'
+import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
 import {
   initialUserGroupEditorState,
   reduceUserGroupEditorState,
-} from '@/features/usergroup/domain/usergroup-editor-state'
+} from '@/features/usergroup/state/usergroup-editor-state'
 
 export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
   const [state, dispatch] = useReducer(reduceUserGroupEditorState, initialUserGroupEditorState)

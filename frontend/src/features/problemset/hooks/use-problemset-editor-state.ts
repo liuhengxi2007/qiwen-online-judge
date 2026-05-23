@@ -1,10 +1,10 @@
 import { useEffect, useReducer } from 'react'
 
-import type { ProblemSetDetail } from '@/features/problemset/domain/problemset'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import {
   initialProblemSetEditorState,
   reduceProblemSetEditorState,
-} from '@/features/problemset/domain/problemset-editor-state'
+} from '@/features/problemset/state/problemset-editor-state'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 export function useProblemSetEditorState(problemSet: ProblemSetDetail | null) {

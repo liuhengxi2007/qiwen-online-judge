@@ -1,6 +1,6 @@
 import type { SuccessResponse } from '@/shared/model/SuccessResponse'
-import type { NotificationId } from '@/features/notification/domain/notification'
-import { notificationIdValue } from '@/features/notification/domain/notification'
+import type { NotificationId } from '@/features/notification/model/NotificationId'
+import { notificationIdValue } from '@/features/notification/lib/notification-parsers'
 import {
   decodeSuccessResponse,
   postJson,

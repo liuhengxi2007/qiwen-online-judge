@@ -7,7 +7,8 @@ import { ProblemSetAccessDialog } from '@/features/problemset/components/problem
 import { ProblemSetDetailHeaderCard } from '@/features/problemset/components/problem-set-detail-header-card'
 import { ProblemSetLinkedProblemsCard } from '@/features/problemset/components/problem-set-linked-problems-card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { parseProblemSetSlug, problemSetDescriptionValue, problemSetTitleValue, type ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { parseProblemSetSlug, problemSetDescriptionValue, problemSetTitleValue } from '@/features/problemset/lib/problemset-parsers'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 import { useProblemSetDetailPageModel } from '@/features/problemset/hooks/use-problemset-detail-page-model'
 import {
   grantedGroupsInputFromAccessPolicy,

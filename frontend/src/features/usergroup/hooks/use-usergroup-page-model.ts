@@ -4,7 +4,7 @@ import { listUserGroups } from '@/features/usergroup/http/api/usergroup-client'
 import {
   initialUserGroupPageState,
   reduceUserGroupPageState,
-} from '@/features/usergroup/domain/usergroup-page-state'
+} from '@/features/usergroup/state/usergroup-page-state'
 import { translateMessage } from '@/shared/i18n/messages'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

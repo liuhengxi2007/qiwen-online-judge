@@ -1,7 +1,5 @@
-import type {
-  CreateProblemRequest,
-  ProblemDetail,
-} from '@/features/problem/domain/problem'
+import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import {
   fromProblemDetailContract,
   toCreateProblemRequestContract,

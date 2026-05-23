@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { type BlogSummary } from '@/features/blog/domain/blog'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import { BlogSummaryCard } from '@/features/blog/components/blog-summary-card'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

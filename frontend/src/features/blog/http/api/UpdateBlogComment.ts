@@ -1,17 +1,12 @@
-import type {
-  BlogCommentId,
-  BlogDetail,
-  UpdateBlogCommentRequest,
-} from '@/features/blog/domain/blog'
-import {
-  blogCommentIdValue,
-  blogIdValue,
-} from '@/features/blog/domain/blog'
+import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
+import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import type { UpdateBlogCommentRequest } from '@/features/blog/http/request/UpdateBlogCommentRequest'
+import { blogCommentIdValue, blogIdValue } from '@/features/blog/lib/blog-parsers'
 import {
   fromBlogDetailContract,
   toUpdateBlogCommentRequestContract,
 } from '@/features/blog/http/codec'
-import type { BlogId } from '@/features/blog/domain/blog'
+import type { BlogId } from '@/features/blog/model/BlogId'
 import { postJson } from '@/shared/api/http-client'
 
 export async function updateBlogComment(

@@ -1,7 +1,5 @@
-import type {
-  BlogSummary,
-  CreateBlogRequest,
-} from '@/features/blog/domain/blog'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogRequest'
 import {
   fromBlogSummaryContract,
   toCreateBlogRequestContract,

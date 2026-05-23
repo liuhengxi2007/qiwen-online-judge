@@ -7,23 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { deleteSubmission, rejudgeSubmission } from '@/features/submission/http/api/submission-client'
-import {
-  isTerminalSubmissionStatus,
-  parseSubmissionId,
-  type SubmissionId,
-  submissionIdValue,
-  submissionJudgeStateLabel,
-  submissionLanguageLabel,
-  submissionSourceCodeValue,
-  submissionVerdictLabel,
-} from '@/features/submission/domain/submission'
+import { isTerminalSubmissionStatus, parseSubmissionId, submissionIdValue, submissionJudgeStateLabel, submissionLanguageLabel, submissionSourceCodeValue, submissionVerdictLabel } from '@/features/submission/lib/submission-parsers'
+import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
 } from '@/features/submission/components/submission-support'
-import { formatProblemTitleDisplay, problemSlugValue } from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
 import { HttpClientError } from '@/shared/api/http-client'

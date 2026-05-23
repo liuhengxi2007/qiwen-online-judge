@@ -1,5 +1,5 @@
-import type { SubmissionId } from '@/features/submission/domain/submission'
-import { submissionIdValue } from '@/features/submission/domain/submission'
+import type { SubmissionId } from '@/features/submission/model/SubmissionId'
+import { submissionIdValue } from '@/features/submission/lib/submission-parsers'
 import {
   decodeSuccessResponse,
   postJson,

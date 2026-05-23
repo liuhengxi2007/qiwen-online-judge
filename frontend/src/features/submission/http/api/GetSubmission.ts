@@ -1,8 +1,6 @@
-import type {
-  SubmissionDetail,
-  SubmissionId,
-} from '@/features/submission/domain/submission'
-import { submissionIdValue } from '@/features/submission/domain/submission'
+import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
+import type { SubmissionId } from '@/features/submission/model/SubmissionId'
+import { submissionIdValue } from '@/features/submission/lib/submission-parsers'
 import { fromSubmissionDetailContract } from '@/features/submission/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 

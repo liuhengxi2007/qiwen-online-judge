@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { updateUserGroup } from '@/features/usergroup/http/api/usergroup-client'
-import type { UserGroupDetail, UserGroupSlug } from '@/features/usergroup/domain/usergroup'
-import { validateUserGroupUpdateDraft } from '@/features/usergroup/domain/usergroup-form'
+import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import { validateUserGroupUpdateDraft } from '@/features/usergroup/lib/usergroup-form'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

@@ -1,12 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  problemSetDescriptionValue,
-  problemSetSlugValue,
-  problemSetTitleValue,
-  type ProblemSetDetail,
-} from '@/features/problemset/domain/problemset'
+import { problemSetDescriptionValue, problemSetSlugValue, problemSetTitleValue } from '@/features/problemset/lib/problemset-parsers'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import { MarkdownDocument } from '@/shared/components/markdown-document'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'

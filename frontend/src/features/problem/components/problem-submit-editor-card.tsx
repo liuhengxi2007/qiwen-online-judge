@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { SubmissionLanguage } from '@/features/submission/domain/submission'
-import { isSubmissionLanguage } from '@/features/submission/domain/submission'
+import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
+import { isSubmissionLanguage } from '@/features/submission/lib/submission-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemSubmitEditorCardProps = {

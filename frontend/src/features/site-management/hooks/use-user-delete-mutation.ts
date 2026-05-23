@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import type { Username } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { UserClientError, deleteUser } from '@/features/user/http/api/user-client'
 import { translateMessage } from '@/shared/i18n/messages'

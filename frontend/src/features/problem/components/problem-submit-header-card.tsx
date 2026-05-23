@@ -2,11 +2,8 @@ import { Code2 } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
-import {
-  formatProblemTitleDisplay,
-  problemSlugValue,
-  shouldShowProblemSlugSupplement,
-} from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/features/problem/lib/problem-display'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 

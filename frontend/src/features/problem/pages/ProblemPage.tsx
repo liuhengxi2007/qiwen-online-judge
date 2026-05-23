@@ -9,11 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import {
-  parseProblemSearchQuery,
-  problemSlugValue,
-  shouldShowProblemSlugSupplement,
-} from '@/features/problem/domain/problem'
+import { parseProblemSearchQuery, problemSlugValue } from '@/features/problem/lib/problem-parsers'
+import { shouldShowProblemSlugSupplement } from '@/features/problem/lib/problem-display'
 import { useProblemPageModel } from '@/features/problem/hooks/use-problem-page-model'
 import {
   useProblemTitleDisplay,

@@ -1,7 +1,7 @@
-import type { SessionResponse } from '@/features/auth/domain/auth'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import { fromSessionResponseContract } from '@/features/auth/http/codec'
-import type { Username } from '@/features/user/domain/user'
-import { usernameValue } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
+import { usernameValue } from '@/features/user/lib/user-parsers'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function getUserSettings(username: Username): Promise<SessionResponse> {

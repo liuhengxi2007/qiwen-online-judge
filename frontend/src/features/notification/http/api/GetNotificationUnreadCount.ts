@@ -1,4 +1,4 @@
-import type { NotificationUnreadCountResponse } from '@/features/notification/domain/notification'
+import type { NotificationUnreadCountResponse } from '@/features/notification/http/response/NotificationUnreadCountResponse'
 import { fromNotificationUnreadCountResponse } from '@/features/notification/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 

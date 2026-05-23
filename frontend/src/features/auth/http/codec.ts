@@ -7,7 +7,7 @@ import {
   emailAddressValue,
   parseEmailAddress,
   plaintextPasswordValue,
-} from '@/features/auth/domain/auth-parsers'
+} from '@/features/auth/lib/auth-parsers'
 import {
   displayNameValue,
   parseDisplayName,
@@ -17,7 +17,7 @@ import {
   parseUsername,
   requireParsed,
   usernameValue,
-} from '@/features/user/domain/user-parsers'
+} from '@/features/user/lib/user-parsers'
 
 type UserPreferencesContract = {
   displayMode: 'display_name' | 'username' | 'display_name_with_username'

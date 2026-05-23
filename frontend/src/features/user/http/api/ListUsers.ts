@@ -1,7 +1,5 @@
-import type {
-  UserListRequest,
-  UserListResponse,
-} from '@/features/user/domain/user'
+import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
+import type { UserListResponse } from '@/features/user/http/response/UserListResponse'
 import {
   fromUserListResponseContract,
   toUserListRequestContract,

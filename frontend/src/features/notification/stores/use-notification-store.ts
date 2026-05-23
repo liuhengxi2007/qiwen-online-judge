@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 
 import { getNotificationUnreadCount, listNotifications } from '@/features/notification/http/api/notification-client'
-import type { NotificationId, NotificationSummary } from '@/features/notification/domain/notification'
-import { notificationIdValue } from '@/features/notification/domain/notification'
+import type { NotificationId } from '@/features/notification/model/NotificationId'
+import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
+import { notificationIdValue } from '@/features/notification/lib/notification-parsers'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

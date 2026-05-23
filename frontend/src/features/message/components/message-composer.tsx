@@ -5,8 +5,9 @@ import type { KeyboardEvent } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import type { MessageConversationSummary } from '@/features/message/domain/message'
-import { usernameValue, type Username } from '@/features/user/domain/user'
+import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
+import { usernameValue } from '@/features/user/lib/user-parsers'
+import type { Username } from '@/features/user/model/Username'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type MessageComposerProps = {

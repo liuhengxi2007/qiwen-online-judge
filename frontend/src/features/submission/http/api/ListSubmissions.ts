@@ -1,7 +1,5 @@
-import type {
-  SubmissionListRequest,
-  SubmissionListResponse,
-} from '@/features/submission/domain/submission'
+import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
 import {
   fromSubmissionListResponseContract,
   toSubmissionListRequestContract,

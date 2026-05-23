@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Username } from '@/features/user/domain/user'
+import type { Username } from '@/features/user/model/Username'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
 import { UserClientError, getUserProfile } from '@/features/user/http/api/user-client'
-import type { UserProfileResponse } from '@/features/user/domain/user'
+import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserProfileQueryArgs = {

@@ -1,5 +1,5 @@
 import { fromUserIdentityContract } from '@/features/user/http/codec'
-import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/domain/problem'
+import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
 import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
 import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
@@ -17,7 +17,7 @@ import {
   submissionProblemQueryValue,
   submissionSourceCodeValue,
   submissionUserQueryValue,
-} from '@/features/submission/domain/submission-parsers'
+} from '@/features/submission/lib/submission-parsers'
 import type { JudgeResult } from '@/features/submission/model/JudgeResult'
 
 type PageResponseContract<TItem> = {

@@ -1,5 +1,6 @@
-import type { BlogListResponse } from '@/features/blog/domain/blog'
-import { usernameValue, type Username } from '@/features/user/domain/user'
+import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
+import { usernameValue } from '@/features/user/lib/user-parsers'
+import type { Username } from '@/features/user/model/Username'
 import { fromBlogListResponseContract } from '@/features/blog/http/codec'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

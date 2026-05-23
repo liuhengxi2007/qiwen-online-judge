@@ -1,4 +1,5 @@
-import { parseUsername, requireParsed, usernameValue, type Username } from '@/features/user/domain/user'
+import { parseUsername, requireParsed, usernameValue } from '@/features/user/lib/user-parsers'
+import type { Username } from '@/features/user/model/Username'
 import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { CreateConversationRequest } from '@/features/message/http/request/CreateConversationRequest'
 import type { ConversationMessageFacts } from '@/features/message/http/response/ConversationMessageFacts'
@@ -17,7 +18,7 @@ import {
   parseMessageContent,
   parseMessageConversationId,
   parseMessageId,
-} from '@/features/message/domain/message-parsers'
+} from '@/features/message/lib/message-parsers'
 
 export type ConversationReadStreamPayload = {
   conversationId: MessageConversationId

@@ -6,10 +6,12 @@ import {
   listPendingProblemBlogs,
   unlinkBlogFromProblem,
 } from '@/features/blog/http/api/blog-client'
-import { blogIdValue, parseBlogId, type BlogId, type BlogSummary } from '@/features/blog/domain/blog'
+import { blogIdValue, parseBlogId } from '@/features/blog/lib/blog-parsers'
+import type { BlogId } from '@/features/blog/model/BlogId'
+import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
-import type { Username } from '@/features/user/domain/user'
-import type { ProblemSlug } from '@/features/problem/domain/problem'
+import type { Username } from '@/features/user/model/Username'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

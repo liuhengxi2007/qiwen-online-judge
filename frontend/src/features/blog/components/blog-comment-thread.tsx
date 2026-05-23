@@ -3,13 +3,10 @@ import { ThumbsDown, ThumbsUp } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  blogCommentContentValue,
-  blogCommentIdValue,
-  type BlogCommentId,
-  type BlogCommentSummary,
-  type BlogVote,
-} from '@/features/blog/domain/blog'
+import { blogCommentContentValue, blogCommentIdValue } from '@/features/blog/lib/blog-parsers'
+import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
+import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
+import type { BlogVote } from '@/features/blog/model/BlogVote'
 import { blogScoreClassName } from '@/features/blog/components/blog-support'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'

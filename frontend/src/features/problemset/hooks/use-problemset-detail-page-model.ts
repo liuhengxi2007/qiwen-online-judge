@@ -1,18 +1,17 @@
 import { useReducer } from 'react'
 
-import { problemSlugValue, type ProblemSlug } from '@/features/problem/domain/problem'
-import {
-  type ProblemSetSlug,
-} from '@/features/problemset/domain/problemset'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 import {
   emptyProblemSetSectionMessageState,
   reduceProblemSetSectionMessageState,
-} from '@/features/problemset/domain/problemset-detail-page-state'
+} from '@/features/problemset/state/problemset-detail-page-state'
 import {
   buildProblemSetAccessUpdateDraft,
   buildProblemSetContentUpdateDraft,
   buildProblemSetDetailAccessPolicy,
-} from '@/features/problemset/domain/problemset-detail-page-support'
+} from '@/features/problemset/lib/problemset-detail-page-support'
 import { useProblemSetDeleteAction } from '@/features/problemset/hooks/use-problemset-delete-action'
 import { useProblemSetDetailQuery } from '@/features/problemset/hooks/use-problemset-detail-query'
 import { useProblemSetEditorState } from '@/features/problemset/hooks/use-problemset-editor-state'

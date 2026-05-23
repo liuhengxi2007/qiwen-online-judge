@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { addProblemToProblemSet } from '@/features/problemset/http/api/problemset-client'
-import { validateProblemSetLinkDraft } from '@/features/problemset/domain/problemset-link-form'
-import type { ProblemSetDetail, ProblemSetSlug } from '@/features/problemset/domain/problemset'
+import { validateProblemSetLinkDraft } from '@/features/problemset/lib/problemset-link-form'
+import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 export function useProblemSetLinkProblemAction(problemSetSlug: ProblemSetSlug) {

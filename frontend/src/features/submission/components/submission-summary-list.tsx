@@ -1,25 +1,19 @@
 import { Link } from 'react-router-dom'
 
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  formatProblemTitleDisplay,
-  problemSlugValue,
-} from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
-import {
-  submissionIdValue,
-  submissionJudgeStateLabel,
-  submissionLanguageLabel,
-  type SubmissionSummary,
-} from '@/features/submission/domain/submission'
+import { submissionIdValue, submissionJudgeStateLabel, submissionLanguageLabel } from '@/features/submission/lib/submission-parsers'
+import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
 } from '@/features/submission/components/submission-support'
-import type { SessionResponse } from '@/features/auth/domain/auth'
-import { usernameValue } from '@/features/user/domain/user'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import { usernameValue } from '@/features/user/lib/user-parsers'
 import { DateTimeText } from '@/shared/components/date-time-text'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { useI18n } from '@/shared/i18n/use-i18n'

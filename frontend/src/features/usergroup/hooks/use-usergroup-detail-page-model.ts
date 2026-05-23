@@ -1,15 +1,15 @@
 import { useMemo, useReducer } from 'react'
 
-import type { Username } from '@/features/user/domain/user'
-import type { UserGroupSlug } from '@/features/usergroup/domain/usergroup'
+import type { Username } from '@/features/user/model/Username'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import {
   initialUserGroupDetailPageMessageState,
   reduceUserGroupDetailPageMessageState,
-} from '@/features/usergroup/domain/usergroup-detail-page-state'
+} from '@/features/usergroup/state/usergroup-detail-page-state'
 import {
   canViewerRemoveUserGroupMember,
   resolveUserGroupDetailPermissions,
-} from '@/features/usergroup/domain/usergroup-detail-page-support'
+} from '@/features/usergroup/lib/usergroup-detail-page-support'
 import { useUserGroupAddMemberAction } from '@/features/usergroup/hooks/use-usergroup-add-member-action'
 import { useUserGroupDeleteAction } from '@/features/usergroup/hooks/use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from '@/features/usergroup/hooks/use-usergroup-detail-query'

@@ -4,12 +4,8 @@ import { Database, Files, MessageSquareText, PencilLine, ScrollText, Send, Shiel
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  formatProblemTitleDisplay,
-  problemSlugValue,
-  problemStatementTextValue,
-  shouldShowProblemSlugSupplement,
-} from '@/features/problem/domain/problem'
+import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/features/problem/lib/problem-display'
+import { problemSlugValue, problemStatementTextValue } from '@/features/problem/lib/problem-parsers'
 import type { useProblemDetailPageModel } from '@/features/problem/hooks/use-problem-detail-page-model'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'

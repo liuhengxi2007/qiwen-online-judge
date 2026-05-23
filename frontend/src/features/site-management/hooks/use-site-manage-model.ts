@@ -1,10 +1,12 @@
 import { useReducer } from 'react'
 
-import type { AuthUserListItem, UpdateUserPermissionsRequest, UserListRequest } from '@/features/user/domain/user'
+import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
+import type { UpdateUserPermissionsRequest } from '@/features/user/http/request/UpdateUserPermissionsRequest'
+import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
 import {
   initialSiteManageState,
   reduceSiteManageState,
-} from '@/features/site-management/domain/site-manage-state'
+} from '@/features/site-management/state/site-manage-state'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { useSiteManageQuery } from '@/features/site-management/hooks/use-site-manage-query'
 import { useUserDeleteMutation } from '@/features/site-management/hooks/use-user-delete-mutation'

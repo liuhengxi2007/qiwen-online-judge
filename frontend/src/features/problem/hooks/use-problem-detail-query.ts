@@ -1,11 +1,12 @@
 import { useEffect, useReducer } from 'react'
 
 import { getProblem } from '@/features/problem/http/api/problem-client'
-import type { ProblemDetail, ProblemSlug } from '@/features/problem/domain/problem'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import {
   initialProblemDetailQueryState,
   reduceProblemDetailQueryState,
-} from '@/features/problem/domain/problem-query-state'
+} from '@/features/problem/state/problem-query-state'
 import { HttpClientError } from '@/shared/api/http-client'
 
 export function useProblemDetailQuery(problemSlug: ProblemSlug) {

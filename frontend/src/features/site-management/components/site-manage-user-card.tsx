@@ -9,12 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import {
-  displayNameValue,
-  usernameValue,
-  type AuthUserListItem,
-} from '@/features/user/domain/user'
-import { emailAddressValue } from '@/features/auth/domain/auth'
+import { displayNameValue, usernameValue } from '@/features/user/lib/user-parsers'
+import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
+import { emailAddressValue } from '@/features/auth/lib/auth-parsers'
 import type { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { buildPageNumbers } from '@/shared/domain/pagination'

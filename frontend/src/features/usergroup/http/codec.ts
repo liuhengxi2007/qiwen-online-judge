@@ -1,4 +1,4 @@
-import { parseDisplayName, parseUsername } from '@/features/user/domain/user'
+import { parseDisplayName, parseUsername } from '@/features/user/lib/user-parsers'
 import {
   parseUserGroupDescription,
   parseUserGroupId,
@@ -9,7 +9,7 @@ import {
   userGroupDescriptionValue,
   userGroupNameValue,
   userGroupSlugValue,
-} from '@/features/usergroup/domain/usergroup-parsers'
+} from '@/features/usergroup/lib/usergroup-parsers'
 import type { AddUserGroupMemberRequest } from '@/features/usergroup/http/request/AddUserGroupMemberRequest'
 import type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'
 import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/http/request/UpdateUserGroupMemberRoleRequest'

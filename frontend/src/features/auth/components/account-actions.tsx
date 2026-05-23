@@ -3,7 +3,7 @@ import { Bell, LogOut, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { logout as logoutRequest } from '@/features/auth/http/api/auth-client'
-import { usernameValue } from '@/features/user/domain/user'
+import { usernameValue } from '@/features/user/lib/user-parsers'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'

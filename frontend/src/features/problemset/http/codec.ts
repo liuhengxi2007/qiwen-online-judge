@@ -1,10 +1,5 @@
 import { fromUserIdentityContract } from '@/features/user/http/codec'
-import {
-  parseProblemId,
-  parseProblemSlug,
-  parseProblemTitle,
-  problemSlugValue,
-} from '@/features/problem/domain/problem'
+import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/request/AddProblemToProblemSetRequest'
 import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
 import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
@@ -22,7 +17,7 @@ import {
   problemSetSlugValue,
   problemSetTitleValue,
   requireParsed,
-} from '@/features/problemset/domain/problemset-parsers'
+} from '@/features/problemset/lib/problemset-parsers'
 import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
 
 type PageResponseContract<TItem> = {

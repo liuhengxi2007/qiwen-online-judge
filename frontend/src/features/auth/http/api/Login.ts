@@ -1,7 +1,5 @@
-import type {
-  LoginRequest,
-  LoginResponse,
-} from '@/features/auth/domain/auth'
+import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
+import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
 import {
   fromLoginResponseContract,
   toLoginRequestContract,
