@@ -4,12 +4,8 @@ package domains.notification.http.api
 
 import domains.notification.http.*
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
-import domains.notification.model.NotificationId
-import shared.http.AuthenticatedHttpExecutor
+import domains.notification.application.NotificationStreamEvent
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -22,13 +18,10 @@ import org.typelevel.ci.CIString
 
 object SubscribeNotificationEvents:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    val plans = NotificationHttpPlanDefinitions.plans(notificationEventHub)
+  def routes(context: NotificationHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "notifications" / "events" =>
-        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(context.databaseSession, context.sessionStore, request) { actor =>
           IO.pure(
             Response[IO](status = Status.Ok)
               .putHeaders(
@@ -36,7 +29,7 @@ object SubscribeNotificationEvents:
                 Header.Raw(CIString("Cache-Control"), "no-cache")
               )
               .withBodyStream(
-                notificationEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
+                context.notificationEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
               )
           )
         }
@@ -51,4 +44,3 @@ object SubscribeNotificationEvents:
 
   private def toServerSentEventString(event: NotificationStreamEvent): String =
     toServerSentEvent(event).renderString + "\n"
-

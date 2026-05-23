@@ -5,11 +5,8 @@ package domains.usergroup.http.api
 import domains.usergroup.http.*
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.user.model.Username
-import shared.http.AuthenticatedHttpExecutor
 import shared.http.utils.PageRequestQuerySupport
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
@@ -20,10 +17,8 @@ import org.http4s.dsl.io.*
 
 object ListUserGroups:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
+  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        handlers.execute(request, PageRequestQuerySupport.parsePageRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
+        context.handlers.execute(request, PageRequestQuerySupport.parsePageRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
     }

@@ -18,22 +18,30 @@ import domains.user.http.api.UpdateUserAccount
 import domains.user.http.api.DeleteUser
 import domains.auth.application.SessionStore
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object UserRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = UserHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      handlers = new UserHttpHandlers(databaseSession, sessionStore)
+    )
+
     val endpointRoutes = List(
-      ListUsers.routes(databaseSession, sessionStore),
-      ListUserSuggestions.routes(databaseSession, sessionStore),
-      GetUserProfile.routes(databaseSession, sessionStore),
-      GetUserSettings.routes(databaseSession, sessionStore),
-      ListContributionRanklist.routes(databaseSession, sessionStore),
-      ListAcceptedRanklist.routes(databaseSession, sessionStore),
-      UpdateUserPermissions.routes(databaseSession, sessionStore),
-      UpdateUserProfile.routes(databaseSession, sessionStore),
-      UpdateUserPreferences.routes(databaseSession, sessionStore),
-      UpdateUserAccount.routes(databaseSession, sessionStore),
-      DeleteUser.routes(databaseSession, sessionStore)
+      ListUsers.routes(context),
+      ListUserSuggestions.routes(context),
+      GetUserProfile.routes(context),
+      GetUserSettings.routes(context),
+      ListContributionRanklist.routes(context),
+      ListAcceptedRanklist.routes(context),
+      UpdateUserPermissions.routes(context),
+      UpdateUserProfile.routes(context),
+      UpdateUserPreferences.routes(context),
+      UpdateUserAccount.routes(context),
+      DeleteUser.routes(context)
     )
 
     endpointRoutes.reduce(_ <+> _)

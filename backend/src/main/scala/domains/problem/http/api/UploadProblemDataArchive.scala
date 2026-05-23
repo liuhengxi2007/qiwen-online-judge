@@ -8,13 +8,10 @@ import domains.problem.http.utils.ProblemDataUploadHttpSupport
 import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
-import domains.problem.application.{ProblemCommands, ProblemDataStorage}
+import domains.problem.application.ProblemCommands
 import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
-import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -22,15 +19,12 @@ import org.http4s.dsl.io.*
 
 object UploadProblemDataArchive:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, problemDataStorage: ProblemDataStorage): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    val plans = ProblemHttpPlanDefinitions.plans(problemDataStorage)
+  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problems" / problemSlug / "data" / "archive" =>
         ProblemSlug.parse(problemSlug) match
           case Left(message) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
-            ProblemDataUploadHttpSupport.uploadMultipartProblemDataArchive(databaseSession, sessionStore, problemDataStorage, request, parsedProblemSlug)
+            ProblemDataUploadHttpSupport.uploadMultipartProblemDataArchive(context.databaseSession, context.sessionStore, context.problemDataStorage, request, parsedProblemSlug)
     }

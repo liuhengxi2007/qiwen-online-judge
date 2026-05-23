@@ -7,13 +7,10 @@ import domains.problem.http.response.ProblemHttpResponses
 import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
-import domains.problem.application.{ProblemCommands, ProblemDataStorage}
+import domains.problem.application.ProblemCommands
 import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
-import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -23,10 +20,7 @@ private object PathQueryParamMatcher extends org.http4s.dsl.impl.QueryParamDecod
 
 object DownloadProblemDataPath:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, problemDataStorage: ProblemDataStorage): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    val plans = ProblemHttpPlanDefinitions.plans(problemDataStorage)
+  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case GET -> Root / "api" / "problems" / problemSlug / "data" / "file" :? PathQueryParamMatcher(rawPath) =>
         (ProblemSlug.parse(problemSlug), ProblemDataPath.parse(rawPath)) match
@@ -35,5 +29,5 @@ object DownloadProblemDataPath:
           case (_, Left(message)) =>
             ProblemHttpResponses.validationErrorResponse(message)
           case (Right(parsedProblemSlug), Right(parsedPath)) =>
-            ProblemHttpResponses.downloadDataPathResponse(problemDataStorage, parsedProblemSlug, parsedPath)
+            ProblemHttpResponses.downloadDataPathResponse(context.problemDataStorage, parsedProblemSlug, parsedPath)
     }

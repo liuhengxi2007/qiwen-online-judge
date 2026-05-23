@@ -7,11 +7,8 @@ import domains.usergroup.http.response.UserGroupHttpResponses
 import domains.usergroup.http.*
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.usergroup.application.UserGroupCommands
 import domains.user.model.Username
-import shared.http.AuthenticatedHttpExecutor
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import org.http4s.HttpRoutes
@@ -21,14 +18,12 @@ import org.http4s.dsl.io.*
 
 object DeleteUserGroup:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
+  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "delete" =>
         UserGroupSlug.parse(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponses.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
+            context.handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
     }

@@ -23,24 +23,35 @@ import domains.problem.http.api.UpdateProblem
 import domains.problem.http.api.DeleteProblem
 import domains.auth.application.SessionStore
 import domains.problem.application.ProblemDataStorage
+import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object ProblemRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, problemDataStorage: ProblemDataStorage): HttpRoutes[IO] =
-    ListProblems.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      ListProblemSuggestions.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      CreateProblem.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      GetProblem.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      ListProblemDataFiles.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      ListProblemDataTree.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      DownloadProblemDataPath.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      DeleteProblemDataPath.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      DownloadProblemData.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      DeleteProblemData.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      ClearProblemData.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      SetProblemDataReady.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      UploadProblemDataFile.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      UploadProblemDataArchive.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      UpdateProblem.routes(databaseSession, sessionStore, problemDataStorage) <+>
-      DeleteProblem.routes(databaseSession, sessionStore, problemDataStorage)
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = ProblemHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      problemDataStorage = problemDataStorage,
+      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore),
+      plans = ProblemHttpPlanDefinitions.plans(problemDataStorage)
+    )
+
+    ListProblems.routes(context) <+>
+      ListProblemSuggestions.routes(context) <+>
+      CreateProblem.routes(context) <+>
+      GetProblem.routes(context) <+>
+      ListProblemDataFiles.routes(context) <+>
+      ListProblemDataTree.routes(context) <+>
+      DownloadProblemDataPath.routes(context) <+>
+      DeleteProblemDataPath.routes(context) <+>
+      DownloadProblemData.routes(context) <+>
+      DeleteProblemData.routes(context) <+>
+      ClearProblemData.routes(context) <+>
+      SetProblemDataReady.routes(context) <+>
+      UploadProblemDataFile.routes(context) <+>
+      UploadProblemDataArchive.routes(context) <+>
+      UpdateProblem.routes(context) <+>
+      DeleteProblem.routes(context)

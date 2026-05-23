@@ -5,8 +5,6 @@ package domains.user.http.api
 import domains.user.http.*
 import domains.user.http.codec.UserHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.user.model.Username
 import shared.model.PageRequest
 import domains.user.application.UserMutationCommands
@@ -19,12 +17,10 @@ import org.http4s.dsl.io.*
 
 object ListContributionRanklist:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new UserHttpHandlers(databaseSession, sessionStore)
+  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / "ranklist" =>
-        handlers.execute(request, PageRequest(page = parsePage(request.uri.query.params.get("page"))), listContributionRanklist)
+        context.handlers.execute(request, PageRequest(page = parsePage(request.uri.query.params.get("page"))), listContributionRanklist)
     }
 
   private def parsePage(rawPage: Option[String]): Int =

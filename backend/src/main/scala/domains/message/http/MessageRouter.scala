@@ -17,22 +17,33 @@ import domains.message.http.api.RemoveMessageBlock
 import domains.message.http.api.SubscribeMessageEvents
 import domains.auth.application.SessionStore
 import domains.message.application.MessageEventHub
+import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object MessageRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, messageEventHub: MessageEventHub): HttpRoutes[IO] =
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = MessageHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      messageEventHub = messageEventHub,
+      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore),
+      plans = MessageHttpPlanDefinitions.plans(messageEventHub)
+    )
+
     val endpointRoutes = List(
-      ListInbox.routes(databaseSession, sessionStore, messageEventHub),
-      GetConversationHistory.routes(databaseSession, sessionStore, messageEventHub),
-      CreateConversation.routes(databaseSession, sessionStore, messageEventHub),
-      SendDirectMessage.routes(databaseSession, sessionStore, messageEventHub),
-      MarkConversationRead.routes(databaseSession, sessionStore, messageEventHub),
-      MarkAllMessagesRead.routes(databaseSession, sessionStore, messageEventHub),
-      ListMessageBlocks.routes(databaseSession, sessionStore, messageEventHub),
-      AddMessageBlock.routes(databaseSession, sessionStore, messageEventHub),
-      RemoveMessageBlock.routes(databaseSession, sessionStore, messageEventHub),
-      SubscribeMessageEvents.routes(databaseSession, sessionStore, messageEventHub)
+      ListInbox.routes(context),
+      GetConversationHistory.routes(context),
+      CreateConversation.routes(context),
+      SendDirectMessage.routes(context),
+      MarkConversationRead.routes(context),
+      MarkAllMessagesRead.routes(context),
+      ListMessageBlocks.routes(context),
+      AddMessageBlock.routes(context),
+      RemoveMessageBlock.routes(context),
+      SubscribeMessageEvents.routes(context)
     )
 
     endpointRoutes.reduce(_ <+> _)

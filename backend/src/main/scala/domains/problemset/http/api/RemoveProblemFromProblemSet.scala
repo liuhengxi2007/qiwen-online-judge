@@ -7,13 +7,10 @@ import domains.problemset.http.response.ProblemSetHttpResponses
 import domains.problemset.http.*
 import domains.problemset.http.codec.ProblemSetHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.problemset.application.ProblemSetCommands
 import domains.problem.model.ProblemSlug
 import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetSlug}
-import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -21,9 +18,7 @@ import org.http4s.dsl.io.*
 
 object RemoveProblemFromProblemSet:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
+  def routes(context: ProblemSetHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" / linkedProblemSlug / "remove" =>
         (ProblemSetSlug.parse(problemSetSlug), ProblemSlug.parse(linkedProblemSlug)) match
@@ -32,5 +27,5 @@ object RemoveProblemFromProblemSet:
           case (_, Left(message)) =>
             ProblemSetHttpResponses.validationErrorResponse(message)
           case (Right(parsedProblemSetSlug), Right(parsedProblemSlug)) =>
-            handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
+            context.handlers.execute(request, (parsedProblemSetSlug, parsedProblemSlug), ProblemSetHttpPlanDefinitions.removeProblem)
     }

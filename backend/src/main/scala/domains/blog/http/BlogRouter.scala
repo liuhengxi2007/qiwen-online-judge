@@ -24,25 +24,36 @@ import domains.blog.http.api.UpdateBlogComment
 import domains.blog.http.api.DeleteBlogComment
 import domains.auth.application.SessionStore
 import domains.notification.application.NotificationEventHub
+import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object BlogRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
-    ListBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      ListProblemBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      ListPendingProblemBlogs.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      SubmitBlogToProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      AcceptBlogProblemSubmission.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      LinkBlogToProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      UnlinkBlogFromProblem.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      CreateBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      GetBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      VoteBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      UpdateBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      DeleteBlog.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      CreateBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      CreateBlogCommentReply.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      VoteBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      UpdateBlogComment.routes(databaseSession, sessionStore, notificationEventHub) <+>
-      DeleteBlogComment.routes(databaseSession, sessionStore, notificationEventHub)
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = BlogHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      notificationEventHub = notificationEventHub,
+      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore),
+      plans = BlogHttpPlanDefinitions.plans(notificationEventHub)
+    )
+
+    ListBlogs.routes(context) <+>
+      ListProblemBlogs.routes(context) <+>
+      ListPendingProblemBlogs.routes(context) <+>
+      SubmitBlogToProblem.routes(context) <+>
+      AcceptBlogProblemSubmission.routes(context) <+>
+      LinkBlogToProblem.routes(context) <+>
+      UnlinkBlogFromProblem.routes(context) <+>
+      CreateBlog.routes(context) <+>
+      GetBlog.routes(context) <+>
+      VoteBlog.routes(context) <+>
+      UpdateBlog.routes(context) <+>
+      DeleteBlog.routes(context) <+>
+      CreateBlogComment.routes(context) <+>
+      CreateBlogCommentReply.routes(context) <+>
+      VoteBlogComment.routes(context) <+>
+      UpdateBlogComment.routes(context) <+>
+      DeleteBlogComment.routes(context)

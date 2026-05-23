@@ -3,6 +3,7 @@ package domains.auth.http.response
 
 
 import cats.effect.IO
+import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
 import domains.auth.application.output.{LoginResponse, RegisterResponse, SessionResponse}
 import domains.auth.http.AuthHttpPlans
 import domains.auth.http.codec.AuthHttpCodecs.given
@@ -132,26 +133,26 @@ object AuthHttpResponses:
   def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
     loggedOutResponse(output.clearedSessionCookie)
 
-  def loginResponse(output: AuthHttpPlans.LoginOutput): IO[Response[IO]] =
+  def loginResponse(output: LoginResult): IO[Response[IO]] =
     output match
-      case AuthHttpPlans.LoginOutput.InvalidCredentials =>
+      case LoginResult.InvalidCredentials =>
         invalidCredentialsResponse
-      case AuthHttpPlans.LoginOutput.LoggedIn(user, sessionToken) =>
+      case LoginResult.LoggedIn(user, sessionToken) =>
         IO.pure(
           Response[IO](status = Status.Ok)
             .withEntity(toLoginResponse(user, "Login successful").asJson)
             .addCookie(sessionCookie(sessionToken))
         )
 
-  def registerResponse(output: AuthHttpPlans.RegisterOutput): IO[Response[IO]] =
+  def registerResponse(output: RegisterResult): IO[Response[IO]] =
     output match
-      case AuthHttpPlans.RegisterOutput.ValidationFailed(message) =>
+      case RegisterResult.ValidationFailed(message) =>
         validationErrorResponse(message)
-      case AuthHttpPlans.RegisterOutput.UsernameConflict =>
+      case RegisterResult.UsernameConflict =>
         usernameConflictResponse
-      case AuthHttpPlans.RegisterOutput.UsernameConflictsWithUserGroup =>
+      case RegisterResult.UsernameConflictsWithUserGroup =>
         usernameConflictsWithUserGroupResponse
-      case AuthHttpPlans.RegisterOutput.Registered(user, sessionToken) =>
+      case RegisterResult.Registered(user, sessionToken) =>
         IO.pure(
           Response[IO](status = Status.Created)
             .withEntity(toRegisterResponse(user, "Registration successful").asJson)

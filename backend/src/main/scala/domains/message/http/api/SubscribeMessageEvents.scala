@@ -5,15 +5,8 @@ package domains.message.http.api
 import domains.message.http.*
 import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.user.model.Username
-import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, RemoveBlockResult}
-import domains.message.application.{MessageEventHub, MessageStreamEvent}
-import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.model.{MessageConversationId, MessageId}
-import shared.http.AuthenticatedHttpExecutor
+import domains.message.application.MessageStreamEvent
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -26,13 +19,10 @@ import org.typelevel.ci.CIString
 
 object SubscribeMessageEvents:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, messageEventHub: MessageEventHub): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    val plans = MessageHttpPlanDefinitions.plans(messageEventHub)
+  def routes(context: MessageHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "messages" / "events" =>
-        AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+        AuthHttpSessionSupport.withAuthenticatedUser(context.databaseSession, context.sessionStore, request) { actor =>
           IO.pure(
             Response[IO](status = Status.Ok)
               .putHeaders(
@@ -40,7 +30,7 @@ object SubscribeMessageEvents:
                 Header.Raw(CIString("Cache-Control"), "no-cache")
               )
               .withBodyStream(
-                messageEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
+                context.messageEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
               )
           )
         }

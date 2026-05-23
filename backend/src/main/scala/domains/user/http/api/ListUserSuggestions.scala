@@ -7,8 +7,6 @@ import domains.user.http.response.UserHttpResponses
 import domains.user.http.*
 import domains.user.http.codec.UserHttpCodecs.given
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.user.model.Username
 import shared.model.PageRequest
 import domains.user.application.UserMutationCommands
@@ -21,14 +19,12 @@ import org.http4s.dsl.io.*
 
 object ListUserSuggestions:
 
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new UserHttpHandlers(databaseSession, sessionStore)
+  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / "suggestions" =>
         UserSearchQuery.parse(request.uri.query.params.get("q").getOrElse("")) match
           case Left(message) => UserHttpResponses.validationErrorResponse(message)
-          case Right(query) => handlers.execute(request, query, listUserSuggestions)
+          case Right(query) => context.handlers.execute(request, query, listUserSuggestions)
     }
 
   private def parsePage(rawPage: Option[String]): Int =

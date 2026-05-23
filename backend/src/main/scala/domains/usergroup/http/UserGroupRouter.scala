@@ -14,16 +14,25 @@ import domains.usergroup.http.api.AddUserGroupMember
 import domains.usergroup.http.api.UpdateUserGroupMemberRole
 import domains.usergroup.http.api.RemoveUserGroupMember
 import domains.auth.application.SessionStore
+import shared.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object UserGroupRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    ListUserGroups.routes(databaseSession, sessionStore) <+>
-      GetUserGroup.routes(databaseSession, sessionStore) <+>
-      CreateUserGroup.routes(databaseSession, sessionStore) <+>
-      UpdateUserGroup.routes(databaseSession, sessionStore) <+>
-      DeleteUserGroup.routes(databaseSession, sessionStore) <+>
-      AddUserGroupMember.routes(databaseSession, sessionStore) <+>
-      UpdateUserGroupMemberRole.routes(databaseSession, sessionStore) <+>
-      RemoveUserGroupMember.routes(databaseSession, sessionStore)
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = UserGroupHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
+    )
+
+    ListUserGroups.routes(context) <+>
+      GetUserGroup.routes(context) <+>
+      CreateUserGroup.routes(context) <+>
+      UpdateUserGroup.routes(context) <+>
+      DeleteUserGroup.routes(context) <+>
+      AddUserGroupMember.routes(context) <+>
+      UpdateUserGroupMemberRole.routes(context) <+>
+      RemoveUserGroupMember.routes(context)

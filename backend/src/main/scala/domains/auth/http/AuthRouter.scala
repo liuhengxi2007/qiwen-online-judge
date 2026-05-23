@@ -11,11 +11,19 @@ import domains.auth.http.api.Login
 import domains.auth.http.api.Register
 import domains.auth.application.SessionStore
 import org.http4s.HttpRoutes
+import org.http4s.dsl.Http4sDsl
 
 object AuthRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    GetSession.routes(databaseSession, sessionStore) <+>
-      Logout.routes(databaseSession, sessionStore) <+>
-      Login.routes(databaseSession, sessionStore) <+>
-      Register.routes(databaseSession, sessionStore)
+    given Http4sDsl[IO] = new Http4sDsl[IO] {}
+    val context = AuthHttpRouteContext(
+      databaseSession = databaseSession,
+      sessionStore = sessionStore,
+      handlers = new AuthHttpHandlers(databaseSession, sessionStore)
+    )
+
+    GetSession.routes(context) <+>
+      Logout.routes(context) <+>
+      Login.routes(context) <+>
+      Register.routes(context)
