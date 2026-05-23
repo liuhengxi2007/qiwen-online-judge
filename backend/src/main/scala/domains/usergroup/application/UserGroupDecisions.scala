@@ -33,11 +33,11 @@ object UserGroupDecisions:
 
   def decideCreateUserGroup(
     existingGroup: Option[UserGroup],
-    conflictingUser: Option[domains.auth.model.AuthUser],
+    hasConflictingUsername: Boolean,
   ): CreateUserGroupDecision =
     existingGroup match
       case Some(_) => CreateUserGroupDecision.SlugAlreadyExists
-      case None if conflictingUser.nonEmpty => CreateUserGroupDecision.SlugConflictsWithUsername
+      case None if hasConflictingUsername => CreateUserGroupDecision.SlugConflictsWithUsername
       case None => CreateUserGroupDecision.Create
 
   def decideUpdateUserGroup(

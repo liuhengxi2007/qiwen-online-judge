@@ -4,25 +4,26 @@ package domains.problem.application.utils
 
 import domains.problem.application.{ProblemAccessDecision, ProblemAccessFacts, ProblemPolicy}
 import cats.effect.IO
+import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
-import domains.auth.table.auth_user.AuthUserTable
 import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.application.output.{ProblemDetail}
-import domains.problem.table.problem.ProblemTable
-import domains.problemset.model.{ProblemSet, ProblemSetSlug}
-import domains.problemset.table.problem_set.ProblemSetTable
+import domains.problemset.application.ProblemSetCommands
 import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
-import domains.usergroup.table.user_group.UserGroupTable
+import domains.usergroup.application.UserGroupCommands
 
 object ProblemCommandSupport:
 
-  def findConflictingProblemSet(
+  final case class ProblemPermissionEvaluation(
+    canView: Boolean,
+    canManage: Boolean
+  )
+
+  def hasConflictingProblemSetSlug(
     connection: java.sql.Connection,
     rawSlug: String
-  ): IO[Option[ProblemSet]] =
-    ProblemSetSlug.parse(rawSlug) match
-      case Left(_) => IO.pure(None)
-      case Right(slug) => ProblemSetTable.findBySlug(connection, slug)
+  ): IO[Boolean] =
+    ProblemSetCommands.problemSetSlugConflictsWith(connection, rawSlug)
 
   def updatedProblemOrError(message: String)(maybeProblem: Option[ProblemDetail]): ProblemDetail =
     maybeProblem.getOrElse(throw new IllegalStateException(message))
@@ -32,7 +33,16 @@ object ProblemCommandSupport:
     actor: AuthUser,
     problem: ProblemDetail
   ): IO[Option[ProblemDetail]] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { actorGroupSlugs =>
+    evaluateProblemPermissions(connection, actor, problem).map { decision =>
+      if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
+    }
+
+  def evaluateProblemPermissions(
+    connection: java.sql.Connection,
+    actor: AuthUser,
+    problem: ProblemDetail
+  ): IO[ProblemPermissionEvaluation] =
+    UserGroupCommands.accessActorGroupSlugs(connection, actor.username).flatMap { actorGroupSlugs =>
       val resourceAccessFacts = ResourceAccessFacts(
         policy = problem.accessPolicy,
         actorUsername = actor.username,
@@ -41,7 +51,7 @@ object ProblemCommandSupport:
         hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
       )
 
-      ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map { hasVisibleContainingProblemSet =>
+      domains.problem.table.problem.ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map { hasVisibleContainingProblemSet =>
         val decision = ProblemAccessDecision.evaluate(
           ProblemAccessFacts(
             resourceAccess = resourceAccessFacts,
@@ -49,7 +59,10 @@ object ProblemCommandSupport:
           )
         )
 
-        if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
+        ProblemPermissionEvaluation(
+          canView = decision.canView,
+          canManage = decision.canManage
+        )
       }
     }
 
@@ -58,7 +71,7 @@ object ProblemCommandSupport:
     actor: AuthUser,
     problem: ProblemDetail
   ): IO[Boolean] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { actorGroupSlugs =>
+    UserGroupCommands.accessActorGroupSlugs(connection, actor.username).map { actorGroupSlugs =>
       ProblemAccessDecision
         .evaluate(
           ProblemAccessFacts(
@@ -85,15 +98,13 @@ object ProblemCommandSupport:
         case None =>
           subject match
             case AccessSubject.User(username) =>
-              AuthUserTable.findByUsername(connection, username).map {
-                case Some(_) => None
-                case None => Some(s"Granted user not found: ${username.value}.")
-              }
+              AuthCommands.accessPolicyUserExists(connection, username).map(exists =>
+                if exists then None else Some(s"Granted user not found: ${username.value}.")
+              )
             case AccessSubject.UserGroup(slug) =>
-              UserGroupTable.findBySlug(connection, slug).map {
-                case Some(_) => None
-                case None => Some(s"Granted user group not found: ${slug.value}.")
-              }
+              UserGroupCommands.accessPolicyUserGroupExists(connection, slug).map(exists =>
+                if exists then None else Some(s"Granted user group not found: ${slug.value}.")
+              )
       }
     }
 

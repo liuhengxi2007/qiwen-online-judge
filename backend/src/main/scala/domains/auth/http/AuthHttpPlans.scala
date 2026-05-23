@@ -11,8 +11,7 @@ import domains.auth.application.output.SessionResponse
 import domains.auth.model.*
 import domains.auth.table.auth_user.AuthUserTable
 import domains.user.model.{DisplayName, Username}
-import domains.usergroup.model.UserGroupSlug
-import domains.usergroup.table.user_group.UserGroupTable
+import domains.usergroup.application.UserGroupCommands
 
 import java.sql.Connection
 
@@ -93,11 +92,11 @@ object AuthHttpPlans:
         case None =>
           for
             existingUser <- AuthUserTable.findByUsername(connection, input.username)
-            existingUserGroup <- findConflictingUserGroup(connection, input.username)
+            conflictingUserGroupSlugExists <- UserGroupCommands.userGroupSlugConflictsWith(connection, input.username.value)
             result <- existingUser match
               case Some(_) =>
                 IO.pure(RegisterOutput.UsernameConflict)
-              case None if existingUserGroup.nonEmpty =>
+              case None if conflictingUserGroupSlugExists =>
                 IO.pure(RegisterOutput.UsernameConflictsWithUserGroup)
               case None =>
                 validateRegisterRequest(input) match
@@ -145,11 +144,3 @@ object AuthHttpPlans:
     else if normalized.length > 255 then Some("Email must be at most 255 characters.")
     else if emailPattern.matches(normalized) then None
     else Some("Please enter a valid email address.")
-
-  private def findConflictingUserGroup(
-    connection: Connection,
-    username: Username
-  ): IO[Option[domains.usergroup.model.UserGroup]] =
-    UserGroupSlug.parse(username.value) match
-      case Left(_) => IO.pure(None)
-      case Right(slug) => UserGroupTable.findBySlug(connection, slug)

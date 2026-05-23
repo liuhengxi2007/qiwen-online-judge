@@ -9,6 +9,8 @@ import domains.judger.application.output.RegisteredJudgerListItem
 import domains.judger.table.judger.JudgerTable
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse}
 
+import java.sql.Connection
+
 object JudgerRegistryCommands:
 
   enum RegisterResult:
@@ -54,6 +56,13 @@ object JudgerRegistryCommands:
     databaseSession.withTransactionConnection { connection =>
       JudgerTable.listJudgers(connection, judgeConfig.heartbeatTimeoutMs)
     }
+
+  def resolveActiveSupportedLanguages(
+    connection: Connection,
+    judgeConfig: JudgeConfig,
+    judgerId: JudgerId
+  ): IO[Option[List[judgeprotocol.model.SubmissionLanguage]]] =
+    JudgerTable.findActiveSupportedLanguages(connection, judgerId, judgeConfig.heartbeatTimeoutMs)
 
   private def validateRegisterRequest(request: RegisterJudgerRequest): Either[String, RegisterJudgerRequest] =
     val host = request.host.trim

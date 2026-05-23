@@ -4,9 +4,8 @@ package domains.usergroup.application
 
 import cats.effect.IO
 import database.DatabaseSession
+import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
-import domains.user.model.Username
-import domains.auth.table.auth_user.AuthUserTable
 import domains.usergroup.application.input.{CreateUserGroupRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import domains.usergroup.table.user_group.UserGroupTable
@@ -41,7 +40,7 @@ object UserGroupMutationCommands:
         case Right(validRequest) =>
           for
             existing <- UserGroupTable.findBySlug(connection, validRequest.slug)
-            conflictingUser <- AuthUserTable.findByUsername(connection, Username.canonical(validRequest.slug.value))
+            conflictingUser <- AuthCommands.usernameConflictsWithUser(connection, validRequest.slug.value)
             result <- decideCreateUserGroup(existing, conflictingUser) match
               case CreateUserGroupDecision.SlugAlreadyExists =>
                 IO.pure(CreateUserGroupResult.SlugAlreadyExists)

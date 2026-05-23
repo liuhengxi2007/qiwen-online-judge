@@ -2,10 +2,10 @@ package domains.submission.table.submission
 
 
 
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.output.{SubmissionDetail, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
+import shared.sql.UserIdentitySql.readUserIdentity
 import io.circe.parser.decode
 import io.circe.syntax.*
 import judgeprotocol.model.JudgeResult

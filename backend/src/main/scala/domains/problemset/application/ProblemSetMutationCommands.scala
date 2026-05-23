@@ -6,8 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.model.AuthUser
-import domains.problem.model.ProblemSlug
-import domains.problem.table.problem.ProblemTable
+import domains.problem.application.ProblemCommands
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.table.problem_set.ProblemSetTable
 import shared.access.{ResourceId, ResourceKind}
@@ -42,11 +41,9 @@ object ProblemSetMutationCommands:
         case Right(validRequest) =>
           for
             existing <- ProblemSetTable.findBySlug(connection, validRequest.slug)
-            conflictingProblem <- ProblemSlug.parse(validRequest.slug.value) match
-              case Left(message) => IO.raiseError(IllegalStateException(s"Validated problem set slug became invalid: $message"))
-              case Right(problemSlug) => ProblemTable.findBySlug(connection, problemSlug)
+            conflictingProblemSlugExists <- ProblemCommands.problemSlugConflictsWith(connection, validRequest.slug.value)
             accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-            result <- decideCreateProblemSet(existing, conflictingProblem, accessPolicyValidation) match
+            result <- decideCreateProblemSet(existing, conflictingProblemSlugExists, accessPolicyValidation) match
               case CreateProblemSetDecision.SlugAlreadyExists =>
                 IO.pure(CreateProblemSetResult.SlugAlreadyExists)
               case CreateProblemSetDecision.SlugConflictsWithProblem =>

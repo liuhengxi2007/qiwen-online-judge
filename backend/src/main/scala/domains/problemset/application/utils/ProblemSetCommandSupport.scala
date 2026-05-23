@@ -4,12 +4,12 @@ package domains.problemset.application.utils
 
 import domains.problemset.application.{ProblemSetAccessDecision, ProblemSetAccessFacts, ProblemSetPolicy}
 import cats.effect.IO
+import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
-import domains.auth.table.auth_user.AuthUserTable
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
 import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
-import domains.usergroup.table.user_group.UserGroupTable
+import domains.usergroup.application.UserGroupCommands
 
 object ProblemSetCommandSupport:
 
@@ -18,7 +18,7 @@ object ProblemSetCommandSupport:
     actor: AuthUser,
     problemSet: ProblemSet
   ): IO[Boolean] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { viewerGroupSlugs =>
+    UserGroupCommands.accessActorGroupSlugs(connection, actor.username).map { viewerGroupSlugs =>
       ProblemSetAccessDecision
         .evaluate(
           ProblemSetAccessFacts(
@@ -44,15 +44,13 @@ object ProblemSetCommandSupport:
         case None =>
           subject match
             case AccessSubject.User(username) =>
-              AuthUserTable.findByUsername(connection, username).map {
-                case Some(_) => None
-                case None => Some(s"Granted user not found: ${username.value}.")
-              }
+              AuthCommands.accessPolicyUserExists(connection, username).map(exists =>
+                if exists then None else Some(s"Granted user not found: ${username.value}.")
+              )
             case AccessSubject.UserGroup(slug) =>
-              UserGroupTable.findBySlug(connection, slug).map {
-                case Some(_) => None
-                case None => Some(s"Granted user group not found: ${slug.value}.")
-              }
+              UserGroupCommands.accessPolicyUserGroupExists(connection, slug).map(exists =>
+                if exists then None else Some(s"Granted user group not found: ${slug.value}.")
+              )
       }
     }
 

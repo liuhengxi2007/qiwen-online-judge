@@ -5,7 +5,7 @@ package domains.blog.table.blog
 import cats.effect.IO
 import domains.user.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
-import domains.blog.application.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
+import domains.blog.application.output.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.application.output.{BlogCommentSummary, BlogDetail, BlogSummary}
 import domains.blog.table.blog.BlogTableSupport.*

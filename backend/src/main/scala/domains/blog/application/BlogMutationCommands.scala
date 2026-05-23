@@ -9,9 +9,8 @@ import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.blog.table.blog.BlogTable
-import domains.problem.application.ProblemPolicy
+import domains.problem.application.ProblemCommands
 import domains.problem.model.ProblemSlug
-import domains.problem.table.problem.ProblemTable
 
 import java.sql.Connection
 
@@ -152,16 +151,17 @@ object BlogMutationCommands:
     problemSlug: ProblemSlug,
     blogId: BlogId
   ): IO[LinkBlogToProblemResult] =
-    if !ProblemPolicy.canEdit(actor) then IO.pure(LinkBlogToProblemResult.Forbidden)
-    else
-      ProblemTable.findBySlug(connection, problemSlug).flatMap {
-        case None => IO.pure(LinkBlogToProblemResult.NotFound)
-        case Some(_) =>
-          BlogTable.linkProblem(connection, problemSlug, blogId, actor.username).map {
-            case true => LinkBlogToProblemResult.Linked
-            case false => LinkBlogToProblemResult.NotFound
-          }
-      }
+    ProblemCommands.resolveBlogProblemLinkTarget(connection, actor, problemSlug).flatMap {
+      case ProblemCommands.ResolveBlogProblemLinkTargetResult.Forbidden =>
+        IO.pure(LinkBlogToProblemResult.Forbidden)
+      case ProblemCommands.ResolveBlogProblemLinkTargetResult.ProblemNotFound =>
+        IO.pure(LinkBlogToProblemResult.NotFound)
+      case ProblemCommands.ResolveBlogProblemLinkTargetResult.Allowed =>
+        BlogTable.linkProblem(connection, problemSlug, blogId, actor.username).map {
+          case true => LinkBlogToProblemResult.Linked
+          case false => LinkBlogToProblemResult.NotFound
+        }
+    }
 
   def acceptBlogProblemSubmission(
     connection: Connection,
@@ -169,7 +169,7 @@ object BlogMutationCommands:
     problemSlug: ProblemSlug,
     blogId: BlogId
   ): IO[AcceptBlogProblemSubmissionResult] =
-    if !ProblemPolicy.canEdit(actor) then IO.pure(AcceptBlogProblemSubmissionResult.Forbidden)
+    if !ProblemCommands.canManageProblemCatalog(actor) then IO.pure(AcceptBlogProblemSubmissionResult.Forbidden)
     else
       BlogTable.acceptProblem(connection, problemSlug, blogId, actor.username).map {
         case true => AcceptBlogProblemSubmissionResult.Accepted
@@ -182,7 +182,7 @@ object BlogMutationCommands:
     problemSlug: ProblemSlug,
     blogId: BlogId
   ): IO[UnlinkBlogFromProblemResult] =
-    if !ProblemPolicy.canEdit(actor) then IO.pure(UnlinkBlogFromProblemResult.Forbidden)
+    if !ProblemCommands.canManageProblemCatalog(actor) then IO.pure(UnlinkBlogFromProblemResult.Forbidden)
     else
       BlogTable.unlinkProblem(connection, problemSlug, blogId).map {
         case true => UnlinkBlogFromProblemResult.Unlinked

@@ -3,12 +3,12 @@ package domains.user.table.user
 
 
 import cats.effect.IO
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
+import shared.sql.UserIdentitySql.readUserIdentity
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
 import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}

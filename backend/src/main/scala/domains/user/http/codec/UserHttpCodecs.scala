@@ -1,6 +1,7 @@
 package domains.user.http.codec
 
 import domains.auth.http.codec.AuthModelHttpCodecs.given
+import domains.auth.application.output.SessionResponse
 import domains.user.application.input.*
 import domains.user.application.output.*
 import shared.model.PageRequest
@@ -51,6 +52,8 @@ object UserHttpCodecs:
 
   given Encoder[AuthUserListItem] = deriveEncoder[AuthUserListItem]
   given Decoder[AuthUserListItem] = deriveDecoder[AuthUserListItem]
+  given Encoder[SessionResponse] = deriveEncoder[SessionResponse]
+  given Decoder[SessionResponse] = deriveDecoder[SessionResponse]
   given Encoder[UserProfileResponse] = deriveEncoder[UserProfileResponse]
   given Decoder[UserProfileResponse] = deriveDecoder[UserProfileResponse]
   given Encoder[UserRanklistItem] = deriveEncoder[UserRanklistItem]

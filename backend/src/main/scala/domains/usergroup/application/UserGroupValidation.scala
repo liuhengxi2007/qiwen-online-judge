@@ -2,7 +2,7 @@ package domains.usergroup.application
 
 
 
-import domains.auth.application.UsernameRules
+import domains.auth.application.AuthCommands
 import domains.user.model.Username
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupDescription, UserGroupName, UserGroupSlug}
@@ -38,6 +38,4 @@ object UserGroupValidation:
     UserGroupDescription.parse(description.value)
 
   private def validateUsername(username: Username): Either[String, Username] =
-    UsernameRules.validate(username) match
-      case Some(message) => Left(message)
-      case None => Right(Username.canonical(username.value))
+    AuthCommands.validateUsername(username)

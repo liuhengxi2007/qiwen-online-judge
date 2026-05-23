@@ -6,7 +6,6 @@ import domains.notification.http.*
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.model.NotificationId
 import shared.http.AuthenticatedHttpExecutor
@@ -47,4 +46,3 @@ object MarkNotificationRead:
 
   private def toServerSentEventString(event: NotificationStreamEvent): String =
     toServerSentEvent(event).renderString + "\n"
-

@@ -1,6 +1,6 @@
 package domains.message.table
 
-import domains.message.table.utils.MessageTableSupport
+import domains.message.table.message.MessageTableSupport
 import domains.user.model.Username
 import munit.FunSuite
 

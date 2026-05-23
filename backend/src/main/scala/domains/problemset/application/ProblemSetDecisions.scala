@@ -2,7 +2,7 @@ package domains.problemset.application
 
 
 
-import domains.problem.application.output.ProblemDetail
+import domains.problem.application.output.ProblemSetMemberTarget
 import domains.problemset.model.ProblemSet
 
 object ProblemSetDecisions:
@@ -21,21 +21,21 @@ object ProblemSetDecisions:
   enum AddProblemDecision:
     case ProblemSetNotFound
     case ProblemNotFound
-    case Link(problemSet: ProblemSet, problem: ProblemDetail)
+    case Link(problemSet: ProblemSet, problem: ProblemSetMemberTarget)
 
   enum RemoveProblemDecision:
     case ProblemSetNotFound
     case ProblemNotFound
-    case Remove(problemSet: ProblemSet, problem: ProblemDetail)
+    case Remove(problemSet: ProblemSet, problem: ProblemSetMemberTarget)
 
   def decideCreateProblemSet(
     existingProblemSet: Option[ProblemSet],
-    conflictingProblem: Option[ProblemDetail],
+    hasConflictingProblemSlug: Boolean,
     accessPolicyValidation: Option[String],
   ): CreateProblemSetDecision =
     existingProblemSet match
       case Some(_) => CreateProblemSetDecision.SlugAlreadyExists
-      case None if conflictingProblem.nonEmpty => CreateProblemSetDecision.SlugConflictsWithProblem
+      case None if hasConflictingProblemSlug => CreateProblemSetDecision.SlugConflictsWithProblem
       case None =>
         accessPolicyValidation match
           case Some(message) => CreateProblemSetDecision.ValidationFailed(message)
@@ -52,7 +52,7 @@ object ProblemSetDecisions:
 
   def decideAddProblem(
     maybeProblemSet: Option[ProblemSet],
-    maybeProblem: Option[ProblemDetail],
+    maybeProblem: Option[ProblemSetMemberTarget],
   ): AddProblemDecision =
     maybeProblemSet match
       case None => AddProblemDecision.ProblemSetNotFound
@@ -61,7 +61,7 @@ object ProblemSetDecisions:
 
   def decideRemoveProblem(
     maybeProblemSet: Option[ProblemSet],
-    maybeProblem: Option[ProblemDetail],
+    maybeProblem: Option[ProblemSetMemberTarget],
   ): RemoveProblemDecision =
     maybeProblemSet match
       case None => RemoveProblemDecision.ProblemSetNotFound

@@ -5,7 +5,7 @@ package domains.problemset.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.table.problem.ProblemTable
+import domains.problem.application.ProblemCommands
 import domains.problemset.application.input.AddProblemToProblemSetRequest
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.problemset.application.ProblemSetCommandResults.*
@@ -43,7 +43,7 @@ object ProblemSetRelationCommands:
             maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
             maybeProblem <- maybeProblemSet match
               case None => IO.pure(None)
-              case Some(_) => ProblemTable.findBySlug(connection, validRequest.problemSlug)
+              case Some(_) => ProblemCommands.resolveProblemSetMemberTarget(connection, validRequest.problemSlug)
             result <- decideAddProblem(maybeProblemSet, maybeProblem) match
               case AddProblemDecision.ProblemSetNotFound =>
                 IO.pure(AddProblemResult.ProblemSetNotFound)
@@ -86,7 +86,7 @@ object ProblemSetRelationCommands:
         maybeProblemSet <- ProblemSetTable.findBySlug(connection, problemSetSlug)
         maybeProblem <- maybeProblemSet match
           case None => IO.pure(None)
-          case Some(_) => ProblemTable.findBySlug(connection, problemSlug)
+          case Some(_) => ProblemCommands.resolveProblemSetMemberTarget(connection, problemSlug)
         result <- decideRemoveProblem(maybeProblemSet, maybeProblem) match
           case RemoveProblemDecision.ProblemSetNotFound =>
             IO.pure(RemoveProblemResult.ProblemSetNotFound)

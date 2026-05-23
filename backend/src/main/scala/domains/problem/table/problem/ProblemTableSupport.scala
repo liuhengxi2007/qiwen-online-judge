@@ -4,12 +4,12 @@ package domains.problem.table.problem
 
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.problem.application.input.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
 import shared.sql.LikePatternSql
+import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.{PreparedStatement, ResultSet}
 

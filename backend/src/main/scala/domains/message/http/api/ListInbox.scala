@@ -7,7 +7,6 @@ import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.user.model.Username
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, RemoveBlockResult}
 import domains.message.application.{MessageEventHub, MessageStreamEvent}

@@ -5,7 +5,7 @@ package domains.notification.application
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.user.model.Username
-import domains.blog.application.BlogCommentNotificationContext
+import domains.blog.application.output.BlogCommentNotificationContext
 import domains.blog.model.BlogCommentId
 import domains.notification.application.NotificationCommandResults.{MarkAllNotificationsReadResult, MarkNotificationReadResult}
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}

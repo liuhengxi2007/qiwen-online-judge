@@ -4,9 +4,9 @@ package domains.usergroup.application.utils
 
 import domains.usergroup.application.{UserGroupCommands, UserGroupDecisions}
 import cats.effect.IO
+import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
 import domains.user.model.Username
-import domains.auth.table.auth_user.AuthUserTable
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroup}
 import domains.usergroup.table.user_group.UserGroupTable
@@ -30,10 +30,10 @@ object UserGroupCommandSupport:
     managedGroup: ManagedUserGroup,
     request: AddUserGroupMemberRequest
   ): IO[UserGroupCommands.AddUserGroupMemberResult] =
-    AuthUserTable.findByUsername(connection, request.username).flatMap {
+    AuthCommands.resolveUserGroupMemberTarget(connection, request.username).flatMap {
       case None => IO.pure(UserGroupCommands.AddUserGroupMemberResult.UserNotFound)
-      case Some(targetUser) =>
-        UserGroupTable.addMember(connection, managedGroup.value.id, request.copy(username = targetUser.username)).flatMap {
+      case Some(targetUsername) =>
+        UserGroupTable.addMember(connection, managedGroup.value.id, request.copy(username = targetUsername)).flatMap {
           case UserGroupTable.AddMemberTableResult.AlreadyExists =>
             IO.pure(UserGroupCommands.AddUserGroupMemberResult.MemberAlreadyExists)
           case UserGroupTable.AddMemberTableResult.UserNotFound =>

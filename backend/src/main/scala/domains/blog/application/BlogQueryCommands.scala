@@ -9,6 +9,7 @@ import domains.user.model.Username
 import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.BlogId
 import domains.blog.table.blog.BlogTable
+import domains.problem.application.ProblemCommands
 import domains.problem.model.ProblemSlug
 import shared.model.PageRequest
 
@@ -48,7 +49,7 @@ object BlogQueryCommands:
   ): IO[ListBlogsResult] =
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>
-      if !domains.problem.application.ProblemPolicy.canEdit(actor) then
+      if !ProblemCommands.canManageProblemCatalog(actor) then
         IO.pure(ListBlogsResult.Listed(shared.model.PageResponse(Nil, normalizedPageRequest.page, normalizedPageRequest.pageSize, 0L)))
       else BlogTable.listPendingByProblem(connection, problemSlug, actor.username, normalizedPageRequest).map(blogs => ListBlogsResult.Listed(blogs))
     }

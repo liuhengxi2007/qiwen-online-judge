@@ -42,9 +42,9 @@ object ProblemMutationCommands:
         case Right(validRequest) =>
           for
             existing <- ProblemTable.findBySlug(connection, validRequest.slug)
-            conflictingProblemSet <- findConflictingProblemSet(connection, validRequest.slug.value)
+            conflictingProblemSetSlugExists <- hasConflictingProblemSetSlug(connection, validRequest.slug.value)
             accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-            result <- decideCreateProblem(existing, conflictingProblemSet, accessPolicyValidation) match
+            result <- decideCreateProblem(existing, conflictingProblemSetSlugExists, accessPolicyValidation) match
               case CreateProblemDecision.SlugAlreadyExists =>
                 IO.pure(CreateProblemResult.SlugAlreadyExists)
               case CreateProblemDecision.SlugConflictsWithProblemSet =>

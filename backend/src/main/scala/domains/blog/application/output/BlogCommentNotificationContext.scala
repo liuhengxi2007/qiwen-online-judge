@@ -1,9 +1,7 @@
-package domains.blog.application
+package domains.blog.application.output
 
-
-
-import domains.user.model.Username
 import domains.blog.model.{BlogCommentId, BlogId, BlogTitle}
+import domains.user.model.Username
 
 final case class BlogCommentNotificationAncestor(
   commentId: BlogCommentId,

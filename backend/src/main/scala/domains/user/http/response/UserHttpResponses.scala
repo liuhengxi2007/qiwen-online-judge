@@ -3,10 +3,9 @@ package domains.user.http.response
 
 
 import cats.effect.IO
-import domains.auth.http.codec.AuthHttpCodecs.given
-import domains.auth.http.response.AuthHttpResponses
 import domains.auth.model.AuthUser
 import domains.auth.application.output.{SessionResponse}
+import domains.user.model.UserPreferences
 import shared.model.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.UserHttpPlans.UpdateUserSettingsOutput
@@ -15,39 +14,72 @@ import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistIt
 import domains.user.model.UserIdentity
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
-import org.http4s.{Response, Status}
+import org.http4s.{Response, ResponseCookie, SameSite, Status}
+import shared.http.ApiMessages
+import shared.http.utils.HttpResponseSupport
 
 object UserHttpResponses:
 
+  private val sessionCookieName = "qiwen_session"
+
+  private val clearedSessionCookie: ResponseCookie =
+    ResponseCookie(
+      name = sessionCookieName,
+      content = "",
+      path = Some("/"),
+      httpOnly = true,
+      sameSite = Some(SameSite.Lax),
+      maxAge = Some(0L)
+    )
+
   def userNotFoundResponse: IO[Response[IO]] =
-    AuthHttpResponses.userNotFoundResponse
+    HttpResponseSupport.errorResponse(Status.NotFound, ApiMessages.userNotFound)
 
   def forbiddenResponse: IO[Response[IO]] =
-    AuthHttpResponses.forbiddenResponse
+    HttpResponseSupport.errorResponse(Status.Forbidden, ApiMessages.siteManagerRequired)
 
   def protectedAdminResponse: IO[Response[IO]] =
-    AuthHttpResponses.protectedAdminResponse
+    HttpResponseSupport.errorResponse(Status.Forbidden, ApiMessages.adminPermissionsImmutable)
 
   def protectedAdminDeletionResponse: IO[Response[IO]] =
-    AuthHttpResponses.protectedAdminDeletionResponse
+    HttpResponseSupport.errorResponse(Status.Forbidden, ApiMessages.adminDeleteForbidden)
 
   def selfDeletionResponse: IO[Response[IO]] =
-    AuthHttpResponses.selfDeletionResponse
+    HttpResponseSupport.errorResponse(Status.BadRequest, ApiMessages.cannotDeleteSelf)
 
   def invalidCurrentPasswordResponse: IO[Response[IO]] =
-    AuthHttpResponses.invalidCurrentPasswordResponse
+    HttpResponseSupport.errorResponse(Status.Unauthorized, ApiMessages.invalidCurrentPassword)
 
   def userOwnsResourcesResponse: IO[Response[IO]] =
-    AuthHttpResponses.userOwnsResourcesResponse
+    HttpResponseSupport.errorResponse(Status.Conflict, ApiMessages.userHasOwnedResources)
 
   def validationErrorResponse(message: String): IO[Response[IO]] =
-    AuthHttpResponses.validationErrorResponse(message)
+    HttpResponseSupport.validationErrorResponse(message)
 
   def toSessionResponse(user: AuthUser): SessionResponse =
-    AuthHttpResponses.toSessionResponse(user)
+    SessionResponse(
+      displayName = user.displayName,
+      username = user.username,
+      email = user.email,
+      preferences =
+        UserPreferences(
+          displayMode = user.displayMode,
+          locale = user.locale,
+          problemTitleDisplayMode = user.problemTitleDisplayMode,
+          autoMarkMessageRead = user.autoMarkMessageRead
+        ),
+      siteManager = user.siteManager,
+      problemManager = user.problemManager
+    )
 
   def toUserListItem(user: AuthUser): AuthUserListItem =
-    AuthHttpResponses.toUserListItem(user)
+    AuthUserListItem(
+      username = user.username,
+      displayName = user.displayName,
+      email = user.email,
+      siteManager = user.siteManager,
+      problemManager = user.problemManager
+    )
 
   def listUsersResponse(users: UserListResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
@@ -101,7 +133,7 @@ object UserHttpResponses:
 
   def mapUpdateUserSettingsOutput(output: UpdateUserSettingsOutput): IO[Response[IO]] =
     mapUpdateUserSettingsResult(output.result).map { response =>
-      if output.clearSessionCookie then response.addCookie(AuthHttpResponses.clearedSessionCookie)
+      if output.clearSessionCookie then response.addCookie(clearedSessionCookie)
       else response
     }
 

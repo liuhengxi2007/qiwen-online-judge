@@ -4,9 +4,14 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 const root = process.cwd()
 
 const allowedMissing = new Set([
+  'backend-only:blog/BlogCommentNotificationAncestor',
+  'backend-only:blog/BlogCommentNotificationContext',
   'backend-only:message/MarkConversationReadMode',
+  'backend-only:problem/ProblemAccessEvaluation',
+  'backend-only:problem/ProblemSetMemberTarget',
   'backend-only:shared/ResourceAccessDecision',
   'backend-only:shared/ResourceAccessFacts',
+  'backend-only:submission/ClaimedSubmission',
 ])
 
 const allowedFieldMismatch = new Set([

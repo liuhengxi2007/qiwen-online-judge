@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.judge.application.JudgeTaskBuilder
+import domains.judge.application.JudgeCommands
 import domains.problem.application.output.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 import domains.problem.model.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
 import domains.problem.table.problem.ProblemTable
@@ -345,11 +345,11 @@ object ProblemDataCommands:
         case None =>
           IO.pure(SetProblemReadyResult.ValidationFailed("judge.yaml is required at the problem data root."))
         case Some((_, bytes)) =>
-          JudgeTaskBuilder
-            .validateReadyConfigBytes(bytes, problem, manifest)
+          JudgeCommands
+            .validateProblemReadyConfig(bytes, problem, manifest)
             .fold(
               message => IO.pure(SetProblemReadyResult.ValidationFailed(message)),
-              validation => retainReadyFiles(problemDataStorage, connection, problem, manifest.entries, validation.retainedPaths)
+              retainedPaths => retainReadyFiles(problemDataStorage, connection, problem, manifest.entries, retainedPaths)
             )
     yield result
 

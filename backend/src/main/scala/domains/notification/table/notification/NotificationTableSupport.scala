@@ -3,9 +3,9 @@ package domains.notification.table.notification
 
 
 import domains.user.model.Username
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.notification.model.{NotificationKind, NotificationPayload, NotificationStatus}
 import domains.notification.application.output.{NotificationSummary}
+import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.ResultSet
 

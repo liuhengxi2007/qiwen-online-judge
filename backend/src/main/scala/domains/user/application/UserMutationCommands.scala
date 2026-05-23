@@ -4,7 +4,7 @@ package domains.user.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.application.PasswordHasher
+import domains.auth.application.AuthCommands
 import domains.auth.model.{AuthUser, EmailAddress, PlaintextPassword, SiteManagerUser}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
@@ -192,7 +192,7 @@ object UserMutationCommands:
     targetUser: AuthUser,
     request: UpdateOwnAccountRequest
   ): IO[UpdateUserSettingsResult] =
-    PasswordHasher.verifyPassword(request.currentPassword, actor.passwordHash).flatMap {
+    AuthCommands.verifyPassword(request.currentPassword, actor.passwordHash).flatMap {
       case false =>
         IO.pure(UpdateUserSettingsResult.InvalidCurrentPassword)
       case true =>
@@ -223,7 +223,7 @@ object UserMutationCommands:
     val passwordChanged = newPassword.nonEmpty
     for
       nextPasswordHash <- newPassword match
-        case Some(password) => PasswordHasher.hashPassword(password)
+        case Some(password) => AuthCommands.hashPassword(password)
         case None => IO.pure(targetUser.passwordHash)
       updatedUser <- UserTable.updateSettings(
         connection,

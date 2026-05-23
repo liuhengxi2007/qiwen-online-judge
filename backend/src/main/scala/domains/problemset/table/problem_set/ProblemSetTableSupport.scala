@@ -5,11 +5,11 @@ package domains.problemset.table.problem_set
 import cats.effect.IO
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.model.AuthUser
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
 import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
+import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.{PreparedStatement, ResultSet}
 

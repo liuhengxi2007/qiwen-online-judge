@@ -31,12 +31,12 @@ object ProblemDecisions:
 
   def decideCreateProblem(
     existingProblem: Option[ProblemDetail],
-    conflictingProblemSet: Option[domains.problemset.model.ProblemSet],
+    hasConflictingProblemSetSlug: Boolean,
     accessPolicyValidation: Option[String],
   ): CreateProblemDecision =
     existingProblem match
       case Some(_) => CreateProblemDecision.SlugAlreadyExists
-      case None if conflictingProblemSet.nonEmpty => CreateProblemDecision.SlugConflictsWithProblemSet
+      case None if hasConflictingProblemSetSlug => CreateProblemDecision.SlugConflictsWithProblemSet
       case None =>
         accessPolicyValidation match
           case Some(message) => CreateProblemDecision.ValidationFailed(message)

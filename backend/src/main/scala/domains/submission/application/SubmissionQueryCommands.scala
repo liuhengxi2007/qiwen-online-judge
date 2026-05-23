@@ -5,14 +5,11 @@ package domains.submission.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.model.OthersSubmissionAccess
-import domains.problem.application.utils.ProblemCommandSupport.canManageProblem
-import domains.problem.table.problem.ProblemTable
+import domains.problem.application.ProblemCommands
 import domains.submission.model.{SubmissionId}
 import domains.submission.application.input.{SubmissionListRequest}
 import domains.submission.table.submission.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
-import domains.submission.application.utils.SubmissionCommandSupport.*
 
 object SubmissionQueryCommands:
 
@@ -37,27 +34,24 @@ object SubmissionQueryCommands:
         case None =>
           IO.pure(GetSubmissionResult.NotFound)
         case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) =>
-          ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {
-            case None =>
+          ProblemCommands.evaluateProblemAccess(connection, actor, submission.problemSlug).map {
+            case ProblemCommands.EvaluateProblemAccessResult.ProblemNotFound =>
               IO.pure(GetSubmissionResult.NotFound)
-            case Some(problem) =>
-              canManageProblem(connection, actor, problem).map(manageable =>
-                GetSubmissionResult.Found(submission.copy(canManage = manageable))
-              )
-          }
+            case ProblemCommands.EvaluateProblemAccessResult.Evaluated(access) =>
+              IO.pure(GetSubmissionResult.Found(submission.copy(canManage = access.canManage)))
+          }.flatten
         case Some(submission) =>
-          ProblemTable.findBySlug(connection, submission.problemSlug).flatMap {
-            case None =>
+          ProblemCommands.evaluateProblemAccess(connection, actor, submission.problemSlug).map {
+            case ProblemCommands.EvaluateProblemAccessResult.ProblemNotFound =>
               IO.pure(GetSubmissionResult.NotFound)
-            case Some(problem) =>
-              canViewOthersSubmission(connection, actor, problem, OthersSubmissionAccess.Detail).flatMap {
-                case false =>
-                  IO.pure(GetSubmissionResult.Forbidden)
-                case true =>
-                  canManageProblem(connection, actor, problem).map(manageable =>
-                    GetSubmissionResult.Found(submission.copy(canManage = manageable))
-                  )
-              }
+            case ProblemCommands.EvaluateProblemAccessResult.Evaluated(access) if !access.canView =>
+              IO.pure(GetSubmissionResult.Forbidden)
+            case ProblemCommands.EvaluateProblemAccessResult.Evaluated(access)
+                if !SubmissionPolicy.canViewDetailOfOthers(access.othersSubmissionAccess) =>
+              IO.pure(GetSubmissionResult.Forbidden)
+            case ProblemCommands.EvaluateProblemAccessResult.Evaluated(access) =>
+              IO.pure(GetSubmissionResult.Found(submission.copy(canManage = access.canManage)))
           }
+            .flatten
       }
     }

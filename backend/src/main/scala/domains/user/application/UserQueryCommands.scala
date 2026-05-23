@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.Username
-import domains.blog.table.blog.BlogTable
+import domains.blog.application.BlogCommands
 import shared.model.{PageRequest, PageResponse}
 import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
@@ -44,7 +44,7 @@ object UserQueryCommands:
           IO.pure(GetUserProfileResult.NotFound)
         case Some(targetUser) =>
           for
-            contribution <- BlogTable.contributionByAuthor(connection, targetUsername)
+            contribution <- BlogCommands.authorContribution(connection, targetUsername)
             acceptedProblems <- UserTable.listAcceptedProblems(connection, targetUsername)
           yield
             GetUserProfileResult.Found(

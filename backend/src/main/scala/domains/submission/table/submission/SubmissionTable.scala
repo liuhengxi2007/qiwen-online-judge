@@ -10,7 +10,7 @@ import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.application.output.{SubmissionDetail, SubmissionListResponse, SubmissionSummary}
+import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.submission.SubmissionTableSchema.*
 import domains.submission.table.submission.SubmissionTableSupport.*
@@ -21,16 +21,6 @@ import java.time.Instant
 import java.util.UUID
 import domains.submission.application.input.{SubmissionSort, SubmissionSortDirection}
 import shared.sql.UserIdentitySql
-
-final case class ClaimedSubmission(
-  id: SubmissionId,
-  problemId: ProblemId,
-  problemSlug: ProblemSlug,
-  language: SubmissionLanguage,
-  sourceCode: SubmissionSourceCode,
-  timeLimitMs: Int,
-  spaceLimitMb: Int
-)
 
 object SubmissionTable:
 

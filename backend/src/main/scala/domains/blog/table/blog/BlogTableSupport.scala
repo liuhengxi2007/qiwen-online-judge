@@ -2,10 +2,10 @@ package domains.blog.table.blog
 
 
 
-import domains.auth.table.auth_user.UserIdentityTableSupport.readUserIdentity
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.application.output.{BlogCommentSummary, BlogSummary}
 import domains.problem.model.{ProblemSlug, ProblemTitle}
+import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.ResultSet
 

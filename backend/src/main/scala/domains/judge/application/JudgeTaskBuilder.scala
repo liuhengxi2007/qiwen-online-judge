@@ -2,12 +2,10 @@ package domains.judge.application
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.application.ProblemDataStorage
+import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.ProblemDataPath
-import domains.problem.table.problem.ProblemTable
-import domains.problem.table.problem_data_file.ProblemDataFileTable
-import domains.submission.table.submission.ClaimedSubmission
+import domains.submission.application.output.ClaimedSubmission
 import judgeprotocol.model.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
@@ -26,16 +24,15 @@ object JudgeTaskBuilder:
     claimedSubmission: ClaimedSubmission
   ): IO[Either[String, JudgeTask]] =
     for
-      problem <- ProblemTable.findBySlug(connection, claimedSubmission.problemSlug)
-      manifest <- problem match
-        case None => IO.pure(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
-        case Some(foundProblem) => ProblemDataFileTable.manifestForProblem(connection, foundProblem.id, claimedSubmission.problemSlug)
+      maybeManifest <- ProblemCommands.judgeTaskManifest(connection, claimedSubmission.problemId, claimedSubmission.problemSlug)
+      manifest = maybeManifest.getOrElse(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
       config <- loadConfig(problemDataStorage, claimedSubmission, manifest)
     yield
-      problem match
+      maybeManifest match
         case None =>
           Left("Problem not found for claimed submission.")
-        case Some(_) => config
+        case Some(_) =>
+          config
 
   private def toProtocolLanguage(language: domains.submission.model.SubmissionLanguage): SubmissionLanguage =
     language match

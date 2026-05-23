@@ -9,8 +9,6 @@ import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.model.{AuthUser, SessionToken}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.user.application.output.{AuthUserListItem}
-import domains.user.http.codec.UserHttpCodecs.given
 import domains.user.model.UserPreferences
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
@@ -94,15 +92,6 @@ object AuthHttpResponses:
       problemManager = user.problemManager
     )
 
-  def toUserListItem(user: AuthUser): AuthUserListItem =
-    AuthUserListItem(
-      username = user.username,
-      displayName = user.displayName,
-      email = user.email,
-      siteManager = user.siteManager,
-      problemManager = user.problemManager
-    )
-
   def toLoginResponse(user: AuthUser, message: String): LoginResponse =
     LoginResponse(
       displayName = user.displayName,
@@ -139,9 +128,6 @@ object AuthHttpResponses:
 
   def sessionResponse(response: SessionResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
-
-  def listUsersResponse(users: List[AuthUserListItem]): IO[Response[IO]] =
-    IO.pure(Response[IO](status = Status.Ok).withEntity(users.asJson))
 
   def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
     loggedOutResponse(output.clearedSessionCookie)

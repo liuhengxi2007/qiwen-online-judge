@@ -5,7 +5,7 @@ import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
-import domains.submission.table.ClaimedSubmission
+import domains.submission.application.output.ClaimedSubmission
 import munit.FunSuite
 import shared.access.{BaseAccess, ResourceAccessPolicy}
 
