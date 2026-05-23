@@ -1,23 +1,14 @@
 package domains.submission.http.api
 
-import domains.submission.http.response.SubmissionHttpResponses
-
-
-
-import domains.submission.http.*
-import domains.submission.http.codec.SubmissionHttpCodecs.given
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
-import domains.submission.application.SubmissionCommands
-import shared.model.PageRequest
-import domains.submission.application.input.{CreateSubmissionRequest, SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.model.SubmissionId
-import shared.http.AuthenticatedHttpExecutor
+import domains.submission.http.*
+import domains.submission.http.utils.SubmissionListRequestQuerySupport
 import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
+import shared.http.AuthenticatedHttpExecutor
 
 object ListSubmissions:
 
@@ -26,40 +17,6 @@ object ListSubmissions:
     val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
-        parseListRequest(request.uri.query.params) match
-          case Left(message) =>
-            SubmissionHttpResponses.validationErrorResponse(message)
-          case Right(listRequest) =>
-            handlers.execute(request, listRequest, SubmissionHttpPlanDefinitions.listSubmissions)
+        val listRequest = SubmissionListRequestQuerySupport.parseListRequest(request.uri.query.params)
+        handlers.execute(request, listRequest, SubmissionHttpPlanDefinitions.listSubmissions)
     }
-
-  private def parseListRequest(queryParams: Map[String, String]): Either[String, SubmissionListRequest] =
-    for
-      sort <- queryParams.get("sort") match
-        case Some(rawSort) => SubmissionSort.parse(rawSort)
-        case None => Right(SubmissionSort.Submitted)
-      direction <- queryParams.get("direction") match
-        case Some(rawDirection) => SubmissionSortDirection.parse(rawDirection)
-        case None => Right(SubmissionSort.defaultDirection(sort))
-      verdict <- queryParams.get("verdict") match
-        case Some(rawVerdict) => SubmissionVerdictFilter.parse(rawVerdict)
-        case None => Right(SubmissionVerdictFilter.All)
-      page <- parsePositiveInt(queryParams.get("page"), defaultValue = 1, fieldName = "Page")
-      pageSize <- parsePositiveInt(queryParams.get("pageSize"), defaultValue = 10, fieldName = "Page size")
-    yield
-      SubmissionListRequest(
-        userQuery = queryParams.get("username").flatMap(rawQuery => SubmissionUserQuery.parse(rawQuery).toOption),
-        problemQuery = queryParams.get("problem").flatMap(rawQuery => SubmissionProblemQuery.parse(rawQuery).toOption),
-        verdict = verdict,
-        sort = sort,
-        direction = direction,
-        pageRequest = PageRequest(page = page, pageSize = pageSize)
-      )
-
-  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int, fieldName: String): Either[String, Int] =
-    rawValue match
-      case None => Right(defaultValue)
-      case Some(value) =>
-        value.toIntOption match
-          case Some(parsed) if parsed > 0 => Right(parsed)
-          case _ => Left(s"$fieldName must be a positive integer.")
