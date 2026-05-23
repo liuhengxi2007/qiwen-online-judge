@@ -24,7 +24,12 @@ import {
   problemTitleValue,
   requireParsed,
 } from '@/features/problem/lib/problem-parsers'
-import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+import {
+  fromResourceAccessPolicyContract,
+  toResourceAccessPolicyContract,
+} from '@/shared/access/resource-access-policy-codec'
+
+type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -48,7 +53,7 @@ type ProblemSummaryContract = {
   ready: boolean
   timeLimitMs: number
   spaceLimitMb: number
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   othersSubmissionAccess: OthersSubmissionAccessContract
   creator: UserIdentityContract
   createdAt: string
@@ -75,7 +80,7 @@ type ProblemDetailContract = {
   ready: boolean
   timeLimitMs: number
   spaceLimitMb: number
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   othersSubmissionAccess: OthersSubmissionAccessContract
   creator: UserIdentityContract
   canManage: boolean
@@ -94,7 +99,7 @@ type CreateProblemRequestContract = {
   statement: string
   timeLimitMs: number
   spaceLimitMb: number
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   othersSubmissionAccess: OthersSubmissionAccessContract
 }
 
@@ -103,7 +108,7 @@ type UpdateProblemRequestContract = {
   statement: string
   timeLimitMs: number
   spaceLimitMb: number
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   othersSubmissionAccess: OthersSubmissionAccessContract
 }
 
@@ -124,7 +129,7 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
     ready: problem.ready,
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
-    accessPolicy: problem.accessPolicy,
+    accessPolicy: fromResourceAccessPolicyContract(problem.accessPolicy),
     othersSubmissionAccess: problem.othersSubmissionAccess,
     creator: fromUserIdentityContract(problem.creator),
     createdAt: problem.createdAt,
@@ -142,7 +147,7 @@ export function fromProblemDetailContract(problem: ProblemDetailContract): Probl
     ready: problem.ready,
     timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
     spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
-    accessPolicy: problem.accessPolicy,
+    accessPolicy: fromResourceAccessPolicyContract(problem.accessPolicy),
     othersSubmissionAccess: problem.othersSubmissionAccess,
     creator: fromUserIdentityContract(problem.creator),
     canManage: problem.canManage,
@@ -191,7 +196,7 @@ export function toCreateProblemRequestContract(request: CreateProblemRequest): C
     statement: problemStatementTextValue(request.statement),
     timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
     spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
-    accessPolicy: request.accessPolicy,
+    accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
     othersSubmissionAccess: request.othersSubmissionAccess,
   }
 }
@@ -202,7 +207,7 @@ export function toUpdateProblemRequestContract(request: UpdateProblemRequest): U
     statement: problemStatementTextValue(request.statement),
     timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
     spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
-    accessPolicy: request.accessPolicy,
+    accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
     othersSubmissionAccess: request.othersSubmissionAccess,
   }
 }

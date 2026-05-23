@@ -73,8 +73,8 @@ object JudgeTaskBuilder:
       problemSlug = problem.slug,
       language = domains.submission.model.SubmissionLanguage.Cpp17,
       sourceCode = domains.submission.model.SubmissionSourceCode("int main() { return 0; }"),
-      timeLimitMs = problem.timeLimitMs.value,
-      spaceLimitMb = problem.spaceLimitMb.value
+      timeLimitMs = problem.timeLimitMs,
+      spaceLimitMb = problem.spaceLimitMb
     )
     parseConfigBytes(bytes, claimedSubmission, manifest).flatMap { task =>
       val rawPaths =
@@ -105,7 +105,7 @@ object JudgeTaskBuilder:
       version <- intAt(root, "version").flatMap(value => Either.cond(value == 1, value, "judge.yaml version must be 1."))
       roundingScale <- optionalIntAt(root, "roundingScale").map(_.getOrElse(6))
       _ <- Either.cond(roundingScale >= 0 && roundingScale <= 18, (), "roundingScale must be between 0 and 18.")
-      rootLimits <- limitsAt(root).map(_.orElse(Some(JudgeTaskLimits(ProblemTimeLimitMs(claimedSubmission.timeLimitMs), ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb)))))
+      rootLimits <- limitsAt(root).map(_.orElse(Some(JudgeTaskLimits(ProblemTimeLimitMs(claimedSubmission.timeLimitMs.value), ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb.value)))))
       rootChecker <- checkerAt(root)
       rootAggregation <- aggregationAt(root)
       subtaskMaps <- listOfMapsAt(root, "subtasks")

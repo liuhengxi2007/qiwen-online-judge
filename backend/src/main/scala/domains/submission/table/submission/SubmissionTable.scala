@@ -8,7 +8,7 @@ import domains.user.model.{DisplayName, Username}
 import domains.user.model.UserIdentity
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, ProblemTitle}
 import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
@@ -420,14 +420,20 @@ object SubmissionTable:
                 problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
                 language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
                 sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
-                timeLimitMs = resultSet.getInt("time_limit_ms"),
-                spaceLimitMb = resultSet.getInt("space_limit_mb")
+                timeLimitMs = parseProblemTimeLimitColumn(resultSet.getInt("time_limit_ms")),
+                spaceLimitMb = parseProblemSpaceLimitColumn(resultSet.getInt("space_limit_mb"))
               )
             )
           else None
         finally resultSet.close()
       finally statement.close()
     }
+
+  private def parseProblemTimeLimitColumn(rawValue: Int): ProblemTimeLimitMs =
+    ProblemTimeLimitMs.parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in problems.time_limit_ms: $message"), identity)
+
+  private def parseProblemSpaceLimitColumn(rawValue: Int): ProblemSpaceLimitMb =
+    ProblemSpaceLimitMb.parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in problems.space_limit_mb: $message"), identity)
 
   private val updateJudgeStateSQL: String =
     """

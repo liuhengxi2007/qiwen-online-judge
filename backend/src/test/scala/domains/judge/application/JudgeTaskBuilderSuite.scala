@@ -21,8 +21,8 @@ class JudgeTaskBuilderSuite extends FunSuite:
     problemSlug = ProblemSlug("sample-problem"),
     language = SubmissionLanguage.Cpp17,
     sourceCode = SubmissionSourceCode("int main() {}"),
-    timeLimitMs = 1000,
-    spaceLimitMb = 256
+    timeLimitMs = ProblemTimeLimitMs(1000),
+    spaceLimitMb = ProblemSpaceLimitMb(256)
   )
 
   private val manifest = ProblemDataManifest.fromEntries(
@@ -108,6 +108,27 @@ class JudgeTaskBuilderSuite extends FunSuite:
       result.left.toOption,
       Some("Unsupported aggregation: sum,max,max. Expected one of: min_max_max, min_sum_max, sum_max_max, sum_sum_max.")
     )
+  }
+
+  test("parseConfigBytes uses claimed submission limits when config omits limits") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 1
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - name: sample
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      manifest
+    )
+
+    assertEquals(result.map(_.subtasks.head.testcases.head.limits.timeMs.value), Right(1000))
+    assertEquals(result.map(_.subtasks.head.testcases.head.limits.memoryMb.value), Right(256))
   }
 
   test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {

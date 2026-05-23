@@ -6,7 +6,7 @@ import {
   listPendingProblemBlogs,
   unlinkBlogFromProblem,
 } from '@/features/blog/http/api/blog-client'
-import { blogIdValue, parseBlogId } from '@/features/blog/lib/blog-parsers'
+import { parseBlogId } from '@/features/blog/lib/blog-parsers'
 import type { BlogId } from '@/features/blog/model/BlogId'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
@@ -36,7 +36,7 @@ export function useBlogPageModel({
   const [pendingBlogs, setPendingBlogs] = useState<BlogSummary[]>([])
   const [isLoadingPending, setIsLoadingPending] = useState(false)
   const [pendingMessage, setPendingMessage] = useState('')
-  const [activeReviewBlogId, setActiveReviewBlogId] = useState<number | null>(null)
+  const [activeReviewBlogId, setActiveReviewBlogId] = useState<BlogId | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -112,12 +112,12 @@ export function useBlogPageModel({
       return
     }
 
-    setActiveReviewBlogId(blogIdValue(blog.id))
+    setActiveReviewBlogId(blog.id)
     setPendingMessage('')
     try {
       await acceptBlogProblemSubmission(problemSlugFilter, blog.id)
       model.reload()
-      setPendingBlogs((blogs) => blogs.filter((item) => blogIdValue(item.id) !== blogIdValue(blog.id)))
+      setPendingBlogs((blogs) => blogs.filter((item) => item.id !== blog.id))
       setPendingMessage(t('blog.problem.accepted'))
     } catch {
       setPendingMessage(t('blog.problem.acceptFailed'))
@@ -131,11 +131,11 @@ export function useBlogPageModel({
       return
     }
 
-    setActiveReviewBlogId(blogIdValue(blog.id))
+    setActiveReviewBlogId(blog.id)
     setPendingMessage('')
     try {
       await unlinkBlogFromProblem(problemSlugFilter, blog.id)
-      setPendingBlogs((blogs) => blogs.filter((item) => blogIdValue(item.id) !== blogIdValue(blog.id)))
+      setPendingBlogs((blogs) => blogs.filter((item) => item.id !== blog.id))
       setPendingMessage(t('blog.problem.rejected'))
     } catch {
       setPendingMessage(t('blog.problem.rejectFailed'))

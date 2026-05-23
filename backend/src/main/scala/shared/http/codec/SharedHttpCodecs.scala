@@ -79,7 +79,12 @@ object SharedHttpCodecs:
   given Decoder[AccessSubject] = Decoder.instance { cursor =>
     cursor.downField("kind").as[String].flatMap {
       case "user" =>
-        cursor.downField("username").as[String].map(value => AccessSubject.User(Username.canonical(value)))
+        cursor.downField("username").as[String].flatMap { value =>
+          Username.parse(value)
+            .left
+            .map(message => DecodingFailure(message, cursor.downField("username").history))
+            .map(AccessSubject.User(_))
+        }
       case "user_group" =>
         cursor.downField("slug").as[String].flatMap { value =>
           UserGroupSlug.parse(value).left.map(message => DecodingFailure(message, cursor.history)).map(AccessSubject.UserGroup(_))

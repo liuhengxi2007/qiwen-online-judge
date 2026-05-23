@@ -1,6 +1,6 @@
 package domains.submission.application.output
 
-import domains.problem.model.{ProblemId, ProblemSlug}
+import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 
 final case class ClaimedSubmission(
@@ -9,6 +9,6 @@ final case class ClaimedSubmission(
   problemSlug: ProblemSlug,
   language: SubmissionLanguage,
   sourceCode: SubmissionSourceCode,
-  timeLimitMs: Int,
-  spaceLimitMb: Int
+  timeLimitMs: ProblemTimeLimitMs,
+  spaceLimitMb: ProblemSpaceLimitMb
 )

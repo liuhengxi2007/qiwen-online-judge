@@ -1,12 +1,15 @@
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
+import type { Username } from '@/features/user/model/Username'
+import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
+import type { ParseResult } from '@/shared/domain/parsing'
 
 type AccessPolicyBuildResult =
   | { ok: true; value: ResourceAccessPolicy }
   | { ok: false; message: string }
 
 type AccessSubjectParsers = {
-  parseUsername: (token: string) => { ok: true; value: string } | { ok: false; error: string }
-  parseUserGroupSlug: (token: string) => { ok: true; value: string } | { ok: false; error: string }
+  parseUsername: (token: string) => ParseResult<Username>
+  parseUserGroupSlug: (token: string) => ParseResult<UserGroupSlug>
 }
 
 export function buildResourceAccessPolicy(

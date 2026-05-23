@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import { BlogSummaryCard } from '@/features/blog/components/blog-summary-card'
+import type { BlogId } from '@/features/blog/model/BlogId'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type PendingProblemBlogsCardProps = {
   pendingBlogs: BlogSummary[]
   isLoadingPending: boolean
   pendingMessage: string
-  activeReviewBlogId: number | null
+  activeReviewBlogId: BlogId | null
   onAccept: (blog: BlogSummary) => void
   onReject: (blog: BlogSummary) => void
 }

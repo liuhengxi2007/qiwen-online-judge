@@ -18,7 +18,12 @@ import {
   problemSetTitleValue,
   requireParsed,
 } from '@/features/problemset/lib/problemset-parsers'
-import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+import {
+  fromResourceAccessPolicyContract,
+  toResourceAccessPolicyContract,
+} from '@/shared/access/resource-access-policy-codec'
+
+type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -44,7 +49,7 @@ type ProblemSetSummaryContract = {
   slug: string
   title: string
   description: string
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   creator: UserIdentityContract
   createdAt: string
   updatedAt: string
@@ -56,7 +61,7 @@ type ProblemSetDetailContract = {
   title: string
   description: string
   problems: ProblemSetProblemSummaryContract[]
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
   creator: UserIdentityContract
   createdAt: string
   updatedAt: string
@@ -66,13 +71,13 @@ type CreateProblemSetRequestContract = {
   slug: string
   title: string
   description: string
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
 }
 
 type UpdateProblemSetRequestContract = {
   title: string
   description: string
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceAccessPolicyContract
 }
 
 type AddProblemToProblemSetRequestContract = {
@@ -98,7 +103,7 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
     slug: requireParsed(parseProblemSetSlug(problemSet.slug), 'problem set summary slug'),
     title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set summary title'),
     description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set summary description'),
-    accessPolicy: problemSet.accessPolicy,
+    accessPolicy: fromResourceAccessPolicyContract(problemSet.accessPolicy),
     creator: fromUserIdentityContract(problemSet.creator),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
@@ -112,7 +117,7 @@ export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContrac
     title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set detail title'),
     description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set detail description'),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
-    accessPolicy: problemSet.accessPolicy,
+    accessPolicy: fromResourceAccessPolicyContract(problemSet.accessPolicy),
     creator: fromUserIdentityContract(problemSet.creator),
     createdAt: problemSet.createdAt,
     updatedAt: problemSet.updatedAt,
@@ -137,7 +142,7 @@ export function toCreateProblemSetRequestContract(
     slug: problemSetSlugValue(request.slug),
     title: problemSetTitleValue(request.title),
     description: problemSetDescriptionValue(request.description),
-    accessPolicy: request.accessPolicy,
+    accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
   }
 }
 
@@ -147,7 +152,7 @@ export function toUpdateProblemSetRequestContract(
   return {
     title: problemSetTitleValue(request.title),
     description: problemSetDescriptionValue(request.description),
-    accessPolicy: request.accessPolicy,
+    accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
   }
 }
 

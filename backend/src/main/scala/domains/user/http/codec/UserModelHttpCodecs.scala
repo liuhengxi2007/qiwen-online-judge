@@ -16,7 +16,7 @@ object UserModelHttpCodecs:
   }
 
   given Encoder[Username] = Encoder.encodeString.contramap(_.value)
-  given Decoder[Username] = Decoder.decodeString.map(Username.canonical)
+  given Decoder[Username] = Decoder.decodeString.emap(Username.parse)
 
   given Encoder[DisplayName] = Encoder.encodeString.contramap(_.value)
   given Decoder[DisplayName] = Decoder.decodeString.map(value => DisplayName(value))

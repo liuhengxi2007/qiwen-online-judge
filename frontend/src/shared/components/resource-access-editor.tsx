@@ -1,15 +1,11 @@
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { resourceAccessSummary, type BaseAccess } from '@/shared/domain/resource-lifecycle'
+import { resourceAccessSummary, type BaseAccess, type ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ResourceAccessEditorProps = {
-  accessPolicy: {
-    baseAccess: BaseAccess
-    viewerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
-    managerGrants: Array<{ kind: 'user'; username: string } | { kind: 'user_group'; slug: string }>
-  }
+  accessPolicy: ResourceAccessPolicy
   grantedUsersInput: string
   grantedGroupsInput: string
   grantedManagerUsersInput?: string
