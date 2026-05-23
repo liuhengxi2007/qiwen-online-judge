@@ -8,14 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { usernameValue } from '@/features/user/lib/user-parsers'
-import type { UserIdentity } from '@/features/user/model/UserIdentity'
-import { markAllMessagesRead } from '@/features/message/http/api/message-client'
+import { useMessageInboxActions } from '@/features/message/hooks/use-message-inbox-actions'
+import { useMessageRecipientSuggestions } from '@/features/message/hooks/use-message-recipient-suggestions'
 import { messageConversationPath, messageConversationIdValue } from '@/features/message/lib/message-parsers'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
-import { listUserSuggestions } from '@/features/user/http/api/user-client'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { HttpClientError } from '@/shared/api/http-client'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { DateTimeText } from '@/shared/components/date-time-text'
@@ -36,10 +34,11 @@ export function MessageInboxPage() {
   const inboxError = useMessageStore((state) => state.inboxError)
   const refreshInbox = useMessageStore((state) => state.refreshInbox)
   const [searchQuery, setSearchQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<UserIdentity[]>([])
-  const [searchError, setSearchError] = useState('')
-  const [inboxActionError, setInboxActionError] = useState('')
-  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const recipientSuggestions = useMessageRecipientSuggestions(searchQuery, t('messages.searchFailed'))
+  const inboxActions = useMessageInboxActions({
+    refreshInbox,
+    markAllReadFailedMessage: t('messages.loadFailed'),
+  })
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const totalPages = calculateTotalPages(totalItems, pageSize)
@@ -66,28 +65,8 @@ export function MessageInboxPage() {
     setSearchParams(nextSearchParams)
   }, [currentPage, isLoadingInbox, searchParams, setSearchParams, totalPages])
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      void listUserSuggestions(searchQuery)
-        .then((items) => {
-          setSuggestions(items)
-          setSearchError('')
-        })
-        .catch((error) => {
-          setSuggestions([])
-          setSearchError(error instanceof HttpClientError ? error.message : t('messages.searchFailed'))
-        })
-    }, 150)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [searchQuery, t])
-
-  const visibleSuggestions = searchQuery.trim() ? suggestions : []
-  const visibleSearchError = searchQuery.trim() ? searchError : ''
+  const visibleSuggestions = searchQuery.trim() ? recipientSuggestions.suggestions : []
+  const visibleSearchError = searchQuery.trim() ? recipientSuggestions.searchError : ''
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -177,29 +156,20 @@ export function MessageInboxPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={totalUnreadCount === 0 || isMarkingAllRead}
+                  disabled={totalUnreadCount === 0 || inboxActions.isMarkingAllRead}
                   className="rounded-2xl border-slate-300 bg-white"
                   onClick={() => {
-                    setIsMarkingAllRead(true)
-                    void markAllMessagesRead()
-                      .then(async () => {
-                        setInboxActionError('')
-                        await refreshInbox({ page: currentPage, pageSize: conversationsPerPage })
-                      })
-                      .catch((error) => {
-                        setInboxActionError(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
-                      })
-                      .finally(() => setIsMarkingAllRead(false))
+                    void inboxActions.markAllRead({ page: currentPage, pageSize: conversationsPerPage })
                   }}
                 >
-                  {isMarkingAllRead ? t('messages.markingRead') : t('messages.markAllRead')}
+                  {inboxActions.isMarkingAllRead ? t('messages.markingRead') : t('messages.markAllRead')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {inboxActionError ? (
+              {inboxActions.inboxActionError ? (
                 <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                  <AlertDescription className="text-rose-700">{inboxActionError}</AlertDescription>
+                  <AlertDescription className="text-rose-700">{inboxActions.inboxActionError}</AlertDescription>
                 </Alert>
               ) : null}
               {inboxError ? (

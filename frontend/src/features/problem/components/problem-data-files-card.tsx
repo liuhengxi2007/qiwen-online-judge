@@ -2,9 +2,7 @@ import { ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { problemDataPathDownloadUrl } from '@/features/problem/http/api/problem-client'
 import { problemDataPathValue } from '@/features/problem/lib/problem-parsers'
-import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { useI18n } from '@/shared/i18n/use-i18n'
@@ -13,10 +11,9 @@ type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 type ProblemDataFilesCardProps = {
   model: ProblemDataPageModel
-  problemSlug: ProblemSlug
 }
 
-export function ProblemDataFilesCard({ model, problemSlug }: ProblemDataFilesCardProps) {
+export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
   const { t } = useI18n()
 
   return (
@@ -69,7 +66,7 @@ export function ProblemDataFilesCard({ model, problemSlug }: ProblemDataFilesCar
                   {node.kind === 'file' ? (
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
-                        <a href={problemDataPathDownloadUrl(problemSlug, node.path)}>
+                        <a href={model.downloadDataPathUrl(node.path)}>
                           <ArrowDownToLine className="size-4" />
                           {t('problem.data.download')}
                         </a>

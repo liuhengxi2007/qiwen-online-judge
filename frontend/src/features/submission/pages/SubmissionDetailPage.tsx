@@ -1,12 +1,10 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { useState } from 'react'
 import { Files, RotateCcw, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { deleteSubmission, rejudgeSubmission } from '@/features/submission/http/api/submission-client'
 import { isTerminalSubmissionStatus, parseSubmissionId, submissionIdValue, submissionJudgeStateLabel, submissionLanguageLabel, submissionSourceCodeValue, submissionVerdictLabel } from '@/features/submission/lib/submission-parsers'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import {
@@ -18,8 +16,8 @@ import {
 import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
+import { useSubmissionDetailActions } from '@/features/submission/hooks/use-submission-detail-actions'
 import { useSubmissionDetailQuery } from '@/features/submission/hooks/use-submission-detail-query'
-import { HttpClientError } from '@/shared/api/http-client'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
@@ -54,46 +52,20 @@ export function SubmissionDetailPage() {
 function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissionId: SubmissionId }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
-  const [actionErrorMessage, setActionErrorMessage] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isRejudging, setIsRejudging] = useState(false)
-  const [deleted, setDeleted] = useState(false)
   const submissionQuery = useSubmissionDetailQuery(currentSubmissionId)
+  const submissionActions = useSubmissionDetailActions({
+    submissionId: currentSubmissionId,
+    replaceSubmission: submissionQuery.replaceSubmission,
+    rejudgeFailedMessage: t('submission.detail.rejudgeFailed'),
+    deleteFailedMessage: t('submission.detail.deleteFailed'),
+  })
 
-  if (deleted) {
+  if (submissionActions.deleted) {
     return <Navigate replace to="/submissions" />
   }
 
   if (!submissionQuery.isLoading && !submissionQuery.submission) {
     return <Navigate replace to="/submissions" />
-  }
-
-  async function handleRejudge() {
-    setActionErrorMessage('')
-    setIsRejudging(true)
-    try {
-      const submission = await rejudgeSubmission(currentSubmissionId)
-      submissionQuery.replaceSubmission(submission)
-    } catch (error) {
-      setActionErrorMessage(
-        error instanceof HttpClientError ? error.message : t('submission.detail.rejudgeFailed'),
-      )
-    } finally {
-      setIsRejudging(false)
-    }
-  }
-
-  async function handleDelete() {
-    setActionErrorMessage('')
-    setIsDeleting(true)
-    try {
-      await deleteSubmission(currentSubmissionId)
-      setDeleted(true)
-    } catch (error) {
-      setActionErrorMessage(error instanceof HttpClientError ? error.message : t('submission.detail.deleteFailed'))
-    } finally {
-      setIsDeleting(false)
-    }
   }
 
   return (
@@ -118,9 +90,9 @@ function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissio
           </Alert>
         ) : null}
 
-        {actionErrorMessage ? (
+        {submissionActions.actionErrorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{actionErrorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{submissionActions.actionErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -151,32 +123,32 @@ function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissio
                         type="button"
                         variant="outline"
                         className="rounded-2xl border-slate-300 bg-white"
-                        disabled={isRejudging || isDeleting || !isTerminalSubmissionStatus(submissionQuery.submission.status)}
+                        disabled={submissionActions.isRejudging || submissionActions.isDeleting || !isTerminalSubmissionStatus(submissionQuery.submission.status)}
                         onClick={() => {
-                          void handleRejudge()
+                          void submissionActions.rejudge()
                         }}
                       >
                         <RotateCcw className="mr-2 size-4" />
-                        {isRejudging ? t('submission.detail.rejudgingAction') : t('submission.detail.rejudgeAction')}
+                        {submissionActions.isRejudging ? t('submission.detail.rejudgingAction') : t('submission.detail.rejudgeAction')}
                       </Button>
 
                       <ConfirmActionDialog
                         title={t('submission.detail.deleteConfirmTitle')}
                         description={t('submission.detail.deleteConfirmDescription')}
-                        confirmLabel={isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
+                        confirmLabel={submissionActions.isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
                         destructive
                         onConfirm={() => {
-                          void handleDelete()
+                          void submissionActions.deleteCurrentSubmission()
                         }}
                         trigger={
                           <Button
                             type="button"
                             variant="outline"
                             className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                            disabled={isDeleting || isRejudging}
+                            disabled={submissionActions.isDeleting || submissionActions.isRejudging}
                           >
                             <Trash2 className="mr-2 size-4" />
-                            {isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
+                            {submissionActions.isDeleting ? t('submission.detail.deletingAction') : t('submission.detail.deleteAction')}
                           </Button>
                         }
                       />

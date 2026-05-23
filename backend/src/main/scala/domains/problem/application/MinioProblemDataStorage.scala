@@ -22,8 +22,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       .build()
 
   override def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]] =
-    IO.blocking {
-      ensureBucket()
+    ensureBucket() *> IO.blocking {
       client
         .listObjects(
           io.minio.ListObjectsArgs
@@ -65,8 +64,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
     }
 
   override def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath] =
-    IO.blocking {
-      ensureBucket()
+    ensureBucket() *> IO.blocking {
       client.putObject(
         PutObjectArgs
           .builder()
@@ -80,8 +78,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
     }
 
   override def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]] =
-    IO.blocking {
-      ensureBucket()
+    ensureBucket() *> IO.blocking {
       try
         val inputStream = client.getObject(
           GetObjectArgs
@@ -101,8 +98,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
     readPath(problemSlug, path).flatMap {
       case None => IO.pure(false)
       case Some(_) =>
-        IO.blocking {
-          ensureBucket()
+        ensureBucket() *> IO.blocking {
           client.removeObject(
             RemoveObjectArgs
               .builder()
@@ -122,10 +118,12 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       accIo *> writePath(problemSlug, path, bytes).void
     }
 
-  private def ensureBucket(): Unit =
-    val exists = client.bucketExists(BucketExistsArgs.builder().bucket(config.bucket).build())
-    if !exists then
-      client.makeBucket(MakeBucketArgs.builder().bucket(config.bucket).build())
+  private def ensureBucket(): IO[Unit] =
+    IO.blocking {
+      val exists = client.bucketExists(BucketExistsArgs.builder().bucket(config.bucket).build())
+      if !exists then
+        client.makeBucket(MakeBucketArgs.builder().bucket(config.bucket).build())
+    }
 
   private def prefixFor(problemSlug: ProblemSlug): String =
     s"problems/${problemSlug.value}/data/"

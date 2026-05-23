@@ -22,10 +22,12 @@ final class RedisSessionCache private (client: JedisPooled) extends SessionCache
     }
 
   override def put(token: SessionToken, session: CachedSession): IO[Unit] =
-    val ttlSeconds = math.max(1L, java.time.Duration.between(Instant.now(), session.expiresAt).getSeconds)
-    IO.blocking {
-      client.setex(key(token), ttlSeconds, encode(session))
-      ()
+    IO.realTimeInstant.flatMap { now =>
+      val ttlSeconds = math.max(1L, java.time.Duration.between(now, session.expiresAt).getSeconds)
+      IO.blocking {
+        client.setex(key(token), ttlSeconds, encode(session))
+        ()
+      }
     }
 
   override def delete(token: SessionToken): IO[Unit] =

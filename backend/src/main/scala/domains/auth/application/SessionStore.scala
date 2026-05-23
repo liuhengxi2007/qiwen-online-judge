@@ -24,7 +24,8 @@ final class SessionStore private (
   def createSession(username: Username): IO[SessionToken] =
     for
       token <- nextToken
-      expiresAt = java.time.Instant.now().plus(sessionConfig.ttl)
+      now <- IO.realTimeInstant
+      expiresAt = now.plus(sessionConfig.ttl)
       _ <- databaseSession.withTransactionConnection(connection =>
         insertSession(connection, token, username, expiresAt)
       )
@@ -84,7 +85,8 @@ final class SessionStore private (
       token <- existingToken match
         case Some(token) => IO.pure(token)
         case None => nextToken
-      expiresAt = java.time.Instant.now().plus(sessionConfig.ttl)
+      now <- IO.realTimeInstant
+      expiresAt = now.plus(sessionConfig.ttl)
       _ <- insertSession(connection, token, username, expiresAt)
     yield token
 

@@ -6,12 +6,14 @@ import {
   deleteProblemDataPath,
   listProblemDataFiles,
   listProblemDataTree,
+  problemDataPathDownloadUrl,
   setProblemDataReady,
   uploadProblemDataArchive,
   uploadProblemDataFile,
 } from '@/features/problem/http/api/problem-client'
 import { parseProblemDataFilename, problemDataPathValue, problemDataFilenameValue } from '@/features/problem/lib/problem-parsers'
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
+import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import {
   initialProblemDataPageState,
@@ -128,7 +130,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   )
 
   const deleteDataPath = useCallback(
-    async (path: import('@/features/problem/model/ProblemDataPath').ProblemDataPath): Promise<DeleteResult> => {
+    async (path: ProblemDataPath): Promise<DeleteResult> => {
       dispatch({ type: 'delete_started', filename: path.split('/').slice(-1)[0] as ProblemDataFilename })
 
       try {
@@ -208,6 +210,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     uploadSelectedFile,
     deleteDataFile,
     deleteDataPath,
+    downloadDataPathUrl: (path: ProblemDataPath) => problemDataPathDownloadUrl(problemSlug, path),
     clearAllDataFiles,
     setReady,
   }

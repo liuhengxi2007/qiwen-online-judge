@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, FileCode2, PauseCircle, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -6,19 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  readProblemDataText,
-  saveProblemDataText,
-} from '@/features/problem/http/api/problem-client'
-import {
-  judgeConfigPath,
-  judgeConfigTemplate,
-  validateJudgeConfigYaml,
-} from '@/features/problem/lib/problem-judge-config'
-import { parseProblemDataPath } from '@/features/problem/lib/problem-parsers'
+import { useProblemJudgeConfigEditorModel } from '@/features/problem/hooks/use-problem-judge-config-editor-model'
+import { judgeConfigPath } from '@/features/problem/lib/problem-judge-config'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { useProblemDataPageModel } from '@/features/problem/hooks/use-problem-data-page-model'
-import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
@@ -28,73 +18,9 @@ type ProblemJudgeConfigEditorCardProps = {
   problemSlug: ProblemSlug
 }
 
-const judgePath = parseProblemDataPath(judgeConfigPath)
-if (!judgePath.ok) {
-  throw new Error(judgePath.error)
-}
-const judgeDataPath = judgePath.value
-
 export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudgeConfigEditorCardProps) {
   const { t } = useI18n()
-  const [content, setContent] = useState(judgeConfigTemplate)
-  const [lastSavedContent, setLastSavedContent] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [statusMessage, setStatusMessage] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-
-  const validation = useMemo(() => validateJudgeConfigYaml(content, model.dataTree), [content, model.dataTree])
-  const isDirty = lastSavedContent === null || content !== lastSavedContent
-
-  const loadConfig = useCallback(async () => {
-    setIsLoading(true)
-    setErrorMessage('')
-    setStatusMessage('')
-    try {
-      const loaded = await readProblemDataText(problemSlug, judgeDataPath)
-      setContent(loaded)
-      setLastSavedContent(loaded)
-      setStatusMessage(t('problem.data.judgeConfig.loaded'))
-    } catch (error) {
-      if (error instanceof HttpClientError && error.kind === 'not-found') {
-        setContent(judgeConfigTemplate)
-        setLastSavedContent(null)
-        setStatusMessage(t('problem.data.judgeConfig.templateUnsaved'))
-      } else {
-        setErrorMessage(error instanceof Error ? error.message : t('problem.data.judgeConfig.loadFailed'))
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [problemSlug, t])
-
-  useEffect(() => {
-    void loadConfig()
-  }, [loadConfig])
-
-  const saveConfig = async () => {
-    setErrorMessage('')
-    setStatusMessage('')
-
-    setIsSaving(true)
-    try {
-      const result = await saveProblemDataText(problemSlug, judgeDataPath, content)
-      model.replaceProblem(result.problem)
-      await model.loadFiles()
-      setLastSavedContent(content)
-      setStatusMessage(t('problem.data.judgeConfig.saved'))
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : t('problem.data.judgeConfig.saveFailed'))
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const resetTemplate = () => {
-    setContent(judgeConfigTemplate)
-    setStatusMessage(t('problem.data.judgeConfig.templateInserted'))
-    setErrorMessage('')
-  }
+  const editor = useProblemJudgeConfigEditorModel(model, problemSlug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -111,10 +37,10 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             <Button
               type="button"
               variant="outline"
-              disabled={isLoading || isSaving}
+              disabled={editor.isLoading || editor.isSaving}
               className="rounded-2xl border-slate-300 bg-white"
               onClick={() => {
-                void loadConfig()
+                void editor.loadConfig()
               }}
             >
               <RefreshCw className="size-4" />
@@ -123,9 +49,9 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             <Button
               type="button"
               variant="outline"
-              disabled={isSaving}
+              disabled={editor.isSaving}
               className="rounded-2xl border-slate-300 bg-white"
-              onClick={resetTemplate}
+              onClick={editor.resetTemplate}
             >
               <RotateCcw className="size-4" />
               {t('problem.data.judgeConfig.template')}
@@ -133,30 +59,23 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             <Button
               type="button"
               variant="outline"
-              disabled={isLoading || isSaving}
+              disabled={editor.isLoading || editor.isSaving}
               className="rounded-2xl border-slate-300 bg-white"
-              onClick={() => {
-                setErrorMessage('')
-                setStatusMessage(
-                  validation.ok
-                    ? t('problem.data.judgeConfig.valid')
-                    : t('problem.data.judgeConfig.invalid'),
-                )
-              }}
+              onClick={editor.validateCurrentContent}
             >
               <Wand2 className="size-4" />
               {t('problem.data.judgeConfig.validate')}
             </Button>
             <Button
               type="button"
-              disabled={isSaving || isLoading || !isDirty}
+              disabled={editor.isSaving || editor.isLoading || !editor.isDirty}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
-                void saveConfig()
+                void editor.saveConfig()
               }}
             >
               <Save className="size-4" />
-              {isSaving ? t('problem.data.judgeConfig.saving') : t('problem.data.judgeConfig.save')}
+              {editor.isSaving ? t('problem.data.judgeConfig.saving') : t('problem.data.judgeConfig.save')}
             </Button>
             {model.problem?.ready ? (
               <Button
@@ -174,7 +93,7 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
             ) : (
               <Button
                 type="button"
-                disabled={model.isSavingReady || isLoading || isDirty || !validation.ok}
+                disabled={model.isSavingReady || editor.isLoading || editor.isDirty || !editor.validation.ok}
                 className="rounded-2xl bg-emerald-700 text-white hover:bg-emerald-800"
                 onClick={() => {
                   void model.setReady(true)
@@ -191,30 +110,28 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="problem-judge-config">{judgeConfigPath}</Label>
             <span className="text-xs font-medium text-slate-500">
-              {isDirty ? t('problem.data.judgeConfig.unsaved') : t('problem.data.judgeConfig.savedState')}
+              {editor.isDirty ? t('problem.data.judgeConfig.unsaved') : t('problem.data.judgeConfig.savedState')}
             </span>
           </div>
           <Textarea
             id="problem-judge-config"
             spellCheck={false}
-            value={content}
-            disabled={isLoading}
+            value={editor.content}
+            disabled={editor.isLoading}
             className="min-h-[28rem] resize-y rounded-2xl bg-slate-950 font-mono text-sm leading-6 text-slate-50 shadow-inner selection:bg-emerald-300 selection:text-slate-950"
             onChange={(event) => {
-              setContent(event.target.value)
-              setErrorMessage('')
-              setStatusMessage('')
+              editor.setContent(event.target.value)
             }}
           />
         </div>
 
-        {!validation.ok ? (
+        {!editor.validation.ok ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="space-y-1 text-rose-700">
-              {validation.errors.slice(0, 8).map((error) => (
+              {editor.validation.errors.slice(0, 8).map((error) => (
                 <p key={error}>{error}</p>
               ))}
-              {validation.errors.length > 8 ? <p>{t('problem.data.judgeConfig.moreErrors', { count: validation.errors.length - 8 })}</p> : null}
+              {editor.validation.errors.length > 8 ? <p>{t('problem.data.judgeConfig.moreErrors', { count: editor.validation.errors.length - 8 })}</p> : null}
             </AlertDescription>
           </Alert>
         ) : (
@@ -226,15 +143,15 @@ export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudg
           </Alert>
         )}
 
-        {errorMessage ? (
+        {editor.errorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{editor.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
-        {statusMessage ? (
+        {editor.statusMessage ? (
           <Alert className="rounded-2xl border-sky-200 bg-sky-50/95">
-            <AlertDescription className="text-sky-800">{statusMessage}</AlertDescription>
+            <AlertDescription className="text-sky-800">{editor.statusMessage}</AlertDescription>
           </Alert>
         ) : null}
       </CardContent>

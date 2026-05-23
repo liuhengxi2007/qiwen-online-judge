@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,10 +9,9 @@ import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { parseProblemSlug } from '@/features/problem/lib/problem-parsers'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { useProblemDetailQuery } from '@/features/problem/hooks/use-problem-detail-query'
-import { createSubmission } from '@/features/submission/http/api/submission-client'
 import type { SubmissionLanguage } from '@/features/submission/model/SubmissionLanguage'
-import { parseSubmissionSourceCode, submissionIdValue } from '@/features/submission/lib/submission-parsers'
-import { HttpClientError } from '@/shared/api/http-client'
+import { useCreateSubmissionAction } from '@/features/submission/hooks/use-create-submission-action'
+import { parseSubmissionSourceCode } from '@/features/submission/lib/submission-parsers'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/shared/hooks/use-before-unload-prompt'
@@ -48,13 +47,10 @@ export function ProblemSubmitPage() {
 
 function ProblemSubmitPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
   const { t } = useI18n()
-  const navigate = useNavigate()
   const detailQuery = useProblemDetailQuery(problemSlug)
   const [language, setLanguage] = useState<SubmissionLanguage>('cpp17')
   const [sourceCode, setSourceCode] = useState('')
-  const [statusMessage, setStatusMessage] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const createSubmissionAction = useCreateSubmissionAction(t('problem.submit.createFailed'))
   const hasUnsavedChanges = sourceCode.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
@@ -91,53 +87,32 @@ function ProblemSubmitPageContent({ problemSlug }: { problemSlug: ProblemSlug })
           <div className="space-y-6">
             <ProblemSubmitHeaderCard detailQuery={detailQuery} />
             <ProblemSubmitEditorCard
-              errorMessage={errorMessage}
-              isSubmitting={isSubmitting}
+              errorMessage={createSubmissionAction.errorMessage}
+              isSubmitting={createSubmissionAction.isSubmitting}
               language={language}
               onLanguageChange={(nextLanguage) => {
                 setLanguage(nextLanguage)
-                setStatusMessage('')
-                setErrorMessage('')
+                createSubmissionAction.clearMessages()
               }}
               onSourceCodeChange={(value) => {
                 setSourceCode(value)
-                setStatusMessage('')
-                setErrorMessage('')
+                createSubmissionAction.clearMessages()
               }}
               onSubmit={() => {
                 const sourceCodeResult = parseSubmissionSourceCode(sourceCode)
                 if (!sourceCodeResult.ok) {
-                  setErrorMessage(sourceCodeResult.error)
-                  setStatusMessage('')
+                  createSubmissionAction.setErrorMessage(sourceCodeResult.error)
                   return
                 }
 
-                setIsSubmitting(true)
-                setErrorMessage('')
-                setStatusMessage('')
-
-                void createSubmission({
+                void createSubmissionAction.submit({
                   problemSlug,
                   language,
                   sourceCode: sourceCodeResult.value,
                 })
-                  .then((submission) => {
-                    void navigate(`/submissions/${submissionIdValue(submission.id)}`)
-                  })
-                  .catch((error: unknown) => {
-                    if (error instanceof HttpClientError) {
-                      setErrorMessage(error.message)
-                      return
-                    }
-
-                    setErrorMessage(t('problem.submit.createFailed'))
-                  })
-                  .finally(() => {
-                    setIsSubmitting(false)
-                  })
               }}
               sourceCode={sourceCode}
-              statusMessage={statusMessage}
+              statusMessage={createSubmissionAction.statusMessage}
               supportedLanguages={supportedLanguages}
             />
           </div>

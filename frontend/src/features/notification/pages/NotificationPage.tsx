@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Bell, ChevronRight } from 'lucide-react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -6,10 +6,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { markAllNotificationsRead, markNotificationRead } from '@/features/notification/http/api/notification-client'
+import { useNotificationActions } from '@/features/notification/hooks/use-notification-actions'
 import { notificationTranslationValues } from '@/features/notification/lib/notification-parsers'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
-import { HttpClientError } from '@/shared/api/http-client'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { DateTimeText } from '@/shared/components/date-time-text'
@@ -34,8 +33,12 @@ export function NotificationPage() {
   const refreshNotifications = useNotificationStore((state) => state.refreshNotifications)
   const markReadLocal = useNotificationStore((state) => state.markReadLocal)
   const markAllReadLocal = useNotificationStore((state) => state.markAllReadLocal)
-  const [actionError, setActionError] = useState('')
-  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const notificationActions = useNotificationActions({
+    refreshNotifications,
+    markReadLocal,
+    markAllReadLocal,
+    markAllReadFailedMessage: t('notifications.markAllReadFailed'),
+  })
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const totalPages = calculateTotalPages(totalItems, pageSize)
@@ -71,15 +74,7 @@ export function NotificationPage() {
   }
 
   async function openNotification(targetPath: string, targetAnchor: string | null, notificationId: Parameters<typeof markReadLocal>[0], isRead: boolean) {
-    if (!isRead) {
-      try {
-        await markNotificationRead(notificationId)
-        markReadLocal(notificationId)
-      } catch {
-        // Keep navigation working even if mark-read fails.
-      }
-    }
-
+    await notificationActions.markReadIfNeeded(notificationId, isRead)
     navigate(targetAnchor ? `${targetPath}#${targetAnchor}` : targetPath)
   }
 
@@ -112,30 +107,20 @@ export function NotificationPage() {
               <Button
                 type="button"
                 variant="outline"
-                disabled={unreadCount === 0 || isMarkingAllRead}
+                disabled={unreadCount === 0 || notificationActions.isMarkingAllRead}
                 className="rounded-2xl border-slate-300 bg-white"
                 onClick={() => {
-                  setIsMarkingAllRead(true)
-                  void markAllNotificationsRead()
-                    .then(() => {
-                      setActionError('')
-                      markAllReadLocal()
-                      void refreshNotifications({ page: currentPage, pageSize: notificationsPerPage })
-                    })
-                    .catch((error) => {
-                      setActionError(error instanceof HttpClientError ? error.message : t('notifications.markAllReadFailed'))
-                    })
-                    .finally(() => setIsMarkingAllRead(false))
+                  void notificationActions.markAllRead({ page: currentPage, pageSize: notificationsPerPage })
                 }}
               >
-                {isMarkingAllRead ? t('notifications.markingRead') : t('notifications.markAllRead')}
+                {notificationActions.isMarkingAllRead ? t('notifications.markingRead') : t('notifications.markAllRead')}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {actionError ? (
+            {notificationActions.actionError ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{actionError}</AlertDescription>
+                <AlertDescription className="text-rose-700">{notificationActions.actionError}</AlertDescription>
               </Alert>
             ) : null}
             {listError ? (

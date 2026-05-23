@@ -9,12 +9,19 @@ import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.blog.table.blog.BlogTable
+import domains.notification.application.NotificationCommands
 import domains.problem.application.ProblemCommands
 import domains.problem.model.ProblemSlug
+import domains.user.model.Username
 
 import java.sql.Connection
 
 object BlogMutationCommands:
+
+  final case class CreateBlogCommentWithNotificationRecipientsResult(
+    result: CreateBlogCommentResult,
+    notificationRecipients: List[Username]
+  )
 
   def createBlog(
     databaseSession: DatabaseSession,
@@ -108,6 +115,27 @@ object BlogMutationCommands:
     BlogTable.insertComment(connection, blogId, parentCommentId, actor.username, request.content).map {
       case Some((blog, createdCommentId)) => CreateBlogCommentResult.Created(blog, createdCommentId)
       case None => CreateBlogCommentResult.BlogNotFound
+    }
+
+  def createBlogCommentWithNotificationRecipients(
+    connection: Connection,
+    actor: AuthUser,
+    blogId: BlogId,
+    parentCommentId: Option[BlogCommentId],
+    request: CreateBlogCommentRequest
+  ): IO[CreateBlogCommentWithNotificationRecipientsResult] =
+    createBlogComment(connection, actor, blogId, parentCommentId, request).flatMap {
+      case created @ CreateBlogCommentResult.Created(_, createdCommentId) =>
+        BlogTable.findCommentNotificationContext(connection, blogId, createdCommentId).flatMap {
+          case Some(context) =>
+            NotificationCommands
+              .createBlogReplyNotifications(connection, actor, context)
+              .map(recipients => CreateBlogCommentWithNotificationRecipientsResult(created, recipients))
+          case None =>
+            IO.pure(CreateBlogCommentWithNotificationRecipientsResult(created, Nil))
+        }
+      case result =>
+        IO.pure(CreateBlogCommentWithNotificationRecipientsResult(result, Nil))
     }
 
   def voteBlogComment(

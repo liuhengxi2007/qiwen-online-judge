@@ -10,6 +10,12 @@ const backendBlockedModelSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendModelPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
+const frontendFeatureHttpApiPathPattern = /^frontend\/src\/features\/[^/]+\/http\/api(?:\/|$)/
+const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
+const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
+const backendEffectPattern =
+  /(?:\.prepareStatement\s*\(|\bFiles\.|\bInstant\.now\s*\(|\bLocalDateTime\.now\s*\(|\bSystem\.currentTimeMillis\s*\(|\bUUID\.randomUUID\s*\(|\bSecureRandom\s*\(|\.nextBytes\s*\(|\.publish1\s*\(|\.publish\s*\(|\bclient\.(?:get|set|setex|del|listObjects|putObject|getObject|removeObject|bucketExists|makeBucket)\s*\(|\bproblemDataStorage\.(?:list|read|write|delete|snapshot|restore)\w*\s*\()/
+const backendEffectfulReturnPattern = /:\s*(?:IO|Resource)\s*\[|:\s*Stream\s*\[\s*IO\b/
 
 const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
@@ -94,6 +100,18 @@ function checkFrontendFile(filePath, blockedSegments, errors) {
   }
 }
 
+function checkFrontendPageComponentApiImports(filePath, errors) {
+  const source = read(filePath)
+  for (const match of extractTsSpecifiers(source)) {
+    const resolved = resolveFrontendSpecifier(filePath, match.specifier)
+    if (frontendFeatureHttpApiPathPattern.test(resolved)) {
+      errors.push(
+        `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend API shell "${match.specifier}"`,
+      )
+    }
+  }
+}
+
 function extractScalaImports(source) {
   return source
     .split('\n')
@@ -125,6 +143,59 @@ function checkBackendApplicationBoundaryFile(filePath, errors) {
     if (backendApplicationWireCodecImportPattern.test(importedPath)) {
       errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
     }
+  }
+}
+
+function checkBackendHttpPlansFile(filePath, errors) {
+  const source = read(filePath)
+  for (const entry of extractScalaImports(source)) {
+    const importedPath = entry.line.replace(/^import\s+/, '')
+    if (backendDomainTableImportPattern.test(importedPath)) {
+      errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend table layer "${importedPath}"`)
+    }
+  }
+
+  const sourceWithoutImports = source
+    .split('\n')
+    .map((line) => (line.trim().startsWith('import ') ? '' : line))
+    .join('\n')
+  for (const match of sourceWithoutImports.matchAll(backendDomainTableReferencePattern)) {
+    errors.push(`${filePath}:${lineNumber(sourceWithoutImports, match.index ?? 0)} references forbidden backend table "${match[0]}"`)
+  }
+}
+
+function extractScalaMethods(source) {
+  const methodStartPattern = /^[ \t]*(?:(?:override|private|protected|final)\s+)*def\s+[A-Za-z_$][\w$]*\b/gm
+  const starts = [...source.matchAll(methodStartPattern)].map((match) => match.index ?? 0)
+
+  return starts.flatMap((start, index) => {
+    const nextStart = starts[index + 1] ?? source.length
+    const equalsIndex = source.indexOf('=', start)
+    if (equalsIndex === -1 || equalsIndex > nextStart) {
+      return []
+    }
+
+    return [{
+      start,
+      signature: source.slice(start, equalsIndex),
+      body: source.slice(equalsIndex + 1, nextStart),
+    }]
+  })
+}
+
+function checkBackendEffectfulMethodSignatures(filePath, errors) {
+  const source = read(filePath)
+  for (const method of extractScalaMethods(source)) {
+    if (!backendEffectPattern.test(method.body)) {
+      continue
+    }
+
+    if (backendEffectfulReturnPattern.test(method.signature)) {
+      continue
+    }
+
+    const methodName = method.signature.match(/\bdef\s+([A-Za-z_$][\w$]*)\b/)?.[1] ?? '<unknown>'
+    errors.push(`${filePath}:${lineNumber(source, method.start)} method "${methodName}" contains side effects but does not return IO[...] or Resource[IO, ...]`)
   }
 }
 
@@ -223,6 +294,10 @@ function run() {
     if (/^frontend\/src\/features\/[^/]+\/(?:lib|state)\//.test(filePath)) {
       checkFrontendFile(filePath, frontendBlockedPureSegments, errors)
     }
+
+    if (/^frontend\/src\/features\/[^/]+\/(?:pages|components)\//.test(filePath)) {
+      checkFrontendPageComponentApiImports(filePath, errors)
+    }
   }
 
   for (const filePath of walk('frontend/src/shared/model', new Set(['.ts', '.tsx']))) {
@@ -239,6 +314,14 @@ function run() {
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
       checkBackendApplicationBoundaryFile(filePath, errors)
     }
+
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/.*HttpPlans\.scala$/.test(filePath)) {
+      checkBackendHttpPlansFile(filePath, errors)
+    }
+
+    if (!/^backend\/src\/main\/scala\/domains\/[^/]+\/(?:table|http)\//.test(filePath)) {
+      checkBackendEffectfulMethodSignatures(filePath, errors)
+    }
   }
 
   for (const filePath of walk('backend/src/main/scala/shared/model', new Set(['.scala']))) {
@@ -248,6 +331,12 @@ function run() {
 
   for (const filePath of walk('backend/src/main/scala/shared/access', new Set(['.scala']))) {
     checkBackendModelFile(filePath, errors)
+  }
+
+  for (const filePath of walk('backend/src/main/scala/shared', new Set(['.scala']))) {
+    if (!/^backend\/src\/main\/scala\/shared\/(?:model|access|http)\//.test(filePath)) {
+      checkBackendEffectfulMethodSignatures(filePath, errors)
+    }
   }
 
   checkTrackedResidues(errors)

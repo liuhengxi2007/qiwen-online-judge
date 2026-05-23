@@ -86,58 +86,72 @@ class LocalProblemDataStorage(rootDirectory: Path) extends ProblemDataStorage:
     }
 
   override def deletePath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Boolean] =
+    val directory = dataDirectory(problemSlug)
     IO.blocking {
-      val directory = dataDirectory(problemSlug)
       val resolvedPath = resolveTargetPath(directory, sanitizePath(path))
       val deleted = Files.deleteIfExists(resolvedPath)
-      if deleted then deleteEmptyAncestors(directory, resolvedPath.getParent)
-      deleted
+      (deleted, resolvedPath.getParent)
+    }.flatMap {
+      case (true, parentDirectory) => deleteEmptyAncestors(directory, parentDirectory).as(true)
+      case (false, _) => IO.pure(false)
     }
 
   override def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
-    IO.blocking {
-      val directory = dataDirectory(problemSlug)
-      if Files.exists(directory) then clearDirectory(directory)
+    val directory = dataDirectory(problemSlug)
+    IO.blocking(Files.exists(directory)).flatMap {
+      case true => clearDirectory(directory)
+      case false => IO.unit
     }
 
   override def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
-    IO.blocking {
-      val directory = dataDirectory(problemSlug)
-      Files.createDirectories(directory)
-      clearDirectory(directory)
-      snapshot.foreach { case (path, bytes) =>
-        val resolvedPath = resolveTargetPath(directory, path)
-        Files.createDirectories(resolvedPath.getParent)
-        Files.write(
-          resolvedPath,
-          bytes,
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING,
-          StandardOpenOption.WRITE
-        )
+    val directory = dataDirectory(problemSlug)
+    IO.blocking(Files.createDirectories(directory)) *>
+      clearDirectory(directory) *>
+      snapshot.toList.foldLeft(IO.unit) { case (acc, (path, bytes)) =>
+        acc *> IO.blocking {
+          val resolvedPath = resolveTargetPath(directory, path)
+          Files.createDirectories(resolvedPath.getParent)
+          Files.write(
+            resolvedPath,
+            bytes,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.WRITE
+          )
+          ()
+        }
       }
+
+  private def clearDirectory(directory: Path): IO[Unit] =
+    IO.blocking {
+      val stream = Files.walk(directory)
+      try
+        stream.iterator().asScala
+          .toList
+          .sortBy(_.getNameCount)(Ordering[Int].reverse)
+          .filterNot(_ == directory)
+          .foreach(path => Files.deleteIfExists(path))
+      finally stream.close()
     }
 
-  private def clearDirectory(directory: Path): Unit =
-    val stream = Files.walk(directory)
-    try
-      stream.iterator().asScala
-        .toList
-        .sortBy(_.getNameCount)(Ordering[Int].reverse)
-        .filterNot(_ == directory)
-        .foreach(path => Files.deleteIfExists(path))
-    finally stream.close()
-
-  private def deleteEmptyAncestors(rootDirectory: Path, startingDirectory: Path | Null): Unit =
-    Option(startingDirectory).foreach { currentDirectory =>
-      if currentDirectory != rootDirectory && Files.isDirectory(currentDirectory) then
-        val childStream = Files.list(currentDirectory)
-        try
-          if !childStream.iterator().hasNext then
-            Files.deleteIfExists(currentDirectory)
-            deleteEmptyAncestors(rootDirectory, currentDirectory.getParent)
-        finally childStream.close()
-    }
+  private def deleteEmptyAncestors(rootDirectory: Path, startingDirectory: Path | Null): IO[Unit] =
+    Option(startingDirectory) match
+      case None => IO.unit
+      case Some(currentDirectory) =>
+        IO.blocking {
+          if currentDirectory != rootDirectory && Files.isDirectory(currentDirectory) then
+            val childStream = Files.list(currentDirectory)
+            try
+              if !childStream.iterator().hasNext then
+                Files.deleteIfExists(currentDirectory)
+                Some(currentDirectory.getParent)
+              else None
+            finally childStream.close()
+          else None
+        }.flatMap {
+          case Some(parentDirectory) => deleteEmptyAncestors(rootDirectory, parentDirectory)
+          case None => IO.unit
+        }
 
   private def toProblemDataPath(rootDirectory: Path, path: Path): ProblemDataPath =
     val relativePath = rootDirectory.relativize(path).toString.replace('\\', '/')

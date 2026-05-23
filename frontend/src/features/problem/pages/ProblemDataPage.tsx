@@ -68,7 +68,7 @@ function ProblemDataPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
             <ProblemDataHeaderCard model={model} />
             <ProblemDataUploadCard model={model} />
             <ProblemJudgeConfigEditorCard model={model} problemSlug={problemSlug} />
-            <ProblemDataFilesCard model={model} problemSlug={problemSlug} />
+            <ProblemDataFilesCard model={model} />
           </div>
         ) : (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">

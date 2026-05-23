@@ -1,5 +1,5 @@
 import { useDeferredValue, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { NotebookPen } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { createBlog } from '@/features/blog/http/api/blog-client'
-import { blogIdValue, parseBlogContent, parseBlogTitle } from '@/features/blog/lib/blog-parsers'
+import { useCreateBlogAction } from '@/features/blog/hooks/use-create-blog-action'
+import { parseBlogContent, parseBlogTitle } from '@/features/blog/lib/blog-parsers'
 import type { BlogVisibility } from '@/features/blog/model/BlogVisibility'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
@@ -24,14 +24,12 @@ import { useI18n } from '@/shared/i18n/use-i18n'
 export function CreateBlogPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.create.pageTitle'))
-  const navigate = useNavigate()
   const { session: user, navigationIntent } = useSessionGuard()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [visibility, setVisibility] = useState<BlogVisibility>('public')
   const [contentTab, setContentTab] = useState<'write' | 'preview'>('write')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const createBlogAction = useCreateBlogAction(t('blog.message.createFailed'))
   const deferredContent = useDeferredValue(content)
   const hasUnsavedChanges = title.trim().length > 0 || content.trim().length > 0
 
@@ -48,30 +46,21 @@ export function CreateBlogPage() {
   async function submit() {
     const parsedTitle = parseBlogTitle(title)
     if (!parsedTitle.ok) {
-      setErrorMessage(parsedTitle.error)
+      createBlogAction.setErrorMessage(parsedTitle.error)
       return
     }
 
     const parsedContent = parseBlogContent(content)
     if (!parsedContent.ok) {
-      setErrorMessage(parsedContent.error)
+      createBlogAction.setErrorMessage(parsedContent.error)
       return
     }
 
-    setIsSubmitting(true)
-    setErrorMessage('')
-    try {
-      const createdBlog = await createBlog({
-        title: parsedTitle.value,
-        content: parsedContent.value,
-        visibility,
-      })
-      navigate(`/blogs/${blogIdValue(createdBlog.id)}`)
-    } catch {
-      setErrorMessage(t('blog.message.createFailed'))
-    } finally {
-      setIsSubmitting(false)
-    }
+    await createBlogAction.submit({
+      title: parsedTitle.value,
+      content: parsedContent.value,
+      visibility,
+    })
   }
 
   return (
@@ -152,21 +141,21 @@ export function CreateBlogPage() {
               <p className="text-xs text-slate-500">{t('blog.create.visibilityHelp')}</p>
             </div>
 
-            {errorMessage ? (
+            {createBlogAction.errorMessage ? (
               <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+                <AlertDescription className="text-rose-700">{createBlogAction.errorMessage}</AlertDescription>
               </Alert>
             ) : null}
 
             <Button
               type="button"
-              disabled={isSubmitting}
+              disabled={createBlogAction.isSubmitting}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
                 void submit()
               }}
             >
-              {isSubmitting ? t('blog.create.submitting') : t('blog.create.submit')}
+              {createBlogAction.isSubmitting ? t('blog.create.submitting') : t('blog.create.submit')}
             </Button>
           </CardContent>
         </Card>

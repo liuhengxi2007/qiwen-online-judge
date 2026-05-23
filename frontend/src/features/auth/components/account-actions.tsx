@@ -1,10 +1,10 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Bell, LogOut, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { logout as logoutRequest } from '@/features/auth/http/api/auth-client'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
+import { useLogoutAction } from '@/features/auth/hooks/use-logout-action'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 import { formatUserDisplayLabel } from '@/features/user/components/user-display-label'
@@ -16,20 +16,13 @@ type AccountActionsProps = {
 
 export function AccountActions({ showSignOutLabel = false }: AccountActionsProps) {
   const { t } = useI18n()
-  const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
-  const clearSession = useAuthStore((state) => state.clearSession)
+  const signOut = useLogoutAction()
   const totalUnreadCount = useMessageStore((state) => state.totalUnreadCount)
   const unreadNotificationCount = useNotificationStore((state) => state.unreadCount)
 
   if (!session) {
     return null
-  }
-
-  async function signOut() {
-    await logoutRequest().catch(() => undefined)
-    clearSession()
-    navigate('/login?notice=signed-out', { replace: true })
   }
 
   return (
