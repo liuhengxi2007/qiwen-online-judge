@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.user.model.Username
 import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.BlogId
-import domains.blog.table.BlogTable
+import domains.blog.table.blog.BlogTable
 import domains.problem.model.ProblemSlug
 import shared.model.PageRequest
 

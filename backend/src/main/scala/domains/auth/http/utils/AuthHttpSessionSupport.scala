@@ -7,7 +7,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.model.{AuthUser, SessionToken, SiteManagerUser}
-import domains.auth.table.AuthUserTable
+import domains.auth.table.auth_user.AuthUserTable
 import org.http4s.{Request, Response}
 
 object AuthHttpSessionSupport:

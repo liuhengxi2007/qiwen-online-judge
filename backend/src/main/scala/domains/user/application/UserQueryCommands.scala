@@ -6,13 +6,13 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.Username
-import domains.blog.table.BlogTable
+import domains.blog.table.blog.BlogTable
 import shared.model.{PageRequest, PageResponse}
 import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserProfileResponse, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
 import domains.user.model.{UserContribution, UserIdentity}
 import domains.user.application.input.{UserListRequest}
-import domains.user.table.UserTable
+import domains.user.table.user.UserTable
 
 object UserQueryCommands:
 

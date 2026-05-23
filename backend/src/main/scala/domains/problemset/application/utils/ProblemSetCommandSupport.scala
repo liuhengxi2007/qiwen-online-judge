@@ -5,11 +5,11 @@ package domains.problemset.application.utils
 import domains.problemset.application.{ProblemSetAccessDecision, ProblemSetAccessFacts, ProblemSetPolicy}
 import cats.effect.IO
 import domains.auth.model.AuthUser
-import domains.auth.table.AuthUserTable
+import domains.auth.table.auth_user.AuthUserTable
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
 import shared.access.{AccessSubject, ResourceAccessFacts, ResourceAccessPolicy}
-import domains.usergroup.table.UserGroupTable
+import domains.usergroup.table.user_group.UserGroupTable
 
 object ProblemSetCommandSupport:
 

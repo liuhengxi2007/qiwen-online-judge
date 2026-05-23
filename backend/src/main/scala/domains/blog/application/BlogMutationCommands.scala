@@ -8,10 +8,10 @@ import domains.auth.model.AuthUser
 import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
-import domains.blog.table.BlogTable
+import domains.blog.table.blog.BlogTable
 import domains.problem.application.ProblemPolicy
 import domains.problem.model.ProblemSlug
-import domains.problem.table.ProblemTable
+import domains.problem.table.problem.ProblemTable
 
 import java.sql.Connection
 

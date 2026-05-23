@@ -1,26 +1,28 @@
 import domains.auth.application.{RedisSessionCache, SessionCache, SessionCacheConfig, SessionStore}
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{host, port}
-import database.{DatabaseSession, ResourceAccessGrantTable}
+import database.DatabaseSession
+import database.table.resource_access_grant.ResourceAccessGrantTable
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import domains.system.http.ApiRouter
-import domains.auth.table.AuthUserTable
-import domains.blog.table.BlogTable
+import domains.auth.table.auth_user.AuthUserTable
+import domains.blog.table.blog.BlogTable
 import domains.judge.application.JudgeConfig
 import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
-import domains.auth.table.SessionTable
-import domains.problem.table.{ProblemDataFileTable, ProblemTable}
-import domains.problemset.table.ProblemSetTable
-import domains.submission.table.SubmissionTable
-import domains.judger.table.JudgerTable
+import domains.auth.table.session.SessionTable
+import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.problemset.table.problem_set.ProblemSetTable
+import domains.submission.table.submission.SubmissionTable
+import domains.judger.table.judger.JudgerTable
 import domains.message.application.MessageEventHub
-import domains.message.table.MessageTable
+import domains.message.table.message.MessageTable
 import domains.notification.application.NotificationEventHub
-import domains.notification.table.NotificationTable
-import domains.usergroup.table.UserGroupTable
+import domains.notification.table.notification.NotificationTable
+import domains.usergroup.table.user_group.UserGroupTable
 
 object Main extends IOApp.Simple:
 
@@ -45,7 +47,7 @@ object Main extends IOApp.Simple:
       messageEventHub <- MessageEventHub.resource
       notificationEventHub <- NotificationEventHub.resource
       seedAdminPasswordHash <- cats.effect.Resource.eval(
-        domains.auth.application.PasswordHasher.hashPassword(domains.auth.table.utils.AuthUserTableSupport.seedAdminPlaintextPassword)
+        domains.auth.application.PasswordHasher.hashPassword(domains.auth.table.auth_user.AuthUserTableSupport.seedAdminPlaintextPassword)
       )
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()

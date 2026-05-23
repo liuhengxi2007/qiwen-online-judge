@@ -78,16 +78,28 @@ Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs
 
 For `table`:
 
+- `table/<table_name>/`
+  one folder per persisted table or closely owned table group; use `snake_case` for multi-word folder names and keep the Scala package aligned with the directory
 - `*Table.scala`
-  outward-facing persistence API
+  outward-facing persistence API and operation SQL placed immediately before the method that uses it
 - `*TableSchema.scala`
-  DDL, migration, initialization
-- `*TableSql.scala`
-  SQL constants
-- `utils/*TableSupport.scala`
-  row readers, bind helpers, and persistence-local support code
+  DDL, migration, and initialization SQL
+- optional same-folder support files
+  row readers, bind helpers, codecs, and package-local persistence support for that table
 
 These templates exist to stop large files from mixing routing, orchestration, SQL, migrations, and decoding in one place.
+
+Do not create `*TableSql.scala` files or group operation SQL into one constants block at the top of a table. Prefer:
+
+```scala
+private val insertBookSQL = ...
+def insertBook(...) = ...
+
+private val deleteBookSQL = ...
+def deleteBook(...) = ...
+```
+
+Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
 Do not move query/mutation orchestration into `model`, HTTP wire decoding into `application`, or business decisions into `table`.

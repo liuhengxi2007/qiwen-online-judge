@@ -7,7 +7,7 @@ import domains.user.model.Username
 import domains.message.application.output.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import shared.model.PageRequest
-import domains.message.table.MessageTable
+import domains.message.table.message.MessageTable
 
 import java.sql.Connection
 

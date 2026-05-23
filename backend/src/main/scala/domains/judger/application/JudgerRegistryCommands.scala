@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig
 import domains.judger.application.output.RegisteredJudgerListItem
-import domains.judger.table.JudgerTable
+import domains.judger.table.judger.JudgerTable
 import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse}
 
 object JudgerRegistryCommands:

@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import shared.model.{PageRequest, PageResponse}
 import domains.usergroup.model.{UserGroupSlug}
 import domains.usergroup.application.output.{UserGroupSummary}
-import domains.usergroup.table.UserGroupTable
+import domains.usergroup.table.user_group.UserGroupTable
 import domains.usergroup.application.UserGroupCommandResults.*
 
 object UserGroupQueryCommands:

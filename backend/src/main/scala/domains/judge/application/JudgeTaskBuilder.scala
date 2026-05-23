@@ -5,8 +5,9 @@ import cats.syntax.all.*
 import domains.problem.application.ProblemDataStorage
 import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.ProblemDataPath
-import domains.problem.table.{ProblemDataFileTable, ProblemTable}
-import domains.submission.table.ClaimedSubmission
+import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.submission.table.submission.ClaimedSubmission
 import judgeprotocol.model.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 

@@ -10,7 +10,7 @@ import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
 import domains.user.model.{UserDisplayMode, UserLocale, UserPreferences}
-import domains.user.table.UserTable
+import domains.user.table.user.UserTable
 
 import java.sql.Connection
 

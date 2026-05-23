@@ -5,9 +5,9 @@ package domains.problemset.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.problem.table.ProblemTable
+import domains.problem.table.problem.ProblemTable
 import domains.problemset.application.input.AddProblemToProblemSetRequest
-import domains.problemset.table.ProblemSetTable
+import domains.problemset.table.problem_set.ProblemSetTable
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetDecisions.*
 import domains.problemset.application.utils.ProblemSetCommandSupport.*

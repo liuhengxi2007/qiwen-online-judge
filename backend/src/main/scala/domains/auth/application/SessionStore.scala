@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.SessionToken
 import domains.user.model.Username
-import domains.auth.table.SessionTable
+import domains.auth.table.session.SessionTable
 
 import java.sql.Connection
 import java.security.SecureRandom

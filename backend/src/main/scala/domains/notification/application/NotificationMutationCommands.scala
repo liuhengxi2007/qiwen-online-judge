@@ -9,7 +9,7 @@ import domains.blog.application.BlogCommentNotificationContext
 import domains.blog.model.BlogCommentId
 import domains.notification.application.NotificationCommandResults.{MarkAllNotificationsReadResult, MarkNotificationReadResult}
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
-import domains.notification.table.NotificationTable
+import domains.notification.table.notification.NotificationTable
 
 import java.sql.Connection
 

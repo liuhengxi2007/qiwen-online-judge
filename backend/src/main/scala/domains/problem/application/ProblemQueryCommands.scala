@@ -9,7 +9,7 @@ import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.application.input.{ProblemListRequest, ProblemSearchQuery}
-import domains.problem.table.ProblemTable
+import domains.problem.table.problem.ProblemTable
 import shared.model.PageResponse
 
 object ProblemQueryCommands:

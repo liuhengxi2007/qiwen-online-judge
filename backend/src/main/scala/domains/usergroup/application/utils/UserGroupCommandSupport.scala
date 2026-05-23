@@ -6,10 +6,10 @@ import domains.usergroup.application.{UserGroupCommands, UserGroupDecisions}
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.user.model.Username
-import domains.auth.table.AuthUserTable
+import domains.auth.table.auth_user.AuthUserTable
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{ManagedUserGroup, OwnedUserGroup, UserGroup}
-import domains.usergroup.table.UserGroupTable
+import domains.usergroup.table.user_group.UserGroupTable
 
 object UserGroupCommandSupport:
 
