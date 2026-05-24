@@ -17,6 +17,12 @@ object UserIdentitySql:
   def returningColumns(usernameColumn: String, alias: String): String =
     s"$usernameColumn, (select display_name from auth_users where username = $usernameColumn) as ${alias}_display_name"
 
+  def readUserIdentity(resultSet: ResultSet): UserIdentity =
+    UserIdentity(
+      username = Username.canonical(resultSet.getString("username")),
+      displayName = DisplayName(resultSet.getString("display_name"))
+    )
+
   def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
     UserIdentity(
       username = Username.canonical(resultSet.getString(s"${prefix}_username")),

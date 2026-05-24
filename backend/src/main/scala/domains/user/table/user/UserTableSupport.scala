@@ -6,9 +6,10 @@ import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import shared.sql.LikePatternSql
+import shared.sql.UserIdentitySql.readUserIdentity
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
-import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserIdentity, UserLocale}
+import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -53,12 +54,6 @@ object UserTableSupport:
     UserAcceptedRanklistItem(
       user = readUserIdentity(resultSet),
       acceptedCount = resultSet.getInt("accepted_count")
-    )
-
-  def readUserIdentity(resultSet: ResultSet): UserIdentity =
-    UserIdentity(
-      username = Username.canonical(resultSet.getString("username")),
-      displayName = DisplayName(resultSet.getString("display_name"))
     )
 
   def readAcceptedProblem(resultSet: ResultSet): UserAcceptedProblem =

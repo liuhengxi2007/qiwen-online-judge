@@ -4,8 +4,7 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import domains.auth.model.AuthUser
-import domains.user.model.{DisplayName, Username}
-import domains.user.model.UserIdentity
+import domains.user.model.Username
 import shared.model.{PageRequest, PageResponse}
 import shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, ProblemTitle}
@@ -71,10 +70,7 @@ object SubmissionTable:
               problemSlug = problemSlug,
               problemTitle = problemTitle,
               canManage = false,
-              submitter = UserIdentity(
-                submitterUsername,
-                DisplayName(resultSet.getString("submitter_display_name"))
-              ),
+              submitter = UserIdentitySql.readUserIdentity(resultSet, "submitter"),
               language = language,
               status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
               verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),

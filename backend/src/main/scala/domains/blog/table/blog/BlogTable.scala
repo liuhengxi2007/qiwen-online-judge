@@ -3,8 +3,7 @@ package domains.blog.table.blog
 
 
 import cats.effect.IO
-import domains.user.model.{DisplayName, Username}
-import domains.user.model.UserIdentity
+import domains.user.model.Username
 import domains.blog.application.output.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.application.output.{BlogCommentSummary, BlogDetail, BlogSummary}
@@ -54,10 +53,7 @@ object BlogTable:
               id = BlogId(resultSet.getLong("public_id")),
               title = title,
               content = content,
-              author = UserIdentity(
-                authorUsername,
-                DisplayName(resultSet.getString("author_display_name"))
-              ),
+              author = UserIdentitySql.readUserIdentity(resultSet, "author"),
               visibility = visibility,
               relatedProblems = Nil,
               score = 0,

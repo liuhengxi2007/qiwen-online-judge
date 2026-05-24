@@ -2,10 +2,10 @@ package domains.message.table.message
 
 
 
-import domains.user.model.{DisplayName, Username}
+import domains.user.model.Username
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.message.application.output.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
-import domains.user.model.UserIdentity
+import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.ResultSet
 
@@ -16,10 +16,7 @@ object MessageTableSupport:
   def readConversationSummary(resultSet: ResultSet): MessageConversationSummary =
     MessageConversationSummary(
       id = MessageConversationId(resultSet.getObject("id", classOf[java.util.UUID])),
-      otherUser = UserIdentity(
-        username = Username.canonical(resultSet.getString("other_username")),
-        displayName = DisplayName(resultSet.getString("other_display_name"))
-      ),
+      otherUser = readUserIdentity(resultSet, "other"),
       lastMessagePreview = Option(resultSet.getString("last_message_preview")),
       lastMessageSenderUsername = Option(resultSet.getString("last_message_sender_username")).map(Username.canonical),
       lastMessageAt = resultSet.getTimestamp("last_message_at").toInstant,
@@ -30,10 +27,7 @@ object MessageTableSupport:
     DirectMessage(
       id = MessageId(resultSet.getObject("id", classOf[java.util.UUID])),
       conversationId = MessageConversationId(resultSet.getObject("conversation_id", classOf[java.util.UUID])),
-      sender = UserIdentity(
-        username = Username.canonical(resultSet.getString("sender_username")),
-        displayName = DisplayName(resultSet.getString("sender_display_name"))
-      ),
+      sender = readUserIdentity(resultSet, "sender"),
       recipientUsername = Username.canonical(resultSet.getString("recipient_username")),
       content = MessageContent(resultSet.getString("content")),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
@@ -42,10 +36,7 @@ object MessageTableSupport:
 
   def readBlockEntry(resultSet: ResultSet): MessageBlockEntry =
     MessageBlockEntry(
-      user = UserIdentity(
-        username = Username.canonical(resultSet.getString("blocked_username")),
-        displayName = DisplayName(resultSet.getString("blocked_display_name"))
-      ),
+      user = readUserIdentity(resultSet, "blocked"),
       createdAt = resultSet.getTimestamp("created_at").toInstant
     )
 
