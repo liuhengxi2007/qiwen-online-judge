@@ -57,6 +57,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
   useEffect(() => {
     dispatch({
       type: 'target_changed',
+      targetUsername,
       editedUser: isEditingOwnSettings ? viewer : null,
     })
   }, [isEditingOwnSettings, targetUsername, viewer])

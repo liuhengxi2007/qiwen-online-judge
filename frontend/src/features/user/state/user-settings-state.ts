@@ -5,6 +5,7 @@ import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
+import type { Username } from '@/features/user/model/Username'
 
 export type UserSettingsSection = 'profile' | 'preferences' | 'account'
 
@@ -15,6 +16,7 @@ export type UserSettingsSectionState = {
 }
 
 export type UserSettingsState = {
+  targetUsername: Username | null
   editedUser: SessionResponse | null
   displayName: string
   email: string
@@ -31,7 +33,7 @@ export type UserSettingsState = {
 }
 
 export type UserSettingsAction =
-  | { type: 'target_changed'; editedUser: SessionResponse | null }
+  | { type: 'target_changed'; targetUsername: Username; editedUser: SessionResponse | null }
   | { type: 'query_synced'; user: SessionResponse }
   | { type: 'query_failed'; message: string }
   | { type: 'set_display_name'; value: string }
@@ -79,6 +81,7 @@ function clearSectionFeedback(
 }
 
 export const initialUserSettingsState: UserSettingsState = {
+  targetUsername: null,
   editedUser: null,
   displayName: '',
   email: '',
@@ -102,6 +105,7 @@ export function reduceUserSettingsState(
     case 'target_changed':
       return {
         ...state,
+        targetUsername: action.targetUsername,
         editedUser: action.editedUser,
         displayName: '',
         email: '',

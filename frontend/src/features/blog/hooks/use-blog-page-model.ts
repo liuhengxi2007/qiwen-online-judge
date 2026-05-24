@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   acceptBlogProblemSubmission,
@@ -38,36 +38,37 @@ export function useBlogPageModel({
   const [pendingMessage, setPendingMessage] = useState('')
   const [activeReviewBlogId, setActiveReviewBlogId] = useState<BlogId | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const refreshPendingBlogs = useCallback((isCancelled: () => boolean = () => false) => {
     if (!canManageProblemLinks || !problemSlugFilter) {
       setPendingBlogs([])
-      return () => {
-        cancelled = true
-      }
+      return
     }
 
     setIsLoadingPending(true)
     setPendingMessage('')
     void listPendingProblemBlogs(problemSlugFilter, { page: 1, pageSize: 10 })
       .then((response) => {
-        if (!cancelled) {
+        if (!isCancelled()) {
           setPendingBlogs(response.items)
           setIsLoadingPending(false)
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!isCancelled()) {
           setPendingBlogs([])
           setIsLoadingPending(false)
           setPendingMessage(t('blog.problem.pendingLoadFailed'))
         }
       })
+  }, [canManageProblemLinks, problemSlugFilter, t])
 
+  useEffect(() => {
+    let cancelled = false
+    refreshPendingBlogs(() => cancelled)
     return () => {
       cancelled = true
     }
-  }, [canManageProblemLinks, problemSlugFilter, model.blogs, t])
+  }, [refreshPendingBlogs])
 
   async function submitLinkBlog() {
     if (!problemSlugFilter) {
@@ -85,6 +86,7 @@ export function useBlogPageModel({
     try {
       await linkBlogToProblem(problemSlugFilter, parsedBlogId.value)
       model.reload()
+      refreshPendingBlogs()
       setLinkBlogId('')
       setLinkMessage(t('blog.problem.linkCreated'))
     } catch {
@@ -102,6 +104,7 @@ export function useBlogPageModel({
     try {
       await unlinkBlogFromProblem(problemSlugFilter, blogId)
       model.reload()
+      refreshPendingBlogs()
     } catch {
       setLinkMessage(t('blog.problem.unlinkFailed'))
     }
