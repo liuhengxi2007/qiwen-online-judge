@@ -1,9 +1,9 @@
-package domains.system.http
+package server.http
 
-import domains.auth.application.SessionStore
 import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
+import domains.auth.application.SessionStore
 import domains.judge.application.JudgeConfig
 import domains.message.application.MessageEventHub
 import domains.notification.application.NotificationEventHub
@@ -23,7 +23,7 @@ object ApiRouter:
     notificationEventHub: NotificationEventHub
   ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
-      domains.system.health.HealthRouter.routes <+>
+      server.health.HealthRouter.routes <+>
         domains.auth.http.AuthRouter.routes(databaseSession, sessionStore) <+>
         domains.user.http.UserRouter.routes(databaseSession, sessionStore) <+>
         domains.judger.http.JudgerRegistryRouter.routes(databaseSession, judgeConfig, sessionStore) <+>

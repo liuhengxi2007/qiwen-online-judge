@@ -8,7 +8,9 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - Auth commands, HTTP routes, models, and persistence for accounts and sessions
 - `src/main/scala/domains/user`
   - User profile, ranklist, settings, permission-management routes, and user-owned persistence/models
-- `src/main/scala/domains/system/health`
+- `src/main/scala/server/http`
+  - Top-level HTTP app/router composition that wires domain routers together
+- `src/main/scala/server/health`
   - Health endpoint and response model
 - `src/main/scala/shared`
   - Shared models used across domains, including pagination and lifecycle primitives

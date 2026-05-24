@@ -1,4 +1,4 @@
-package domains.system.health
+package server.health
 
 import cats.effect.IO
 import io.circe.syntax.*
