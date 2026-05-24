@@ -1,4 +1,4 @@
-import { useEffect, useReducer, type KeyboardEvent } from 'react'
+import { useReducer, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
@@ -26,9 +26,9 @@ import {
 import {
   buildPageNumbers,
   calculateTotalPages,
-  getPageCorrection,
   parsePositivePage,
 } from '@/shared/domain/pagination'
+import { usePageSearchParamCorrection } from '@/shared/hooks/use-page-search-param-correction'
 
 export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -90,24 +90,12 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     showProblemSuggestionPanel,
   })
 
-  useEffect(() => {
-    if (submissionQuery.isLoading) {
-      return
-    }
-
-    const correction = getPageCorrection(currentPage, totalPages)
-    if (correction.kind === 'none') {
-      return
-    }
-
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (correction.kind === 'delete') {
-      nextSearchParams.delete('page')
-    } else {
-      nextSearchParams.set('page', String(correction.page))
-    }
-    setSearchParams(nextSearchParams)
-  }, [currentPage, searchParams, setSearchParams, submissionQuery.isLoading, totalPages])
+  usePageSearchParamCorrection({
+    currentPage,
+    totalPages,
+    isLoading: submissionQuery.isLoading,
+    setSearchParams,
+  })
 
   function updateSearchFilter(name: string, value: string | null) {
     const nextSearchParams = new URLSearchParams(searchParams)

@@ -21,13 +21,13 @@ import { resourceAccessBadgeLabel } from '@/shared/domain/resource-lifecycle'
 import {
   buildPageNumbers,
   calculateTotalPages,
-  getPageCorrection,
   parsePositivePage,
 } from '@/shared/domain/pagination'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
+import { usePageSearchParamCorrection } from '@/shared/hooks/use-page-search-param-correction'
 
 const problemsPerPage = 10
 
@@ -74,24 +74,12 @@ function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
     setQueryInput(activeQuery)
   }, [activeQuery])
 
-  useEffect(() => {
-    if (model.isLoading) {
-      return
-    }
-
-    const correction = getPageCorrection(currentPage, totalPages)
-    if (correction.kind === 'none') {
-      return
-    }
-
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (correction.kind === 'delete') {
-      nextSearchParams.delete('page')
-    } else {
-      nextSearchParams.set('page', String(correction.page))
-    }
-    setSearchParams(nextSearchParams)
-  }, [currentPage, model.isLoading, searchParams, setSearchParams, totalPages])
+  usePageSearchParamCorrection({
+    currentPage,
+    totalPages,
+    isLoading: model.isLoading,
+    setSearchParams,
+  })
 
   function applyQuery() {
     const nextSearchParams = new URLSearchParams(searchParams)

@@ -18,7 +18,8 @@ import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { DateTimeText } from '@/shared/components/date-time-text'
-import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/shared/domain/pagination'
+import { usePageSearchParamCorrection } from '@/shared/hooks/use-page-search-param-correction'
 
 const conversationsPerPage = 10
 
@@ -49,22 +50,12 @@ export function MessageInboxPage() {
     void refreshInbox({ page: currentPage, pageSize: conversationsPerPage })
   }, [currentPage, refreshInbox])
 
-  useEffect(() => {
-    if (isLoadingInbox) {
-      return
-    }
-    const correction = getPageCorrection(currentPage, totalPages)
-    if (correction.kind === 'none') {
-      return
-    }
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (correction.kind === 'delete') {
-      nextSearchParams.delete('page')
-    } else {
-      nextSearchParams.set('page', String(correction.page))
-    }
-    setSearchParams(nextSearchParams)
-  }, [currentPage, isLoadingInbox, searchParams, setSearchParams, totalPages])
+  usePageSearchParamCorrection({
+    currentPage,
+    totalPages,
+    isLoading: isLoadingInbox,
+    setSearchParams,
+  })
 
   const visibleSuggestions = searchQuery.trim() ? recipientSuggestions.suggestions : []
   const visibleSearchError = searchQuery.trim() ? recipientSuggestions.searchError : ''

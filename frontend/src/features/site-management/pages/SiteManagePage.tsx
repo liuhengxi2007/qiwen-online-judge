@@ -9,8 +9,9 @@ import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useSiteManageModel } from '@/features/site-management/hooks/use-site-manage-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { parseUserSearchQuery } from '@/features/user/lib/user-parsers'
-import { calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+import { calculateTotalPages, parsePositivePage } from '@/shared/domain/pagination'
 import { useI18n } from '@/shared/i18n/use-i18n'
+import { usePageSearchParamCorrection } from '@/shared/hooks/use-page-search-param-correction'
 
 export function SiteManagePage() {
   const { t } = useI18n()
@@ -56,24 +57,12 @@ export function SiteManagePage() {
     setQueryInput(activeQuery)
   }, [activeQuery])
 
-  useEffect(() => {
-    if (isLoadingUsers) {
-      return
-    }
-
-    const correction = getPageCorrection(currentPage, totalPages)
-    if (correction.kind === 'none') {
-      return
-    }
-
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (correction.kind === 'delete') {
-      nextSearchParams.delete('page')
-    } else {
-      nextSearchParams.set('page', String(correction.page))
-    }
-    setSearchParams(nextSearchParams)
-  }, [currentPage, isLoadingUsers, searchParams, setSearchParams, totalPages])
+  usePageSearchParamCorrection({
+    currentPage,
+    totalPages,
+    isLoading: isLoadingUsers,
+    setSearchParams,
+  })
 
   if (guardNavigationIntent) {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />

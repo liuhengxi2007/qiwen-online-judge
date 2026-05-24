@@ -37,13 +37,20 @@ export function useNotificationRealtimeConnection() {
   const clear = useNotificationStore((state) => state.clear)
 
   useEffect(() => {
+    if (session) {
+      return
+    }
+
+    clear()
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+    subscriberCount = 0
+  }, [clear, session])
+
+  useEffect(() => {
     if (!session) {
-      clear()
-      if (eventSource) {
-        eventSource.close()
-        eventSource = null
-      }
-      subscriberCount = 0
       return
     }
 
@@ -58,5 +65,5 @@ export function useNotificationRealtimeConnection() {
       subscriberCount -= 1
       releaseEventSource()
     }
-  }, [clear, hasLoadedUnreadCount, refreshNotifications, refreshUnreadCount, session])
+  }, [hasLoadedUnreadCount, refreshNotifications, refreshUnreadCount, session])
 }

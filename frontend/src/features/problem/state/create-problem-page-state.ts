@@ -1,8 +1,7 @@
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
-export type CreateProblemPageState = {
-  isSubmitting: boolean
+export type CreateProblemPageDraft = {
   slug: string
   title: string
   statement: string
@@ -14,6 +13,11 @@ export type CreateProblemPageState = {
   managerUsersInput: string
   managerGroupsInput: string
   othersSubmissionAccess: OthersSubmissionAccess
+}
+
+export type CreateProblemPageState = {
+  isSubmitting: boolean
+  draft: CreateProblemPageDraft
   errorMessage: string
   successMessage: string
 }
@@ -34,8 +38,7 @@ export type CreateProblemPageAction =
   | { type: 'submit_succeeded'; message: string }
   | { type: 'submit_failed'; message: string }
 
-export const initialCreateProblemPageState: CreateProblemPageState = {
-  isSubmitting: false,
+export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   slug: '',
   title: '',
   statement: '',
@@ -47,6 +50,11 @@ export const initialCreateProblemPageState: CreateProblemPageState = {
   managerUsersInput: '',
   managerGroupsInput: '',
   othersSubmissionAccess: 'none',
+}
+
+export const initialCreateProblemPageState: CreateProblemPageState = {
+  isSubmitting: false,
+  draft: initialCreateProblemPageDraft,
   errorMessage: '',
   successMessage: '',
 }
@@ -58,17 +66,7 @@ export function resetCreateProblemPageState(
   return {
     ...state,
     isSubmitting: false,
-    slug: '',
-    title: '',
-    statement: '',
-    timeLimitMs: 1000,
-    spaceLimitMb: 256,
-    baseAccess: 'owner_only',
-    grantedUsersInput: '',
-    grantedGroupsInput: '',
-    managerUsersInput: '',
-    managerGroupsInput: '',
-    othersSubmissionAccess: 'none',
+    draft: initialCreateProblemPageDraft,
     errorMessage: '',
     successMessage,
   }
@@ -80,27 +78,27 @@ export function reduceCreateProblemPageState(
 ): CreateProblemPageState {
   switch (action.type) {
     case 'set_slug':
-      return { ...state, slug: action.value }
+      return { ...state, draft: { ...state.draft, slug: action.value } }
     case 'set_title':
-      return { ...state, title: action.value }
+      return { ...state, draft: { ...state.draft, title: action.value } }
     case 'set_statement':
-      return { ...state, statement: action.value }
+      return { ...state, draft: { ...state.draft, statement: action.value } }
     case 'set_time_limit_ms':
-      return { ...state, timeLimitMs: action.value }
+      return { ...state, draft: { ...state.draft, timeLimitMs: action.value } }
     case 'set_space_limit_mb':
-      return { ...state, spaceLimitMb: action.value }
+      return { ...state, draft: { ...state.draft, spaceLimitMb: action.value } }
     case 'set_base_access':
-      return { ...state, baseAccess: action.value }
+      return { ...state, draft: { ...state.draft, baseAccess: action.value } }
     case 'set_granted_users_input':
-      return { ...state, grantedUsersInput: action.value }
+      return { ...state, draft: { ...state.draft, grantedUsersInput: action.value } }
     case 'set_granted_groups_input':
-      return { ...state, grantedGroupsInput: action.value }
+      return { ...state, draft: { ...state.draft, grantedGroupsInput: action.value } }
     case 'set_manager_users_input':
-      return { ...state, managerUsersInput: action.value }
+      return { ...state, draft: { ...state.draft, managerUsersInput: action.value } }
     case 'set_manager_groups_input':
-      return { ...state, managerGroupsInput: action.value }
+      return { ...state, draft: { ...state.draft, managerGroupsInput: action.value } }
     case 'set_others_submission_access':
-      return { ...state, othersSubmissionAccess: action.value }
+      return { ...state, draft: { ...state.draft, othersSubmissionAccess: action.value } }
     case 'submit_started':
       return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
     case 'submit_succeeded':

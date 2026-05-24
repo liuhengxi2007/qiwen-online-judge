@@ -11,14 +11,18 @@ import { useI18n } from '@/shared/i18n/use-i18n'
 
 type CreateProblemSetPageState = {
   isSubmitting: boolean
+  draft: CreateProblemSetDraft
+  errorMessage: string
+  successMessage: string
+}
+
+type CreateProblemSetDraft = {
   slug: string
   title: string
   description: string
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
-  errorMessage: string
-  successMessage: string
 }
 
 type CreateProblemSetPageAction =
@@ -32,14 +36,18 @@ type CreateProblemSetPageAction =
   | { type: 'submit_succeeded' }
   | { type: 'submit_failed'; message: string }
 
-const initialState: CreateProblemSetPageState = {
-  isSubmitting: false,
+const initialDraft: CreateProblemSetDraft = {
   slug: '',
   title: '',
   description: '',
   baseAccess: 'owner_only',
   grantedUsersInput: '',
   grantedGroupsInput: '',
+}
+
+const initialState: CreateProblemSetPageState = {
+  isSubmitting: false,
+  draft: initialDraft,
   errorMessage: '',
   successMessage: '',
 }
@@ -47,29 +55,24 @@ const initialState: CreateProblemSetPageState = {
 function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageAction): CreateProblemSetPageState {
   switch (action.type) {
     case 'set_slug':
-      return { ...state, slug: action.value }
+      return { ...state, draft: { ...state.draft, slug: action.value } }
     case 'set_title':
-      return { ...state, title: action.value }
+      return { ...state, draft: { ...state.draft, title: action.value } }
     case 'set_description':
-      return { ...state, description: action.value }
+      return { ...state, draft: { ...state.draft, description: action.value } }
     case 'set_base_access':
-      return { ...state, baseAccess: action.value }
+      return { ...state, draft: { ...state.draft, baseAccess: action.value } }
     case 'set_granted_users_input':
-      return { ...state, grantedUsersInput: action.value }
+      return { ...state, draft: { ...state.draft, grantedUsersInput: action.value } }
     case 'set_granted_groups_input':
-      return { ...state, grantedGroupsInput: action.value }
+      return { ...state, draft: { ...state.draft, grantedGroupsInput: action.value } }
     case 'submit_started':
       return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
     case 'submit_succeeded':
       return {
         ...state,
         isSubmitting: false,
-        slug: '',
-        title: '',
-        description: '',
-        baseAccess: 'owner_only',
-        grantedUsersInput: '',
-        grantedGroupsInput: '',
+        draft: initialDraft,
         errorMessage: '',
         successMessage: 'Problem set created successfully.',
       }
@@ -82,9 +85,10 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
   const accessPolicyResult = buildResourceAccessPolicy(
-    resourceAccessSubjectParsers,    state.baseAccess,
-    state.grantedUsersInput,
-    state.grantedGroupsInput,
+    resourceAccessSubjectParsers,
+    state.draft.baseAccess,
+    state.draft.grantedUsersInput,
+    state.draft.grantedGroupsInput,
   )
 
   const submit = useCallback(async (): Promise<ProblemSetSummary | null> => {
@@ -93,14 +97,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
       return null
     }
 
-    const validation = validateProblemSetDraft({
-      slug: state.slug,
-      title: state.title,
-      description: state.description,
-      baseAccess: state.baseAccess,
-      grantedUsersInput: state.grantedUsersInput,
-      grantedGroupsInput: state.grantedGroupsInput,
-    })
+    const validation = validateProblemSetDraft(state.draft)
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', message: validation.message })
       return null
@@ -117,10 +114,12 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
       dispatch({ type: 'submit_failed', message })
       return null
     }
-  }, [canCreate, state.baseAccess, state.description, state.grantedGroupsInput, state.grantedUsersInput, state.slug, state.title, t])
+  }, [canCreate, state.draft, t])
 
   return {
-    ...state,
+    ...state.draft,
+    isSubmitting: state.isSubmitting,
+    errorMessage: state.errorMessage,
     successMessage: state.successMessage ? t('problemSet.message.createSuccess') : '',
     accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createOwnerOnlyAccessPolicy(),
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),

@@ -6,12 +6,16 @@ import { useRegisterMutation } from '@/features/auth/hooks/use-register-mutation
 import { parseDisplayName, parseUsername } from '@/features/user/lib/user-parsers'
 
 type RegisterState = {
+  draft: RegisterDraft
+  errorMessage: string
+}
+
+type RegisterDraft = {
   username: string
   displayName: string
   email: string
   password: string
   confirmPassword: string
-  errorMessage: string
 }
 
 type RegisterAction =
@@ -23,27 +27,31 @@ type RegisterAction =
   | { type: 'validation_failed'; message: string }
   | { type: 'validation_cleared' }
 
-const initialState: RegisterState = {
+const initialDraft: RegisterDraft = {
   username: '',
   displayName: '',
   email: '',
   password: '',
   confirmPassword: '',
+}
+
+const initialState: RegisterState = {
+  draft: initialDraft,
   errorMessage: '',
 }
 
 function registerReducer(state: RegisterState, action: RegisterAction): RegisterState {
   switch (action.type) {
     case 'set_username':
-      return { ...state, username: action.value }
+      return { ...state, draft: { ...state.draft, username: action.value } }
     case 'set_display_name':
-      return { ...state, displayName: action.value }
+      return { ...state, draft: { ...state.draft, displayName: action.value } }
     case 'set_email':
-      return { ...state, email: action.value }
+      return { ...state, draft: { ...state.draft, email: action.value } }
     case 'set_password':
-      return { ...state, password: action.value }
+      return { ...state, draft: { ...state.draft, password: action.value } }
     case 'set_confirm_password':
-      return { ...state, confirmPassword: action.value }
+      return { ...state, draft: { ...state.draft, confirmPassword: action.value } }
     case 'validation_failed':
       return { ...state, errorMessage: action.message }
     case 'validation_cleared':
@@ -56,31 +64,31 @@ export function useRegisterModel() {
   const mutation = useRegisterMutation()
 
   const submit = useCallback(async () => {
-    const usernameResult = parseUsername(state.username)
+    const usernameResult = parseUsername(state.draft.username)
     if (!usernameResult.ok) {
       dispatch({ type: 'validation_failed', message: usernameResult.error })
       return
     }
 
-    const displayNameResult = parseDisplayName(state.displayName)
+    const displayNameResult = parseDisplayName(state.draft.displayName)
     if (!displayNameResult.ok) {
       dispatch({ type: 'validation_failed', message: displayNameResult.error })
       return
     }
 
-    const emailResult = parseEmailAddress(state.email)
+    const emailResult = parseEmailAddress(state.draft.email)
     if (!emailResult.ok) {
       dispatch({ type: 'validation_failed', message: emailResult.error })
       return
     }
 
-    const passwordResult = parsePlaintextPassword(state.password)
+    const passwordResult = parsePlaintextPassword(state.draft.password)
     if (!passwordResult.ok) {
       dispatch({ type: 'validation_failed', message: passwordResult.error })
       return
     }
 
-    const confirmPasswordResult = parsePlaintextPassword(state.confirmPassword)
+    const confirmPasswordResult = parsePlaintextPassword(state.draft.confirmPassword)
     if (!confirmPasswordResult.ok) {
       dispatch({ type: 'validation_failed', message: confirmPasswordResult.error })
       return
@@ -99,14 +107,14 @@ export function useRegisterModel() {
       email: emailResult.value,
       password: passwordResult.value,
     } satisfies RegisterRequest)
-  }, [mutation, state.confirmPassword, state.displayName, state.email, state.password, state.username])
+  }, [mutation, state.draft])
 
   return {
-    username: state.username,
-    displayName: state.displayName,
-    email: state.email,
-    password: state.password,
-    confirmPassword: state.confirmPassword,
+    username: state.draft.username,
+    displayName: state.draft.displayName,
+    email: state.draft.email,
+    password: state.draft.password,
+    confirmPassword: state.draft.confirmPassword,
     errorMessage: state.errorMessage || mutation.errorMessage,
     isSubmitting: mutation.isSubmitting,
     navigationIntent: mutation.navigationIntent,

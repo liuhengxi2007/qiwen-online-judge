@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, FolderKanban, Users } from 'lucide-react'
 
@@ -12,7 +11,8 @@ import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
-import { buildPageNumbers, calculateTotalPages, getPageCorrection, parsePositivePage } from '@/shared/domain/pagination'
+import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/shared/domain/pagination'
+import { usePageSearchParamCorrection } from '@/shared/hooks/use-page-search-param-correction'
 
 const userGroupsPerPage = 10
 
@@ -26,22 +26,12 @@ export function UserGroupPage() {
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
-  useEffect(() => {
-    if (model.isLoading) {
-      return
-    }
-    const correction = getPageCorrection(currentPage, totalPages)
-    if (correction.kind === 'none') {
-      return
-    }
-    const nextSearchParams = new URLSearchParams(searchParams)
-    if (correction.kind === 'delete') {
-      nextSearchParams.delete('page')
-    } else {
-      nextSearchParams.set('page', String(correction.page))
-    }
-    setSearchParams(nextSearchParams)
-  }, [currentPage, model.isLoading, searchParams, setSearchParams, totalPages])
+  usePageSearchParamCorrection({
+    currentPage,
+    totalPages,
+    isLoading: model.isLoading,
+    setSearchParams,
+  })
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />

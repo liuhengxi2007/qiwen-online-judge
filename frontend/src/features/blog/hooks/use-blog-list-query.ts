@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
 import { listBlogs, listProblemBlogs } from '@/features/blog/http/api/blog-client'
@@ -6,18 +6,26 @@ import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { PageRequest } from '@/shared/model/PageRequest'
 
+type BlogListQuery = {
+  authorUsername: Username | null
+  problemSlug: ProblemSlug | null
+  pageRequest: PageRequest
+}
+
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null, pageRequest: PageRequest) {
   const page = pageRequest.page
   const pageSize = pageRequest.pageSize
   const [queryState, setQueryState] = useState<{
-    key: string | null
+    query: BlogListQuery | null
+    reloadToken: number | null
     blogs: BlogSummary[]
     page: number
     pageSize: number
     totalItems: number
     errorMessage: string
   }>({
-    key: null,
+    query: null,
+    reloadToken: null,
     blogs: [],
     page,
     pageSize,
@@ -25,12 +33,22 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
     errorMessage: '',
   })
   const [reloadToken, setReloadToken] = useState(0)
-  const queryKey = `${authorUsername ?? ''}:${problemSlug ?? ''}:${page}:${pageSize}:${reloadToken}`
+  const query = useMemo(
+    () => ({
+      authorUsername,
+      problemSlug,
+      pageRequest: { page, pageSize },
+    }),
+    [authorUsername, page, pageSize, problemSlug],
+  )
+  const hasCurrentQuery = queryState.query === query && queryState.reloadToken === reloadToken
 
   useEffect(() => {
     let cancelled = false
-    const nextPageRequest = { page, pageSize }
-    const loadBlogs = problemSlug === null ? listBlogs(authorUsername, nextPageRequest) : listProblemBlogs(problemSlug, nextPageRequest)
+    const loadBlogs =
+      query.problemSlug === null
+        ? listBlogs(query.authorUsername, query.pageRequest)
+        : listProblemBlogs(query.problemSlug, query.pageRequest)
 
     void loadBlogs
       .then((response) => {
@@ -39,7 +57,8 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
         }
 
         setQueryState({
-          key: queryKey,
+          query,
+          reloadToken,
           blogs: response.items,
           page: response.page,
           pageSize: response.pageSize,
@@ -53,10 +72,11 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
         }
 
         setQueryState({
-          key: queryKey,
+          query,
+          reloadToken,
           blogs: [],
-          page,
-          pageSize,
+          page: query.pageRequest.page,
+          pageSize: query.pageRequest.pageSize,
           totalItems: 0,
           errorMessage: 'Unable to load blogs.',
         })
@@ -65,15 +85,15 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
     return () => {
       cancelled = true
     }
-  }, [authorUsername, page, pageSize, problemSlug, queryKey])
+  }, [query, reloadToken])
 
   return {
-    blogs: queryState.key === queryKey ? queryState.blogs : [],
-    page: queryState.key === queryKey ? queryState.page : page,
-    pageSize: queryState.key === queryKey ? queryState.pageSize : pageSize,
-    totalItems: queryState.key === queryKey ? queryState.totalItems : 0,
-    isLoading: queryState.key !== queryKey,
-    errorMessage: queryState.key === queryKey ? queryState.errorMessage : '',
+    blogs: hasCurrentQuery ? queryState.blogs : [],
+    page: hasCurrentQuery ? queryState.page : page,
+    pageSize: hasCurrentQuery ? queryState.pageSize : pageSize,
+    totalItems: hasCurrentQuery ? queryState.totalItems : 0,
+    isLoading: !hasCurrentQuery,
+    errorMessage: hasCurrentQuery ? queryState.errorMessage : '',
     reload: () => setReloadToken((value) => value + 1),
   }
 }
