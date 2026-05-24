@@ -318,7 +318,9 @@ function run() {
 
   for (const filePath of walk('frontend/src/shared/model', new Set(['.ts', '.tsx']))) {
     checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
-    checkFrontendModelFileShape(filePath, errors)
+    if (!/^frontend\/src\/shared\/model\/access\//.test(filePath)) {
+      checkFrontendModelFileShape(filePath, errors)
+    }
   }
 
   for (const filePath of walk('backend/src/main/scala/domains', new Set(['.scala']))) {
@@ -342,15 +344,13 @@ function run() {
 
   for (const filePath of walk('backend/src/main/scala/shared/model', new Set(['.scala']))) {
     checkBackendModelFile(filePath, errors)
-    checkBackendModelFileShape(filePath, errors)
-  }
-
-  for (const filePath of walk('backend/src/main/scala/shared/access', new Set(['.scala']))) {
-    checkBackendModelFile(filePath, errors)
+    if (!/^backend\/src\/main\/scala\/shared\/model\/access\//.test(filePath)) {
+      checkBackendModelFileShape(filePath, errors)
+    }
   }
 
   for (const filePath of walk('backend/src/main/scala/shared', new Set(['.scala']))) {
-    if (!/^backend\/src\/main\/scala\/shared\/(?:model|access|http)\//.test(filePath)) {
+    if (!/^backend\/src\/main\/scala\/shared\/(?:model|http)\//.test(filePath)) {
       checkBackendEffectfulMethodSignatures(filePath, errors)
     }
   }

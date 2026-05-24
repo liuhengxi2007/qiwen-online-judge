@@ -9,7 +9,7 @@ import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.table.problem_set.ProblemSetTable
-import shared.access.{ResourceId, ResourceKind}
+import shared.model.access.{ResourceId, ResourceKind}
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.utils.ProblemSetCommandSupport.*
 import domains.problemset.application.ProblemSetDecisions.*

@@ -15,7 +15,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/shared`
   - Dependency-pure shared contracts and platform helpers used across domains
   - `shared/model`: shared transport/domain primitives such as pagination and lifecycle values
-  - `shared/access`: shared access-control contract types only
+  - `shared/model/access`: shared access-control contract types only
   - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
   - `shared/http`: shared HTTP transport models, codecs, and actor-parameterized plan contracts
 - `src/main/scala/database`

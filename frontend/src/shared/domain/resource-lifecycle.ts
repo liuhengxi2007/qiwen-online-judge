@@ -4,8 +4,8 @@ export type {
   ResourceAccessPolicy,
   UserAccessSubject,
   UserGroupAccessSubject,
-} from '@/shared/access/AccessPolicy'
-import type { AccessSubject, ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+} from '@/shared/model/access/AccessPolicy'
+import type { AccessSubject, ResourceAccessPolicy } from '@/shared/model/access/AccessPolicy'
 
 type Translate = (key: string, values?: Record<string, string | number>) => string
 

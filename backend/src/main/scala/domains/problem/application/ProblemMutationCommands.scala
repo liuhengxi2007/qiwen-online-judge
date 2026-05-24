@@ -12,7 +12,7 @@ import domains.problem.table.problem.ProblemTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
-import shared.access.{ResourceId, ResourceKind}
+import shared.model.access.{ResourceId, ResourceKind}
 
 import java.time.Instant
 import java.util.UUID

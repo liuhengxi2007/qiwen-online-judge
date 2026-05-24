@@ -2,7 +2,7 @@ package shared.http.codec
 
 import io.circe.parser.decode
 import munit.FunSuite
-import shared.access.{AccessSubject, AccessUsername}
+import shared.model.access.{AccessSubject, AccessUsername}
 import shared.http.codec.SharedHttpCodecs.given
 
 class SharedHttpCodecsSuite extends FunSuite:

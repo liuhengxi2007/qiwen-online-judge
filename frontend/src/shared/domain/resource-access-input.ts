@@ -1,6 +1,6 @@
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/domain/resource-lifecycle'
-import type { AccessUserGroupSlug } from '@/shared/access/AccessUserGroupSlug'
-import type { AccessUsername } from '@/shared/access/AccessUsername'
+import type { AccessUserGroupSlug } from '@/shared/model/access/AccessUserGroupSlug'
+import type { AccessUsername } from '@/shared/model/access/AccessUsername'
 import type { ParseResult } from '@/shared/domain/parsing'
 
 type AccessPolicyBuildResult =

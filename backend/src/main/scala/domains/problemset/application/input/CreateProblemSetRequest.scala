@@ -2,7 +2,7 @@ package domains.problemset.application.input
 
 import domains.problemset.model.*
 
-import shared.access.ResourceAccessPolicy
+import shared.model.access.ResourceAccessPolicy
 
 final case class CreateProblemSetRequest(
   slug: ProblemSetSlug,

@@ -10,7 +10,7 @@ import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProb
 import domains.problemset.model.{ProblemSet}
 import domains.user.model.Username
 import domains.usergroup.model.UserGroupSlug
-import shared.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
+import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 import shared.application.access.ResourceAccessFacts
 import domains.usergroup.application.UserGroupCommands
 

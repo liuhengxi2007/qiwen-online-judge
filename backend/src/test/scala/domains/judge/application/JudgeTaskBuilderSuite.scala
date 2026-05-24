@@ -7,7 +7,7 @@ import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.application.output.ClaimedSubmission
 import munit.FunSuite
-import shared.access.{BaseAccess, ResourceAccessPolicy}
+import shared.model.access.{BaseAccess, ResourceAccessPolicy}
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant

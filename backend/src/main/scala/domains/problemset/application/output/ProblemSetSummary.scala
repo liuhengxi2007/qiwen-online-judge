@@ -3,7 +3,7 @@ package domains.problemset.application.output
 import domains.problemset.model.*
 
 import domains.user.model.UserIdentity
-import shared.access.ResourceAccessPolicy
+import shared.model.access.ResourceAccessPolicy
 
 import java.time.Instant
 

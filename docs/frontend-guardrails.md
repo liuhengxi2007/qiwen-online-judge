@@ -16,7 +16,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - Dependency-pure shared contracts, hooks, routing helpers, and platform primitives
 - `src/shared/api`
   - Reusable HTTP request helpers and shared client error handling
-- `src/shared/access`
+- `src/shared/model/access`
   - Shared access-control contract types only
 - `src/shared/domain`
   - Shared frontend domain primitives and pure helpers such as pagination, lifecycle values, and access parsers/codecs
@@ -81,7 +81,7 @@ Bad examples for `shared`:
 - `shared/problemset-form`
 - `shared/contest-policy`
 - `shared/submission-status-mapper`
-- `shared/access` parser or codec logic mixed into contract type files
+- `shared/model/access` parser or codec logic mixed into contract type files
 
 `shared` must not import from `features/*`. Shared code sits below feature domains; feature-specific adapters should stay in the owning feature.
 
@@ -245,9 +245,9 @@ Required path rules:
   `frontend/src/shared/model/<Name>.ts`
 
 - backend shared access:
-  `backend/src/main/scala/shared/access/<Name>.scala`
+  `backend/src/main/scala/shared/model/access/<Name>.scala`
 - frontend shared access:
-  `frontend/src/shared/access/<Name>.ts`
+  `frontend/src/shared/model/access/<Name>.ts`
 
 - backend shared HTTP response:
   `backend/src/main/scala/shared/http/response/<Name>.scala`

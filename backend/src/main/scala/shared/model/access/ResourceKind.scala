@@ -1,4 +1,4 @@
-package shared.access
+package shared.model.access
 
 enum ResourceKind:
   case Problem

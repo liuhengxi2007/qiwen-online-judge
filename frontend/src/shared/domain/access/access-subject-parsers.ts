@@ -1,5 +1,5 @@
-import type { AccessUserGroupSlug } from '@/shared/access/AccessUserGroupSlug'
-import type { AccessUsername } from '@/shared/access/AccessUsername'
+import type { AccessUserGroupSlug } from '@/shared/model/access/AccessUserGroupSlug'
+import type { AccessUsername } from '@/shared/model/access/AccessUsername'
 import type { ParseResult } from '@/shared/domain/parsing'
 
 const usernamePattern = /^[a-z0-9_-]+$/

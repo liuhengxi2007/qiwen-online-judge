@@ -9,7 +9,7 @@ import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
 import domains.user.model.{DisplayName, UserIdentity, Username}
-import shared.access.{ResourceAccessPolicy, ResourceId}
+import shared.model.access.{ResourceAccessPolicy, ResourceId}
 import database.utils.UserIdentitySql
 
 import java.sql.{PreparedStatement, ResultSet}

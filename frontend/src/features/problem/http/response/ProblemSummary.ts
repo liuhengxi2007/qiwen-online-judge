@@ -6,7 +6,7 @@ import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'
 import type { ProblemTimeLimitMs } from '@/features/problem/model/ProblemTimeLimitMs'
 import type { ProblemTitle } from '@/features/problem/model/ProblemTitle'
-import type { ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
+import type { ResourceAccessPolicy } from '@/shared/model/access/AccessPolicy'
 import type { AuditFields } from '@/shared/model/AuditFields'
 
 export type ProblemSummary = AuditFields & {

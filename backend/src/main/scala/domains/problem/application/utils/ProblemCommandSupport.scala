@@ -11,7 +11,7 @@ import domains.problem.application.output.{ProblemDetail}
 import domains.problemset.application.ProblemSetCommands
 import domains.user.model.Username
 import domains.usergroup.model.UserGroupSlug
-import shared.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
+import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 import shared.application.access.ResourceAccessFacts
 import domains.usergroup.application.UserGroupCommands
 

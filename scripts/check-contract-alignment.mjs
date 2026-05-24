@@ -29,14 +29,12 @@ const ignoredKeys = new Set([
 const frontendRoots = [
   'frontend/src/features',
   'frontend/src/shared/model',
-  'frontend/src/shared/access',
   'frontend/src/shared/http/response',
 ]
 
 const backendRoots = [
   'backend/src/main/scala/domains',
   'backend/src/main/scala/shared/model',
-  'backend/src/main/scala/shared/access',
   'backend/src/main/scala/shared/http/response',
 ]
 
@@ -309,7 +307,6 @@ function frontendMetadata(path) {
 
   if (
     normalized.startsWith('frontend/src/shared/model/') ||
-    normalized.startsWith('frontend/src/shared/access/') ||
     normalized.startsWith('frontend/src/shared/http/response/')
   ) {
     return { scope: 'shared', required: true }
@@ -330,7 +327,6 @@ function backendMetadata(path) {
 
   if (
     normalized.startsWith('backend/src/main/scala/shared/model/') ||
-    normalized.startsWith('backend/src/main/scala/shared/access/') ||
     normalized.startsWith('backend/src/main/scala/shared/http/response/')
   ) {
     return { scope: 'shared', required: true }
