@@ -17,7 +17,6 @@ import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 
-import java.sql.Connection
 
 final class UserHttpHandlers(
   databaseSession: DatabaseSession,

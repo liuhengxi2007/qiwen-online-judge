@@ -4,7 +4,6 @@ import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
 import domains.judge.application.JudgeConfig
-import domains.problem.application.ProblemDataStorage
 import domains.judge.http.api.ClaimJudgeTask
 import domains.judge.http.api.DownloadJudgeProblemData
 import domains.judge.http.api.CompleteJudgeSubmission

@@ -9,7 +9,7 @@ import domains.auth.model.{AuthUser, EmailAddress, PlaintextPassword, SiteManage
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
-import domains.user.model.{UserDisplayMode, UserLocale, UserPreferences}
+import domains.user.model.{UserDisplayMode, UserLocale}
 import domains.user.table.user.UserTable
 
 import java.sql.Connection

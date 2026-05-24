@@ -8,7 +8,6 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 
 final class AuthHttpHandlers(

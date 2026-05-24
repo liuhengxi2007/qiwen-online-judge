@@ -5,11 +5,11 @@ package domains.submission.table.submission
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.user.model.Username
-import shared.model.{PageRequest, PageResponse}
+import shared.model.{PageResponse}
 import shared.sql.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, ProblemTitle}
 import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse, SubmissionSummary}
+import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.submission.SubmissionTableSchema.*
 import domains.submission.table.submission.SubmissionTableSupport.*

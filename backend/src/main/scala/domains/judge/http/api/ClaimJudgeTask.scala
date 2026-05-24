@@ -3,12 +3,9 @@ package domains.judge.http.api
 import domains.judge.http.*
 import cats.effect.IO
 import database.DatabaseSession
-import domains.judge.application.{JudgeCommands, JudgeConfig}
+import domains.judge.application.JudgeConfig
 import domains.problem.application.ProblemDataStorage
-import domains.submission.model.SubmissionId
-import judgeprotocol.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
 import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 

@@ -5,9 +5,8 @@ package domains.notification.table.notification
 import cats.effect.IO
 import domains.user.model.Username
 import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
-import domains.notification.application.output.{NotificationListResponse, NotificationSummary}
+import domains.notification.application.output.{NotificationListResponse}
 import domains.notification.table.notification.NotificationTableSupport.{encodeNotificationKindColumn, readNotificationSummary}
-import domains.notification.table.notification.NotificationPayloadJsonCodec
 import shared.model.PageRequest
 
 import java.sql.{Connection, Timestamp}

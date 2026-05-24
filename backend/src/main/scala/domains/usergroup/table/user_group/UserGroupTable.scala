@@ -4,15 +4,15 @@ package domains.usergroup.table.user_group
 
 import cats.effect.IO
 import domains.auth.model.AuthUser
-import domains.user.model.{DisplayName, Username}
+import domains.user.model.{Username}
 import shared.model.PageResponse
 import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
-import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.model.{UserGroup, UserGroupId, UserGroupMember, UserGroupRole, UserGroupSlug}
 import domains.usergroup.application.output.{UserGroupSummary}
 import domains.usergroup.table.user_group.UserGroupTableSchema.*
 import domains.usergroup.table.user_group.UserGroupTableSupport.*
 
-import java.sql.{Connection, ResultSet, SQLException, Timestamp}
+import java.sql.{Connection, SQLException, Timestamp}
 import java.time.Instant
 import java.util.UUID
 

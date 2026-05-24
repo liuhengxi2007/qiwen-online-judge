@@ -2,7 +2,6 @@ package domains.submission.application.input
 
 
 
-import domains.submission.model.SubmissionVerdict
 
 enum SubmissionVerdictFilter:
   case All

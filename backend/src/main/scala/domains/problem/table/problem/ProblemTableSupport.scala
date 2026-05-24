@@ -7,7 +7,7 @@ import domains.auth.model.AuthUser
 import domains.problem.application.input.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
-import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
+import shared.access.{ResourceAccessPolicy, ResourceId}
 import shared.sql.LikePatternSql
 import shared.sql.UserIdentitySql.readUserIdentity
 

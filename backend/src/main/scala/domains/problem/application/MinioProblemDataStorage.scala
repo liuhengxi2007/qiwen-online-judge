@@ -6,7 +6,6 @@ import cats.effect.IO
 import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
 import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataPath, ProblemSlug}
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
-import io.minio.messages.Item
 
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest

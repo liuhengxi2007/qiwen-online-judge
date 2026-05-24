@@ -22,7 +22,6 @@ final class JudgerRegistryHttpHandlers(
   sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  import dsl.*
 
   def register(request: Request[IO]): IO[Response[IO]] =
     JudgerRegistryHttpSupport.withJudgeToken(request, judgeConfig) {

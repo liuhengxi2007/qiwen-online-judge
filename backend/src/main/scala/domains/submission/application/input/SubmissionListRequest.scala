@@ -1,6 +1,5 @@
 package domains.submission.application.input
 
-import domains.submission.model.*
 
 import shared.model.PageRequest
 

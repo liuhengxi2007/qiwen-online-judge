@@ -8,7 +8,6 @@ object AuthHttpPlanDefinitions:
 
   import AuthHttpPlanRegistry.RegisteredPlan.{
     AuthenticatedPlain,
-    AuthenticatedWithTransaction,
     PublicPlain,
     PublicWithTransaction
   }

@@ -20,7 +20,6 @@ final class JudgeHttpHandlers(
   problemDataStorage: ProblemDataStorage
 )(using dsl: Http4sDsl[IO]):
 
-  import dsl.*
 
   def claim(request: Request[IO]): IO[Response[IO]] =
     JudgeHttpSupport.withJudgeToken(request, judgeConfig) {

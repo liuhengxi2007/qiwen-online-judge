@@ -7,7 +7,7 @@ import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.Username
 import shared.model.{PageRequest, PageResponse}
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
-import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest, UserListRequest, UserSearchQuery}
 import domains.user.model.UserIdentity
 

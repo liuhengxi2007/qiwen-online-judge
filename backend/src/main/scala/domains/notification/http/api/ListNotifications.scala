@@ -4,9 +4,7 @@ package domains.notification.http.api
 
 import domains.notification.http.*
 import cats.effect.IO
-import domains.notification.model.NotificationId
 import shared.http.utils.PageRequestQuerySupport
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 import org.http4s.HttpRoutes

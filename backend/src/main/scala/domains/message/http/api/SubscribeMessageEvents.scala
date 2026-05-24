@@ -11,7 +11,6 @@ import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
 import org.http4s.{Header, HttpRoutes, Response, Status}
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 import org.http4s.ServerSentEvent

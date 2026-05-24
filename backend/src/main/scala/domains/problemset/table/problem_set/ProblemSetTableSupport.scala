@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
-import shared.access.{BaseAccess, ResourceAccessPolicy, ResourceId}
+import shared.access.{ResourceAccessPolicy, ResourceId}
 import shared.sql.UserIdentitySql.readUserIdentity
 
 import java.sql.{PreparedStatement, ResultSet}

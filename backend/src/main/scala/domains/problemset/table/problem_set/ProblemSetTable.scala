@@ -6,17 +6,17 @@ import database.table.resource_access_grant.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.user.model.Username
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.problem.model.{ProblemId}
 import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
-import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
+import shared.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse
 import domains.problemset.table.problem_set.ProblemSetTableSchema.*
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
 
-import java.sql.{Connection, ResultSet, Timestamp}
+import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
 import shared.sql.UserIdentitySql

@@ -10,13 +10,13 @@ import domains.problem.application.input.{CreateProblemRequest, ProblemListReque
 import domains.problem.application.input.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
-import shared.access.{BaseAccess, GrantRole, ResourceAccessPolicy, ResourceId, ResourceKind}
+import shared.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse
 import domains.problem.table.problem.ProblemTableSchema.*
 import domains.problem.table.problem.ProblemTableSupport.*
 
-import java.sql.{Connection, ResultSet, Timestamp}
+import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import shared.sql.UserIdentitySql
 

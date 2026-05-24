@@ -1,6 +1,5 @@
 package domains.submission.application.output
 
-import domains.submission.model.*
 
 import shared.model.PageResponse
 

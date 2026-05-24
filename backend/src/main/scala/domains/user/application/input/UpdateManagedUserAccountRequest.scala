@@ -1,6 +1,5 @@
 package domains.user.application.input
 
-import domains.user.model.*
 
 import domains.auth.model.{EmailAddress, PlaintextPassword}
 

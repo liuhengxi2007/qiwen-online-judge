@@ -5,15 +5,10 @@ import domains.user.http.response.UserHttpResponses
 
 
 import domains.user.http.*
-import domains.user.http.codec.UserHttpCodecs.given
 import cats.effect.IO
-import domains.user.model.Username
-import shared.model.PageRequest
-import domains.user.application.UserMutationCommands
-import domains.user.http.UserHttpPlanDefinitions.{deleteUser, getUserProfile, getUserSettings, listAcceptedRanklist, listContributionRanklist, listUserSuggestions, listUsers, updateUserPermissions}
-import domains.user.application.input.{UpdateUserPermissionsRequest, UserListRequest, UserSearchQuery}
+import domains.user.http.UserHttpPlanDefinitions.{listUserSuggestions}
+import domains.user.application.input.{UserSearchQuery}
 import org.http4s.HttpRoutes
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
 

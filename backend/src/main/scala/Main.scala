@@ -11,7 +11,7 @@ import domains.system.http.ApiRouter
 import domains.auth.table.auth_user.AuthUserTable
 import domains.blog.table.blog.BlogTable
 import domains.judge.application.JudgeConfig
-import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
+import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.auth.table.session.SessionTable
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable

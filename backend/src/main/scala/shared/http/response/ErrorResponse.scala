@@ -1,7 +1,5 @@
 package shared.http.response
 
-import shared.model.*
-
 import shared.model.ApiMessageParams
 import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder}

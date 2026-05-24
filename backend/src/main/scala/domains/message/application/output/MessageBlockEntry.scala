@@ -1,6 +1,5 @@
 package domains.message.application.output
 
-import domains.message.model.*
 
 import domains.user.model.UserIdentity
 

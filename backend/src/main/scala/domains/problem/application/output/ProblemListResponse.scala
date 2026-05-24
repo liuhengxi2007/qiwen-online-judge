@@ -1,6 +1,5 @@
 package domains.problem.application.output
 
-import domains.problem.model.*
 
 import shared.model.PageResponse
 

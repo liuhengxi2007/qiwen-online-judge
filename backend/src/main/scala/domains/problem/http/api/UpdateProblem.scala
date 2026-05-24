@@ -8,9 +8,8 @@ import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
-import domains.problem.application.input.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
-import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
+import domains.problem.application.input.{UpdateProblemRequest}
+import domains.problem.model.{ProblemSlug}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

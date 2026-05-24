@@ -8,6 +8,7 @@ lazy val root = (project in file("."))
   .dependsOn(judgeProtocol)
   .settings(
     name := "qiwen-online-judge-backend",
+    scalacOptions ++= Seq("-Wunused:imports", "-Werror"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-effect" % "3.5.4",
       "org.http4s" %% "http4s-dsl" % "0.23.27",

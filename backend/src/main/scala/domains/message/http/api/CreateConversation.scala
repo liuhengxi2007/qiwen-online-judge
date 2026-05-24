@@ -5,10 +5,8 @@ package domains.message.http.api
 import domains.message.http.*
 import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
-import domains.user.model.Username
-import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, GetConversationHistoryResult, RemoveBlockResult}
-import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.model.{MessageConversationId, MessageId}
+import domains.message.application.MessageCommandResults.CreateConversationResult
+import domains.message.application.input.CreateConversationRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
