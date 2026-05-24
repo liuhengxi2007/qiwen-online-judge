@@ -13,11 +13,15 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/features/dashboard`
   - Signed-in landing page and top-level entry points
 - `src/shared`
-  - Cross-feature hooks and routing helpers
+  - Dependency-pure shared contracts, hooks, routing helpers, and platform primitives
 - `src/shared/api`
   - Reusable HTTP request helpers and shared client error handling
+- `src/shared/access`
+  - Shared access-control contract types only
 - `src/shared/domain`
-  - Shared frontend domain primitives such as pagination and lifecycle types
+  - Shared frontend domain primitives and pure helpers such as pagination, lifecycle values, and access parsers/codecs
+- `src/shared/http`
+  - Shared HTTP transport response types that mirror backend `shared/http`
 - `src/components/ui`
   - Shared presentational UI primitives
 
@@ -66,6 +70,9 @@ Good examples for `shared`:
 
 - HTTP client primitives
 - pagination types
+- access contract types
+- pure shared access parsers/codecs under `shared/domain/access`
+- shared HTTP response payload types under `shared/http/response`
 - generic routing helpers
 - presentational UI primitives
 
@@ -74,6 +81,9 @@ Bad examples for `shared`:
 - `shared/problemset-form`
 - `shared/contest-policy`
 - `shared/submission-status-mapper`
+- `shared/access` parser or codec logic mixed into contract type files
+
+`shared` must not import from `features/*`. Shared code sits below feature domains; feature-specific adapters should stay in the owning feature.
 
 If ownership is ambiguous, default to the business domain that would be most damaged if the code changed.
 
@@ -238,6 +248,11 @@ Required path rules:
   `backend/src/main/scala/shared/access/<Name>.scala`
 - frontend shared access:
   `frontend/src/shared/access/<Name>.ts`
+
+- backend shared HTTP response:
+  `backend/src/main/scala/shared/http/response/<Name>.scala`
+- frontend shared HTTP response:
+  `frontend/src/shared/http/response/<Name>.ts`
 
 The mapping must be simple enough that a script can derive one side from the other without special cases.
 

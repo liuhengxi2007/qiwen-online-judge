@@ -18,7 +18,9 @@ Preferred split:
   typed endpoint plans
 - `*HttpPlanDefinitions.scala`
   registers plans and binds `Output => Response[IO]`
-- shared executor in `shared/http`
+- actor-parameterized plan contracts in `shared/http`
+  define plain vs transaction execution without importing business domains
+- authenticated executor in `domains/auth/http`
   runs auth checks, request decoding, and transaction boundaries
 
 ## Execution Model

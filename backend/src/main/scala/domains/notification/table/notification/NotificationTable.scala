@@ -12,7 +12,7 @@ import shared.model.PageRequest
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
-import shared.sql.UserIdentitySql
+import database.utils.UserIdentitySql
 
 object NotificationTable:
 

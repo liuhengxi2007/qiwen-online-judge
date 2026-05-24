@@ -6,7 +6,7 @@ This document records the current implemented state of problem-data storage and 
 
 The repository currently implements:
 
-- reusable backend upload preparation utilities under `shared.upload`
+- reusable backend upload preparation utilities under `shared.application.upload`
 - multipart single-file uploads for problem data
 - multipart zip uploads for problem data
 - tree-shaped problem-data listing for management pages

@@ -3,7 +3,7 @@ package domains.blog.http
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.notification.application.NotificationEventHub
-import shared.http.AuthenticatedHttpExecutor
+import domains.auth.http.AuthenticatedHttpExecutor
 
 final case class BlogHttpRouteContext(
   databaseSession: DatabaseSession,

@@ -14,19 +14,19 @@ import java.sql.Connection
 
 object NotificationHttpPlans:
 
-  case object ListNotifications extends PlainAuthenticatedHttpPlan[PageRequest, domains.notification.application.output.NotificationListResponse]:
+  case object ListNotifications extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, domains.notification.application.output.NotificationListResponse]:
     override val name: String = "ListNotifications"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.application.output.NotificationListResponse] =
       NotificationCommands.listNotifications(databaseSession, actor, input)
 
-  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[Unit, domains.notification.application.output.NotificationUnreadCountResponse]:
+  case object GetUnreadCount extends PlainAuthenticatedHttpPlan[AuthUser, Unit, domains.notification.application.output.NotificationUnreadCountResponse]:
     override val name: String = "GetUnreadCount"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.application.output.NotificationUnreadCountResponse] =
       val _ = input
       NotificationCommands.getUnreadCount(databaseSession, actor)
 
   final class MarkNotificationReadPlan(notificationEventHub: NotificationEventHub)
-      extends TransactionAuthenticatedHttpPlan[NotificationId, NotificationCommands.MarkNotificationReadResult]:
+      extends TransactionAuthenticatedHttpPlan[AuthUser, NotificationId, NotificationCommands.MarkNotificationReadResult]:
     override val name: String = "MarkNotificationRead"
     override def execute(connection: Connection, actor: AuthUser, input: NotificationId): IO[NotificationCommands.MarkNotificationReadResult] =
       NotificationCommands.markNotificationRead(connection, actor, input).flatTap {
@@ -37,7 +37,7 @@ object NotificationHttpPlans:
       }
 
   final class MarkAllNotificationsReadPlan(notificationEventHub: NotificationEventHub)
-      extends TransactionAuthenticatedHttpPlan[Unit, NotificationCommands.MarkAllNotificationsReadResult]:
+      extends TransactionAuthenticatedHttpPlan[AuthUser, Unit, NotificationCommands.MarkAllNotificationsReadResult]:
     override val name: String = "MarkAllNotificationsRead"
     override def execute(connection: Connection, actor: AuthUser, input: Unit): IO[NotificationCommands.MarkAllNotificationsReadResult] =
       val _ = input

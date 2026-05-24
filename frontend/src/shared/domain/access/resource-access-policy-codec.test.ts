@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
-} from '@/shared/access/resource-access-policy-codec'
+} from '@/shared/domain/access/resource-access-policy-codec'
 import {
   accessUserGroupSlugValue,
   accessUsernameValue,
   resourceAccessSubjectParsers,
-} from '@/shared/access/access-subject-parsers'
+} from '@/shared/domain/access/access-subject-parsers'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 
 describe('resource access policy codec', () => {

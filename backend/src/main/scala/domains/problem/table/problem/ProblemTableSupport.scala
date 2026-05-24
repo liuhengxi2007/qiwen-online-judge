@@ -7,13 +7,21 @@ import domains.auth.model.AuthUser
 import domains.problem.application.input.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import shared.access.{ResourceAccessPolicy, ResourceId}
-import shared.sql.LikePatternSql
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.LikePatternSql
+import database.utils.UserIdentitySql
 
 import java.sql.{PreparedStatement, ResultSet}
 
 object ProblemTableSupport:
+
+  private def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readProblemSummaryBase(resultSet: ResultSet): ProblemSummary =
     ProblemSummary(

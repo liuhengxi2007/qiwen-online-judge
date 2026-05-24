@@ -3,10 +3,10 @@ package domains.user.table.user
 
 
 import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
-import domains.user.model.{DisplayName, Username}
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
-import shared.sql.LikePatternSql
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.LikePatternSql
+import database.utils.UserIdentitySql
 import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
 import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
@@ -14,6 +14,20 @@ import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMod
 import java.sql.{PreparedStatement, ResultSet}
 
 object UserTableSupport:
+
+  def readUserIdentity(resultSet: ResultSet): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
+
+  def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readAuthUser(resultSet: ResultSet): AuthUser =
     AuthUser(

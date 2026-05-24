@@ -1,4 +1,4 @@
-package shared.sql
+package database.utils
 
 
 

@@ -11,7 +11,7 @@ import domains.submission.http.api.GetSubmission
 import domains.submission.http.api.DeleteSubmission
 import domains.submission.http.api.RejudgeSubmission
 import domains.auth.application.SessionStore
-import shared.http.AuthenticatedHttpExecutor
+import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

@@ -112,6 +112,18 @@ function checkFrontendPageComponentApiImports(filePath, errors) {
   }
 }
 
+function checkFrontendSharedBoundaryFile(filePath, errors) {
+  const source = read(filePath)
+  for (const match of extractTsSpecifiers(source)) {
+    const resolved = resolveFrontendSpecifier(filePath, match.specifier)
+    if (resolved.startsWith('frontend/src/features/')) {
+      errors.push(
+        `${filePath}:${lineNumber(source, match.index)} shared frontend imports feature package "${match.specifier}"`,
+      )
+    }
+  }
+}
+
 function extractScalaImports(source) {
   return source
     .split('\n')
@@ -298,6 +310,10 @@ function run() {
     if (/^frontend\/src\/features\/[^/]+\/(?:pages|components)\//.test(filePath)) {
       checkFrontendPageComponentApiImports(filePath, errors)
     }
+  }
+
+  for (const filePath of walk('frontend/src/shared', new Set(['.ts', '.tsx']))) {
+    checkFrontendSharedBoundaryFile(filePath, errors)
   }
 
   for (const filePath of walk('frontend/src/shared/model', new Set(['.ts', '.tsx']))) {

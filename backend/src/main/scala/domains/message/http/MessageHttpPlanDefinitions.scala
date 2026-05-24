@@ -11,15 +11,15 @@ object MessageHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listInbox: Plain[shared.model.PageRequest, domains.message.application.output.MessageInboxResponse],
-    getConversationHistory: Plain[MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
-    createConversation: WithTransaction[domains.message.application.input.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
-    sendMessage: WithTransaction[(domains.message.model.MessageConversationId, domains.message.application.input.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],
-    markConversationRead: WithTransaction[(domains.message.model.MessageConversationId, domains.message.application.input.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
-    markAllMessagesRead: WithTransaction[Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult],
-    listBlocks: Plain[Unit, List[domains.message.application.output.MessageBlockEntry]],
-    addBlock: WithTransaction[domains.user.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
-    removeBlock: WithTransaction[domains.user.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
+    listInbox: Plain[domains.auth.model.AuthUser, shared.model.PageRequest, domains.message.application.output.MessageInboxResponse],
+    getConversationHistory: Plain[domains.auth.model.AuthUser, MessageHttpPlans.HistoryInput, domains.message.application.MessageCommandResults.GetConversationHistoryResult],
+    createConversation: WithTransaction[domains.auth.model.AuthUser, domains.message.application.input.CreateConversationRequest, domains.message.application.MessageCommandResults.CreateConversationResult],
+    sendMessage: WithTransaction[domains.auth.model.AuthUser, (domains.message.model.MessageConversationId, domains.message.application.input.SendDirectMessageRequest), MessageHttpPlans.SendMessageOutput],
+    markConversationRead: WithTransaction[domains.auth.model.AuthUser, (domains.message.model.MessageConversationId, domains.message.application.input.MarkConversationReadRequest), MessageHttpPlans.MarkConversationReadOutput],
+    markAllMessagesRead: WithTransaction[domains.auth.model.AuthUser, Unit, domains.message.application.MessageCommandResults.MarkAllMessagesReadResult],
+    listBlocks: Plain[domains.auth.model.AuthUser, Unit, List[domains.message.application.output.MessageBlockEntry]],
+    addBlock: WithTransaction[domains.auth.model.AuthUser, domains.user.model.Username, domains.message.application.MessageCommandResults.AddBlockResult],
+    removeBlock: WithTransaction[domains.auth.model.AuthUser, domains.user.model.Username, domains.message.application.MessageCommandResults.RemoveBlockResult]
   )
 
   def plans(messageEventHub: MessageEventHub): RegisteredPlans =

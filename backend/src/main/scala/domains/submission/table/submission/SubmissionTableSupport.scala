@@ -5,7 +5,8 @@ package domains.submission.table.submission
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.application.output.{SubmissionDetail, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.UserIdentitySql
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import io.circe.parser.decode
 import io.circe.syntax.*
 import judgeprotocol.model.JudgeResult
@@ -14,6 +15,13 @@ import java.sql.{PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
 
 object SubmissionTableSupport:
+
+  def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readSubmissionSummary(resultSet: ResultSet): SubmissionSummary =
     SubmissionSummary(

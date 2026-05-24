@@ -14,7 +14,7 @@ import domains.usergroup.http.api.AddUserGroupMember
 import domains.usergroup.http.api.UpdateUserGroupMemberRole
 import domains.usergroup.http.api.RemoveUserGroupMember
 import domains.auth.application.SessionStore
-import shared.http.AuthenticatedHttpExecutor
+import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

@@ -29,7 +29,7 @@ object ProblemDataCommands:
   private def writePreparedFiles(
     problemDataStorage: ProblemDataStorage,
     problemSlug: domains.problem.model.ProblemSlug,
-    preparedFiles: List[shared.upload.PreparedUploadFile]
+    preparedFiles: List[shared.application.upload.PreparedUploadFile]
   ): IO[Unit] =
     preparedFiles.traverse_ { preparedFile =>
       IO.fromEither(
@@ -40,7 +40,7 @@ object ProblemDataCommands:
     }
 
   private def summaryFilenameFor(
-    preparedFiles: List[shared.upload.PreparedUploadFile]
+    preparedFiles: List[shared.application.upload.PreparedUploadFile]
   ): Either[String, ProblemDataFilename] =
     preparedFiles
       .sortBy(_.path.value)
@@ -101,7 +101,7 @@ object ProblemDataCommands:
     connection: java.sql.Connection,
     actor: AuthUser,
     problemSlug: domains.problem.model.ProblemSlug,
-    preparedFiles: List[shared.upload.PreparedUploadFile],
+    preparedFiles: List[shared.application.upload.PreparedUploadFile],
     summaryFilename: ProblemDataFilename
   ): IO[UpdateProblemDataResult] =
     withManageableProblemForUpdate(connection, actor, problemSlug)(
@@ -404,7 +404,7 @@ object ProblemDataCommands:
     val segments = path.value.split('/').toList.dropRight(1)
     segments.indices.map(index => ProblemDataPath(segments.take(index + 1).mkString("/"))).toList
 
-  private def toManifestEntries(preparedFiles: List[shared.upload.PreparedUploadFile]): List[ProblemDataManifestEntry] =
+  private def toManifestEntries(preparedFiles: List[shared.application.upload.PreparedUploadFile]): List[ProblemDataManifestEntry] =
     preparedFiles.flatMap { preparedFile =>
       ProblemDataUploadPreparation.toProblemDataPath(preparedFile.path).toOption.map { path =>
         ProblemDataManifestEntry(path = path, sizeBytes = preparedFile.bytes.length.toLong, sha256 = sha256Hex(preparedFile.bytes))

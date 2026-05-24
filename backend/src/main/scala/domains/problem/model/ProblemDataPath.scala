@@ -2,7 +2,7 @@ package domains.problem.model
 
 
 
-import shared.upload.StoredFilePath
+import shared.application.upload.StoredFilePath
 
 final case class ProblemDataPath(value: String):
   def fileName: String =

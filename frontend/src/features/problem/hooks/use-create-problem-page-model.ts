@@ -10,7 +10,7 @@ import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubm
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import { validateProblemDraft } from '@/features/problem/lib/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/shared/access/access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import { useI18n } from '@/shared/i18n/use-i18n'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 

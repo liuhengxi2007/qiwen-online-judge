@@ -5,7 +5,7 @@ import { createProblemSet } from '@/features/problemset/http/api/problemset-clie
 import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
 import { validateProblemSetDraft } from '@/features/problemset/lib/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/shared/access/access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/shared/domain/resource-lifecycle'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

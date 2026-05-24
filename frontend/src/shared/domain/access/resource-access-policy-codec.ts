@@ -3,7 +3,7 @@ import {
   accessUsernameValue,
   parseUserGroupSlug,
   parseUsername,
-} from '@/shared/access/access-subject-parsers'
+} from '@/shared/domain/access/access-subject-parsers'
 import type { AccessSubject, BaseAccess, ResourceAccessPolicy } from '@/shared/access/AccessPolicy'
 import { requireParsed } from '@/shared/domain/parsing'
 

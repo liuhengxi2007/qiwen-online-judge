@@ -5,11 +5,19 @@ package domains.blog.table.blog
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
 import domains.blog.application.output.{BlogCommentSummary, BlogSummary}
 import domains.problem.model.{ProblemSlug, ProblemTitle}
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.UserIdentitySql
+import domains.user.model.{DisplayName, UserIdentity, Username}
 
 import java.sql.ResultSet
 
 object BlogTableSupport:
+
+  def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readBlogSummary(resultSet: ResultSet): BlogSummary =
     BlogSummary(

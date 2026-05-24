@@ -12,7 +12,7 @@ import domains.notification.http.api.MarkAllNotificationsRead
 import domains.notification.http.api.SubscribeNotificationEvents
 import domains.auth.application.SessionStore
 import domains.notification.application.NotificationEventHub
-import shared.http.AuthenticatedHttpExecutor
+import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

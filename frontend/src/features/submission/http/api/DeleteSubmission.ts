@@ -4,7 +4,7 @@ import {
   decodeSuccessResponse,
   postJson,
 } from '@/shared/api/http-client'
-import type { SuccessResponse } from '@/shared/model/SuccessResponse'
+import type { SuccessResponse } from '@/shared/http/response/SuccessResponse'
 
 export async function deleteSubmission(submissionId: SubmissionId): Promise<SuccessResponse> {
   return postJson(`/api/submissions/${submissionIdValue(submissionId)}/delete`, decodeSuccessResponse, {})

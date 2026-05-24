@@ -16,7 +16,7 @@ import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[PageRequest, PageResponse[domains.usergroup.application.output.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.application.output.UserGroupSummary]]:
 
     override val name: String = "ListUserGroups"
 
@@ -27,7 +27,7 @@ object UserGroupHttpPlans:
     ): IO[PageResponse[domains.usergroup.application.output.UserGroupSummary]] =
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
-  case object GetUserGroup extends PlainAuthenticatedHttpPlan[UserGroupSlug, UserGroupCommands.GetUserGroupResult]:
+  case object GetUserGroup extends PlainAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.GetUserGroupResult]:
 
     override val name: String = "GetUserGroup"
 
@@ -38,7 +38,7 @@ object UserGroupHttpPlans:
     ): IO[UserGroupCommands.GetUserGroupResult] =
       UserGroupCommands.getUserGroupBySlug(databaseSession, actor, input)
 
-  case object CreateUserGroup extends TransactionAuthenticatedHttpPlan[CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult]:
+  case object CreateUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult]:
 
     override val name: String = "CreateUserGroup"
 
@@ -49,7 +49,7 @@ object UserGroupHttpPlans:
     ): IO[UserGroupCommands.CreateUserGroupResult] =
       UserGroupCommands.createUserGroup(connection, actor, input)
 
-  case object UpdateUserGroup extends TransactionAuthenticatedHttpPlan[(UserGroupSlug, UpdateUserGroupRequest), UserGroupCommands.UpdateUserGroupResult]:
+  case object UpdateUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, UpdateUserGroupRequest), UserGroupCommands.UpdateUserGroupResult]:
 
     override val name: String = "UpdateUserGroup"
 
@@ -61,7 +61,7 @@ object UserGroupHttpPlans:
       val (slug, request) = input
       UserGroupCommands.updateUserGroup(connection, actor, slug, request)
 
-  case object DeleteUserGroup extends TransactionAuthenticatedHttpPlan[UserGroupSlug, UserGroupCommands.DeleteUserGroupResult]:
+  case object DeleteUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.DeleteUserGroupResult]:
 
     override val name: String = "DeleteUserGroup"
 
@@ -72,7 +72,7 @@ object UserGroupHttpPlans:
     ): IO[UserGroupCommands.DeleteUserGroupResult] =
       UserGroupCommands.deleteUserGroup(connection, actor, input)
 
-  case object AddMember extends TransactionAuthenticatedHttpPlan[(UserGroupSlug, AddUserGroupMemberRequest), UserGroupCommands.AddUserGroupMemberResult]:
+  case object AddMember extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, AddUserGroupMemberRequest), UserGroupCommands.AddUserGroupMemberResult]:
 
     override val name: String = "AddMember"
 
@@ -84,7 +84,7 @@ object UserGroupHttpPlans:
       val (slug, request) = input
       UserGroupCommands.addUserGroupMember(connection, actor, slug, request)
 
-  case object UpdateMemberRole extends TransactionAuthenticatedHttpPlan[(UserGroupSlug, Username, UpdateUserGroupMemberRoleRequest), UserGroupCommands.UpdateUserGroupMemberRoleResult]:
+  case object UpdateMemberRole extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, Username, UpdateUserGroupMemberRoleRequest), UserGroupCommands.UpdateUserGroupMemberRoleResult]:
 
     override val name: String = "UpdateMemberRole"
 
@@ -96,7 +96,7 @@ object UserGroupHttpPlans:
       val (slug, targetUsername, request) = input
       UserGroupCommands.updateUserGroupMemberRole(connection, actor, slug, targetUsername, request)
 
-  case object RemoveMember extends TransactionAuthenticatedHttpPlan[(UserGroupSlug, Username), UserGroupCommands.RemoveUserGroupMemberResult]:
+  case object RemoveMember extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, Username), UserGroupCommands.RemoveUserGroupMemberResult]:
 
     override val name: String = "RemoveMember"
 

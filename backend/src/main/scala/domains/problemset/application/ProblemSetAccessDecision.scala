@@ -2,7 +2,7 @@ package domains.problemset.application
 
 
 
-import shared.access.{ResourceAccessDecision, ResourceAccessFacts}
+import shared.application.access.{ResourceAccessDecision, ResourceAccessFacts}
 
 final case class ProblemSetAccessFacts(
   resourceAccess: ResourceAccessFacts

@@ -9,8 +9,6 @@ const allowedMissing = new Set([
   'backend-only:message/MarkConversationReadMode',
   'backend-only:problem/ProblemAccessEvaluation',
   'backend-only:problem/ProblemSetMemberTarget',
-  'backend-only:shared/ResourceAccessDecision',
-  'backend-only:shared/ResourceAccessFacts',
   'backend-only:submission/ClaimedSubmission',
 ])
 
@@ -32,6 +30,7 @@ const frontendRoots = [
   'frontend/src/features',
   'frontend/src/shared/model',
   'frontend/src/shared/access',
+  'frontend/src/shared/http/response',
 ]
 
 const backendRoots = [
@@ -308,7 +307,11 @@ function frontendMetadata(path) {
     }
   }
 
-  if (normalized.startsWith('frontend/src/shared/model/') || normalized.startsWith('frontend/src/shared/access/')) {
+  if (
+    normalized.startsWith('frontend/src/shared/model/') ||
+    normalized.startsWith('frontend/src/shared/access/') ||
+    normalized.startsWith('frontend/src/shared/http/response/')
+  ) {
     return { scope: 'shared', required: true }
   }
 

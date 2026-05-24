@@ -3,7 +3,7 @@ import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubm
 import type { UpdateProblemRequest } from '@/features/problem/http/request/UpdateProblemRequest'
 import { parseProblemSlug, parseProblemStatementText, parseProblemSpaceLimitMb, parseProblemTimeLimitMs, parseProblemTitle } from '@/features/problem/lib/problem-parsers'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/shared/access/access-subject-parsers'
+import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 
 type ProblemDraft = {

@@ -1,4 +1,6 @@
-package shared.access
+package shared.application.access
+
+import shared.access.{AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 
 final case class ResourceAccessFacts(
   policy: ResourceAccessPolicy,

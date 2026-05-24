@@ -9,6 +9,11 @@ const checkedRoots = [
   'backend/src/test/scala/domains',
 ]
 
+const checkedSharedRoots = [
+  'backend/src/main/scala/shared',
+  'backend/src/test/scala/shared',
+]
+
 const publicCommandFacades = new Set([
   'domains.auth.application.AuthCommands',
   'domains.blog.application.BlogCommands',
@@ -379,9 +384,9 @@ function isPublicWiringImport(domain, importPath) {
   const wiringPattern = new RegExp(
     `^domains\\.${domain}\\.application\\.(?:SessionStore|ProblemDataStorage|JudgeConfig|[A-Za-z0-9_]*(?:EventHub|StreamEvent))(?:\\.|$)`,
   )
-  const authSessionSupportPattern = /^domains\.auth\.http\.utils\.AuthHttpSessionSupport(?:\.|$)/
+  const authHttpWiringPattern = /^domains\.auth\.http\.(?:AuthenticatedHttpExecutor|utils\.AuthHttpSessionSupport)(?:\.|$)/
   const routerPattern = new RegExp(`^domains\\.${domain}\\.http\\.[A-Za-z0-9_]*Router(?:\\.|$)`)
-  return wiringPattern.test(importPath) || authSessionSupportPattern.test(importPath) || routerPattern.test(importPath)
+  return wiringPattern.test(importPath) || authHttpWiringPattern.test(importPath) || routerPattern.test(importPath)
 }
 
 function isPublicCodecImport(domain, importPath) {
@@ -453,12 +458,27 @@ function checkFile(filePath, errors) {
   }
 }
 
+function checkSharedFile(filePath, errors) {
+  for (const entry of collectScalaImports(read(filePath))) {
+    for (const importPath of expandImport(entry.statement)) {
+      if (targetDomain(importPath) !== null) {
+        errors.push(`${filePath}:${entry.line} shared backend imports domain package: ${importPath}`)
+      }
+    }
+  }
+}
+
 function run() {
   const errors = []
   const files = checkedRoots.flatMap((rootPath) => walk(rootPath, '.scala'))
+  const sharedFiles = checkedSharedRoots.flatMap((rootPath) => walk(rootPath, '.scala'))
 
   for (const filePath of files) {
     checkFile(filePath, errors)
+  }
+
+  for (const filePath of sharedFiles) {
+    checkSharedFile(filePath, errors)
   }
 
   if (errors.length > 0) {

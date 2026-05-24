@@ -12,22 +12,22 @@ object BlogHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listBlogs: Plain[BlogHttpPlans.ListBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
-    listProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
-    listPendingProblemBlogs: Plain[BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
-    createBlog: WithTransaction[domains.blog.application.input.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
-    getBlog: Plain[domains.blog.model.BlogId, domains.blog.application.BlogCommands.GetBlogResult],
-    voteBlog: WithTransaction[BlogHttpPlans.VoteBlogInput, domains.blog.application.BlogCommands.VoteBlogResult],
-    updateBlog: WithTransaction[BlogHttpPlans.UpdateBlogInput, domains.blog.application.BlogCommands.UpdateBlogResult],
-    deleteBlog: WithTransaction[domains.blog.model.BlogId, domains.blog.application.BlogCommands.DeleteBlogResult],
-    submitBlogToProblem: WithTransaction[BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.SubmitBlogToProblemResult],
-    linkBlogToProblem: WithTransaction[BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.LinkBlogToProblemResult],
-    acceptBlogProblemSubmission: WithTransaction[BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.AcceptBlogProblemSubmissionResult],
-    unlinkBlogFromProblem: WithTransaction[BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.UnlinkBlogFromProblemResult],
-    createBlogComment: WithTransaction[BlogHttpPlans.CreateBlogCommentInput, domains.blog.application.BlogCommands.CreateBlogCommentResult],
-    voteBlogComment: WithTransaction[BlogHttpPlans.VoteBlogCommentInput, domains.blog.application.BlogCommands.VoteBlogCommentResult],
-    updateBlogComment: WithTransaction[BlogHttpPlans.UpdateBlogCommentInput, domains.blog.application.BlogCommands.UpdateBlogCommentResult],
-    deleteBlogComment: WithTransaction[BlogHttpPlans.DeleteBlogCommentInput, domains.blog.application.BlogCommands.DeleteBlogCommentResult]
+    listBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ListBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
+    listProblemBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
+    listPendingProblemBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
+    createBlog: WithTransaction[domains.auth.model.AuthUser, domains.blog.application.input.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
+    getBlog: Plain[domains.auth.model.AuthUser, domains.blog.model.BlogId, domains.blog.application.BlogCommands.GetBlogResult],
+    voteBlog: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.VoteBlogInput, domains.blog.application.BlogCommands.VoteBlogResult],
+    updateBlog: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.UpdateBlogInput, domains.blog.application.BlogCommands.UpdateBlogResult],
+    deleteBlog: WithTransaction[domains.auth.model.AuthUser, domains.blog.model.BlogId, domains.blog.application.BlogCommands.DeleteBlogResult],
+    submitBlogToProblem: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.SubmitBlogToProblemResult],
+    linkBlogToProblem: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.LinkBlogToProblemResult],
+    acceptBlogProblemSubmission: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.AcceptBlogProblemSubmissionResult],
+    unlinkBlogFromProblem: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.BlogProblemLinkInput, domains.blog.application.BlogCommands.UnlinkBlogFromProblemResult],
+    createBlogComment: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.CreateBlogCommentInput, domains.blog.application.BlogCommands.CreateBlogCommentResult],
+    voteBlogComment: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.VoteBlogCommentInput, domains.blog.application.BlogCommands.VoteBlogCommentResult],
+    updateBlogComment: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.UpdateBlogCommentInput, domains.blog.application.BlogCommands.UpdateBlogCommentResult],
+    deleteBlogComment: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.DeleteBlogCommentInput, domains.blog.application.BlogCommands.DeleteBlogCommentResult]
   )
 
   def plans(notificationEventHub: NotificationEventHub): RegisteredPlans =

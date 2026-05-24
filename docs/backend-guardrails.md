@@ -13,7 +13,11 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/server/health`
   - Health endpoint and response model
 - `src/main/scala/shared`
-  - Shared models used across domains, including pagination and lifecycle primitives
+  - Dependency-pure shared contracts and platform helpers used across domains
+  - `shared/model`: shared transport/domain primitives such as pagination and lifecycle values
+  - `shared/access`: shared access-control contract types only
+  - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
+  - `shared/http`: shared HTTP transport models, codecs, and actor-parameterized plan contracts
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
 
@@ -151,9 +155,11 @@ Allow only:
 - lifecycle and pagination primitives
 - small utility types with no business ownership
 - cross-domain platform primitives whose ownership is genuinely shared
-  examples: shared HTTP execution support, reusable access-control primitives used by multiple resource domains
+  examples: shared HTTP plan contracts, reusable access-control primitives used by multiple resource domains
 
 Cross-domain persistence helpers belong in `database` when they are infrastructure-level and do not have a single business-domain owner.
+`shared` must not import `domains.*`; pass domain actors, facts, or values in as type parameters or shared contracts instead.
+Auth-aware session execution belongs to `domains/auth/http`, while `shared/http` owns only the actor-parameterized plan contracts and transport helpers.
 
 Do not move these into `shared`:
 
@@ -175,6 +181,7 @@ Rules:
 - keep planners in the `http` layer, not in `application`
 - let plans return typed outputs, then map those outputs to `Response[IO]`
 - choose transaction boundaries explicitly with plain vs transaction plan variants
+- keep auth/session wrapping in `domains/auth/http`; shared plan contracts stay actor-parameterized and domain-free
 
 Preferred structure for business CRUD domains:
 
@@ -182,7 +189,7 @@ Preferred structure for business CRUD domains:
   endpoint-level plan implementations
 - `*HttpPlanDefinitions.scala`
   registered plans plus `toResponse` mapping
-- shared executor in `shared/http`
+- auth-owned authenticated executor in `domains/auth/http`
 - thin `*Router.scala`
   aggregator of `http/api/<Name>.scala` endpoint files
 

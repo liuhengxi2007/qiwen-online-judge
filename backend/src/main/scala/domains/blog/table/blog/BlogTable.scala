@@ -14,7 +14,7 @@ import shared.model.{PageRequest, PageResponse}
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
-import shared.sql.UserIdentitySql
+import database.utils.UserIdentitySql
 
 object BlogTable:
 
@@ -53,7 +53,7 @@ object BlogTable:
               id = BlogId(resultSet.getLong("public_id")),
               title = title,
               content = content,
-              author = UserIdentitySql.readUserIdentity(resultSet, "author"),
+              author = readUserIdentity(resultSet, "author"),
               visibility = visibility,
               relatedProblems = Nil,
               score = 0,

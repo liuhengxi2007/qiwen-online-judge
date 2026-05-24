@@ -8,12 +8,20 @@ import domains.auth.model.AuthUser
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.application.output.ProblemSetSummary
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import shared.access.{ResourceAccessPolicy, ResourceId}
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.UserIdentitySql
 
 import java.sql.{PreparedStatement, ResultSet}
 
 object ProblemSetTableSupport:
+
+  private def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readProblemSetSummaryBase(resultSet: ResultSet): ProblemSetSummary =
     ProblemSetSummary(

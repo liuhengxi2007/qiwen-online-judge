@@ -6,7 +6,7 @@ import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.user.model.Username
 import shared.model.{PageResponse}
-import shared.sql.LikePatternSql
+import database.utils.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, ProblemTitle}
 import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse}
@@ -19,7 +19,7 @@ import java.sql.{Connection, PreparedStatement, Timestamp}
 import java.time.Instant
 import java.util.UUID
 import domains.submission.application.input.{SubmissionSort, SubmissionSortDirection}
-import shared.sql.UserIdentitySql
+import database.utils.UserIdentitySql
 
 object SubmissionTable:
 
@@ -70,7 +70,7 @@ object SubmissionTable:
               problemSlug = problemSlug,
               problemTitle = problemTitle,
               canManage = false,
-              submitter = UserIdentitySql.readUserIdentity(resultSet, "submitter"),
+              submitter = readUserIdentity(resultSet, "submitter"),
               language = language,
               status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
               verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),

@@ -4,27 +4,26 @@ package shared.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
 
 import java.sql.Connection
 
-trait AuthenticatedHttpPlan[Input, Output]:
+trait AuthenticatedHttpPlan[Actor, Input, Output]:
 
   def name: String
 
-trait PlainAuthenticatedHttpPlan[Input, Output] extends AuthenticatedHttpPlan[Input, Output]:
+trait PlainAuthenticatedHttpPlan[Actor, Input, Output] extends AuthenticatedHttpPlan[Actor, Input, Output]:
 
   def execute(
     databaseSession: DatabaseSession,
-    actor: AuthUser,
+    actor: Actor,
     input: Input
   ): IO[Output]
 
-trait TransactionAuthenticatedHttpPlan[Input, Output] extends AuthenticatedHttpPlan[Input, Output]:
+trait TransactionAuthenticatedHttpPlan[Actor, Input, Output] extends AuthenticatedHttpPlan[Actor, Input, Output]:
 
   def execute(
     connection: Connection,
-    actor: AuthUser,
+    actor: Actor,
     input: Input
   ): IO[Output]
 
@@ -35,14 +34,14 @@ object AuthenticatedHttpPlanRegistry:
 
   object RegisteredPlan:
 
-    final case class Plain[Input, Output](
-      plan: PlainAuthenticatedHttpPlan[Input, Output],
+    final case class Plain[Actor, Input, Output](
+      plan: PlainAuthenticatedHttpPlan[Actor, Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
     ) extends RegisteredPlan:
       override val name: String = plan.name
 
-    final case class WithTransaction[Input, Output](
-      plan: TransactionAuthenticatedHttpPlan[Input, Output],
+    final case class WithTransaction[Actor, Input, Output](
+      plan: TransactionAuthenticatedHttpPlan[Actor, Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
     ) extends RegisteredPlan:
       override val name: String = plan.name

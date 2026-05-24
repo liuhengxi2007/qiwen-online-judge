@@ -17,7 +17,7 @@ import domains.message.http.api.RemoveMessageBlock
 import domains.message.http.api.SubscribeMessageEvents
 import domains.auth.application.SessionStore
 import domains.message.application.MessageEventHub
-import shared.http.AuthenticatedHttpExecutor
+import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

@@ -7,8 +7,7 @@ import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
-import shared.sql.LikePatternSql
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.LikePatternSql
 import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
 import domains.user.application.input.UserSearchQuery
 import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}

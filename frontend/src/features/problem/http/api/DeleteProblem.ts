@@ -1,4 +1,4 @@
-import type { SuccessResponse } from '@/shared/model/SuccessResponse'
+import type { SuccessResponse } from '@/shared/http/response/SuccessResponse'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import {

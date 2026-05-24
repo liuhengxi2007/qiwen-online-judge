@@ -1,10 +1,13 @@
-package shared.sql
-
-import domains.user.model.{DisplayName, UserIdentity, Username}
+package database.utils
 
 import java.sql.ResultSet
 
 
+
+final case class UserIdentityRow(
+  username: String,
+  displayName: String
+)
 
 object UserIdentitySql:
 
@@ -17,14 +20,14 @@ object UserIdentitySql:
   def returningColumns(usernameColumn: String, alias: String): String =
     s"$usernameColumn, (select display_name from auth_users where username = $usernameColumn) as ${alias}_display_name"
 
-  def readUserIdentity(resultSet: ResultSet): UserIdentity =
-    UserIdentity(
-      username = Username.canonical(resultSet.getString("username")),
-      displayName = DisplayName(resultSet.getString("display_name"))
+  def readUserIdentityRow(resultSet: ResultSet): UserIdentityRow =
+    UserIdentityRow(
+      username = resultSet.getString("username"),
+      displayName = resultSet.getString("display_name")
     )
 
-  def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
-    UserIdentity(
-      username = Username.canonical(resultSet.getString(s"${prefix}_username")),
-      displayName = DisplayName(resultSet.getString(s"${prefix}_display_name"))
+  def readUserIdentityRow(resultSet: ResultSet, prefix: String): UserIdentityRow =
+    UserIdentityRow(
+      username = resultSet.getString(s"${prefix}_username"),
+      displayName = resultSet.getString(s"${prefix}_display_name")
     )

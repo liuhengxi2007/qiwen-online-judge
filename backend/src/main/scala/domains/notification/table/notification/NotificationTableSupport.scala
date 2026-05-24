@@ -2,14 +2,21 @@ package domains.notification.table.notification
 
 
 
-import domains.user.model.Username
+import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.notification.model.{NotificationKind, NotificationPayload, NotificationStatus}
 import domains.notification.application.output.{NotificationSummary}
-import shared.sql.UserIdentitySql.readUserIdentity
+import database.utils.UserIdentitySql
 
 import java.sql.ResultSet
 
 object NotificationTableSupport:
+
+  private def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
 
   def readNotificationSummary(resultSet: ResultSet): NotificationSummary =
     NotificationSummary(

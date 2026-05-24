@@ -18,7 +18,7 @@ import domains.problem.table.problem.ProblemTableSupport.*
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
-import shared.sql.UserIdentitySql
+import database.utils.UserIdentitySql
 
 object ProblemTable:
 

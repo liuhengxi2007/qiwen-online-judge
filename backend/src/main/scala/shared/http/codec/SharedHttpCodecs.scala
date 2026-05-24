@@ -2,7 +2,7 @@ package shared.http.codec
 
 import shared.access.*
 import shared.model.*
-import shared.upload.StoredFilePath
+import shared.application.upload.StoredFilePath
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

@@ -14,7 +14,7 @@ import java.sql.Connection
 
 object SubmissionHttpPlans:
 
-  case object ListSubmissions extends PlainAuthenticatedHttpPlan[SubmissionListRequest, SubmissionCommands.ListSubmissionsResult]:
+  case object ListSubmissions extends PlainAuthenticatedHttpPlan[AuthUser, SubmissionListRequest, SubmissionCommands.ListSubmissionsResult]:
 
     override val name: String = "ListSubmissions"
 
@@ -25,7 +25,7 @@ object SubmissionHttpPlans:
     ): IO[SubmissionCommands.ListSubmissionsResult] =
       SubmissionCommands.listSubmissions(databaseSession, actor, input)
 
-  case object CreateSubmission extends TransactionAuthenticatedHttpPlan[CreateSubmissionRequest, SubmissionCommands.CreateSubmissionResult]:
+  case object CreateSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, CreateSubmissionRequest, SubmissionCommands.CreateSubmissionResult]:
 
     override val name: String = "CreateSubmission"
 
@@ -36,7 +36,7 @@ object SubmissionHttpPlans:
     ): IO[SubmissionCommands.CreateSubmissionResult] =
       SubmissionCommands.createSubmission(connection, actor, input)
 
-  case object GetSubmission extends PlainAuthenticatedHttpPlan[SubmissionId, SubmissionCommands.GetSubmissionResult]:
+  case object GetSubmission extends PlainAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.GetSubmissionResult]:
 
     override val name: String = "GetSubmission"
 
@@ -47,7 +47,7 @@ object SubmissionHttpPlans:
     ): IO[SubmissionCommands.GetSubmissionResult] =
       SubmissionCommands.getSubmission(databaseSession, actor, input)
 
-  case object DeleteSubmission extends TransactionAuthenticatedHttpPlan[SubmissionId, SubmissionCommands.DeleteSubmissionResult]:
+  case object DeleteSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.DeleteSubmissionResult]:
 
     override val name: String = "DeleteSubmission"
 
@@ -58,7 +58,7 @@ object SubmissionHttpPlans:
     ): IO[SubmissionCommands.DeleteSubmissionResult] =
       SubmissionCommands.deleteSubmission(connection, actor, input)
 
-  case object RejudgeSubmission extends TransactionAuthenticatedHttpPlan[SubmissionId, SubmissionCommands.RejudgeSubmissionResult]:
+  case object RejudgeSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.RejudgeSubmissionResult]:
 
     override val name: String = "RejudgeSubmission"
 

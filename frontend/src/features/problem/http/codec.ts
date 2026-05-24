@@ -27,7 +27,7 @@ import {
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
-} from '@/shared/access/resource-access-policy-codec'
+} from '@/shared/domain/access/resource-access-policy-codec'
 
 type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 

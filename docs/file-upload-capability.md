@@ -3,6 +3,7 @@
 This document describes the reusable backend capability for accepting uploaded files before any domain-specific storage decision is made.
 
 The capability is intentionally broader than problem data.
+Implementation lives under `shared.application.upload`.
 
 ## Scope
 
