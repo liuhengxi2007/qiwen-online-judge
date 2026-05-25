@@ -1,5 +1,4 @@
-package domains.user.model.request
-
+package domains.auth.model.request
 
 final case class UpdateUserPermissionsRequest(
   siteManager: Boolean,

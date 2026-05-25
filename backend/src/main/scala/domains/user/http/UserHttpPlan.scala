@@ -4,14 +4,12 @@ package domains.user.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.application.SessionStore
 import domains.auth.model.{AuthUser, SiteManagerUser}
 
 import java.sql.Connection
 
 final case class UserHttpContext(
-  databaseSession: DatabaseSession,
-  sessionStore: SessionStore
+  databaseSession: DatabaseSession
 )
 
 trait UserHttpPlan[Input, Output]

@@ -12,7 +12,7 @@ import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.Username
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.model.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.model.request.{UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -23,7 +23,7 @@ final class UserHttpHandlers(
   sessionStore: SessionStore
 )(using dsl: Http4sDsl[IO]):
 
-  private val context = UserHttpContext(databaseSession, sessionStore)
+  private val context = UserHttpContext(databaseSession)
 
   def execute[Input, Output](
     request: Request[IO],
@@ -109,21 +109,6 @@ final class UserHttpHandlers(
             UserHttpResponseMappers.validationErrorResponse("Site manager permission required.")
     }
 
-  def executeUserSettingsAccountUpdate(
-    request: Request[IO],
-    targetUsername: Username
-  ): IO[Response[IO]] =
-    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
-      if targetUsername.value == actor.username.value then
-        runOwnAccountUpdate(request, targetUsername, actor)
-      else
-        SiteManagerUser.from(actor) match
-          case Some(siteManagerActor) =>
-            runManagedAccountUpdate(request, targetUsername, siteManagerActor)
-          case None =>
-            UserHttpResponseMappers.validationErrorResponse("Site manager permission required.")
-    }
-
   private def runOwnProfileUpdate(
     request: Request[IO],
     targetUsername: Username,
@@ -150,19 +135,6 @@ final class UserHttpHandlers(
       )
     }
 
-  private def runOwnAccountUpdate(
-    request: Request[IO],
-    targetUsername: Username,
-    actor: AuthUser
-  ): IO[Response[IO]] =
-    request.as[UpdateOwnAccountRequest].flatMap { body =>
-      databaseSession.withTransactionConnection(connection =>
-        UserHttpPlanDefinitions.updateOwnAccount.plan
-          .execute(context, connection, actor, (targetUsername, body))
-          .flatMap(UserHttpPlanDefinitions.updateOwnAccount.toResponse)
-      )
-    }
-
   private def runManagedProfileUpdate(
     request: Request[IO],
     targetUsername: Username,
@@ -186,18 +158,5 @@ final class UserHttpHandlers(
         UserHttpPlanDefinitions.updateManagedPreferences.plan
           .execute(context, connection, actor, (targetUsername, body))
           .flatMap(UserHttpPlanDefinitions.updateManagedPreferences.toResponse)
-      )
-    }
-
-  private def runManagedAccountUpdate(
-    request: Request[IO],
-    targetUsername: Username,
-    actor: SiteManagerUser
-  ): IO[Response[IO]] =
-    request.as[UpdateManagedUserAccountRequest].flatMap { body =>
-      databaseSession.withTransactionConnection(connection =>
-        UserHttpPlanDefinitions.updateManagedAccount.plan
-          .execute(context, connection, actor, (targetUsername, body))
-          .flatMap(UserHttpPlanDefinitions.updateManagedAccount.toResponse)
       )
     }

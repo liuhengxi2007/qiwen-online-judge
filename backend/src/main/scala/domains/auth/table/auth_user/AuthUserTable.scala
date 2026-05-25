@@ -3,7 +3,7 @@ package domains.auth.table.auth_user
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
+import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.auth.table.auth_user.AuthUserTableSchema.*
@@ -11,9 +11,14 @@ import domains.auth.table.auth_user.AuthUserTableSupport.*
 import domains.user.model.{UserDisplayMode, UserLocale}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import java.sql.Connection
+import java.sql.{Connection, SQLException}
 
 object AuthUserTable:
+
+  enum DeleteAccountTableResult:
+    case NotFound
+    case Deleted
+    case HasOwnedResources
 
   private val logger = Slf4jLogger.getLogger[IO]
 
@@ -114,5 +119,86 @@ object AuthUserTable:
           if resultSet.next() then readAuthUser(resultSet)
           else missingInsertResult("user")
         finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val updateAccountSQL: String =
+    """
+      |update auth_users
+      |set email = ?, password_hash = ?
+      |where username = ?
+      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |""".stripMargin
+
+  def updateAccount(
+    connection: Connection,
+    username: Username,
+    email: EmailAddress,
+    passwordHash: PasswordHash
+  ): IO[Option[AuthUser]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateAccountSQL)
+      try
+        statement.setString(1, email.value.trim)
+        statement.setString(2, passwordHash.value)
+        statement.setString(3, username.value.trim)
+
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(readAuthUser(resultSet))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val updatePermissionsSQL: String =
+    """
+      |update auth_users
+      |set site_manager = ?, problem_manager = ?
+      |where username = ?
+      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |""".stripMargin
+
+  def updatePermissions(
+    connection: Connection,
+    actor: SiteManagerUser,
+    username: Username,
+    siteManager: Boolean,
+    problemManager: Boolean
+  ): IO[Option[AuthUser]] =
+    IO.blocking {
+      val _ = actor
+      val statement = connection.prepareStatement(updatePermissionsSQL)
+      try
+        statement.setBoolean(1, siteManager)
+        statement.setBoolean(2, problemManager)
+        statement.setString(3, username.value.trim)
+
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(readAuthUser(resultSet))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val deleteSQL: String =
+    """
+      |delete from auth_users
+      |where username = ?
+      |""".stripMargin
+
+  def delete(connection: Connection, username: Username): IO[DeleteAccountTableResult] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteSQL)
+      try
+        statement.setString(1, username.value)
+        try
+          val deletedRows = statement.executeUpdate()
+          if deletedRows == 0 then DeleteAccountTableResult.NotFound
+          else DeleteAccountTableResult.Deleted
+        catch
+          case exception: SQLException if exception.getSQLState == "23503" =>
+            DeleteAccountTableResult.HasOwnedResources
       finally statement.close()
     }

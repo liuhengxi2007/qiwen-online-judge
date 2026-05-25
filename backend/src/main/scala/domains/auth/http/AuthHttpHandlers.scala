@@ -7,7 +7,13 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpPlanRegistry.RegisteredPlan
+import domains.auth.http.codec.AuthHttpCodecs.given
+import domains.auth.http.mapper.AuthHttpResponseMappers
+import domains.auth.model.{AuthUser, SiteManagerUser}
+import domains.auth.model.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
+import domains.user.model.Username
 import org.http4s.{Request, Response}
+import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 
 final class AuthHttpHandlers(
@@ -272,3 +278,44 @@ final class AuthHttpHandlers(
     registeredPlan: RegisteredPlan.SiteManagerWithTransaction[Input, Output]
   )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)((body: Input) => body)
+
+  def executeAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username
+  ): IO[Response[IO]] =
+    AuthHttpSessionSupport.withAuthenticatedUser(databaseSession, sessionStore, request) { actor =>
+      if targetUsername.value == actor.username.value then
+        runOwnAccountUpdate(request, targetUsername, actor)
+      else
+        SiteManagerUser.from(actor) match
+          case Some(siteManagerActor) =>
+            runManagedAccountUpdate(request, targetUsername, siteManagerActor)
+          case None =>
+            AuthHttpResponseMappers.validationErrorResponse("Site manager permission required.")
+    }
+
+  private def runOwnAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: AuthUser
+  ): IO[Response[IO]] =
+    request.as[UpdateOwnAccountRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        AuthHttpPlanDefinitions.updateOwnAccount.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(AuthHttpPlanDefinitions.updateOwnAccount.toResponse)
+      )
+    }
+
+  private def runManagedAccountUpdate(
+    request: Request[IO],
+    targetUsername: Username,
+    actor: SiteManagerUser
+  ): IO[Response[IO]] =
+    request.as[UpdateManagedUserAccountRequest].flatMap { body =>
+      databaseSession.withTransactionConnection(connection =>
+        AuthHttpPlanDefinitions.updateManagedAccount.plan
+          .execute(context, connection, actor, (targetUsername, body))
+          .flatMap(AuthHttpPlanDefinitions.updateManagedAccount.toResponse)
+      )
+    }

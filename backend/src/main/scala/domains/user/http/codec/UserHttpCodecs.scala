@@ -1,7 +1,6 @@
 package domains.user.http.codec
 
 import domains.auth.http.codec.AuthModelHttpCodecs.given
-import domains.auth.model.response.SessionResponse
 import domains.user.model.request.*
 import domains.user.model.response.*
 import shared.model.PageRequest
@@ -35,25 +34,19 @@ object UserHttpCodecs:
     yield UserListRequest(query = query, pageRequest = PageRequest(page = page, pageSize = pageSize))
   }
 
-  given Encoder[UpdateUserPermissionsRequest] = deriveEncoder[UpdateUserPermissionsRequest]
-  given Decoder[UpdateUserPermissionsRequest] = deriveDecoder[UpdateUserPermissionsRequest]
   given Encoder[UpdateOwnProfileRequest] = deriveEncoder[UpdateOwnProfileRequest]
   given Decoder[UpdateOwnProfileRequest] = deriveDecoder[UpdateOwnProfileRequest]
   given Encoder[UpdateOwnPreferencesRequest] = deriveEncoder[UpdateOwnPreferencesRequest]
   given Decoder[UpdateOwnPreferencesRequest] = deriveDecoder[UpdateOwnPreferencesRequest]
-  given Encoder[UpdateOwnAccountRequest] = deriveEncoder[UpdateOwnAccountRequest]
-  given Decoder[UpdateOwnAccountRequest] = deriveDecoder[UpdateOwnAccountRequest]
   given Encoder[UpdateManagedUserProfileRequest] = deriveEncoder[UpdateManagedUserProfileRequest]
   given Decoder[UpdateManagedUserProfileRequest] = deriveDecoder[UpdateManagedUserProfileRequest]
   given Encoder[UpdateManagedUserPreferencesRequest] = deriveEncoder[UpdateManagedUserPreferencesRequest]
   given Decoder[UpdateManagedUserPreferencesRequest] = deriveDecoder[UpdateManagedUserPreferencesRequest]
-  given Encoder[UpdateManagedUserAccountRequest] = deriveEncoder[UpdateManagedUserAccountRequest]
-  given Decoder[UpdateManagedUserAccountRequest] = deriveDecoder[UpdateManagedUserAccountRequest]
 
   given Encoder[AuthUserListItem] = deriveEncoder[AuthUserListItem]
   given Decoder[AuthUserListItem] = deriveDecoder[AuthUserListItem]
-  given Encoder[SessionResponse] = deriveEncoder[SessionResponse]
-  given Decoder[SessionResponse] = deriveDecoder[SessionResponse]
+  given Encoder[UserSettingsResponse] = deriveEncoder[UserSettingsResponse]
+  given Decoder[UserSettingsResponse] = deriveDecoder[UserSettingsResponse]
   given Encoder[UserProfileResponse] = deriveEncoder[UserProfileResponse]
   given Decoder[UserProfileResponse] = deriveDecoder[UserProfileResponse]
   given Encoder[UserRanklistItem] = deriveEncoder[UserRanklistItem]

@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
 import { HttpClientError } from '@/shared/api/http-client'
-import { updateUserPermissions } from '@/features/user/http/api/UpdateUserPermissions'
+import { updateAccountPermissions } from '@/features/auth/http/api/UpdateAccountPermissions'
 import type { AuthUserListItem } from '@/features/user/model/response/AuthUserListItem'
-import type { UpdateUserPermissionsRequest } from '@/features/user/model/request/UpdateUserPermissionsRequest'
+import type { UpdateUserPermissionsRequest } from '@/features/auth/model/request/UpdateUserPermissionsRequest'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
 import { translateMessage } from '@/shared/i18n/messages'
@@ -24,7 +24,7 @@ export function useUserPermissionsMutation() {
       setNavigationIntent(null)
 
       try {
-        const updatedUser = await updateUserPermissions(targetUsername, nextPermissions)
+        const updatedUser = await updateAccountPermissions(targetUsername, nextPermissions)
         setUpdatingUsername(null)
         return { kind: 'updated', user: updatedUser }
       } catch (error) {

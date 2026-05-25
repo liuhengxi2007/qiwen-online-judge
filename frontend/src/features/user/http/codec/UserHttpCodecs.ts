@@ -1,13 +1,10 @@
 import type { AuthUserListItem } from '@/features/user/model/response/AuthUserListItem'
 import type { PageResponse } from '@/shared/model/PageResponse'
 import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
-import type { UpdateManagedUserAccountRequest } from '@/features/user/model/request/UpdateManagedUserAccountRequest'
 import type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateManagedUserProfileRequest } from '@/features/user/model/request/UpdateManagedUserProfileRequest'
-import type { UpdateOwnAccountRequest } from '@/features/user/model/request/UpdateOwnAccountRequest'
 import type { UpdateOwnPreferencesRequest } from '@/features/user/model/request/UpdateOwnPreferencesRequest'
 import type { UpdateOwnProfileRequest } from '@/features/user/model/request/UpdateOwnProfileRequest'
-import type { UpdateUserPermissionsRequest } from '@/features/user/model/request/UpdateUserPermissionsRequest'
 import type { UserAcceptedRanklistItem } from '@/features/user/model/response/UserAcceptedRanklistItem'
 import type { UserListRequest } from '@/features/user/model/request/UserListRequest'
 import type { UserListResponse } from '@/features/user/model/response/UserListResponse'
@@ -15,8 +12,6 @@ import type { UserProfileResponse } from '@/features/user/model/response/UserPro
 import type { UserRanklistItem } from '@/features/user/model/response/UserRanklistItem'
 import {
   fromEmailAddressContract,
-  toEmailAddressContract,
-  toPlaintextPasswordContract,
 } from '@/features/auth/http/codec/AuthModelHttpCodecs'
 import {
   fromDisplayNameContract,
@@ -84,11 +79,6 @@ type SessionResponseContract = {
   problemManager: boolean
 }
 
-type UpdateUserPermissionsRequestContract = {
-  siteManager: boolean
-  problemManager: boolean
-}
-
 type UpdateOwnProfileRequestContract = {
   displayName: string
 }
@@ -97,23 +87,12 @@ type UpdateOwnPreferencesRequestContract = {
   preferences: UserPreferencesContract
 }
 
-type UpdateOwnAccountRequestContract = {
-  email: string
-  currentPassword: string
-  newPassword: string | null
-}
-
 type UpdateManagedUserProfileRequestContract = {
   displayName: string
 }
 
 type UpdateManagedUserPreferencesRequestContract = {
   preferences: UserPreferencesContract
-}
-
-type UpdateManagedUserAccountRequestContract = {
-  email: string
-  newPassword: string | null
 }
 
 export function fromUserProfileResponseContract(response: UserProfileResponseContract): UserProfileResponse {
@@ -213,12 +192,6 @@ export function toUserListRequestContract(request: UserListRequest): UserListReq
   }
 }
 
-export function toUpdateUserPermissionsRequestContract(
-  request: UpdateUserPermissionsRequest,
-): UpdateUserPermissionsRequestContract {
-  return request
-}
-
 export function toUpdateOwnProfileRequestContract(
   request: UpdateOwnProfileRequest,
 ): UpdateOwnProfileRequestContract {
@@ -235,16 +208,6 @@ export function toUpdateOwnPreferencesRequestContract(
   }
 }
 
-export function toUpdateOwnAccountRequestContract(
-  request: UpdateOwnAccountRequest,
-): UpdateOwnAccountRequestContract {
-  return {
-    email: toEmailAddressContract(request.email),
-    currentPassword: toPlaintextPasswordContract(request.currentPassword),
-    newPassword: request.newPassword ? toPlaintextPasswordContract(request.newPassword) : null,
-  }
-}
-
 export function toUpdateManagedUserProfileRequestContract(
   request: UpdateManagedUserProfileRequest,
 ): UpdateManagedUserProfileRequestContract {
@@ -258,14 +221,5 @@ export function toUpdateManagedUserPreferencesRequestContract(
 ): UpdateManagedUserPreferencesRequestContract {
   return {
     preferences: toUserPreferencesContract(request.preferences),
-  }
-}
-
-export function toUpdateManagedUserAccountRequestContract(
-  request: UpdateManagedUserAccountRequest,
-): UpdateManagedUserAccountRequestContract {
-  return {
-    email: toEmailAddressContract(request.email),
-    newPassword: request.newPassword ? toPlaintextPasswordContract(request.newPassword) : null,
   }
 }

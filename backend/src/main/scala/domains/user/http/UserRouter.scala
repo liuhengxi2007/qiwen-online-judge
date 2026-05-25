@@ -11,11 +11,8 @@ import domains.user.http.api.GetUserProfile
 import domains.user.http.api.GetUserSettings
 import domains.user.http.api.ListContributionRanklist
 import domains.user.http.api.ListAcceptedRanklist
-import domains.user.http.api.UpdateUserPermissions
 import domains.user.http.api.UpdateUserProfile
 import domains.user.http.api.UpdateUserPreferences
-import domains.user.http.api.UpdateUserAccount
-import domains.user.http.api.DeleteUser
 import domains.auth.application.SessionStore
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
@@ -33,11 +30,8 @@ object UserRouter:
       GetUserSettings.routes(handlers),
       ListContributionRanklist.routes(handlers),
       ListAcceptedRanklist.routes(handlers),
-      UpdateUserPermissions.routes(handlers),
       UpdateUserProfile.routes(handlers),
-      UpdateUserPreferences.routes(handlers),
-      UpdateUserAccount.routes(handlers),
-      DeleteUser.routes(handlers)
+      UpdateUserPreferences.routes(handlers)
     )
 
     endpointRoutes.reduce(_ <+> _)

@@ -9,6 +9,9 @@ import domains.auth.http.api.GetSession
 import domains.auth.http.api.Logout
 import domains.auth.http.api.Login
 import domains.auth.http.api.Register
+import domains.auth.http.api.UpdateAccount
+import domains.auth.http.api.UpdateAccountPermissions
+import domains.auth.http.api.DeleteAccount
 import domains.auth.application.SessionStore
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
@@ -22,4 +25,7 @@ object AuthRouter:
     GetSession.routes(handlers) <+>
       Logout.routes(handlers) <+>
       Login.routes(handlers) <+>
-      Register.routes(handlers)
+      Register.routes(handlers) <+>
+      UpdateAccount.routes(handlers) <+>
+      UpdateAccountPermissions.routes(handlers) <+>
+      DeleteAccount.routes(handlers)

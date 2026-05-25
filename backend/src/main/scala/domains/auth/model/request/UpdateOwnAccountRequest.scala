@@ -1,9 +1,9 @@
-package domains.user.model.request
-
+package domains.auth.model.request
 
 import domains.auth.model.{EmailAddress, PlaintextPassword}
 
-final case class UpdateManagedUserAccountRequest(
+final case class UpdateOwnAccountRequest(
   email: EmailAddress,
+  currentPassword: PlaintextPassword,
   newPassword: Option[PlaintextPassword]
 )

@@ -3,8 +3,9 @@ package domains.auth.http.mapper
 
 
 import cats.effect.IO
+import domains.auth.application.AuthCommands
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
-import domains.auth.model.response.{LoginResponse, RegisterResponse, SessionResponse}
+import domains.auth.model.response.{AuthAccountListItem, LoginResponse, RegisterResponse, SessionResponse}
 import domains.auth.http.AuthHttpPlans
 import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.model.{AuthUser, SessionToken}
@@ -127,11 +128,63 @@ object AuthHttpResponseMappers:
       message = message
     )
 
+  def toAuthAccountListItem(user: AuthUser): AuthAccountListItem =
+    AuthAccountListItem(
+      username = user.username,
+      displayName = user.displayName,
+      email = user.email,
+      siteManager = user.siteManager,
+      problemManager = user.problemManager
+    )
+
   def sessionResponse(response: SessionResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def loggedOutResponse(output: AuthHttpPlans.LogoutOutput): IO[Response[IO]] =
     loggedOutResponse(output.clearedSessionCookie)
+
+  def mapUpdateUserPermissionsResult(result: AuthCommands.UpdateUserPermissionsResult): IO[Response[IO]] =
+    result match
+      case AuthCommands.UpdateUserPermissionsResult.Forbidden =>
+        forbiddenResponse
+      case AuthCommands.UpdateUserPermissionsResult.ProtectedAdmin =>
+        protectedAdminResponse
+      case AuthCommands.UpdateUserPermissionsResult.NotFound =>
+        userNotFoundResponse
+      case AuthCommands.UpdateUserPermissionsResult.Updated(user) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toAuthAccountListItem(user).asJson))
+
+  def mapUpdateAccountResult(result: AuthCommands.UpdateAccountResult): IO[Response[IO]] =
+    result match
+      case AuthCommands.UpdateAccountResult.Forbidden =>
+        forbiddenResponse
+      case AuthCommands.UpdateAccountResult.InvalidCurrentPassword =>
+        invalidCurrentPasswordResponse
+      case AuthCommands.UpdateAccountResult.NotFound =>
+        userNotFoundResponse
+      case AuthCommands.UpdateAccountResult.Updated(user, _) =>
+        IO.pure(Response[IO](status = Status.Ok).withEntity(toSessionResponse(user).asJson))
+
+  def mapUpdateAccountOutput(output: AuthHttpPlans.UpdateAccountOutput): IO[Response[IO]] =
+    mapUpdateAccountResult(output.result).map { response =>
+      if output.clearSessionCookie then response.addCookie(clearedSessionCookie)
+      else response
+    }
+
+  def mapDeleteAccountResult(result: AuthCommands.DeleteAccountResult): IO[Response[IO]] =
+    result match
+      case AuthCommands.DeleteAccountResult.Forbidden =>
+        forbiddenResponse
+      case AuthCommands.DeleteAccountResult.ProtectedAdmin =>
+        protectedAdminDeletionResponse
+      case AuthCommands.DeleteAccountResult.CannotDeleteSelf =>
+        selfDeletionResponse
+      case AuthCommands.DeleteAccountResult.NotFound =>
+        userNotFoundResponse
+      case AuthCommands.DeleteAccountResult.HasOwnedResources =>
+        userOwnsResourcesResponse
+      case AuthCommands.DeleteAccountResult.Deleted =>
+        successResponse(Status.Ok, ApiMessages.userDeleted)
 
   def loginResponse(output: LoginResult): IO[Response[IO]] =
     output match

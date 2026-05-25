@@ -5,13 +5,13 @@ import type { SessionResponse } from '@/features/auth/model/response/SessionResp
 import type { Username } from '@/features/user/model/Username'
 import { logout } from '@/features/auth/http/api/Logout'
 import { HttpClientError } from '@/shared/api/http-client'
-import { updateManagedUserAccount, updateOwnUserAccount } from '@/features/user/http/api/UpdateUserAccount'
+import { updateManagedAccount, updateOwnAccount } from '@/features/auth/http/api/UpdateAccount'
 import { updateManagedUserPreferences, updateOwnUserPreferences } from '@/features/user/http/api/UpdateUserPreferences'
 import { updateManagedUserProfile, updateOwnUserProfile } from '@/features/user/http/api/UpdateUserProfile'
-import type { UpdateManagedUserAccountRequest } from '@/features/user/model/request/UpdateManagedUserAccountRequest'
+import type { UpdateManagedUserAccountRequest } from '@/features/auth/model/request/UpdateManagedUserAccountRequest'
 import type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateManagedUserProfileRequest } from '@/features/user/model/request/UpdateManagedUserProfileRequest'
-import type { UpdateOwnAccountRequest } from '@/features/user/model/request/UpdateOwnAccountRequest'
+import type { UpdateOwnAccountRequest } from '@/features/auth/model/request/UpdateOwnAccountRequest'
 import type { UpdateOwnPreferencesRequest } from '@/features/user/model/request/UpdateOwnPreferencesRequest'
 import type { UpdateOwnProfileRequest } from '@/features/user/model/request/UpdateOwnProfileRequest'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
@@ -79,13 +79,13 @@ export function useUserSettingsMutation() {
             case 'own_preferences':
               return updateOwnUserPreferences(params.targetUsername, params.request)
             case 'own_account':
-              return updateOwnUserAccount(params.targetUsername, params.request)
+              return updateOwnAccount(params.targetUsername, params.request)
             case 'managed_profile':
               return updateManagedUserProfile(params.targetUsername, params.request)
             case 'managed_preferences':
               return updateManagedUserPreferences(params.targetUsername, params.request)
             case 'managed_account':
-              return updateManagedUserAccount(params.targetUsername, params.request)
+              return updateManagedAccount(params.targetUsername, params.request)
           }
         })()
 

@@ -38,6 +38,7 @@ const publicModelTypes = new Map([
     'SiteManagerUser',
   ])],
   ['blog', new Set([
+    'BlogCommentNotificationContext',
     'BlogCommentId',
     'BlogId',
     'BlogTitle',
@@ -56,7 +57,9 @@ const publicModelTypes = new Map([
     'ProblemDataManifest',
     'ProblemDataManifestEntry',
     'ProblemDataPath',
+    'ProblemDetail',
     'ProblemId',
+    'ProblemSetMemberTarget',
     'ProblemSlug',
     'ProblemSpaceLimitMb',
     'ProblemStatementText',
@@ -72,6 +75,7 @@ const publicModelTypes = new Map([
     'ProblemSetTitle',
   ])],
   ['submission', new Set([
+    'ClaimedSubmission',
     'SubmissionId',
     'SubmissionLanguage',
     'SubmissionSourceCode',

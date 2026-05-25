@@ -3,7 +3,7 @@ package domains.user.table.user
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
+import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
@@ -14,14 +14,9 @@ import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, U
 import domains.user.model.request.{UserListRequest}
 import domains.user.table.user.UserTableSupport.*
 
-import java.sql.{Connection, SQLException}
+import java.sql.Connection
 
 object UserTable:
-
-  enum DeleteUserTableResult:
-    case NotFound
-    case Deleted
-    case HasOwnedResources
 
   private val findByUsernameSQL: String =
     """
@@ -269,41 +264,10 @@ object UserTable:
       finally statement.close()
     }
 
-  private val updatePermissionsSQL: String =
-    """
-      |update auth_users
-      |set site_manager = ?, problem_manager = ?
-      |where username = ?
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
-      |""".stripMargin
-
-  def updatePermissions(
-    connection: Connection,
-    actor: SiteManagerUser,
-    username: Username,
-    siteManager: Boolean,
-    problemManager: Boolean
-  ): IO[Option[AuthUser]] =
-    IO.blocking {
-      val _ = actor
-      val statement = connection.prepareStatement(updatePermissionsSQL)
-      try
-        statement.setBoolean(1, siteManager)
-        statement.setBoolean(2, problemManager)
-        statement.setString(3, username.value.trim)
-
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then Some(readAuthUser(resultSet))
-          else None
-        finally resultSet.close()
-      finally statement.close()
-    }
-
   private val updateSettingsSQL: String =
     """
       |update auth_users
-      |set display_name = ?, email = ?, display_mode = ?, locale = ?, problem_title_display_mode = ?, auto_mark_message_read = ?, password_hash = ?
+      |set display_name = ?, display_mode = ?, locale = ?, problem_title_display_mode = ?, auto_mark_message_read = ?
       |where username = ?
       |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
       |""".stripMargin
@@ -312,51 +276,26 @@ object UserTable:
     connection: Connection,
     username: Username,
     displayName: DisplayName,
-    email: EmailAddress,
     displayMode: UserDisplayMode,
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,
-    autoMarkMessageRead: Boolean,
-    passwordHash: PasswordHash
+    autoMarkMessageRead: Boolean
   ): IO[Option[AuthUser]] =
     IO.blocking {
       val statement = connection.prepareStatement(updateSettingsSQL)
       try
         statement.setString(1, displayName.value.trim)
-        statement.setString(2, email.value.trim)
-        statement.setString(3, encodeUserDisplayModeColumn(displayMode))
-        statement.setString(4, encodeUserLocaleColumn(locale))
-        statement.setString(5, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
-        statement.setBoolean(6, autoMarkMessageRead)
-        statement.setString(7, passwordHash.value)
-        statement.setString(8, username.value.trim)
+        statement.setString(2, encodeUserDisplayModeColumn(displayMode))
+        statement.setString(3, encodeUserLocaleColumn(locale))
+        statement.setString(4, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
+        statement.setBoolean(5, autoMarkMessageRead)
+        statement.setString(6, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then Some(readAuthUser(resultSet))
           else None
         finally resultSet.close()
-      finally statement.close()
-    }
-
-  private val deleteSQL: String =
-    """
-      |delete from auth_users
-      |where username = ?
-      |""".stripMargin
-
-  def delete(connection: Connection, username: Username): IO[DeleteUserTableResult] =
-    IO.blocking {
-      val statement = connection.prepareStatement(deleteSQL)
-      try
-        statement.setString(1, username.value)
-        try
-          val deletedRows = statement.executeUpdate()
-          if deletedRows == 0 then DeleteUserTableResult.NotFound
-          else DeleteUserTableResult.Deleted
-        catch
-          case exception: SQLException if exception.getSQLState == "23503" =>
-            DeleteUserTableResult.HasOwnedResources
       finally statement.close()
     }
 
