@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import {
-  readProblemDataText,
-  saveProblemDataText,
-} from '@/features/problem/http/api/problem-client'
+import { readProblemDataText } from '@/features/problem/http/api/DownloadProblemDataPath'
+import { saveProblemDataText } from '@/features/problem/http/api/UploadProblemDataFile'
 import {
   judgeConfigPath,
   judgeConfigTemplate,

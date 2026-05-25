@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useReducer } from 'react'
 
-import {
-  clearProblemData,
-  deleteProblemData,
-  deleteProblemDataPath,
-  listProblemDataFiles,
-  listProblemDataTree,
-  problemDataPathDownloadUrl,
-  setProblemDataReady,
-  uploadProblemDataArchive,
-  uploadProblemDataFile,
-} from '@/features/problem/http/api/problem-client'
+import { clearProblemData } from '@/features/problem/http/api/ClearProblemData'
+import { deleteProblemData } from '@/features/problem/http/api/DeleteProblemData'
+import { deleteProblemDataPath } from '@/features/problem/http/api/DeleteProblemDataPath'
+import { listProblemDataFiles } from '@/features/problem/http/api/ListProblemDataFiles'
+import { listProblemDataTree } from '@/features/problem/http/api/ListProblemDataTree'
+import { problemDataPathDownloadUrl } from '@/features/problem/http/api/DownloadProblemDataPath'
+import { setProblemDataReady } from '@/features/problem/http/api/SetProblemDataReady'
+import { uploadProblemDataArchive } from '@/features/problem/http/api/UploadProblemDataArchive'
+import { uploadProblemDataFile } from '@/features/problem/http/api/UploadProblemDataFile'
 import { parseProblemDataFilename, problemDataPathValue, problemDataFilenameValue } from '@/features/problem/lib/problem-parsers'
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'

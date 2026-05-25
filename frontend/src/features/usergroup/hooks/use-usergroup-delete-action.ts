@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { deleteUserGroup } from '@/features/usergroup/http/api/usergroup-client'
+import { deleteUserGroup } from '@/features/usergroup/http/api/DeleteUserGroup'
 import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'

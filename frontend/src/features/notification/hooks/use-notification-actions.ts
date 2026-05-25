@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { markAllNotificationsRead, markNotificationRead } from '@/features/notification/http/api/notification-client'
+import { markAllNotificationsRead } from '@/features/notification/http/api/MarkAllNotificationsRead'
+import { markNotificationRead } from '@/features/notification/http/api/MarkNotificationRead'
 import type { NotificationId } from '@/features/notification/model/NotificationId'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

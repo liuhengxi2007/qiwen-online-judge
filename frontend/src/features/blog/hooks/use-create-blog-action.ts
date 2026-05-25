@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { createBlog } from '@/features/blog/http/api/blog-client'
+import { createBlog } from '@/features/blog/http/api/CreateBlog'
 import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogRequest'
 import { blogIdValue } from '@/features/blog/lib/blog-parsers'
 

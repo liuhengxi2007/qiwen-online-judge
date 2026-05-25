@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { toAuthSession } from '@/features/auth/lib/auth-session'
 import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
 import type { RegisterResponse } from '@/features/auth/http/response/RegisterResponse'
-import { register } from '@/features/auth/http/api/auth-client'
+import { register } from '@/features/auth/http/api/Register'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 

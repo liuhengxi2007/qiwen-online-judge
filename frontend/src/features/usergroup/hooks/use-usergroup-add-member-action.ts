@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { addUserGroupMember } from '@/features/usergroup/http/api/usergroup-client'
+import { addUserGroupMember } from '@/features/usergroup/http/api/AddUserGroupMember'
 import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
 import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'

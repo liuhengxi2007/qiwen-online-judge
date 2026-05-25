@@ -4,7 +4,8 @@ import type { SessionResponse } from '@/features/auth/http/response/SessionRespo
 import type { Username } from '@/features/user/model/Username'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
-import { UserClientError, getUserSettings } from '@/features/user/http/api/user-client'
+import { HttpClientError } from '@/shared/api/http-client'
+import { getUserSettings } from '@/features/user/http/api/GetUserSettings'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserSettingsQueryArgs = {
@@ -61,7 +62,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof UserClientError && error.kind === 'forbidden') {
+        if (error instanceof HttpClientError && error.kind === 'forbidden') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,
@@ -71,7 +72,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof UserClientError && error.kind === 'not-found') {
+        if (error instanceof HttpClientError && error.kind === 'not-found') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,

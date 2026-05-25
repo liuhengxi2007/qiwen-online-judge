@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { asSiteManagerSession } from '@/features/auth/lib/auth-session'
-import { AuthClientError, getSession, logout as logoutRequest } from '@/features/auth/http/api/auth-client'
+import { HttpClientError } from '@/shared/api/http-client'
+import { getSession } from '@/features/auth/http/api/GetSession'
+import { logout as logoutRequest } from '@/features/auth/http/api/Logout'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import {
   toSessionExpiredRedirect,
@@ -42,7 +44,7 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
           return
         }
 
-        if (error instanceof AuthClientError && error.kind === 'unauthorized') {
+        if (error instanceof HttpClientError && error.kind === 'unauthorized') {
           clearSession()
           setNavigationIntent(toSessionExpiredRedirect())
           return

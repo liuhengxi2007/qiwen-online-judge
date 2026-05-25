@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { createSubmission } from '@/features/submission/http/api/submission-client'
+import { createSubmission } from '@/features/submission/http/api/CreateSubmission'
 import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
 import { submissionIdValue } from '@/features/submission/lib/submission-parsers'
 import { HttpClientError } from '@/shared/api/http-client'

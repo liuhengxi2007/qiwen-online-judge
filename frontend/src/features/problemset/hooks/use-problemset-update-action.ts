@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
-import { updateProblemSet } from '@/features/problemset/http/api/problemset-client'
+import { updateProblemSet } from '@/features/problemset/http/api/UpdateProblemSet'
 import { validateProblemSetUpdateDraft } from '@/features/problemset/lib/problemset-form'
 import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'

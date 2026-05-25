@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 
-import {
-  createConversation,
-  getConversationHistory,
-  markConversationRead,
-  sendDirectMessage,
-} from '@/features/message/http/api/message-client'
+import { createConversation } from '@/features/message/http/api/CreateConversation'
+import { getConversationHistory } from '@/features/message/http/api/GetConversationHistory'
+import { markConversationRead } from '@/features/message/http/api/MarkConversationRead'
+import { sendDirectMessage } from '@/features/message/http/api/SendDirectMessage'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
 import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
 import type { MessageId } from '@/features/message/model/MessageId'

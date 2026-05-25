@@ -1,15 +1,13 @@
 import { useState } from 'react'
 
-import {
-  createBlogComment,
-  deleteBlog,
-  deleteBlogComment,
-  submitBlogToProblem,
-  updateBlog,
-  updateBlogComment,
-  voteBlog,
-  voteBlogComment,
-} from '@/features/blog/http/api/blog-client'
+import { createBlogComment } from '@/features/blog/http/api/CreateBlogComment'
+import { deleteBlog } from '@/features/blog/http/api/DeleteBlog'
+import { deleteBlogComment } from '@/features/blog/http/api/DeleteBlogComment'
+import { submitBlogToProblem } from '@/features/blog/http/api/SubmitBlogToProblem'
+import { updateBlog } from '@/features/blog/http/api/UpdateBlog'
+import { updateBlogComment } from '@/features/blog/http/api/UpdateBlogComment'
+import { voteBlog } from '@/features/blog/http/api/VoteBlog'
+import { voteBlogComment } from '@/features/blog/http/api/VoteBlogComment'
 import { blogCommentContentValue, parseBlogCommentContent, parseBlogContent, parseBlogTitle } from '@/features/blog/lib/blog-parsers'
 import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
 import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'

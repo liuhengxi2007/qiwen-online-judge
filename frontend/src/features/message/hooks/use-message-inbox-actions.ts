@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { markAllMessagesRead } from '@/features/message/http/api/message-client'
+import { markAllMessagesRead } from '@/features/message/http/api/MarkAllMessagesRead'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

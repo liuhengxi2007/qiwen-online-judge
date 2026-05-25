@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
-import { listBlogs, listProblemBlogs } from '@/features/blog/http/api/blog-client'
+import { listBlogs } from '@/features/blog/http/api/ListBlogs'
+import { listProblemBlogs } from '@/features/blog/http/api/ListProblemBlogs'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { PageRequest } from '@/shared/model/PageRequest'

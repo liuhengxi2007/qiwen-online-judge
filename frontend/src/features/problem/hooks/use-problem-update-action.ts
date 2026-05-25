@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
-import { updateProblem } from '@/features/problem/http/api/problem-client'
+import { updateProblem } from '@/features/problem/http/api/UpdateProblem'
 import { validateProblemUpdateDraft } from '@/features/problem/lib/problem-form'
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'

@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import { getProblem } from '@/features/problem/http/api/problem-client'
+import { getProblem } from '@/features/problem/http/api/GetProblem'
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import {

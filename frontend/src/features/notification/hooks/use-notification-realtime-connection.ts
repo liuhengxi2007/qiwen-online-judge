@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 import { useNotificationRefresh } from '@/features/notification/hooks/use-notification-refresh'
-import { notificationEventsUrl } from '@/features/notification/http/api/notification-client'
+import { notificationEventsUrl } from '@/features/notification/http/api/SubscribeNotificationEvents'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 
 let eventSource: EventSource | null = null

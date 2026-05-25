@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
-import { removeUserGroupMember } from '@/features/usergroup/http/api/usergroup-client'
+import { removeUserGroupMember } from '@/features/usergroup/http/api/RemoveUserGroupMember'
 import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import { HttpClientError } from '@/shared/api/http-client'

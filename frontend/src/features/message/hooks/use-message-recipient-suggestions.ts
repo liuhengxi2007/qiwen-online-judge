@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { listUserSuggestions } from '@/features/user/http/api/user-client'
+import { listUserSuggestions } from '@/features/user/http/api/ListUserSuggestions'
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
 import { HttpClientError } from '@/shared/api/http-client'
 

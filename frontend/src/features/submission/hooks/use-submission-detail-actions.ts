@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { deleteSubmission, rejudgeSubmission } from '@/features/submission/http/api/submission-client'
+import { deleteSubmission } from '@/features/submission/http/api/DeleteSubmission'
+import { rejudgeSubmission } from '@/features/submission/http/api/RejudgeSubmission'
 import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import { HttpClientError } from '@/shared/api/http-client'

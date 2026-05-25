@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { listInbox } from '@/features/message/http/api/message-client'
+import { listInbox } from '@/features/message/http/api/ListInbox'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

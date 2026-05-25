@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import {
-  acceptBlogProblemSubmission,
-  linkBlogToProblem,
-  listPendingProblemBlogs,
-  unlinkBlogFromProblem,
-} from '@/features/blog/http/api/blog-client'
+import { acceptBlogProblemSubmission } from '@/features/blog/http/api/AcceptBlogProblemSubmission'
+import { linkBlogToProblem } from '@/features/blog/http/api/LinkBlogToProblem'
+import { listPendingProblemBlogs } from '@/features/blog/http/api/ListPendingProblemBlogs'
+import { unlinkBlogFromProblem } from '@/features/blog/http/api/UnlinkBlogFromProblem'
 import { parseBlogId } from '@/features/blog/lib/blog-parsers'
 import type { BlogId } from '@/features/blog/model/BlogId'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'

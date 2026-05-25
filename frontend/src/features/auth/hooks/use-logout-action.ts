@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { logout as logoutRequest } from '@/features/auth/http/api/auth-client'
+import { logout as logoutRequest } from '@/features/auth/http/api/Logout'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'
 
 export function useLogoutAction() {

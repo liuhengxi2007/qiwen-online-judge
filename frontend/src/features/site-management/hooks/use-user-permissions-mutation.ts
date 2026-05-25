@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
-import { UserClientError, updateUserPermissions } from '@/features/user/http/api/user-client'
+import { HttpClientError } from '@/shared/api/http-client'
+import { updateUserPermissions } from '@/features/user/http/api/UpdateUserPermissions'
 import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
 import type { UpdateUserPermissionsRequest } from '@/features/user/http/request/UpdateUserPermissionsRequest'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
@@ -27,7 +28,7 @@ export function useUserPermissionsMutation() {
         setUpdatingUsername(null)
         return { kind: 'updated', user: updatedUser }
       } catch (error) {
-        if (error instanceof UserClientError && error.kind === 'forbidden') {
+        if (error instanceof HttpClientError && error.kind === 'forbidden') {
           setUpdatingUsername(null)
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }

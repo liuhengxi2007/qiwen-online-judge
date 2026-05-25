@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react'
 
 import type { Username } from '@/features/user/model/Username'
 import { toSiteManageDeniedRedirect } from '@/features/auth/lib/route-policy'
-import { UserClientError, deleteUser } from '@/features/user/http/api/user-client'
+import { HttpClientError } from '@/shared/api/http-client'
+import { deleteUser } from '@/features/user/http/api/DeleteUser'
 import { translateMessage } from '@/shared/i18n/messages'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
@@ -25,14 +26,14 @@ export function useUserDeleteMutation() {
         setDeletingUsername(null)
         return { kind: 'deleted', message: response.message ?? translateMessage('common.success.generic') }
       } catch (error) {
-        if (error instanceof UserClientError && error.kind === 'forbidden') {
+        if (error instanceof HttpClientError && error.kind === 'forbidden') {
           setDeletingUsername(null)
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }
         }
 
         const message =
-          error instanceof UserClientError ? error.message : translateMessage('siteManage.message.deleteUserFailed')
+          error instanceof HttpClientError ? error.message : translateMessage('siteManage.message.deleteUserFailed')
         setDeletingUsername(null)
         return { kind: 'failed', message }
       }

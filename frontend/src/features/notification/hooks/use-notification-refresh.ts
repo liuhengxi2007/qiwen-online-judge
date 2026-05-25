@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
-import { getNotificationUnreadCount, listNotifications } from '@/features/notification/http/api/notification-client'
+import { getNotificationUnreadCount } from '@/features/notification/http/api/GetNotificationUnreadCount'
+import { listNotifications } from '@/features/notification/http/api/ListNotifications'
 import { useNotificationStore } from '@/features/notification/stores/use-notification-store'
 import { HttpClientError } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

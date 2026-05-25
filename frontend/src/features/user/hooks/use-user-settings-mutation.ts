@@ -3,16 +3,11 @@ import { useCallback, useState } from 'react'
 import { toAuthSession } from '@/features/auth/lib/auth-session'
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import type { Username } from '@/features/user/model/Username'
-import { logout } from '@/features/auth/http/api/auth-client'
-import {
-  UserClientError,
-  updateManagedUserAccount,
-  updateManagedUserPreferences,
-  updateManagedUserProfile,
-  updateOwnUserAccount,
-  updateOwnUserPreferences,
-  updateOwnUserProfile,
-} from '@/features/user/http/api/user-client'
+import { logout } from '@/features/auth/http/api/Logout'
+import { HttpClientError } from '@/shared/api/http-client'
+import { updateManagedUserAccount, updateOwnUserAccount } from '@/features/user/http/api/UpdateUserAccount'
+import { updateManagedUserPreferences, updateOwnUserPreferences } from '@/features/user/http/api/UpdateUserPreferences'
+import { updateManagedUserProfile, updateOwnUserProfile } from '@/features/user/http/api/UpdateUserProfile'
 import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
 import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
@@ -116,12 +111,12 @@ export function useUserSettingsMutation() {
 
         return { kind: 'updated', user: updatedUser, message }
       } catch (error) {
-        if (error instanceof UserClientError && error.kind === 'forbidden') {
+        if (error instanceof HttpClientError && error.kind === 'forbidden') {
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }
         }
 
-        if (error instanceof UserClientError && error.kind === 'unauthorized') {
+        if (error instanceof HttpClientError && error.kind === 'unauthorized') {
           const message =
             error.message ||
             (params.kind === 'own_account' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))

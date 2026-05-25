@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { listAcceptedRanklist, listContributionRanklist } from '@/features/user/http/api/user-client'
+import { listAcceptedRanklist } from '@/features/user/http/api/ListAcceptedRanklist'
+import { listContributionRanklist } from '@/features/user/http/api/ListContributionRanklist'
 import type { UserAcceptedRanklistItem } from '@/features/user/http/response/UserAcceptedRanklistItem'
 import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
 import type { PageResponse } from '@/shared/model/PageResponse'
