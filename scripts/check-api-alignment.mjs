@@ -37,7 +37,6 @@ function frontendEndpointNames(domain) {
   return listFilesIfDirectory(join(frontendFeaturesRoot, domain, 'http/api'))
     .map((filePath) => filePath.split('/').at(-1))
     .filter((fileName) => fileName.endsWith('.ts'))
-    .filter((fileName) => !fileName.endsWith('-client.ts'))
     .map((fileName) => fileName.replace(/\.ts$/, ''))
     .sort()
 }

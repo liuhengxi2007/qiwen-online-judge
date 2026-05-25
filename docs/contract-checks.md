@@ -29,4 +29,4 @@ The contract alignment check is intentionally structural:
 
 It does not replace runtime tests, endpoint fixtures, or parser tests.
 
-The API alignment check compares `frontend/src/features/*/http/api/*.ts` with `backend/src/main/scala/domains/*/http/api/*.scala`, ignoring frontend `*-client.ts` barrels and explicit backend-only domains such as judge integration endpoints.
+The API alignment check compares `frontend/src/features/*/http/api/*.ts` with `backend/src/main/scala/domains/*/http/api/*.scala`, with explicit backend-only domains such as judge integration endpoints recorded as script exceptions.

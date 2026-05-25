@@ -163,13 +163,13 @@ Rules:
 
 - endpoint clients live in `src/features/<domain>/http/api/<Name>.ts`
 - each endpoint file exports the idiomatic function name used by hooks and pages, for example `ListProblems.ts` exports `listProblems`
-- the domain `http/api/*-client.ts` file is the only frontend API barrel for a domain
+- do not add domain-level `http/api/*-client.ts` barrels
 - do not keep compatibility barrels under `src/features/<domain>/api`
 - non-JSON boundary helpers, such as download URL builders or realtime event URL helpers, also live in matched API files
 - when a frontend endpoint has a backend route, the frontend and backend API basenames must match exactly, with only the extension differing
 - run `node scripts/check-api-alignment.mjs` when endpoint files change
 
-Avoid adding new endpoint implementations directly to aggregate `*-client.ts` files.
+Hooks and pages should import directly from the matched endpoint file.
 
 ## Frontend Layer Boundaries
 
