@@ -11,6 +11,13 @@ const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendModelPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
 const frontendFeatureHttpApiPathPattern = /^frontend\/src\/features\/[^/]+\/http\/api(?:\/|$)/
+const frontendFeatureBareHttpCodecPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec$/
+const frontendFeatureFlatHttpCodecPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec\.ts$/
+const frontendFeatureHttpCodecIndexPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec\/index\.ts$/
+const frontendFeatureHttpCodecFilePattern = /^frontend\/src\/features\/([^/]+)\/http\/codec\/([^/]+)\.ts$/
+const frontendFeatureHttpCodecBasenamePattern = /^[A-Za-z0-9_]*(?:Model)?HttpCodecs$/
+const backendDomainHttpCodecFilePattern =
+  /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/codec\/([^/]+)\.scala$/
 const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
 const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
 const backendEffectPattern =
@@ -120,6 +127,97 @@ function checkFrontendSharedBoundaryFile(filePath, errors) {
       errors.push(
         `${filePath}:${lineNumber(source, match.index)} shared frontend imports feature package "${match.specifier}"`,
       )
+    }
+  }
+}
+
+function checkFrontendHttpCodecImports(filePath, errors) {
+  const source = read(filePath)
+  for (const match of extractTsSpecifiers(source)) {
+    const resolved = resolveFrontendSpecifier(filePath, match.specifier)
+    if (frontendFeatureBareHttpCodecPathPattern.test(resolved)) {
+      errors.push(
+        `${filePath}:${lineNumber(source, match.index)} imports removed frontend codec barrel "${match.specifier}"`,
+      )
+    }
+  }
+}
+
+function addCodecFile(map, domain, basename, filePath) {
+  const domainFiles = map.get(domain) ?? new Map()
+  domainFiles.set(basename, filePath)
+  map.set(domain, domainFiles)
+}
+
+function collectFrontendHttpCodecFiles(files, errors) {
+  const codecsByDomain = new Map()
+
+  for (const filePath of files) {
+    if (frontendFeatureFlatHttpCodecPathPattern.test(filePath)) {
+      errors.push(`${filePath} is a removed flat frontend codec file; use http/codec/*HttpCodecs.ts`)
+      continue
+    }
+
+    if (frontendFeatureHttpCodecIndexPathPattern.test(filePath)) {
+      errors.push(`${filePath} is a forbidden frontend codec barrel; import codec files directly`)
+      continue
+    }
+
+    const match = filePath.match(frontendFeatureHttpCodecFilePattern)
+    if (!match) {
+      continue
+    }
+
+    const [, domain, basename] = match
+    if (!frontendFeatureHttpCodecBasenamePattern.test(basename)) {
+      errors.push(`${filePath} must be named *HttpCodecs.ts or *ModelHttpCodecs.ts`)
+      continue
+    }
+
+    addCodecFile(codecsByDomain, domain, basename, filePath)
+  }
+
+  return codecsByDomain
+}
+
+function collectBackendHttpCodecFiles(files) {
+  const codecsByDomain = new Map()
+
+  for (const filePath of files) {
+    const match = filePath.match(backendDomainHttpCodecFilePattern)
+    if (!match) {
+      continue
+    }
+
+    const [, domain, basename] = match
+    addCodecFile(codecsByDomain, domain, basename, filePath)
+  }
+
+  return codecsByDomain
+}
+
+function checkFrontendHttpCodecLayout(frontendFiles, backendFiles, errors) {
+  const frontendCodecs = collectFrontendHttpCodecFiles(frontendFiles, errors)
+  const backendCodecs = collectBackendHttpCodecFiles(backendFiles)
+  const domains = [...new Set([...frontendCodecs.keys(), ...backendCodecs.keys()])].sort()
+
+  for (const domain of domains) {
+    const frontendDomainCodecs = frontendCodecs.get(domain) ?? new Map()
+    const backendDomainCodecs = backendCodecs.get(domain) ?? new Map()
+    const basenames = [...new Set([...frontendDomainCodecs.keys(), ...backendDomainCodecs.keys()])].sort()
+
+    for (const basename of basenames) {
+      if (!frontendDomainCodecs.has(basename)) {
+        const backendPath = backendDomainCodecs.get(basename)
+        errors.push(
+          `frontend/src/features/${domain}/http/codec/${basename}.ts is missing matching frontend codec for ${backendPath}`,
+        )
+      }
+
+      if (!backendDomainCodecs.has(basename)) {
+        const frontendPath = frontendDomainCodecs.get(basename)
+        errors.push(`${frontendPath} has no matching backend codec basename ${basename}.scala`)
+      }
     }
   }
 }
@@ -296,8 +394,12 @@ function checkTrackedResidues(errors) {
 
 function run() {
   const errors = []
+  const frontendFeatureFiles = walk('frontend/src/features', new Set(['.ts', '.tsx']))
+  const backendDomainFiles = walk('backend/src/main/scala/domains', new Set(['.scala']))
 
-  for (const filePath of walk('frontend/src/features', new Set(['.ts', '.tsx']))) {
+  for (const filePath of frontendFeatureFiles) {
+    checkFrontendHttpCodecImports(filePath, errors)
+
     if (/^frontend\/src\/features\/[^/]+\/model\//.test(filePath)) {
       checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
       checkFrontendModelFileShape(filePath, errors)
@@ -312,6 +414,8 @@ function run() {
     }
   }
 
+  checkFrontendHttpCodecLayout(frontendFeatureFiles, backendDomainFiles, errors)
+
   for (const filePath of walk('frontend/src/shared', new Set(['.ts', '.tsx']))) {
     checkFrontendSharedBoundaryFile(filePath, errors)
   }
@@ -323,7 +427,7 @@ function run() {
     }
   }
 
-  for (const filePath of walk('backend/src/main/scala/domains', new Set(['.scala']))) {
+  for (const filePath of backendDomainFiles) {
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/model\//.test(filePath)) {
       checkBackendModelFile(filePath, errors)
       checkBackendModelFileShape(filePath, errors)
