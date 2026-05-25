@@ -2,7 +2,7 @@ import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFi
 import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
-import { fromProblemDetailContract } from '@/features/problem/http/codec'
+import { fromProblemDetailContract } from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function deleteProblemData(problemSlug: ProblemSlug, filename: ProblemDataFilename): Promise<ProblemDetail> {

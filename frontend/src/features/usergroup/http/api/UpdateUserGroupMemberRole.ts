@@ -5,7 +5,7 @@ import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupMemberRoleRequestContract,
-} from '@/features/usergroup/http/codec'
+} from '@/features/usergroup/http/codec/UserGroupHttpCodecs'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'
 import { postJson } from '@/shared/api/http-client'

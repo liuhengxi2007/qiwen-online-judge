@@ -5,7 +5,7 @@ import { usernameValue } from '@/features/user/lib/user-parsers'
 import {
   fromAuthUserListItemContract,
   toUpdateUserPermissionsRequestContract,
-} from '@/features/user/http/codec'
+} from '@/features/user/http/codec/UserHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export function updateUserPermissions(

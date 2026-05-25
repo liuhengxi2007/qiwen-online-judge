@@ -1,4 +1,4 @@
-import { fromUserRanklistResponseContract } from '@/features/user/http/codec'
+import { fromUserRanklistResponseContract } from '@/features/user/http/codec/UserHttpCodecs'
 import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageResponse } from '@/shared/model/PageResponse'

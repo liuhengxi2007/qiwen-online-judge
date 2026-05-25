@@ -3,7 +3,7 @@ import type { ProblemDetail } from '@/features/problem/http/response/ProblemDeta
 import {
   fromProblemDetailContract,
   toCreateProblemRequestContract,
-} from '@/features/problem/http/codec'
+} from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createProblem(request: CreateProblemRequest): Promise<ProblemDetail> {

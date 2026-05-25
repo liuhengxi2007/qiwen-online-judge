@@ -3,7 +3,7 @@ import type { SubmissionDetail } from '@/features/submission/http/response/Submi
 import {
   fromSubmissionDetailContract,
   toCreateSubmissionRequestContract,
-} from '@/features/submission/http/codec'
+} from '@/features/submission/http/codec/SubmissionHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createSubmission(request: CreateSubmissionRequest): Promise<SubmissionDetail> {

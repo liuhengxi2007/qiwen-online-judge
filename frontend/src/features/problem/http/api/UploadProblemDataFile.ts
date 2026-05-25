@@ -3,7 +3,7 @@ import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemDataFilenameValue, problemDataPathValue, problemSlugValue } from '@/features/problem/lib/problem-parsers'
-import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec'
+import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { postMultipart } from '@/shared/api/http-client'
 
 export async function uploadProblemDataFile(

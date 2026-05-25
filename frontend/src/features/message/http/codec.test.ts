@@ -6,7 +6,7 @@ import {
   fromMessageHistoryResponse,
   fromMessageInboxResponse,
   toMarkConversationReadRequest,
-} from '@/features/message/http/codec'
+} from '@/features/message/http/codec/MessageHttpCodecs'
 import {
   messageContentValue,
   messageConversationIdValue,

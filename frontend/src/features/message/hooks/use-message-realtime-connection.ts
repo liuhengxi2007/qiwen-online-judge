@@ -9,7 +9,7 @@ import {
   fromDirectMessage,
   fromInboxChangedStreamPayload,
   type ConversationReadStreamPayload,
-} from '@/features/message/http/codec'
+} from '@/features/message/http/codec/MessageHttpCodecs'
 import { useMessageStore } from '@/features/message/stores/use-message-store'
 
 export const messageStreamEventName = 'qiwen:message-stream-event'

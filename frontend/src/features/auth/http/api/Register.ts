@@ -3,7 +3,7 @@ import type { RegisterResponse } from '@/features/auth/http/response/RegisterRes
 import {
   fromRegisterResponseContract,
   toRegisterRequestContract,
-} from '@/features/auth/http/codec'
+} from '@/features/auth/http/codec/AuthHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function register(request: RegisterRequest): Promise<RegisterResponse> {

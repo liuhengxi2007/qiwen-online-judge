@@ -1,7 +1,7 @@
 import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'
-import { fromBlogListResponseContract } from '@/features/blog/http/codec'
+import { fromBlogListResponseContract } from '@/features/blog/http/codec/BlogHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

@@ -5,7 +5,7 @@ import { blogCommentIdValue, blogIdValue } from '@/features/blog/lib/blog-parser
 import {
   fromBlogDetailContract,
   toCreateBlogCommentRequestContract,
-} from '@/features/blog/http/codec'
+} from '@/features/blog/http/codec/BlogHttpCodecs'
 import type { BlogId } from '@/features/blog/model/BlogId'
 import { postJson } from '@/shared/api/http-client'
 

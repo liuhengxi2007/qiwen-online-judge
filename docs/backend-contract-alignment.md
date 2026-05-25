@@ -32,7 +32,7 @@ Keep these roles separate:
 
 - frontend `http/request` and `http/response`
   frontend transport payload models
-- frontend `lib/*-parsers.ts` and `http/codec.ts`
+- frontend `lib/*-parsers.ts`, `http/codec/*ModelHttpCodecs.ts`, and `http/codec/*HttpCodecs.ts`
   boundary parsing and serialization helpers
 - backend `application/input` and `application/output`
   backend HTTP-facing command/query models

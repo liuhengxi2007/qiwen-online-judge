@@ -3,7 +3,7 @@ import type { ProblemSetSummary } from '@/features/problemset/http/response/Prob
 import {
   fromProblemSetSummaryContract,
   toCreateProblemSetRequestContract,
-} from '@/features/problemset/http/codec'
+} from '@/features/problemset/http/codec/ProblemSetHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createProblemSet(request: CreateProblemSetRequest): Promise<ProblemSetSummary> {

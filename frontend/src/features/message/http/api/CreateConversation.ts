@@ -3,7 +3,7 @@ import type { MessageConversationSummary } from '@/features/message/http/respons
 import {
   fromMessageConversationSummary,
   toCreateConversationRequest,
-} from '@/features/message/http/codec'
+} from '@/features/message/http/codec/MessageHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export function createConversation(request: CreateConversationRequest): Promise<MessageConversationSummary> {

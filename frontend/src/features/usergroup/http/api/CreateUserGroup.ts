@@ -3,7 +3,7 @@ import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGro
 import {
   fromUserGroupDetailContract,
   toCreateUserGroupRequestContract,
-} from '@/features/usergroup/http/codec'
+} from '@/features/usergroup/http/codec/UserGroupHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createUserGroup(request: CreateUserGroupRequest): Promise<UserGroupDetail> {

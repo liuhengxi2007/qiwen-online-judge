@@ -1,6 +1,6 @@
 import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
-import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
-import type { UserListResponse } from '@/features/user/http/response/UserListResponse'
+import type { PageResponse } from '@/shared/model/PageResponse'
+import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
 import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
 import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
@@ -9,45 +9,37 @@ import type { UpdateOwnPreferencesRequest } from '@/features/user/http/request/U
 import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
 import type { UpdateUserPermissionsRequest } from '@/features/user/http/request/UpdateUserPermissionsRequest'
 import type { UserAcceptedRanklistItem } from '@/features/user/http/response/UserAcceptedRanklistItem'
-import type { UserIdentity } from '@/features/user/model/UserIdentity'
+import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
+import type { UserListResponse } from '@/features/user/http/response/UserListResponse'
 import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
 import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
-import type { PageResponse } from '@/shared/model/PageResponse'
 import {
-  emailAddressValue,
-  parseEmailAddress,
-  plaintextPasswordValue,
-} from '@/features/auth/lib/auth-parsers'
-import { parseProblemSlug, parseProblemTitle } from '@/features/problem/lib/problem-parsers'
+  fromEmailAddressContract,
+  toEmailAddressContract,
+  toPlaintextPasswordContract,
+} from '@/features/auth/http/codec/AuthModelHttpCodecs'
 import {
-  displayNameValue,
-  parseDisplayName,
-  parseUserContribution,
-  userSearchQueryValue,
-  parseUsername,
-  problemTitleDisplayModeValue,
-  requireParsed,
-  userDisplayModeValue,
-  userLocaleValue,
-} from '@/features/user/lib/user-parsers'
+  fromDisplayNameContract,
+  fromUserAcceptedProblemContract,
+  fromUserContributionContract,
+  fromUserIdentityContract,
+  fromUserPreferencesContract,
+  fromUsernameContract,
+  toDisplayNameContract,
+  toUserPreferencesContract,
+  type UserAcceptedProblemContract,
+  type UserIdentityContract,
+  type UserPreferencesContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
+import { userSearchQueryValue } from '@/features/user/lib/user-parsers'
+
+export { fromUserIdentityContract } from '@/features/user/http/codec/UserModelHttpCodecs'
 
 type PageResponseContract<TItem> = {
   items: TItem[]
   page: number
   pageSize: number
   totalItems: number
-}
-
-type UserIdentityContract = {
-  username: string
-  displayName: string
-}
-
-type UserPreferencesContract = {
-  displayMode: 'display_name' | 'username' | 'display_name_with_username'
-  locale: 'en' | 'zh-CN'
-  problemTitleDisplayMode: 'title' | 'slug' | 'title_with_slug'
-  autoMarkMessageRead: boolean
 }
 
 type AuthUserListItemContract = {
@@ -62,12 +54,6 @@ type UserListRequestContract = {
   query: string | null
   page: number
   pageSize: number
-}
-
-type UserAcceptedProblemContract = {
-  slug: string
-  title: string
-  acceptedAt: string
 }
 
 type UserProfileResponseContract = {
@@ -88,6 +74,15 @@ type UserAcceptedRanklistItemContract = {
 }
 
 type UserListResponseContract = PageResponseContract<AuthUserListItemContract>
+
+type SessionResponseContract = {
+  displayName: string
+  username: string
+  email: string
+  preferences: UserPreferencesContract
+  siteManager: boolean
+  problemManager: boolean
+}
 
 type UpdateUserPermissionsRequestContract = {
   siteManager: boolean
@@ -121,32 +116,21 @@ type UpdateManagedUserAccountRequestContract = {
   newPassword: string | null
 }
 
-export function fromUserIdentityContract(response: UserIdentityContract): UserIdentity {
-  return {
-    username: requireParsed(parseUsername(response.username), 'user identity username'),
-    displayName: requireParsed(parseDisplayName(response.displayName), 'user identity display name'),
-  }
-}
-
 export function fromUserProfileResponseContract(response: UserProfileResponseContract): UserProfileResponse {
   const acceptedProblems = Array.isArray(response.acceptedProblems) ? response.acceptedProblems : []
 
   return {
-    username: requireParsed(parseUsername(response.username), 'user profile username'),
-    displayName: requireParsed(parseDisplayName(response.displayName), 'user profile display name'),
-    contribution: requireParsed(parseUserContribution(response.contribution), 'user profile contribution'),
-    acceptedProblems: acceptedProblems.map((problem, index) => ({
-      slug: requireParsed(parseProblemSlug(problem.slug), `user profile accepted problem slug ${index}`),
-      title: requireParsed(parseProblemTitle(problem.title), `user profile accepted problem title ${index}`),
-      acceptedAt: problem.acceptedAt,
-    })),
+    username: fromUsernameContract(response.username, 'user profile username'),
+    displayName: fromDisplayNameContract(response.displayName, 'user profile display name'),
+    contribution: fromUserContributionContract(response.contribution, 'user profile contribution'),
+    acceptedProblems: acceptedProblems.map(fromUserAcceptedProblemContract),
   }
 }
 
 export function fromUserRanklistItemContract(response: UserRanklistItemContract): UserRanklistItem {
   return {
     user: fromUserIdentityContract(response.user),
-    contribution: requireParsed(parseUserContribution(response.contribution), 'user ranklist contribution'),
+    contribution: fromUserContributionContract(response.contribution, 'user ranklist contribution'),
   }
 }
 
@@ -189,9 +173,9 @@ export function fromUserAcceptedRanklistResponseContract(
 
 export function fromAuthUserListItemContract(response: AuthUserListItemContract): AuthUserListItem {
   return {
-    username: requireParsed(parseUsername(response.username), 'auth user username'),
-    displayName: requireParsed(parseDisplayName(response.displayName), 'auth user display name'),
-    email: requireParsed(parseEmailAddress(response.email), 'auth user email'),
+    username: fromUsernameContract(response.username, 'auth user username'),
+    displayName: fromDisplayNameContract(response.displayName, 'auth user display name'),
+    email: fromEmailAddressContract(response.email, 'auth user email'),
     siteManager: response.siteManager,
     problemManager: response.problemManager,
   }
@@ -207,6 +191,17 @@ export function fromUserListResponseContract(response: UserListResponseContract)
     page: response.page,
     pageSize: response.pageSize,
     totalItems: response.totalItems,
+  }
+}
+
+export function fromSessionResponseContract(response: SessionResponseContract): SessionResponse {
+  return {
+    displayName: fromDisplayNameContract(response.displayName, 'session response display name'),
+    username: fromUsernameContract(response.username, 'session response username'),
+    email: fromEmailAddressContract(response.email, 'session response email'),
+    preferences: fromUserPreferencesContract(response.preferences, 'session response'),
+    siteManager: response.siteManager,
+    problemManager: response.problemManager,
   }
 }
 
@@ -228,7 +223,7 @@ export function toUpdateOwnProfileRequestContract(
   request: UpdateOwnProfileRequest,
 ): UpdateOwnProfileRequestContract {
   return {
-    displayName: displayNameValue(request.displayName),
+    displayName: toDisplayNameContract(request.displayName),
   }
 }
 
@@ -236,12 +231,7 @@ export function toUpdateOwnPreferencesRequestContract(
   request: UpdateOwnPreferencesRequest,
 ): UpdateOwnPreferencesRequestContract {
   return {
-    preferences: {
-      displayMode: userDisplayModeValue(request.preferences.displayMode),
-      locale: userLocaleValue(request.preferences.locale),
-      problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
-      autoMarkMessageRead: request.preferences.autoMarkMessageRead,
-    },
+    preferences: toUserPreferencesContract(request.preferences),
   }
 }
 
@@ -249,9 +239,9 @@ export function toUpdateOwnAccountRequestContract(
   request: UpdateOwnAccountRequest,
 ): UpdateOwnAccountRequestContract {
   return {
-    email: emailAddressValue(request.email),
-    currentPassword: plaintextPasswordValue(request.currentPassword),
-    newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
+    email: toEmailAddressContract(request.email),
+    currentPassword: toPlaintextPasswordContract(request.currentPassword),
+    newPassword: request.newPassword ? toPlaintextPasswordContract(request.newPassword) : null,
   }
 }
 
@@ -259,7 +249,7 @@ export function toUpdateManagedUserProfileRequestContract(
   request: UpdateManagedUserProfileRequest,
 ): UpdateManagedUserProfileRequestContract {
   return {
-    displayName: displayNameValue(request.displayName),
+    displayName: toDisplayNameContract(request.displayName),
   }
 }
 
@@ -267,12 +257,7 @@ export function toUpdateManagedUserPreferencesRequestContract(
   request: UpdateManagedUserPreferencesRequest,
 ): UpdateManagedUserPreferencesRequestContract {
   return {
-    preferences: {
-      displayMode: userDisplayModeValue(request.preferences.displayMode),
-      locale: userLocaleValue(request.preferences.locale),
-      problemTitleDisplayMode: problemTitleDisplayModeValue(request.preferences.problemTitleDisplayMode),
-      autoMarkMessageRead: request.preferences.autoMarkMessageRead,
-    },
+    preferences: toUserPreferencesContract(request.preferences),
   }
 }
 
@@ -280,7 +265,7 @@ export function toUpdateManagedUserAccountRequestContract(
   request: UpdateManagedUserAccountRequest,
 ): UpdateManagedUserAccountRequestContract {
   return {
-    email: emailAddressValue(request.email),
-    newPassword: request.newPassword ? plaintextPasswordValue(request.newPassword) : null,
+    email: toEmailAddressContract(request.email),
+    newPassword: request.newPassword ? toPlaintextPasswordContract(request.newPassword) : null,
   }
 }

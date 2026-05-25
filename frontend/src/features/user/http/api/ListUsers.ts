@@ -3,7 +3,7 @@ import type { UserListResponse } from '@/features/user/http/response/UserListRes
 import {
   fromUserListResponseContract,
   toUserListRequestContract,
-} from '@/features/user/http/codec'
+} from '@/features/user/http/codec/UserHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listUsers(request: UserListRequest): Promise<UserListResponse> {

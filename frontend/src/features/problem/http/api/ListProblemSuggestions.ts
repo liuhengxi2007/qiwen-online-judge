@@ -1,6 +1,6 @@
 import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
 import { parseProblemSearchQuery } from '@/features/problem/lib/problem-parsers'
-import { fromProblemSuggestionContract } from '@/features/problem/http/codec'
+import { fromProblemSuggestionContract } from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listProblemSuggestions(query: string): Promise<ProblemSuggestion[]> {

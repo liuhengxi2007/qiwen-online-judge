@@ -1,33 +1,37 @@
-import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
-import type { ProblemData } from '@/features/problem/model/ProblemData'
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
+import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
 import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
 import type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
 import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
 import type { ProblemSummary } from '@/features/problem/http/response/ProblemSummary'
 import type { UpdateProblemRequest } from '@/features/problem/http/request/UpdateProblemRequest'
 import {
-  parseProblemDataFilename,
-  parseProblemId,
-  parseProblemSlug,
-  parseProblemSpaceLimitMb,
-  parseProblemStatementText,
-  parseProblemTimeLimitMs,
-  parseProblemTitle,
-  problemSearchQueryValue,
-  problemSlugValue,
-  problemSpaceLimitMbValue,
-  problemStatementTextValue,
-  problemTimeLimitMsValue,
-  problemTitleValue,
-  requireParsed,
-} from '@/features/problem/lib/problem-parsers'
+  fromOthersSubmissionAccessContract,
+  fromProblemDataContract,
+  fromProblemIdContract,
+  fromProblemSlugContract,
+  fromProblemSpaceLimitMbContract,
+  fromProblemStatementTextContract,
+  fromProblemTimeLimitMsContract,
+  fromProblemTitleContract,
+  toOthersSubmissionAccessContract,
+  toProblemSlugContract,
+  toProblemSpaceLimitMbContract,
+  toProblemStatementTextContract,
+  toProblemTimeLimitMsContract,
+  toProblemTitleContract,
+  type OthersSubmissionAccessContract,
+} from '@/features/problem/http/codec/ProblemModelHttpCodecs'
+import { problemSearchQueryValue } from '@/features/problem/lib/problem-parsers'
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
 } from '@/shared/domain/access/resource-access-policy-codec'
+import {
+  fromUserIdentityContract,
+  type UserIdentityContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
 
 type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 
@@ -37,13 +41,6 @@ type PageResponseContract<TItem> = {
   pageSize: number
   totalItems: number
 }
-
-type UserIdentityContract = {
-  username: string
-  displayName: string
-}
-
-type OthersSubmissionAccessContract = 'none' | 'summary' | 'detail'
 
 type ProblemSummaryContract = {
   id: string
@@ -114,23 +111,17 @@ type UpdateProblemRequestContract = {
 
 type ProblemListResponseContract = PageResponseContract<ProblemSummaryContract>
 
-function fromProblemDataContract(rawData: string | null, label: string): ProblemData {
-  return {
-    value: rawData === null ? null : requireParsed(parseProblemDataFilename(rawData), label),
-  }
-}
-
 export function fromProblemSummaryContract(problem: ProblemSummaryContract): ProblemSummary {
   return {
-    id: requireParsed(parseProblemId(problem.id), 'problem summary id'),
-    slug: requireParsed(parseProblemSlug(problem.slug), 'problem summary slug'),
-    title: requireParsed(parseProblemTitle(problem.title), 'problem summary title'),
+    id: fromProblemIdContract(problem.id, 'problem summary id'),
+    slug: fromProblemSlugContract(problem.slug, 'problem summary slug'),
+    title: fromProblemTitleContract(problem.title, 'problem summary title'),
     data: fromProblemDataContract(problem.data, 'problem summary data'),
     ready: problem.ready,
-    timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem summary time limit'),
-    spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem summary space limit'),
+    timeLimitMs: fromProblemTimeLimitMsContract(problem.timeLimitMs, 'problem summary time limit'),
+    spaceLimitMb: fromProblemSpaceLimitMbContract(problem.spaceLimitMb, 'problem summary space limit'),
     accessPolicy: fromResourceAccessPolicyContract(problem.accessPolicy),
-    othersSubmissionAccess: problem.othersSubmissionAccess,
+    othersSubmissionAccess: fromOthersSubmissionAccessContract(problem.othersSubmissionAccess),
     creator: fromUserIdentityContract(problem.creator),
     createdAt: problem.createdAt,
     updatedAt: problem.updatedAt,
@@ -139,16 +130,16 @@ export function fromProblemSummaryContract(problem: ProblemSummaryContract): Pro
 
 export function fromProblemDetailContract(problem: ProblemDetailContract): ProblemDetail {
   return {
-    id: requireParsed(parseProblemId(problem.id), 'problem detail id'),
-    slug: requireParsed(parseProblemSlug(problem.slug), 'problem detail slug'),
-    title: requireParsed(parseProblemTitle(problem.title), 'problem detail title'),
-    statement: requireParsed(parseProblemStatementText(problem.statement), 'problem detail statement'),
+    id: fromProblemIdContract(problem.id, 'problem detail id'),
+    slug: fromProblemSlugContract(problem.slug, 'problem detail slug'),
+    title: fromProblemTitleContract(problem.title, 'problem detail title'),
+    statement: fromProblemStatementTextContract(problem.statement, 'problem detail statement'),
     data: fromProblemDataContract(problem.data, 'problem detail data'),
     ready: problem.ready,
-    timeLimitMs: requireParsed(parseProblemTimeLimitMs(problem.timeLimitMs), 'problem detail time limit'),
-    spaceLimitMb: requireParsed(parseProblemSpaceLimitMb(problem.spaceLimitMb), 'problem detail space limit'),
+    timeLimitMs: fromProblemTimeLimitMsContract(problem.timeLimitMs, 'problem detail time limit'),
+    spaceLimitMb: fromProblemSpaceLimitMbContract(problem.spaceLimitMb, 'problem detail space limit'),
     accessPolicy: fromResourceAccessPolicyContract(problem.accessPolicy),
-    othersSubmissionAccess: problem.othersSubmissionAccess,
+    othersSubmissionAccess: fromOthersSubmissionAccessContract(problem.othersSubmissionAccess),
     creator: fromUserIdentityContract(problem.creator),
     canManage: problem.canManage,
     createdAt: problem.createdAt,
@@ -176,8 +167,8 @@ export function fromProblemListResponseContract(response: ProblemListResponseCon
 
 export function fromProblemSuggestionContract(problem: ProblemSuggestionContract): ProblemSuggestion {
   return {
-    slug: requireParsed(parseProblemSlug(problem.slug), 'problem suggestion slug'),
-    title: requireParsed(parseProblemTitle(problem.title), 'problem suggestion title'),
+    slug: fromProblemSlugContract(problem.slug, 'problem suggestion slug'),
+    title: fromProblemTitleContract(problem.title, 'problem suggestion title'),
   }
 }
 
@@ -191,23 +182,23 @@ export function toProblemListRequestContract(request: ProblemListRequest): Probl
 
 export function toCreateProblemRequestContract(request: CreateProblemRequest): CreateProblemRequestContract {
   return {
-    slug: problemSlugValue(request.slug),
-    title: problemTitleValue(request.title),
-    statement: problemStatementTextValue(request.statement),
-    timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
-    spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
+    slug: toProblemSlugContract(request.slug),
+    title: toProblemTitleContract(request.title),
+    statement: toProblemStatementTextContract(request.statement),
+    timeLimitMs: toProblemTimeLimitMsContract(request.timeLimitMs),
+    spaceLimitMb: toProblemSpaceLimitMbContract(request.spaceLimitMb),
     accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
-    othersSubmissionAccess: request.othersSubmissionAccess,
+    othersSubmissionAccess: toOthersSubmissionAccessContract(request.othersSubmissionAccess),
   }
 }
 
 export function toUpdateProblemRequestContract(request: UpdateProblemRequest): UpdateProblemRequestContract {
   return {
-    title: problemTitleValue(request.title),
-    statement: problemStatementTextValue(request.statement),
-    timeLimitMs: problemTimeLimitMsValue(request.timeLimitMs),
-    spaceLimitMb: problemSpaceLimitMbValue(request.spaceLimitMb),
+    title: toProblemTitleContract(request.title),
+    statement: toProblemStatementTextContract(request.statement),
+    timeLimitMs: toProblemTimeLimitMsContract(request.timeLimitMs),
+    spaceLimitMb: toProblemSpaceLimitMbContract(request.spaceLimitMb),
     accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
-    othersSubmissionAccess: request.othersSubmissionAccess,
+    othersSubmissionAccess: toOthersSubmissionAccessContract(request.othersSubmissionAccess),
   }
 }

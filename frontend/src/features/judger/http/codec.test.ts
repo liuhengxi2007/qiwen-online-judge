@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { fromRegisteredJudgerListItemContract } from '@/features/judger/http/codec'
+import { fromRegisteredJudgerListItemContract } from '@/features/judger/http/codec/JudgerRegistryHttpCodecs'
 
 describe('judger codec', () => {
   it('trims host process id and supported languages from contract payloads', () => {

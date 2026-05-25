@@ -3,7 +3,7 @@ import type { SubmissionListResponse } from '@/features/submission/http/response
 import {
   fromSubmissionListResponseContract,
   toSubmissionListRequestContract,
-} from '@/features/submission/http/codec'
+} from '@/features/submission/http/codec/SubmissionHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listSubmissions(request: SubmissionListRequest): Promise<SubmissionListResponse> {

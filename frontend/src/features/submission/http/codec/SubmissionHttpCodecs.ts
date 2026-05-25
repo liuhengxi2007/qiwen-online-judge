@@ -1,24 +1,41 @@
-import { fromUserIdentityContract } from '@/features/user/http/codec'
-import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
+import type { JudgeResult } from '@/features/submission/model/JudgeResult'
 import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
 import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
 import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
 import {
+  fromProblemIdContract,
+  fromProblemSlugContract,
+  fromProblemTitleContract,
+  toProblemSlugContract,
+} from '@/features/problem/http/codec/ProblemModelHttpCodecs'
+import {
+  fromSubmissionIdContract,
+  fromSubmissionLanguageContract,
+  fromSubmissionSourceCodeContract,
+  fromSubmissionStatusContract,
+  fromSubmissionVerdictContract,
+  toSubmissionLanguageContract,
+  toSubmissionSourceCodeContract,
+  type SubmissionLanguageContract,
+  type SubmissionStatusContract,
+  type SubmissionVerdictContract,
+} from '@/features/submission/http/codec/SubmissionModelHttpCodecs'
+import {
   isSubmissionSort,
   isSubmissionSortDirection,
   isSubmissionVerdictFilter,
-  parseSubmissionId,
   parseSubmissionProblemQuery,
-  parseSubmissionSourceCode,
   parseSubmissionUserQuery,
   requireParsed,
   submissionProblemQueryValue,
-  submissionSourceCodeValue,
   submissionUserQueryValue,
 } from '@/features/submission/lib/submission-parsers'
-import type { JudgeResult } from '@/features/submission/model/JudgeResult'
+import {
+  fromUserIdentityContract,
+  type UserIdentityContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -27,23 +44,9 @@ type PageResponseContract<TItem> = {
   totalItems: number
 }
 
-type UserIdentityContract = {
-  username: string
-  displayName: string
-}
-
-type SubmissionLanguageContract = 'cpp17' | 'python3'
-type SubmissionStatusContract = 'queued' | 'running' | 'completed' | 'failed'
-type SubmissionVerdictContract =
-  | 'accepted'
-  | 'wrong_answer'
-  | 'compile_error'
-  | 'runtime_error'
-  | 'time_limit_exceeded'
-  | 'system_error'
 type SubmissionVerdictFilterContract = 'all' | 'pending' | SubmissionVerdictContract
-type SubmissionSortContract = 'submitted' | 'time' | 'memory' | 'code_length'
-type SubmissionSortDirectionContract = 'asc' | 'desc'
+type SubmissionSortRequestContract = 'submitted' | 'time' | 'memory' | 'code_length'
+type SubmissionSortDirectionRequestContract = 'asc' | 'desc'
 
 type CreateSubmissionRequestContract = {
   problemSlug: string
@@ -55,8 +58,8 @@ type SubmissionListRequestContract = {
   userQuery: string | null
   problemQuery: string | null
   verdict: SubmissionVerdictFilterContract
-  sort: SubmissionSortContract
-  direction: SubmissionSortDirectionContract
+  sort: SubmissionSortRequestContract
+  direction: SubmissionSortDirectionRequestContract
   page: number
   pageSize: number
 }
@@ -106,22 +109,22 @@ type SubmissionListResponseContract = PageResponseContract<SubmissionSummaryCont
 
 export function fromSubmissionDetailContract(submission: SubmissionDetailContract): SubmissionDetail {
   return {
-    id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
-    problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
-    problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
-    problemTitle: requireParsed(parseProblemTitle(submission.problemTitle), 'submission problem title'),
+    id: fromSubmissionIdContract(submission.id, 'submission id'),
+    problemId: fromProblemIdContract(submission.problemId, 'submission problem id'),
+    problemSlug: fromProblemSlugContract(submission.problemSlug, 'submission problem slug'),
+    problemTitle: fromProblemTitleContract(submission.problemTitle, 'submission problem title'),
     canManage: submission.canManage,
     submitter: fromUserIdentityContract(submission.submitter),
-    language: submission.language,
-    status: submission.status,
-    verdict: submission.verdict,
+    language: fromSubmissionLanguageContract(submission.language),
+    status: fromSubmissionStatusContract(submission.status),
+    verdict: submission.verdict === null ? null : fromSubmissionVerdictContract(submission.verdict),
     judgeMessage: submission.judgeMessage,
     timeUsedMs: submission.timeUsedMs,
     memoryUsedKb: submission.memoryUsedKb,
     score: submission.score,
     judgeResult: submission.judgeResult,
     codeLength: submission.codeLength,
-    sourceCode: requireParsed(parseSubmissionSourceCode(submission.sourceCode), 'submission source code'),
+    sourceCode: fromSubmissionSourceCodeContract(submission.sourceCode, 'submission source code'),
     submittedAt: submission.submittedAt,
     startedAt: submission.startedAt,
     finishedAt: submission.finishedAt,
@@ -130,15 +133,15 @@ export function fromSubmissionDetailContract(submission: SubmissionDetailContrac
 
 export function fromSubmissionSummaryContract(submission: SubmissionSummaryContract): SubmissionSummary {
   return {
-    id: requireParsed(parseSubmissionId(submission.id), 'submission id'),
-    problemId: requireParsed(parseProblemId(submission.problemId), 'submission problem id'),
-    problemSlug: requireParsed(parseProblemSlug(submission.problemSlug), 'submission problem slug'),
-    problemTitle: requireParsed(parseProblemTitle(submission.problemTitle), 'submission problem title'),
+    id: fromSubmissionIdContract(submission.id, 'submission id'),
+    problemId: fromProblemIdContract(submission.problemId, 'submission problem id'),
+    problemSlug: fromProblemSlugContract(submission.problemSlug, 'submission problem slug'),
+    problemTitle: fromProblemTitleContract(submission.problemTitle, 'submission problem title'),
     canViewDetail: submission.canViewDetail,
     submitter: fromUserIdentityContract(submission.submitter),
-    language: submission.language,
-    status: submission.status,
-    verdict: submission.verdict,
+    language: fromSubmissionLanguageContract(submission.language),
+    status: fromSubmissionStatusContract(submission.status),
+    verdict: submission.verdict === null ? null : fromSubmissionVerdictContract(submission.verdict),
     timeUsedMs: submission.timeUsedMs,
     memoryUsedKb: submission.memoryUsedKb,
     score: submission.score,
@@ -160,9 +163,9 @@ export function fromSubmissionListResponseContract(response: SubmissionListRespo
 
 export function toCreateSubmissionRequestContract(request: CreateSubmissionRequest): CreateSubmissionRequestContract {
   return {
-    problemSlug: problemSlugValue(request.problemSlug),
-    language: request.language,
-    sourceCode: submissionSourceCodeValue(request.sourceCode),
+    problemSlug: toProblemSlugContract(request.problemSlug),
+    language: toSubmissionLanguageContract(request.language),
+    sourceCode: toSubmissionSourceCodeContract(request.sourceCode),
   }
 }
 

@@ -5,7 +5,7 @@ import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import {
   fromProblemDetailContract,
   toUpdateProblemRequestContract,
-} from '@/features/problem/http/codec'
+} from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function updateProblem(problemSlug: ProblemSlug, request: UpdateProblemRequest): Promise<ProblemDetail> {

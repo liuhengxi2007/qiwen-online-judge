@@ -5,7 +5,7 @@ import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {
   fromUserGroupDetailContract,
   toAddUserGroupMemberRequestContract,
-} from '@/features/usergroup/http/codec'
+} from '@/features/usergroup/http/codec/UserGroupHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function addUserGroupMember(

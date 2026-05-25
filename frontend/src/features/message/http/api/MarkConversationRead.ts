@@ -5,7 +5,7 @@ import { messageConversationIdValue } from '@/features/message/lib/message-parse
 import {
   fromMessageConversationSummary,
   toMarkConversationReadRequest,
-} from '@/features/message/http/codec'
+} from '@/features/message/http/codec/MessageHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export function markConversationRead(

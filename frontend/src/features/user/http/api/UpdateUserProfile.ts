@@ -1,5 +1,5 @@
 import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
-import { fromSessionResponseContract } from '@/features/auth/http/codec'
+import { fromSessionResponseContract } from '@/features/user/http/codec/UserHttpCodecs'
 import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
 import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
 import type { Username } from '@/features/user/model/Username'
@@ -7,7 +7,7 @@ import { usernameValue } from '@/features/user/lib/user-parsers'
 import {
   toUpdateManagedUserProfileRequestContract,
   toUpdateOwnProfileRequestContract,
-} from '@/features/user/http/codec'
+} from '@/features/user/http/codec/UserHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export function updateOwnUserProfile(

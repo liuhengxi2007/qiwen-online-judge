@@ -1,5 +1,5 @@
 import type { UserGroupListResponse } from '@/features/usergroup/http/response/UserGroupListResponse'
-import { fromUserGroupListResponseContract } from '@/features/usergroup/http/codec'
+import { fromUserGroupListResponseContract } from '@/features/usergroup/http/codec/UserGroupHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

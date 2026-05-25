@@ -1,27 +1,29 @@
-import { fromUserIdentityContract } from '@/features/user/http/codec'
-import { parseProblemId, parseProblemSlug, parseProblemTitle, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/request/AddProblemToProblemSetRequest'
 import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
 import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
 import type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
-import type { ProblemSetProblemSummary } from '@/features/problemset/model/ProblemSetProblemSummary'
 import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
 import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
+import { toProblemSlugContract } from '@/features/problem/http/codec/ProblemModelHttpCodecs'
 import {
-  parseProblemSetDescription,
-  parseProblemSetId,
-  parseProblemSetProblemPosition,
-  parseProblemSetSlug,
-  parseProblemSetTitle,
-  problemSetDescriptionValue,
-  problemSetSlugValue,
-  problemSetTitleValue,
-  requireParsed,
-} from '@/features/problemset/lib/problemset-parsers'
+  fromProblemSetDescriptionContract,
+  fromProblemSetIdContract,
+  fromProblemSetProblemSummaryContract,
+  fromProblemSetSlugContract,
+  fromProblemSetTitleContract,
+  toProblemSetDescriptionContract,
+  toProblemSetSlugContract,
+  toProblemSetTitleContract,
+  type ProblemSetProblemSummaryContract,
+} from '@/features/problemset/http/codec/ProblemSetModelHttpCodecs'
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
 } from '@/shared/domain/access/resource-access-policy-codec'
+import {
+  fromUserIdentityContract,
+  type UserIdentityContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
 
 type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 
@@ -30,18 +32,6 @@ type PageResponseContract<TItem> = {
   page: number
   pageSize: number
   totalItems: number
-}
-
-type UserIdentityContract = {
-  username: string
-  displayName: string
-}
-
-type ProblemSetProblemSummaryContract = {
-  id: string
-  slug: string
-  title: string
-  position: number
 }
 
 type ProblemSetSummaryContract = {
@@ -86,23 +76,12 @@ type AddProblemToProblemSetRequestContract = {
 
 type ProblemSetListResponseContract = PageResponseContract<ProblemSetSummaryContract>
 
-export function fromProblemSetProblemSummaryContract(
-  problem: ProblemSetProblemSummaryContract,
-): ProblemSetProblemSummary {
-  return {
-    id: requireParsed(parseProblemId(problem.id), 'problem set problem id'),
-    slug: requireParsed(parseProblemSlug(problem.slug), 'problem set problem slug'),
-    title: requireParsed(parseProblemTitle(problem.title), 'problem set problem title'),
-    position: requireParsed(parseProblemSetProblemPosition(problem.position), 'problem set problem position'),
-  }
-}
-
 export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContract): ProblemSetSummary {
   return {
-    id: requireParsed(parseProblemSetId(problemSet.id), 'problem set summary id'),
-    slug: requireParsed(parseProblemSetSlug(problemSet.slug), 'problem set summary slug'),
-    title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set summary title'),
-    description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set summary description'),
+    id: fromProblemSetIdContract(problemSet.id, 'problem set summary id'),
+    slug: fromProblemSetSlugContract(problemSet.slug, 'problem set summary slug'),
+    title: fromProblemSetTitleContract(problemSet.title, 'problem set summary title'),
+    description: fromProblemSetDescriptionContract(problemSet.description, 'problem set summary description'),
     accessPolicy: fromResourceAccessPolicyContract(problemSet.accessPolicy),
     creator: fromUserIdentityContract(problemSet.creator),
     createdAt: problemSet.createdAt,
@@ -112,10 +91,10 @@ export function fromProblemSetSummaryContract(problemSet: ProblemSetSummaryContr
 
 export function fromProblemSetDetailContract(problemSet: ProblemSetDetailContract): ProblemSetDetail {
   return {
-    id: requireParsed(parseProblemSetId(problemSet.id), 'problem set detail id'),
-    slug: requireParsed(parseProblemSetSlug(problemSet.slug), 'problem set detail slug'),
-    title: requireParsed(parseProblemSetTitle(problemSet.title), 'problem set detail title'),
-    description: requireParsed(parseProblemSetDescription(problemSet.description), 'problem set detail description'),
+    id: fromProblemSetIdContract(problemSet.id, 'problem set detail id'),
+    slug: fromProblemSetSlugContract(problemSet.slug, 'problem set detail slug'),
+    title: fromProblemSetTitleContract(problemSet.title, 'problem set detail title'),
+    description: fromProblemSetDescriptionContract(problemSet.description, 'problem set detail description'),
     problems: problemSet.problems.map(fromProblemSetProblemSummaryContract),
     accessPolicy: fromResourceAccessPolicyContract(problemSet.accessPolicy),
     creator: fromUserIdentityContract(problemSet.creator),
@@ -139,9 +118,9 @@ export function toCreateProblemSetRequestContract(
   request: CreateProblemSetRequest,
 ): CreateProblemSetRequestContract {
   return {
-    slug: problemSetSlugValue(request.slug),
-    title: problemSetTitleValue(request.title),
-    description: problemSetDescriptionValue(request.description),
+    slug: toProblemSetSlugContract(request.slug),
+    title: toProblemSetTitleContract(request.title),
+    description: toProblemSetDescriptionContract(request.description),
     accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
   }
 }
@@ -150,8 +129,8 @@ export function toUpdateProblemSetRequestContract(
   request: UpdateProblemSetRequest,
 ): UpdateProblemSetRequestContract {
   return {
-    title: problemSetTitleValue(request.title),
-    description: problemSetDescriptionValue(request.description),
+    title: toProblemSetTitleContract(request.title),
+    description: toProblemSetDescriptionContract(request.description),
     accessPolicy: toResourceAccessPolicyContract(request.accessPolicy),
   }
 }
@@ -160,6 +139,6 @@ export function toAddProblemToProblemSetRequestContract(
   request: AddProblemToProblemSetRequest,
 ): AddProblemToProblemSetRequestContract {
   return {
-    problemSlug: problemSlugValue(request.problemSlug),
+    problemSlug: toProblemSlugContract(request.problemSlug),
   }
 }

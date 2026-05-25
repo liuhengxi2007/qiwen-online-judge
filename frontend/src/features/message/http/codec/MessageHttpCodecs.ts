@@ -1,6 +1,4 @@
-import { parseUsername, requireParsed, usernameValue } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'
-import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { CreateConversationRequest } from '@/features/message/http/request/CreateConversationRequest'
 import type { ConversationMessageFacts } from '@/features/message/http/response/ConversationMessageFacts'
 import type { DirectMessage } from '@/features/message/http/response/DirectMessage'
@@ -13,12 +11,17 @@ import type { MessageId } from '@/features/message/model/MessageId'
 import type { MessageInboxResponse } from '@/features/message/http/response/MessageInboxResponse'
 import type { SendDirectMessageRequest } from '@/features/message/http/request/SendDirectMessageRequest'
 import {
-  messageContentValue,
-  messageIdValue,
-  parseMessageContent,
-  parseMessageConversationId,
-  parseMessageId,
-} from '@/features/message/lib/message-parsers'
+  fromMessageContentContract,
+  fromMessageConversationIdContract,
+  fromMessageIdContract,
+  toMessageContentContract,
+  toMessageIdContract,
+} from '@/features/message/http/codec/MessageModelHttpCodecs'
+import {
+  fromUserIdentityContract,
+  fromUsernameContract,
+  toUsernameContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
 
 export type ConversationReadStreamPayload = {
   conversationId: MessageConversationId
@@ -43,13 +46,13 @@ export function fromMessageConversationSummary(value: unknown): MessageConversat
   }
 
   return {
-    id: requireParsed(parseMessageConversationId(readString(value.id, 'conversation id')), 'conversation id'),
+    id: fromMessageConversationIdContract(readString(value.id, 'conversation id'), 'conversation id'),
     otherUser: readUserIdentity(value.otherUser, 'conversation other user'),
     lastMessagePreview: value.lastMessagePreview === null ? null : readString(value.lastMessagePreview, 'last message preview'),
     lastMessageSenderUsername:
       value.lastMessageSenderUsername === null
         ? null
-        : requireParsed(parseUsername(readString(value.lastMessageSenderUsername, 'last message sender username')), 'last message sender username'),
+        : fromUsernameContract(readString(value.lastMessageSenderUsername, 'last message sender username'), 'last message sender username'),
     lastMessageAt: readString(value.lastMessageAt, 'last message at'),
     unreadCount: readNumber(value.unreadCount, 'unread count'),
   }
@@ -61,11 +64,11 @@ export function fromDirectMessage(value: unknown): DirectMessage {
   }
 
   return {
-    id: requireParsed(parseMessageId(readString(value.id, 'message id')), 'message id'),
-    conversationId: requireParsed(parseMessageConversationId(readString(value.conversationId, 'conversation id')), 'conversation id'),
+    id: fromMessageIdContract(readString(value.id, 'message id'), 'message id'),
+    conversationId: fromMessageConversationIdContract(readString(value.conversationId, 'conversation id'), 'conversation id'),
     sender: readUserIdentity(value.sender, 'message sender'),
-    recipientUsername: requireParsed(parseUsername(readString(value.recipientUsername, 'recipient username')), 'recipient username'),
-    content: requireParsed(parseMessageContent(readString(value.content, 'message content')), 'message content'),
+    recipientUsername: fromUsernameContract(readString(value.recipientUsername, 'recipient username'), 'recipient username'),
+    content: fromMessageContentContract(readString(value.content, 'message content'), 'message content'),
     createdAt: readString(value.createdAt, 'message created at'),
     readAt: value.readAt === null ? null : readString(value.readAt, 'message read at'),
   }
@@ -115,9 +118,9 @@ export function fromConversationReadStreamPayload(value: unknown): ConversationR
   }
 
   return {
-    conversationId: requireParsed(parseMessageConversationId(readString(value.conversationId, 'conversation read conversation id')), 'conversation read conversation id'),
-    readUpToMessageId: requireParsed(parseMessageId(readString(value.readUpToMessageId, 'conversation read message id')), 'conversation read message id'),
-    readerUsername: requireParsed(parseUsername(readString(value.readerUsername, 'conversation read reader username')), 'conversation read reader username'),
+    conversationId: fromMessageConversationIdContract(readString(value.conversationId, 'conversation read conversation id'), 'conversation read conversation id'),
+    readUpToMessageId: fromMessageIdContract(readString(value.readUpToMessageId, 'conversation read message id'), 'conversation read message id'),
+    readerUsername: fromUsernameContract(readString(value.readerUsername, 'conversation read reader username'), 'conversation read reader username'),
   }
 }
 
@@ -131,13 +134,13 @@ export function fromInboxChangedStreamPayload(value: unknown): Record<string, ne
 
 export function toCreateConversationRequest(request: CreateConversationRequest): { targetUsername: string } {
   return {
-    targetUsername: usernameValue(request.targetUsername),
+    targetUsername: toUsernameContract(request.targetUsername),
   }
 }
 
 export function toSendDirectMessageRequest(request: SendDirectMessageRequest): { content: string } {
   return {
-    content: messageContentValue(request.content),
+    content: toMessageContentContract(request.content),
   }
 }
 
@@ -150,7 +153,7 @@ export function toMarkConversationReadRequest(
     case 'message':
       return {
         mode: 'message',
-        messageId: messageIdValue(request.messageId),
+        messageId: toMessageIdContract(request.messageId),
       }
   }
 }

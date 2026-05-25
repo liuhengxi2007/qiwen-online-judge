@@ -3,7 +3,7 @@ import type { ProblemListResponse } from '@/features/problem/http/response/Probl
 import {
   fromProblemListResponseContract,
   toProblemListRequestContract,
-} from '@/features/problem/http/codec'
+} from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 
 export async function listProblems(request: ProblemListRequest): Promise<ProblemListResponse> {

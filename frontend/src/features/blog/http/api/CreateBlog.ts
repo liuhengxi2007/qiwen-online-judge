@@ -3,7 +3,7 @@ import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogR
 import {
   fromBlogSummaryContract,
   toCreateBlogRequestContract,
-} from '@/features/blog/http/codec'
+} from '@/features/blog/http/codec/BlogHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export async function createBlog(request: CreateBlogRequest): Promise<BlogSummary> {

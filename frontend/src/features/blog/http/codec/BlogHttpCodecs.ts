@@ -1,8 +1,6 @@
-import { fromUserIdentityContract } from '@/features/user/http/codec'
 import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
 import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
 import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
-import type { BlogProblemReference } from '@/features/blog/model/BlogProblemReference'
 import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
 import type { CreateBlogCommentRequest } from '@/features/blog/http/request/CreateBlogCommentRequest'
 import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogRequest'
@@ -11,40 +9,33 @@ import type { UpdateBlogRequest } from '@/features/blog/http/request/UpdateBlogR
 import type { VoteBlogCommentRequest } from '@/features/blog/http/request/VoteBlogCommentRequest'
 import type { VoteBlogRequest } from '@/features/blog/http/request/VoteBlogRequest'
 import {
-  parseProblemSlug,
-  parseProblemTitle,
-  requireParsed as requireParsedProblem,
-} from '@/features/problem/lib/problem-parsers'
+  fromBlogCommentContentContract,
+  fromBlogCommentIdContract,
+  fromBlogContentContract,
+  fromBlogIdContract,
+  fromBlogProblemReferenceContract,
+  fromBlogTitleContract,
+  fromBlogVisibilityContract,
+  fromBlogVoteContract,
+  toBlogCommentContentContract,
+  toBlogContentContract,
+  toBlogTitleContract,
+  toBlogVisibilityContract,
+  toBlogVoteContract,
+  type BlogProblemReferenceContract,
+  type BlogVisibilityContract,
+  type BlogVoteContract,
+} from '@/features/blog/http/codec/BlogModelHttpCodecs'
 import {
-  blogCommentContentValue,
-  blogContentValue,
-  blogTitleValue,
-  parseBlogCommentContent,
-  parseBlogCommentId,
-  parseBlogContent,
-  parseBlogId,
-  parseBlogTitle,
-  requireParsed,
-} from '@/features/blog/lib/blog-parsers'
+  fromUserIdentityContract,
+  type UserIdentityContract,
+} from '@/features/user/http/codec/UserModelHttpCodecs'
 
 type PageResponseContract<TItem> = {
   items: TItem[]
   page: number
   pageSize: number
   totalItems: number
-}
-
-type UserIdentityContract = {
-  username: string
-  displayName: string
-}
-
-type BlogVisibilityContract = 'public' | 'private'
-type BlogVoteContract = 'up' | 'down'
-
-type BlogProblemReferenceContract = {
-  slug: string
-  title: string
 }
 
 type CreateBlogRequestContract = {
@@ -117,14 +108,14 @@ type BlogListResponseContract = PageResponseContract<BlogSummaryContract>
 
 export function fromBlogSummaryContract(blog: BlogSummaryContract): BlogSummary {
   return {
-    id: requireParsed(parseBlogId(blog.id), 'blog id'),
-    title: requireParsed(parseBlogTitle(blog.title), 'blog title'),
-    content: requireParsed(parseBlogContent(blog.content), 'blog content'),
+    id: fromBlogIdContract(blog.id, 'blog id'),
+    title: fromBlogTitleContract(blog.title, 'blog title'),
+    content: fromBlogContentContract(blog.content, 'blog content'),
     author: fromUserIdentityContract(blog.author),
-    visibility: blog.visibility,
+    visibility: fromBlogVisibilityContract(blog.visibility),
     relatedProblems: parseRelatedProblems(blog.relatedProblems),
     score: blog.score,
-    viewerVote: blog.viewerVote,
+    viewerVote: blog.viewerVote === null ? null : fromBlogVoteContract(blog.viewerVote),
     createdAt: blog.createdAt,
     updatedAt: blog.updatedAt,
   }
@@ -132,12 +123,12 @@ export function fromBlogSummaryContract(blog: BlogSummaryContract): BlogSummary 
 
 export function fromBlogCommentSummaryContract(comment: BlogCommentSummaryContract): BlogCommentSummary {
   return {
-    id: requireParsed(parseBlogCommentId(comment.id), 'blog comment id'),
-    parentId: comment.parentId === null ? null : requireParsed(parseBlogCommentId(comment.parentId), 'blog comment parent id'),
-    content: requireParsed(parseBlogCommentContent(comment.content), 'blog comment content'),
+    id: fromBlogCommentIdContract(comment.id, 'blog comment id'),
+    parentId: comment.parentId === null ? null : fromBlogCommentIdContract(comment.parentId, 'blog comment parent id'),
+    content: fromBlogCommentContentContract(comment.content, 'blog comment content'),
     author: fromUserIdentityContract(comment.author),
     score: comment.score,
-    viewerVote: comment.viewerVote,
+    viewerVote: comment.viewerVote === null ? null : fromBlogVoteContract(comment.viewerVote),
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
   }
@@ -145,14 +136,14 @@ export function fromBlogCommentSummaryContract(comment: BlogCommentSummaryContra
 
 export function fromBlogDetailContract(blog: BlogDetailContract): BlogDetail {
   return {
-    id: requireParsed(parseBlogId(blog.id), 'blog id'),
-    title: requireParsed(parseBlogTitle(blog.title), 'blog title'),
-    content: requireParsed(parseBlogContent(blog.content), 'blog content'),
+    id: fromBlogIdContract(blog.id, 'blog id'),
+    title: fromBlogTitleContract(blog.title, 'blog title'),
+    content: fromBlogContentContract(blog.content, 'blog content'),
     author: fromUserIdentityContract(blog.author),
-    visibility: blog.visibility,
+    visibility: fromBlogVisibilityContract(blog.visibility),
     relatedProblems: parseRelatedProblems(blog.relatedProblems),
     score: blog.score,
-    viewerVote: blog.viewerVote,
+    viewerVote: blog.viewerVote === null ? null : fromBlogVoteContract(blog.viewerVote),
     comments: blog.comments.map(fromBlogCommentSummaryContract),
     createdAt: blog.createdAt,
     updatedAt: blog.updatedAt,
@@ -170,47 +161,44 @@ export function fromBlogListResponseContract(response: BlogListResponseContract)
 
 export function toCreateBlogRequestContract(request: CreateBlogRequest): CreateBlogRequestContract {
   return {
-    title: blogTitleValue(request.title),
-    content: blogContentValue(request.content),
-    visibility: request.visibility,
+    title: toBlogTitleContract(request.title),
+    content: toBlogContentContract(request.content),
+    visibility: toBlogVisibilityContract(request.visibility),
   }
 }
 
 export function toUpdateBlogRequestContract(request: UpdateBlogRequest): UpdateBlogRequestContract {
   return {
-    title: blogTitleValue(request.title),
-    content: blogContentValue(request.content),
-    visibility: request.visibility,
+    title: toBlogTitleContract(request.title),
+    content: toBlogContentContract(request.content),
+    visibility: toBlogVisibilityContract(request.visibility),
   }
 }
 
-function parseRelatedProblems(relatedProblems: BlogSummaryContract['relatedProblems']): BlogProblemReference[] {
-  return relatedProblems.map((problem, index) => ({
-    slug: requireParsedProblem(parseProblemSlug(problem.slug), `blog related problem slug ${index}`),
-    title: requireParsedProblem(parseProblemTitle(problem.title), `blog related problem title ${index}`),
-  }))
+function parseRelatedProblems(relatedProblems: BlogSummaryContract['relatedProblems']) {
+  return relatedProblems.map(fromBlogProblemReferenceContract)
 }
 
 export function toVoteBlogRequestContract(request: VoteBlogRequest): VoteBlogRequestContract {
   return {
-    vote: request.vote,
+    vote: toBlogVoteContract(request.vote),
   }
 }
 
 export function toCreateBlogCommentRequestContract(request: CreateBlogCommentRequest): CreateBlogCommentRequestContract {
   return {
-    content: blogCommentContentValue(request.content),
+    content: toBlogCommentContentContract(request.content),
   }
 }
 
 export function toUpdateBlogCommentRequestContract(request: UpdateBlogCommentRequest): UpdateBlogCommentRequestContract {
   return {
-    content: blogCommentContentValue(request.content),
+    content: toBlogCommentContentContract(request.content),
   }
 }
 
 export function toVoteBlogCommentRequestContract(request: VoteBlogCommentRequest): VoteBlogCommentRequestContract {
   return {
-    vote: request.vote,
+    vote: toBlogVoteContract(request.vote),
   }
 }

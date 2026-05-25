@@ -5,7 +5,7 @@ import { problemSetSlugValue } from '@/features/problemset/lib/problemset-parser
 import {
   fromProblemSetDetailContract,
   toUpdateProblemSetRequestContract,
-} from '@/features/problemset/http/codec'
+} from '@/features/problemset/http/codec/ProblemSetHttpCodecs'
 import { postJson } from '@/shared/api/http-client'
 
 export function updateProblemSet(

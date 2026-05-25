@@ -2,7 +2,7 @@ import type { MessageConversationId } from '@/features/message/model/MessageConv
 import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
 import type { MessageId } from '@/features/message/model/MessageId'
 import { messageConversationIdValue, messageIdValue } from '@/features/message/lib/message-parsers'
-import { fromMessageHistoryResponse } from '@/features/message/http/codec'
+import { fromMessageHistoryResponse } from '@/features/message/http/codec/MessageHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 
 export function getConversationHistory(
