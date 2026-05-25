@@ -1,4 +1,4 @@
-import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
+import type { UserProfileResponse } from '@/features/user/model/response/UserProfileResponse'
 import type { Username } from '@/features/user/model/Username'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import { fromUserProfileResponseContract } from '@/features/user/http/codec/UserHttpCodecs'

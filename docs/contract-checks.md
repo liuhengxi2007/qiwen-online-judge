@@ -16,8 +16,8 @@ Current checks cover:
 
 - shared transport models
 - shared access and lifecycle enum values
-- frontend feature `http/request` files against backend `application/input`
-- frontend feature `http/response` files against backend `application/output`
+- frontend feature `model/request` files against backend `model/request`
+- frontend feature `model/response` files against backend `model/response`
 - mirrored feature `model` files when both sides expose the same key
 
 The contract alignment check is intentionally structural:

@@ -1,4 +1,4 @@
-import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
+import type { SubmissionDetail } from '@/features/submission/model/response/SubmissionDetail'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import { submissionIdValue } from '@/features/submission/lib/submission-parsers'
 import { fromSubmissionDetailContract } from '@/features/submission/http/codec/SubmissionHttpCodecs'

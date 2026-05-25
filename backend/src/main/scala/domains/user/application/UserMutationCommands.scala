@@ -8,7 +8,7 @@ import domains.auth.application.AuthCommands
 import domains.auth.model.{AuthUser, EmailAddress, PlaintextPassword, SiteManagerUser}
 import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
+import domains.user.model.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest, UpdateUserPermissionsRequest}
 import domains.user.model.{UserDisplayMode, UserLocale}
 import domains.user.table.user.UserTable
 

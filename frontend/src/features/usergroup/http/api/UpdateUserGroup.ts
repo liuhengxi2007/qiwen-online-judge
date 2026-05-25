@@ -1,5 +1,5 @@
-import type { UpdateUserGroupRequest } from '@/features/usergroup/http/request/UpdateUserGroupRequest'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/model/request/UpdateUserGroupRequest'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import { userGroupSlugValue } from '@/features/usergroup/lib/usergroup-parsers'
 import {

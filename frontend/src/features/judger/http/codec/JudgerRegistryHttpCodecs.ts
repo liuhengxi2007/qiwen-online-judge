@@ -1,4 +1,4 @@
-import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
+import type { RegisteredJudgerListItem } from '@/features/judger/model/response/RegisteredJudgerListItem'
 
 type RegisteredJudgerListItemContract = {
   judgerId: string

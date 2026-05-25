@@ -1,6 +1,6 @@
 import { parseProblemSetDescription, parseProblemSetSlug, parseProblemSetTitle } from '@/features/problemset/lib/problemset-parsers'
-import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
-import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
+import type { CreateProblemSetRequest } from '@/features/problemset/model/request/CreateProblemSetRequest'
+import type { UpdateProblemSetRequest } from '@/features/problemset/model/request/UpdateProblemSetRequest'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'

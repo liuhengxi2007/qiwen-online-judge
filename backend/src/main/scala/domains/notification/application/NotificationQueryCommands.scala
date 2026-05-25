@@ -5,7 +5,7 @@ package domains.notification.application
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
-import domains.notification.application.output.{NotificationListResponse, NotificationUnreadCountResponse}
+import domains.notification.model.response.{NotificationListResponse, NotificationUnreadCountResponse}
 import domains.notification.table.notification.NotificationTable
 import shared.model.PageRequest
 

@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react'
 import { getSubmission } from '@/features/submission/http/api/GetSubmission'
 import { listSubmissions } from '@/features/submission/http/api/ListSubmissions'
 import { isTerminalSubmissionStatus } from '@/features/submission/lib/submission-parsers'
-import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
-import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
-import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
+import type { SubmissionListRequest } from '@/features/submission/model/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/model/response/SubmissionListResponse'
+import type { SubmissionSummary } from '@/features/submission/model/response/SubmissionSummary'
 
 function requestKey(request: SubmissionListRequest): string {
   return JSON.stringify({

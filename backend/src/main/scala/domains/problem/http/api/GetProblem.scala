@@ -1,12 +1,12 @@
 package domains.problem.http.api
 
-import domains.problem.http.response.ProblemHttpResponses
+import domains.problem.http.mapper.ProblemHttpResponseMappers
+import domains.problem.http.mapper.ProblemHttpRequestMappers
 
 
 
 import domains.problem.http.*
 import cats.effect.IO
-import domains.problem.model.{ProblemSlug}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
@@ -16,9 +16,9 @@ object GetProblem:
   def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problems" / problemSlug =>
-        ProblemSlug.parse(problemSlug) match
+        ProblemHttpRequestMappers.problemSlug(problemSlug) match
           case Left(message) =>
-            ProblemHttpResponses.validationErrorResponse(message)
+            ProblemHttpResponseMappers.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
             context.handlers.execute(request, parsedProblemSlug, context.plans.getProblem)
     }

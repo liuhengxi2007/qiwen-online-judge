@@ -2,7 +2,7 @@ import { useCallback, useReducer } from 'react'
 
 import { HttpClientError } from '@/shared/api/http-client'
 import { createProblemSet } from '@/features/problemset/http/api/CreateProblemSet'
-import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
+import type { ProblemSetSummary } from '@/features/problemset/model/response/ProblemSetSummary'
 import { validateProblemSetDraft } from '@/features/problemset/lib/problemset-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'

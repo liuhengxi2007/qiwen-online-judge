@@ -4,9 +4,9 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import domains.user.model.Username
-import domains.blog.application.output.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
+import domains.blog.model.response.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
-import domains.blog.application.output.{BlogCommentSummary, BlogDetail, BlogSummary}
+import domains.blog.model.response.{BlogCommentSummary, BlogDetail, BlogSummary}
 import domains.blog.table.blog.BlogTableSupport.*
 import domains.problem.model.ProblemSlug
 import shared.model.{PageRequest, PageResponse}

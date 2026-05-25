@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'

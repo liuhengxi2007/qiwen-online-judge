@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problemset.application.input.AddProblemToProblemSetRequest
+import domains.problemset.model.request.AddProblemToProblemSetRequest
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetDecisions.*

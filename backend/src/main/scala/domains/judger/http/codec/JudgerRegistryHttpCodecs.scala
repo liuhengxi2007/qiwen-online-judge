@@ -1,6 +1,6 @@
 package domains.judger.http.codec
 
-import domains.judger.application.output.RegisteredJudgerListItem
+import domains.judger.model.response.RegisteredJudgerListItem
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

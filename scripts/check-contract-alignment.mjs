@@ -29,13 +29,11 @@ const ignoredKeys = new Set([
 const frontendRoots = [
   'frontend/src/features',
   'frontend/src/shared/model',
-  'frontend/src/shared/http/response',
 ]
 
 const backendRoots = [
   'backend/src/main/scala/domains',
   'backend/src/main/scala/shared/model',
-  'backend/src/main/scala/shared/http/response',
 ]
 
 function read(relativePath) {
@@ -297,19 +295,28 @@ function resolveTsFields(typeName, allTypes, seen = new Set()) {
 
 function frontendMetadata(path) {
   const normalized = path.split(sep).join('/')
-  const featureMatch = normalized.match(/^frontend\/src\/features\/([^/]+)\/(http\/request|http\/response|model)\//)
-  if (featureMatch) {
+  const featureBoundaryMatch = normalized.match(/^frontend\/src\/features\/([^/]+)\/model\/(request|response)\//)
+  if (featureBoundaryMatch) {
     return {
-      scope: featureMatch[1],
-      required: featureMatch[2] !== 'model',
+      scope: featureBoundaryMatch[1],
+      required: true,
     }
   }
 
-  if (
-    normalized.startsWith('frontend/src/shared/model/') ||
-    normalized.startsWith('frontend/src/shared/http/response/')
-  ) {
+  const featureModelMatch = normalized.match(/^frontend\/src\/features\/([^/]+)\/model\//)
+  if (featureModelMatch) {
+    return {
+      scope: featureModelMatch[1],
+      required: false,
+    }
+  }
+
+  if (normalized.startsWith('frontend/src/shared/model/response/')) {
     return { scope: 'shared', required: true }
+  }
+
+  if (normalized.startsWith('frontend/src/shared/model/')) {
+    return { scope: 'shared', required: false }
   }
 
   return null
@@ -317,19 +324,28 @@ function frontendMetadata(path) {
 
 function backendMetadata(path) {
   const normalized = path.split(sep).join('/')
-  const domainMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/(application\/input|application\/output|model)\//)
-  if (domainMatch) {
+  const domainBoundaryMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/model\/(request|response)\//)
+  if (domainBoundaryMatch) {
     return {
-      scope: domainMatch[1],
-      required: domainMatch[2] !== 'model',
+      scope: domainBoundaryMatch[1],
+      required: true,
     }
   }
 
-  if (
-    normalized.startsWith('backend/src/main/scala/shared/model/') ||
-    normalized.startsWith('backend/src/main/scala/shared/http/response/')
-  ) {
+  const domainModelMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/model\//)
+  if (domainModelMatch) {
+    return {
+      scope: domainModelMatch[1],
+      required: false,
+    }
+  }
+
+  if (normalized.startsWith('backend/src/main/scala/shared/model/response/')) {
     return { scope: 'shared', required: true }
+  }
+
+  if (normalized.startsWith('backend/src/main/scala/shared/model/')) {
+    return { scope: 'shared', required: false }
   }
 
   return null

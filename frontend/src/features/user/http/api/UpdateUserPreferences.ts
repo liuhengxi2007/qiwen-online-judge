@@ -1,7 +1,7 @@
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { fromSessionResponseContract } from '@/features/user/http/codec/UserHttpCodecs'
-import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
-import type { UpdateOwnPreferencesRequest } from '@/features/user/http/request/UpdateOwnPreferencesRequest'
+import type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/request/UpdateManagedUserPreferencesRequest'
+import type { UpdateOwnPreferencesRequest } from '@/features/user/model/request/UpdateOwnPreferencesRequest'
 import type { Username } from '@/features/user/model/Username'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import {

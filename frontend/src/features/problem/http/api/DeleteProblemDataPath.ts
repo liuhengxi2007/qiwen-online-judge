@@ -1,6 +1,6 @@
-import type { DeleteProblemDataPathRequest } from '@/features/problem/http/request/DeleteProblemDataPathRequest'
+import type { DeleteProblemDataPathRequest } from '@/features/problem/model/request/DeleteProblemDataPathRequest'
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemDetail } from '@/features/problem/model/response/ProblemDetail'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemDataPathValue, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { fromProblemDetailContract } from '@/features/problem/http/codec/ProblemHttpCodecs'

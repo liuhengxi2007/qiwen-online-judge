@@ -1,6 +1,6 @@
-import type { DirectMessage } from '@/features/message/http/response/DirectMessage'
+import type { DirectMessage } from '@/features/message/model/response/DirectMessage'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
-import type { SendDirectMessageRequest } from '@/features/message/http/request/SendDirectMessageRequest'
+import type { SendDirectMessageRequest } from '@/features/message/model/request/SendDirectMessageRequest'
 import { messageConversationIdValue } from '@/features/message/lib/message-parsers'
 import {
   fromDirectMessage,

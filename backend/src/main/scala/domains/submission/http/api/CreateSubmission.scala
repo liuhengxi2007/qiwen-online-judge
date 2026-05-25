@@ -2,9 +2,10 @@ package domains.submission.http.api
 
 import cats.effect.IO
 import domains.submission.application.SubmissionCommands
-import domains.submission.application.input.CreateSubmissionRequest
+import domains.submission.model.request.CreateSubmissionRequest
 import domains.submission.http.*
 import domains.submission.http.codec.SubmissionHttpCodecs.given
+import domains.submission.http.mapper.SubmissionHttpRequestMappers
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -18,5 +19,5 @@ object CreateSubmission:
         context.handlers.executeDecoded[CreateSubmissionRequest, CreateSubmissionRequest, SubmissionCommands.CreateSubmissionResult](
           request,
           SubmissionHttpPlanDefinitions.createSubmission
-        )(identity)
+        )(SubmissionHttpRequestMappers.createSubmissionRequest)
     }

@@ -2,7 +2,7 @@ package domains.auth.http.utils
 
 
 
-import domains.auth.http.response.AuthHttpResponses
+import domains.auth.http.mapper.AuthHttpResponseMappers
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
@@ -40,7 +40,7 @@ object AuthHttpSessionSupport:
   )(handle: AuthUser => IO[Response[IO]]): IO[Response[IO]] =
     authenticatedUser(databaseSession, sessionStore, request).flatMap {
       case Some(user) => handle(user)
-      case None => AuthHttpResponses.unauthorizedResponse
+      case None => AuthHttpResponseMappers.unauthorizedResponse
     }
 
   def withSiteManager(
@@ -51,5 +51,5 @@ object AuthHttpSessionSupport:
     withAuthenticatedUser(databaseSession, sessionStore, request) { user =>
       SiteManagerUser.from(user) match
         case Some(siteManagerUser) => handle(siteManagerUser)
-        case None => AuthHttpResponses.forbiddenResponse
+        case None => AuthHttpResponseMappers.forbiddenResponse
     }

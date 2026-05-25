@@ -4,7 +4,7 @@ import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { DisplayName } from '@/features/user/model/DisplayName'
 import type { Username } from '@/features/user/model/Username'
-import type { UserSearchQuery } from '@/features/user/http/request/UserSearchQuery'
+import type { UserSearchQuery } from '@/features/user/model/request/UserSearchQuery'
 import type { ParseResult } from '@/shared/domain/parsing'
 
 export type { ParseResult } from '@/shared/domain/parsing'

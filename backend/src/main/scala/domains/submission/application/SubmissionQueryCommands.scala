@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.submission.model.{SubmissionId}
-import domains.submission.application.input.{SubmissionListRequest}
+import domains.submission.model.request.{SubmissionListRequest}
 import domains.submission.table.submission.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*
 

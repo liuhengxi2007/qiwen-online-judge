@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.judger.application.JudgerRegistryCommands
 import domains.problem.application.ProblemDataStorage
-import domains.problem.application.output.ProblemDetail
+import domains.problem.model.response.ProblemDetail
 import domains.problem.model.{ProblemDataManifest, ProblemDataPath}
 import domains.submission.application.SubmissionCommands
 import domains.submission.model.SubmissionId

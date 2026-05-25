@@ -6,7 +6,7 @@ import domains.problemset.application.{ProblemSetAccessDecision, ProblemSetAcces
 import cats.effect.IO
 import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
-import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet}
 import domains.user.model.Username
 import domains.usergroup.model.UserGroupSlug

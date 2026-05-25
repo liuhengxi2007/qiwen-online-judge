@@ -1,5 +1,5 @@
-import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
-import type { UpdateBlogRequest } from '@/features/blog/http/request/UpdateBlogRequest'
+import type { BlogDetail } from '@/features/blog/model/response/BlogDetail'
+import type { UpdateBlogRequest } from '@/features/blog/model/request/UpdateBlogRequest'
 import { blogIdValue } from '@/features/blog/lib/blog-parsers'
 import {
   fromBlogDetailContract,

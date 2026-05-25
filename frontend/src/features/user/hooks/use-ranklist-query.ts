@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import { listAcceptedRanklist } from '@/features/user/http/api/ListAcceptedRanklist'
 import { listContributionRanklist } from '@/features/user/http/api/ListContributionRanklist'
-import type { UserAcceptedRanklistItem } from '@/features/user/http/response/UserAcceptedRanklistItem'
-import type { UserRanklistItem } from '@/features/user/http/response/UserRanklistItem'
+import type { UserAcceptedRanklistItem } from '@/features/user/model/response/UserAcceptedRanklistItem'
+import type { UserRanklistItem } from '@/features/user/model/response/UserRanklistItem'
 import type { PageResponse } from '@/shared/model/PageResponse'
 import { translateMessage } from '@/shared/i18n/messages'
 

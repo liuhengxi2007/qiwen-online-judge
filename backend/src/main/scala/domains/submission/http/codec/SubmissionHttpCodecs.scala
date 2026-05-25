@@ -1,8 +1,8 @@
 package domains.submission.http.codec
 
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
-import domains.submission.application.input.*
-import domains.submission.application.output.*
+import domains.submission.model.request.*
+import domains.submission.model.response.*
 import domains.submission.http.codec.SubmissionModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given
 import shared.model.PageRequest
@@ -28,11 +28,11 @@ object SubmissionHttpCodecs:
   given Decoder[SubmissionUserQuery] = Decoder.decodeString.emap(SubmissionUserQuery.parse)
   given Encoder[SubmissionProblemQuery] = Encoder.encodeString.contramap(_.value)
   given Decoder[SubmissionProblemQuery] = Decoder.decodeString.emap(SubmissionProblemQuery.parse)
-  given Encoder[SubmissionVerdictFilter] = Encoder.encodeString.contramap(SubmissionVerdictFilter.toDatabase)
+  given Encoder[SubmissionVerdictFilter] = Encoder.encodeString.contramap(SubmissionVerdictFilter.encode)
   given Decoder[SubmissionVerdictFilter] = Decoder.decodeString.emap(SubmissionVerdictFilter.parse)
-  given Encoder[SubmissionSort] = Encoder.encodeString.contramap(SubmissionSort.toDatabase)
+  given Encoder[SubmissionSort] = Encoder.encodeString.contramap(SubmissionSort.encode)
   given Decoder[SubmissionSort] = Decoder.decodeString.emap(SubmissionSort.parse)
-  given Encoder[SubmissionSortDirection] = Encoder.encodeString.contramap(SubmissionSortDirection.toDatabase)
+  given Encoder[SubmissionSortDirection] = Encoder.encodeString.contramap(SubmissionSortDirection.encode)
   given Decoder[SubmissionSortDirection] = Decoder.decodeString.emap(SubmissionSortDirection.parse)
 
   given Encoder[SubmissionListRequest] = Encoder.instance(request =>

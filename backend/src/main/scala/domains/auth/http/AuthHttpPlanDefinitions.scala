@@ -1,6 +1,6 @@
 package domains.auth.http
 
-import domains.auth.http.response.AuthHttpResponses
+import domains.auth.http.mapper.AuthHttpResponseMappers
 
 
 
@@ -12,10 +12,10 @@ object AuthHttpPlanDefinitions:
     PublicWithTransaction
   }
 
-  val session = AuthenticatedPlain(AuthHttpPlans.Session, AuthHttpResponses.sessionResponse)
-  val logout = PublicPlain(AuthHttpPlans.Logout, AuthHttpResponses.loggedOutResponse)
-  val login = PublicWithTransaction(AuthHttpPlans.Login, AuthHttpResponses.loginResponse)
-  val register = PublicWithTransaction(AuthHttpPlans.Register, AuthHttpResponses.registerResponse)
+  val session = AuthenticatedPlain(AuthHttpPlans.Session, AuthHttpResponseMappers.sessionResponse)
+  val logout = PublicPlain(AuthHttpPlans.Logout, AuthHttpResponseMappers.loggedOutResponse)
+  val login = PublicWithTransaction(AuthHttpPlans.Login, AuthHttpResponseMappers.loginResponse)
+  val register = PublicWithTransaction(AuthHttpPlans.Register, AuthHttpResponseMappers.registerResponse)
 
   val plans: Map[String, AuthHttpPlanRegistry.RegisteredPlan] =
     List(

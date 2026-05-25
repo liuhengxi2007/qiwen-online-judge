@@ -1,5 +1,5 @@
 import { parseProblemSlug } from '@/features/problem/lib/problem-parsers'
-import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/request/AddProblemToProblemSetRequest'
+import type { AddProblemToProblemSetRequest } from '@/features/problemset/model/request/AddProblemToProblemSetRequest'
 
 type ProblemSetLinkDraft = {
   problemSlug: string

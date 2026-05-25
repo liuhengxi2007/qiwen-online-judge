@@ -4,8 +4,8 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 
-import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
-import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
+import type { SubmissionListRequest } from '@/features/submission/model/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/model/response/SubmissionListResponse'
 import { useSubmissionPageModel } from '@/features/submission/hooks/use-submission-page-model'
 
 const queryState = vi.hoisted(() => ({

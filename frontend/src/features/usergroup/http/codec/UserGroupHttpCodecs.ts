@@ -1,10 +1,10 @@
-import type { AddUserGroupMemberRequest } from '@/features/usergroup/http/request/AddUserGroupMemberRequest'
-import type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'
-import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/http/request/UpdateUserGroupMemberRoleRequest'
-import type { UpdateUserGroupRequest } from '@/features/usergroup/http/request/UpdateUserGroupRequest'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
-import type { UserGroupListResponse } from '@/features/usergroup/http/response/UserGroupListResponse'
-import type { UserGroupSummary } from '@/features/usergroup/http/response/UserGroupSummary'
+import type { AddUserGroupMemberRequest } from '@/features/usergroup/model/request/AddUserGroupMemberRequest'
+import type { CreateUserGroupRequest } from '@/features/usergroup/model/request/CreateUserGroupRequest'
+import type { UpdateUserGroupMemberRoleRequest } from '@/features/usergroup/model/request/UpdateUserGroupMemberRoleRequest'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/model/request/UpdateUserGroupRequest'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
+import type { UserGroupListResponse } from '@/features/usergroup/model/response/UserGroupListResponse'
+import type { UserGroupSummary } from '@/features/usergroup/model/response/UserGroupSummary'
 import { toUsernameContract } from '@/features/user/http/codec/UserModelHttpCodecs'
 import {
   fromUserGroupDescriptionContract,

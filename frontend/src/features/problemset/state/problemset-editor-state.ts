@@ -1,4 +1,4 @@
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
 import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'
 import type { BaseAccess } from '@/shared/domain/resource-lifecycle'
 

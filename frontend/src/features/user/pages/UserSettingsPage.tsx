@@ -2,7 +2,7 @@ import { Navigate, useLocation, useParams } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
 import { MessageBlockListCard } from '@/features/message/components/message-block-list-card'
 import { UserAccountPageShell } from '@/features/user/components/user-account-page-shell'

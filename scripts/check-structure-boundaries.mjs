@@ -18,6 +18,9 @@ const frontendFeatureHttpCodecFilePattern = /^frontend\/src\/features\/([^/]+)\/
 const frontendFeatureHttpCodecBasenamePattern = /^[A-Za-z0-9_]*(?:Model)?HttpCodecs$/
 const backendDomainHttpCodecFilePattern =
   /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/codec\/([^/]+)\.scala$/
+const backendDomainHttpMapperFilePattern =
+  /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/mapper\/([^/]+)\.scala$/
+const backendDomainHttpMapperBasenamePattern = /^[A-Za-z0-9_]+Http(?:Request|Response)Mappers$/
 const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
 const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
 const backendEffectPattern =
@@ -97,11 +100,21 @@ function extractTsSpecifiers(source) {
 
 function checkFrontendFile(filePath, blockedSegments, errors) {
   const source = read(filePath)
+  const isBareFeatureModel = /^frontend\/src\/features\/[^/]+\/model\/(?!request\/|response\/)/.test(filePath)
+  const isBareSharedModel = /^frontend\/src\/shared\/model\/(?!request\/|response\/)/.test(filePath)
   for (const match of extractTsSpecifiers(source)) {
     const resolved = resolveFrontendSpecifier(filePath, match.specifier)
     if (hasBlockedSegment(resolved, blockedSegments)) {
       errors.push(
         `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend layer "${match.specifier}"`,
+      )
+    }
+    if (
+      (isBareFeatureModel || isBareSharedModel) &&
+      /\/model\/(?:request|response)(?:\/|$)/.test(resolved)
+    ) {
+      errors.push(
+        `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend boundary model "${match.specifier}"`,
       )
     }
   }
@@ -231,10 +244,18 @@ function extractScalaImports(source) {
 
 function checkBackendModelFile(filePath, errors) {
   const source = read(filePath)
+  const isBareDomainModel = /^backend\/src\/main\/scala\/domains\/[^/]+\/model\/(?!request\/|response\/)/.test(filePath)
+  const isBareSharedModel = /^backend\/src\/main\/scala\/shared\/model\/(?!request\/|response\/)/.test(filePath)
   for (const entry of extractScalaImports(source)) {
     const importedPath = entry.line.replace(/^import\s+/, '')
     if (hasBlockedSegment(importedPath.replace(/[{}]/g, '.').replace(/,/g, '.'), backendBlockedModelSegments)) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend layer "${importedPath}"`)
+    }
+    if (
+      (isBareDomainModel || isBareSharedModel) &&
+      /\.model\.(?:request|response)(?:\.|$|\{)/.test(importedPath)
+    ) {
+      errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary model "${importedPath}"`)
     }
     if (backendWireCodecImportPattern.test(importedPath)) {
       errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
@@ -243,6 +264,18 @@ function checkBackendModelFile(filePath, errors) {
 
   for (const match of source.matchAll(backendModelPersistenceHelperPattern)) {
     errors.push(`${filePath}:${lineNumber(source, match.index ?? 0)} defines persistence helper "${match[0].trim()}"`)
+  }
+}
+
+function checkBackendHttpMapperFile(filePath, errors) {
+  const match = filePath.match(backendDomainHttpMapperFilePattern)
+  if (!match) {
+    return
+  }
+
+  const [, , basename] = match
+  if (!backendDomainHttpMapperBasenamePattern.test(basename)) {
+    errors.push(`${filePath} must be named *HttpRequestMappers.scala or *HttpResponseMappers.scala`)
   }
 }
 
@@ -382,6 +415,26 @@ function checkTrackedResidues(errors) {
       errors.push(`${filePath} is in removed frontend feature domain layer`)
     }
 
+    if (/^frontend\/src\/features\/[^/]+\/http\/(?:request|response)\//.test(filePath)) {
+      errors.push(`${filePath} is in removed frontend HTTP contract directory; use model/request or model/response`)
+    }
+
+    if (/^frontend\/src\/shared\/http\/response\//.test(filePath)) {
+      errors.push(`${filePath} is in removed shared frontend HTTP response directory; use shared/model/response`)
+    }
+
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
+      errors.push(`${filePath} is in removed backend application contract directory; use model/request or model/response`)
+    }
+
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/response\//.test(filePath)) {
+      errors.push(`${filePath} is in removed backend HTTP response mapper directory; use http/mapper`)
+    }
+
+    if (/^backend\/src\/main\/scala\/shared\/http\/response\//.test(filePath)) {
+      errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/model/response`)
+    }
+
     if (segments.includes('dist')) {
       errors.push(`${filePath} is tracked generated dist output`)
     }
@@ -439,6 +492,10 @@ function run() {
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/.*HttpPlans\.scala$/.test(filePath)) {
       checkBackendHttpPlansFile(filePath, errors)
+    }
+
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/mapper\//.test(filePath)) {
+      checkBackendHttpMapperFile(filePath, errors)
     }
 
     if (!/^backend\/src\/main\/scala\/domains\/[^/]+\/(?:table|http)\//.test(filePath)) {

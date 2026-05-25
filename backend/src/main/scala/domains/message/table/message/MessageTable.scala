@@ -4,7 +4,7 @@ package domains.message.table.message
 
 import cats.effect.IO
 import domains.user.model.Username
-import domains.message.application.output.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import domains.message.table.message.MessageTableSchema.initialize
 import domains.message.table.message.MessageTableSupport.*

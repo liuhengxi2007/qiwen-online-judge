@@ -1,6 +1,7 @@
 package domains.judger.http
 
-import domains.judger.http.response.JudgerRegistryHttpResponses
+import domains.judger.http.mapper.JudgerRegistryHttpResponseMappers
+import domains.judger.http.mapper.JudgerRegistryHttpRequestMappers
 
 
 
@@ -11,7 +12,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.judge.application.JudgeConfig
 import domains.judger.application.JudgerRegistryCommands
-import judgeprotocol.model.{JudgerHeartbeatRequest, JudgerId, RegisterJudgerRequest}
+import judgeprotocol.model.{JudgerHeartbeatRequest, RegisterJudgerRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -29,21 +30,21 @@ final class JudgerRegistryHttpHandlers(
         registerRequest <- request.as[RegisterJudgerRequest]
         response <- JudgerRegistryCommands
           .register(databaseSession, judgeConfig, registerRequest)
-          .flatMap(JudgerRegistryHttpResponses.mapRegisterResult)
+          .flatMap(JudgerRegistryHttpResponseMappers.mapRegisterResult)
       yield response
     }
 
   def heartbeat(request: Request[IO], rawJudgerId: String): IO[Response[IO]] =
     JudgerRegistryHttpSupport.withJudgeToken(request, judgeConfig) {
-      JudgerId.parse(rawJudgerId) match
+      JudgerRegistryHttpRequestMappers.judgerId(rawJudgerId) match
         case Left(message) =>
-          JudgerRegistryHttpResponses.validationErrorResponse(message)
+          JudgerRegistryHttpResponseMappers.validationErrorResponse(message)
         case Right(judgerId) =>
           for
             _ <- request.as[JudgerHeartbeatRequest]
             response <- JudgerRegistryCommands
               .heartbeat(databaseSession, judgeConfig, judgerId)
-              .flatMap(JudgerRegistryHttpResponses.mapHeartbeatResult)
+              .flatMap(JudgerRegistryHttpResponseMappers.mapHeartbeatResult)
           yield response
     }
 
@@ -52,5 +53,5 @@ final class JudgerRegistryHttpHandlers(
       val _ = actor
       JudgerRegistryCommands
         .listRegistered(databaseSession, judgeConfig)
-        .flatMap(JudgerRegistryHttpResponses.listRegisteredJudgersResponse)
+        .flatMap(JudgerRegistryHttpResponseMappers.listRegisteredJudgersResponse)
     }

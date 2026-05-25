@@ -1,4 +1,4 @@
-import type { MessageBlockEntry } from '@/features/message/http/response/MessageBlockEntry'
+import type { MessageBlockEntry } from '@/features/message/model/response/MessageBlockEntry'
 import { fromMessageBlockEntry } from '@/features/message/http/codec/MessageHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 

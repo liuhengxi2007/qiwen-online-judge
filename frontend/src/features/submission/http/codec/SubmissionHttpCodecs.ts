@@ -1,9 +1,9 @@
-import type { CreateSubmissionRequest } from '@/features/submission/http/request/CreateSubmissionRequest'
+import type { CreateSubmissionRequest } from '@/features/submission/model/request/CreateSubmissionRequest'
 import type { JudgeResult } from '@/features/submission/model/JudgeResult'
-import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
-import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
-import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
-import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
+import type { SubmissionDetail } from '@/features/submission/model/response/SubmissionDetail'
+import type { SubmissionListRequest } from '@/features/submission/model/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/model/response/SubmissionListResponse'
+import type { SubmissionSummary } from '@/features/submission/model/response/SubmissionSummary'
 import {
   fromProblemIdContract,
   fromProblemSlugContract,

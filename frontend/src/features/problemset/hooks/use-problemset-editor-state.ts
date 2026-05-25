@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
 import {
   initialProblemSetEditorState,
   reduceProblemSetEditorState,

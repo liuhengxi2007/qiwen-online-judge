@@ -1,5 +1,5 @@
-import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
-import type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
+import type { ProblemListRequest } from '@/features/problem/model/request/ProblemListRequest'
+import type { ProblemListResponse } from '@/features/problem/model/response/ProblemListResponse'
 import {
   fromProblemListResponseContract,
   toProblemListRequestContract,

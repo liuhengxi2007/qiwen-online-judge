@@ -1,4 +1,4 @@
-import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
+import type { BlogListResponse } from '@/features/blog/model/response/BlogListResponse'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { fromBlogListResponseContract } from '@/features/blog/http/codec/BlogHttpCodecs'

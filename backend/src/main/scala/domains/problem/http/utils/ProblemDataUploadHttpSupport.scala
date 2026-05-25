@@ -5,7 +5,7 @@ import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.http.response.ProblemHttpResponses
+import domains.problem.http.mapper.ProblemHttpResponseMappers
 import domains.problem.model.{ProblemDataPath, ProblemSlug}
 import fs2.text
 import org.http4s.{Request, Response}
@@ -24,7 +24,7 @@ object ProblemDataUploadHttpSupport:
       request.as[Multipart[IO]].flatMap { multipart =>
         extractNamedBinaryPart(multipart, "file").flatMap {
           case None =>
-            ProblemHttpResponses.validationErrorResponse("Multipart file field 'file' is required.")
+            ProblemHttpResponseMappers.validationErrorResponse("Multipart file field 'file' is required.")
           case Some((filePart, bytes)) =>
             val candidatePath =
               multipart.parts.find(_.name.contains("path")) match
@@ -42,19 +42,19 @@ object ProblemDataUploadHttpSupport:
 
             candidatePath.attempt.flatMap {
               case Left(error: IllegalArgumentException) =>
-                ProblemHttpResponses.validationErrorResponse(error.getMessage)
+                ProblemHttpResponseMappers.validationErrorResponse(error.getMessage)
               case Left(error) =>
                 IO.raiseError(error)
               case Right(maybePath) =>
                 val resolvedPath = maybePath.orElse(filePart.filename.flatMap(name => ProblemDataPath.parse(name).toOption))
                 resolvedPath match
                   case None =>
-                    ProblemHttpResponses.validationErrorResponse("Multipart upload requires a valid 'path' field or uploaded filename.")
+                    ProblemHttpResponseMappers.validationErrorResponse("Multipart upload requires a valid 'path' field or uploaded filename.")
                   case Some(path) =>
                     databaseSession.withTransactionConnection(connection =>
                       ProblemCommands
                         .uploadProblemDataFile(problemDataStorage, connection, actor, problemSlug, path, bytes)
-                        .flatMap(ProblemHttpResponses.mapUpdateDataResult)
+                        .flatMap(ProblemHttpResponseMappers.mapUpdateDataResult)
                     )
             }
         }
@@ -72,22 +72,22 @@ object ProblemDataUploadHttpSupport:
       request.as[Multipart[IO]].flatMap { multipart =>
         extractNamedBinaryPart(multipart, "file").flatMap {
           case None =>
-            ProblemHttpResponses.validationErrorResponse("Multipart file field 'file' is required.")
+            ProblemHttpResponseMappers.validationErrorResponse("Multipart file field 'file' is required.")
           case Some((filePart, bytes)) =>
             val validArchiveName = filePart.filename.exists(_.toLowerCase.endsWith(".zip"))
             if !validArchiveName then
-              ProblemHttpResponses.validationErrorResponse("Multipart archive upload requires a .zip file.")
+              ProblemHttpResponseMappers.validationErrorResponse("Multipart archive upload requires a .zip file.")
             else
               extractOptionalPathField(multipart, "targetDir").attempt.flatMap {
                 case Left(error: IllegalArgumentException) =>
-                  ProblemHttpResponses.validationErrorResponse(error.getMessage)
+                  ProblemHttpResponseMappers.validationErrorResponse(error.getMessage)
                 case Left(error) =>
                   IO.raiseError(error)
                 case Right(targetDirectory) =>
                   databaseSession.withTransactionConnection(connection =>
                     ProblemCommands
                       .uploadProblemDataArchive(problemDataStorage, connection, actor, problemSlug, targetDirectory, bytes)
-                      .flatMap(ProblemHttpResponses.mapUpdateDataResult)
+                      .flatMap(ProblemHttpResponseMappers.mapUpdateDataResult)
                   )
               }
         }

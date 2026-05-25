@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
-import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
-import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
+import type { NotificationListResponse } from '@/features/notification/model/response/NotificationListResponse'
+import type { NotificationSummary } from '@/features/notification/model/response/NotificationSummary'
 import { notificationIdValue } from '@/features/notification/lib/notification-parsers'
 import type { NotificationId } from '@/features/notification/model/NotificationId'
 

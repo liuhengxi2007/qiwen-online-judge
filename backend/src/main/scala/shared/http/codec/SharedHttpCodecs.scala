@@ -2,6 +2,7 @@ package shared.http.codec
 
 import shared.model.access.*
 import shared.model.*
+import shared.model.response.{ErrorResponse, SuccessResponse}
 import shared.application.upload.StoredFilePath
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -43,6 +44,10 @@ object SharedHttpCodecs:
   given Decoder[PageRequest] = deriveDecoder[PageRequest]
   given [A: Encoder]: Encoder[PageResponse[A]] = deriveEncoder[PageResponse[A]]
   given [A: Decoder]: Decoder[PageResponse[A]] = deriveDecoder[PageResponse[A]]
+  given Encoder[ErrorResponse] = deriveEncoder[ErrorResponse]
+  given Decoder[ErrorResponse] = deriveDecoder[ErrorResponse]
+  given Encoder[SuccessResponse] = deriveEncoder[SuccessResponse]
+  given Decoder[SuccessResponse] = deriveDecoder[SuccessResponse]
 
   given Encoder[ResourceVisibility] = Encoder.encodeString.contramap(encodeResourceVisibility)
   given Decoder[ResourceVisibility] = Decoder.decodeString.emap { value =>

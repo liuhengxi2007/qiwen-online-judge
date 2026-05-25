@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { createUserGroup } from '@/features/usergroup/http/api/CreateUserGroup'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import {
   initialCreateUserGroupPageState,
   reduceCreateUserGroupPageState,

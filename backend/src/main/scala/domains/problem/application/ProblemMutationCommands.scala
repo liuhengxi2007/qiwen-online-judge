@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.model.AuthUser
-import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemId}
 import domains.problem.table.problem.ProblemTable
 import domains.problem.application.ProblemCommandResults.*

@@ -1,6 +1,6 @@
 package domains.submission.application.utils
 
-import domains.submission.application.output.SubmissionDetail
+import domains.submission.model.response.SubmissionDetail
 import domains.submission.model.SubmissionJudgeState
 
 object SubmissionJudgeStateSupport:

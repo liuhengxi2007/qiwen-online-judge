@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import type { DirectMessage } from '@/features/message/http/response/DirectMessage'
+import type { DirectMessage } from '@/features/message/model/response/DirectMessage'
 import type { MessageId } from '@/features/message/model/MessageId'
 import { messageIdValue } from '@/features/message/lib/message-parsers'
 import { DateTimeText } from '@/shared/components/date-time-text'

@@ -1,12 +1,12 @@
 package domains.problem.http.api
 
-import domains.problem.http.response.ProblemHttpResponses
+import domains.problem.http.mapper.ProblemHttpResponseMappers
+import domains.problem.http.mapper.ProblemHttpRequestMappers
 
 
 
 import domains.problem.http.*
 import cats.effect.IO
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
@@ -18,11 +18,9 @@ object DownloadProblemDataPath:
   def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case GET -> Root / "api" / "problems" / problemSlug / "data" / "file" :? PathQueryParamMatcher(rawPath) =>
-        (ProblemSlug.parse(problemSlug), ProblemDataPath.parse(rawPath)) match
-          case (Left(message), _) =>
-            ProblemHttpResponses.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            ProblemHttpResponses.validationErrorResponse(message)
-          case (Right(parsedProblemSlug), Right(parsedPath)) =>
-            ProblemHttpResponses.downloadDataPathResponse(context.problemDataStorage, parsedProblemSlug, parsedPath)
+        ProblemHttpRequestMappers.problemSlugAndPath(problemSlug, rawPath) match
+          case Left(message) =>
+            ProblemHttpResponseMappers.validationErrorResponse(message)
+          case Right((parsedProblemSlug, parsedPath)) =>
+            ProblemHttpResponseMappers.downloadDataPathResponse(context.problemDataStorage, parsedProblemSlug, parsedPath)
     }

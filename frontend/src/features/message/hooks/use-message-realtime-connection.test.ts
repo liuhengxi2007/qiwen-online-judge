@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DisplayName } from '@/features/user/model/DisplayName'
 import type { Username } from '@/features/user/model/Username'
 import type { EmailAddress } from '@/features/auth/model/EmailAddress'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 
 class MockEventSource {
   static instances: MockEventSource[] = []

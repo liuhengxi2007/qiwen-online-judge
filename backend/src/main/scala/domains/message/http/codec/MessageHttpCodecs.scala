@@ -1,7 +1,7 @@
 package domains.message.http.codec
 
-import domains.message.application.input.*
-import domains.message.application.output.*
+import domains.message.model.request.*
+import domains.message.model.response.*
 import domains.message.http.codec.MessageModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs
 import domains.user.http.codec.UserModelHttpCodecs.given

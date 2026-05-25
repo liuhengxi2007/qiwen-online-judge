@@ -1,6 +1,6 @@
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
-import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
+import type { UpdateProblemSetRequest } from '@/features/problemset/model/request/UpdateProblemSetRequest'
 import { problemSetSlugValue } from '@/features/problemset/lib/problemset-parsers'
 import {
   fromProblemSetDetailContract,

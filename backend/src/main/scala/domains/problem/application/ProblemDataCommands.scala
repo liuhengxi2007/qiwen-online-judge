@@ -7,7 +7,7 @@ import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.judge.application.JudgeCommands
-import domains.problem.application.output.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
+import domains.problem.model.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 import domains.problem.model.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable

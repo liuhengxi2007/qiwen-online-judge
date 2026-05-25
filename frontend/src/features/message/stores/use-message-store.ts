@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
-import type { MessageInboxResponse } from '@/features/message/http/response/MessageInboxResponse'
-import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
+import type { MessageInboxResponse } from '@/features/message/model/response/MessageInboxResponse'
+import type { MessageConversationSummary } from '@/features/message/model/response/MessageConversationSummary'
 
 type MessageStoreState = {
   conversations: MessageConversationSummary[]

@@ -1,5 +1,5 @@
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
-import type { ProblemDetail, ProblemDetail as ProblemDetailModel } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemDetail, ProblemDetail as ProblemDetailModel } from '@/features/problem/model/response/ProblemDetail'
 import { problemStatementTextValue, problemTitleValue } from '@/features/problem/lib/problem-parsers'
 import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import {

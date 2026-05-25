@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import type { UserSettingsSectionState } from '@/features/user/state/user-settings-state'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

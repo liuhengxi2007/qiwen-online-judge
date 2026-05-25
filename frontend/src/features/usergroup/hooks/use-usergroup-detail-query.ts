@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 
 import { getUserGroup } from '@/features/usergroup/http/api/GetUserGroup'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/features/usergroup/model/UserGroupSlug'
 import {
   initialUserGroupDetailQueryState,

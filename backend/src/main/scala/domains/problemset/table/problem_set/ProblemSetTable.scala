@@ -7,9 +7,9 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.user.model.Username
 import domains.problem.model.{ProblemId}
-import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
-import domains.problemset.application.output.ProblemSetSummary
+import domains.problemset.model.response.ProblemSetSummary
 import shared.model.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse

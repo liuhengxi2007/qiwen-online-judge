@@ -2,7 +2,7 @@ package domains.problem.application
 
 
 
-import domains.problem.application.output.ProblemDetail
+import domains.problem.model.response.ProblemDetail
 
 object ProblemDecisions:
 

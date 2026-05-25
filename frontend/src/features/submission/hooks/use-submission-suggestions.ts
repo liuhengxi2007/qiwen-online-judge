@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { listProblemSuggestions } from '@/features/problem/http/api/ListProblemSuggestions'
-import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
+import type { ProblemSuggestion } from '@/features/problem/model/response/ProblemSuggestion'
 import { listUserSuggestions } from '@/features/user/http/api/ListUserSuggestions'
 import type { UserIdentity } from '@/features/user/model/UserIdentity'
 

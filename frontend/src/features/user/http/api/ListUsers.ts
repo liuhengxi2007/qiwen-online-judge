@@ -1,5 +1,5 @@
-import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
-import type { UserListResponse } from '@/features/user/http/response/UserListResponse'
+import type { UserListRequest } from '@/features/user/model/request/UserListRequest'
+import type { UserListResponse } from '@/features/user/model/response/UserListResponse'
 import {
   fromUserListResponseContract,
   toUserListRequestContract,

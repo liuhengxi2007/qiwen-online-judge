@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { listProblems } from '@/features/problem/http/api/ListProblems'
-import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
-import type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
+import type { ProblemListRequest } from '@/features/problem/model/request/ProblemListRequest'
+import type { ProblemListResponse } from '@/features/problem/model/response/ProblemListResponse'
 import { translateMessage } from '@/shared/i18n/messages'
 
 function requestKey(request: ProblemListRequest): string {

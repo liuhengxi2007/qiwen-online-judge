@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { parseEmailAddress, parsePlaintextPassword } from '@/features/auth/lib/auth-parsers'
-import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
+import type { RegisterRequest } from '@/features/auth/model/request/RegisterRequest'
 import { useRegisterMutation } from '@/features/auth/hooks/use-register-mutation'
 import { parseDisplayName, parseUsername } from '@/features/user/lib/user-parsers'
 

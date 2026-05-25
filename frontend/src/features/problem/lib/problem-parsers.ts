@@ -1,7 +1,7 @@
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
 import type { ProblemId } from '@/features/problem/model/ProblemId'
-import type { ProblemSearchQuery } from '@/features/problem/http/request/ProblemSearchQuery'
+import type { ProblemSearchQuery } from '@/features/problem/model/request/ProblemSearchQuery'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { ProblemSpaceLimitMb } from '@/features/problem/model/ProblemSpaceLimitMb'
 import type { ProblemStatementText } from '@/features/problem/model/ProblemStatementText'

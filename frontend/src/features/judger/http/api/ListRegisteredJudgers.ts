@@ -1,4 +1,4 @@
-import type { RegisteredJudgerListItem } from '@/features/judger/http/response/RegisteredJudgerListItem'
+import type { RegisteredJudgerListItem } from '@/features/judger/model/response/RegisteredJudgerListItem'
 import { fromRegisteredJudgerListItemContract } from '@/features/judger/http/codec/JudgerRegistryHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 

@@ -3,6 +3,7 @@ package domains.auth.http.api
 
 
 import domains.auth.http.*
+import domains.auth.http.mapper.AuthHttpRequestMappers
 import cats.effect.IO
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
@@ -13,5 +14,5 @@ object GetSession:
   def routes(context: AuthHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "auth" / "session" =>
-        context.handlers.execute(request, (), AuthHttpPlanDefinitions.session)
+        context.handlers.execute(request, AuthHttpRequestMappers.unit, AuthHttpPlanDefinitions.session)
     }

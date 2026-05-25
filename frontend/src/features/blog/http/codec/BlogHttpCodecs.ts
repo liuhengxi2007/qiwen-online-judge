@@ -1,13 +1,13 @@
-import type { BlogCommentSummary } from '@/features/blog/http/response/BlogCommentSummary'
-import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
-import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
-import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
-import type { CreateBlogCommentRequest } from '@/features/blog/http/request/CreateBlogCommentRequest'
-import type { CreateBlogRequest } from '@/features/blog/http/request/CreateBlogRequest'
-import type { UpdateBlogCommentRequest } from '@/features/blog/http/request/UpdateBlogCommentRequest'
-import type { UpdateBlogRequest } from '@/features/blog/http/request/UpdateBlogRequest'
-import type { VoteBlogCommentRequest } from '@/features/blog/http/request/VoteBlogCommentRequest'
-import type { VoteBlogRequest } from '@/features/blog/http/request/VoteBlogRequest'
+import type { BlogCommentSummary } from '@/features/blog/model/response/BlogCommentSummary'
+import type { BlogDetail } from '@/features/blog/model/response/BlogDetail'
+import type { BlogListResponse } from '@/features/blog/model/response/BlogListResponse'
+import type { BlogSummary } from '@/features/blog/model/response/BlogSummary'
+import type { CreateBlogCommentRequest } from '@/features/blog/model/request/CreateBlogCommentRequest'
+import type { CreateBlogRequest } from '@/features/blog/model/request/CreateBlogRequest'
+import type { UpdateBlogCommentRequest } from '@/features/blog/model/request/UpdateBlogCommentRequest'
+import type { UpdateBlogRequest } from '@/features/blog/model/request/UpdateBlogRequest'
+import type { VoteBlogCommentRequest } from '@/features/blog/model/request/VoteBlogCommentRequest'
+import type { VoteBlogRequest } from '@/features/blog/model/request/VoteBlogRequest'
 import {
   fromBlogCommentContentContract,
   fromBlogCommentIdContract,

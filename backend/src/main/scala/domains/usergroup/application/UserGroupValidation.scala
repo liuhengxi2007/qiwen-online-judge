@@ -4,7 +4,7 @@ package domains.usergroup.application
 
 import domains.auth.application.AuthCommands
 import domains.user.model.Username
-import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupDescription, UserGroupName, UserGroupSlug}
 
 object UserGroupValidation:

@@ -1,6 +1,6 @@
-import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
-import type { NotificationSummary } from '@/features/notification/http/response/NotificationSummary'
-import type { NotificationUnreadCountResponse } from '@/features/notification/http/response/NotificationUnreadCountResponse'
+import type { NotificationListResponse } from '@/features/notification/model/response/NotificationListResponse'
+import type { NotificationSummary } from '@/features/notification/model/response/NotificationSummary'
+import type { NotificationUnreadCountResponse } from '@/features/notification/model/response/NotificationUnreadCountResponse'
 import {
   fromNotificationIdContract,
   fromNotificationKindContract,

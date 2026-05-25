@@ -1,5 +1,5 @@
 import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import { userGroupDescriptionValue, userGroupNameValue } from '@/features/usergroup/lib/usergroup-parsers'
 
 export type UserGroupEditorState = {

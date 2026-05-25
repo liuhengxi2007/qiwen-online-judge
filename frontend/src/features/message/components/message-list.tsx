@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
+import type { MessageHistoryResponse } from '@/features/message/model/response/MessageHistoryResponse'
 import type { MessageId } from '@/features/message/model/MessageId'
 import { messageIdValue } from '@/features/message/lib/message-parsers'
 import { MessageBubble } from '@/features/message/components/message-bubble'

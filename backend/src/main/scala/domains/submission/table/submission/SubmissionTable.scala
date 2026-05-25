@@ -8,8 +8,8 @@ import domains.user.model.Username
 import shared.model.{PageResponse}
 import database.utils.LikePatternSql
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, ProblemTitle}
-import domains.submission.application.input.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.application.output.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse}
+import domains.submission.model.request.{SubmissionListRequest, SubmissionProblemQuery, SubmissionUserQuery, SubmissionVerdictFilter}
+import domains.submission.model.response.{ClaimedSubmission, SubmissionDetail, SubmissionListResponse}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import domains.submission.table.submission.SubmissionTableSchema.*
 import domains.submission.table.submission.SubmissionTableSupport.*
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets
 import java.sql.{Connection, PreparedStatement, Timestamp}
 import java.time.Instant
 import java.util.UUID
-import domains.submission.application.input.{SubmissionSort, SubmissionSortDirection}
+import domains.submission.model.request.{SubmissionSort, SubmissionSortDirection}
 import database.utils.UserIdentitySql
 
 object SubmissionTable:

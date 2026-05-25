@@ -1,6 +1,6 @@
 import { parseEmailAddress } from '@/features/auth/lib/auth-parsers'
 import { parseDisplayName, parseProblemTitleDisplayMode, parseUserDisplayMode, parseUserLocale, parseUsername } from '@/features/user/lib/user-parsers'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 
 const authUserStorageKey = 'auth_user'
 

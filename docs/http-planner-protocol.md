@@ -13,11 +13,15 @@ Preferred split:
 - `*Router.scala`
   thin domain route aggregator only
 - `api/<Name>.scala`
-  one REST endpoint route fragment, including path matching, request parsing/decoding, executor call, and response mapping for that endpoint
+  one REST endpoint route fragment, including path matching, request mapper calls, executor call, and response mapper calls for that endpoint
 - `*HttpPlans.scala`
   typed endpoint plans
 - `*HttpPlanDefinitions.scala`
   registers plans and binds `Output => Response[IO]`
+- `mapper/*HttpRequestMappers.scala`
+  maps raw HTTP path/query/body inputs into typed request models or plan inputs
+- `mapper/*HttpResponseMappers.scala`
+  maps typed outputs and command results into `Response[IO]`
 - actor-parameterized plan contracts in `shared/http`
   define plain vs transaction execution without importing business domains
 - authenticated executor in `domains/auth/http`
@@ -33,7 +37,7 @@ For the main business domains (`problem`, `problemset`, `submission`, `usergroup
   executes inside `withTransactionConnection`
 
 Plans should return typed outputs, not raw `Response[IO]`.
-Response mapping belongs in `*HttpPlanDefinitions.scala` and `http/response/*HttpResponses.scala`.
+Response mapping belongs in `*HttpPlanDefinitions.scala` and `http/mapper/*HttpResponseMappers.scala`.
 Shared HTTP-only helpers belong in `http/utils`, not beside endpoint API files.
 
 ## Auth Exception

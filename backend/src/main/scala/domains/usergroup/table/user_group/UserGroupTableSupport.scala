@@ -4,7 +4,7 @@ package domains.usergroup.table.user_group
 
 import domains.user.model.{DisplayName, Username}
 import domains.usergroup.model.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
-import domains.usergroup.application.output.{UserGroupSummary}
+import domains.usergroup.model.response.{UserGroupSummary}
 
 import java.sql.ResultSet
 

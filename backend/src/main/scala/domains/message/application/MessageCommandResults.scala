@@ -4,7 +4,7 @@ package domains.message.application
 
 import domains.user.model.Username
 import domains.message.model.{ConversationReadReceipt, MessageId}
-import domains.message.application.output.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse}
+import domains.message.model.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse}
 
 object MessageCommandResults:
 

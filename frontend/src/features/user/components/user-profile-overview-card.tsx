@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { emailAddressValue } from '@/features/auth/lib/auth-parsers'
 import { displayNameValue, usernameValue } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'

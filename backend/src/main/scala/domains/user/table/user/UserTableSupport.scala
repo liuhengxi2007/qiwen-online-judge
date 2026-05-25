@@ -7,8 +7,8 @@ import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
-import domains.user.application.output.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
-import domains.user.application.input.UserSearchQuery
+import domains.user.model.response.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
+import domains.user.model.request.UserSearchQuery
 import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
 
 import java.sql.{PreparedStatement, ResultSet}

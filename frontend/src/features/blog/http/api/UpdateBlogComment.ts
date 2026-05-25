@@ -1,6 +1,6 @@
 import type { BlogCommentId } from '@/features/blog/model/BlogCommentId'
-import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
-import type { UpdateBlogCommentRequest } from '@/features/blog/http/request/UpdateBlogCommentRequest'
+import type { BlogDetail } from '@/features/blog/model/response/BlogDetail'
+import type { UpdateBlogCommentRequest } from '@/features/blog/model/request/UpdateBlogCommentRequest'
 import { blogCommentIdValue, blogIdValue } from '@/features/blog/lib/blog-parsers'
 import {
   fromBlogDetailContract,

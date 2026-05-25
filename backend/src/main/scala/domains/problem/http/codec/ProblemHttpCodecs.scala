@@ -1,7 +1,7 @@
 package domains.problem.http.codec
 
-import domains.problem.application.input.*
-import domains.problem.application.output.*
+import domains.problem.model.request.*
+import domains.problem.model.response.*
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.user.http.codec.UserModelHttpCodecs.given

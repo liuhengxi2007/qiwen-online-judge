@@ -1,7 +1,7 @@
 package domains.auth.http.codec
 
-import domains.auth.application.input.*
-import domains.auth.application.output.*
+import domains.auth.model.request.*
+import domains.auth.model.response.*
 import domains.auth.http.codec.AuthModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given
 import io.circe.{Decoder, Encoder}

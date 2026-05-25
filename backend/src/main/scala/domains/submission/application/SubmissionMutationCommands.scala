@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.submission.application.input.{CreateSubmissionRequest}
+import domains.submission.model.request.{CreateSubmissionRequest}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionStatus}
 import domains.submission.table.submission.SubmissionTable
 import domains.submission.application.SubmissionCommandResults.*

@@ -4,9 +4,10 @@ package domains.message.http.api
 
 import domains.message.http.*
 import domains.message.http.codec.MessageHttpCodecs.given
+import domains.message.http.mapper.MessageHttpRequestMappers
 import cats.effect.IO
 import domains.message.application.MessageCommandResults.CreateConversationResult
-import domains.message.application.input.CreateConversationRequest
+import domains.message.model.request.CreateConversationRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -20,5 +21,5 @@ object CreateConversation:
         context.handlers.executeDecoded[CreateConversationRequest, CreateConversationRequest, CreateConversationResult](
           request,
           context.plans.createConversation
-        )(identity)
+        )(MessageHttpRequestMappers.createConversationRequest)
     }

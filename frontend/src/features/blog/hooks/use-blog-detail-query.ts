@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { getBlog } from '@/features/blog/http/api/GetBlog'
-import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
+import type { BlogDetail } from '@/features/blog/model/response/BlogDetail'
 import type { BlogId } from '@/features/blog/model/BlogId'
 
 export function useBlogDetailQuery(blogId: BlogId | null) {

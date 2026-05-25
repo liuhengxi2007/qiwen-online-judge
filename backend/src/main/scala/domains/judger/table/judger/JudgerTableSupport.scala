@@ -2,7 +2,7 @@ package domains.judger.table.judger
 
 
 
-import domains.judger.application.output.RegisteredJudgerListItem
+import domains.judger.model.response.RegisteredJudgerListItem
 import judgeprotocol.model.SubmissionLanguage
 
 object JudgerTableSupport:

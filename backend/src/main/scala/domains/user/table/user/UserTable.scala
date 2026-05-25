@@ -8,10 +8,10 @@ import domains.user.model.{DisplayName, Username}
 import domains.problem.model.ProblemTitleDisplayMode
 import shared.model.{PageRequest, PageResponse}
 import database.utils.LikePatternSql
-import domains.user.application.output.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
-import domains.user.application.input.UserSearchQuery
+import domains.user.model.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.model.request.UserSearchQuery
 import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}
-import domains.user.application.input.{UserListRequest}
+import domains.user.model.request.{UserListRequest}
 import domains.user.table.user.UserTableSupport.*
 
 import java.sql.{Connection, SQLException}

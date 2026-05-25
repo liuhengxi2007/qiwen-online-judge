@@ -3,7 +3,7 @@ package domains.submission.table.submission
 
 
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.application.output.{SubmissionDetail, SubmissionSummary}
+import domains.submission.model.response.{SubmissionDetail, SubmissionSummary}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
 import domains.user.model.{DisplayName, UserIdentity, Username}

@@ -1,5 +1,5 @@
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
-import type { ProblemSummary } from '@/features/problem/http/response/ProblemSummary'
+import type { ProblemDetail } from '@/features/problem/model/response/ProblemDetail'
+import type { ProblemSummary } from '@/features/problem/model/response/ProblemSummary'
 
 export type ProblemPageState = {
   problems: ProblemSummary[]

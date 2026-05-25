@@ -3,7 +3,7 @@ package domains.blog.table.blog
 
 
 import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
-import domains.blog.application.output.{BlogCommentSummary, BlogSummary}
+import domains.blog.model.response.{BlogCommentSummary, BlogSummary}
 import domains.problem.model.{ProblemSlug, ProblemTitle}
 import database.utils.UserIdentitySql
 import domains.user.model.{DisplayName, UserIdentity, Username}

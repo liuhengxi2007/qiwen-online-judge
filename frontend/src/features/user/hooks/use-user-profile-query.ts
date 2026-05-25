@@ -5,7 +5,7 @@ import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/features/auth/lib/route-policy'
 import { HttpClientError } from '@/shared/api/http-client'
 import { getUserProfile } from '@/features/user/http/api/GetUserProfile'
-import type { UserProfileResponse } from '@/features/user/http/response/UserProfileResponse'
+import type { UserProfileResponse } from '@/features/user/model/response/UserProfileResponse'
 import { translateMessage } from '@/shared/i18n/messages'
 
 type UseUserProfileQueryArgs = {

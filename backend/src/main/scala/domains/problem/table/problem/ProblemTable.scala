@@ -6,10 +6,10 @@ import database.table.resource_access_grant.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.user.model.Username
-import domains.problem.application.input.{CreateProblemRequest, ProblemListRequest, UpdateProblemRequest}
-import domains.problem.application.input.ProblemSearchQuery
+import domains.problem.model.request.{CreateProblemRequest, ProblemListRequest, UpdateProblemRequest}
+import domains.problem.model.request.ProblemSearchQuery
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataFilename, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.problem.application.output.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.model.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import shared.model.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
 import shared.model.PageResponse

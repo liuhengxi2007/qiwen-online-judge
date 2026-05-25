@@ -4,7 +4,7 @@ package domains.auth.application
 
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
-import domains.auth.application.input.{LoginRequest, RegisterRequest}
+import domains.auth.model.request.{LoginRequest, RegisterRequest}
 import domains.auth.model.{EmailAddress, PlaintextPassword, PasswordHash}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.auth.table.auth_user.AuthUserTable

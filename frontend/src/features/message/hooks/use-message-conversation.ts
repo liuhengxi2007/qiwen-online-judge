@@ -6,7 +6,7 @@ import { getConversationHistory } from '@/features/message/http/api/GetConversat
 import { markConversationRead } from '@/features/message/http/api/MarkConversationRead'
 import { sendDirectMessage } from '@/features/message/http/api/SendDirectMessage'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
-import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
+import type { MessageHistoryResponse } from '@/features/message/model/response/MessageHistoryResponse'
 import type { MessageId } from '@/features/message/model/MessageId'
 import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/features/message/lib/message-parsers'
 import {
@@ -14,7 +14,7 @@ import {
   type MessageStreamEventDetail,
 } from '@/features/message/hooks/use-message-realtime-connection'
 import { useMessageInboxRefresh } from '@/features/message/hooks/use-message-inbox-refresh'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import type { Username } from '@/features/user/model/Username'
 import { HttpClientError } from '@/shared/api/http-client'
 import { useI18n } from '@/shared/i18n/use-i18n'

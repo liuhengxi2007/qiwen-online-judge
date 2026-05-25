@@ -1,5 +1,5 @@
-import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
-import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
+import type { CreateProblemSetRequest } from '@/features/problemset/model/request/CreateProblemSetRequest'
+import type { ProblemSetSummary } from '@/features/problemset/model/response/ProblemSetSummary'
 import {
   fromProblemSetSummaryContract,
   toCreateProblemSetRequestContract,

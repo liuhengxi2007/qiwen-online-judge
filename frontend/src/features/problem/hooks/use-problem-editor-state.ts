@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemDetail } from '@/features/problem/model/response/ProblemDetail'
 import {
   initialProblemEditorState,
   reduceProblemEditorState,

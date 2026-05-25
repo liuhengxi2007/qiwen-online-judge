@@ -1,8 +1,8 @@
 package domains.usergroup.http.codec
 
 import domains.user.http.codec.UserModelHttpCodecs.given
-import domains.usergroup.application.input.*
-import domains.usergroup.application.output.*
+import domains.usergroup.model.request.*
+import domains.usergroup.model.response.*
 import domains.usergroup.http.codec.UserGroupModelHttpCodecs.given
 import shared.http.codec.SharedHttpCodecs
 import shared.http.codec.SharedHttpCodecs.given

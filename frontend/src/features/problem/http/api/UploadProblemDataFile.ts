@@ -1,6 +1,6 @@
 import type { ProblemDataFilename } from '@/features/problem/model/ProblemDataFilename'
 import type { ProblemDataPath } from '@/features/problem/model/ProblemDataPath'
-import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
+import type { ProblemDataUploadResult } from '@/features/problem/model/response/ProblemDataUploadResult'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import { problemDataFilenameValue, problemDataPathValue, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { fromProblemDataUploadResultContract } from '@/features/problem/http/codec/ProblemHttpCodecs'

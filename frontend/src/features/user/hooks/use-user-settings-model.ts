@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { parseUsername } from '@/features/user/lib/user-parsers'
 import {
   initialUserSettingsState,
@@ -18,12 +18,12 @@ import { useI18n } from '@/shared/i18n/use-i18n'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'
-import type { UpdateManagedUserAccountRequest } from '@/features/user/http/request/UpdateManagedUserAccountRequest'
-import type { UpdateManagedUserPreferencesRequest } from '@/features/user/http/request/UpdateManagedUserPreferencesRequest'
-import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
-import type { UpdateOwnAccountRequest } from '@/features/user/http/request/UpdateOwnAccountRequest'
-import type { UpdateOwnPreferencesRequest } from '@/features/user/http/request/UpdateOwnPreferencesRequest'
-import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
+import type { UpdateManagedUserAccountRequest } from '@/features/user/model/request/UpdateManagedUserAccountRequest'
+import type { UpdateManagedUserPreferencesRequest } from '@/features/user/model/request/UpdateManagedUserPreferencesRequest'
+import type { UpdateManagedUserProfileRequest } from '@/features/user/model/request/UpdateManagedUserProfileRequest'
+import type { UpdateOwnAccountRequest } from '@/features/user/model/request/UpdateOwnAccountRequest'
+import type { UpdateOwnPreferencesRequest } from '@/features/user/model/request/UpdateOwnPreferencesRequest'
+import type { UpdateOwnProfileRequest } from '@/features/user/model/request/UpdateOwnProfileRequest'
 
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse

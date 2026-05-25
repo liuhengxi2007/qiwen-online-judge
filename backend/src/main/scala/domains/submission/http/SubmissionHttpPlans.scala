@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.auth.model.AuthUser
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.submission.application.SubmissionCommands
-import domains.submission.application.input.{CreateSubmissionRequest, SubmissionListRequest}
+import domains.submission.model.request.{CreateSubmissionRequest, SubmissionListRequest}
 import domains.submission.model.{SubmissionId}
 
 import java.sql.Connection

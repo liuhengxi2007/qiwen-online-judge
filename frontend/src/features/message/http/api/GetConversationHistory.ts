@@ -1,5 +1,5 @@
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
-import type { MessageHistoryResponse } from '@/features/message/http/response/MessageHistoryResponse'
+import type { MessageHistoryResponse } from '@/features/message/model/response/MessageHistoryResponse'
 import type { MessageId } from '@/features/message/model/MessageId'
 import { messageConversationIdValue, messageIdValue } from '@/features/message/lib/message-parsers'
 import { fromMessageHistoryResponse } from '@/features/message/http/codec/MessageHttpCodecs'

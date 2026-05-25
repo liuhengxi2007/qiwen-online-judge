@@ -2,7 +2,7 @@ import { useEffect, useReducer } from 'react'
 
 import { getSubmission } from '@/features/submission/http/api/GetSubmission'
 import { isTerminalSubmissionStatus } from '@/features/submission/lib/submission-parsers'
-import type { SubmissionDetail } from '@/features/submission/http/response/SubmissionDetail'
+import type { SubmissionDetail } from '@/features/submission/model/response/SubmissionDetail'
 import type { SubmissionId } from '@/features/submission/model/SubmissionId'
 import { HttpClientError } from '@/shared/api/http-client'
 

@@ -5,9 +5,10 @@ package domains.problem.http.api
 
 import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
+import domains.problem.http.mapper.ProblemHttpRequestMappers
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
-import domains.problem.application.input.{CreateProblemRequest}
+import domains.problem.model.request.{CreateProblemRequest}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -21,5 +22,5 @@ object CreateProblem:
         context.handlers.executeDecoded[CreateProblemRequest, CreateProblemRequest, ProblemCommands.CreateProblemResult](
           request,
           context.plans.createProblem
-        )(identity)
+        )(ProblemHttpRequestMappers.createProblemRequest)
     }

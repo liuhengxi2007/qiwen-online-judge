@@ -9,14 +9,14 @@ import domains.user.model.Username
 import shared.model.{PageRequest, PageResponse}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.application.input.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 
 import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.application.output.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.model.response.UserGroupSummary]]:
 
     override val name: String = "ListUserGroups"
 
@@ -24,7 +24,7 @@ object UserGroupHttpPlans:
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.usergroup.application.output.UserGroupSummary]] =
+    ): IO[PageResponse[domains.usergroup.model.response.UserGroupSummary]] =
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.GetUserGroupResult]:

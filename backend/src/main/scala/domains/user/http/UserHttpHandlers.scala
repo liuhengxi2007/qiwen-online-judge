@@ -1,6 +1,6 @@
 package domains.user.http
 
-import domains.user.http.response.UserHttpResponses
+import domains.user.http.mapper.UserHttpResponseMappers
 import domains.user.http.codec.UserHttpCodecs.given
 
 
@@ -12,7 +12,7 @@ import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.auth.model.{AuthUser, SiteManagerUser}
 import domains.user.model.Username
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.application.input.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.model.request.{UpdateManagedUserAccountRequest, UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnAccountRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -91,7 +91,7 @@ final class UserHttpHandlers(
           case Some(siteManagerActor) =>
             runManagedProfileUpdate(request, targetUsername, siteManagerActor)
           case None =>
-            UserHttpResponses.validationErrorResponse("Site manager permission required.")
+            UserHttpResponseMappers.validationErrorResponse("Site manager permission required.")
     }
 
   def executeUserSettingsPreferencesUpdate(
@@ -106,7 +106,7 @@ final class UserHttpHandlers(
           case Some(siteManagerActor) =>
             runManagedPreferencesUpdate(request, targetUsername, siteManagerActor)
           case None =>
-            UserHttpResponses.validationErrorResponse("Site manager permission required.")
+            UserHttpResponseMappers.validationErrorResponse("Site manager permission required.")
     }
 
   def executeUserSettingsAccountUpdate(
@@ -121,7 +121,7 @@ final class UserHttpHandlers(
           case Some(siteManagerActor) =>
             runManagedAccountUpdate(request, targetUsername, siteManagerActor)
           case None =>
-            UserHttpResponses.validationErrorResponse("Site manager permission required.")
+            UserHttpResponseMappers.validationErrorResponse("Site manager permission required.")
     }
 
   private def runOwnProfileUpdate(

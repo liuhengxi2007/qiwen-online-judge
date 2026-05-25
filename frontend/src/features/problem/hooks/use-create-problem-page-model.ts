@@ -7,7 +7,7 @@ import {
   reduceCreateProblemPageState,
 } from '@/features/problem/state/create-problem-page-state'
 import type { OthersSubmissionAccess } from '@/features/problem/model/OthersSubmissionAccess'
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
+import type { ProblemDetail } from '@/features/problem/model/response/ProblemDetail'
 import { validateProblemDraft } from '@/features/problem/lib/problem-form'
 import { buildResourceAccessPolicy } from '@/shared/domain/resource-access-input'
 import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'

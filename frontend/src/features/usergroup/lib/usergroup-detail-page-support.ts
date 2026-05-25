@@ -1,6 +1,6 @@
 import type { Username } from '@/features/user/model/Username'
 import { canRemoveUserGroupMember, resolveUserGroupViewerPermissions } from '@/features/usergroup/lib/usergroup-permissions'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 
 export function resolveUserGroupDetailPermissions(
   userGroup: UserGroupDetail | null,

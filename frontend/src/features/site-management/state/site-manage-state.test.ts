@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { initialSiteManageState, reduceSiteManageState } from '@/features/site-management/state/site-manage-state'
 import type { Username } from '@/features/user/model/Username'
-import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
+import type { AuthUserListItem } from '@/features/user/model/response/AuthUserListItem'
 
 describe('site-manage-state', () => {
   it('records the active username when an update starts', () => {

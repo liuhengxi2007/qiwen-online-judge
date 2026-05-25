@@ -1,6 +1,6 @@
-import type { MarkConversationReadRequest } from '@/features/message/http/request/MarkConversationReadRequest'
+import type { MarkConversationReadRequest } from '@/features/message/model/request/MarkConversationReadRequest'
 import type { MessageConversationId } from '@/features/message/model/MessageConversationId'
-import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
+import type { MessageConversationSummary } from '@/features/message/model/response/MessageConversationSummary'
 import { messageConversationIdValue } from '@/features/message/lib/message-parsers'
 import {
   fromMessageConversationSummary,

@@ -1,5 +1,5 @@
-import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
-import type { SubmissionListResponse } from '@/features/submission/http/response/SubmissionListResponse'
+import type { SubmissionListRequest } from '@/features/submission/model/request/SubmissionListRequest'
+import type { SubmissionListResponse } from '@/features/submission/model/response/SubmissionListResponse'
 import {
   fromSubmissionListResponseContract,
   toSubmissionListRequestContract,

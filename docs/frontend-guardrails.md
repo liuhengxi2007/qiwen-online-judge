@@ -72,7 +72,7 @@ Good examples for `shared`:
 - pagination types
 - access contract types
 - pure shared access parsers/codecs under `shared/domain/access`
-- shared HTTP response payload types under `shared/http/response`
+- shared response payload types under `shared/model/response`
 - generic routing helpers
 - presentational UI primitives
 
@@ -134,7 +134,7 @@ Cross-stack type names should align when they represent the same transport shape
 
 Rules:
 
-- frontend `http/request` and `http/response` types must stay aligned with backend `application/input` and `application/output` boundary models
+- frontend `model/request` and `model/response` types must stay aligned with backend `model/request` and `model/response` boundary models
 - if frontend and backend both expose the same response shape, use the same type name on both sides
 - do not introduce backend-only aliases like `SummaryView`, `ListItem`, or `MemberRecord` when they mean the same thing as an existing contract-facing type
 - do not introduce frontend-only aliases for the same contract shape unless the frontend model has meaningfully different fields or semantics
@@ -177,12 +177,16 @@ Feature layer roles:
 
 - `model`
   mirrored domain values and stable business concepts; one top-level type per file
+- `model/request`
+  feature API request payload models; one top-level type per file
+- `model/response`
+  feature API response payload models; one top-level type per file
 - `lib`
   pure feature helpers such as parsers, display formatting, validation, permission helpers, and draft builders
 - `state`
   pure reducer state, actions, and transitions for pages and editors
 - `http`
-  request/response payload types, endpoint clients, and feature boundary codecs
+  endpoint clients and feature boundary codecs
 - `hooks`
   React orchestration for queries, mutations, reducers, browser state, and side effects
 - `components`
@@ -193,15 +197,14 @@ Feature layer roles:
 Rules:
 
 - `src/features/<domain>/domain` no longer exists; do not add feature domain barrels or compatibility re-exports
-- `src/features/<domain>/model` must not import `http`, `lib`, `state`, `hooks`, `components`, or `pages`
+- bare `src/features/<domain>/model` must not import `model/request`, `model/response`, `http`, `lib`, `state`, `hooks`, `components`, or `pages`
+- `src/features/<domain>/model/request` and `src/features/<domain>/model/response` must not import `http`, `state`, `hooks`, `components`, or `pages`
 - `src/features/<domain>/lib` and `src/features/<domain>/state` must not import `hooks`, `components`, or `pages`
 - React hooks belong in `hooks`, even when they expose display preferences or other domain-adjacent UI state
 - import model, request, response, lib, and state symbols directly from the owning file instead of through barrels
 - run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers
 
-If a model needs a type that currently lives in `http/response`, either move the
-shared concept into `model` or introduce a model type and let the response layer
-reuse it.
+If a bare model needs a type that currently lives in `model/response`, either move the shared concept into bare `model` or introduce a core model type and let the response layer reuse it.
 
 ## Frontend and Backend Type System Mirror Rule
 
@@ -220,19 +223,19 @@ Rules:
 - validation that combines multiple fields or encodes business workflow should still live outside mirrored type files
 - do not keep one large aggregate model file on one side while splitting the same mirrored types into many files on the other side
 - do not introduce frontend-only or backend-only aliases for a mirrored type
-- do not put API-only payload DTOs in `model/`; use backend `application/input` for inbound/request-shaped inputs, backend `application/output` for outbound read shapes, and frontend HTTP request/response folders for transport payload types
+- keep core domain models directly under bare `model/`; use backend and frontend `model/request` for inbound/request-shaped inputs and `model/response` for outbound read shapes
 
 Required path rules:
 
-- backend application input:
-  `backend/src/main/scala/domains/<domain>/application/input/<Name>.scala`
-- frontend HTTP request payload:
-  `frontend/src/features/<domain>/http/request/<Name>.ts`
+- backend request payload:
+  `backend/src/main/scala/domains/<domain>/model/request/<Name>.scala`
+- frontend request payload:
+  `frontend/src/features/<domain>/model/request/<Name>.ts`
 
-- backend application output / response shape:
-  `backend/src/main/scala/domains/<domain>/application/output/<Name>.scala`
-- frontend HTTP response payload:
-  `frontend/src/features/<domain>/http/response/<Name>.ts`
+- backend response payload:
+  `backend/src/main/scala/domains/<domain>/model/response/<Name>.scala`
+- frontend response payload:
+  `frontend/src/features/<domain>/model/response/<Name>.ts`
 
 - backend domain model:
   `backend/src/main/scala/domains/<domain>/model/<Name>.scala`
@@ -249,10 +252,10 @@ Required path rules:
 - frontend shared access:
   `frontend/src/shared/model/access/<Name>.ts`
 
-- backend shared HTTP response:
-  `backend/src/main/scala/shared/http/response/<Name>.scala`
-- frontend shared HTTP response:
-  `frontend/src/shared/http/response/<Name>.ts`
+- backend shared response:
+  `backend/src/main/scala/shared/model/response/<Name>.scala`
+- frontend shared response:
+  `frontend/src/shared/model/response/<Name>.ts`
 
 The mapping must be simple enough that a script can derive one side from the other without special cases.
 

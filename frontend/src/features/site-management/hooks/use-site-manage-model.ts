@@ -1,8 +1,8 @@
 import { useReducer } from 'react'
 
-import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
-import type { UpdateUserPermissionsRequest } from '@/features/user/http/request/UpdateUserPermissionsRequest'
-import type { UserListRequest } from '@/features/user/http/request/UserListRequest'
+import type { AuthUserListItem } from '@/features/user/model/response/AuthUserListItem'
+import type { UpdateUserPermissionsRequest } from '@/features/user/model/request/UpdateUserPermissionsRequest'
+import type { UserListRequest } from '@/features/user/model/request/UserListRequest'
 import {
   initialSiteManageState,
   reduceSiteManageState,

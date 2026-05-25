@@ -1,5 +1,5 @@
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
-import type { UserGroupSummary } from '@/features/usergroup/http/response/UserGroupSummary'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
+import type { UserGroupSummary } from '@/features/usergroup/model/response/UserGroupSummary'
 
 export type UserGroupPageState = {
   groups: UserGroupSummary[]

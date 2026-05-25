@@ -1,6 +1,6 @@
 import type { DisplayName } from '@/features/user/model/DisplayName'
 import type { Username } from '@/features/user/model/Username'
-import type { AuthUserListItem } from '@/features/user/http/response/AuthUserListItem'
+import type { AuthUserListItem } from '@/features/user/model/response/AuthUserListItem'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 
 export type SiteManageNotice =

@@ -3,8 +3,8 @@ package domains.message.http.api
 
 
 import domains.message.http.*
+import domains.message.http.mapper.MessageHttpRequestMappers
 import cats.effect.IO
-import domains.user.model.Username
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
@@ -16,7 +16,7 @@ object RemoveMessageBlock:
       case request @ POST -> Root / "api" / "messages" / "blocks" / targetUsername / "remove" =>
         context.handlers.execute(
           request,
-          Username.canonical(targetUsername),
+          MessageHttpRequestMappers.username(targetUsername),
           context.plans.removeBlock
         )
     }

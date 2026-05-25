@@ -2,8 +2,8 @@ import { parseUsername } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'
 import { parseUserGroupDescription, parseUserGroupName, parseUserGroupSlug } from '@/features/usergroup/lib/usergroup-parsers'
 import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
-import type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'
-import type { UpdateUserGroupRequest } from '@/features/usergroup/http/request/UpdateUserGroupRequest'
+import type { CreateUserGroupRequest } from '@/features/usergroup/model/request/CreateUserGroupRequest'
+import type { UpdateUserGroupRequest } from '@/features/usergroup/model/request/UpdateUserGroupRequest'
 
 export type UserGroupDraft = {
   slug: string

@@ -1,5 +1,5 @@
-import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { LoginResponse } from '@/features/auth/model/response/LoginResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 
 export function toAuthSession(
   response: Pick<LoginResponse, 'displayName' | 'username' | 'email' | 'preferences' | 'siteManager' | 'problemManager'>,

@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 
 import { listProblemSets } from '@/features/problemset/http/api/ListProblemSets'
-import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
+import type { ProblemSetSummary } from '@/features/problemset/model/response/ProblemSetSummary'
 import type { PageRequest } from '@/shared/model/PageRequest'
 
 type ProblemSetPageState = {

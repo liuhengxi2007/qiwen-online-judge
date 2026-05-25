@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { HttpClientError } from '@/shared/api/http-client'
 import { addProblemToProblemSet } from '@/features/problemset/http/api/AddProblemToProblemSet'
 import { validateProblemSetLinkDraft } from '@/features/problemset/lib/problemset-link-form'
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/features/problemset/model/ProblemSetSlug'
 import { useI18n } from '@/shared/i18n/use-i18n'
 

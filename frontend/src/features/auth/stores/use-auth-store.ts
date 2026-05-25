@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { clearAuthSession, persistAuthSession, readAuthSession } from '@/features/auth/lib/auth-storage'
 
 type AuthStore = {

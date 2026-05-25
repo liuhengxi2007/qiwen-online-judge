@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Username } from '@/features/user/model/Username'
 import { listBlogs } from '@/features/blog/http/api/ListBlogs'
 import { listProblemBlogs } from '@/features/blog/http/api/ListProblemBlogs'
-import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { BlogSummary } from '@/features/blog/model/response/BlogSummary'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
 import type { PageRequest } from '@/shared/model/PageRequest'
 

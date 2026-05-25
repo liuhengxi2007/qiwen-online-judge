@@ -1,5 +1,5 @@
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'
-import type { ProblemDataTreeResponse } from '@/features/problem/http/response/ProblemDataTreeResponse'
+import type { ProblemDataTreeResponse } from '@/features/problem/model/response/ProblemDataTreeResponse'
 import { parseProblemDataPath, problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { requestJson } from '@/shared/api/http-client'
 

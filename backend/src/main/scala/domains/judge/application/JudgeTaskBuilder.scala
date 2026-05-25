@@ -5,7 +5,7 @@ import cats.syntax.all.*
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.ProblemDataPath
-import domains.submission.application.output.ClaimedSubmission
+import domains.submission.model.response.ClaimedSubmission
 import judgeprotocol.model.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
@@ -64,7 +64,7 @@ object JudgeTaskBuilder:
 
   def validateReadyConfigBytes(
     bytes: Array[Byte],
-    problem: domains.problem.application.output.ProblemDetail,
+    problem: domains.problem.model.response.ProblemDetail,
     manifest: ProblemDataManifest
   ): Either[String, ReadyValidation] =
     val claimedSubmission = ClaimedSubmission(

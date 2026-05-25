@@ -2,7 +2,7 @@ package domains.problem.application
 
 
 
-import domains.problem.application.output.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
+import domains.problem.model.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 
 object ProblemCommandResults:
 

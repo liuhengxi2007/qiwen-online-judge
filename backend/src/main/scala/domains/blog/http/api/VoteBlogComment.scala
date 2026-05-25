@@ -4,9 +4,10 @@ package domains.blog.http.api
 
 import domains.blog.http.*
 import domains.blog.http.codec.BlogHttpCodecs.given
+import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
 import domains.blog.application.BlogCommands
-import domains.blog.application.input.VoteBlogCommentRequest
+import domains.blog.model.request.VoteBlogCommentRequest
 import domains.blog.model.{BlogCommentId, BlogId}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -18,7 +19,7 @@ object VoteBlogComment:
   def routes(context: BlogHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "vote" =>
-        (BlogId.parse(rawBlogId), BlogCommentId.parse(rawCommentId)) match
+        (BlogHttpRequestMappers.blogId(rawBlogId), BlogHttpRequestMappers.blogCommentId(rawCommentId)) match
           case (Left(message), _) =>
             shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
           case (_, Left(message)) =>

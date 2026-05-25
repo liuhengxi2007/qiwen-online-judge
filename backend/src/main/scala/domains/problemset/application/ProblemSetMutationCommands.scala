@@ -7,7 +7,7 @@ import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problemset.application.input.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.table.problem_set.ProblemSetTable
 import shared.model.access.{ResourceId, ResourceKind}
 import domains.problemset.application.ProblemSetCommandResults.*

@@ -1,4 +1,4 @@
-import type { NotificationListResponse } from '@/features/notification/http/response/NotificationListResponse'
+import type { NotificationListResponse } from '@/features/notification/model/response/NotificationListResponse'
 import { fromNotificationListResponse } from '@/features/notification/http/codec/NotificationHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

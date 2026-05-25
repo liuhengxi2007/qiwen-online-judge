@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.AuthCommands
 import domains.auth.model.AuthUser
-import domains.usergroup.application.input.{CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.request.{CreateUserGroupRequest, UpdateUserGroupRequest}
 import domains.usergroup.model.{UserGroupSlug}
 import domains.usergroup.table.user_group.UserGroupTable
 import domains.usergroup.application.UserGroupCommandResults.*

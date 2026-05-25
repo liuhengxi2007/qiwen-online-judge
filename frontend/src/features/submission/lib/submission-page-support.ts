@@ -1,9 +1,9 @@
-import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
-import type { SubmissionListRequest } from '@/features/submission/http/request/SubmissionListRequest'
-import type { SubmissionSort } from '@/features/submission/http/request/SubmissionSort'
-import type { SubmissionSortDirection } from '@/features/submission/http/request/SubmissionSortDirection'
-import type { SubmissionVerdictFilter } from '@/features/submission/http/request/SubmissionVerdictFilter'
-import type { SubmissionSummary } from '@/features/submission/http/response/SubmissionSummary'
+import type { ProblemSuggestion } from '@/features/problem/model/response/ProblemSuggestion'
+import type { SubmissionListRequest } from '@/features/submission/model/request/SubmissionListRequest'
+import type { SubmissionSort } from '@/features/submission/model/request/SubmissionSort'
+import type { SubmissionSortDirection } from '@/features/submission/model/request/SubmissionSortDirection'
+import type { SubmissionVerdictFilter } from '@/features/submission/model/request/SubmissionVerdictFilter'
+import type { SubmissionSummary } from '@/features/submission/model/response/SubmissionSummary'
 import {
   isSubmissionSort,
   isSubmissionSortDirection,

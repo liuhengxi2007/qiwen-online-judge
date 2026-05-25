@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 
 import { toAuthSession } from '@/features/auth/lib/auth-session'
-import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
-import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
+import type { LoginRequest } from '@/features/auth/model/request/LoginRequest'
+import type { LoginResponse } from '@/features/auth/model/response/LoginResponse'
 import { login } from '@/features/auth/http/api/Login'
 import type { NavigationIntent } from '@/shared/routing/navigation-intent'
 import { useAuthStore } from '@/features/auth/stores/use-auth-store'

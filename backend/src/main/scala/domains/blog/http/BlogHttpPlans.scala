@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.user.model.Username
 import domains.blog.application.BlogCommands
 import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.application.input.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.model.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
 import domains.problem.model.ProblemSlug
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}

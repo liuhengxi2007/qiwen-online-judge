@@ -1,5 +1,5 @@
-import type { BlogDetail } from '@/features/blog/http/response/BlogDetail'
-import type { VoteBlogRequest } from '@/features/blog/http/request/VoteBlogRequest'
+import type { BlogDetail } from '@/features/blog/model/response/BlogDetail'
+import type { VoteBlogRequest } from '@/features/blog/model/request/VoteBlogRequest'
 import { blogIdValue } from '@/features/blog/lib/blog-parsers'
 import {
   fromBlogDetailContract,

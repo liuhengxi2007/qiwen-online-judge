@@ -1,4 +1,4 @@
-import type { BlogListResponse } from '@/features/blog/http/response/BlogListResponse'
+import type { BlogListResponse } from '@/features/blog/model/response/BlogListResponse'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import type { Username } from '@/features/user/model/Username'
 import { fromBlogListResponseContract } from '@/features/blog/http/codec/BlogHttpCodecs'

@@ -1,4 +1,4 @@
-import type { MessageBlockEntry } from '@/features/message/http/response/MessageBlockEntry'
+import type { MessageBlockEntry } from '@/features/message/model/response/MessageBlockEntry'
 import type { Username } from '@/features/user/model/Username'
 import { fromMessageBlockEntry } from '@/features/message/http/codec/MessageHttpCodecs'
 import { usernameValue } from '@/features/user/lib/user-parsers'

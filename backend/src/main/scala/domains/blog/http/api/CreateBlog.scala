@@ -4,9 +4,10 @@ package domains.blog.http.api
 
 import domains.blog.http.*
 import domains.blog.http.codec.BlogHttpCodecs.given
+import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
 import domains.blog.application.BlogCommands
-import domains.blog.application.input.CreateBlogRequest
+import domains.blog.model.request.CreateBlogRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -20,5 +21,5 @@ object CreateBlog:
         context.handlers.executeDecoded[CreateBlogRequest, CreateBlogRequest, BlogCommands.CreateBlogResult](
           request,
           context.plans.createBlog
-        )(identity)
+        )(BlogHttpRequestMappers.createBlogRequest)
     }

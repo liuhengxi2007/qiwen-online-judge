@@ -51,10 +51,12 @@ For `http`:
 - `*Router.scala`
   thin aggregator that combines endpoint API route files
 - `api/<Name>.scala`
-  one HTTP endpoint route fragment, including path matching, input parsing/decoding, plan execution, and response mapping for that endpoint
+  one HTTP endpoint route fragment, including path matching, request mapper calls, plan execution, and response mapper calls for that endpoint
 - `*HttpHandlers.scala`
   request decoding, auth/session wrapping, command invocation
-- `response/*HttpResponses.scala`
+- `mapper/*HttpRequestMappers.scala`
+  translation from raw HTTP path/query/body inputs into typed request models or plan inputs
+- `mapper/*HttpResponseMappers.scala`
   translation from command results to HTTP responses
 - `codec/*HttpCodecs.scala`
   Circe encoders/decoders for HTTP request and response wire formats
@@ -63,22 +65,23 @@ For `http`:
 - `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
 
-For `application/input`:
+For `model/request`:
 
 - `<Name>.scala`
   typed command/query inputs decoded by HTTP endpoints and consumed by application/table code, including inbound request bodies and query-derived list filters
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
-For `application/output`:
+For `model/response`:
 
 - `<Name>.scala`
   read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
-Do not put API-only payload DTOs in `model/`. Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies in `model/`.
+Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `model/`. Put API contract payloads under `model/request` and `model/response`.
 `model/` files must not import Circe or define JSON encoders/decoders. HTTP JSON codecs belong in the owning domain's `http/codec`, or in `shared/http/codec` for shared transport primitives. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
-Non-HTTP layers must not import from `http.request` or `http.response`; use `application/input` for inputs and `application/output` for read/output shapes that application, table, or model code needs to name.
-`model/` must not import `application`, `http`, or `table`; if a model transition needs data from an output shape, put that adapter in `application` support code.
+Bare `model/` files must not import `model/request` or `model/response`; dependency direction is from request/response payloads toward core model types only.
+`model/request` and `model/response` must not import `application`, `http`, or `table`.
+`model/` must not import `application`, `http`, or `table`; if a model transition needs data from a response shape, put that adapter in `application` support code.
 
 Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol models because those types are cross-process wire contracts rather than backend business models.
 

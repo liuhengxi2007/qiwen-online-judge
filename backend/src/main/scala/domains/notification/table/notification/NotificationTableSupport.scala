@@ -4,7 +4,7 @@ package domains.notification.table.notification
 
 import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.notification.model.{NotificationKind, NotificationPayload, NotificationStatus}
-import domains.notification.application.output.{NotificationSummary}
+import domains.notification.model.response.{NotificationSummary}
 import database.utils.UserIdentitySql
 
 import java.sql.ResultSet

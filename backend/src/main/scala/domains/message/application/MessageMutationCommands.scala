@@ -5,8 +5,8 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.AuthUser
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.application.input.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.application.input.MarkConversationReadMode
+import domains.message.model.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.model.request.MarkConversationReadMode
 import domains.message.model.MessageConversationId
 
 import java.sql.Connection

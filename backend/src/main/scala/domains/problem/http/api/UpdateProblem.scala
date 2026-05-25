@@ -1,6 +1,7 @@
 package domains.problem.http.api
 
-import domains.problem.http.response.ProblemHttpResponses
+import domains.problem.http.mapper.ProblemHttpResponseMappers
+import domains.problem.http.mapper.ProblemHttpRequestMappers
 
 
 
@@ -8,7 +9,7 @@ import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
-import domains.problem.application.input.{UpdateProblemRequest}
+import domains.problem.model.request.{UpdateProblemRequest}
 import domains.problem.model.{ProblemSlug}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -20,9 +21,9 @@ object UpdateProblem:
   def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problems" / problemSlug =>
-        ProblemSlug.parse(problemSlug) match
+        ProblemHttpRequestMappers.problemSlug(problemSlug) match
           case Left(message) =>
-            ProblemHttpResponses.validationErrorResponse(message)
+            ProblemHttpResponseMappers.validationErrorResponse(message)
           case Right(parsedProblemSlug) =>
             context.handlers.executeDecoded[UpdateProblemRequest, (ProblemSlug, UpdateProblemRequest), ProblemCommands.UpdateProblemResult](
               request,

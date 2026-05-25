@@ -1,6 +1,6 @@
 package domains.user.http
 
-import domains.user.http.response.UserHttpResponses
+import domains.user.http.mapper.UserHttpResponseMappers
 
 
 
@@ -8,20 +8,20 @@ import domains.user.http.UserHttpPlanRegistry.RegisteredPlan.{AuthenticatedPlain
 
 object UserHttpPlanDefinitions:
 
-  val listUsers = SiteManagerPlain(UserHttpPlans.ListUsers, UserHttpResponses.listUsersResponse)
-  val listUserSuggestions = AuthenticatedPlain(UserHttpPlans.ListUserSuggestions, UserHttpResponses.listUserSuggestionsResponse)
-  val getUserProfile = AuthenticatedPlain(UserHttpPlans.GetUserProfile, UserHttpResponses.mapGetUserProfileResult)
-  val getUserSettings = AuthenticatedPlain(UserHttpPlans.GetUserSettings, UserHttpResponses.mapGetUserSettingsResult)
-  val listContributionRanklist = AuthenticatedPlain(UserHttpPlans.ListContributionRanklist, UserHttpResponses.listContributionRanklistResponse)
-  val listAcceptedRanklist = AuthenticatedPlain(UserHttpPlans.ListAcceptedRanklist, UserHttpResponses.listAcceptedRanklistResponse)
-  val updateUserPermissions = SiteManagerWithTransaction(UserHttpPlans.UpdateUserPermissions, UserHttpResponses.mapUpdateUserPermissionsResult)
-  val updateOwnProfile = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnProfile, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val updateOwnPreferences = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnPreferences, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val updateOwnAccount = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnAccount, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val updateManagedProfile = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedProfile, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val updateManagedPreferences = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedPreferences, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val updateManagedAccount = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedAccount, UserHttpResponses.mapUpdateUserSettingsOutput)
-  val deleteUser = SiteManagerWithTransaction(UserHttpPlans.DeleteUser, UserHttpResponses.mapDeleteUserResult)
+  val listUsers = SiteManagerPlain(UserHttpPlans.ListUsers, UserHttpResponseMappers.listUsersResponse)
+  val listUserSuggestions = AuthenticatedPlain(UserHttpPlans.ListUserSuggestions, UserHttpResponseMappers.listUserSuggestionsResponse)
+  val getUserProfile = AuthenticatedPlain(UserHttpPlans.GetUserProfile, UserHttpResponseMappers.mapGetUserProfileResult)
+  val getUserSettings = AuthenticatedPlain(UserHttpPlans.GetUserSettings, UserHttpResponseMappers.mapGetUserSettingsResult)
+  val listContributionRanklist = AuthenticatedPlain(UserHttpPlans.ListContributionRanklist, UserHttpResponseMappers.listContributionRanklistResponse)
+  val listAcceptedRanklist = AuthenticatedPlain(UserHttpPlans.ListAcceptedRanklist, UserHttpResponseMappers.listAcceptedRanklistResponse)
+  val updateUserPermissions = SiteManagerWithTransaction(UserHttpPlans.UpdateUserPermissions, UserHttpResponseMappers.mapUpdateUserPermissionsResult)
+  val updateOwnProfile = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnProfile, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val updateOwnPreferences = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnPreferences, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val updateOwnAccount = AuthenticatedWithTransaction(UserHttpPlans.UpdateOwnAccount, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val updateManagedProfile = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedProfile, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val updateManagedPreferences = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedPreferences, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val updateManagedAccount = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedAccount, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
+  val deleteUser = SiteManagerWithTransaction(UserHttpPlans.DeleteUser, UserHttpResponseMappers.mapDeleteUserResult)
 
   val plans: Map[String, UserHttpPlanRegistry.RegisteredPlan] =
     List(

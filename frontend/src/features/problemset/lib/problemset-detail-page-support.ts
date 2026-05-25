@@ -1,4 +1,4 @@
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
 import { problemSetDescriptionValue, problemSetTitleValue } from '@/features/problemset/lib/problemset-parsers'
 import { resourceAccessSubjectParsers } from '@/shared/domain/access/access-subject-parsers'
 import { buildResourceAccessPolicy, grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/shared/domain/resource-access-input'

@@ -1,6 +1,6 @@
 package domains.notification.http.codec
 
-import domains.notification.application.output.*
+import domains.notification.model.response.*
 import domains.notification.http.codec.NotificationModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given
 import io.circe.{Decoder, Encoder}

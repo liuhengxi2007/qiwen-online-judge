@@ -4,7 +4,7 @@ package domains.message.table.message
 
 import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
-import domains.message.application.output.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
+import domains.message.model.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
 import database.utils.UserIdentitySql
 
 import java.sql.ResultSet

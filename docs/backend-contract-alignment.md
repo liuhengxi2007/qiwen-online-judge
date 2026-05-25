@@ -19,7 +19,7 @@ Frontend and backend boundary models are the source of truth together.
 
 That means:
 
-- frontend `http/request` and `http/response` field shape must match backend `application/input` and `application/output`
+- frontend `model/request` and `model/response` field shape must match backend `model/request` and `model/response`
 - enum string values exposed over HTTP must match exactly
 - backend domain objects may remain richer or stricter than HTTP payloads
 - frontend adapters may keep local wire DTO aliases when they parse raw JSON into branded frontend types
@@ -30,16 +30,16 @@ That means:
 
 Keep these roles separate:
 
-- frontend `http/request` and `http/response`
+- frontend `model/request` and `model/response`
   frontend transport payload models
 - frontend `lib/*-parsers.ts`, `http/codec/*ModelHttpCodecs.ts`, and `http/codec/*HttpCodecs.ts`
   boundary parsing and serialization helpers
-- backend `application/input` and `application/output`
+- backend `model/request` and `model/response`
   backend HTTP-facing command/query models
-- backend `model`
+- backend bare `model`
   backend domain values and stable mirrored business concepts
 - backend `http`
-  request decoding, response encoding, and HTTP routing
+  request mapping, response mapping, JSON codecs, and HTTP routing
 
 If a non-backend Scala process such as `judger` needs the same boundary types, do not make that process depend on the backend project directly. Use a small protocol module for stable cross-process types.
 
@@ -63,8 +63,8 @@ These surfaces are checked by `node scripts/check-contract-alignment.mjs`:
 
 - shared response models such as `ErrorResponse`, `SuccessResponse`, and pagination shapes
 - shared access and lifecycle values that are part of frontend/backend payloads
-- feature `http/request` files against backend `application/input`
-- feature `http/response` files against backend `application/output`
+- feature `model/request` files against backend `model/request`
+- feature `model/response` files against backend `model/response`
 - feature `model` files only when both sides expose the same key
 - enum string values for exposed unions/enums
 

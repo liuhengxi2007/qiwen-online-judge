@@ -1,7 +1,7 @@
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import { fromSessionResponseContract } from '@/features/user/http/codec/UserHttpCodecs'
-import type { UpdateManagedUserProfileRequest } from '@/features/user/http/request/UpdateManagedUserProfileRequest'
-import type { UpdateOwnProfileRequest } from '@/features/user/http/request/UpdateOwnProfileRequest'
+import type { UpdateManagedUserProfileRequest } from '@/features/user/model/request/UpdateManagedUserProfileRequest'
+import type { UpdateOwnProfileRequest } from '@/features/user/model/request/UpdateOwnProfileRequest'
 import type { Username } from '@/features/user/model/Username'
 import { usernameValue } from '@/features/user/lib/user-parsers'
 import {

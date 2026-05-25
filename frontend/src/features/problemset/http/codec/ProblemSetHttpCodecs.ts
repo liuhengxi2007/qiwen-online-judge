@@ -1,9 +1,9 @@
-import type { AddProblemToProblemSetRequest } from '@/features/problemset/http/request/AddProblemToProblemSetRequest'
-import type { CreateProblemSetRequest } from '@/features/problemset/http/request/CreateProblemSetRequest'
-import type { ProblemSetDetail } from '@/features/problemset/http/response/ProblemSetDetail'
-import type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
-import type { ProblemSetSummary } from '@/features/problemset/http/response/ProblemSetSummary'
-import type { UpdateProblemSetRequest } from '@/features/problemset/http/request/UpdateProblemSetRequest'
+import type { AddProblemToProblemSetRequest } from '@/features/problemset/model/request/AddProblemToProblemSetRequest'
+import type { CreateProblemSetRequest } from '@/features/problemset/model/request/CreateProblemSetRequest'
+import type { ProblemSetDetail } from '@/features/problemset/model/response/ProblemSetDetail'
+import type { ProblemSetListResponse } from '@/features/problemset/model/response/ProblemSetListResponse'
+import type { ProblemSetSummary } from '@/features/problemset/model/response/ProblemSetSummary'
+import type { UpdateProblemSetRequest } from '@/features/problemset/model/request/UpdateProblemSetRequest'
 import { toProblemSlugContract } from '@/features/problem/http/codec/ProblemModelHttpCodecs'
 import {
   fromProblemSetDescriptionContract,

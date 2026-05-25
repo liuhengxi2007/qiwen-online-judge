@@ -1,8 +1,8 @@
-import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
-import type { LoginResponse } from '@/features/auth/http/response/LoginResponse'
-import type { RegisterRequest } from '@/features/auth/http/request/RegisterRequest'
-import type { RegisterResponse } from '@/features/auth/http/response/RegisterResponse'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { LoginRequest } from '@/features/auth/model/request/LoginRequest'
+import type { LoginResponse } from '@/features/auth/model/response/LoginResponse'
+import type { RegisterRequest } from '@/features/auth/model/request/RegisterRequest'
+import type { RegisterResponse } from '@/features/auth/model/response/RegisterResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import {
   fromEmailAddressContract,
   toEmailAddressContract,

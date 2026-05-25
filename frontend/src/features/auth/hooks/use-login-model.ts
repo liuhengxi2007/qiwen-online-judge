@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { parsePlaintextPassword } from '@/features/auth/lib/auth-parsers'
-import type { LoginRequest } from '@/features/auth/http/request/LoginRequest'
+import type { LoginRequest } from '@/features/auth/model/request/LoginRequest'
 import { useLoginMutation } from '@/features/auth/hooks/use-login-mutation'
 import { parseUsername } from '@/features/user/lib/user-parsers'
 

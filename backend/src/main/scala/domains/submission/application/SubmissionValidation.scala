@@ -2,7 +2,7 @@ package domains.submission.application
 
 
 
-import domains.submission.application.input.CreateSubmissionRequest
+import domains.submission.model.request.CreateSubmissionRequest
 
 object SubmissionValidation:
 

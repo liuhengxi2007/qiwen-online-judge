@@ -6,7 +6,7 @@ import { listPendingProblemBlogs } from '@/features/blog/http/api/ListPendingPro
 import { unlinkBlogFromProblem } from '@/features/blog/http/api/UnlinkBlogFromProblem'
 import { parseBlogId } from '@/features/blog/lib/blog-parsers'
 import type { BlogId } from '@/features/blog/model/BlogId'
-import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { BlogSummary } from '@/features/blog/model/response/BlogSummary'
 import { useBlogListQuery } from '@/features/blog/hooks/use-blog-list-query'
 import type { Username } from '@/features/user/model/Username'
 import type { ProblemSlug } from '@/features/problem/model/ProblemSlug'

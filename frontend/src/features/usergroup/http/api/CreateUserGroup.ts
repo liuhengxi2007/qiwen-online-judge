@@ -1,5 +1,5 @@
-import type { CreateUserGroupRequest } from '@/features/usergroup/http/request/CreateUserGroupRequest'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { CreateUserGroupRequest } from '@/features/usergroup/model/request/CreateUserGroupRequest'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import {
   fromUserGroupDetailContract,
   toCreateUserGroupRequestContract,

@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 
 import type { AddUserGroupMemberRole } from '@/features/usergroup/model/AddUserGroupMemberRole'
-import type { UserGroupDetail } from '@/features/usergroup/http/response/UserGroupDetail'
+import type { UserGroupDetail } from '@/features/usergroup/model/response/UserGroupDetail'
 import {
   initialUserGroupEditorState,
   reduceUserGroupEditorState,

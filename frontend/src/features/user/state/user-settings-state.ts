@@ -1,6 +1,6 @@
 import { displayNameValue, problemTitleDisplayModeValue, userDisplayModeValue, userLocaleValue } from '@/features/user/lib/user-parsers'
 import { emailAddressValue } from '@/features/auth/lib/auth-parsers'
-import type { SessionResponse } from '@/features/auth/http/response/SessionResponse'
+import type { SessionResponse } from '@/features/auth/model/response/SessionResponse'
 import type { UserDisplayMode } from '@/features/user/model/UserDisplayMode'
 import type { UserLocale } from '@/features/user/model/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/features/problem/model/ProblemTitleDisplayMode'

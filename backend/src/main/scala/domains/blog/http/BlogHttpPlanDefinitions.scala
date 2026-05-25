@@ -1,6 +1,6 @@
 package domains.blog.http
 
-import domains.blog.http.response.BlogHttpResponses
+import domains.blog.http.mapper.BlogHttpResponseMappers
 
 
 
@@ -15,7 +15,7 @@ object BlogHttpPlanDefinitions:
     listBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ListBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
     listProblemBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
     listPendingProblemBlogs: Plain[domains.auth.model.AuthUser, BlogHttpPlans.ProblemBlogsInput, domains.blog.application.BlogCommands.ListBlogsResult],
-    createBlog: WithTransaction[domains.auth.model.AuthUser, domains.blog.application.input.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
+    createBlog: WithTransaction[domains.auth.model.AuthUser, domains.blog.model.request.CreateBlogRequest, domains.blog.application.BlogCommands.CreateBlogResult],
     getBlog: Plain[domains.auth.model.AuthUser, domains.blog.model.BlogId, domains.blog.application.BlogCommands.GetBlogResult],
     voteBlog: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.VoteBlogInput, domains.blog.application.BlogCommands.VoteBlogResult],
     updateBlog: WithTransaction[domains.auth.model.AuthUser, BlogHttpPlans.UpdateBlogInput, domains.blog.application.BlogCommands.UpdateBlogResult],
@@ -32,20 +32,20 @@ object BlogHttpPlanDefinitions:
 
   def plans(notificationEventHub: NotificationEventHub): RegisteredPlans =
     RegisteredPlans(
-      listBlogs = Plain(BlogHttpPlans.ListBlogs, BlogHttpResponses.mapListResult),
-      listProblemBlogs = Plain(BlogHttpPlans.ListProblemBlogs, BlogHttpResponses.mapListResult),
-      listPendingProblemBlogs = Plain(BlogHttpPlans.ListPendingProblemBlogs, BlogHttpResponses.mapListResult),
-      createBlog = WithTransaction(BlogHttpPlans.CreateBlog, BlogHttpResponses.mapCreateResult),
-      getBlog = Plain(BlogHttpPlans.GetBlog, BlogHttpResponses.mapGetResult),
-      voteBlog = WithTransaction(BlogHttpPlans.VoteBlog, BlogHttpResponses.mapVoteResult),
-      updateBlog = WithTransaction(BlogHttpPlans.UpdateBlog, BlogHttpResponses.mapUpdateResult),
-      deleteBlog = WithTransaction(BlogHttpPlans.DeleteBlog, BlogHttpResponses.mapDeleteResult),
-      submitBlogToProblem = WithTransaction(BlogHttpPlans.SubmitBlogToProblem, BlogHttpResponses.mapSubmitBlogToProblemResult),
-      linkBlogToProblem = WithTransaction(BlogHttpPlans.LinkBlogToProblem, BlogHttpResponses.mapLinkBlogToProblemResult),
-      acceptBlogProblemSubmission = WithTransaction(BlogHttpPlans.AcceptBlogProblemSubmission, BlogHttpResponses.mapAcceptBlogProblemSubmissionResult),
-      unlinkBlogFromProblem = WithTransaction(BlogHttpPlans.UnlinkBlogFromProblem, BlogHttpResponses.mapUnlinkBlogFromProblemResult),
-      createBlogComment = WithTransaction(new BlogHttpPlans.CreateBlogCommentPlan(notificationEventHub), BlogHttpResponses.mapCreateCommentResult),
-      voteBlogComment = WithTransaction(BlogHttpPlans.VoteBlogComment, BlogHttpResponses.mapVoteCommentResult),
-      updateBlogComment = WithTransaction(BlogHttpPlans.UpdateBlogComment, BlogHttpResponses.mapUpdateCommentResult),
-      deleteBlogComment = WithTransaction(BlogHttpPlans.DeleteBlogComment, BlogHttpResponses.mapDeleteCommentResult)
+      listBlogs = Plain(BlogHttpPlans.ListBlogs, BlogHttpResponseMappers.mapListResult),
+      listProblemBlogs = Plain(BlogHttpPlans.ListProblemBlogs, BlogHttpResponseMappers.mapListResult),
+      listPendingProblemBlogs = Plain(BlogHttpPlans.ListPendingProblemBlogs, BlogHttpResponseMappers.mapListResult),
+      createBlog = WithTransaction(BlogHttpPlans.CreateBlog, BlogHttpResponseMappers.mapCreateResult),
+      getBlog = Plain(BlogHttpPlans.GetBlog, BlogHttpResponseMappers.mapGetResult),
+      voteBlog = WithTransaction(BlogHttpPlans.VoteBlog, BlogHttpResponseMappers.mapVoteResult),
+      updateBlog = WithTransaction(BlogHttpPlans.UpdateBlog, BlogHttpResponseMappers.mapUpdateResult),
+      deleteBlog = WithTransaction(BlogHttpPlans.DeleteBlog, BlogHttpResponseMappers.mapDeleteResult),
+      submitBlogToProblem = WithTransaction(BlogHttpPlans.SubmitBlogToProblem, BlogHttpResponseMappers.mapSubmitBlogToProblemResult),
+      linkBlogToProblem = WithTransaction(BlogHttpPlans.LinkBlogToProblem, BlogHttpResponseMappers.mapLinkBlogToProblemResult),
+      acceptBlogProblemSubmission = WithTransaction(BlogHttpPlans.AcceptBlogProblemSubmission, BlogHttpResponseMappers.mapAcceptBlogProblemSubmissionResult),
+      unlinkBlogFromProblem = WithTransaction(BlogHttpPlans.UnlinkBlogFromProblem, BlogHttpResponseMappers.mapUnlinkBlogFromProblemResult),
+      createBlogComment = WithTransaction(new BlogHttpPlans.CreateBlogCommentPlan(notificationEventHub), BlogHttpResponseMappers.mapCreateCommentResult),
+      voteBlogComment = WithTransaction(BlogHttpPlans.VoteBlogComment, BlogHttpResponseMappers.mapVoteCommentResult),
+      updateBlogComment = WithTransaction(BlogHttpPlans.UpdateBlogComment, BlogHttpResponseMappers.mapUpdateCommentResult),
+      deleteBlogComment = WithTransaction(BlogHttpPlans.DeleteBlogComment, BlogHttpResponseMappers.mapDeleteCommentResult)
     )

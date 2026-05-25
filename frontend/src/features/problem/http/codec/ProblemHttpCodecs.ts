@@ -1,11 +1,11 @@
-import type { CreateProblemRequest } from '@/features/problem/http/request/CreateProblemRequest'
-import type { ProblemDataUploadResult } from '@/features/problem/http/response/ProblemDataUploadResult'
-import type { ProblemDetail } from '@/features/problem/http/response/ProblemDetail'
-import type { ProblemListRequest } from '@/features/problem/http/request/ProblemListRequest'
-import type { ProblemListResponse } from '@/features/problem/http/response/ProblemListResponse'
-import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
-import type { ProblemSummary } from '@/features/problem/http/response/ProblemSummary'
-import type { UpdateProblemRequest } from '@/features/problem/http/request/UpdateProblemRequest'
+import type { CreateProblemRequest } from '@/features/problem/model/request/CreateProblemRequest'
+import type { ProblemDataUploadResult } from '@/features/problem/model/response/ProblemDataUploadResult'
+import type { ProblemDetail } from '@/features/problem/model/response/ProblemDetail'
+import type { ProblemListRequest } from '@/features/problem/model/request/ProblemListRequest'
+import type { ProblemListResponse } from '@/features/problem/model/response/ProblemListResponse'
+import type { ProblemSuggestion } from '@/features/problem/model/response/ProblemSuggestion'
+import type { ProblemSummary } from '@/features/problem/model/response/ProblemSummary'
+import type { UpdateProblemRequest } from '@/features/problem/model/request/UpdateProblemRequest'
 import {
   fromOthersSubmissionAccessContract,
   fromProblemDataContract,

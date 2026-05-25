@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { blogIdValue, blogTitleValue } from '@/features/blog/lib/blog-parsers'
-import type { BlogSummary } from '@/features/blog/http/response/BlogSummary'
+import type { BlogSummary } from '@/features/blog/model/response/BlogSummary'
 import { blogScoreClassName } from '@/features/blog/lib/blog-display'
 import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
 import { problemSlugValue } from '@/features/problem/lib/problem-parsers'

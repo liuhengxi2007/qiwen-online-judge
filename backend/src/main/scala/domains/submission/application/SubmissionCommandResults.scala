@@ -2,7 +2,7 @@ package domains.submission.application
 
 
 
-import domains.submission.application.output.{SubmissionDetail, SubmissionListResponse}
+import domains.submission.model.response.{SubmissionDetail, SubmissionListResponse}
 
 object SubmissionCommandResults:
 

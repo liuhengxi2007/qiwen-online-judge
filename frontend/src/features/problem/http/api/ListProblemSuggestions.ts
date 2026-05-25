@@ -1,4 +1,4 @@
-import type { ProblemSuggestion } from '@/features/problem/http/response/ProblemSuggestion'
+import type { ProblemSuggestion } from '@/features/problem/model/response/ProblemSuggestion'
 import { parseProblemSearchQuery } from '@/features/problem/lib/problem-parsers'
 import { fromProblemSuggestionContract } from '@/features/problem/http/codec/ProblemHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'

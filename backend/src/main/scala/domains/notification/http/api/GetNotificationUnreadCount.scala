@@ -3,6 +3,7 @@ package domains.notification.http.api
 
 
 import domains.notification.http.*
+import domains.notification.http.mapper.NotificationHttpRequestMappers
 import cats.effect.IO
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io.*
@@ -15,7 +16,7 @@ object GetNotificationUnreadCount:
       case request @ GET -> Root / "api" / "notifications" / "unread-count" =>
         context.handlers.execute(
           request,
-          (),
+          NotificationHttpRequestMappers.unit,
           context.plans.getUnreadCount
         )
     }

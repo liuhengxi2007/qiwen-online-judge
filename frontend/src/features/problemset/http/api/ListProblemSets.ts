@@ -1,4 +1,4 @@
-import type { ProblemSetListResponse } from '@/features/problemset/http/response/ProblemSetListResponse'
+import type { ProblemSetListResponse } from '@/features/problemset/model/response/ProblemSetListResponse'
 import { fromProblemSetListResponseContract } from '@/features/problemset/http/codec/ProblemSetHttpCodecs'
 import { requestJson } from '@/shared/api/http-client'
 import type { PageRequest } from '@/shared/model/PageRequest'

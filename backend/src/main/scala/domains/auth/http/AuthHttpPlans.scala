@@ -1,14 +1,14 @@
 package domains.auth.http
 
-import domains.auth.http.response.AuthHttpResponses
+import domains.auth.http.mapper.AuthHttpResponseMappers
 
 
 
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
 import domains.auth.application.AuthCommands
-import domains.auth.application.input.{LoginRequest, RegisterRequest}
-import domains.auth.application.output.SessionResponse
+import domains.auth.model.request.{LoginRequest, RegisterRequest}
+import domains.auth.model.response.SessionResponse
 import domains.auth.model.*
 
 import java.sql.Connection
@@ -26,7 +26,7 @@ object AuthHttpPlans:
       actor: AuthUser,
       input: Unit
     ): IO[SessionResponse] =
-      IO.pure(AuthHttpResponses.toSessionResponse(actor))
+      IO.pure(AuthHttpResponseMappers.toSessionResponse(actor))
 
   case object Logout extends PublicPlainAuthHttpPlan[Option[SessionToken], LogoutOutput]:
 
@@ -38,9 +38,9 @@ object AuthHttpPlans:
     ): IO[LogoutOutput] =
       input match
         case Some(token) =>
-          context.sessionStore.deleteSession(token).as(LogoutOutput(AuthHttpResponses.clearedSessionCookie))
+          context.sessionStore.deleteSession(token).as(LogoutOutput(AuthHttpResponseMappers.clearedSessionCookie))
         case None =>
-          IO.pure(LogoutOutput(AuthHttpResponses.clearedSessionCookie))
+          IO.pure(LogoutOutput(AuthHttpResponseMappers.clearedSessionCookie))
 
   case object Login extends PublicTransactionAuthHttpPlan[LoginRequest, LoginResult]:
 

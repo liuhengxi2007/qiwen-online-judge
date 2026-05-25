@@ -7,7 +7,7 @@ import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseC
 import domains.auth.model.AuthUser
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
-import domains.problemset.application.output.ProblemSetSummary
+import domains.problemset.model.response.ProblemSetSummary
 import domains.user.model.{DisplayName, UserIdentity, Username}
 import shared.model.access.{ResourceAccessPolicy, ResourceId}
 import database.utils.UserIdentitySql

@@ -4,7 +4,8 @@ package shared.http.utils
 
 import shared.http.ApiMessage
 import cats.effect.IO
-import shared.http.response.{ErrorResponse, SuccessResponse}
+import shared.http.codec.SharedHttpCodecs.given
+import shared.model.response.{ErrorResponse, SuccessResponse}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*

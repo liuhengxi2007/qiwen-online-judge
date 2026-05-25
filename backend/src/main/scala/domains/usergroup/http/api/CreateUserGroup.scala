@@ -4,9 +4,10 @@ package domains.usergroup.http.api
 
 import domains.usergroup.http.*
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
+import domains.usergroup.http.mapper.UserGroupHttpRequestMappers
 import cats.effect.IO
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.application.input.{CreateUserGroupRequest}
+import domains.usergroup.model.request.{CreateUserGroupRequest}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -20,5 +21,5 @@ object CreateUserGroup:
         context.handlers.executeDecoded[CreateUserGroupRequest, CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult](
           request,
           UserGroupHttpPlanDefinitions.createUserGroup
-        )(identity)
+        )(UserGroupHttpRequestMappers.createUserGroupRequest)
     }

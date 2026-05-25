@@ -1,5 +1,5 @@
-import type { CreateConversationRequest } from '@/features/message/http/request/CreateConversationRequest'
-import type { MessageConversationSummary } from '@/features/message/http/response/MessageConversationSummary'
+import type { CreateConversationRequest } from '@/features/message/model/request/CreateConversationRequest'
+import type { MessageConversationSummary } from '@/features/message/model/response/MessageConversationSummary'
 import {
   fromMessageConversationSummary,
   toCreateConversationRequest,
