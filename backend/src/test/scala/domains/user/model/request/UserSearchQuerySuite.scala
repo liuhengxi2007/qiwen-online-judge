@@ -1,4 +1,4 @@
-package domains.user.application.input
+package domains.user.model.request
 
 import munit.FunSuite
 

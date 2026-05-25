@@ -3,9 +3,10 @@ package domains.message.application
 import cats.effect.IO
 import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.application.input.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.application.output.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
-import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
+import domains.message.model.internal.ConversationReadReceipt
+import domains.message.model.request.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.model.{MessageContent, MessageConversationId, MessageId}
 import domains.problem.model.ProblemTitleDisplayMode
 import domains.user.model.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, Username}
 import munit.CatsEffectSuite

@@ -1,6 +1,7 @@
-package domains.submission.model
+package domains.submission.model.internal
 
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs}
+import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 
 final case class ClaimedSubmission(
   id: SubmissionId,

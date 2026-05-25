@@ -1,13 +1,13 @@
-package domains.submission.http.utils
+package domains.submission.http.mapper
 
-import domains.submission.application.input.*
+import domains.submission.model.request.*
 import munit.FunSuite
 import shared.model.PageRequest
 
-class SubmissionListRequestQuerySupportSuite extends FunSuite:
+class SubmissionHttpRequestMappersSuite extends FunSuite:
 
-  test("parseListRequest uses default list request when query parameters are absent") {
-    val result = SubmissionListRequestQuerySupport.parseListRequest(Map.empty)
+  test("listSubmissionsRequest uses default list request when query parameters are absent") {
+    val result = SubmissionHttpRequestMappers.listSubmissionsRequest(Map.empty)
 
     assertEquals(
       result,
@@ -22,8 +22,8 @@ class SubmissionListRequestQuerySupportSuite extends FunSuite:
     )
   }
 
-  test("parseListRequest accepts valid page, sort, direction, verdict, and text filters") {
-    val result = SubmissionListRequestQuerySupport.parseListRequest(
+  test("listSubmissionsRequest accepts valid page, sort, direction, verdict, and text filters") {
+    val result = SubmissionHttpRequestMappers.listSubmissionsRequest(
       Map(
         "page" -> "3",
         "pageSize" -> "50",
@@ -48,7 +48,7 @@ class SubmissionListRequestQuerySupportSuite extends FunSuite:
     )
   }
 
-  test("parseListRequest falls back to default pagination for invalid, zero, and negative values") {
+  test("listSubmissionsRequest falls back to default pagination for invalid, zero, and negative values") {
     val cases = List(
       Map("page" -> "abc", "pageSize" -> "ten"),
       Map("page" -> "0", "pageSize" -> "0"),
@@ -56,14 +56,14 @@ class SubmissionListRequestQuerySupportSuite extends FunSuite:
     )
 
     cases.foreach { queryParams =>
-      val result = SubmissionListRequestQuerySupport.parseListRequest(queryParams)
+      val result = SubmissionHttpRequestMappers.listSubmissionsRequest(queryParams)
 
       assertEquals(result.pageRequest, PageRequest(page = 1, pageSize = 10))
     }
   }
 
-  test("parseListRequest falls back to default sort, direction, and verdict values when invalid") {
-    val result = SubmissionListRequestQuerySupport.parseListRequest(
+  test("listSubmissionsRequest falls back to default sort, direction, and verdict values when invalid") {
+    val result = SubmissionHttpRequestMappers.listSubmissionsRequest(
       Map("sort" -> "bad", "direction" -> "sideways", "verdict" -> "mystery")
     )
 
@@ -72,9 +72,9 @@ class SubmissionListRequestQuerySupportSuite extends FunSuite:
     assertEquals(result.verdict, SubmissionVerdictFilter.All)
   }
 
-  test("parseListRequest derives default direction from resolved sort when direction is absent or invalid") {
-    val absentDirection = SubmissionListRequestQuerySupport.parseListRequest(Map("sort" -> "time"))
-    val invalidDirection = SubmissionListRequestQuerySupport.parseListRequest(
+  test("listSubmissionsRequest derives default direction from resolved sort when direction is absent or invalid") {
+    val absentDirection = SubmissionHttpRequestMappers.listSubmissionsRequest(Map("sort" -> "time"))
+    val invalidDirection = SubmissionHttpRequestMappers.listSubmissionsRequest(
       Map("sort" -> "memory", "direction" -> "bad")
     )
 

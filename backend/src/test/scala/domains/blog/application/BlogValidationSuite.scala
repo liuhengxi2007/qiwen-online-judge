@@ -1,7 +1,7 @@
 package domains.blog.application
 
-import domains.blog.application.input.{CreateBlogRequest, UpdateBlogRequest}
 import domains.blog.model.{BlogContent, BlogTitle, BlogVisibility}
+import domains.blog.model.request.{CreateBlogRequest, UpdateBlogRequest}
 import munit.FunSuite
 
 class BlogValidationSuite extends FunSuite:

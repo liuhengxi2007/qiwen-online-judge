@@ -1,7 +1,7 @@
 package domains.problem.application
 
-import domains.problem.application.input.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.model.{OthersSubmissionAccess, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
 import munit.FunSuite
 import shared.model.access.{BaseAccess, ResourceAccessPolicy}
 

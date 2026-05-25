@@ -1,4 +1,4 @@
-package domains.submission.application.input
+package domains.submission.model.request
 
 import munit.FunSuite
 
@@ -32,7 +32,7 @@ class SubmissionVerdictFilterSuite extends FunSuite:
     )
   }
 
-  test("toDatabase round-trips representative values") {
+  test("encode round-trips representative values") {
     val cases = List(
       SubmissionVerdictFilter.All -> "all",
       SubmissionVerdictFilter.Accepted -> "accepted",
@@ -40,6 +40,6 @@ class SubmissionVerdictFilterSuite extends FunSuite:
     )
 
     cases.foreach { (value, expected) =>
-      assertEquals(SubmissionVerdictFilter.toDatabase(value), expected)
+      assertEquals(SubmissionVerdictFilter.encode(value), expected)
     }
   }

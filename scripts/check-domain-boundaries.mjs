@@ -38,6 +38,7 @@ const publicModelTypes = new Map([
     'SiteManagerUser',
   ])],
   ['blog', new Set([
+    // Internal notification context is intentionally consumed by the notification domain.
     'BlogCommentNotificationContext',
     'BlogCommentId',
     'BlogId',
@@ -74,6 +75,7 @@ const publicModelTypes = new Map([
     'ProblemSetTitle',
   ])],
   ['submission', new Set([
+    // Internal claimed-task shape is intentionally consumed by the judge domain.
     'ClaimedSubmission',
     'SubmissionId',
     'SubmissionLanguage',

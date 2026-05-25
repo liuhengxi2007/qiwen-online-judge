@@ -1,7 +1,8 @@
 package domains.message.table.message
 
 import cats.effect.IO
-import domains.message.model.{ConversationReadReceipt, MessageConversationId, MessageId}
+import domains.message.model.{MessageConversationId, MessageId}
+import domains.message.model.internal.ConversationReadReceipt
 import domains.message.table.message.MessageTableSupport.*
 import domains.user.model.Username
 

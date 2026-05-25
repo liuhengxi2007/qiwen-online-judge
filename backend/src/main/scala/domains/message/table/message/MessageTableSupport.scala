@@ -3,7 +3,8 @@ package domains.message.table.message
 
 
 import domains.user.model.{DisplayName, UserIdentity, Username}
-import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
+import domains.message.model.{MessageContent, MessageConversationId, MessageId}
+import domains.message.model.internal.ConversationReadReceipt
 import domains.message.model.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
 import database.utils.UserIdentitySql
 

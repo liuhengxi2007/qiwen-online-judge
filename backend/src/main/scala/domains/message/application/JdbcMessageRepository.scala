@@ -5,7 +5,8 @@ package domains.message.application
 import cats.effect.IO
 import domains.user.model.Username
 import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
-import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
+import domains.message.model.{MessageContent, MessageConversationId, MessageId}
+import domains.message.model.internal.ConversationReadReceipt
 import shared.model.PageRequest
 import domains.message.table.message.{DirectMessageTable, MessageBlockTable, MessageConversationTable, MessageReadTable, MessageUserTable}
 

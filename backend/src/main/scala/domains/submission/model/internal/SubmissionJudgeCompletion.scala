@@ -1,5 +1,6 @@
-package domains.submission.model
+package domains.submission.model.internal
 
+import domains.submission.model.{SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.model.JudgeResult
 
 final case class SubmissionJudgeCompletion(

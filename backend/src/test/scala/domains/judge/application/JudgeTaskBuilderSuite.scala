@@ -1,11 +1,11 @@
 package domains.judge.application
 
-import domains.problem.application.output.ProblemDetail
+import domains.problem.model.response.ProblemDetail
 import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.user.model.{DisplayName, UserIdentity, Username}
 import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
-import domains.submission.application.output.ClaimedSubmission
+import domains.submission.model.internal.ClaimedSubmission
 import munit.FunSuite
 import shared.model.access.{BaseAccess, ResourceAccessPolicy}
 

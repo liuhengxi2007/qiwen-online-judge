@@ -1,8 +1,8 @@
 package domains.problemset.application
 
 import domains.problem.model.ProblemSlug
-import domains.problemset.application.input.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.model.{ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.model.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
 import munit.FunSuite
 import shared.model.access.{BaseAccess, ResourceAccessPolicy}
 

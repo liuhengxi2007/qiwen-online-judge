@@ -38,6 +38,8 @@ Keep these roles separate:
   backend HTTP-facing command/query models
 - backend bare `model`
   backend domain values and stable mirrored business concepts
+- backend `model/internal`
+  backend-only collaboration objects that are not frontend mirrors and are skipped by contract alignment
 - backend `http`
   request mapping, response mapping, JSON codecs, and HTTP routing
 
@@ -67,6 +69,7 @@ These surfaces are checked by `node scripts/check-contract-alignment.mjs`:
 - feature `model/response` files against backend `model/response`
 - feature `model` files only when both sides expose the same key
 - enum string values for exposed unions/enums
+- backend `model/internal` files are intentionally skipped
 
 Do not force these into cross-stack alignment:
 

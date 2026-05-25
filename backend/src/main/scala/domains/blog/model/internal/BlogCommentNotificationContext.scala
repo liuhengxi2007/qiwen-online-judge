@@ -1,5 +1,6 @@
-package domains.blog.model
+package domains.blog.model.internal
 
+import domains.blog.model.{BlogCommentId, BlogId, BlogTitle}
 import domains.user.model.Username
 
 final case class BlogCommentNotificationContext(

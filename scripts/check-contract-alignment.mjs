@@ -306,6 +306,10 @@ function frontendMetadata(path) {
 
 function backendMetadata(path) {
   const normalized = path.split(sep).join('/')
+  if (/^backend\/src\/main\/scala\/domains\/([^/]+)\/model\/internal\//.test(normalized)) {
+    return null
+  }
+
   const domainBoundaryMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/model\/(request|response)\//)
   if (domainBoundaryMatch) {
     return {

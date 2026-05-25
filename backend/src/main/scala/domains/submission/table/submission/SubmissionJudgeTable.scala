@@ -2,7 +2,8 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import domains.problem.model.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs}
-import domains.submission.model.{ClaimedSubmission, SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.model.internal.ClaimedSubmission
 import domains.submission.table.submission.SubmissionTableSupport.*
 
 import java.sql.Connection

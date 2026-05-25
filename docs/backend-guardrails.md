@@ -78,6 +78,7 @@ For `model/response`:
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
 Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `model/`. Put API contract payloads under `model/request` and `model/response`.
+Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `model/internal`. These types are not frontend mirrors and do not participate in HTTP contract alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
 `model/` files must not import Circe or define JSON encoders/decoders. HTTP JSON codecs belong in the owning domain's `http/codec`, or in `shared/http/codec` for shared transport primitives. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
 Bare `model/` files must not import `model/request` or `model/response`; dependency direction is from request/response payloads toward core model types only.
 `model/request` and `model/response` must not import `application`, `http`, or `table`.

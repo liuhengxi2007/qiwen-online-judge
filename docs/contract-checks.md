@@ -19,6 +19,7 @@ Current checks cover:
 - frontend feature `model/request` files against backend `model/request`
 - frontend feature `model/response` files against backend `model/response`
 - mirrored feature `model` files when both sides expose the same key
+- backend `model/internal` is skipped because it is backend-only collaboration state, not an HTTP contract
 
 The contract alignment check is intentionally structural:
 

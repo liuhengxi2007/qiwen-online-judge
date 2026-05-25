@@ -1,5 +1,7 @@
 package domains.submission.model
 
+import domains.submission.model.internal.SubmissionJudgeCompletion
+
 import java.time.Instant
 
 object SubmissionLifecycle:

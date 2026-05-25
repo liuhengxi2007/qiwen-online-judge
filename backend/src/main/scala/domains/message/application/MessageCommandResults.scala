@@ -3,7 +3,8 @@ package domains.message.application
 
 
 import domains.user.model.Username
-import domains.message.model.{ConversationReadReceipt, MessageId}
+import domains.message.model.MessageId
+import domains.message.model.internal.ConversationReadReceipt
 import domains.message.model.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageHistoryResponse}
 
 object MessageCommandResults:
