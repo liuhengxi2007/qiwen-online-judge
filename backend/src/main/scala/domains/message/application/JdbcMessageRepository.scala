@@ -7,37 +7,37 @@ import domains.user.model.Username
 import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
 import domains.message.model.{ConversationReadReceipt, MessageContent, MessageConversationId, MessageId}
 import shared.model.PageRequest
-import domains.message.table.message.MessageTable
+import domains.message.table.message.{DirectMessageTable, MessageBlockTable, MessageConversationTable, MessageReadTable, MessageUserTable}
 
 import java.sql.Connection
 
 object JdbcMessageRepository extends MessageRepository:
   override def userExists(connection: Connection, username: Username): IO[Boolean] =
-    MessageTable.userExists(connection, username)
+    MessageUserTable.userExists(connection, username)
 
   override def getOrCreateConversation(
     connection: Connection,
     actorUsername: Username,
     targetUsername: Username
   ): IO[MessageConversationSummary] =
-    MessageTable.getOrCreateConversation(connection, actorUsername, targetUsername)
+    MessageConversationTable.getOrCreateConversation(connection, actorUsername, targetUsername)
 
   override def findConversationSummaryForUser(
     connection: Connection,
     actorUsername: Username,
     conversationId: MessageConversationId
   ): IO[Option[MessageConversationSummary]] =
-    MessageTable.findConversationSummaryForUser(connection, actorUsername, conversationId)
+    MessageConversationTable.findConversationSummaryForUser(connection, actorUsername, conversationId)
 
   override def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse] =
-    MessageTable.listInbox(connection, actorUsername, pageRequest)
+    MessageConversationTable.listInbox(connection, actorUsername, pageRequest)
 
   override def findOtherParticipant(
     connection: Connection,
     actorUsername: Username,
     conversationId: MessageConversationId
   ): IO[Option[Username]] =
-    MessageTable.findOtherParticipant(connection, actorUsername, conversationId)
+    MessageConversationTable.findOtherParticipant(connection, actorUsername, conversationId)
 
   override def listConversationMessages(
     connection: Connection,
@@ -45,14 +45,14 @@ object JdbcMessageRepository extends MessageRepository:
     beforeMessageId: Option[MessageId],
     limit: Int
   ): IO[(List[DirectMessage], Boolean)] =
-    MessageTable.listConversationMessages(connection, conversationId, beforeMessageId, limit)
+    DirectMessageTable.listConversationMessages(connection, conversationId, beforeMessageId, limit)
 
   override def getConversationMessageFacts(
     connection: Connection,
     conversationId: MessageConversationId,
     actorUsername: Username
   ): IO[ConversationMessageFacts] =
-    MessageTable.getConversationMessageFacts(connection, conversationId, actorUsername)
+    DirectMessageTable.getConversationMessageFacts(connection, conversationId, actorUsername)
 
   override def insertMessage(
     connection: Connection,
@@ -61,17 +61,17 @@ object JdbcMessageRepository extends MessageRepository:
     recipientUsername: Username,
     content: MessageContent
   ): IO[DirectMessage] =
-    MessageTable.insertMessage(connection, conversationId, senderUsername, recipientUsername, content)
+    DirectMessageTable.insertMessage(connection, conversationId, senderUsername, recipientUsername, content)
 
   override def isBlocked(connection: Connection, ownerUsername: Username, blockedUsername: Username): IO[Boolean] =
-    MessageTable.isBlocked(connection, ownerUsername, blockedUsername)
+    MessageBlockTable.isBlocked(connection, ownerUsername, blockedUsername)
 
   override def markConversationRead(
     connection: Connection,
     conversationId: MessageConversationId,
     recipientUsername: Username
   ): IO[Option[MessageId]] =
-    MessageTable.markConversationRead(connection, conversationId, recipientUsername)
+    MessageReadTable.markConversationRead(connection, conversationId, recipientUsername)
 
   override def markMessageRead(
     connection: Connection,
@@ -79,29 +79,29 @@ object JdbcMessageRepository extends MessageRepository:
     recipientUsername: Username,
     messageId: MessageId
   ): IO[Boolean] =
-    MessageTable.markMessageRead(connection, conversationId, recipientUsername, messageId)
+    MessageReadTable.markMessageRead(connection, conversationId, recipientUsername, messageId)
 
   override def markAllMessagesRead(
     connection: Connection,
     recipientUsername: Username
   ): IO[Unit] =
-    MessageTable.markAllMessagesRead(connection, recipientUsername)
+    MessageReadTable.markAllMessagesRead(connection, recipientUsername)
 
   override def listUnreadConversationReadReceipts(
     connection: Connection,
     recipientUsername: Username
   ): IO[List[ConversationReadReceipt]] =
-    MessageTable.listUnreadConversationReadReceipts(connection, recipientUsername)
+    MessageReadTable.listUnreadConversationReadReceipts(connection, recipientUsername)
 
   override def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]] =
-    MessageTable.listBlocks(connection, ownerUsername)
+    MessageBlockTable.listBlocks(connection, ownerUsername)
 
   override def upsertBlock(
     connection: Connection,
     ownerUsername: Username,
     blockedUsername: Username
   ): IO[MessageBlockEntry] =
-    MessageTable.upsertBlock(connection, ownerUsername, blockedUsername)
+    MessageBlockTable.upsertBlock(connection, ownerUsername, blockedUsername)
 
   override def removeBlock(connection: Connection, ownerUsername: Username, blockedUsername: Username): IO[Unit] =
-    MessageTable.removeBlock(connection, ownerUsername, blockedUsername)
+    MessageBlockTable.removeBlock(connection, ownerUsername, blockedUsername)

@@ -6,7 +6,7 @@ import cats.effect.IO
 import domains.submission.model.response.ClaimedSubmission
 import domains.submission.application.utils.SubmissionJudgeStateSupport
 import domains.submission.model.{SubmissionId, SubmissionJudgeCompletion, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
-import domains.submission.table.submission.SubmissionTable
+import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
 import judgeprotocol.model.{JudgerId, ReportJudgeResultRequest}
 
 import java.sql.Connection
@@ -36,7 +36,7 @@ object SubmissionCommands:
       case Left(message) =>
         IO.pure(ClaimNextJudgeTaskResult.ValidationFailed(message))
       case Right(runningState) =>
-        SubmissionTable.claimNextForLanguages(connection, supportedLanguages.flatMap(toSubmissionLanguage), runningState).map {
+        SubmissionJudgeTable.claimNextForLanguages(connection, supportedLanguages.flatMap(toSubmissionLanguage), runningState).map {
           case None => ClaimNextJudgeTaskResult.NoTask
           case Some(claimedSubmission) => ClaimNextJudgeTaskResult.Claimed(claimedSubmission)
         }
@@ -66,7 +66,7 @@ object SubmissionCommands:
       case Left(lifecycleMessage) =>
         IO.pure(Left(lifecycleMessage))
       case Right(failedState) =>
-        SubmissionTable.updateJudgeState(connection, claimedSubmission.id, failedState).as(Right(()))
+        SubmissionJudgeTable.updateJudgeState(connection, claimedSubmission.id, failedState).as(Right(()))
 
   def recordJudgeResult(
     connection: Connection,
@@ -76,7 +76,7 @@ object SubmissionCommands:
   ): IO[RecordJudgeResult] =
     request.status match
       case judgeprotocol.model.SubmissionStatus.Completed | judgeprotocol.model.SubmissionStatus.Failed =>
-        SubmissionTable.findById(connection, submissionId).flatMap {
+        SubmissionQueryTable.findById(connection, submissionId).flatMap {
           case None =>
             IO.pure(RecordJudgeResult.SubmissionNotFound)
           case Some(submission) =>
@@ -97,7 +97,7 @@ object SubmissionCommands:
               .fold(
                 message => IO.pure(RecordJudgeResult.ValidationFailed(message)),
                 completedState =>
-                  SubmissionTable
+                  SubmissionJudgeTable
                     .updateJudgeState(connection, submissionId, completedState)
                     .as(RecordJudgeResult.Updated)
               )

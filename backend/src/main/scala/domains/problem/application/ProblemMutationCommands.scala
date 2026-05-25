@@ -8,7 +8,7 @@ import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.model.AuthUser
 import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.model.{ProblemId}
-import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem.{ProblemMutationTable, ProblemQueryTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
@@ -41,7 +41,7 @@ object ProblemMutationCommands:
           IO.pure(CreateProblemResult.ValidationFailed(message))
         case Right(validRequest) =>
           for
-            existing <- ProblemTable.findBySlug(connection, validRequest.slug)
+            existing <- ProblemQueryTable.findBySlug(connection, validRequest.slug)
             conflictingProblemSetSlugExists <- hasConflictingProblemSetSlug(connection, validRequest.slug.value)
             accessPolicyValidation <- validateAccessPolicySubjects(connection, validRequest.accessPolicy)
             result <- decideCreateProblem(existing, conflictingProblemSetSlugExists, accessPolicyValidation) match
@@ -55,7 +55,7 @@ object ProblemMutationCommands:
                 for
                   problemId <- IO.delay(ProblemId(UUID.randomUUID()))
                   now <- IO.realTimeInstant
-                  result <- ProblemTable
+                  result <- ProblemMutationTable
                     .insert(connection, problemId, now, actor.username, sanitizePolicy(validRequest))
                     .map(problem => CreateProblemResult.Created(problem.copy(canManage = true)))
                 yield result
@@ -82,7 +82,7 @@ object ProblemMutationCommands:
         IO.pure(UpdateProblemResult.ValidationFailed(message))
       case Right(validRequest) =>
         for
-          maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+          maybeProblem <- ProblemQueryTable.findBySlug(connection, problemSlug)
           result <- maybeProblem match
             case None =>
               IO.pure(UpdateProblemResult.ProblemNotFound)
@@ -95,10 +95,10 @@ object ProblemMutationCommands:
                     case Some(message) =>
                       IO.pure(UpdateProblemResult.ValidationFailed(message))
                     case None =>
-                      ProblemTable
+                      ProblemMutationTable
                         .update(connection, problem.id, Instant.now(), sanitizePolicy(validRequest))
                         .flatMap(_ =>
-                          ProblemTable
+                          ProblemQueryTable
                             .findBySlug(connection, problem.slug)
                             .map(updatedProblemOrError("Problem disappeared after update"))
                             .map(_.copy(canManage = true))
@@ -123,7 +123,7 @@ object ProblemMutationCommands:
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[DeleteProblemResult] =
     for
-      maybeProblem <- ProblemTable.findBySlug(connection, problemSlug)
+      maybeProblem <- ProblemQueryTable.findBySlug(connection, problemSlug)
       result <- maybeProblem match
         case None =>
           IO.pure(DeleteProblemResult.ProblemNotFound)
@@ -134,7 +134,7 @@ object ProblemMutationCommands:
             case true =>
               ResourceAccessGrantTable
                 .deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
-                .flatMap(_ => ProblemTable.delete(connection, problem.id))
+                .flatMap(_ => ProblemMutationTable.delete(connection, problem.id))
                 .as(DeleteProblemResult.Deleted)
           }
     yield result

@@ -9,7 +9,7 @@ import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.model.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.model.request.{ProblemListRequest, ProblemSearchQuery}
-import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem.ProblemQueryTable
 import shared.model.PageResponse
 
 object ProblemQueryCommands:
@@ -20,7 +20,7 @@ object ProblemQueryCommands:
   ): IO[PageResponse[ProblemSummary]] =
     val normalizedRequest = request.copy(pageRequest = request.pageRequest.normalized)
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.listVisibleTo(connection, actor, normalizedRequest)
+      ProblemQueryTable.listVisibleTo(connection, actor, normalizedRequest)
     }
 
   def getProblemBySlug(
@@ -29,7 +29,7 @@ object ProblemQueryCommands:
     slug: domains.problem.model.ProblemSlug
   ): IO[GetProblemResult] =
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.findBySlug(connection, slug).flatMap {
+      ProblemQueryTable.findBySlug(connection, slug).flatMap {
         case Some(problem) =>
           enrichProblemPermissions(connection, actor, problem).map {
             case Some(enrichedProblem) => GetProblemResult.Found(enrichedProblem)
@@ -46,5 +46,5 @@ object ProblemQueryCommands:
     query: ProblemSearchQuery
   ): IO[List[ProblemSuggestion]] =
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.listSuggestions(connection, actor, query)
+      ProblemQueryTable.listSuggestions(connection, actor, query)
     }

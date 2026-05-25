@@ -1,0 +1,282 @@
+package domains.blog.table.blog
+
+import cats.effect.IO
+import database.utils.UserIdentitySql
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogId, BlogTitle}
+import domains.blog.model.response.{BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogCommentSummary, BlogDetail}
+import domains.blog.table.blog.BlogTableSupport.*
+import domains.user.model.Username
+
+import java.sql.{Connection, Timestamp}
+import java.time.Instant
+import java.util.UUID
+
+object BlogCommentTable:
+
+  private val insertCommentSQL: String =
+    s"""
+      |insert into blog_comments (id, public_id, blog_id, parent_comment_id, author_username, content, created_at, updated_at)
+      |select ?, nextval('blog_comment_public_id_seq'), id, null, ?, ?, ?, ?
+      |from blogs
+      |where public_id = ?
+      |  and (visibility = 'public' or author_username = ?)
+      |returning public_id
+      |""".stripMargin
+
+  private val insertReplySQL: String =
+    s"""
+      |insert into blog_comments (id, public_id, blog_id, parent_comment_id, author_username, content, created_at, updated_at)
+      |select ?, nextval('blog_comment_public_id_seq'), b.id, parent_comment.id, ?, ?, ?, ?
+      |from blogs b
+      |join blog_comments parent_comment on parent_comment.blog_id = b.id and parent_comment.public_id = ?
+      |where b.public_id = ?
+      |  and (b.visibility = 'public' or b.author_username = ?)
+      |returning public_id
+      |""".stripMargin
+
+  def insertComment(
+    connection: Connection,
+    blogId: BlogId,
+    parentCommentId: Option[BlogCommentId],
+    authorUsername: Username,
+    content: BlogCommentContent
+  ): IO[Option[(BlogDetail, BlogCommentId)]] =
+    IO.blocking {
+      val now = Instant.now()
+      val statement = connection.prepareStatement(if parentCommentId.isDefined then insertReplySQL else insertCommentSQL)
+      try
+        statement.setObject(1, UUID.randomUUID())
+        parentCommentId match
+          case Some(commentId) =>
+            statement.setString(2, authorUsername.value)
+            statement.setString(3, content.value)
+            statement.setTimestamp(4, Timestamp.from(now))
+            statement.setTimestamp(5, Timestamp.from(now))
+            statement.setLong(6, commentId.value)
+            statement.setLong(7, blogId.value)
+            statement.setString(8, authorUsername.value)
+          case None =>
+            statement.setString(2, authorUsername.value)
+            statement.setString(3, content.value)
+            statement.setTimestamp(4, Timestamp.from(now))
+            statement.setTimestamp(5, Timestamp.from(now))
+            statement.setLong(6, blogId.value)
+            statement.setString(7, authorUsername.value)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(BlogCommentId(resultSet.getLong("public_id")))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap {
+      case None => IO.pure(None)
+      case Some(createdCommentId) =>
+        BlogPostQueryTable.findById(connection, blogId, authorUsername).map(_.map(_ -> createdCommentId))
+    }
+
+  private val findCommentNotificationBlogContextSQL: String =
+    """
+      |select b.public_id as blog_public_id,
+      |       b.title as blog_title,
+      |       b.author_username as blog_author_username,
+      |       c.content as trigger_comment_content
+      |from blogs b
+      |join blog_comments c on c.blog_id = b.id
+      |where b.public_id = ?
+      |  and c.public_id = ?
+      |""".stripMargin
+
+  private val listCommentNotificationAncestorsSQL: String =
+    """
+      |with recursive ancestor_chain as (
+      |  select parent.public_id,
+      |         parent.parent_comment_id,
+      |         parent.author_username,
+      |         1 as depth
+      |  from blog_comments child
+      |  join blogs b on b.id = child.blog_id
+      |  join blog_comments parent on parent.id = child.parent_comment_id
+      |  where b.public_id = ?
+      |    and child.public_id = ?
+      |  union all
+      |  select parent.public_id,
+      |         parent.parent_comment_id,
+      |         parent.author_username,
+      |         ancestor_chain.depth + 1
+      |  from ancestor_chain
+      |  join blog_comments parent on parent.id = ancestor_chain.parent_comment_id
+      |)
+      |select public_id, author_username
+      |from ancestor_chain
+      |order by depth asc
+      |""".stripMargin
+
+  def findCommentNotificationContext(
+    connection: Connection,
+    blogId: BlogId,
+    triggerCommentId: BlogCommentId
+  ): IO[Option[BlogCommentNotificationContext]] =
+    for
+      maybeBlogContext <- IO.blocking {
+        val statement = connection.prepareStatement(findCommentNotificationBlogContextSQL)
+        try
+          statement.setLong(1, blogId.value)
+          statement.setLong(2, triggerCommentId.value)
+          val resultSet = statement.executeQuery()
+          try
+            if resultSet.next() then
+              Some(
+                (
+                  parseColumn("blogs.title", resultSet.getString("blog_title"), BlogTitle.parse),
+                  Username.canonical(resultSet.getString("blog_author_username")),
+                  resultSet.getString("trigger_comment_content")
+                )
+              )
+            else None
+          finally resultSet.close()
+        finally statement.close()
+      }
+      ancestors <- maybeBlogContext match
+        case None => IO.pure(Nil)
+        case Some(_) =>
+          IO.blocking {
+            val statement = connection.prepareStatement(listCommentNotificationAncestorsSQL)
+            try
+              statement.setLong(1, blogId.value)
+              statement.setLong(2, triggerCommentId.value)
+              val resultSet = statement.executeQuery()
+              try
+                Iterator
+                  .continually(resultSet.next())
+                  .takeWhile(identity)
+                  .map(_ =>
+                    BlogCommentNotificationAncestor(
+                      commentId = BlogCommentId(resultSet.getLong("public_id")),
+                      authorUsername = Username.canonical(resultSet.getString("author_username"))
+                    )
+                  )
+                  .toList
+              finally resultSet.close()
+            finally statement.close()
+          }
+    yield maybeBlogContext.map { case (blogTitle, blogAuthorUsername, triggerCommentContent) =>
+      BlogCommentNotificationContext(
+        blogId = blogId,
+        blogTitle = blogTitle,
+        blogAuthorUsername = blogAuthorUsername,
+        triggerCommentId = triggerCommentId,
+        triggerCommentContent = triggerCommentContent,
+        ancestors = ancestors
+      )
+    }
+
+  private val updateCommentSQL: String =
+    """
+      |update blog_comments c
+      |set content = ?,
+      |    updated_at = ?
+      |from blogs b
+      |where b.id = c.blog_id
+      |  and b.public_id = ?
+      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and c.public_id = ?
+      |  and c.author_username = ?
+      |""".stripMargin
+
+  def updateComment(
+    connection: Connection,
+    blogId: BlogId,
+    commentId: BlogCommentId,
+    actorUsername: Username,
+    content: BlogCommentContent
+  ): IO[Option[BlogDetail]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateCommentSQL)
+      try
+        statement.setString(1, content.value)
+        statement.setTimestamp(2, Timestamp.from(Instant.now()))
+        statement.setLong(3, blogId.value)
+        statement.setString(4, actorUsername.value)
+        statement.setLong(5, commentId.value)
+        statement.setString(6, actorUsername.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }.flatMap {
+      case true => BlogPostQueryTable.findById(connection, blogId, actorUsername)
+      case false => IO.pure(None)
+    }
+
+  private val deleteCommentSQL: String =
+    """
+      |delete from blog_comments c
+      |using blogs b
+      |where b.id = c.blog_id
+      |  and b.public_id = ?
+      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and c.public_id = ?
+      |  and c.author_username = ?
+      |""".stripMargin
+
+  def deleteComment(
+    connection: Connection,
+    blogId: BlogId,
+    commentId: BlogCommentId,
+    actorUsername: Username
+  ): IO[Option[BlogDetail]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteCommentSQL)
+      try
+        statement.setLong(1, blogId.value)
+        statement.setString(2, actorUsername.value)
+        statement.setLong(3, commentId.value)
+        statement.setString(4, actorUsername.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }.flatMap {
+      case true => BlogPostQueryTable.findById(connection, blogId, actorUsername)
+      case false => IO.pure(None)
+    }
+
+  private val listCommentsSQL: String =
+    s"""
+      |select c.public_id,
+      |       pc.public_id as parent_id,
+      |       c.content,
+      |       ${UserIdentitySql.selectColumns("c.author_username", "author", "au")},
+      |       coalesce(cvs.score, 0) as score,
+      |       viewer_vote.vote as viewer_vote,
+      |       c.created_at,
+      |       c.updated_at
+      |from blog_comments c
+      |join blogs b on b.id = c.blog_id
+      |left join blog_comments pc on pc.id = c.parent_comment_id
+      |${UserIdentitySql.joinAuthUsers("c.author_username", "au")}
+      |left join (
+      |  select comment_id,
+      |         sum(case when vote = 'up' then 1 when vote = 'down' then -1 else 0 end)::int as score
+      |  from blog_comment_votes
+      |  group by comment_id
+      |) cvs on cvs.comment_id = c.id
+      |left join blog_comment_votes viewer_vote on viewer_vote.comment_id = c.id and viewer_vote.username = ?
+      |where b.public_id = ?
+      |  and (b.visibility = 'public' or b.author_username = ?)
+      |order by c.public_id asc
+      |""".stripMargin
+
+  def listComments(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[List[BlogCommentSummary]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listCommentsSQL)
+      try
+        statement.setString(1, viewerUsername.value)
+        statement.setLong(2, blogId.value)
+        statement.setString(3, viewerUsername.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readBlogCommentSummary(resultSet))
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }

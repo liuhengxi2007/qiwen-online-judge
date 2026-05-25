@@ -9,7 +9,7 @@ import domains.auth.model.AuthUser
 import domains.judge.application.JudgeCommands
 import domains.problem.model.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
 import domains.problem.model.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
-import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem.{ProblemDataStateTable, ProblemQueryTable}
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
@@ -53,7 +53,7 @@ object ProblemDataCommands:
     actor: AuthUser,
     problemSlug: ProblemSlug
   )(notFound: A, forbidden: A)(useProblem: ProblemDetail => IO[A]): IO[A] =
-    ProblemTable.findBySlugForUpdate(connection, problemSlug).flatMap {
+    ProblemQueryTable.findBySlugForUpdate(connection, problemSlug).flatMap {
       case None =>
         IO.pure(notFound)
       case Some(problem) =>
@@ -112,10 +112,10 @@ object ProblemDataCommands:
         snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
         now = Instant.now()
         result <- writePreparedFiles(problemDataStorage, problem.slug, preparedFiles)
-          .flatMap(_ => ProblemTable.updateData(connection, problem.id, now, summaryFilename))
+          .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, now, summaryFilename))
           .flatMap(_ => ProblemDataFileTable.upsertForProblem(connection, problem.id, toManifestEntries(preparedFiles), now))
           .flatMap(_ =>
-            ProblemTable
+            ProblemQueryTable
               .findBySlug(connection, problem.slug)
               .map(updatedProblemOrError("Problem disappeared after data update"))
               .map(_.copy(canManage = true))
@@ -135,7 +135,7 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ListProblemDataResult] =
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+      ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
         case None =>
           IO.pure(ListProblemDataResult.ProblemNotFound)
         case Some(problem) =>
@@ -158,7 +158,7 @@ object ProblemDataCommands:
   ): IO[AuthorizeProblemDataDownloadResult] =
     val _ = problemDataStorage
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+      ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
         case None =>
           IO.pure(AuthorizeProblemDataDownloadResult.ProblemNotFound)
         case Some(problem) =>
@@ -175,7 +175,7 @@ object ProblemDataCommands:
     problemSlug: domains.problem.model.ProblemSlug
   ): IO[ListProblemDataTreeResult] =
     databaseSession.withTransactionConnection { connection =>
-      ProblemTable.findBySlug(connection, problemSlug).flatMap {
+      ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
         case None =>
           IO.pure(ListProblemDataTreeResult.ProblemNotFound)
         case Some(problem) =>
@@ -220,9 +220,9 @@ object ProblemDataCommands:
           case true =>
             ProblemDataFileTable.deleteForProblemPath(connection, problem.id, ProblemDataPath.fromFilename(filename))
               .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
-              .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
+              .flatMap(entries => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
               .flatMap(_ =>
-                ProblemTable
+                ProblemQueryTable
                   .findBySlug(connection, problem.slug)
                   .map(updatedProblemOrError("Problem disappeared after data deletion"))
                   .map(_.copy(canManage = true))
@@ -258,9 +258,9 @@ object ProblemDataCommands:
               .traverse_(pathToDelete => problemDataStorage.deletePath(problem.slug, pathToDelete).void)
               .flatMap(_ => pathsToDelete.traverse_(pathToDelete => ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete)))
               .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
-              .flatMap(entries => ProblemTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
+              .flatMap(entries => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), summaryFilenameForEntries(entries)))
               .flatMap(_ =>
-                ProblemTable
+                ProblemQueryTable
                   .findBySlug(connection, problem.slug)
                   .map(updatedProblemOrError("Problem disappeared after data deletion"))
                   .map(_.copy(canManage = true))
@@ -297,9 +297,9 @@ object ProblemDataCommands:
         result <- problemDataStorage
           .deleteAllFiles(problem.slug)
           .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
-          .flatMap(_ => ProblemTable.updateData(connection, problem.id, Instant.now(), None))
+          .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
           .flatMap(_ =>
-            ProblemTable
+            ProblemQueryTable
               .findBySlug(connection, problem.slug)
               .map(updatedProblemOrError("Problem disappeared after clearing data"))
               .map(_.copy(canManage = true))
@@ -327,7 +327,7 @@ object ProblemDataCommands:
     }
 
   private def markProblemNotReady(connection: java.sql.Connection, problem: ProblemDetail): IO[SetProblemReadyResult] =
-    ProblemTable
+    ProblemDataStateTable
       .updateDataReady(connection, problem.id, Instant.now(), problem.data.value, ready = false)
       .flatMap(_ => refreshedManagedProblem(connection, problem, "Problem disappeared after ready update"))
       .map(SetProblemReadyResult.Updated(_))
@@ -367,7 +367,7 @@ object ProblemDataCommands:
       result <- redundantPaths
         .traverse_(path => problemDataStorage.deletePath(problem.slug, path).void)
         .flatMap(_ => ProblemDataFileTable.deleteExceptPaths(connection, problem.id, retainedPaths))
-        .flatMap(_ => ProblemTable.updateDataReady(connection, problem.id, Instant.now(), summaryFilenameForEntries(retainedEntries), ready = true))
+        .flatMap(_ => ProblemDataStateTable.updateDataReady(connection, problem.id, Instant.now(), summaryFilenameForEntries(retainedEntries), ready = true))
         .flatMap(_ => refreshedManagedProblem(connection, problem, "Problem disappeared after ready update"))
         .map(SetProblemReadyResult.Updated(_))
         .handleErrorWith { error =>
@@ -380,7 +380,7 @@ object ProblemDataCommands:
     problem: ProblemDetail,
     missingMessage: String
   ): IO[ProblemDetail] =
-    ProblemTable
+    ProblemQueryTable
       .findBySlug(connection, problem.slug)
       .map(updatedProblemOrError(missingMessage))
       .map(_.copy(canManage = true))

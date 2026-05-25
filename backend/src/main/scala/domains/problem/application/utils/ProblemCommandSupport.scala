@@ -14,6 +14,7 @@ import domains.usergroup.model.UserGroupSlug
 import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 import shared.application.access.ResourceAccessFacts
 import domains.usergroup.application.UserGroupCommands
+import domains.problem.table.problem.ProblemQueryTable
 
 object ProblemCommandSupport:
 
@@ -54,7 +55,7 @@ object ProblemCommandSupport:
         hasGlobalManageOverride = ProblemPolicy.hasGlobalManageOverride(actor)
       )
 
-      domains.problem.table.problem.ProblemTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map { hasVisibleContainingProblemSet =>
+      ProblemQueryTable.hasVisibleContainingProblemSet(connection, actor, problem.id).map { hasVisibleContainingProblemSet =>
         val decision = ProblemAccessDecision.evaluate(
           ProblemAccessFacts(
             resourceAccess = resourceAccessFacts,

@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.submission.model.request.{CreateSubmissionRequest}
 import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionStatus}
-import domains.submission.table.submission.SubmissionTable
+import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionMutationTable, SubmissionQueryTable}
 import domains.submission.application.SubmissionCommandResults.*
 
 import java.sql.Connection
@@ -39,7 +39,7 @@ object SubmissionMutationCommands:
           case ProblemCommands.ResolveSubmissionTargetResult.Forbidden =>
             IO.pure(CreateSubmissionResult.Forbidden)
           case ProblemCommands.ResolveSubmissionTargetResult.Resolved(problem) =>
-            SubmissionTable
+            SubmissionMutationTable
               .insert(
                 connection = connection,
                 problemId = problem.id,
@@ -66,7 +66,7 @@ object SubmissionMutationCommands:
     actor: AuthUser,
     submissionId: SubmissionId
   ): IO[DeleteSubmissionResult] =
-    SubmissionTable.findById(connection, submissionId).flatMap {
+    SubmissionQueryTable.findById(connection, submissionId).flatMap {
       case None =>
         IO.pure(DeleteSubmissionResult.NotFound)
       case Some(submission) =>
@@ -76,7 +76,7 @@ object SubmissionMutationCommands:
           case ProblemCommands.EvaluateProblemAccessResult.Evaluated(access) if !access.canManage =>
             IO.pure(DeleteSubmissionResult.Forbidden)
           case ProblemCommands.EvaluateProblemAccessResult.Evaluated(_) =>
-            SubmissionTable.deleteById(connection, submissionId).as(DeleteSubmissionResult.Deleted)
+            SubmissionMutationTable.deleteById(connection, submissionId).as(DeleteSubmissionResult.Deleted)
         }
     }
 
@@ -94,7 +94,7 @@ object SubmissionMutationCommands:
     actor: AuthUser,
     submissionId: SubmissionId
   ): IO[RejudgeSubmissionResult] =
-    SubmissionTable.findById(connection, submissionId).flatMap {
+    SubmissionQueryTable.findById(connection, submissionId).flatMap {
       case None =>
         IO.pure(RejudgeSubmissionResult.NotFound)
       case Some(submission) =>
@@ -106,9 +106,9 @@ object SubmissionMutationCommands:
           case ProblemCommands.EvaluateProblemAccessResult.Evaluated(_) if submission.status == SubmissionStatus.Queued || submission.status == SubmissionStatus.Running =>
             IO.pure(RejudgeSubmissionResult.ValidationFailed("Only completed or failed submissions can be rejudged."))
           case ProblemCommands.EvaluateProblemAccessResult.Evaluated(_) =>
-            SubmissionTable
+            SubmissionJudgeTable
               .updateJudgeState(connection, submissionId, SubmissionJudgeState.queued)
-              .flatMap(_ => SubmissionTable.findById(connection, submissionId))
+              .flatMap(_ => SubmissionQueryTable.findById(connection, submissionId))
               .map(_.getOrElse(throw new IllegalStateException("Submission disappeared after rejudge.")))
               .map(_.copy(canManage = true))
               .map(RejudgeSubmissionResult.Rejudged(_))

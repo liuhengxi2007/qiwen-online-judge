@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.submission.model.{SubmissionId}
 import domains.submission.model.request.{SubmissionListRequest}
-import domains.submission.table.submission.SubmissionTable
+import domains.submission.table.submission.SubmissionQueryTable
 import domains.submission.application.SubmissionCommandResults.*
 
 object SubmissionQueryCommands:
@@ -19,7 +19,7 @@ object SubmissionQueryCommands:
     request: SubmissionListRequest
   ): IO[ListSubmissionsResult] =
     databaseSession.withTransactionConnection { connection =>
-      SubmissionTable
+      SubmissionQueryTable
         .listVisibleTo(connection, actor, request, SubmissionPolicy.hasGlobalViewOverride(actor))
         .map(submissions => ListSubmissionsResult.Listed(submissions))
     }
@@ -30,7 +30,7 @@ object SubmissionQueryCommands:
     submissionId: SubmissionId
   ): IO[GetSubmissionResult] =
     databaseSession.withTransactionConnection { connection =>
-      SubmissionTable.findById(connection, submissionId).flatMap {
+      SubmissionQueryTable.findById(connection, submissionId).flatMap {
         case None =>
           IO.pure(GetSubmissionResult.NotFound)
         case Some(submission) if SubmissionPolicy.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) =>

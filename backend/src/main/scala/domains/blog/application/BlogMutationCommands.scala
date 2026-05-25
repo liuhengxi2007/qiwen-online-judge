@@ -8,7 +8,7 @@ import domains.auth.model.AuthUser
 import domains.blog.application.BlogCommandResults.*
 import domains.blog.model.{BlogCommentId, BlogId}
 import domains.blog.model.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
-import domains.blog.table.blog.BlogTable
+import domains.blog.table.blog.{BlogCommentTable, BlogCommentVoteTable, BlogPostMutationTable, BlogProblemLinkMutationTable, BlogVoteTable}
 import domains.notification.application.NotificationCommands
 import domains.problem.application.ProblemCommands
 import domains.problem.model.ProblemSlug
@@ -39,7 +39,7 @@ object BlogMutationCommands:
       case Left(message) =>
         IO.pure(CreateBlogResult.ValidationFailed(message))
       case Right(validRequest) =>
-        BlogTable
+        BlogPostMutationTable
           .insert(
             connection,
             actor.username,
@@ -55,7 +55,7 @@ object BlogMutationCommands:
     blogId: BlogId,
     request: VoteBlogRequest
   ): IO[VoteBlogResult] =
-    BlogTable.vote(connection, blogId, actor.username, request.vote).map {
+    BlogVoteTable.vote(connection, blogId, actor.username, request.vote).map {
       case Some(blog) => VoteBlogResult.Voted(blog)
       case None => VoteBlogResult.NotFound
     }
@@ -70,7 +70,7 @@ object BlogMutationCommands:
       case Left(message) =>
         IO.pure(UpdateBlogResult.ValidationFailed(message))
       case Right(validRequest) =>
-        BlogTable
+        BlogPostMutationTable
           .update(
             connection,
             blogId,
@@ -89,7 +89,7 @@ object BlogMutationCommands:
     actor: AuthUser,
     blogId: BlogId
   ): IO[DeleteBlogResult] =
-    BlogTable.delete(connection, blogId, actor.username).map {
+    BlogPostMutationTable.delete(connection, blogId, actor.username).map {
       case true => DeleteBlogResult.Deleted
       case false => DeleteBlogResult.NotFound
     }
@@ -100,7 +100,7 @@ object BlogMutationCommands:
     problemSlug: ProblemSlug,
     blogId: BlogId
   ): IO[SubmitBlogToProblemResult] =
-    BlogTable.submitProblem(connection, problemSlug, blogId, actor.username).map {
+    BlogProblemLinkMutationTable.submitProblem(connection, problemSlug, blogId, actor.username).map {
       case true => SubmitBlogToProblemResult.Submitted
       case false => SubmitBlogToProblemResult.NotFound
     }
@@ -112,7 +112,7 @@ object BlogMutationCommands:
     parentCommentId: Option[BlogCommentId],
     request: CreateBlogCommentRequest
   ): IO[CreateBlogCommentResult] =
-    BlogTable.insertComment(connection, blogId, parentCommentId, actor.username, request.content).map {
+    BlogCommentTable.insertComment(connection, blogId, parentCommentId, actor.username, request.content).map {
       case Some((blog, createdCommentId)) => CreateBlogCommentResult.Created(blog, createdCommentId)
       case None => CreateBlogCommentResult.BlogNotFound
     }
@@ -126,7 +126,7 @@ object BlogMutationCommands:
   ): IO[CreateBlogCommentWithNotificationRecipientsResult] =
     createBlogComment(connection, actor, blogId, parentCommentId, request).flatMap {
       case created @ CreateBlogCommentResult.Created(_, createdCommentId) =>
-        BlogTable.findCommentNotificationContext(connection, blogId, createdCommentId).flatMap {
+        BlogCommentTable.findCommentNotificationContext(connection, blogId, createdCommentId).flatMap {
           case Some(context) =>
             NotificationCommands
               .createBlogReplyNotifications(connection, actor, context)
@@ -145,7 +145,7 @@ object BlogMutationCommands:
     commentId: BlogCommentId,
     request: VoteBlogCommentRequest
   ): IO[VoteBlogCommentResult] =
-    BlogTable.voteComment(connection, blogId, commentId, actor.username, request.vote).map {
+    BlogCommentVoteTable.voteComment(connection, blogId, commentId, actor.username, request.vote).map {
       case Some(blog) => VoteBlogCommentResult.Voted(blog)
       case None => VoteBlogCommentResult.NotFound
     }
@@ -157,7 +157,7 @@ object BlogMutationCommands:
     commentId: BlogCommentId,
     request: UpdateBlogCommentRequest
   ): IO[UpdateBlogCommentResult] =
-    BlogTable.updateComment(connection, blogId, commentId, actor.username, request.content).map {
+    BlogCommentTable.updateComment(connection, blogId, commentId, actor.username, request.content).map {
       case Some(blog) => UpdateBlogCommentResult.Updated(blog)
       case None => UpdateBlogCommentResult.NotFound
     }
@@ -168,7 +168,7 @@ object BlogMutationCommands:
     blogId: BlogId,
     commentId: BlogCommentId
   ): IO[DeleteBlogCommentResult] =
-    BlogTable.deleteComment(connection, blogId, commentId, actor.username).map {
+    BlogCommentTable.deleteComment(connection, blogId, commentId, actor.username).map {
       case Some(blog) => DeleteBlogCommentResult.Deleted(blog)
       case None => DeleteBlogCommentResult.NotFound
     }
@@ -185,7 +185,7 @@ object BlogMutationCommands:
       case ProblemCommands.ResolveBlogProblemLinkTargetResult.ProblemNotFound =>
         IO.pure(LinkBlogToProblemResult.NotFound)
       case ProblemCommands.ResolveBlogProblemLinkTargetResult.Allowed =>
-        BlogTable.linkProblem(connection, problemSlug, blogId, actor.username).map {
+        BlogProblemLinkMutationTable.linkProblem(connection, problemSlug, blogId, actor.username).map {
           case true => LinkBlogToProblemResult.Linked
           case false => LinkBlogToProblemResult.NotFound
         }
@@ -199,7 +199,7 @@ object BlogMutationCommands:
   ): IO[AcceptBlogProblemSubmissionResult] =
     if !ProblemCommands.canManageProblemCatalog(actor) then IO.pure(AcceptBlogProblemSubmissionResult.Forbidden)
     else
-      BlogTable.acceptProblem(connection, problemSlug, blogId, actor.username).map {
+      BlogProblemLinkMutationTable.acceptProblem(connection, problemSlug, blogId, actor.username).map {
         case true => AcceptBlogProblemSubmissionResult.Accepted
         case false => AcceptBlogProblemSubmissionResult.NotFound
       }
@@ -212,7 +212,7 @@ object BlogMutationCommands:
   ): IO[UnlinkBlogFromProblemResult] =
     if !ProblemCommands.canManageProblemCatalog(actor) then IO.pure(UnlinkBlogFromProblemResult.Forbidden)
     else
-      BlogTable.unlinkProblem(connection, problemSlug, blogId).map {
+      BlogProblemLinkMutationTable.unlinkProblem(connection, problemSlug, blogId).map {
         case true => UnlinkBlogFromProblemResult.Unlinked
         case false => UnlinkBlogFromProblemResult.NotFound
       }

@@ -7,7 +7,7 @@ import domains.auth.model.AuthUser
 import domains.problem.model.response.{ProblemAccessEvaluation, ProblemSetMemberTarget}
 import domains.problem.application.utils.ProblemCommandSupport.{enrichProblemPermissions, evaluateProblemPermissions}
 import domains.problem.model.{ProblemDataManifest, ProblemId, ProblemSlug}
-import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem.ProblemQueryTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 
 import java.sql.Connection
@@ -35,17 +35,17 @@ object ProblemCommands:
   def problemSlugConflictsWith(connection: Connection, rawValue: String): IO[Boolean] =
     ProblemSlug.parse(rawValue) match
       case Left(_) => IO.pure(false)
-      case Right(slug) => ProblemTable.findBySlug(connection, slug).map(_.nonEmpty)
+      case Right(slug) => ProblemQueryTable.findBySlug(connection, slug).map(_.nonEmpty)
 
   def resolveProblemSetMemberTarget(connection: Connection, slug: ProblemSlug): IO[Option[ProblemSetMemberTarget]] =
-    ProblemTable.findBySlug(connection, slug).map(_.map(problem => ProblemSetMemberTarget(problem.id)))
+    ProblemQueryTable.findBySlug(connection, slug).map(_.map(problem => ProblemSetMemberTarget(problem.id)))
 
   def resolveSubmissionTarget(
     connection: Connection,
     actor: AuthUser,
     slug: ProblemSlug
   ): IO[ResolveSubmissionTargetResult] =
-    ProblemTable.findBySlug(connection, slug).flatMap {
+    ProblemQueryTable.findBySlug(connection, slug).flatMap {
       case None =>
         IO.pure(ResolveSubmissionTargetResult.ProblemNotFound)
       case Some(problem) =>
@@ -60,7 +60,7 @@ object ProblemCommands:
     actor: AuthUser,
     slug: ProblemSlug
   ): IO[EvaluateProblemAccessResult] =
-    ProblemTable.findBySlug(connection, slug).flatMap {
+    ProblemQueryTable.findBySlug(connection, slug).flatMap {
       case None =>
         IO.pure(EvaluateProblemAccessResult.ProblemNotFound)
       case Some(problem) =>
@@ -83,7 +83,7 @@ object ProblemCommands:
     if !ProblemPolicy.canEdit(actor) then
       IO.pure(ResolveBlogProblemLinkTargetResult.Forbidden)
     else
-      ProblemTable.findBySlug(connection, slug).map {
+      ProblemQueryTable.findBySlug(connection, slug).map {
         case None => ResolveBlogProblemLinkTargetResult.ProblemNotFound
         case Some(_) => ResolveBlogProblemLinkTargetResult.Allowed
       }
@@ -96,7 +96,7 @@ object ProblemCommands:
     problemId: ProblemId,
     problemSlug: ProblemSlug
   ): IO[Option[ProblemDataManifest]] =
-    ProblemTable.findBySlug(connection, problemSlug).flatMap {
+    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
       case Some(problem) if problem.id == problemId =>
         ProblemDataFileTable.manifestForProblem(connection, problemId, problemSlug).map(Some(_))
       case _ =>
