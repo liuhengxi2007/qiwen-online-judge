@@ -13,12 +13,12 @@ import org.http4s.dsl.io.*
 
 object GetProblemSet:
 
-  def routes(context: ProblemSetHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
         ProblemSetHttpRequestMappers.problemSetSlug(problemSetSlug) match
           case Left(message) =>
             ProblemSetHttpResponseMappers.validationErrorResponse(message)
           case Right(parsedProblemSetSlug) =>
-            context.handlers.execute(request, parsedProblemSetSlug, ProblemSetHttpPlanDefinitions.getProblemSet)
+            handlers.execute(request, parsedProblemSetSlug, ProblemSetHttpPlanDefinitions.getProblemSet)
     }

@@ -4,7 +4,6 @@ package domains.usergroup.http.api
 
 import domains.usergroup.http.*
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
-import domains.usergroup.http.mapper.UserGroupHttpRequestMappers
 import cats.effect.IO
 import domains.usergroup.application.UserGroupCommands
 import domains.usergroup.model.request.{CreateUserGroupRequest}
@@ -15,11 +14,11 @@ import org.http4s.dsl.io.*
 
 object CreateUserGroup:
 
-  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "user-groups" =>
-        context.handlers.executeDecoded[CreateUserGroupRequest, CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult](
+        handlers.executeDecoded[CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult](
           request,
           UserGroupHttpPlanDefinitions.createUserGroup
-        )(UserGroupHttpRequestMappers.createUserGroupRequest)
+        )
     }

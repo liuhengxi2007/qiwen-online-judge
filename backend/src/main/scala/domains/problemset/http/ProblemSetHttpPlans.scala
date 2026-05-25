@@ -18,8 +18,6 @@ object ProblemSetHttpPlans:
 
   case object ListProblemSets extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.problemset.model.response.ProblemSetSummary]]:
 
-    override val name: String = "ListProblemSets"
-
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
@@ -28,8 +26,6 @@ object ProblemSetHttpPlans:
       ProblemSetCommands.listProblemSets(databaseSession, actor, input)
 
   case object GetProblemSet extends PlainAuthenticatedHttpPlan[AuthUser, ProblemSetSlug, ProblemSetCommands.GetProblemSetResult]:
-
-    override val name: String = "GetProblemSet"
 
     override def execute(
       databaseSession: DatabaseSession,
@@ -40,8 +36,6 @@ object ProblemSetHttpPlans:
 
   case object CreateProblemSet extends TransactionAuthenticatedHttpPlan[AuthUser, CreateProblemSetRequest, ProblemSetCommands.CreateProblemSetResult]:
 
-    override val name: String = "CreateProblemSet"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -50,8 +44,6 @@ object ProblemSetHttpPlans:
       ProblemSetCommands.createProblemSet(connection, actor, input)
 
   case object AddProblem extends TransactionAuthenticatedHttpPlan[AuthUser, (ProblemSetSlug, AddProblemToProblemSetRequest), ProblemSetCommands.AddProblemResult]:
-
-    override val name: String = "AddProblem"
 
     override def execute(
       connection: Connection,
@@ -63,8 +55,6 @@ object ProblemSetHttpPlans:
 
   case object UpdateProblemSet extends TransactionAuthenticatedHttpPlan[AuthUser, (ProblemSetSlug, UpdateProblemSetRequest), ProblemSetCommands.UpdateProblemSetResult]:
 
-    override val name: String = "UpdateProblemSet"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -75,8 +65,6 @@ object ProblemSetHttpPlans:
 
   case object DeleteProblemSet extends TransactionAuthenticatedHttpPlan[AuthUser, ProblemSetSlug, ProblemSetCommands.DeleteProblemSetResult]:
 
-    override val name: String = "DeleteProblemSet"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -85,8 +73,6 @@ object ProblemSetHttpPlans:
       ProblemSetCommands.deleteProblemSet(connection, actor, input)
 
   case object RemoveProblem extends TransactionAuthenticatedHttpPlan[AuthUser, (ProblemSetSlug, ProblemSlug), ProblemSetCommands.RemoveProblemResult]:
-
-    override val name: String = "RemoveProblem"
 
     override def execute(
       connection: Connection,

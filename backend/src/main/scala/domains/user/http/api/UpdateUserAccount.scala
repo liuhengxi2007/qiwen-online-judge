@@ -11,8 +11,8 @@ import org.http4s.dsl.io.*
 
 object UpdateUserAccount:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "users" / targetUsername / "settings" / "account" =>
-        context.handlers.executeUserSettingsAccountUpdate(request, UserHttpRequestMappers.username(targetUsername))
+        handlers.executeUserSettingsAccountUpdate(request, UserHttpRequestMappers.username(targetUsername))
     }

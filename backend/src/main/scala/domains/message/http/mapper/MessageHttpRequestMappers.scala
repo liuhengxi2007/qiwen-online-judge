@@ -2,7 +2,7 @@ package domains.message.http.mapper
 
 import domains.message.http.MessageHttpPlans
 import domains.message.model.{MessageConversationId, MessageId}
-import domains.message.model.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.model.request.{MarkConversationReadRequest, SendDirectMessageRequest}
 import domains.user.model.Username
 import shared.http.utils.PageRequestQuerySupport
 import shared.model.PageRequest
@@ -11,9 +11,6 @@ object MessageHttpRequestMappers:
 
   def username(rawUsername: String): Username =
     Username.canonical(rawUsername)
-
-  def createConversationRequest(body: CreateConversationRequest): CreateConversationRequest =
-    body
 
   def inboxRequest(queryParams: Map[String, String]): PageRequest =
     PageRequestQuerySupport.parsePageRequest(queryParams)

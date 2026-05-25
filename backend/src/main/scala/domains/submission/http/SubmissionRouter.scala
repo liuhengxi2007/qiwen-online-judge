@@ -19,14 +19,10 @@ object SubmissionRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val context = SubmissionHttpRouteContext(
-      databaseSession = databaseSession,
-      sessionStore = sessionStore,
-      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    )
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
 
-    ListSubmissions.routes(context) <+>
-      CreateSubmission.routes(context) <+>
-      GetSubmission.routes(context) <+>
-      DeleteSubmission.routes(context) <+>
-      RejudgeSubmission.routes(context)
+    ListSubmissions.routes(handlers) <+>
+      CreateSubmission.routes(handlers) <+>
+      GetSubmission.routes(handlers) <+>
+      DeleteSubmission.routes(handlers) <+>
+      RejudgeSubmission.routes(handlers)

@@ -11,8 +11,8 @@ import org.http4s.dsl.io.*
 
 object ListUserGroups:
 
-  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "user-groups" =>
-        context.handlers.execute(request, UserGroupHttpRequestMappers.listUserGroupsRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
+        handlers.execute(request, UserGroupHttpRequestMappers.listUserGroupsRequest(request.uri.query.params), UserGroupHttpPlanDefinitions.listUserGroups)
     }

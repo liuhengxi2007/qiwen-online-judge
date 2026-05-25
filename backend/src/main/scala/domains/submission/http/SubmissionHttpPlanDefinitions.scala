@@ -24,12 +24,3 @@ object SubmissionHttpPlanDefinitions:
     WithTransaction(SubmissionHttpPlans.DeleteSubmission, SubmissionHttpResponseMappers.mapDeleteResult)
   val rejudgeSubmission: TransactionPlan[domains.submission.model.SubmissionId, domains.submission.application.SubmissionCommands.RejudgeSubmissionResult] =
     WithTransaction(SubmissionHttpPlans.RejudgeSubmission, SubmissionHttpResponseMappers.mapRejudgeResult)
-
-  val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
-    List(
-      listSubmissions,
-      createSubmission,
-      getSubmission,
-      deleteSubmission,
-      rejudgeSubmission
-    ).map(plan => plan.name -> plan).toMap

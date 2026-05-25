@@ -28,14 +28,3 @@ object ProblemSetHttpPlanDefinitions:
     WithTransaction(ProblemSetHttpPlans.DeleteProblemSet, ProblemSetHttpResponseMappers.mapDeleteResult)
   val removeProblem: TransactionPlan[(domains.problemset.model.ProblemSetSlug, domains.problem.model.ProblemSlug), domains.problemset.application.ProblemSetCommands.RemoveProblemResult] =
     WithTransaction(ProblemSetHttpPlans.RemoveProblem, ProblemSetHttpResponseMappers.mapRemoveProblemResult)
-
-  val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
-    List(
-      listProblemSets,
-      getProblemSet,
-      createProblemSet,
-      addProblem,
-      updateProblemSet,
-      deleteProblemSet,
-      removeProblem
-    ).map(plan => plan.name -> plan).toMap

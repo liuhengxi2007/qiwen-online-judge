@@ -5,7 +5,6 @@ package domains.problem.http.api
 
 import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
-import domains.problem.http.mapper.ProblemHttpRequestMappers
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.model.request.{CreateProblemRequest}
@@ -19,8 +18,8 @@ object CreateProblem:
   def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problems" =>
-        context.handlers.executeDecoded[CreateProblemRequest, CreateProblemRequest, ProblemCommands.CreateProblemResult](
+        context.handlers.executeDecoded[CreateProblemRequest, ProblemCommands.CreateProblemResult](
           request,
           context.plans.createProblem
-        )(ProblemHttpRequestMappers.createProblemRequest)
+        )
     }

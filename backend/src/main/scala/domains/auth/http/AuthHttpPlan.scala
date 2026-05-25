@@ -14,9 +14,7 @@ final case class AuthHttpContext(
   sessionStore: SessionStore
 )
 
-trait AuthHttpPlan[Input, Output]:
-
-  def name: String
+trait AuthHttpPlan[Input, Output]
 
 trait PublicPlainAuthHttpPlan[Input, Output] extends AuthHttpPlan[Input, Output]:
 

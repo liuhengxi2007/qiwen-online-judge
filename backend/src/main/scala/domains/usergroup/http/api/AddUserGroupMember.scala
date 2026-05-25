@@ -18,14 +18,14 @@ import org.http4s.dsl.io.*
 
 object AddUserGroupMember:
 
-  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "members" =>
         UserGroupHttpRequestMappers.userGroupSlug(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponseMappers.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            context.handlers.executeDecoded[
+            handlers.executeDecoded[
               AddUserGroupMemberRequest,
               (UserGroupSlug, AddUserGroupMemberRequest),
               UserGroupCommands.AddUserGroupMemberResult

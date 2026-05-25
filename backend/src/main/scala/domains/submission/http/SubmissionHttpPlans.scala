@@ -16,8 +16,6 @@ object SubmissionHttpPlans:
 
   case object ListSubmissions extends PlainAuthenticatedHttpPlan[AuthUser, SubmissionListRequest, SubmissionCommands.ListSubmissionsResult]:
 
-    override val name: String = "ListSubmissions"
-
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
@@ -26,8 +24,6 @@ object SubmissionHttpPlans:
       SubmissionCommands.listSubmissions(databaseSession, actor, input)
 
   case object CreateSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, CreateSubmissionRequest, SubmissionCommands.CreateSubmissionResult]:
-
-    override val name: String = "CreateSubmission"
 
     override def execute(
       connection: Connection,
@@ -38,8 +34,6 @@ object SubmissionHttpPlans:
 
   case object GetSubmission extends PlainAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.GetSubmissionResult]:
 
-    override val name: String = "GetSubmission"
-
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
@@ -49,8 +43,6 @@ object SubmissionHttpPlans:
 
   case object DeleteSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.DeleteSubmissionResult]:
 
-    override val name: String = "DeleteSubmission"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -59,8 +51,6 @@ object SubmissionHttpPlans:
       SubmissionCommands.deleteSubmission(connection, actor, input)
 
   case object RejudgeSubmission extends TransactionAuthenticatedHttpPlan[AuthUser, SubmissionId, SubmissionCommands.RejudgeSubmissionResult]:
-
-    override val name: String = "RejudgeSubmission"
 
     override def execute(
       connection: Connection,

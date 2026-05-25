@@ -4,7 +4,6 @@ package domains.problemset.http.api
 
 import domains.problemset.http.*
 import domains.problemset.http.codec.ProblemSetHttpCodecs.given
-import domains.problemset.http.mapper.ProblemSetHttpRequestMappers
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
 import domains.problemset.model.request.{CreateProblemSetRequest}
@@ -15,11 +14,11 @@ import org.http4s.dsl.io.*
 
 object CreateProblemSet:
 
-  def routes(context: ProblemSetHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problem-sets" =>
-        context.handlers.executeDecoded[CreateProblemSetRequest, CreateProblemSetRequest, ProblemSetCommands.CreateProblemSetResult](
+        handlers.executeDecoded[CreateProblemSetRequest, ProblemSetCommands.CreateProblemSetResult](
           request,
           ProblemSetHttpPlanDefinitions.createProblemSet
-        )(ProblemSetHttpRequestMappers.createProblemSetRequest)
+        )
     }

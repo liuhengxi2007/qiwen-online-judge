@@ -19,8 +19,6 @@ object AuthHttpPlans:
 
   case object Session extends AuthenticatedPlainAuthHttpPlan[Unit, SessionResponse]:
 
-    override val name: String = "Session"
-
     override def execute(
       context: AuthHttpContext,
       actor: AuthUser,
@@ -29,8 +27,6 @@ object AuthHttpPlans:
       IO.pure(AuthHttpResponseMappers.toSessionResponse(actor))
 
   case object Logout extends PublicPlainAuthHttpPlan[Option[SessionToken], LogoutOutput]:
-
-    override val name: String = "Logout"
 
     override def execute(
       context: AuthHttpContext,
@@ -44,8 +40,6 @@ object AuthHttpPlans:
 
   case object Login extends PublicTransactionAuthHttpPlan[LoginRequest, LoginResult]:
 
-    override val name: String = "Login"
-
     override def execute(
       context: AuthHttpContext,
       connection: Connection,
@@ -54,8 +48,6 @@ object AuthHttpPlans:
       AuthCommands.login(connection, context.sessionStore, input)
 
   case object Register extends PublicTransactionAuthHttpPlan[RegisterRequest, RegisterResult]:
-
-    override val name: String = "Register"
 
     override def execute(
       context: AuthHttpContext,

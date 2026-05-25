@@ -11,8 +11,8 @@ import org.http4s.dsl.io.*
 
 object Logout:
 
-  def routes(context: AuthHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: AuthHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "auth" / "logout" =>
-        context.handlers.execute(request, AuthHttpRequestMappers.logoutInput(request), AuthHttpPlanDefinitions.logout)
+        handlers.execute(request, AuthHttpRequestMappers.logoutInput(request), AuthHttpPlanDefinitions.logout)
     }

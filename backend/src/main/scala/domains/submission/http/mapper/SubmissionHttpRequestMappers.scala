@@ -2,7 +2,6 @@ package domains.submission.http.mapper
 
 import domains.submission.model.SubmissionId
 import domains.submission.model.request.{
-  CreateSubmissionRequest,
   SubmissionListRequest,
   SubmissionProblemQuery,
   SubmissionSort,
@@ -13,9 +12,6 @@ import domains.submission.model.request.{
 import shared.http.utils.PageRequestQuerySupport
 
 object SubmissionHttpRequestMappers:
-
-  def createSubmissionRequest(body: CreateSubmissionRequest): CreateSubmissionRequest =
-    body
 
   def submissionId(rawSubmissionId: String): Either[String, SubmissionId] =
     SubmissionId.parse(rawSubmissionId)

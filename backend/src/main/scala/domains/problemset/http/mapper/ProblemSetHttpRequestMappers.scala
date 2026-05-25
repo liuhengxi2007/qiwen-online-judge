@@ -2,14 +2,11 @@ package domains.problemset.http.mapper
 
 import domains.problem.model.ProblemSlug
 import domains.problemset.model.ProblemSetSlug
-import domains.problemset.model.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.model.request.{AddProblemToProblemSetRequest, UpdateProblemSetRequest}
 import shared.http.utils.PageRequestQuerySupport
 import shared.model.PageRequest
 
 object ProblemSetHttpRequestMappers:
-
-  def createProblemSetRequest(body: CreateProblemSetRequest): CreateProblemSetRequest =
-    body
 
   def problemSetSlug(rawProblemSetSlug: String): Either[String, ProblemSetSlug] =
     ProblemSetSlug.parse(rawProblemSetSlug)

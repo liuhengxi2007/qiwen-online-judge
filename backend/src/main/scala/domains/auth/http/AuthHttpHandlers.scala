@@ -197,6 +197,12 @@ final class AuthHttpHandlers(
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
 
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.PublicPlain[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
+
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.PublicWithTransaction[Input, Output]
@@ -204,6 +210,12 @@ final class AuthHttpHandlers(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
+
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.PublicWithTransaction[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
 
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
@@ -213,6 +225,12 @@ final class AuthHttpHandlers(
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
 
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.AuthenticatedPlain[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
+
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.AuthenticatedWithTransaction[Input, Output]
@@ -220,6 +238,12 @@ final class AuthHttpHandlers(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
+
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.AuthenticatedWithTransaction[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
 
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
@@ -229,6 +253,12 @@ final class AuthHttpHandlers(
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
 
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.SiteManagerPlain[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
+
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.SiteManagerWithTransaction[Input, Output]
@@ -236,3 +266,9 @@ final class AuthHttpHandlers(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
+
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.SiteManagerWithTransaction[Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)

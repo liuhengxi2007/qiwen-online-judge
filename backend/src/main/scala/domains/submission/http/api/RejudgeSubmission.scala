@@ -10,12 +10,12 @@ import org.http4s.dsl.io.*
 
 object RejudgeSubmission:
 
-  def routes(context: SubmissionHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "submissions" / rawSubmissionId / "rejudge" =>
         SubmissionHttpRequestMappers.submissionId(rawSubmissionId) match
           case Left(message) =>
             SubmissionHttpResponseMappers.validationErrorResponse(message)
           case Right(submissionId) =>
-            context.handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.rejudgeSubmission)
+            handlers.execute(request, submissionId, SubmissionHttpPlanDefinitions.rejudgeSubmission)
     }

@@ -22,21 +22,3 @@ object UserHttpPlanDefinitions:
   val updateManagedPreferences = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedPreferences, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
   val updateManagedAccount = SiteManagerWithTransaction(UserHttpPlans.UpdateManagedAccount, UserHttpResponseMappers.mapUpdateUserSettingsOutput)
   val deleteUser = SiteManagerWithTransaction(UserHttpPlans.DeleteUser, UserHttpResponseMappers.mapDeleteUserResult)
-
-  val plans: Map[String, UserHttpPlanRegistry.RegisteredPlan] =
-    List(
-      listUsers,
-      listUserSuggestions,
-      getUserProfile,
-      getUserSettings,
-      listContributionRanklist,
-      listAcceptedRanklist,
-      updateUserPermissions,
-      updateOwnProfile,
-      updateOwnPreferences,
-      updateOwnAccount,
-      updateManagedProfile,
-      updateManagedPreferences,
-      updateManagedAccount,
-      deleteUser
-    ).map(plan => plan.name -> plan).toMap

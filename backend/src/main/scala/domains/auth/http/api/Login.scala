@@ -4,7 +4,6 @@ package domains.auth.http.api
 
 import domains.auth.http.*
 import domains.auth.http.codec.AuthHttpCodecs.given
-import domains.auth.http.mapper.AuthHttpRequestMappers
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.LoginResult
 import domains.auth.model.request.LoginRequest
@@ -15,11 +14,11 @@ import org.http4s.dsl.io.*
 
 object Login:
 
-  def routes(context: AuthHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: AuthHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "auth" / "login" =>
-        context.handlers.executeDecoded[LoginRequest, LoginRequest, LoginResult](
+        handlers.executeDecoded[LoginRequest, LoginResult](
           request,
           AuthHttpPlanDefinitions.login
-        )(AuthHttpRequestMappers.loginRequest)
+        )
     }

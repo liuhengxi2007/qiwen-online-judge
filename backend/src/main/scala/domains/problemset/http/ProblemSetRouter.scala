@@ -21,16 +21,12 @@ object ProblemSetRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val context = ProblemSetHttpRouteContext(
-      databaseSession = databaseSession,
-      sessionStore = sessionStore,
-      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    )
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
 
-    ListProblemSets.routes(context) <+>
-      GetProblemSet.routes(context) <+>
-      CreateProblemSet.routes(context) <+>
-      AddProblemToProblemSet.routes(context) <+>
-      UpdateProblemSet.routes(context) <+>
-      DeleteProblemSet.routes(context) <+>
-      RemoveProblemFromProblemSet.routes(context)
+    ListProblemSets.routes(handlers) <+>
+      GetProblemSet.routes(handlers) <+>
+      CreateProblemSet.routes(handlers) <+>
+      AddProblemToProblemSet.routes(handlers) <+>
+      UpdateProblemSet.routes(handlers) <+>
+      DeleteProblemSet.routes(handlers) <+>
+      RemoveProblemFromProblemSet.routes(handlers)

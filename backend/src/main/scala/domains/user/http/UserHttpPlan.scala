@@ -14,8 +14,7 @@ final case class UserHttpContext(
   sessionStore: SessionStore
 )
 
-trait UserHttpPlan[Input, Output]:
-  def name: String
+trait UserHttpPlan[Input, Output]
 
 trait AuthenticatedPlainUserHttpPlan[Input, Output] extends UserHttpPlan[Input, Output]:
   def execute(context: UserHttpContext, actor: AuthUser, input: Input): IO[Output]
@@ -31,31 +30,26 @@ trait SiteManagerTransactionUserHttpPlan[Input, Output] extends UserHttpPlan[Inp
 
 object UserHttpPlanRegistry:
 
-  sealed trait RegisteredPlan:
-    def name: String
+  sealed trait RegisteredPlan
 
   object RegisteredPlan:
 
     final case class AuthenticatedPlain[Input, Output](
       plan: AuthenticatedPlainUserHttpPlan[Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
-    ) extends RegisteredPlan:
-      override val name: String = plan.name
+    ) extends RegisteredPlan
 
     final case class AuthenticatedWithTransaction[Input, Output](
       plan: AuthenticatedTransactionUserHttpPlan[Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
-    ) extends RegisteredPlan:
-      override val name: String = plan.name
+    ) extends RegisteredPlan
 
     final case class SiteManagerPlain[Input, Output](
       plan: SiteManagerPlainUserHttpPlan[Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
-    ) extends RegisteredPlan:
-      override val name: String = plan.name
+    ) extends RegisteredPlan
 
     final case class SiteManagerWithTransaction[Input, Output](
       plan: SiteManagerTransactionUserHttpPlan[Input, Output],
       toResponse: Output => IO[org.http4s.Response[IO]]
-    ) extends RegisteredPlan:
-      override val name: String = plan.name
+    ) extends RegisteredPlan

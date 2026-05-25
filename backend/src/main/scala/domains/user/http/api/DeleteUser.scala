@@ -12,8 +12,8 @@ import org.http4s.dsl.io.*
 
 object DeleteUser:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "users" / targetUsername / "delete" =>
-        context.handlers.execute(request, UserHttpRequestMappers.username(targetUsername), deleteUser)
+        handlers.execute(request, UserHttpRequestMappers.username(targetUsername), deleteUser)
     }

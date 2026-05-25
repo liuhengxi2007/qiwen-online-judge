@@ -24,24 +24,20 @@ object UserRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val context = UserHttpRouteContext(
-      databaseSession = databaseSession,
-      sessionStore = sessionStore,
-      handlers = new UserHttpHandlers(databaseSession, sessionStore)
-    )
+    val handlers = new UserHttpHandlers(databaseSession, sessionStore)
 
     val endpointRoutes = List(
-      ListUsers.routes(context),
-      ListUserSuggestions.routes(context),
-      GetUserProfile.routes(context),
-      GetUserSettings.routes(context),
-      ListContributionRanklist.routes(context),
-      ListAcceptedRanklist.routes(context),
-      UpdateUserPermissions.routes(context),
-      UpdateUserProfile.routes(context),
-      UpdateUserPreferences.routes(context),
-      UpdateUserAccount.routes(context),
-      DeleteUser.routes(context)
+      ListUsers.routes(handlers),
+      ListUserSuggestions.routes(handlers),
+      GetUserProfile.routes(handlers),
+      GetUserSettings.routes(handlers),
+      ListContributionRanklist.routes(handlers),
+      ListAcceptedRanklist.routes(handlers),
+      UpdateUserPermissions.routes(handlers),
+      UpdateUserProfile.routes(handlers),
+      UpdateUserPreferences.routes(handlers),
+      UpdateUserAccount.routes(handlers),
+      DeleteUser.routes(handlers)
     )
 
     endpointRoutes.reduce(_ <+> _)

@@ -30,15 +30,3 @@ object UserGroupHttpPlanDefinitions:
     WithTransaction(UserGroupHttpPlans.UpdateMemberRole, UserGroupHttpResponseMappers.mapUpdateMemberRoleResult)
   val removeMember: TransactionPlan[(domains.usergroup.model.UserGroupSlug, domains.user.model.Username), domains.usergroup.application.UserGroupCommands.RemoveUserGroupMemberResult] =
     WithTransaction(UserGroupHttpPlans.RemoveMember, UserGroupHttpResponseMappers.mapRemoveMemberResult)
-
-  val plans: Map[String, AuthenticatedHttpPlanRegistry.RegisteredPlan] =
-    List(
-      listUserGroups,
-      getUserGroup,
-      createUserGroup,
-      updateUserGroup,
-      deleteUserGroup,
-      addMember,
-      updateMemberRole,
-      removeMember
-    ).map(plan => plan.name -> plan).toMap

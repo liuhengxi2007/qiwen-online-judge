@@ -2,14 +2,11 @@ package domains.usergroup.http.mapper
 
 import domains.user.model.Username
 import domains.usergroup.model.UserGroupSlug
-import domains.usergroup.model.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.model.request.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
 import shared.http.utils.PageRequestQuerySupport
 import shared.model.PageRequest
 
 object UserGroupHttpRequestMappers:
-
-  def createUserGroupRequest(body: CreateUserGroupRequest): CreateUserGroupRequest =
-    body
 
   def userGroupSlug(rawGroupSlug: String): Either[String, UserGroupSlug] =
     UserGroupSlug.parse(rawGroupSlug)

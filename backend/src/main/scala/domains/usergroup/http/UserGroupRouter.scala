@@ -22,17 +22,13 @@ object UserGroupRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val context = UserGroupHttpRouteContext(
-      databaseSession = databaseSession,
-      sessionStore = sessionStore,
-      handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
-    )
+    val handlers = new AuthenticatedHttpExecutor(databaseSession, sessionStore)
 
-    ListUserGroups.routes(context) <+>
-      GetUserGroup.routes(context) <+>
-      CreateUserGroup.routes(context) <+>
-      UpdateUserGroup.routes(context) <+>
-      DeleteUserGroup.routes(context) <+>
-      AddUserGroupMember.routes(context) <+>
-      UpdateUserGroupMemberRole.routes(context) <+>
-      RemoveUserGroupMember.routes(context)
+    ListUserGroups.routes(handlers) <+>
+      GetUserGroup.routes(handlers) <+>
+      CreateUserGroup.routes(handlers) <+>
+      UpdateUserGroup.routes(handlers) <+>
+      DeleteUserGroup.routes(handlers) <+>
+      AddUserGroupMember.routes(handlers) <+>
+      UpdateUserGroupMemberRole.routes(handlers) <+>
+      RemoveUserGroupMember.routes(handlers)

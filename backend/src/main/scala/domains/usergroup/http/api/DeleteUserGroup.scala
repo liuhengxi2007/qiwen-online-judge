@@ -13,12 +13,12 @@ import org.http4s.dsl.io.*
 
 object DeleteUserGroup:
 
-  def routes(context: UserGroupHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "user-groups" / groupSlug / "delete" =>
         UserGroupHttpRequestMappers.userGroupSlug(groupSlug) match
           case Left(message) =>
             UserGroupHttpResponseMappers.validationErrorResponse(message)
           case Right(parsedGroupSlug) =>
-            context.handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
+            handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
     }

@@ -28,6 +28,14 @@ import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
+final case class BlogHttpRouteContext(
+  databaseSession: DatabaseSession,
+  sessionStore: SessionStore,
+  notificationEventHub: NotificationEventHub,
+  handlers: AuthenticatedHttpExecutor,
+  plans: BlogHttpPlanDefinitions.RegisteredPlans
+)
+
 object BlogRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =

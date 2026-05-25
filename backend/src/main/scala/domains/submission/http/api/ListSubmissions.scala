@@ -9,9 +9,9 @@ import org.http4s.dsl.io.*
 
 object ListSubmissions:
 
-  def routes(context: SubmissionHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "submissions" =>
         val listRequest = SubmissionHttpRequestMappers.listSubmissionsRequest(request.uri.query.params)
-        context.handlers.execute(request, listRequest, SubmissionHttpPlanDefinitions.listSubmissions)
+        handlers.execute(request, listRequest, SubmissionHttpPlanDefinitions.listSubmissions)
     }

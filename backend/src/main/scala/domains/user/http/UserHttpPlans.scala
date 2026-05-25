@@ -22,8 +22,6 @@ object UserHttpPlans:
 
   case object ListUsers extends SiteManagerPlainUserHttpPlan[UserListRequest, UserListResponse]:
 
-    override val name: String = "ListUsers"
-
     override def execute(
       context: UserHttpContext,
       actor: SiteManagerUser,
@@ -32,8 +30,6 @@ object UserHttpPlans:
       UserQueryCommands.listUsers(context.databaseSession, actor, input)
 
   case object GetUserProfile extends AuthenticatedPlainUserHttpPlan[Username, UserQueryCommands.GetUserProfileResult]:
-
-    override val name: String = "GetUserProfile"
 
     override def execute(
       context: UserHttpContext,
@@ -44,8 +40,6 @@ object UserHttpPlans:
 
   case object ListUserSuggestions extends AuthenticatedPlainUserHttpPlan[UserSearchQuery, List[UserIdentity]]:
 
-    override val name: String = "ListUserSuggestions"
-
     override def execute(
       context: UserHttpContext,
       actor: AuthUser,
@@ -54,8 +48,6 @@ object UserHttpPlans:
       UserQueryCommands.listSuggestions(context.databaseSession, actor, input)
 
   case object GetUserSettings extends AuthenticatedPlainUserHttpPlan[Username, UserMutationCommands.GetUserSettingsResult]:
-
-    override val name: String = "GetUserSettings"
 
     override def execute(
       context: UserHttpContext,
@@ -66,8 +58,6 @@ object UserHttpPlans:
 
   case object ListContributionRanklist extends AuthenticatedPlainUserHttpPlan[PageRequest, PageResponse[UserRanklistItem]]:
 
-    override val name: String = "ListContributionRanklist"
-
     override def execute(
       context: UserHttpContext,
       actor: AuthUser,
@@ -76,8 +66,6 @@ object UserHttpPlans:
       UserQueryCommands.listContributionRanklist(context.databaseSession, actor, input)
 
   case object ListAcceptedRanklist extends AuthenticatedPlainUserHttpPlan[PageRequest, PageResponse[UserAcceptedRanklistItem]]:
-
-    override val name: String = "ListAcceptedRanklist"
 
     override def execute(
       context: UserHttpContext,
@@ -88,8 +76,6 @@ object UserHttpPlans:
 
   case object UpdateUserPermissions
       extends SiteManagerTransactionUserHttpPlan[(Username, UpdateUserPermissionsRequest), UserMutationCommands.UpdateUserPermissionsResult]:
-
-    override val name: String = "UpdateUserPermissions"
 
     override def execute(
       context: UserHttpContext,
@@ -103,8 +89,6 @@ object UserHttpPlans:
 
   case object UpdateOwnProfile
       extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnProfileRequest), UpdateUserSettingsOutput]:
-
-    override val name: String = "UpdateOwnProfile"
 
     override def execute(
       context: UserHttpContext,
@@ -126,8 +110,6 @@ object UserHttpPlans:
   case object UpdateOwnPreferences
       extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnPreferencesRequest), UpdateUserSettingsOutput]:
 
-    override val name: String = "UpdateOwnPreferences"
-
     override def execute(
       context: UserHttpContext,
       connection: Connection,
@@ -147,8 +129,6 @@ object UserHttpPlans:
 
   case object UpdateOwnAccount
       extends AuthenticatedTransactionUserHttpPlan[(Username, UpdateOwnAccountRequest), UpdateUserSettingsOutput]:
-
-    override val name: String = "UpdateOwnAccount"
 
     override def execute(
       context: UserHttpContext,
@@ -170,8 +150,6 @@ object UserHttpPlans:
   case object UpdateManagedProfile
       extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserProfileRequest), UpdateUserSettingsOutput]:
 
-    override val name: String = "UpdateManagedProfile"
-
     override def execute(
       context: UserHttpContext,
       connection: Connection,
@@ -191,8 +169,6 @@ object UserHttpPlans:
 
   case object UpdateManagedPreferences
       extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserPreferencesRequest), UpdateUserSettingsOutput]:
-
-    override val name: String = "UpdateManagedPreferences"
 
     override def execute(
       context: UserHttpContext,
@@ -214,8 +190,6 @@ object UserHttpPlans:
   case object UpdateManagedAccount
       extends SiteManagerTransactionUserHttpPlan[(Username, UpdateManagedUserAccountRequest), UpdateUserSettingsOutput]:
 
-    override val name: String = "UpdateManagedAccount"
-
     override def execute(
       context: UserHttpContext,
       connection: Connection,
@@ -234,8 +208,6 @@ object UserHttpPlans:
         )
 
   case object DeleteUser extends SiteManagerTransactionUserHttpPlan[Username, UserMutationCommands.DeleteUserResult]:
-
-    override val name: String = "DeleteUser"
 
     override def execute(
       context: UserHttpContext,

@@ -13,12 +13,12 @@ import org.http4s.dsl.io.*
 
 object RemoveProblemFromProblemSet:
 
-  def routes(context: ProblemSetHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "problem-sets" / problemSetSlug / "problems" / linkedProblemSlug / "remove" =>
         ProblemSetHttpRequestMappers.removeProblemInput(problemSetSlug, linkedProblemSlug) match
           case Left(message) =>
             ProblemSetHttpResponseMappers.validationErrorResponse(message)
           case Right(input) =>
-            context.handlers.execute(request, input, ProblemSetHttpPlanDefinitions.removeProblem)
+            handlers.execute(request, input, ProblemSetHttpPlanDefinitions.removeProblem)
     }

@@ -18,8 +18,6 @@ object UserGroupHttpPlans:
 
   case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.model.response.UserGroupSummary]]:
 
-    override val name: String = "ListUserGroups"
-
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
@@ -28,8 +26,6 @@ object UserGroupHttpPlans:
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.GetUserGroupResult]:
-
-    override val name: String = "GetUserGroup"
 
     override def execute(
       databaseSession: DatabaseSession,
@@ -40,8 +36,6 @@ object UserGroupHttpPlans:
 
   case object CreateUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult]:
 
-    override val name: String = "CreateUserGroup"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -50,8 +44,6 @@ object UserGroupHttpPlans:
       UserGroupCommands.createUserGroup(connection, actor, input)
 
   case object UpdateUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, UpdateUserGroupRequest), UserGroupCommands.UpdateUserGroupResult]:
-
-    override val name: String = "UpdateUserGroup"
 
     override def execute(
       connection: Connection,
@@ -63,8 +55,6 @@ object UserGroupHttpPlans:
 
   case object DeleteUserGroup extends TransactionAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.DeleteUserGroupResult]:
 
-    override val name: String = "DeleteUserGroup"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -73,8 +63,6 @@ object UserGroupHttpPlans:
       UserGroupCommands.deleteUserGroup(connection, actor, input)
 
   case object AddMember extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, AddUserGroupMemberRequest), UserGroupCommands.AddUserGroupMemberResult]:
-
-    override val name: String = "AddMember"
 
     override def execute(
       connection: Connection,
@@ -86,8 +74,6 @@ object UserGroupHttpPlans:
 
   case object UpdateMemberRole extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, Username, UpdateUserGroupMemberRoleRequest), UserGroupCommands.UpdateUserGroupMemberRoleResult]:
 
-    override val name: String = "UpdateMemberRole"
-
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -97,8 +83,6 @@ object UserGroupHttpPlans:
       UserGroupCommands.updateUserGroupMemberRole(connection, actor, slug, targetUsername, request)
 
   case object RemoveMember extends TransactionAuthenticatedHttpPlan[AuthUser, (UserGroupSlug, Username), UserGroupCommands.RemoveUserGroupMemberResult]:
-
-    override val name: String = "RemoveMember"
 
     override def execute(
       connection: Connection,

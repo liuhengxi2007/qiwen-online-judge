@@ -15,19 +15,16 @@ import java.sql.Connection
 object NotificationHttpPlans:
 
   case object ListNotifications extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, domains.notification.model.response.NotificationListResponse]:
-    override val name: String = "ListNotifications"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.notification.model.response.NotificationListResponse] =
       NotificationCommands.listNotifications(databaseSession, actor, input)
 
   case object GetUnreadCount extends PlainAuthenticatedHttpPlan[AuthUser, Unit, domains.notification.model.response.NotificationUnreadCountResponse]:
-    override val name: String = "GetUnreadCount"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[domains.notification.model.response.NotificationUnreadCountResponse] =
       val _ = input
       NotificationCommands.getUnreadCount(databaseSession, actor)
 
   final class MarkNotificationReadPlan(notificationEventHub: NotificationEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, NotificationId, NotificationCommands.MarkNotificationReadResult]:
-    override val name: String = "MarkNotificationRead"
     override def execute(connection: Connection, actor: AuthUser, input: NotificationId): IO[NotificationCommands.MarkNotificationReadResult] =
       NotificationCommands.markNotificationRead(connection, actor, input).flatTap {
         case NotificationCommands.MarkNotificationReadResult.Marked =>
@@ -38,7 +35,6 @@ object NotificationHttpPlans:
 
   final class MarkAllNotificationsReadPlan(notificationEventHub: NotificationEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, Unit, NotificationCommands.MarkAllNotificationsReadResult]:
-    override val name: String = "MarkAllNotificationsRead"
     override def execute(connection: Connection, actor: AuthUser, input: Unit): IO[NotificationCommands.MarkAllNotificationsReadResult] =
       val _ = input
       NotificationCommands.markAllNotificationsRead(connection, actor).flatTap(_ =>

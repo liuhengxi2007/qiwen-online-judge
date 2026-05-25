@@ -84,6 +84,12 @@ final class AuthenticatedHttpExecutor(
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
 
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.Plain[AuthUser, Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)
+
   def executeDecoded[Body, Input, Output](
     request: Request[IO],
     registeredPlan: RegisteredPlan.WithTransaction[AuthUser, Input, Output]
@@ -91,3 +97,9 @@ final class AuthenticatedHttpExecutor(
     toInput: Body => Input
   )(using org.http4s.EntityDecoder[IO, Body]): IO[Response[IO]] =
     runDecodedPlan(request, registeredPlan)(toInput)
+
+  def executeDecoded[Input, Output](
+    request: Request[IO],
+    registeredPlan: RegisteredPlan.WithTransaction[AuthUser, Input, Output]
+  )(using org.http4s.EntityDecoder[IO, Input]): IO[Response[IO]] =
+    runDecodedPlan(request, registeredPlan)((body: Input) => body)

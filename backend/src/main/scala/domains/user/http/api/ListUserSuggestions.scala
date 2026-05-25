@@ -14,10 +14,10 @@ import org.http4s.dsl.io.*
 
 object ListUserSuggestions:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / "suggestions" =>
         UserHttpRequestMappers.userSearchQuery(request.uri.query.params) match
           case Left(message) => UserHttpResponseMappers.validationErrorResponse(message)
-          case Right(query) => context.handlers.execute(request, query, listUserSuggestions)
+          case Right(query) => handlers.execute(request, query, listUserSuggestions)
     }

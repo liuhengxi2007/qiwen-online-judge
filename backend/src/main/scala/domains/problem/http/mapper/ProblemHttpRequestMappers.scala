@@ -2,13 +2,10 @@ package domains.problem.http.mapper
 
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
-import domains.problem.model.request.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
+import domains.problem.model.request.{DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
 import shared.http.utils.PageRequestQuerySupport
 
 object ProblemHttpRequestMappers:
-
-  def createProblemRequest(body: CreateProblemRequest): CreateProblemRequest =
-    body
 
   def problemSlug(rawProblemSlug: String): Either[String, ProblemSlug] =
     ProblemSlug.parse(rawProblemSlug)

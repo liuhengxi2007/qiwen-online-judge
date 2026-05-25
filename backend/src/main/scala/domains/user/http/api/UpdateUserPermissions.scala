@@ -17,10 +17,10 @@ import org.http4s.dsl.io.*
 
 object UpdateUserPermissions:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "users" / targetUsername / "permissions" =>
-        context.handlers.executeDecoded[UpdateUserPermissionsRequest, (Username, UpdateUserPermissionsRequest), UserMutationCommands.UpdateUserPermissionsResult](
+        handlers.executeDecoded[UpdateUserPermissionsRequest, (Username, UpdateUserPermissionsRequest), UserMutationCommands.UpdateUserPermissionsResult](
           request,
           updateUserPermissions
         )(body => UserHttpRequestMappers.updateUserPermissionsInput(targetUsername, body))

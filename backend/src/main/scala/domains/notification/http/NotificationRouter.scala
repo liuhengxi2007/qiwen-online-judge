@@ -16,6 +16,14 @@ import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
+final case class NotificationHttpRouteContext(
+  databaseSession: DatabaseSession,
+  sessionStore: SessionStore,
+  notificationEventHub: NotificationEventHub,
+  handlers: AuthenticatedHttpExecutor,
+  plans: NotificationHttpPlanDefinitions.RegisteredPlans
+)
+
 object NotificationRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =

@@ -27,6 +27,14 @@ import domains.auth.http.AuthenticatedHttpExecutor
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
+final case class ProblemHttpRouteContext(
+  databaseSession: DatabaseSession,
+  sessionStore: SessionStore,
+  problemDataStorage: ProblemDataStorage,
+  handlers: AuthenticatedHttpExecutor,
+  plans: ProblemHttpPlanDefinitions.RegisteredPlans
+)
+
 object ProblemRouter:
 
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, problemDataStorage: ProblemDataStorage): HttpRoutes[IO] =

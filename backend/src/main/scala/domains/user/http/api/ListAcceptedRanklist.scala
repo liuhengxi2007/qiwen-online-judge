@@ -12,8 +12,8 @@ import org.http4s.dsl.io.*
 
 object ListAcceptedRanklist:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / "ranklist" / "accepted" =>
-        context.handlers.execute(request, UserHttpRequestMappers.ranklistRequest(request.uri.query.params), listAcceptedRanklist)
+        handlers.execute(request, UserHttpRequestMappers.ranklistRequest(request.uri.query.params), listAcceptedRanklist)
     }

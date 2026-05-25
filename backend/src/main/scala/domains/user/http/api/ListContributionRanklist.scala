@@ -12,8 +12,8 @@ import org.http4s.dsl.io.*
 
 object ListContributionRanklist:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / "ranklist" =>
-        context.handlers.execute(request, UserHttpRequestMappers.ranklistRequest(request.uri.query.params), listContributionRanklist)
+        handlers.execute(request, UserHttpRequestMappers.ranklistRequest(request.uri.query.params), listContributionRanklist)
     }

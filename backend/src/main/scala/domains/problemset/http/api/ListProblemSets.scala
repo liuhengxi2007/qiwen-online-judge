@@ -11,8 +11,8 @@ import org.http4s.dsl.io.*
 
 object ListProblemSets:
 
-  def routes(context: ProblemSetHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "problem-sets" =>
-        context.handlers.execute(request, ProblemSetHttpRequestMappers.listProblemSetsRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
+        handlers.execute(request, ProblemSetHttpRequestMappers.listProblemSetsRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
     }

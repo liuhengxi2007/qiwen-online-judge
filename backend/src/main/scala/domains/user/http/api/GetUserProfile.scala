@@ -12,8 +12,8 @@ import org.http4s.dsl.io.*
 
 object GetUserProfile:
 
-  def routes(context: UserHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
+  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ GET -> Root / "api" / "users" / targetUsername / "profile" =>
-        context.handlers.execute(request, UserHttpRequestMappers.username(targetUsername), getUserProfile)
+        handlers.execute(request, UserHttpRequestMappers.username(targetUsername), getUserProfile)
     }

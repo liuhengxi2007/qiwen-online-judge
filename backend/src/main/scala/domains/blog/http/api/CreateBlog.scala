@@ -4,7 +4,6 @@ package domains.blog.http.api
 
 import domains.blog.http.*
 import domains.blog.http.codec.BlogHttpCodecs.given
-import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
 import domains.blog.application.BlogCommands
 import domains.blog.model.request.CreateBlogRequest
@@ -18,8 +17,8 @@ object CreateBlog:
   def routes(context: BlogHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case request @ POST -> Root / "api" / "blogs" =>
-        context.handlers.executeDecoded[CreateBlogRequest, CreateBlogRequest, BlogCommands.CreateBlogResult](
+        context.handlers.executeDecoded[CreateBlogRequest, BlogCommands.CreateBlogResult](
           request,
           context.plans.createBlog
-        )(BlogHttpRequestMappers.createBlogRequest)
+        )
     }

@@ -19,7 +19,6 @@ import java.sql.Connection
 object MessageHttpPlans:
 
   case object ListInbox extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, domains.message.model.response.MessageInboxResponse]:
-    override val name: String = "ListInbox"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: PageRequest): IO[domains.message.model.response.MessageInboxResponse] =
       MessageCommands.listInbox(databaseSession, actor, input, JdbcMessageRepository)
 
@@ -30,12 +29,10 @@ object MessageHttpPlans:
   )
 
   case object GetConversationHistory extends PlainAuthenticatedHttpPlan[AuthUser, HistoryInput, GetConversationHistoryResult]:
-    override val name: String = "GetConversationHistory"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: HistoryInput): IO[GetConversationHistoryResult] =
       MessageCommands.getConversationHistory(databaseSession, actor, input.conversationId, input.beforeMessageId, input.limit, JdbcMessageRepository)
 
   case object CreateConversation extends TransactionAuthenticatedHttpPlan[AuthUser, CreateConversationRequest, CreateConversationResult]:
-    override val name: String = "CreateConversation"
     override def execute(connection: Connection, actor: AuthUser, input: CreateConversationRequest): IO[CreateConversationResult] =
       MessageCommands.createConversation(connection, actor, input, JdbcMessageRepository)
 
@@ -46,7 +43,6 @@ object MessageHttpPlans:
 
   final class SendMessagePlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, (MessageConversationId, SendDirectMessageRequest), SendMessageOutput]:
-    override val name: String = "SendMessage"
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -67,7 +63,6 @@ object MessageHttpPlans:
 
   final class MarkConversationReadPlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, (MessageConversationId, MarkConversationReadRequest), MarkConversationReadOutput]:
-    override val name: String = "MarkConversationRead"
     override def execute(
       connection: Connection,
       actor: AuthUser,
@@ -86,7 +81,6 @@ object MessageHttpPlans:
 
   final class MarkAllMessagesReadPlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, Unit, MarkAllMessagesReadResult]:
-    override val name: String = "MarkAllMessagesRead"
     override def execute(connection: Connection, actor: AuthUser, input: Unit): IO[MarkAllMessagesReadResult] =
       val _ = input
       MessageCommands.markAllMessagesRead(connection, actor, JdbcMessageRepository).flatTap { result =>
@@ -100,14 +94,12 @@ object MessageHttpPlans:
       }
 
   case object ListBlocks extends PlainAuthenticatedHttpPlan[AuthUser, Unit, List[domains.message.model.response.MessageBlockEntry]]:
-    override val name: String = "ListBlocks"
     override def execute(databaseSession: DatabaseSession, actor: AuthUser, input: Unit): IO[List[domains.message.model.response.MessageBlockEntry]] =
       val _ = input
       MessageCommands.listBlocks(databaseSession, actor, JdbcMessageRepository)
 
   final class AddBlockPlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, Username, AddBlockResult]:
-    override val name: String = "AddBlock"
     override def execute(connection: Connection, actor: AuthUser, input: Username): IO[AddBlockResult] =
       MessageCommands.addBlock(connection, actor, input, JdbcMessageRepository).flatTap(_ =>
         messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
@@ -115,7 +107,6 @@ object MessageHttpPlans:
 
   final class RemoveBlockPlan(messageEventHub: MessageEventHub)
       extends TransactionAuthenticatedHttpPlan[AuthUser, Username, RemoveBlockResult]:
-    override val name: String = "RemoveBlock"
     override def execute(connection: Connection, actor: AuthUser, input: Username): IO[RemoveBlockResult] =
       MessageCommands.removeBlock(connection, actor, input, JdbcMessageRepository).flatTap(_ =>
         messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)

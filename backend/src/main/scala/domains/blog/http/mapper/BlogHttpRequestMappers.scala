@@ -2,15 +2,12 @@ package domains.blog.http.mapper
 
 import domains.blog.http.BlogHttpPlans
 import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.model.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.model.request.{CreateBlogCommentRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.problem.model.ProblemSlug
 import domains.user.model.Username
 import shared.http.utils.PageRequestQuerySupport
 
 object BlogHttpRequestMappers:
-
-  def createBlogRequest(body: CreateBlogRequest): CreateBlogRequest =
-    body
 
   def blogId(rawBlogId: String): Either[String, BlogId] =
     BlogId.parse(rawBlogId)
