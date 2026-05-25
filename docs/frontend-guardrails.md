@@ -196,6 +196,7 @@ Feature layer roles:
 
 Rules:
 
+- a long route page may keep page-private components or pure helpers under `pages/<PageName>/components` or `pages/<PageName>/functions`; promote them to feature-level `components`, `hooks`, `lib`, or `state` only after another page actually uses them
 - `src/features/<domain>/domain` no longer exists; do not add feature domain barrels or compatibility re-exports
 - bare `src/features/<domain>/model` must not import `model/request`, `model/response`, `http`, `lib`, `state`, `hooks`, `components`, or `pages`
 - `src/features/<domain>/model/request` and `src/features/<domain>/model/response` must not import `http`, `state`, `hooks`, `components`, or `pages`

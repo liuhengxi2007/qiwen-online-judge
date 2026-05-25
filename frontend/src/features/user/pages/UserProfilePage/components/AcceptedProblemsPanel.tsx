@@ -1,0 +1,115 @@
+import { Link } from 'react-router-dom'
+
+import { Button } from '@/components/ui/button'
+import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
+import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
+import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
+import type { UserAcceptedProblem } from '@/features/user/model/UserAcceptedProblem'
+import { formatDateTime, formatUtcOffsetTitle } from '@/shared/lib/date-time'
+import { useI18n } from '@/shared/i18n/use-i18n'
+
+type AcceptedProblemsPanelProps = {
+  acceptedProblems: UserAcceptedProblem[]
+  acceptedProblemsExpanded: boolean
+  acceptedProblemsPageItems: UserAcceptedProblem[]
+  acceptedProblemsTotalPages: number
+  hasProfile: boolean
+  isLoadingProfile: boolean
+  normalizedAcceptedProblemsPage: number
+  onNextPage: () => void
+  onPreviousPage: () => void
+  onToggleExpanded: () => void
+}
+
+export function AcceptedProblemsPanel({
+  acceptedProblems,
+  acceptedProblemsExpanded,
+  acceptedProblemsPageItems,
+  acceptedProblemsTotalPages,
+  hasProfile,
+  isLoadingProfile,
+  normalizedAcceptedProblemsPage,
+  onNextPage,
+  onPreviousPage,
+  onToggleExpanded,
+}: AcceptedProblemsPanelProps) {
+  const { t } = useI18n()
+  const problemTitleDisplayMode = useProblemTitleDisplayMode()
+
+  return (
+    <div className="rounded-3xl bg-emerald-50 p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-emerald-800">{t('userProfile.acceptedProblems')}</p>
+          <p className="mt-2 text-3xl font-semibold text-emerald-700">
+            {hasProfile ? String(acceptedProblems.length) : isLoadingProfile ? t('common.loading') : '--'}
+          </p>
+        </div>
+        <Button
+          disabled={!hasProfile || acceptedProblems.length === 0}
+          type="button"
+          variant="outline"
+          className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+          onClick={onToggleExpanded}
+        >
+          {acceptedProblemsExpanded ? t('userProfile.hideAcceptedProblems') : t('userProfile.showAcceptedProblems')}
+        </Button>
+      </div>
+
+      {acceptedProblemsExpanded ? (
+        acceptedProblems.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            {acceptedProblemsPageItems.map((problem) => (
+              <div
+                key={problemSlugValue(problem.slug)}
+                className="rounded-2xl border border-emerald-100 bg-white px-4 py-3"
+              >
+                <Link
+                  className="font-medium text-slate-900 hover:underline"
+                  to={`/problems/${problemSlugValue(problem.slug)}`}
+                >
+                  {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
+                </Link>
+                <p className="mt-1 text-sm text-emerald-700">
+                  <span title={formatUtcOffsetTitle(problem.acceptedAt)}>
+                    {t('userProfile.acceptedAt', { acceptedAt: formatDateTime(problem.acceptedAt) })}
+                  </span>
+                </p>
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <p className="text-sm text-emerald-700">
+                {t('userProfile.acceptedProblemsPageStatus', {
+                  page: String(normalizedAcceptedProblemsPage),
+                  totalPages: String(acceptedProblemsTotalPages),
+                })}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  disabled={normalizedAcceptedProblemsPage <= 1}
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+                  onClick={onPreviousPage}
+                >
+                  {t('submission.pagination.previous')}
+                </Button>
+                <Button
+                  disabled={normalizedAcceptedProblemsPage >= acceptedProblemsTotalPages}
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl border-emerald-300 bg-white text-emerald-950"
+                  onClick={onNextPage}
+                >
+                  {t('submission.pagination.next')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-emerald-700">{t('userProfile.acceptedProblemsEmpty')}</p>
+        )
+      ) : null}
+    </div>
+  )
+}

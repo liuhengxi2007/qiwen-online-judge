@@ -1,31 +1,25 @@
 import { useEffect } from 'react'
-import { useNavigate, useParams, Navigate, Link } from 'react-router-dom'
-import { NotebookPen, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { useNavigate, useParams, Navigate } from 'react-router-dom'
+import { NotebookPen } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { usernameValue } from '@/features/user/lib/user-parsers'
-import { blogContentValue, blogTitleValue, parseBlogId } from '@/features/blog/lib/blog-parsers'
-import type { BlogVisibility } from '@/features/blog/model/BlogVisibility'
-import { BlogCommentThread } from '@/features/blog/components/blog-comment-thread'
-import { blogScoreClassName } from '@/features/blog/lib/blog-display'
+import { blogTitleValue, parseBlogId } from '@/features/blog/lib/blog-parsers'
 import { useBlogDetailQuery } from '@/features/blog/hooks/use-blog-detail-query'
 import { useBlogDetailPageModel } from '@/features/blog/hooks/use-blog-detail-page-model'
 import { useSessionGuard } from '@/features/auth/hooks/use-session-guard'
-import { formatProblemTitleDisplay } from '@/features/problem/lib/problem-display'
-import { problemSlugValue } from '@/features/problem/lib/problem-parsers'
 import { useProblemTitleDisplayMode } from '@/features/problem/hooks/use-problem-title-display'
 import { AppSectionBar } from '@/features/auth/components/app-section-bar'
 import { AncestorNavigation } from '@/shared/components/ancestor-navigation'
-import { DateTimeText } from '@/shared/components/date-time-text'
-import { MarkdownDocument } from '@/shared/components/markdown-document'
-import { UserProfileLink } from '@/features/user/components/user-profile-link'
 import { usePageTitle } from '@/shared/hooks/use-page-title'
 import { useI18n } from '@/shared/i18n/use-i18n'
+
+import { BlogArticleContent } from './BlogDetailPage/components/BlogArticleContent'
+import { BlogCommentsSection } from './BlogDetailPage/components/BlogCommentsSection'
+import { BlogEditForm } from './BlogDetailPage/components/BlogEditForm'
+import { BlogMetaVoteBar } from './BlogDetailPage/components/BlogMetaVoteBar'
+import { BlogOwnerActions } from './BlogDetailPage/components/BlogOwnerActions'
 
 export function BlogDetailPage() {
   const { t } = useI18n()
@@ -113,167 +107,14 @@ export function BlogDetailPage() {
             ) : query.blog ? (
               <article>
                 {usernameValue(query.blog.author.username) === usernameValue(user.username) ? (
-                  <div className="mb-5 space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" onClick={model.startEditingBlog}>
-                        {t('common.edit')}
-                      </Button>
-                      <Button type="button" variant="outline" className="rounded-2xl border-rose-200 bg-white text-rose-700" onClick={() => void model.removeBlog()}>
-                        {t('common.delete')}
-                      </Button>
-                    </div>
-                    {query.blog.visibility === 'public' ? (
-                      <div className="rounded-3xl border border-orange-100 bg-orange-50 p-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                          <div className="space-y-2 sm:max-w-xs">
-                            <label className="text-sm font-medium text-orange-950" htmlFor="submit-blog-problem-slug">
-                              {t('blog.problem.submitToProblem')}
-                            </label>
-                            <Input
-                              id="submit-blog-problem-slug"
-                              value={model.submitProblemSlug}
-                              onChange={(event) => model.setSubmitProblemSlug(event.target.value)}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            disabled={model.isSubmittingToProblem}
-                            className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400"
-                            onClick={() => void model.submitToProblem()}
-                          >
-                            {model.isSubmittingToProblem ? t('common.loading') : t('blog.problem.submit')}
-                          </Button>
-                        </div>
-                        {model.submitProblemMessage ? <p className="mt-2 text-sm text-orange-800">{model.submitProblemMessage}</p> : null}
-                      </div>
-                    ) : null}
-                  </div>
+                  <BlogOwnerActions blog={query.blog} model={model} />
                 ) : null}
 
-                {model.isEditingBlog ? (
-                  <div className="mb-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <Input value={model.editBlogTitle} onChange={(event) => model.setEditBlogTitle(event.target.value)} />
-                    <Select value={model.editBlogVisibility} onValueChange={(value) => model.setEditBlogVisibility(value as BlogVisibility)}>
-                      <SelectTrigger className="rounded-2xl border-slate-300 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">{t('blog.visibility.public')}</SelectItem>
-                        <SelectItem value="private">{t('blog.visibility.private')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Textarea className="min-h-56" value={model.editBlogContent} onChange={(event) => model.setEditBlogContent(event.target.value)} />
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" className="rounded-2xl bg-slate-950 text-white" onClick={() => void model.submitBlogEdit()}>
-                        {t('common.save')}
-                      </Button>
-                      <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" onClick={() => model.setIsEditingBlog(false)}>
-                        {t('common.cancel')}
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
+                {model.isEditingBlog ? <BlogEditForm model={model} /> : null}
 
-                <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                      <span>{t('common.createdByLabel')} </span>
-                      <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" user={query.blog.author} />
-                    </p>
-                    {query.blog.relatedProblems.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-600">
-                        <span>{t('blog.problem.linkedTo')}</span>
-                        {query.blog.relatedProblems.map((problem) => (
-                          <Link key={problemSlugValue(problem.slug)} className="font-semibold text-orange-700 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
-                            {formatProblemTitleDisplay(problem.title, problem.slug, problemTitleDisplayMode)}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-col gap-3 sm:items-end">
-                    <DateTimeText className="text-sm text-slate-500" value={query.blog.createdAt} />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-sm font-semibold ${blogScoreClassName(query.blog.score)}`}>
-                        {t('blog.vote.score', { score: String(query.blog.score) })}
-                      </span>
-                      <Button
-                        type="button"
-                        variant={query.blog.viewerVote === 'up' ? 'default' : 'outline'}
-                        className={query.blog.viewerVote === 'up' ? 'rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700' : 'rounded-2xl border-emerald-200 bg-white text-emerald-700'}
-                        disabled={model.isVoting}
-                        onClick={() => void model.submitVote('up')}
-                      >
-                        <ThumbsUp className="size-4" />
-                        {t('blog.vote.up')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={query.blog.viewerVote === 'down' ? 'default' : 'outline'}
-                        className={query.blog.viewerVote === 'down' ? 'rounded-2xl bg-rose-600 text-white hover:bg-rose-700' : 'rounded-2xl border-rose-200 bg-white text-rose-700'}
-                        disabled={model.isVoting}
-                        onClick={() => void model.submitVote('down')}
-                      >
-                        <ThumbsDown className="size-4" />
-                        {t('blog.vote.down')}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
-                  <MarkdownDocument content={blogContentValue(query.blog.content)} />
-                </div>
-
-                <div className="mt-8 space-y-5">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-950">{t('blog.comment.heading')}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{t('blog.comment.description')}</p>
-                  </div>
-                  <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4">
-                    <Textarea
-                      value={model.commentContent}
-                      className="min-h-28"
-                      onChange={(event) => model.setCommentContent(event.target.value)}
-                    />
-                    {model.commentErrorMessage ? (
-                      <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                        <AlertDescription className="text-rose-700">{model.commentErrorMessage}</AlertDescription>
-                      </Alert>
-                    ) : null}
-                    <Button
-                      type="button"
-                      disabled={model.isSubmittingComment}
-                      className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
-                      onClick={() => void model.submitComment()}
-                    >
-                      {model.isSubmittingComment ? t('blog.comment.submitting') : t('blog.comment.submit')}
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold text-slate-950">{t('blog.comment.heading')}</h3>
-                    <BlogCommentThread
-                      comments={query.blog.comments}
-                      currentUsername={usernameValue(user.username)}
-                      votingCommentId={model.votingCommentId}
-                      replyTargetId={model.replyTargetId}
-                      replyContent={model.replyContent}
-                      isSubmittingReply={model.isSubmittingReply}
-                      editingCommentId={model.editingCommentId}
-                      editingCommentContent={model.editingCommentContent}
-                      commentErrorMessage={model.commentErrorMessage}
-                      onReplyTargetChange={model.setReplyTargetId}
-                      onReplyContentChange={model.setReplyContent}
-                      onEditingCommentIdChange={model.setEditingCommentId}
-                      onEditingCommentContentChange={model.setEditingCommentContent}
-                      onSubmitReply={(commentId) => void model.submitReply(commentId)}
-                      onSubmitCommentVote={(commentId, vote) => void model.submitCommentVote(commentId, vote)}
-                      onStartEditingComment={model.startEditingComment}
-                      onSubmitCommentEdit={(commentId) => void model.submitCommentEdit(commentId)}
-                      onRemoveComment={(commentId) => void model.removeComment(commentId)}
-                    />
-                  </div>
-                </div>
+                <BlogMetaVoteBar blog={query.blog} model={model} problemTitleDisplayMode={problemTitleDisplayMode} />
+                <BlogArticleContent blog={query.blog} />
+                <BlogCommentsSection blog={query.blog} currentUsername={usernameValue(user.username)} model={model} />
               </article>
             ) : null}
           </CardContent>

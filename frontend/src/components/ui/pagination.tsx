@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/class-names'
 import { translateMessage } from '@/shared/i18n/messages'
 
 function Pagination({ className, ...props }: ComponentProps<'nav'>) {

@@ -2,7 +2,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import type { ComponentProps } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/ui/class-names'
 import { translateMessage } from '@/shared/i18n/messages'
 
 function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
