@@ -1,12 +1,9 @@
 package domains.problem.application
 
-
-
 import cats.effect.IO
 import domains.auth.model.AuthUser
-import domains.problem.model.response.{ProblemAccessEvaluation, ProblemSetMemberTarget}
 import domains.problem.application.utils.ProblemCommandSupport.{enrichProblemPermissions, evaluateProblemPermissions}
-import domains.problem.model.{ProblemDataManifest, ProblemId, ProblemSlug}
+import domains.problem.model.{OthersSubmissionAccess, ProblemDataManifest, ProblemId, ProblemSlug}
 import domains.problem.table.problem.ProblemQueryTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 
@@ -17,6 +14,16 @@ object ProblemCommands:
   export ProblemQueryCommands.*
   export ProblemMutationCommands.*
   export ProblemDataCommands.*
+
+  final case class ProblemAccessEvaluation(
+    canView: Boolean,
+    canManage: Boolean,
+    othersSubmissionAccess: OthersSubmissionAccess
+  )
+
+  final case class ProblemSetMemberTarget(
+    id: ProblemId
+  )
 
   enum ResolveSubmissionTargetResult:
     case ProblemNotFound

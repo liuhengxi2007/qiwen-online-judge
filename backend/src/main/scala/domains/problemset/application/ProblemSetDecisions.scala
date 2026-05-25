@@ -1,11 +1,10 @@
 package domains.problemset.application
 
-
-
-import domains.problem.model.response.ProblemSetMemberTarget
+import domains.problem.application.ProblemCommands
 import domains.problemset.model.ProblemSet
 
 object ProblemSetDecisions:
+  type ProblemSetMemberTarget = ProblemCommands.ProblemSetMemberTarget
 
   enum CreateProblemSetDecision:
     case SlugAlreadyExists

@@ -26,6 +26,8 @@ The contract alignment check is intentionally structural:
 - enum string values must match
 - backend `PageResponse[...]` aliases are handled explicitly
 - known representation differences are recorded as stable exceptions in the script
+- every exception must include a non-empty reason
+- unused exceptions fail the check, so stale allowlist entries cannot linger silently
 
 It does not replace runtime tests, endpoint fixtures, or parser tests.
 

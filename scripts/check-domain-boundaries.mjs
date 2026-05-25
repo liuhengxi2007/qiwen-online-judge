@@ -59,7 +59,6 @@ const publicModelTypes = new Map([
     'ProblemDataPath',
     'ProblemDetail',
     'ProblemId',
-    'ProblemSetMemberTarget',
     'ProblemSlug',
     'ProblemSpaceLimitMb',
     'ProblemStatementText',

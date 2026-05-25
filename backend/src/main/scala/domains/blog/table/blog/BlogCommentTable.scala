@@ -2,8 +2,8 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogId, BlogTitle}
-import domains.blog.model.response.{BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogCommentSummary, BlogDetail}
+import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogCommentNotificationAncestor, BlogCommentNotificationContext, BlogId, BlogTitle}
+import domains.blog.model.response.{BlogCommentSummary, BlogDetail}
 import domains.blog.table.blog.BlogTableSupport.*
 import domains.user.model.Username
 

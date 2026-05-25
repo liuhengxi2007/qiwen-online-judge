@@ -263,7 +263,7 @@ The mapping must be simple enough that a script can derive one side from the oth
 Prefer:
 
 - `ProblemSummary.scala` and `ProblemSummary.ts`
-- `SubmissionJudgeState.scala` and `SubmissionJudgeState.ts`
+- `ProblemSetProblemSummary.scala` and `ProblemSetProblemSummary.ts`
 - `AccessPolicy.scala` and `AccessPolicy.ts`
 
 Avoid:

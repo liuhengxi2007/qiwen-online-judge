@@ -3,28 +3,10 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 
 const root = process.cwd()
 
-const allowedMissing = new Set([
-  'backend-only:blog/BlogCommentNotificationAncestor',
-  'backend-only:blog/BlogCommentNotificationContext',
-  'backend-only:message/MarkConversationReadMode',
-  'backend-only:problem/ProblemAccessEvaluation',
-  'backend-only:problem/ProblemSetMemberTarget',
-  'backend-only:submission/ClaimedSubmission',
+const allowedExceptions = new Map([
+  // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
-
-const allowedFieldMismatch = new Set([
-  // Example: 'field-mismatch:problem/SomeBoundaryType'
-])
-
-const allowedUnionMismatch = new Set([
-  // Example: 'union-mismatch:submission/SubmissionStatus'
-])
-
-const ignoredKeys = new Set([
-  'auth/AuthUser',
-  'submission/SubmissionJudgeCompletion',
-  'submission/SubmissionJudgeState',
-])
+const usedExceptions = new Set()
 
 const frontendRoots = [
   'frontend/src/features',
@@ -499,6 +481,31 @@ function sameList(left, right) {
   return joined(left) === joined(right)
 }
 
+function validateAllowedExceptions(errors) {
+  for (const [exceptionKey, reason] of allowedExceptions) {
+    if (typeof reason !== 'string' || reason.trim().length === 0) {
+      errors.push(`${exceptionKey}: contract alignment exception must include a non-empty reason`)
+    }
+  }
+}
+
+function useAllowedException(exceptionKey) {
+  if (!allowedExceptions.has(exceptionKey)) {
+    return false
+  }
+
+  usedExceptions.add(exceptionKey)
+  return true
+}
+
+function checkUnusedAllowedExceptions(errors) {
+  for (const exceptionKey of allowedExceptions.keys()) {
+    if (!usedExceptions.has(exceptionKey)) {
+      errors.push(`${exceptionKey}: unused contract alignment exception`)
+    }
+  }
+}
+
 function isFrontendDiscriminatedUnionVariant(entry) {
   return entry?.side === 'frontend' && entry.kind === 'object' && entry.fields.includes('kind')
 }
@@ -510,7 +517,11 @@ function comparePair(key, frontendEntry, backendEntry, errors) {
 
   if (frontendEntry.kind === 'object' && backendEntry.kind === 'object') {
     const exceptionKey = `field-mismatch:${key}`
-    if (!sameList(frontendEntry.fields, backendEntry.fields) && !allowedFieldMismatch.has(exceptionKey)) {
+    if (!sameList(frontendEntry.fields, backendEntry.fields)) {
+      if (useAllowedException(exceptionKey)) {
+        return
+      }
+
       errors.push(
         `${key}: frontend fields [${joined(frontendEntry.fields)}] do not match backend fields [${joined(
           backendEntry.fields,
@@ -522,7 +533,11 @@ function comparePair(key, frontendEntry, backendEntry, errors) {
 
   if (frontendEntry.kind === 'union' && backendEntry.kind === 'union') {
     const exceptionKey = `union-mismatch:${key}`
-    if (!sameList(frontendEntry.union, backendEntry.union) && !allowedUnionMismatch.has(exceptionKey)) {
+    if (!sameList(frontendEntry.union, backendEntry.union)) {
+      if (useAllowedException(exceptionKey)) {
+        return
+      }
+
       errors.push(
         `${key}: frontend union [${joined(frontendEntry.union)}] does not match backend union [${joined(
           backendEntry.union,
@@ -545,7 +560,7 @@ function checkMissing(key, frontendEntry, backendEntry, errors) {
   const presentSide = frontendEntry ? 'frontend' : 'backend'
   const missingSide = frontendEntry ? 'backend' : 'frontend'
   const exceptionKeys = [`missing-${missingSide}:${key}`, `${presentSide}-only:${key}`]
-  if (exceptionKeys.some((exceptionKey) => allowedMissing.has(exceptionKey))) {
+  if (exceptionKeys.some((exceptionKey) => useAllowedException(exceptionKey))) {
     return
   }
 
@@ -554,20 +569,19 @@ function checkMissing(key, frontendEntry, backendEntry, errors) {
 
 function run() {
   const errors = []
+  validateAllowedExceptions(errors)
   const frontend = collectFrontend()
   const backend = collectBackend()
   const allKeys = [...new Set([...frontend.keys(), ...backend.keys()])].sort()
 
   for (const key of allKeys) {
-    if (ignoredKeys.has(key)) {
-      continue
-    }
-
     const frontendEntry = frontend.get(key)
     const backendEntry = backend.get(key)
     checkMissing(key, frontendEntry, backendEntry, errors)
     comparePair(key, frontendEntry, backendEntry, errors)
   }
+
+  checkUnusedAllowedExceptions(errors)
 
   if (errors.length > 0) {
     console.error(`Frontend/backend alignment check failed with ${errors.length} issue(s):`)
