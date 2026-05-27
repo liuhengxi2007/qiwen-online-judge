@@ -1,16 +1,10 @@
-import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionSort } from '@/objects/submission/request/SubmissionSort'
 import type { SubmissionSortDirection } from '@/objects/submission/request/SubmissionSortDirection'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
-import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
 import {
-  isSubmissionSort,
-  isSubmissionSortDirection,
-  isSubmissionVerdictFilter,
   parseSubmissionProblemQuery,
   parseSubmissionUserQuery,
-  submissionVerdictLabel,
 } from '@/objects/submission/submission-parsers'
 
 export const submissionsPerPage = 10
@@ -33,8 +27,6 @@ export const submissionSortValues = [
   'code_length',
 ] as const satisfies readonly SubmissionSort[]
 
-export type { ProblemSuggestion, SubmissionSort, SubmissionSortDirection, SubmissionSummary, SubmissionVerdictFilter }
-
 export function defaultSortDirection(sort: SubmissionSort): SubmissionSortDirection {
   switch (sort) {
     case 'submitted':
@@ -44,28 +36,6 @@ export function defaultSortDirection(sort: SubmissionSort): SubmissionSortDirect
     case 'code_length':
       return 'asc'
   }
-}
-
-export function readSubmissionSort(searchParams: URLSearchParams): SubmissionSort {
-  const rawSort = searchParams.get('sort')
-  return rawSort && isSubmissionSort(rawSort) ? rawSort : 'submitted'
-}
-
-export function readSubmissionSortDirection(
-  searchParams: URLSearchParams,
-  activeSort: SubmissionSort,
-): SubmissionSortDirection {
-  const rawDirection = searchParams.get('direction')
-  return rawDirection && isSubmissionSortDirection(rawDirection) ? rawDirection : defaultSortDirection(activeSort)
-}
-
-export function readSubmissionVerdictFilter(searchParams: URLSearchParams): SubmissionVerdictFilter {
-  const rawVerdict = searchParams.get('verdict')
-  return rawVerdict && isSubmissionVerdictFilter(rawVerdict) ? rawVerdict : 'all'
-}
-
-export function shouldShowTypingSuggestions(value: string): boolean {
-  return value.trim().length > 0
 }
 
 export function buildSubmissionListRequest({
@@ -106,14 +76,4 @@ export function buildSubmissionListRequest({
       pageSize: submissionsPerPage,
     },
   }
-}
-
-export function verdictFilterLabel(verdict: SubmissionVerdictFilter, allVerdictsLabel: string): string {
-  if (verdict === 'all') {
-    return allVerdictsLabel
-  }
-  if (verdict === 'pending') {
-    return submissionVerdictLabel(null)
-  }
-  return submissionVerdictLabel(verdict)
 }

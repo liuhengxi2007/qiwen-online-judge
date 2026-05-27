@@ -16,7 +16,7 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import {
   initialProblemDataPageState,
   reduceProblemDataPageState,
-} from '@/pages/objects/problem/problem-data-page-state'
+} from '../functions/problem-data-page-state'
 import { useProblemDetailQuery } from '@/pages/hooks/use-problem-detail-query'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'

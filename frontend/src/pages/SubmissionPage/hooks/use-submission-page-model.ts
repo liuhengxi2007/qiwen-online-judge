@@ -18,11 +18,11 @@ import {
   type SubmissionSort,
   type SubmissionSortDirection,
   type SubmissionVerdictFilter,
-} from '@/pages/objects/submission/submission-page-support'
+} from '../functions/submission-page-support'
 import {
   createSubmissionPageState,
   submissionPageReducer,
-} from '@/pages/objects/submission/submission-page-state'
+} from '../functions/submission-page-state'
 import {
   buildPageNumbers,
   calculateTotalPages,

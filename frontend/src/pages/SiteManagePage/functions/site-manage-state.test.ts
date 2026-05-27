@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { initialSiteManageState, reduceSiteManageState } from '@/pages/objects/site-management/site-manage-state'
+import { initialSiteManageState, reduceSiteManageState } from './site-manage-state'
 import type { Username } from '@/objects/user/Username'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
 

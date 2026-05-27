@@ -6,12 +6,12 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import {
   emptyProblemSetSectionMessageState,
   reduceProblemSetSectionMessageState,
-} from '@/pages/objects/problemset/problemset-detail-page-state'
+} from '../functions/problemset-detail-page-state'
 import {
   buildProblemSetAccessUpdateDraft,
   buildProblemSetContentUpdateDraft,
   buildProblemSetDetailAccessPolicy,
-} from '@/pages/objects/problemset/problemset-detail-page-support'
+} from '@/objects/problemset/problemset-form'
 import { useProblemSetDeleteAction } from './use-problemset-delete-action'
 import { useProblemSetDetailQuery } from './use-problemset-detail-query'
 import { useProblemSetEditorState } from './use-problemset-editor-state'

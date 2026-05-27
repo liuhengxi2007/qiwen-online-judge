@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
 
 import type { Username } from '@/objects/user/Username'
-import { toSiteManageDeniedRedirect } from '@/pages/objects/auth/route-policy'
+import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { HttpClientError } from '@/system/api/http-client'
 import { deleteAccount } from '@/apis/auth/DeleteAccount'
 import { translateMessage } from '@/system/i18n/messages'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 
 type DeleteUserResult =
   | { kind: 'deleted'; message: string }

@@ -10,7 +10,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
 import type { UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import type { UserLocale } from '@/objects/user/UserLocale'
-import type { UserSettingsSectionState } from '@/pages/objects/user/user-settings-state'
+import type { UserSettingsSectionState } from '../functions/user-settings-state'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UserSettingsPreferencesCardProps = {

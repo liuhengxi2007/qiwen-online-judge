@@ -1,4 +1,6 @@
 import { formatDateTime, formatUtcOffsetTitle } from '@/objects/shared/date-time'
+import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
+import { submissionVerdictLabel } from '@/objects/submission/submission-parsers'
 
 export function formatOptionalDurationMs(value: number | null): string {
   if (value === null) {
@@ -45,6 +47,16 @@ export function formatOptionalScore(value: number | null): string {
 export const formatSubmissionDateTime = formatDateTime
 
 export const formatSubmissionDateTimeTitle = formatUtcOffsetTitle
+
+export function verdictFilterLabel(verdict: SubmissionVerdictFilter, allVerdictsLabel: string): string {
+  if (verdict === 'all') {
+    return allVerdictsLabel
+  }
+  if (verdict === 'pending') {
+    return submissionVerdictLabel(null)
+  }
+  return submissionVerdictLabel(verdict)
+}
 
 function formatWithReadablePrecision(value: number): string {
   if (value < 1) {

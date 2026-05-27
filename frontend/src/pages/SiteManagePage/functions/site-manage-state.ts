@@ -1,7 +1,7 @@
 import type { DisplayName } from '@/objects/user/DisplayName'
 import type { Username } from '@/objects/user/Username'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 
 export type SiteManageNotice =
   | { kind: 'permissions_updated'; displayName: DisplayName }

@@ -5,7 +5,7 @@ import { createProblem } from '@/apis/problem/CreateProblem'
 import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
-} from '@/pages/objects/problem/create-problem-page-state'
+} from '../functions/create-problem-page-state'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import { validateProblemDraft } from '@/objects/problem/problem-form'

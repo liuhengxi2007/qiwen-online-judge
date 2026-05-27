@@ -3,12 +3,12 @@ import { useReducer } from 'react'
 import {
   emptySectionMessageState,
   reduceSectionMessageState,
-} from '@/pages/objects/problem/problem-detail-page-state'
+} from '../functions/problem-detail-page-state'
 import {
   buildProblemAccessUpdateDraft,
   buildProblemContentUpdateDraft,
   buildProblemDetailAccessPolicy,
-} from '@/pages/objects/problem/problem-detail-page-support'
+} from '@/objects/problem/problem-form'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useProblemDeleteAction } from './use-problem-delete-action'
 import { useProblemDetailQuery } from '@/pages/hooks/use-problem-detail-query'

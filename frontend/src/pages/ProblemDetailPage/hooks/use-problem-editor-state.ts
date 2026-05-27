@@ -5,7 +5,7 @@ import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import {
   initialProblemEditorState,
   reduceProblemEditorState,
-} from '@/pages/objects/problem/problem-editor-state'
+} from '../functions/problem-editor-state'
 import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
 
 export function useProblemEditorState(problem: ProblemDetail | null) {

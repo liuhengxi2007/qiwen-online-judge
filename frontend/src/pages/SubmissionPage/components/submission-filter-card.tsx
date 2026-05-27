@@ -12,7 +12,7 @@ import type {
   SubmissionSort,
   SubmissionSortDirection,
   SubmissionVerdictFilter,
-} from '@/pages/objects/submission/submission-page-support'
+} from '../functions/submission-page-support'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { displayNameValue, usernameValue } from '@/objects/user/user-parsers'
 import { problemSlugValue, problemTitleValue } from '@/objects/problem/problem-parsers'

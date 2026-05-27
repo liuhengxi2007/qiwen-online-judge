@@ -4,7 +4,7 @@ import { toAuthSession } from '@/objects/auth/auth-session'
 import type { LoginRequest } from '@/objects/auth/request/LoginRequest'
 import type { LoginResponse } from '@/objects/auth/response/LoginResponse'
 import { login } from '@/apis/auth/Login'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
 
 type LoginMutationResult =

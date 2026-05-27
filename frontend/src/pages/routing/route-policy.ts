@@ -1,5 +1,5 @@
 import type { Username } from '@/objects/user/Username'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 
 type UserSettingsRoutePolicyArgs = {
   viewerUsername: Username

@@ -5,8 +5,8 @@ import { HttpClientError } from '@/system/api/http-client'
 import { updateAccountPermissions } from '@/apis/auth/UpdateAccountPermissions'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
-import { toSiteManageDeniedRedirect } from '@/pages/objects/auth/route-policy'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
+import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { translateMessage } from '@/system/i18n/messages'
 
 type SavePermissionsResult =

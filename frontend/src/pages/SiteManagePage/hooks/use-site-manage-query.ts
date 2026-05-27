@@ -6,8 +6,8 @@ import { listUsers } from '@/apis/user/ListUsers'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
 import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import type { RegisteredJudgerListItem } from '@/objects/judger/response/RegisteredJudgerListItem'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
-import { toSiteManageDeniedRedirect } from '@/pages/objects/auth/route-policy'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
+import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { translateMessage } from '@/system/i18n/messages'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest: UserListRequest) {

@@ -14,8 +14,8 @@ import type { UpdateManagedUserProfileRequest } from '@/objects/user/request/Upd
 import type { UpdateOwnAccountRequest } from '@/objects/auth/request/UpdateOwnAccountRequest'
 import type { UpdateOwnPreferencesRequest } from '@/objects/user/request/UpdateOwnPreferencesRequest'
 import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnProfileRequest'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
-import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/pages/objects/auth/route-policy'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
+import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmitSettingsParams =

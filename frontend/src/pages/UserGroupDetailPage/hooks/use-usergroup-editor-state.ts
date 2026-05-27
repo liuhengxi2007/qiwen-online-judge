@@ -5,7 +5,7 @@ import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDeta
 import {
   initialUserGroupEditorState,
   reduceUserGroupEditorState,
-} from '@/pages/objects/usergroup/usergroup-editor-state'
+} from '../functions/usergroup-editor-state'
 
 export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
   const [state, dispatch] = useReducer(reduceUserGroupEditorState, initialUserGroupEditorState)

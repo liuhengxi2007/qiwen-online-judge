@@ -4,7 +4,7 @@ import { toAuthSession } from '@/objects/auth/auth-session'
 import type { RegisterRequest } from '@/objects/auth/request/RegisterRequest'
 import type { RegisterResponse } from '@/objects/auth/response/RegisterResponse'
 import { register } from '@/apis/auth/Register'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
 
 type RegisterMutationResult =

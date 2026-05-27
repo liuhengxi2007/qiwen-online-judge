@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
-import type { UserSettingsSectionState } from '@/pages/objects/user/user-settings-state'
+import type { UserSettingsSectionState } from '../functions/user-settings-state'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UserSettingsAccountCardProps = {

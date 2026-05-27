@@ -6,14 +6,15 @@ import {
   initialUserSettingsState,
   reduceUserSettingsState,
   type UserSettingsSection,
-} from '@/pages/objects/user/user-settings-state'
-import { validateUserAccountDraft, validateUserPreferencesDraft, validateUserProfileDraft } from '@/pages/objects/user/user-settings-form'
+} from '../functions/user-settings-state'
+import { validateUserAccountDraft } from '@/objects/auth/user-account-form'
+import { validateUserPreferencesDraft, validateUserProfileDraft } from '@/objects/user/user-settings-form'
 import { useUserSettingsQuery } from './use-user-settings-query'
 import { useUserSettingsMutation } from './use-user-settings-mutation'
 import {
   resolveUserSettingsRoutePolicy,
   toForbiddenRedirect,
-} from '@/pages/objects/auth/route-policy'
+} from '@/pages/routing/route-policy'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import type { UserLocale } from '@/objects/user/UserLocale'
@@ -174,6 +175,10 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
         confirmNewPassword: state.confirmNewPassword,
       },
       isEditingOwnSettings,
+      {
+        confirmNewPassword: t('userSettings.confirmNewPassword'),
+        passwordMismatch: t('userSettings.passwordMismatch'),
+      },
     )
     if (!validation.ok) {
       dispatch({ type: 'submit_failed', section: 'account', message: validation.message })

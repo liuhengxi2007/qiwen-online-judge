@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { Username } from '@/objects/user/Username'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
-import { toForbiddenRedirect } from '@/pages/objects/auth/route-policy'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
+import { toForbiddenRedirect } from '@/pages/routing/route-policy'
 import { HttpClientError } from '@/system/api/http-client'
 import { getUserProfile } from '@/apis/user/GetUserProfile'
 import type { UserProfileResponse } from '@/objects/user/response/UserProfileResponse'

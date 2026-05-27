@@ -4,12 +4,12 @@ import { asSiteManagerSession } from '@/objects/auth/auth-session'
 import { HttpClientError } from '@/system/api/http-client'
 import { getSession } from '@/apis/auth/GetSession'
 import { logout as logoutRequest } from '@/apis/auth/Logout'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import {
   toSessionExpiredRedirect,
   toSignedOutRedirect,
   toSiteManageDeniedRedirect,
-} from '@/pages/objects/auth/route-policy'
+} from '@/pages/routing/route-policy'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
 
 type UseSessionGuardOptions = {

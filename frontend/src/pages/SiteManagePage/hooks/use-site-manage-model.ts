@@ -6,8 +6,8 @@ import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import {
   initialSiteManageState,
   reduceSiteManageState,
-} from '@/pages/objects/site-management/site-manage-state'
-import { toSiteManageDeniedRedirect } from '@/pages/objects/auth/route-policy'
+} from '../functions/site-manage-state'
+import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { useSiteManageQuery } from './use-site-manage-query'
 import { useUserDeleteMutation } from './use-user-delete-mutation'
 import { useUserPermissionsMutation } from './use-user-permissions-mutation'

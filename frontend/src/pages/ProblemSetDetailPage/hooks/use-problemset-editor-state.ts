@@ -4,7 +4,7 @@ import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetD
 import {
   initialProblemSetEditorState,
   reduceProblemSetEditorState,
-} from '@/pages/objects/problemset/problemset-editor-state'
+} from '../functions/problemset-editor-state'
 import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
 
 export function useProblemSetEditorState(problemSet: ProblemSetDetail | null) {

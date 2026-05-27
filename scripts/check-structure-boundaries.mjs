@@ -30,7 +30,8 @@ const frontendUiForbiddenPrefixes = [
   'frontend/src/pages/',
 ]
 const frontendPagesRoot = 'frontend/src/pages/'
-const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'stores'])
+const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'routing', 'stores'])
+const frontendNestedPageObjectPathPattern = /^frontend\/src\/pages\/objects\/[^/]+\//
 const frontendAllowedCanonicalPageVariantImports = [
   {
     importerRoot: 'frontend/src/pages/UserBlogPage/',
@@ -168,13 +169,27 @@ function extractTsSpecifiers(source) {
 
 function checkFrontendLayerFile(filePath, errors) {
   const source = read(filePath)
+  if (frontendNestedPageObjectPathPattern.test(filePath)) {
+    errors.push(`${filePath} is nested under pages/objects; keep frontend/src/pages/objects flat`)
+  }
+
   for (const match of extractTsSpecifiers(source)) {
     const resolved = resolveFrontendSpecifier(filePath, match.specifier)
     const line = lineNumber(source, match.index)
 
-    if (resolved.startsWith('frontend/src/pages/objects/') && !filePath.startsWith('frontend/src/pages/')) {
+    if (frontendNestedPageObjectPathPattern.test(resolved)) {
       errors.push(
-        `${filePath}:${line} imports page-only object "${match.specifier}" from outside pages`,
+        `${filePath}:${line} imports nested page object "${match.specifier}"; keep frontend/src/pages/objects flat`,
+      )
+    }
+
+    if (
+      (resolved.startsWith('frontend/src/pages/objects/') ||
+        resolved.startsWith('frontend/src/pages/routing/')) &&
+      !filePath.startsWith('frontend/src/pages/')
+    ) {
+      errors.push(
+        `${filePath}:${line} imports page-only module "${match.specifier}" from outside pages`,
       )
     }
 

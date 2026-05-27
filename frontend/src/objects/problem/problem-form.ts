@@ -1,8 +1,23 @@
 import type { CreateProblemRequest } from '@/objects/problem/request/CreateProblemRequest'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { UpdateProblemRequest } from '@/objects/problem/request/UpdateProblemRequest'
-import { parseProblemSlug, parseProblemStatementText, parseProblemSpaceLimitMb, parseProblemTimeLimitMs, parseProblemTitle } from '@/objects/problem/problem-parsers'
-import { buildResourceAccessPolicy } from '@/objects/shared/resource-access-input'
+import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
+import {
+  parseProblemSlug,
+  parseProblemStatementText,
+  parseProblemSpaceLimitMb,
+  parseProblemTimeLimitMs,
+  parseProblemTitle,
+  problemStatementTextValue,
+  problemTitleValue,
+} from '@/objects/problem/problem-parsers'
+import {
+  buildResourceAccessPolicy,
+  grantedGroupsInputFromAccessPolicy,
+  grantedManagerGroupsInputFromAccessPolicy,
+  grantedManagerUsersInputFromAccessPolicy,
+  grantedUsersInputFromAccessPolicy,
+} from '@/objects/shared/resource-access-input'
 import { resourceAccessSubjectParsers } from '@/objects/shared/access/access-subject-parsers'
 import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
 
@@ -51,7 +66,8 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
   }
 
   const accessPolicyResult = buildResourceAccessPolicy(
-    resourceAccessSubjectParsers,    draft.baseAccess,
+    resourceAccessSubjectParsers,
+    draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,
     draft.managerUsersInput,
@@ -112,7 +128,8 @@ export function validateProblemUpdateDraft(
   }
 
   const accessPolicyResult = buildResourceAccessPolicy(
-    resourceAccessSubjectParsers,    draft.baseAccess,
+    resourceAccessSubjectParsers,
+    draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,
     draft.managerUsersInput,
@@ -133,4 +150,71 @@ export function validateProblemUpdateDraft(
       othersSubmissionAccess: draft.othersSubmissionAccess,
     },
   }
+}
+
+type ProblemEditorAccessState = {
+  baseAccess: BaseAccess
+  grantedUsersInput: string
+  grantedGroupsInput: string
+  managerUsersInput: string
+  managerGroupsInput: string
+  othersSubmissionAccess: OthersSubmissionAccess
+}
+
+type ProblemEditorContentState = ProblemEditorAccessState & {
+  title: string
+  statement: string
+  timeLimitMs: number
+  spaceLimitMb: number
+}
+
+export function buildProblemContentUpdateDraft(
+  problem: ProblemDetail,
+  editor: ProblemEditorContentState,
+): UpdateProblemDraft {
+  return {
+    title: editor.title,
+    statement: editor.statement,
+    timeLimitMs: editor.timeLimitMs,
+    spaceLimitMb: editor.spaceLimitMb,
+    baseAccess: problem.accessPolicy.baseAccess,
+    grantedUsersInput: grantedUsersInputFromAccessPolicy(problem.accessPolicy),
+    grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
+    managerUsersInput: grantedManagerUsersInputFromAccessPolicy(problem.accessPolicy),
+    managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(problem.accessPolicy),
+    othersSubmissionAccess: problem.othersSubmissionAccess,
+  }
+}
+
+export function buildProblemAccessUpdateDraft(
+  problem: ProblemDetail,
+  editor: ProblemEditorAccessState,
+): UpdateProblemDraft {
+  return {
+    title: problemTitleValue(problem.title),
+    statement: problemStatementTextValue(problem.statement),
+    timeLimitMs: problem.timeLimitMs,
+    spaceLimitMb: problem.spaceLimitMb,
+    baseAccess: editor.baseAccess,
+    grantedUsersInput: editor.grantedUsersInput,
+    grantedGroupsInput: editor.grantedGroupsInput,
+    managerUsersInput: editor.managerUsersInput,
+    managerGroupsInput: editor.managerGroupsInput,
+    othersSubmissionAccess: editor.othersSubmissionAccess,
+  }
+}
+
+export function buildProblemDetailAccessPolicy(editor: ProblemEditorAccessState) {
+  const accessPolicyResult = buildResourceAccessPolicy(
+    resourceAccessSubjectParsers,
+    editor.baseAccess,
+    editor.grantedUsersInput,
+    editor.grantedGroupsInput,
+    editor.managerUsersInput,
+    editor.managerGroupsInput,
+  )
+
+  return accessPolicyResult.ok
+    ? accessPolicyResult.value
+    : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] }
 }

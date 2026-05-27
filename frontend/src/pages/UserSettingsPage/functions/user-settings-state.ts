@@ -4,7 +4,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import type { UserLocale } from '@/objects/user/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
-import type { NavigationIntent } from '@/pages/objects/navigation-intent'
+import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import type { Username } from '@/objects/user/Username'
 
 export type UserSettingsSection = 'profile' | 'preferences' | 'account'

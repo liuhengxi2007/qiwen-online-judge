@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react'
 
-import { contributionTextClassName } from '@/pages/objects/user/contribution-style'
+import { contributionTextClassName } from '@/objects/user/user-display-label'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ContributionPanelProps = {

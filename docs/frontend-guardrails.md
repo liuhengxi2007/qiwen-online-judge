@@ -18,8 +18,8 @@ Top-level source folders:
   Top-level browser router composition and root layout imported by `src/main.tsx`.
 - `src/pages/stores`
   Cross-page page-layer collaboration stores such as session, realtime inbox, notification counters, and internal storage adapters.
-- `src/pages/objects`
-  Page-layer-only pure orchestration objects. These may only be imported by files under `src/pages`.
+- `src/pages/routing`
+  Shared page-layer routing primitives, navigation intent types, and route policies. These may only be imported by files under `src/pages`.
 - `src/system`
   App runtime helpers such as the HTTP client and i18n runtime/messages.
 - `src/components/ui`
@@ -48,10 +48,13 @@ Allowed direction:
 - `pages`
   May import APIs, objects, page stores, system helpers, UI components, page components, page hooks, and page objects.
 
-Hard rule: `src/pages/objects/**` is for page-layer-only pure objects. It is for
-route orchestration concepts such as navigation intent, URL/search-param state,
-and page display state value objects. Put API payloads and domain contracts in
-`src/objects/shared` or `src/objects/<domain>`.
+Hard rule: route policies and navigation intent types belong in
+`src/pages/routing`, not `src/pages/objects`. `src/pages/objects` should only be
+introduced for actual shared page-layer value objects, and it must stay flat if
+used. Do not add domain subdirectories there. Put API payloads, domain
+contracts, form validation, request builders, and domain display helpers in
+`src/objects/shared` or `src/objects/<domain>`. Put single-page state, reducers,
+URL/search-param state, and page display state under the owning page directory.
 
 Run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers.
 
@@ -104,21 +107,27 @@ Reusable page-layer code belongs under:
 
 - `src/pages/components` for independent shared page UI
 - `src/pages/hooks` for independent shared hooks, queries, and guards
-- `src/pages/objects` for pure shared page-layer objects
+- `src/pages/routing` for shared route policies and navigation intent types
+- `src/pages/objects` for actual shared page-layer value objects, only when one exists
 
-`src/pages/components` and `src/pages/hooks` are allowlist-style shared areas.
-Files there must be flat, without domain subdirectories. Add a new file there
-only after it has two or more real page consumers, or when it is route/app shell
-infrastructure with no concrete page owner. If a component or hook is used only
-by one page and that page's nested components, keep it under that page directory
-instead. Tests for shared files may stay next to the file they cover as
-`*.test.*` files.
+`src/pages/components`, `src/pages/hooks`, `src/pages/routing`, and
+`src/pages/objects` are allowlist-style shared areas. Files there must be flat,
+without domain subdirectories. Add a new file there only after it has two or
+more real page consumers, or when it is route/app shell infrastructure with no
+concrete page owner. If a component or hook is used only by one page and that
+page's nested components, keep it under that page directory instead. Tests for
+shared files may stay next to the file they cover as `*.test.*` files.
 
 Route variants may import a canonical page implementation only through an
 explicit `scripts/check-structure-boundaries.mjs` allowlist entry. Keep the
 variant page focused on route parameter parsing and redirects, and keep the
 shared implementation in the canonical page directory. Do not broadly import
 private modules from other route page directories.
+
+`src/pages/objects` follows the same flat shared-area rule used by the reference
+library project: it is for page-specific value objects and display/form models,
+not routing helpers, page-private reducers, or domain-specific helpers before
+they have a clear owner.
 
 Cross-page collaboration state belongs under `src/pages/stores`. This includes
 session state, realtime inbox state, notification counters, and internal browser

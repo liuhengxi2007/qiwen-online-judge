@@ -5,11 +5,11 @@ import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import {
   initialUserGroupDetailPageMessageState,
   reduceUserGroupDetailPageMessageState,
-} from '@/pages/objects/usergroup/usergroup-detail-page-state'
+} from '../functions/usergroup-detail-page-state'
 import {
   canViewerRemoveUserGroupMember,
   resolveUserGroupDetailPermissions,
-} from '@/pages/objects/usergroup/usergroup-detail-page-support'
+} from '../functions/usergroup-detail-page-support'
 import { useUserGroupAddMemberAction } from './use-usergroup-add-member-action'
 import { useUserGroupDeleteAction } from './use-usergroup-delete-action'
 import { useUserGroupDetailQuery } from './use-usergroup-detail-query'
