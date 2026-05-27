@@ -1,7 +1,7 @@
 import { formatDateTime, formatUtcOffsetTitle } from '@/objects/shared/date-time'
+import { formatOptionalBinarySizeBytes } from '@/objects/shared/format/binary-size'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import { submissionVerdictLabel } from '@/objects/submission/submission-parsers'
-import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 
 export function formatOptionalDurationMs(value: number | null): string {
   if (value === null) {
