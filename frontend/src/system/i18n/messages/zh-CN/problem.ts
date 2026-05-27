@@ -111,6 +111,7 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.data.clearAllDescription': '这会删除该题目的全部已上传数据文件，此操作不可撤销。',
   'problem.data.clearAll': '清空全部文件',
   'problem.data.clearing': '正在清空...',
+  'problem.data.sizeUnknown': '大小未知',
   'problem.data.download': '下载',
   'problem.data.delete': '删除',
   'problem.data.deleting': '正在删除...',

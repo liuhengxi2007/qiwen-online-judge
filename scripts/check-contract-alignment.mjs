@@ -1,42 +1,119 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, extname, join, relative, resolve, sep } from 'node:path'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { basename, extname, join, relative, resolve } from 'node:path'
 
 const root = process.cwd()
 
 const allowedExceptions = new Map([
+  [
+    'backend-only:auth/AuthUser',
+    'Backend-only authenticated account model includes password hash and permission flags; frontend receives sanitized response contracts instead.',
+  ],
+  [
+    'backend-only:auth/ProblemManagerUser',
+    'Backend-only problem-manager permission proof wraps AuthUser for server authorization and is not serialized as a frontend JSON contract.',
+  ],
+  [
+    'backend-only:auth/SessionToken',
+    'Backend-only session token value is handled through cookie/cache plumbing and should not be mirrored as a frontend object contract.',
+  ],
+  [
+    'backend-only:auth/SiteManagerUser',
+    'Backend-only site-manager permission proof wraps AuthUser for server authorization and is not serialized as a frontend JSON contract.',
+  ],
   // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
 const usedExceptions = new Set()
 
-const frontendRoots = [
-  'frontend/src/objects',
-]
-
-const backendRoots = [
-  'backend/src/main/scala/domains',
-  'backend/src/main/scala/shared/objects',
-]
+const scopedObjectSubdirectories = ['request', 'response']
 
 function read(relativePath) {
   return readFileSync(resolve(root, relativePath), 'utf8').replace(/\r\n/g, '\n')
 }
 
-function walk(relativePath, extension) {
+function sortedDirectoryEntries(relativePath) {
   const absolutePath = resolve(root, relativePath)
   if (!existsSync(absolutePath)) {
     return []
   }
 
-  const entries = readdirSync(absolutePath).flatMap((entry) => {
-    const child = join(relativePath, entry)
-    const childAbsolute = resolve(root, child)
-    if (statSync(childAbsolute).isDirectory()) {
-      return walk(child, extension)
-    }
-    return extname(child) === extension ? [child] : []
-  })
+  return readdirSync(absolutePath, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))
+}
 
-  return entries.sort()
+function directDirectories(relativePath) {
+  return sortedDirectoryEntries(relativePath)
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({
+      name: entry.name,
+      path: join(relativePath, entry.name),
+    }))
+}
+
+function directFiles(relativePath, extension) {
+  return sortedDirectoryEntries(relativePath)
+    .filter((entry) => entry.isFile() && extname(entry.name) === extension)
+    .map((entry) => join(relativePath, entry.name))
+}
+
+function objectFileName(path) {
+  return basename(path, extname(path))
+}
+
+function objectFileKey(scope, subdirectory, path) {
+  return [scope, subdirectory, objectFileName(path)].filter(Boolean).join('/')
+}
+
+function indexObjectFiles(files) {
+  return new Map(files.map((file) => [file.key, file]))
+}
+
+function collectScopedObjectFiles(side, scope, objectRoot, extension) {
+  const files = directFiles(objectRoot, extension).map((path) => ({
+    side,
+    scope,
+    subdirectory: null,
+    name: objectFileName(path),
+    key: objectFileKey(scope, null, path),
+    path,
+    required: false,
+  }))
+
+  for (const subdirectory of scopedObjectSubdirectories) {
+    files.push(
+      ...directFiles(join(objectRoot, subdirectory), extension).map((path) => ({
+        side,
+        scope,
+        subdirectory,
+        name: objectFileName(path),
+        key: objectFileKey(scope, subdirectory, path),
+        path,
+        required: true,
+      })),
+    )
+  }
+
+  return files
+}
+
+function collectFrontendObjectFiles() {
+  const frontendObjectsRoot = 'frontend/src/objects'
+  return indexObjectFiles(
+    directDirectories(frontendObjectsRoot).flatMap((directory) =>
+      collectScopedObjectFiles('frontend', directory.name, directory.path, '.ts'),
+    ),
+  )
+}
+
+function collectBackendObjectFiles() {
+  const backendDomainsRoot = 'backend/src/main/scala/domains'
+  const backendSharedObjectsRoot = 'backend/src/main/scala/shared/objects'
+  const domainFiles = directDirectories(backendDomainsRoot).flatMap((directory) =>
+    collectScopedObjectFiles('backend', directory.name, join(directory.path, 'objects'), '.scala'),
+  )
+
+  return indexObjectFiles([
+    ...domainFiles,
+    ...collectScopedObjectFiles('backend', 'shared', backendSharedObjectsRoot, '.scala'),
+  ])
 }
 
 function stripComments(source) {
@@ -274,68 +351,6 @@ function resolveTsFields(typeName, allTypes, seen = new Set()) {
   return null
 }
 
-function frontendMetadata(path) {
-  const normalized = path.split(sep).join('/')
-  const objectBoundaryMatch = normalized.match(/^frontend\/src\/objects\/([^/]+)\/(request|response)\//)
-  if (objectBoundaryMatch) {
-    return {
-      scope: objectBoundaryMatch[1],
-      required: true,
-    }
-  }
-
-  const objectMatch = normalized.match(/^frontend\/src\/objects\/([^/]+)\//)
-  if (objectMatch && objectMatch[1] !== 'shared') {
-    return {
-      scope: objectMatch[1],
-      required: false,
-    }
-  }
-
-  if (normalized.startsWith('frontend/src/objects/shared/response/')) {
-    return { scope: 'shared', required: true }
-  }
-
-  if (normalized.startsWith('frontend/src/objects/shared/')) {
-    return { scope: 'shared', required: false }
-  }
-
-  return null
-}
-
-function backendMetadata(path) {
-  const normalized = path.split(sep).join('/')
-  if (/^backend\/src\/main\/scala\/domains\/([^/]+)\/objects\/internal\//.test(normalized)) {
-    return null
-  }
-
-  const domainBoundaryMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/objects\/(request|response)\//)
-  if (domainBoundaryMatch) {
-    return {
-      scope: domainBoundaryMatch[1],
-      required: true,
-    }
-  }
-
-  const domainObjectMatch = normalized.match(/^backend\/src\/main\/scala\/domains\/([^/]+)\/objects\//)
-  if (domainObjectMatch) {
-    return {
-      scope: domainObjectMatch[1],
-      required: false,
-    }
-  }
-
-  if (normalized.startsWith('backend/src/main/scala/shared/objects/response/')) {
-    return { scope: 'shared', required: true }
-  }
-
-  if (normalized.startsWith('backend/src/main/scala/shared/objects/')) {
-    return { scope: 'shared', required: false }
-  }
-
-  return null
-}
-
 function extractScalaFields(params) {
   return splitTopLevel(params, ',')
     .map((part) => part.trim())
@@ -405,25 +420,27 @@ function extractScalaTypes(source) {
   return types
 }
 
+function typeKey(file, typeName) {
+  return typeName === file.name ? file.key : `${file.key}/${typeName}`
+}
+
 function collectFrontend() {
+  const files = collectFrontendObjectFiles()
   const scopedTypes = new Map()
   const globalTypes = new Map()
-  const files = frontendRoots
-    .flatMap((path) => walk(path, '.ts'))
-    .filter((path) => frontendMetadata(path))
 
-  for (const path of files) {
-    const metadata = frontendMetadata(path)
-    const exportedTypes = extractExportedTsTypes(read(path))
+  for (const file of files.values()) {
+    const exportedTypes = extractExportedTsTypes(read(file.path))
     for (const [name, body] of exportedTypes) {
       const entry = {
         side: 'frontend',
-        scope: metadata.scope,
+        scope: file.scope,
         name,
-        key: `${metadata.scope}/${name}`,
-        path,
+        key: typeKey(file, name),
+        fileKey: file.key,
+        path: file.path,
         body,
-        required: metadata.required,
+        required: file.required,
       }
       globalTypes.set(name, entry)
       scopedTypes.set(entry.key, entry)
@@ -444,32 +461,31 @@ function collectFrontend() {
     }
   }
 
-  return scopedTypes
+  return { files, types: scopedTypes }
 }
 
 function collectBackend() {
+  const files = collectBackendObjectFiles()
   const scopedTypes = new Map()
-  const files = backendRoots
-    .flatMap((path) => walk(path, '.scala'))
-    .filter((path) => backendMetadata(path))
 
-  for (const path of files) {
-    const metadata = backendMetadata(path)
-    const exportedTypes = extractScalaTypes(read(path))
+  for (const file of files.values()) {
+    const exportedTypes = extractScalaTypes(read(file.path))
     for (const [name, entry] of exportedTypes) {
-      scopedTypes.set(`${metadata.scope}/${name}`, {
+      const key = typeKey(file, name)
+      scopedTypes.set(key, {
         side: 'backend',
-        scope: metadata.scope,
+        scope: file.scope,
         name,
-        key: `${metadata.scope}/${name}`,
-        path,
-        required: metadata.required,
+        key,
+        fileKey: file.key,
+        path: file.path,
+        required: file.required,
         ...entry,
       })
     }
   }
 
-  return scopedTypes
+  return { files, types: scopedTypes }
 }
 
 function sideLabel(side, entry) {
@@ -550,6 +566,46 @@ function comparePair(key, frontendEntry, backendEntry, errors) {
   }
 }
 
+function checkFileAlignment(frontendFiles, backendFiles, errors) {
+  const allFileKeys = [...new Set([...frontendFiles.keys(), ...backendFiles.keys()])].sort()
+
+  for (const key of allFileKeys) {
+    const frontendFile = frontendFiles.get(key)
+    const backendFile = backendFiles.get(key)
+    if (frontendFile && !backendFile) {
+      if (useAllowedException(`frontend-only:${key}`)) {
+        continue
+      }
+
+      errors.push(`${key}: frontend-only object file ${sideLabel('frontend', frontendFile)}`)
+      continue
+    }
+
+    if (!frontendFile && backendFile) {
+      if (useAllowedException(`backend-only:${key}`)) {
+        continue
+      }
+
+      errors.push(`${key}: backend-only object file ${sideLabel('backend', backendFile)}`)
+    }
+  }
+}
+
+function intersectionSet(left, right) {
+  const rightKeys = new Set(right)
+  return new Set([...left].filter((key) => rightKeys.has(key)))
+}
+
+function filterTypesByFileKeys(types, fileKeys) {
+  const filtered = new Map()
+  for (const [key, entry] of types) {
+    if (fileKeys.has(entry.fileKey)) {
+      filtered.set(key, entry)
+    }
+  }
+  return filtered
+}
+
 function checkMissing(key, frontendEntry, backendEntry, errors) {
   if (frontendEntry && !backendEntry && isFrontendDiscriminatedUnionVariant(frontendEntry)) {
     return
@@ -575,11 +631,16 @@ function run() {
   validateAllowedExceptions(errors)
   const frontend = collectFrontend()
   const backend = collectBackend()
-  const allKeys = [...new Set([...frontend.keys(), ...backend.keys()])].sort()
+  checkFileAlignment(frontend.files, backend.files, errors)
 
-  for (const key of allKeys) {
-    const frontendEntry = frontend.get(key)
-    const backendEntry = backend.get(key)
+  const matchedFileKeys = intersectionSet(frontend.files.keys(), backend.files.keys())
+  const frontendTypes = filterTypesByFileKeys(frontend.types, matchedFileKeys)
+  const backendTypes = filterTypesByFileKeys(backend.types, matchedFileKeys)
+  const allTypeKeys = [...new Set([...frontendTypes.keys(), ...backendTypes.keys()])].sort()
+
+  for (const key of allTypeKeys) {
+    const frontendEntry = frontendTypes.get(key)
+    const backendEntry = backendTypes.get(key)
     checkMissing(key, frontendEntry, backendEntry, errors)
     comparePair(key, frontendEntry, backendEntry, errors)
   }
@@ -594,7 +655,11 @@ function run() {
     process.exit(1)
   }
 
-  console.log(`Frontend/backend alignment check passed for ${allKeys.length} discovered type key(s).`)
+  console.log(
+    `Frontend/backend alignment check passed for ${allTypeKeys.length} discovered type key(s) across ${
+      matchedFileKeys.size
+    } matched object file key(s).`,
+  )
 }
 
 run()

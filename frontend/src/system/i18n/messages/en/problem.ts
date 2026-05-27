@@ -111,6 +111,7 @@ export const enProblemMessages: Record<string, string> = {
   'problem.data.clearAllDescription': 'This currently deletes every uploaded data file for the problem. This action cannot be undone.',
   'problem.data.clearAll': 'Clear all files',
   'problem.data.clearing': 'Clearing...',
+  'problem.data.sizeUnknown': 'Size unknown',
   'problem.data.download': 'Download',
   'problem.data.delete': 'Delete',
   'problem.data.deleting': 'Deleting...',

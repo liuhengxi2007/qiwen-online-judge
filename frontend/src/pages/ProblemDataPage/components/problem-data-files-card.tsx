@@ -3,9 +3,10 @@ import { ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { problemDataPathValue } from '@/objects/problem/problem-parsers'
-import type { useProblemDataPageModel } from '../hooks/use-problem-data-page-model'
 import { ConfirmActionDialog } from '@/pages/components/confirm-action-dialog'
+import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 import { useI18n } from '@/system/i18n/use-i18n'
+import type { useProblemDataPageModel } from '../hooks/use-problem-data-page-model'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
@@ -53,40 +54,50 @@ export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
                   }
                 />
               </div>
-              {model.dataTree.map((node) => (
-                <div
-                  key={problemDataPathValue(node.path)}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                  style={{ paddingLeft: `${16 + (problemDataPathValue(node.path).split('/').length - 1) * 20}px` }}
-                >
-                  <div className="flex items-center gap-2">
-                    {node.kind === 'directory' ? <FolderTree className="size-4 text-slate-500" /> : null}
-                    <p className="text-sm font-medium text-slate-900">{problemDataPathValue(node.path)}</p>
-                  </div>
-                  {node.kind === 'file' ? (
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
-                        <a href={model.downloadDataPathUrl(node.path)}>
-                          <ArrowDownToLine className="size-4" />
-                          {t('problem.data.download')}
-                        </a>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={model.deletingFilename === (node.path.split('/').slice(-1)[0] as never)}
-                        className="rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                        onClick={() => {
-                          void model.deleteDataPath(node.path)
-                        }}
-                      >
-                        <Trash2 className="size-4" />
-                        {t('problem.data.delete')}
-                      </Button>
+              {model.dataTree.map((node) => {
+                const path = problemDataPathValue(node.path)
+                return (
+                  <div
+                    key={path}
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                    style={{ paddingLeft: `${16 + (path.split('/').length - 1) * 20}px` }}
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      {node.kind === 'directory' ? <FolderTree className="size-4 shrink-0 text-slate-500" /> : null}
+                      <div className="min-w-0">
+                        <p className="break-all text-sm font-medium text-slate-900">{path}</p>
+                        {node.kind === 'file' ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {formatOptionalBinarySizeBytes(node.sizeBytes, t('problem.data.sizeUnknown'))}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-              ))}
+                    {node.kind === 'file' ? (
+                      <div className="flex flex-col gap-3 sm:flex-row">
+                        <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
+                          <a href={model.downloadDataPathUrl(node.path)}>
+                            <ArrowDownToLine className="size-4" />
+                            {t('problem.data.download')}
+                          </a>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={model.deletingFilename === (node.path.split('/').slice(-1)[0] as never)}
+                          className="rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                          onClick={() => {
+                            void model.deleteDataPath(node.path)
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                          {t('problem.data.delete')}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

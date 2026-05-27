@@ -1,6 +1,7 @@
 import { formatDateTime, formatUtcOffsetTitle } from '@/objects/shared/date-time'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import { submissionVerdictLabel } from '@/objects/submission/submission-parsers'
+import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 
 export function formatOptionalDurationMs(value: number | null): string {
   if (value === null) {
@@ -11,23 +12,7 @@ export function formatOptionalDurationMs(value: number | null): string {
 }
 
 export function formatOptionalMemoryKb(value: number | null): string {
-  if (value === null) {
-    return '--'
-  }
-
-  const kib = value
-  const mib = value / 1024
-  const gib = value / (1024 * 1024)
-
-  if (kib < 1000) {
-    return `${formatWithReadablePrecision(kib)} KiB`
-  }
-
-  if (mib < 1000) {
-    return `${formatWithReadablePrecision(mib)} MiB`
-  }
-
-  return `${formatWithReadablePrecision(gib)} GiB`
+  return formatOptionalBinarySizeBytes(value === null ? null : value * 1024, '--', { minimumUnit: 'KiB' })
 }
 
 export function formatCodeLength(value: number): string {
@@ -56,17 +41,4 @@ export function verdictFilterLabel(verdict: SubmissionVerdictFilter, allVerdicts
     return submissionVerdictLabel(null)
   }
   return submissionVerdictLabel(verdict)
-}
-
-function formatWithReadablePrecision(value: number): string {
-  if (value < 1) {
-    return new Intl.NumberFormat(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value)
-  }
-
-  return new Intl.NumberFormat(undefined, {
-    maximumSignificantDigits: 3,
-  }).format(value)
 }
