@@ -5,7 +5,7 @@ import {
   grantedManagerGroupsInputFromAccessPolicy,
   grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
-} from '@/pages/objects/resource-access-input'
+} from '@/pages/components/resource-access-editor-input'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type ProblemEditorState = {

@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/system/api/http-client'
 import { updateProblem } from '@/apis/problem/UpdateProblem'
-import { validateProblemUpdateDraft } from '@/pages/objects/problem-form'
+import { validateProblemUpdateDraft } from '../functions/problem-form'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'

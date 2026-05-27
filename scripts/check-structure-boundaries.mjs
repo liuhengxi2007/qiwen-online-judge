@@ -32,6 +32,7 @@ const frontendUiForbiddenPrefixes = [
 const frontendPagesRoot = 'frontend/src/pages/'
 const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'routing', 'stores'])
 const frontendNestedPageObjectPathPattern = /^frontend\/src\/pages\/objects\/[^/]+\//
+const frontendPageObjectWorkflowPathPattern = /^frontend\/src\/pages\/objects\/[^/]+-(?:form|input)\.ts$/
 const frontendTopLevelPageFunctionsPathPattern = /^frontend\/src\/pages\/functions(?:\/|$)/
 const frontendAllowedCanonicalPageVariantImports = [
   {
@@ -180,6 +181,12 @@ function checkFrontendLayerFile(filePath, errors) {
 
   if (frontendNestedPageObjectPathPattern.test(filePath)) {
     errors.push(`${filePath} is nested under pages/objects; keep frontend/src/pages/objects flat`)
+  }
+
+  if (frontendPageObjectWorkflowPathPattern.test(filePath)) {
+    errors.push(
+      `${filePath} is a page workflow/input helper under pages/objects; put form draft/validation in the owning page functions and shared editor input parsing beside the editor`,
+    )
   }
 
   for (const match of extractTsSpecifiers(source)) {

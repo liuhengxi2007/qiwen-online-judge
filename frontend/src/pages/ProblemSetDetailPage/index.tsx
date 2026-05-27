@@ -16,7 +16,7 @@ import {
   grantedGroupsInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
-} from '@/pages/objects/resource-access-input'
+} from '@/pages/components/resource-access-editor-input'
 import { AppSectionBar } from '@/pages/components/app-section-bar'
 import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/use-before-unload-prompt'

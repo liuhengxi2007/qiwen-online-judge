@@ -1,5 +1,5 @@
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
-import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/pages/objects/resource-access-input'
+import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/pages/components/resource-access-editor-input'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type ProblemSetEditorState = {

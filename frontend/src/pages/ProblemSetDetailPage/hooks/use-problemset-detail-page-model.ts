@@ -11,7 +11,7 @@ import {
   buildProblemSetAccessUpdateDraft,
   buildProblemSetContentUpdateDraft,
   buildProblemSetDetailAccessPolicy,
-} from '@/pages/objects/problemset-form'
+} from '../functions/problemset-form'
 import { useProblemSetDeleteAction } from './use-problemset-delete-action'
 import { useProblemSetDetailQuery } from './use-problemset-detail-query'
 import { useProblemSetEditorState } from './use-problemset-editor-state'

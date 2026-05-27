@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildResourceAccessPolicy } from './resource-access-input'
+import { buildResourceAccessPolicy } from './resource-access-editor-input'
 
-describe('resource-access-input', () => {
+describe('resource-access-editor-input', () => {
   it('builds branded access subjects from user input', () => {
     const result = buildResourceAccessPolicy(
       'owner_only',

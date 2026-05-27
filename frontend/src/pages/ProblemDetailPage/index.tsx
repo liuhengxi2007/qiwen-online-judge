@@ -20,7 +20,7 @@ import {
   grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
-} from '@/pages/objects/resource-access-input'
+} from '@/pages/components/resource-access-editor-input'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'

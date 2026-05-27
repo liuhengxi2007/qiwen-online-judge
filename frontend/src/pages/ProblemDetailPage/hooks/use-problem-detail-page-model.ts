@@ -8,7 +8,7 @@ import {
   buildProblemAccessUpdateDraft,
   buildProblemContentUpdateDraft,
   buildProblemDetailAccessPolicy,
-} from '@/pages/objects/problem-form'
+} from '../functions/problem-form'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useProblemDeleteAction } from './use-problem-delete-action'
 import { useProblemDetailQuery } from '@/pages/hooks/use-problem-detail-query'

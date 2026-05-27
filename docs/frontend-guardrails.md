@@ -53,9 +53,10 @@ Hard rule: route policies and navigation intent types belong in
 introduced for actual shared page-layer value objects, and it must stay flat if
 used. Do not add domain subdirectories there. Put API payloads and mirrored
 domain contracts in `src/objects/shared` or `src/objects/<domain>`. Put form
-validation, request builders, domain display helpers, single-page state,
-reducers, URL/search-param state, and page display state under the owning page
-directory or an existing shared page layer when there are real shared consumers.
+drafts, validation, request builders, single-page state, reducers,
+URL/search-param state, and page display state under the owning page directory.
+Shared editor input parsers belong beside their shared editor component, not in
+`src/pages/objects`.
 
 Run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers.
 
@@ -131,9 +132,10 @@ shared implementation in the canonical page directory. Do not broadly import
 private modules from other route page directories.
 
 `src/pages/objects` follows the same flat shared-area rule used by the reference
-library project: it is for page-specific value objects and display/form models,
-not routing helpers, page-private reducers, or domain-specific helpers before
-they have a clear owner.
+library project: it is for page-specific value objects, display mappers, and
+pagination helpers, not routing helpers, form workflow, editor input parsers,
+page-private reducers, or domain-specific helpers before they have a clear
+owner.
 
 Cross-page collaboration state belongs under `src/pages/stores`. This includes
 session state, realtime inbox state, notification counters, and internal browser
