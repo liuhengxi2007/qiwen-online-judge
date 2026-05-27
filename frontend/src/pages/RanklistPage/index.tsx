@@ -1,9 +1,9 @@
 import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useRanklistQuery } from '@/pages/hooks/user/use-ranklist-query'
-import { useSessionGuard } from '@/pages/hooks/auth/use-session-guard'
-import { AppSectionBar } from '@/pages/components/auth/app-section-bar'
+import { useRanklistQuery } from './hooks/use-ranklist-query'
+import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { AppSectionBar } from '@/pages/components/app-section-bar'
 import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'

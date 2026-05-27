@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { useBlogDetailPageModel } from '@/pages/hooks/blog/use-blog-detail-page-model'
+import type { useBlogDetailPageModel } from '../hooks/use-blog-detail-page-model'
 import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
 import { useI18n } from '@/system/i18n/use-i18n'
 

@@ -1,9 +1,9 @@
 import { Navigate, useParams } from 'react-router-dom'
 
-import { useSessionGuard } from '@/pages/hooks/auth/use-session-guard'
-import { MessageConversationCard } from '@/pages/components/message/message-conversation-card'
-import { MessageConversationPageHeader } from '@/pages/components/message/message-conversation-page-header'
-import { useMessageConversation } from '@/pages/hooks/message/use-message-conversation'
+import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { MessageConversationCard } from './components/message-conversation-card'
+import { MessageConversationPageHeader } from './components/message-conversation-page-header'
+import { useMessageConversation } from './hooks/use-message-conversation'
 import { parseUsername } from '@/objects/user/user-parsers'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'

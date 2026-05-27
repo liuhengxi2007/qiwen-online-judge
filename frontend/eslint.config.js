@@ -295,7 +295,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/components/ui/**/*.tsx'],
+    files: ['src/components/ui/**/*.tsx', 'src/router.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

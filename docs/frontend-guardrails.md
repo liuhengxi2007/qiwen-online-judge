@@ -13,9 +13,13 @@ Top-level source folders:
 - `src/objects/shared`
   Shared business objects and pure cross-domain helpers such as pagination and resource-access primitives.
 - `src/pages`
-  Route components, page-owned components, page hooks, route policies, URL/search-param state, stores, and display-only state.
+  Route pages, page-owned components, page hooks, route policies, URL/search-param state, page collaboration stores, and display-only state.
+- `src/router.tsx`
+  Top-level browser router composition and root layout imported by `src/main.tsx`.
+- `src/pages/stores`
+  Cross-page page-layer collaboration stores such as session, realtime inbox, notification counters, and internal storage adapters.
 - `src/pages/objects`
-  Page-layer-only orchestration objects. These may only be imported by files under `src/pages`.
+  Page-layer-only pure orchestration objects. These may only be imported by files under `src/pages`.
 - `src/system`
   App runtime helpers such as the HTTP client and i18n runtime/messages.
 - `src/components/ui`
@@ -39,12 +43,14 @@ Allowed direction:
   May import `objects`, `objects/shared`, peer API codecs, and `system/api`. Never import `pages`.
 - `components/ui`
   May import external UI libraries and `system/i18n` for generic translated labels. Never import pages or domain objects.
+- `pages/stores`
+  May import frontend objects, peer page-store modules, and external runtime libraries. Stores must not import APIs, system helpers, UI components, page hooks/components/objects, or concrete pages.
 - `pages`
-  May import APIs, objects, system helpers, UI components, page components, page hooks, and page objects.
+  May import APIs, objects, page stores, system helpers, UI components, page components, page hooks, and page objects.
 
-Hard rule: `src/pages/objects/**` is page-layer state only. It is for route
-orchestration concepts such as navigation intent, URL/search-param state,
-stores, and page display state. Put API payloads and domain contracts in
+Hard rule: `src/pages/objects/**` is for page-layer-only pure objects. It is for
+route orchestration concepts such as navigation intent, URL/search-param state,
+and page display state value objects. Put API payloads and domain contracts in
 `src/objects/shared` or `src/objects/<domain>`.
 
 Run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers.
@@ -90,19 +96,34 @@ Route pages live at `src/pages/<PageName>/index.tsx`.
 Page-private code belongs under the page directory:
 
 - `components`
+- `hooks`
 - `functions`
 - other page-local support folders when needed
 
 Reusable page-layer code belongs under:
 
-- `src/pages/components`
-- `src/pages/hooks`
-- `src/pages/objects`
+- `src/pages/components` for independent shared page UI
+- `src/pages/hooks` for independent shared hooks, queries, and guards
+- `src/pages/objects` for pure shared page-layer objects
 
-React hooks belong in `src/pages/hooks`, even when they expose display
-preferences or domain-adjacent UI state. Page model hooks may coordinate query
-and mutation results, but pure parsing, validation, and business objects should
-stay in `src/objects`.
+`src/pages/components` and `src/pages/hooks` are allowlist-style shared areas.
+Files there must be flat, without domain subdirectories. Add a new file there
+only after it has two or more real page consumers, or when it is route/app shell
+infrastructure with no concrete page owner. If a component or hook is used only
+by one page and that page's nested components, keep it under that page directory
+instead. Tests for shared files may stay next to the file they cover as
+`*.test.*` files.
+
+Cross-page collaboration state belongs under `src/pages/stores`. This includes
+session state, realtime inbox state, notification counters, and internal browser
+storage adapters used by those stores. Keep Zustand stores out of
+`src/pages/hooks` and `src/pages/components`; shared hooks in `src/pages/hooks`
+may call the stores while owning subscription, query, or refresh orchestration.
+
+Page-layer React hooks belong in the owning page's `hooks` directory or in
+`src/pages/hooks` when they meet the shared-code rule above. Page model hooks may
+coordinate query and mutation results, but pure parsing, validation, and
+business objects should stay in `src/objects`.
 
 ## Type Safety
 
@@ -158,7 +179,7 @@ Push side effects to the boundary.
 Rules:
 
 - keep parsing, validation, policy, and state transition logic pure where possible
-- isolate HTTP, browser storage, time, and other runtime effects in APIs, hooks, stores, or system helpers
+- isolate HTTP, browser storage, time, and other runtime effects in APIs, hooks, page stores, or system helpers
 - keep business objects independent of React and UI components
 - keep transport conversion in API codecs, not page components
 
@@ -182,7 +203,9 @@ State stores are allowed only for real shared state containers.
 
 Rules:
 
-- stores belong in `src/pages/objects` when they are page-layer shared state
+- cross-page page collaboration stores belong in `src/pages/stores`
+- browser storage adapters used only by a store belong beside that store, with names that describe the adapter rather than `use-*-store`
+- `src/pages/components` and `src/pages/hooks` are for independent shared page code, not store bodies
 - stores may hold state, derived flags, and simple state transitions
 - stores must not directly own fetch, mutation, permission redirect, or orchestration logic
 - query loading belongs in hooks

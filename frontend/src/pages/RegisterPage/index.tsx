@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
-import { useRegisterModel } from '@/pages/hooks/auth/use-register-model'
+import { useRegisterModel } from './hooks/use-register-model'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function RegisterPage() {

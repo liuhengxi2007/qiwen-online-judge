@@ -3,10 +3,10 @@ import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } fro
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AccountActions } from '@/pages/components/auth/account-actions'
-import { formatUserDisplayLabel } from '@/pages/components/user/user-display-label'
+import { AccountActions } from '@/pages/components/account-actions'
+import { formatUserDisplayLabel } from '@/objects/user/user-display-label'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
-import { useSessionGuard } from '@/pages/hooks/auth/use-session-guard'
+import { useSessionGuard } from '@/pages/hooks/use-session-guard'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function DashboardPage() {

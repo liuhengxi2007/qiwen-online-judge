@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useSessionGuard } from '@/pages/hooks/auth/use-session-guard'
+import { useSessionGuard } from '@/pages/hooks/use-session-guard'
 import { parseProblemSearchQuery } from '@/objects/problem/problem-parsers'
 import { shouldShowProblemSlugSupplement } from '@/objects/problem/problem-display'
-import { useProblemPageModel } from '@/pages/hooks/problem/use-problem-page-model'
-import { useProblemTitleDisplayMode } from '@/pages/hooks/problem/use-problem-title-display'
-import { AppSectionBar } from '@/pages/components/auth/app-section-bar'
+import { useProblemPageModel } from './hooks/use-problem-page-model'
+import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
+import { AppSectionBar } from '@/pages/components/app-section-bar'
 import {
   buildPageNumbers,
   calculateTotalPages,

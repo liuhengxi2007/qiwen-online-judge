@@ -19,6 +19,11 @@ const frontendApiForbiddenPrefixes = [
   'frontend/src/pages/',
   'frontend/src/components/ui/',
 ]
+const frontendPageStoreForbiddenPrefixes = [
+  'frontend/src/apis/',
+  'frontend/src/system/',
+  'frontend/src/components/ui/',
+]
 const frontendUiForbiddenPrefixes = [
   'frontend/src/apis/',
   'frontend/src/objects/',
@@ -47,13 +52,13 @@ const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
 const removedFrontendFeatureRoot = `${pathOf('frontend', 'src', 'features')}/`
 const removedFrontendSharedRoot = `${pathOf('frontend', 'src', 'shared')}/`
+const removedFrontendStoreRoot = `${pathOf('frontend', 'src', 'stores')}/`
 
 const bannedTrackedPaths = new Set([
   pathOf('backend', extension('package-lock', 'json')),
   pathOf('frontend', 'src', 'assets', extension('hero', 'png')),
   pathOf('frontend', 'src', 'assets', extension('react', 'svg')),
   pathOf('frontend', 'src', 'assets', extension('vite', 'svg')),
-  pathOf('frontend', 'src', 'stores', 'use-app-store.ts'),
 ])
 
 function normalizePath(path) {
@@ -169,6 +174,16 @@ function checkFrontendLayerFile(filePath, errors) {
         !resolved.startsWith('frontend/src/system/api/')
       ) {
         errors.push(`${filePath}:${line} api layer imports non-api system module "${match.specifier}"`)
+      }
+    }
+
+    if (filePath.startsWith('frontend/src/pages/stores/')) {
+      if (hasPrefix(resolved, frontendPageStoreForbiddenPrefixes)) {
+        errors.push(`${filePath}:${line} page stores import forbidden frontend layer "${match.specifier}"`)
+      }
+
+      if (resolved.startsWith('frontend/src/pages/') && !resolved.startsWith('frontend/src/pages/stores/')) {
+        errors.push(`${filePath}:${line} page stores import forbidden page layer "${match.specifier}"`)
       }
     }
 
@@ -461,6 +476,10 @@ function checkTrackedResidues(errors) {
 
     if (bannedTrackedPaths.has(filePath)) {
       errors.push(`${filePath} is a tracked template or misplaced file`)
+    }
+
+    if (filePath.startsWith(removedFrontendStoreRoot)) {
+      errors.push(`${filePath} is in removed frontend stores layer; use frontend/src/pages/stores`)
     }
 
     if (filePath.startsWith(removedFrontendFeatureRoot) && /\/domain\//.test(filePath)) {

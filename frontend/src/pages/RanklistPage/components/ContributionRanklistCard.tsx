@@ -1,7 +1,7 @@
 import { Medal, Trophy } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { UserProfileLink } from '@/pages/components/user/user-profile-link'
+import { UserProfileLink } from '@/pages/components/user-profile-link'
 import { contributionTextClassName } from '@/pages/objects/user/contribution-style'
 import { userContributionValue } from '@/objects/user/user-parsers'
 import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'

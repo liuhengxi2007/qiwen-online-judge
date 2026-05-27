@@ -1,7 +1,7 @@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import type { useBlogDetailPageModel } from '@/pages/hooks/blog/use-blog-detail-page-model'
+import type { useBlogDetailPageModel } from '../hooks/use-blog-detail-page-model'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
