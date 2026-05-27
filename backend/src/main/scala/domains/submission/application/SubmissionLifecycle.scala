@@ -1,6 +1,7 @@
-package domains.submission.objects
+package domains.submission.application
 
-import domains.submission.objects.internal.SubmissionJudgeCompletion
+import domains.submission.objects.SubmissionStatus
+import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 
 import java.time.Instant
 
@@ -13,13 +14,13 @@ object SubmissionLifecycle:
           state.copy(
             status = SubmissionStatus.Running,
             verdict = None,
-                judgeMessage = None,
-                timeUsedMs = None,
-                memoryUsedKb = None,
-                score = None,
-                judgeResult = None,
-                startedAt = Some(startedAt),
-                finishedAt = None
+            judgeMessage = None,
+            timeUsedMs = None,
+            memoryUsedKb = None,
+            score = None,
+            judgeResult = None,
+            startedAt = Some(startedAt),
+            finishedAt = None
           )
         )
       case _ =>

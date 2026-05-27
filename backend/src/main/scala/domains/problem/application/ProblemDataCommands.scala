@@ -8,7 +8,8 @@ import database.DatabaseSession
 import domains.auth.objects.AuthUser
 import domains.judge.application.JudgeCommands
 import domains.problem.objects.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
-import domains.problem.objects.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
+import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.table.problem.{ProblemDataStateTable, ProblemQueryTable}
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.application.ProblemCommandResults.*

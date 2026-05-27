@@ -3,8 +3,8 @@ package domains.judge.application
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.objects.ProblemDataPath
+import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.submission.objects.internal.ClaimedSubmission
 import judgeprotocol.objects.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}

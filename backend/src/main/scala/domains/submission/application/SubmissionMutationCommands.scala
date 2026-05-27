@@ -7,7 +7,8 @@ import database.DatabaseSession
 import domains.auth.objects.AuthUser
 import domains.problem.application.ProblemCommands
 import domains.submission.objects.request.{CreateSubmissionRequest}
-import domains.submission.objects.{SubmissionId, SubmissionJudgeState, SubmissionStatus}
+import domains.submission.objects.{SubmissionId, SubmissionStatus}
+import domains.submission.objects.internal.SubmissionJudgeState
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionMutationTable, SubmissionQueryTable}
 import domains.submission.application.SubmissionCommandResults.*
 

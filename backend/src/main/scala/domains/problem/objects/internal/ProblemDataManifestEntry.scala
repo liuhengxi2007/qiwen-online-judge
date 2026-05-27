@@ -1,4 +1,6 @@
-package domains.problem.objects
+package domains.problem.objects.internal
+
+import domains.problem.objects.ProblemDataPath
 
 final case class ProblemDataManifestEntry(
   path: ProblemDataPath,

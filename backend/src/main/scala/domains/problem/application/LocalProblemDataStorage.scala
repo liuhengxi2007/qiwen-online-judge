@@ -4,7 +4,8 @@ package domains.problem.application
 
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
-import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataPath, ProblemSlug}
+import domains.problem.objects.{ProblemDataPath, ProblemSlug}
+import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 
 import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import java.security.MessageDigest

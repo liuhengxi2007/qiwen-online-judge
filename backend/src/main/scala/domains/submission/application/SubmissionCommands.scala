@@ -4,8 +4,8 @@ package domains.submission.application
 
 import cats.effect.IO
 import domains.submission.application.utils.SubmissionJudgeStateSupport
-import domains.submission.objects.{SubmissionId, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
-import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion}
+import domains.submission.objects.{SubmissionId, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
 import judgeprotocol.objects.{JudgerId, ReportJudgeResultRequest}
 

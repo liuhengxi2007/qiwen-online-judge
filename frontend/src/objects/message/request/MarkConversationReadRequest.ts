@@ -1,10 +1,11 @@
 import type { MessageId } from '@/objects/message/MessageId'
+import type { MarkConversationReadMode } from '@/objects/message/request/MarkConversationReadMode'
 
 export type MarkConversationReadRequest =
   | {
-      mode: 'conversation'
+      mode: Extract<MarkConversationReadMode, 'conversation'>
     }
   | {
-      mode: 'message'
+      mode: Extract<MarkConversationReadMode, 'message'>
       messageId: MessageId
     }

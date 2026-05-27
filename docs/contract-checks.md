@@ -30,6 +30,12 @@ Scoped files that exist on only one side fail as `frontend-only object file` or 
 
 The file-level check is intentionally not recursive beyond the scoped directories above. Nested helper or implementation folders such as `objects/internal`, `objects/access`, or other arbitrary subdirectories are outside this check.
 
+When a new backend-only object appears in this check, resolve it in this order:
+
+1. If the type is a real HTTP or shared wire contract, add the matching frontend mirror with the same basename and exported type name.
+2. If the type is backend-only persistence, state-machine, aggregation, or workflow data, move it under `objects/internal` or into the owning `application` or `table` layer.
+3. Add a backend-only exception only when the type cannot reasonably move and is intentionally not serialized to the frontend.
+
 The contract alignment check is intentionally structural:
 
 - matched exported type field names and field order must match

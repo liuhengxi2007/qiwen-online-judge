@@ -5,7 +5,8 @@ import database.DatabaseSession
 import domains.judger.application.JudgerRegistryCommands
 import domains.problem.application.ProblemDataStorage
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.objects.{ProblemDataManifest, ProblemDataPath}
+import domains.problem.objects.ProblemDataPath
+import domains.problem.objects.internal.ProblemDataManifest
 import domains.submission.application.SubmissionCommands
 import domains.submission.objects.SubmissionId
 import judgeprotocol.objects.{JudgeTask, JudgerId, ReportJudgeResultRequest}

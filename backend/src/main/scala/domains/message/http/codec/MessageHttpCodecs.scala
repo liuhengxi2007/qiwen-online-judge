@@ -18,16 +18,9 @@ object MessageHttpCodecs:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
 
-  given Encoder[MarkConversationReadMode] = Encoder.encodeString.contramap {
-    case MarkConversationReadMode.Message => "message"
-    case MarkConversationReadMode.Conversation => "conversation"
-  }
+  given Encoder[MarkConversationReadMode] = Encoder.encodeString.contramap(MarkConversationReadMode.wireValue)
 
-  given Decoder[MarkConversationReadMode] = Decoder.decodeString.emap {
-    case "message" => Right(MarkConversationReadMode.Message)
-    case "conversation" => Right(MarkConversationReadMode.Conversation)
-    case other => Left(s"Unsupported mark conversation read mode: $other")
-  }
+  given Decoder[MarkConversationReadMode] = Decoder.decodeString.emap(MarkConversationReadMode.parse)
 
   given Encoder[CreateConversationRequest] = deriveEncoder[CreateConversationRequest]
   given Decoder[CreateConversationRequest] = deriveDecoder[CreateConversationRequest]

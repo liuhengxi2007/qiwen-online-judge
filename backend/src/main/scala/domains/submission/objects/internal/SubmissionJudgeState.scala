@@ -1,5 +1,6 @@
-package domains.submission.objects
+package domains.submission.objects.internal
 
+import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.JudgeResult
 import java.time.Instant
 

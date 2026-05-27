@@ -4,7 +4,8 @@ package domains.problem.table.problem_data_file
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry, ProblemDataPath, ProblemId, ProblemSlug}
+import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug}
+import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 
 import java.sql.Connection
 import java.time.Instant

@@ -1,8 +1,8 @@
 package domains.judge.application
 
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.objects.internal.ClaimedSubmission

@@ -3,7 +3,8 @@ package domains.notification.table.notification
 
 
 import domains.user.objects.{DisplayName, UserIdentity, Username}
-import domains.notification.objects.{NotificationKind, NotificationPayload, NotificationStatus}
+import domains.notification.objects.{NotificationKind, NotificationPayload}
+import domains.notification.objects.internal.NotificationStatus
 import domains.notification.objects.response.{NotificationSummary}
 import database.utils.UserIdentitySql
 

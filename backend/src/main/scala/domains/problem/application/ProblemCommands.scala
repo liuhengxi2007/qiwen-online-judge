@@ -3,7 +3,8 @@ package domains.problem.application
 import cats.effect.IO
 import domains.auth.objects.AuthUser
 import domains.problem.application.utils.ProblemCommandSupport.{enrichProblemPermissions, evaluateProblemPermissions}
-import domains.problem.objects.{OthersSubmissionAccess, ProblemDataManifest, ProblemId, ProblemSlug}
+import domains.problem.objects.{OthersSubmissionAccess, ProblemId, ProblemSlug}
+import domains.problem.objects.internal.ProblemDataManifest
 import domains.problem.table.problem.ProblemQueryTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 

@@ -1,6 +1,4 @@
-package domains.notification.objects
-
-
+package domains.notification.objects.internal
 
 enum NotificationStatus:
   case Unread
