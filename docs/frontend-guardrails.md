@@ -9,9 +9,9 @@ Top-level source folders:
 - `src/apis`
   Endpoint clients and HTTP boundary codecs, grouped by domain.
 - `src/objects`
-  Frontend business objects, request/response payload types, parsers, pure display helpers, and pure form helpers.
+  Frontend business object types, request/response payload types, and codecs that belong to the same object.
 - `src/objects/shared`
-  Shared business objects and pure cross-domain helpers such as pagination and resource-access primitives.
+  Shared business objects and object subdomains such as access-control primitives.
 - `src/pages`
   Route pages, page-owned components, page hooks, route policies, URL/search-param state, page collaboration stores, and display-only state.
 - `src/router.tsx`
@@ -51,10 +51,11 @@ Allowed direction:
 Hard rule: route policies and navigation intent types belong in
 `src/pages/routing`, not `src/pages/objects`. `src/pages/objects` should only be
 introduced for actual shared page-layer value objects, and it must stay flat if
-used. Do not add domain subdirectories there. Put API payloads, domain
-contracts, form validation, request builders, and domain display helpers in
-`src/objects/shared` or `src/objects/<domain>`. Put single-page state, reducers,
-URL/search-param state, and page display state under the owning page directory.
+used. Do not add domain subdirectories there. Put API payloads and mirrored
+domain contracts in `src/objects/shared` or `src/objects/<domain>`. Put form
+validation, request builders, domain display helpers, single-page state,
+reducers, URL/search-param state, and page display state under the owning page
+directory or an existing shared page layer when there are real shared consumers.
 
 Run `node scripts/check-structure-boundaries.mjs` after moving files across frontend layers.
 
@@ -67,6 +68,8 @@ Rules:
 - one endpoint client per file
 - the frontend endpoint basename must match the backend `http/api/<Name>.scala` basename when both sides expose the endpoint
 - HTTP boundary codecs live in `src/apis/<domain>/codecs/*HttpCodecs.ts`
+- frontend `*ModelHttpCodecs.ts` files are forbidden; same-object parsing,
+  value extraction, and contract mapping live in the matching object file
 - do not add compatibility barrels; import endpoint and codec files directly
 - non-JSON helpers such as download URL builders or realtime event URL helpers live in the matched endpoint file
 - run `node scripts/check-api-alignment.mjs` when endpoint files change
@@ -78,19 +81,22 @@ Use `src/objects/<domain>` for durable frontend business concepts:
 - mirrored domain values and stable business concepts
 - `request` payloads
 - `response` payloads
-- parsers and value accessors
-- pure display formatting helpers
-- pure form validation and draft builders
+- same-object parse/value helpers
+- same-object contract mappers used by API boundary codecs
 
 Use `src/objects/shared` only after there is a real shared owner. Good examples:
 
-- pagination types and helpers
+- pagination request/response types
 - shared response payloads
-- access-control contracts and parsers/codecs
-- resource lifecycle helpers
+- access-control object types and same-object codecs
 
-Do not put domain-specific policies, forms, or status mappers in shared objects
-just to avoid choosing an owner.
+Do not put domain-specific policies, forms, display mappers, status mappers,
+route builders, pagination UI helpers, date/time formatting, binary-size
+formatting, tests, or barrels in `src/objects`. Page-private logic belongs under
+`src/pages/<PageName>/functions`; shared page-layer value objects and mappers
+belong in flat `src/pages/objects`; reusable presentation belongs with
+`src/pages/components`; generic formatting belongs in `src/system/format`;
+route path builders belong in `src/pages/routing`.
 
 ## Pages
 
@@ -177,7 +183,7 @@ Prefer:
 
 - `ProblemSummary.scala` and `ProblemSummary.ts`
 - `ProblemSetProblemSummary.scala` and `ProblemSetProblemSummary.ts`
-- `AccessPolicy.scala` and `AccessPolicy.ts`
+- `ResourceAccessPolicy.scala` and `ResourceAccessPolicy.ts`
 
 Avoid:
 

@@ -1,6 +1,6 @@
 import { Navigate, useParams } from 'react-router-dom'
 
-import { parseProblemSlug } from '@/objects/problem/problem-parsers'
+import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { SubmissionListPageContent } from '@/pages/SubmissionPage/SubmissionListPageContent'
 
 export function ProblemSubmissionPage() {

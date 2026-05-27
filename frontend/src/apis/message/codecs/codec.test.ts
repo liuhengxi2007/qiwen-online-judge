@@ -9,9 +9,9 @@ import {
 } from '@/apis/message/codecs/MessageHttpCodecs'
 import {
   messageContentValue,
-  messageConversationIdValue,
-  messageIdValue,
-} from '@/objects/message/message-parsers'
+} from '@/objects/message/MessageContent'
+import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
+import { messageIdValue } from '@/objects/message/MessageId'
 import type { MessageId as MessageIdValue } from '@/objects/message/MessageId'
 
 const conversationId = '11111111-1111-4111-8111-111111111111'

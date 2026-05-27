@@ -1,6 +1,6 @@
 import { useReducer } from 'react'
 
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import {
@@ -11,7 +11,7 @@ import {
   buildProblemSetAccessUpdateDraft,
   buildProblemSetContentUpdateDraft,
   buildProblemSetDetailAccessPolicy,
-} from '@/objects/problemset/problemset-form'
+} from '@/pages/objects/problemset-form'
 import { useProblemSetDeleteAction } from './use-problemset-delete-action'
 import { useProblemSetDetailQuery } from './use-problemset-detail-query'
 import { useProblemSetEditorState } from './use-problemset-editor-state'

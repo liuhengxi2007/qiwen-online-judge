@@ -1,5 +1,9 @@
-import { parseEmailAddress } from '@/objects/auth/auth-parsers'
-import { parseDisplayName, parseProblemTitleDisplayMode, parseUserDisplayMode, parseUserLocale, parseUsername } from '@/objects/user/user-parsers'
+import { parseEmailAddress } from '@/objects/auth/EmailAddress'
+import { parseProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
+import { parseDisplayName } from '@/objects/user/DisplayName'
+import { parseUserDisplayMode } from '@/objects/user/UserDisplayMode'
+import { parseUserLocale } from '@/objects/user/UserLocale'
+import { parseUsername } from '@/objects/user/Username'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 
 const authUserStorageKey = 'auth_user'

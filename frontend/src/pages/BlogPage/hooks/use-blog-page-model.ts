@@ -4,7 +4,7 @@ import { acceptBlogProblemSubmission } from '@/apis/blog/AcceptBlogProblemSubmis
 import { linkBlogToProblem } from '@/apis/blog/LinkBlogToProblem'
 import { listPendingProblemBlogs } from '@/apis/blog/ListPendingProblemBlogs'
 import { unlinkBlogFromProblem } from '@/apis/blog/UnlinkBlogFromProblem'
-import { parseBlogId } from '@/objects/blog/blog-parsers'
+import { parseBlogId } from '@/objects/blog/BlogId'
 import type { BlogId } from '@/objects/blog/BlogId'
 import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
 import { useBlogListQuery } from './use-blog-list-query'

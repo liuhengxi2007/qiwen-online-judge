@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { toAuthSession } from '@/objects/auth/auth-session'
+import { toAuthSession } from '@/pages/stores/auth/auth-session'
 import type { RegisterRequest } from '@/objects/auth/request/RegisterRequest'
 import type { RegisterResponse } from '@/objects/auth/response/RegisterResponse'
 import { register } from '@/apis/auth/Register'

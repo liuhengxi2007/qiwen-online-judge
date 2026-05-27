@@ -3,8 +3,8 @@ import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
-} from '@/objects/submission/submission-display'
-import { submissionVerdictLabel } from '@/objects/submission/submission-parsers'
+} from '@/pages/objects/submission-display'
+import { submissionVerdictLabel } from '@/pages/objects/submission-display'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
 import { useI18n } from '@/system/i18n/use-i18n'
 

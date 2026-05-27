@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { getSubmission } from '@/apis/submission/GetSubmission'
 import { listSubmissions } from '@/apis/submission/ListSubmissions'
-import { isTerminalSubmissionStatus } from '@/objects/submission/submission-parsers'
+import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'

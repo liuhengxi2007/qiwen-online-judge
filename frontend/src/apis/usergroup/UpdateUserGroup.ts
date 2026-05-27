@@ -1,7 +1,7 @@
 import type { UpdateUserGroupRequest } from '@/objects/usergroup/request/UpdateUserGroupRequest'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
-import { userGroupSlugValue } from '@/objects/usergroup/usergroup-parsers'
+import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import {
   fromUserGroupDetailContract,
   toUpdateUserGroupRequestContract,

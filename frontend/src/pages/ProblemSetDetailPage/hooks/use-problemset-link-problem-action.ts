@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/system/api/http-client'
 import { addProblemToProblemSet } from '@/apis/problemset/AddProblemToProblemSet'
-import { validateProblemSetLinkDraft } from '@/objects/problemset/problemset-link-form'
+import { validateProblemSetLinkDraft } from '../functions/problemset-link-form'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { useI18n } from '@/system/i18n/use-i18n'

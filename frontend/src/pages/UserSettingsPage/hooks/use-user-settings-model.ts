@@ -1,14 +1,14 @@
 import { useEffect, useReducer } from 'react'
 
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
-import { parseUsername } from '@/objects/user/user-parsers'
+import { parseUsername } from '@/objects/user/Username'
 import {
   initialUserSettingsState,
   reduceUserSettingsState,
   type UserSettingsSection,
 } from '../functions/user-settings-state'
-import { validateUserAccountDraft } from '@/objects/auth/user-account-form'
-import { validateUserPreferencesDraft, validateUserProfileDraft } from '@/objects/user/user-settings-form'
+import { validateUserAccountDraft } from '../functions/user-account-form'
+import { validateUserPreferencesDraft, validateUserProfileDraft } from '../functions/user-settings-form'
 import { useUserSettingsQuery } from './use-user-settings-query'
 import { useUserSettingsMutation } from './use-user-settings-mutation'
 import {

@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
-import { resourceAccessBadgeLabel } from '@/objects/shared/resource-lifecycle'
+import { resourceAccessBadgeLabel } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplay } from '@/pages/hooks/use-problem-title-display'
 import type { ProblemSummary } from '@/objects/problem/response/ProblemSummary'
 

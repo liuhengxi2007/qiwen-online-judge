@@ -5,8 +5,8 @@ import {
   grantedManagerGroupsInputFromAccessPolicy,
   grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
-} from '@/objects/shared/resource-access-input'
-import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
+} from '@/pages/objects/resource-access-input'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type ProblemEditorState = {
   title: string

@@ -1,7 +1,9 @@
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { resourceAccessSummary, type BaseAccess, type ResourceAccessPolicy } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { resourceAccessSummary } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ResourceAccessEditorProps = {

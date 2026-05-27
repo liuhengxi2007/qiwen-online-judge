@@ -1,5 +1,5 @@
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
-import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type CreateProblemPageDraft = {
   slug: string

@@ -8,15 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/pages/hooks/use-session-guard'
 import { useNotificationActions } from './hooks/use-notification-actions'
 import { useNotificationRefresh } from '@/pages/hooks/use-notification-refresh'
-import { notificationTranslationValues } from '@/objects/notification/notification-parsers'
+import { notificationTranslationValues } from './functions/notification-display'
 import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
 import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
 import { AppSectionBar } from '@/pages/components/app-section-bar'
 import { DateTimeText } from '@/pages/components/date-time-text'
-import { formatUserDisplayLabel } from '@/objects/user/user-display-label'
+import { formatUserDisplayLabel } from '@/pages/objects/user-display-label'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/objects/shared/pagination'
+import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/use-page-search-param-correction'
 
 const notificationsPerPage = 10

@@ -3,10 +3,10 @@ import { useCallback, useReducer } from 'react'
 import { HttpClientError } from '@/system/api/http-client'
 import { createProblemSet } from '@/apis/problemset/CreateProblemSet'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
-import { validateProblemSetDraft } from '@/objects/problemset/problemset-form'
-import { buildResourceAccessPolicy } from '@/objects/shared/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/objects/shared/access/access-subject-parsers'
-import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/objects/shared/resource-lifecycle'
+import { validateProblemSetDraft } from '@/pages/objects/problemset-form'
+import { buildResourceAccessPolicy } from '@/pages/objects/resource-access-input'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { createOwnerOnlyAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type CreateProblemSetPageState = {
@@ -85,7 +85,6 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
   const accessPolicyResult = buildResourceAccessPolicy(
-    resourceAccessSubjectParsers,
     state.draft.baseAccess,
     state.draft.grantedUsersInput,
     state.draft.grantedGroupsInput,

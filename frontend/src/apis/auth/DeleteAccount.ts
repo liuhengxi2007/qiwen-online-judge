@@ -1,5 +1,5 @@
 import type { Username } from '@/objects/user/Username'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import {
   decodeSuccessResponse,
   postJson,

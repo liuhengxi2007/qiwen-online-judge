@@ -1,6 +1,6 @@
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
-import { userGroupSlugValue } from '@/objects/usergroup/usergroup-parsers'
+import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import {
   decodeSuccessResponse,
   postJson,

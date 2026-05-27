@@ -1,6 +1,7 @@
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemDataTreeResponse } from '@/objects/problem/response/ProblemDataTreeResponse'
-import { parseProblemDataPath, problemSlugValue } from '@/objects/problem/problem-parsers'
+import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import { requestJson } from '@/system/api/http-client'
 
 export async function listProblemDataTree(problemSlug: ProblemSlug): Promise<ProblemDataTreeResponse> {

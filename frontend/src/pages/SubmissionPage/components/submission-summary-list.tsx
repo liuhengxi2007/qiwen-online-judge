@@ -1,19 +1,21 @@
 import { Link } from 'react-router-dom'
 
 import { Card, CardContent } from '@/components/ui/card'
-import { formatProblemTitleDisplay } from '@/objects/problem/problem-display'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { formatProblemTitleDisplay } from '@/pages/objects/problem-title-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
-import { submissionIdValue, submissionJudgeStateLabel, submissionLanguageLabel } from '@/objects/submission/submission-parsers'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
-} from '@/objects/submission/submission-display'
+  submissionJudgeStateLabel,
+  submissionLanguageLabel,
+} from '@/pages/objects/submission-display'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import { DateTimeText } from '@/pages/components/date-time-text'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
 import { useI18n } from '@/system/i18n/use-i18n'

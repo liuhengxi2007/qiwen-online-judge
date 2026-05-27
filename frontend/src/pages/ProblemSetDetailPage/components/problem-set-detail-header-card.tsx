@@ -1,11 +1,13 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { problemSetDescriptionValue, problemSetSlugValue, problemSetTitleValue } from '@/objects/problemset/problemset-parsers'
+import { problemSetDescriptionValue } from '@/objects/problemset/ProblemSetDescription'
+import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
+import { problemSetTitleValue } from '@/objects/problemset/ProblemSetTitle'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import { MarkdownDocument } from '@/pages/components/markdown-document'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
-import { resourceAccessBadgeLabel } from '@/objects/shared/resource-lifecycle'
+import { resourceAccessBadgeLabel } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemSetDetailHeaderCardProps = {

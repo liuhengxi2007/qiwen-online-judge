@@ -7,7 +7,7 @@ import type { ProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import type { ProblemStatementText } from '@/objects/problem/ProblemStatementText'
 import type { ProblemTimeLimitMs } from '@/objects/problem/ProblemTimeLimitMs'
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
-import type { ResourceAccessPolicy } from '@/objects/shared/access/AccessPolicy'
+import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import type { AuditFields } from '@/objects/shared/AuditFields'
 
 export type ProblemDetail = AuditFields & {

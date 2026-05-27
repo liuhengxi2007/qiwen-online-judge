@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
-import { formatUserDisplayLabel } from '@/objects/user/user-display-label'
+import { formatUserDisplayLabel } from '@/pages/objects/user-display-label'
 
 type UserProfileLinkProps = {
   user: UserIdentity

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { createBlog } from '@/apis/blog/CreateBlog'
 import type { CreateBlogRequest } from '@/objects/blog/request/CreateBlogRequest'
-import { blogIdValue } from '@/objects/blog/blog-parsers'
+import { blogIdValue } from '@/objects/blog/BlogId'
 
 export function useCreateBlogAction(createFailedMessage: string) {
   const navigate = useNavigate()

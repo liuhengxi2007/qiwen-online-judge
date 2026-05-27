@@ -1,9 +1,11 @@
 import { useCallback, useReducer } from 'react'
 
-import { parseEmailAddress, parsePlaintextPassword } from '@/objects/auth/auth-parsers'
+import { parseEmailAddress } from '@/objects/auth/EmailAddress'
+import { parsePlaintextPassword } from '@/objects/auth/PlaintextPassword'
 import type { RegisterRequest } from '@/objects/auth/request/RegisterRequest'
 import { useRegisterMutation } from './use-register-mutation'
-import { parseDisplayName, parseUsername } from '@/objects/user/user-parsers'
+import { parseDisplayName } from '@/objects/user/DisplayName'
+import { parseUsername } from '@/objects/user/Username'
 
 type RegisterState = {
   draft: RegisterDraft

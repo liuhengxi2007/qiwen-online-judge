@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { updateUserGroup } from '@/apis/usergroup/UpdateUserGroup'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
-import { validateUserGroupUpdateDraft } from '@/objects/usergroup/usergroup-form'
+import { validateUserGroupUpdateDraft } from '@/pages/objects/usergroup-form'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 

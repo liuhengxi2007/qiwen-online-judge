@@ -2,7 +2,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { UpdateManagedUserAccountRequest } from '@/objects/auth/request/UpdateManagedUserAccountRequest'
 import type { UpdateOwnAccountRequest } from '@/objects/auth/request/UpdateOwnAccountRequest'
 import type { Username } from '@/objects/user/Username'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import {
   fromSessionResponseContract,
   toUpdateManagedUserAccountRequestContract,

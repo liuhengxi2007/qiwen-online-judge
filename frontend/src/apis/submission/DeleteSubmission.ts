@@ -1,5 +1,5 @@
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
-import { submissionIdValue } from '@/objects/submission/submission-parsers'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import {
   decodeSuccessResponse,
   postJson,

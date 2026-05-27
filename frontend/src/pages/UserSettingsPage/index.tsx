@@ -11,7 +11,7 @@ import { UserProfileOverviewCard } from './components/user-profile-overview-card
 import { UserSettingsAccountCard } from './components/user-settings-account-card'
 import { UserSettingsPreferencesCard } from './components/user-settings-preferences-card'
 import { UserSettingsProfileCard } from './components/user-settings-profile-card'
-import { displayNameValue } from '@/objects/user/user-parsers'
+import { displayNameValue } from '@/objects/user/DisplayName'
 import { useUserSettingsBlockList } from './hooks/use-user-settings-block-list'
 import { useUserSettingsModel } from './hooks/use-user-settings-model'
 import { usePageTitle } from '@/pages/hooks/use-page-title'

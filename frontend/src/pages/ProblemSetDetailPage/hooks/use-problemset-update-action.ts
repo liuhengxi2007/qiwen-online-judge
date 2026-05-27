@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/system/api/http-client'
 import { updateProblemSet } from '@/apis/problemset/UpdateProblemSet'
-import { validateProblemSetUpdateDraft } from '@/objects/problemset/problemset-form'
+import { validateProblemSetUpdateDraft } from '@/pages/objects/problemset-form'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
-import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useProblemSetUpdateAction(problemSetSlug: ProblemSetSlug) {

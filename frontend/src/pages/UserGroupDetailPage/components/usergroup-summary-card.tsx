@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { userGroupDescriptionValue, userGroupNameValue, userGroupSlugValue } from '@/objects/usergroup/usergroup-parsers'
+import { userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
+import { userGroupNameValue } from '@/objects/usergroup/UserGroupName'
+import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import type { useUserGroupDetailPageModel } from '../hooks/use-usergroup-detail-page-model'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
 import { useI18n } from '@/system/i18n/use-i18n'

@@ -10,7 +10,7 @@ import { MessageList } from './message-list'
 import type { MessageConversationSummary } from '@/objects/message/response/MessageConversationSummary'
 import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
 import type { MessageId } from '@/objects/message/MessageId'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 

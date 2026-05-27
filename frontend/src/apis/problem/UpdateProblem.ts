@@ -1,7 +1,7 @@
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { UpdateProblemRequest } from '@/objects/problem/request/UpdateProblemRequest'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import {
   fromProblemDetailContract,
   toUpdateProblemRequestContract,

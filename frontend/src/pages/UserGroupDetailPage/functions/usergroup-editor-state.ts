@@ -1,6 +1,7 @@
 import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
-import { userGroupDescriptionValue, userGroupNameValue } from '@/objects/usergroup/usergroup-parsers'
+import { userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
+import { userGroupNameValue } from '@/objects/usergroup/UserGroupName'
 
 export type UserGroupEditorState = {
   name: string

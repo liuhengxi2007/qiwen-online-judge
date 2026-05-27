@@ -1,6 +1,6 @@
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { UpdateBlogRequest } from '@/objects/blog/request/UpdateBlogRequest'
-import { blogIdValue } from '@/objects/blog/blog-parsers'
+import { blogIdValue } from '@/objects/blog/BlogId'
 import {
   fromBlogDetailContract,
   toUpdateBlogRequestContract,

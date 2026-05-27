@@ -1,8 +1,8 @@
 import { CheckCircle2, HardDriveUpload, PauseCircle } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/objects/problem/problem-display'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/pages/objects/problem-title-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from '../hooks/use-problem-data-page-model'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
 import { useI18n } from '@/system/i18n/use-i18n'

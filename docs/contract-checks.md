@@ -26,9 +26,9 @@ The contract alignment check first compares object file keys one-to-one. Keys in
 - `shared/PageResponse`
 - `shared/response/ErrorResponse`
 
-Scoped files that exist on only one side fail as `frontend-only object file` or `backend-only object file` drift. This includes frontend helper, parser, form, and test files placed directly under `frontend/src/objects/<domain>` or `frontend/src/objects/shared`, because those directories are reserved for mirrored object files.
+Scoped files that exist on only one side fail as `frontend-only object file` or `backend-only object file` drift. Frontend object directories are reserved for PascalCase object files, request/response payloads, real object subdomains, and same-object parse/value/contract helpers. Parser helper files, form helpers, display helpers, tests, and barrels belong outside `frontend/src/objects`.
 
-The file-level check is intentionally not recursive beyond the scoped directories above. Nested helper or implementation folders such as `objects/internal`, `objects/access`, or other arbitrary subdirectories are outside this check.
+The file-level contract check is intentionally not recursive beyond the scoped directories above. Structure boundaries separately reject arbitrary frontend object helper subdirectories and allow only request/response directories plus real object subdomains such as shared access objects.
 
 When a new backend-only object appears in this check, resolve it in this order:
 

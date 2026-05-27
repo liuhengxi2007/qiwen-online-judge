@@ -8,7 +8,9 @@ import { sendDirectMessage } from '@/apis/message/SendDirectMessage'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
 import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
 import type { MessageId } from '@/objects/message/MessageId'
-import { messageConversationIdValue, messageIdValue, parseMessageContent } from '@/objects/message/message-parsers'
+import { parseMessageContent } from '@/objects/message/MessageContent'
+import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
+import { messageIdValue } from '@/objects/message/MessageId'
 import {
   messageStreamEventName,
   type MessageStreamEventDetail,

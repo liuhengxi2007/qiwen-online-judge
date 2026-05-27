@@ -8,32 +8,30 @@ import type { ProblemSummary } from '@/objects/problem/response/ProblemSummary'
 import type { UpdateProblemRequest } from '@/objects/problem/request/UpdateProblemRequest'
 import {
   fromOthersSubmissionAccessContract,
-  fromProblemDataContract,
-  fromProblemIdContract,
-  fromProblemSlugContract,
-  fromProblemSpaceLimitMbContract,
-  fromProblemStatementTextContract,
-  fromProblemTimeLimitMsContract,
-  fromProblemTitleContract,
   toOthersSubmissionAccessContract,
-  toProblemSlugContract,
-  toProblemSpaceLimitMbContract,
-  toProblemStatementTextContract,
-  toProblemTimeLimitMsContract,
-  toProblemTitleContract,
-  type OthersSubmissionAccessContract,
-} from '@/apis/problem/codecs/ProblemModelHttpCodecs'
-import { problemSearchQueryValue } from '@/objects/problem/problem-parsers'
+  type OthersSubmissionAccess,
+} from '@/objects/problem/OthersSubmissionAccess'
+import { fromProblemDataContract } from '@/objects/problem/ProblemData'
+import { fromProblemIdContract } from '@/objects/problem/ProblemId'
+import { fromProblemSlugContract, toProblemSlugContract } from '@/objects/problem/ProblemSlug'
+import { fromProblemSpaceLimitMbContract, toProblemSpaceLimitMbContract } from '@/objects/problem/ProblemSpaceLimitMb'
+import { fromProblemStatementTextContract, toProblemStatementTextContract } from '@/objects/problem/ProblemStatementText'
+import { fromProblemTimeLimitMsContract, toProblemTimeLimitMsContract } from '@/objects/problem/ProblemTimeLimitMs'
+import { fromProblemTitleContract, toProblemTitleContract } from '@/objects/problem/ProblemTitle'
+import { problemSearchQueryValue } from '@/objects/problem/request/ProblemSearchQuery'
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
-} from '@/objects/shared/access/resource-access-policy-codec'
-import {
-  fromUserIdentityContract,
-  type UserIdentityContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+} from '@/objects/shared/access/ResourceAccessPolicy'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
 
 type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
+type OthersSubmissionAccessContract = OthersSubmissionAccess
 
 type PageResponseContract<TItem> = {
   items: TItem[]

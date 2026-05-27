@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { isSubmissionSort, isSubmissionVerdictFilter } from '@/objects/submission/submission-parsers'
+import { isSubmissionSort } from '@/objects/submission/request/SubmissionSort'
+import { isSubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import type {
   ProblemSuggestion,
   SubmissionSort,
@@ -14,8 +15,10 @@ import type {
   SubmissionVerdictFilter,
 } from '../functions/submission-page-support'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
-import { displayNameValue, usernameValue } from '@/objects/user/user-parsers'
-import { problemSlugValue, problemTitleValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
+import { problemTitleValue } from '@/objects/problem/ProblemTitle'
+import { displayNameValue } from '@/objects/user/DisplayName'
+import { usernameValue } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
 

@@ -3,18 +3,22 @@ import type { SubmissionSort } from '@/objects/submission/request/SubmissionSort
 import type { SubmissionSortDirection } from '@/objects/submission/request/SubmissionSortDirection'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
-import { verdictFilterLabel } from '@/objects/submission/submission-display'
+import { verdictFilterLabel } from '@/pages/objects/submission-display'
 import {
   buildSubmissionListRequest,
   defaultSortDirection,
   submissionSortValues,
   verdictFilterValues,
-} from '@/objects/submission/submission-list-form'
+} from './submission-list-form'
 import {
   isSubmissionSort,
+} from '@/objects/submission/request/SubmissionSort'
+import {
   isSubmissionSortDirection,
+} from '@/objects/submission/request/SubmissionSortDirection'
+import {
   isSubmissionVerdictFilter,
-} from '@/objects/submission/submission-parsers'
+} from '@/objects/submission/request/SubmissionVerdictFilter'
 
 export {
   buildSubmissionListRequest,

@@ -3,7 +3,7 @@ import { fromSessionResponseContract } from '@/apis/user/codecs/UserHttpCodecs'
 import type { UpdateManagedUserPreferencesRequest } from '@/objects/user/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateOwnPreferencesRequest } from '@/objects/user/request/UpdateOwnPreferencesRequest'
 import type { Username } from '@/objects/user/Username'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import {
   toUpdateManagedUserPreferencesRequestContract,
   toUpdateOwnPreferencesRequestContract,

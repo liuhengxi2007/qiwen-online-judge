@@ -4,7 +4,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceAccessEditor } from '@/pages/components/resource-access-editor'
-import { resourceAccessSummary, type ResourceAccessPolicy } from '@/objects/shared/resource-lifecycle'
+import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { resourceAccessSummary } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemSetAccessDialogProps = {

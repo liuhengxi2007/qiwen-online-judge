@@ -32,6 +32,7 @@ const frontendUiForbiddenPrefixes = [
 const frontendPagesRoot = 'frontend/src/pages/'
 const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'routing', 'stores'])
 const frontendNestedPageObjectPathPattern = /^frontend\/src\/pages\/objects\/[^/]+\//
+const frontendTopLevelPageFunctionsPathPattern = /^frontend\/src\/pages\/functions(?:\/|$)/
 const frontendAllowedCanonicalPageVariantImports = [
   {
     importerRoot: 'frontend/src/pages/UserBlogPage/',
@@ -50,10 +51,14 @@ const backendBlockedObjectSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendObjectPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
-const frontendApiRootCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/[A-Za-z0-9_]*(?:Model)?HttpCodecs\.ts$/
+const frontendApiRootCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/[A-Za-z0-9_]*HttpCodecs\.ts$/
 const frontendApiCodecIndexPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\/index\.ts$/
 const frontendApiCodecFilePattern = /^frontend\/src\/apis\/([^/]+)\/codecs\/([^/]+)\.ts$/
-const frontendApiCodecBasenamePattern = /^[A-Za-z0-9_]*(?:Model)?HttpCodecs$/
+const frontendApiCodecBasenamePattern = /^[A-Za-z0-9_]*HttpCodecs$/
+const frontendObjectRoot = 'frontend/src/objects/'
+const frontendObjectFileBasenamePattern = /^[A-Z][A-Za-z0-9]*$/
+const frontendObjectAllowedSubdirectories = new Set(['request', 'response'])
+const frontendObjectAllowedSubdomainPaths = new Set(['shared/access'])
 const backendDomainHttpCodecFilePattern =
   /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/codec\/([^/]+)\.scala$/
 const backendDomainHttpMapperFilePattern =
@@ -169,6 +174,10 @@ function extractTsSpecifiers(source) {
 
 function checkFrontendLayerFile(filePath, errors) {
   const source = read(filePath)
+  if (frontendTopLevelPageFunctionsPathPattern.test(filePath)) {
+    errors.push(`${filePath} is under forbidden top-level pages/functions; use pages/<PageName>/functions`)
+  }
+
   if (frontendNestedPageObjectPathPattern.test(filePath)) {
     errors.push(`${filePath} is nested under pages/objects; keep frontend/src/pages/objects flat`)
   }
@@ -271,6 +280,53 @@ function checkFrontendLayerFile(filePath, errors) {
   }
 }
 
+function checkFrontendObjectFileLayout(filePath, errors) {
+  if (!filePath.startsWith(frontendObjectRoot)) {
+    return
+  }
+
+  const relativePath = filePath.slice(frontendObjectRoot.length)
+  const segments = relativePath.split('/')
+  const basename = segments.at(-1) ?? relativePath
+  const basenameWithoutExt = basenameWithoutExtension(filePath)
+  const directories = segments.slice(0, -1)
+  const nestedDirectories = directories.slice(1)
+
+  if (extname(filePath) !== '.ts') {
+    errors.push(`${filePath} is in objects but is not a .ts object file`)
+  }
+
+  if (/\.test\.[^.]+$/.test(filePath)) {
+    errors.push(`${filePath} is an objects-layer test; move tests outside frontend/src/objects`)
+    return
+  }
+
+  if (basename === 'index.ts') {
+    errors.push(`${filePath} is a forbidden objects barrel; import object files directly`)
+    return
+  }
+
+  if (!frontendObjectFileBasenamePattern.test(basenameWithoutExt)) {
+    errors.push(`${filePath} must use a PascalCase object filename`)
+  }
+
+  if (nestedDirectories.length === 0) {
+    return
+  }
+
+  const directoryPath = directories.join('/')
+  const isAllowedBoundaryDirectory =
+    nestedDirectories.length === 1 &&
+    frontendObjectAllowedSubdirectories.has(nestedDirectories[0])
+  const isAllowedObjectSubdomain = frontendObjectAllowedSubdomainPaths.has(directoryPath)
+
+  if (!isAllowedBoundaryDirectory && !isAllowedObjectSubdomain) {
+    errors.push(
+      `${filePath} is in an unsupported objects subdirectory; only request, response, and real object subdomains are allowed`,
+    )
+  }
+}
+
 function checkRemovedFrontendResidueImport(filePath, errors) {
   const source = read(filePath)
   for (const match of extractTsSpecifiers(source)) {
@@ -313,8 +369,13 @@ function collectFrontendHttpCodecFiles(files, errors) {
       continue
     }
 
+    if (basename.endsWith('ModelHttpCodecs')) {
+      errors.push(`${filePath} is a forbidden frontend model codec; keep same-object codecs in object files`)
+      continue
+    }
+
     if (!frontendApiCodecBasenamePattern.test(basename)) {
-      errors.push(`${filePath} must be named *HttpCodecs.ts or *ModelHttpCodecs.ts`)
+      errors.push(`${filePath} must be named *HttpCodecs.ts`)
       continue
     }
 
@@ -334,6 +395,10 @@ function collectBackendHttpCodecFiles(files) {
     }
 
     const [, domain, basename] = match
+    if (basename.endsWith('ModelHttpCodecs')) {
+      continue
+    }
+
     addCodecFile(codecsByDomain, domain, basename, filePath)
   }
 
@@ -603,6 +668,7 @@ function run() {
   for (const filePath of frontendFiles) {
     checkRemovedFrontendResidueImport(filePath, errors)
     checkFrontendLayerFile(filePath, errors)
+    checkFrontendObjectFileLayout(filePath, errors)
   }
 
   checkFrontendHttpCodecLayout(frontendFiles, backendDomainFiles, errors)

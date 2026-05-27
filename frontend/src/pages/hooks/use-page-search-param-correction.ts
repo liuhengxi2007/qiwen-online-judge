@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import type { SetURLSearchParams } from 'react-router-dom'
 
-import { getPageCorrection } from '@/objects/shared/pagination'
+import { getPageCorrection } from '@/pages/objects/pagination'
 
 type UsePageSearchParamCorrectionArgs = {
   currentPage: number

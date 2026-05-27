@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import type { DirectMessage } from '@/objects/message/response/DirectMessage'
 import type { MessageId } from '@/objects/message/MessageId'
-import { messageIdValue } from '@/objects/message/message-parsers'
+import { messageIdValue } from '@/objects/message/MessageId'
 import { DateTimeText } from '@/pages/components/date-time-text'
 import { useI18n } from '@/system/i18n/use-i18n'
 

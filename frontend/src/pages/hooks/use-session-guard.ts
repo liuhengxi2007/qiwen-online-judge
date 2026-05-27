@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { asSiteManagerSession } from '@/objects/auth/auth-session'
+import { asSiteManagerSession } from '@/pages/stores/auth/auth-session'
 import { HttpClientError } from '@/system/api/http-client'
 import { getSession } from '@/apis/auth/GetSession'
 import { logout as logoutRequest } from '@/apis/auth/Logout'

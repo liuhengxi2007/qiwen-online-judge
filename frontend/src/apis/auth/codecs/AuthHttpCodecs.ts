@@ -7,21 +7,18 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { UpdateManagedUserAccountRequest } from '@/objects/auth/request/UpdateManagedUserAccountRequest'
 import type { UpdateOwnAccountRequest } from '@/objects/auth/request/UpdateOwnAccountRequest'
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
-import {
-  fromEmailAddressContract,
-  toEmailAddressContract,
-  toPlaintextPasswordContract,
-} from '@/apis/auth/codecs/AuthModelHttpCodecs'
-import type {
-  UserPreferencesContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
-import {
-  fromDisplayNameContract,
-  fromUserPreferencesContract,
-  fromUsernameContract,
-  toDisplayNameContract,
-  toUsernameContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+import { fromEmailAddressContract, toEmailAddressContract } from '@/objects/auth/EmailAddress'
+import { toPlaintextPasswordContract } from '@/objects/auth/PlaintextPassword'
+import { fromDisplayNameContract, toDisplayNameContract } from '@/objects/user/DisplayName'
+import { fromUserPreferencesContract } from '@/objects/user/UserPreferences'
+import { fromUsernameContract, toUsernameContract } from '@/objects/user/Username'
+
+type UserPreferencesContract = {
+  displayMode: 'display_name' | 'username' | 'display_name_with_username'
+  locale: 'en' | 'zh-CN'
+  problemTitleDisplayMode: 'title' | 'slug' | 'title_with_slug'
+  autoMarkMessageRead: boolean
+}
 
 type LoginRequestContract = {
   username: string

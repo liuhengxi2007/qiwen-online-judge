@@ -7,14 +7,16 @@ import { ProblemSetAccessDialog } from './components/problem-set-access-dialog'
 import { ProblemSetDetailHeaderCard } from './components/problem-set-detail-header-card'
 import { ProblemSetLinkedProblemsCard } from './components/problem-set-linked-problems-card'
 import { useSessionGuard } from '@/pages/hooks/use-session-guard'
-import { parseProblemSetSlug, problemSetDescriptionValue, problemSetTitleValue } from '@/objects/problemset/problemset-parsers'
+import { problemSetDescriptionValue } from '@/objects/problemset/ProblemSetDescription'
+import { parseProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
+import { problemSetTitleValue } from '@/objects/problemset/ProblemSetTitle'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { useProblemSetDetailPageModel } from './hooks/use-problemset-detail-page-model'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
-} from '@/objects/shared/resource-access-input'
+} from '@/pages/objects/resource-access-input'
 import { AppSectionBar } from '@/pages/components/app-section-bar'
 import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/use-before-unload-prompt'

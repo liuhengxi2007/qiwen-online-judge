@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 import type { NotificationListResponse } from '@/objects/notification/response/NotificationListResponse'
 import type { NotificationSummary } from '@/objects/notification/response/NotificationSummary'
-import { notificationIdValue } from '@/objects/notification/notification-parsers'
+import { notificationIdValue } from '@/objects/notification/NotificationId'
 import type { NotificationId } from '@/objects/notification/NotificationId'
 
 type NotificationStoreState = {

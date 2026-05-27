@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
-import { formatProblemTitleDisplay } from '@/objects/problem/problem-display'
+import { formatProblemTitleDisplay } from '@/pages/objects/problem-title-display'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'

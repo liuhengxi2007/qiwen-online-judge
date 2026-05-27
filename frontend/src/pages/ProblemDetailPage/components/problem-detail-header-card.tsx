@@ -4,13 +4,14 @@ import { Database, Files, MessageSquareText, PencilLine, ScrollText, Send, Shiel
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/objects/problem/problem-display'
-import { problemSlugValue, problemStatementTextValue } from '@/objects/problem/problem-parsers'
+import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/pages/objects/problem-title-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
+import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
 import type { useProblemDetailPageModel } from '../hooks/use-problem-detail-page-model'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
 import { MarkdownDocument } from '@/pages/components/markdown-document'
-import { resourceAccessBadgeLabel } from '@/objects/shared/resource-lifecycle'
+import { resourceAccessBadgeLabel } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>

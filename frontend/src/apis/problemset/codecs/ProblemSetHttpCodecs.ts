@@ -4,26 +4,32 @@ import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetD
 import type { ProblemSetListResponse } from '@/objects/problemset/response/ProblemSetListResponse'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
 import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
-import { toProblemSlugContract } from '@/apis/problem/codecs/ProblemModelHttpCodecs'
+import { toProblemSlugContract } from '@/objects/problem/ProblemSlug'
 import {
   fromProblemSetDescriptionContract,
-  fromProblemSetIdContract,
-  fromProblemSetProblemSummaryContract,
-  fromProblemSetSlugContract,
-  fromProblemSetTitleContract,
   toProblemSetDescriptionContract,
-  toProblemSetSlugContract,
-  toProblemSetTitleContract,
-  type ProblemSetProblemSummaryContract,
-} from '@/apis/problemset/codecs/ProblemSetModelHttpCodecs'
+} from '@/objects/problemset/ProblemSetDescription'
+import { fromProblemSetIdContract } from '@/objects/problemset/ProblemSetId'
+import { fromProblemSetProblemSummaryContract } from '@/objects/problemset/ProblemSetProblemSummary'
+import { fromProblemSetSlugContract, toProblemSetSlugContract } from '@/objects/problemset/ProblemSetSlug'
+import { fromProblemSetTitleContract, toProblemSetTitleContract } from '@/objects/problemset/ProblemSetTitle'
 import {
   fromResourceAccessPolicyContract,
   toResourceAccessPolicyContract,
-} from '@/objects/shared/access/resource-access-policy-codec'
-import {
-  fromUserIdentityContract,
-  type UserIdentityContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+} from '@/objects/shared/access/ResourceAccessPolicy'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+
+type ProblemSetProblemSummaryContract = {
+  id: string
+  slug: string
+  title: string
+  position: number
+}
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
 
 type ResourceAccessPolicyContract = ReturnType<typeof toResourceAccessPolicyContract>
 

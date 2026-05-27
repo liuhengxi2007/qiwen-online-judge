@@ -4,7 +4,7 @@ import { addUserGroupMember } from '@/apis/usergroup/AddUserGroupMember'
 import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
-import { validateAddUserGroupMemberDraft } from '@/objects/usergroup/usergroup-form'
+import { validateAddUserGroupMemberDraft } from '@/pages/objects/usergroup-form'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 

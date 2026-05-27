@@ -1,7 +1,7 @@
 import { useReducer, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useSubmissionListQuery } from './use-submission-list-query'
 import { useSubmissionSuggestions } from './use-submission-suggestions'
@@ -27,7 +27,7 @@ import {
   buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
-} from '@/objects/shared/pagination'
+} from '@/pages/objects/pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/use-page-search-param-correction'
 
 export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {

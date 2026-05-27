@@ -2,12 +2,12 @@ import { useCallback, useState } from 'react'
 
 import { HttpClientError } from '@/system/api/http-client'
 import { updateProblem } from '@/apis/problem/UpdateProblem'
-import { validateProblemUpdateDraft } from '@/objects/problem/problem-form'
+import { validateProblemUpdateDraft } from '@/pages/objects/problem-form'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useI18n } from '@/system/i18n/use-i18n'
-import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export function useProblemUpdateAction(problemSlug: ProblemSlug) {
   const [isSaving, setIsSaving] = useState(false)

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
-import { formatProblemTitleDisplay } from '@/objects/problem/problem-display'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { formatProblemTitleDisplay } from '@/pages/objects/problem-title-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
 import type { UserAcceptedProblem } from '@/objects/user/UserAcceptedProblem'
-import { formatDateTime, formatUtcOffsetTitle } from '@/objects/shared/date-time'
+import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type AcceptedProblemsPanelProps = {

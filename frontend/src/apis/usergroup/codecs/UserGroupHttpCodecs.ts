@@ -5,23 +5,24 @@ import type { UpdateUserGroupRequest } from '@/objects/usergroup/request/UpdateU
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupListResponse } from '@/objects/usergroup/response/UserGroupListResponse'
 import type { UserGroupSummary } from '@/objects/usergroup/response/UserGroupSummary'
-import { toUsernameContract } from '@/apis/user/codecs/UserModelHttpCodecs'
+import { toAddUserGroupMemberRoleContract, type AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import { fromUsernameContract, toUsernameContract } from '@/objects/user/Username'
 import {
   fromUserGroupDescriptionContract,
-  fromUserGroupIdContract,
-  fromUserGroupMemberContract,
-  fromUserGroupNameContract,
-  fromUserGroupSlugContract,
-  toAddUserGroupMemberRoleContract,
   toUserGroupDescriptionContract,
-  toUserGroupNameContract,
-  toUserGroupRoleContract,
-  toUserGroupSlugContract,
-  type AddUserGroupMemberRoleContract,
-  type UserGroupMemberContract,
-  type UserGroupRoleContract,
-} from '@/apis/usergroup/codecs/UserGroupModelHttpCodecs'
-import { fromUsernameContract } from '@/apis/user/codecs/UserModelHttpCodecs'
+} from '@/objects/usergroup/UserGroupDescription'
+import { fromUserGroupIdContract } from '@/objects/usergroup/UserGroupId'
+import { fromUserGroupMemberContract } from '@/objects/usergroup/UserGroupMember'
+import { fromUserGroupNameContract, toUserGroupNameContract } from '@/objects/usergroup/UserGroupName'
+import { toUserGroupRoleContract, type UserGroupRole } from '@/objects/usergroup/UserGroupRole'
+import { fromUserGroupSlugContract, toUserGroupSlugContract } from '@/objects/usergroup/UserGroupSlug'
+
+type UserGroupMemberContract = {
+  username: string
+  displayName: string
+  role: UserGroupRole
+  joinedAt: string
+}
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -64,11 +65,11 @@ type UpdateUserGroupRequestContract = {
 
 type AddUserGroupMemberRequestContract = {
   username: string
-  role: AddUserGroupMemberRoleContract
+  role: AddUserGroupMemberRole
 }
 
 type UpdateUserGroupMemberRoleRequestContract = {
-  role: UserGroupRoleContract
+  role: UserGroupRole
 }
 
 type UserGroupListResponseContract = PageResponseContract<UserGroupSummaryContract>

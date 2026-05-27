@@ -1,7 +1,7 @@
 import type { DirectMessage } from '@/objects/message/response/DirectMessage'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
+import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
 import type { SendDirectMessageRequest } from '@/objects/message/request/SendDirectMessageRequest'
-import { messageConversationIdValue } from '@/objects/message/message-parsers'
 import {
   fromDirectMessage,
   toSendDirectMessageRequest,

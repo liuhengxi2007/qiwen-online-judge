@@ -6,7 +6,7 @@ import {
   initialProblemEditorState,
   reduceProblemEditorState,
 } from '../functions/problem-editor-state'
-import type { BaseAccess } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export function useProblemEditorState(problem: ProblemDetail | null) {
   const [state, dispatch] = useReducer(reduceProblemEditorState, initialProblemEditorState)

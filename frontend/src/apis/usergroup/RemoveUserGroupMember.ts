@@ -1,8 +1,8 @@
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
-import { userGroupSlugValue } from '@/objects/usergroup/usergroup-parsers'
+import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import { fromUserGroupDetailContract } from '@/apis/usergroup/codecs/UserGroupHttpCodecs'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { postJson } from '@/system/api/http-client'
 

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
-import { isSubmissionLanguage } from '@/objects/submission/submission-parsers'
+import { isSubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemSubmitEditorCardProps = {

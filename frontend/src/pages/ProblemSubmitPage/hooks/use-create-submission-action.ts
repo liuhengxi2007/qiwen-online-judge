@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { createSubmission } from '@/apis/submission/CreateSubmission'
 import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
-import { submissionIdValue } from '@/objects/submission/submission-parsers'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import { HttpClientError } from '@/system/api/http-client'
 
 export function useCreateSubmissionAction(createFailedMessage: string) {

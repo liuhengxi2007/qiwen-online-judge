@@ -1,6 +1,6 @@
 import { Navigate, useParams } from 'react-router-dom'
 
-import { parseUsername } from '@/objects/user/user-parsers'
+import { parseUsername } from '@/objects/user/Username'
 import { BlogListPageContent } from '@/pages/BlogPage/BlogListPageContent'
 
 export function UserBlogPage() {

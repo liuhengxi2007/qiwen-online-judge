@@ -4,7 +4,7 @@ import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } fro
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccountActions } from '@/pages/components/account-actions'
-import { formatUserDisplayLabel } from '@/objects/user/user-display-label'
+import { formatUserDisplayLabel } from '@/pages/objects/user-display-label'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useSessionGuard } from '@/pages/hooks/use-session-guard'
 import { useI18n } from '@/system/i18n/use-i18n'

@@ -6,8 +6,8 @@ import {
   judgeConfigPath,
   judgeConfigTemplate,
   validateJudgeConfigYaml,
-} from '@/objects/problem/problem-judge-config'
-import { parseProblemDataPath } from '@/objects/problem/problem-parsers'
+} from '../functions/problem-judge-config'
+import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from './use-problem-data-page-model'
 import { HttpClientError } from '@/system/api/http-client'

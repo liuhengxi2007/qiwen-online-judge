@@ -3,8 +3,8 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useSessionGuard } from '@/pages/hooks/use-session-guard'
-import { parseProblemSearchQuery } from '@/objects/problem/problem-parsers'
-import { shouldShowProblemSlugSupplement } from '@/objects/problem/problem-display'
+import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
+import { shouldShowProblemSlugSupplement } from '@/pages/objects/problem-title-display'
 import { useProblemPageModel } from './hooks/use-problem-page-model'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
 import { AppSectionBar } from '@/pages/components/app-section-bar'
@@ -12,7 +12,7 @@ import {
   buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
-} from '@/objects/shared/pagination'
+} from '@/pages/objects/pagination'
 import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'

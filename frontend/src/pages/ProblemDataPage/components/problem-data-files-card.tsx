@@ -2,9 +2,9 @@ import { ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { problemDataPathValue } from '@/objects/problem/problem-parsers'
+import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import { ConfirmActionDialog } from '@/pages/components/confirm-action-dialog'
-import { formatOptionalBinarySizeBytes } from '@/objects/shared/format/binary-size'
+import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { useProblemDataPageModel } from '../hooks/use-problem-data-page-model'
 

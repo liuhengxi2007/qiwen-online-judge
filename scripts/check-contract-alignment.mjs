@@ -20,6 +20,18 @@ const allowedExceptions = new Map([
     'backend-only:auth/SiteManagerUser',
     'Backend-only site-manager permission proof wraps AuthUser for server authorization and is not serialized as a frontend JSON contract.',
   ],
+  [
+    'frontend-only:submission/JudgeResult',
+    'Frontend submission detail mirrors judge-protocol-scala JudgeResult, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
+  [
+    'frontend-only:submission/JudgeSubtaskResult',
+    'Frontend submission detail mirrors judge-protocol-scala JudgeSubtaskResult, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
+  [
+    'frontend-only:submission/JudgeTestcaseResult',
+    'Frontend submission detail mirrors judge-protocol-scala JudgeTestcaseResult, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
   // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
 const usedExceptions = new Set()

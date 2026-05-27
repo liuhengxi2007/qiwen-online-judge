@@ -4,38 +4,35 @@ import type { SubmissionDetail } from '@/objects/submission/response/SubmissionD
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
+import { fromProblemIdContract } from '@/objects/problem/ProblemId'
+import { fromProblemSlugContract, toProblemSlugContract } from '@/objects/problem/ProblemSlug'
+import { fromProblemTitleContract } from '@/objects/problem/ProblemTitle'
 import {
-  fromProblemIdContract,
-  fromProblemSlugContract,
-  fromProblemTitleContract,
-  toProblemSlugContract,
-} from '@/apis/problem/codecs/ProblemModelHttpCodecs'
-import {
-  fromSubmissionIdContract,
   fromSubmissionLanguageContract,
-  fromSubmissionSourceCodeContract,
-  fromSubmissionStatusContract,
-  fromSubmissionVerdictContract,
   toSubmissionLanguageContract,
-  toSubmissionSourceCodeContract,
-  type SubmissionLanguageContract,
-  type SubmissionStatusContract,
-  type SubmissionVerdictContract,
-} from '@/apis/submission/codecs/SubmissionModelHttpCodecs'
+  type SubmissionLanguage,
+} from '@/objects/submission/SubmissionLanguage'
+import { fromSubmissionIdContract } from '@/objects/submission/SubmissionId'
+import { fromSubmissionSourceCodeContract, toSubmissionSourceCodeContract } from '@/objects/submission/SubmissionSourceCode'
+import { fromSubmissionStatusContract, type SubmissionStatus } from '@/objects/submission/SubmissionStatus'
+import { fromSubmissionVerdictContract, type SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import {
-  isSubmissionSort,
-  isSubmissionSortDirection,
-  isSubmissionVerdictFilter,
-  parseSubmissionProblemQuery,
-  parseSubmissionUserQuery,
-  requireParsed,
+  fromSubmissionProblemQueryContract,
   submissionProblemQueryValue,
-  submissionUserQueryValue,
-} from '@/objects/submission/submission-parsers'
+} from '@/objects/submission/request/SubmissionProblemQuery'
+import { isSubmissionSort } from '@/objects/submission/request/SubmissionSort'
+import { isSubmissionSortDirection } from '@/objects/submission/request/SubmissionSortDirection'
 import {
-  fromUserIdentityContract,
-  type UserIdentityContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+  fromSubmissionUserQueryContract,
+  submissionUserQueryValue,
+} from '@/objects/submission/request/SubmissionUserQuery'
+import { isSubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -44,13 +41,13 @@ type PageResponseContract<TItem> = {
   totalItems: number
 }
 
-type SubmissionVerdictFilterContract = 'all' | 'pending' | SubmissionVerdictContract
+type SubmissionVerdictFilterContract = 'all' | 'pending' | SubmissionVerdict
 type SubmissionSortRequestContract = 'submitted' | 'time' | 'memory' | 'code_length'
 type SubmissionSortDirectionRequestContract = 'asc' | 'desc'
 
 type CreateSubmissionRequestContract = {
   problemSlug: string
-  language: SubmissionLanguageContract
+  language: SubmissionLanguage
   sourceCode: string
 }
 
@@ -71,9 +68,9 @@ type SubmissionSummaryContract = {
   problemTitle: string
   canViewDetail: boolean
   submitter: UserIdentityContract
-  language: SubmissionLanguageContract
-  status: SubmissionStatusContract
-  verdict: SubmissionVerdictContract | null
+  language: SubmissionLanguage
+  status: SubmissionStatus
+  verdict: SubmissionVerdict | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
   score: number | null
@@ -90,9 +87,9 @@ type SubmissionDetailContract = {
   problemTitle: string
   canManage: boolean
   submitter: UserIdentityContract
-  language: SubmissionLanguageContract
-  status: SubmissionStatusContract
-  verdict: SubmissionVerdictContract | null
+  language: SubmissionLanguage
+  status: SubmissionStatus
+  verdict: SubmissionVerdict | null
   judgeMessage: string | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
@@ -203,11 +200,14 @@ export function fromSubmissionListRequestContract(request: SubmissionListRequest
   }
 
   return {
-    userQuery: request.userQuery === null ? null : requireParsed(parseSubmissionUserQuery(request.userQuery), 'submission list request user query'),
+    userQuery:
+      request.userQuery === null
+        ? null
+        : fromSubmissionUserQueryContract(request.userQuery, 'submission list request user query'),
     problemQuery:
       request.problemQuery === null
         ? null
-        : requireParsed(parseSubmissionProblemQuery(request.problemQuery), 'submission list request problem query'),
+        : fromSubmissionProblemQueryContract(request.problemQuery, 'submission list request problem query'),
     verdict: request.verdict,
     sort: request.sort,
     direction: request.direction,

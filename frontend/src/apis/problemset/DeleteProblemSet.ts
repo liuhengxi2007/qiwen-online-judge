@@ -1,6 +1,6 @@
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
-import { problemSetSlugValue } from '@/objects/problemset/problemset-parsers'
+import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import {
   decodeSuccessResponse,
   postJson,

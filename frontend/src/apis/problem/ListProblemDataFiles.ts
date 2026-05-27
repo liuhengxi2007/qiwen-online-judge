@@ -1,6 +1,7 @@
 import type { ProblemDataFileListResponse } from '@/objects/problem/response/ProblemDataFileListResponse'
+import { parseProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
-import { parseProblemDataFilename, problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { requestJson } from '@/system/api/http-client'
 
 export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileListResponse> {

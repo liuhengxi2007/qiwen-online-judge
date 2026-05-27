@@ -1,6 +1,6 @@
 import type { ProblemDataUploadResult } from '@/objects/problem/response/ProblemDataUploadResult'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { fromProblemDataUploadResultContract } from '@/apis/problem/codecs/ProblemHttpCodecs'
 import { postMultipart } from '@/system/api/http-client'
 

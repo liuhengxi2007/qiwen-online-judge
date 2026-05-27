@@ -1,5 +1,5 @@
 import type { BlogListResponse } from '@/objects/blog/response/BlogListResponse'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { fromBlogListResponseContract } from '@/apis/blog/codecs/BlogHttpCodecs'
 import { requestJson } from '@/system/api/http-client'

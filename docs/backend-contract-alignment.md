@@ -32,8 +32,10 @@ Keep these roles separate:
 
 - frontend `objects/request` and `objects/response`
   frontend transport payload objects
-- frontend `objects/<domain>/*-parsers.ts`, `apis/<domain>/codecs/*ModelHttpCodecs.ts`, and `apis/<domain>/codecs/*HttpCodecs.ts`
-  boundary parsing and serialization helpers
+- frontend `objects/<domain>/<Object>.ts`
+  durable frontend object types plus same-object parse/value/contract mapping helpers
+- frontend `apis/<domain>/codecs/*HttpCodecs.ts`
+  endpoint/request-response boundary composition over object mappers
 - backend `objects/request` and `objects/response`
   backend HTTP-facing command/query objects
 - backend bare `objects`
@@ -58,6 +60,7 @@ Preferred flow:
 5. encode response consumed by the matching frontend response object
 
 On the frontend, parse raw response payloads at the API boundary before handing values to UI state.
+Object-specific parsing and contract mapping should be exported by the matching object file; frontend API codecs should compose those mappers rather than introducing `*ModelHttpCodecs.ts`.
 
 ## What Must Align
 

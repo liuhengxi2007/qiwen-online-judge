@@ -1,5 +1,5 @@
 import type { UserIdentity } from '@/objects/user/UserIdentity'
-import { parseUserSearchQuery } from '@/objects/user/user-parsers'
+import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
 import { fromUserIdentityContract } from '@/apis/user/codecs/UserHttpCodecs'
 import { requestJson } from '@/system/api/http-client'
 

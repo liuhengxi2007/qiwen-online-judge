@@ -4,7 +4,7 @@ import { useSessionGuard } from '@/pages/hooks/use-session-guard'
 import { MessageConversationCard } from './components/message-conversation-card'
 import { MessageConversationPageHeader } from './components/message-conversation-page-header'
 import { useMessageConversation } from './hooks/use-message-conversation'
-import { parseUsername } from '@/objects/user/user-parsers'
+import { parseUsername } from '@/objects/user/Username'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'
 

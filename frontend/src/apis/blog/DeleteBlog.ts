@@ -1,4 +1,4 @@
-import { blogIdValue } from '@/objects/blog/blog-parsers'
+import { blogIdValue } from '@/objects/blog/BlogId'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { postJson } from '@/system/api/http-client'
 import { decodeSuccessResponse } from '@/system/api/http-client'

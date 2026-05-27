@@ -1,5 +1,5 @@
 import type { Username } from '@/objects/user/Username'
-import { canRemoveUserGroupMember, resolveUserGroupViewerPermissions } from '@/objects/usergroup/usergroup-permissions'
+import { canRemoveUserGroupMember, resolveUserGroupViewerPermissions } from './usergroup-permissions'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 
 export function resolveUserGroupDetailPermissions(

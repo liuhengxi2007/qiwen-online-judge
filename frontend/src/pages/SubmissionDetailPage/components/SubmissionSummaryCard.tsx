@@ -6,21 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ConfirmActionDialog } from '@/pages/components/confirm-action-dialog'
 import { DateTimeText } from '@/pages/components/date-time-text'
 import { UserProfileLink } from '@/pages/components/user-profile-link'
-import { formatProblemTitleDisplay } from '@/objects/problem/problem-display'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
+import { formatProblemTitleDisplay } from '@/pages/objects/problem-title-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
-import {
-  isTerminalSubmissionStatus,
-  submissionIdValue,
-  submissionJudgeStateLabel,
-  submissionLanguageLabel,
-} from '@/objects/submission/submission-parsers'
+import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
-} from '@/objects/submission/submission-display'
+  submissionJudgeStateLabel,
+  submissionLanguageLabel,
+} from '@/pages/objects/submission-display'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 

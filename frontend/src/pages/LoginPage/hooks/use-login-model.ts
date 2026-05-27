@@ -1,9 +1,9 @@
 import { useCallback, useReducer } from 'react'
 
-import { parsePlaintextPassword } from '@/objects/auth/auth-parsers'
+import { parsePlaintextPassword } from '@/objects/auth/PlaintextPassword'
 import type { LoginRequest } from '@/objects/auth/request/LoginRequest'
 import { useLoginMutation } from './use-login-mutation'
-import { parseUsername } from '@/objects/user/user-parsers'
+import { parseUsername } from '@/objects/user/Username'
 
 type LoginState = {
   username: string

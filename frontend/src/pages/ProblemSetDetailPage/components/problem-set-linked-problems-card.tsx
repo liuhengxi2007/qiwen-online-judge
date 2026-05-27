@@ -5,8 +5,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { problemSlugValue } from '@/objects/problem/problem-parsers'
-import { shouldShowProblemSlugSupplement } from '@/objects/problem/problem-display'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
+import { shouldShowProblemSlugSupplement } from '@/pages/objects/problem-title-display'
 import {
   useProblemTitleDisplay,
   useProblemTitleDisplayMode,

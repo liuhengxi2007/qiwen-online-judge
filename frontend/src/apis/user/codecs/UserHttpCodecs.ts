@@ -10,25 +10,34 @@ import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import type { UserListResponse } from '@/objects/user/response/UserListResponse'
 import type { UserProfileResponse } from '@/objects/user/response/UserProfileResponse'
 import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'
-import {
-  fromEmailAddressContract,
-} from '@/apis/auth/codecs/AuthModelHttpCodecs'
-import {
-  fromDisplayNameContract,
-  fromUserAcceptedProblemContract,
-  fromUserContributionContract,
-  fromUserIdentityContract,
-  fromUserPreferencesContract,
-  fromUsernameContract,
-  toDisplayNameContract,
-  toUserPreferencesContract,
-  type UserAcceptedProblemContract,
-  type UserIdentityContract,
-  type UserPreferencesContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
-import { userSearchQueryValue } from '@/objects/user/user-parsers'
+import { fromEmailAddressContract } from '@/objects/auth/EmailAddress'
+import { fromDisplayNameContract, toDisplayNameContract } from '@/objects/user/DisplayName'
+import { fromUserAcceptedProblemContract } from '@/objects/user/UserAcceptedProblem'
+import { fromUserContributionContract } from '@/objects/user/UserContribution'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+import { fromUserPreferencesContract, toUserPreferencesContract } from '@/objects/user/UserPreferences'
+import { userSearchQueryValue } from '@/objects/user/request/UserSearchQuery'
+import { fromUsernameContract } from '@/objects/user/Username'
 
-export { fromUserIdentityContract } from '@/apis/user/codecs/UserModelHttpCodecs'
+export { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type UserPreferencesContract = {
+  displayMode: 'display_name' | 'username' | 'display_name_with_username'
+  locale: 'en' | 'zh-CN'
+  problemTitleDisplayMode: 'title' | 'slug' | 'title_with_slug'
+  autoMarkMessageRead: boolean
+}
+
+type UserAcceptedProblemContract = {
+  slug: string
+  title: string
+  acceptedAt: string
+}
 
 type PageResponseContract<TItem> = {
   items: TItem[]

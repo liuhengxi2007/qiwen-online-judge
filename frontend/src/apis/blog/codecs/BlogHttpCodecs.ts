@@ -8,28 +8,29 @@ import type { UpdateBlogCommentRequest } from '@/objects/blog/request/UpdateBlog
 import type { UpdateBlogRequest } from '@/objects/blog/request/UpdateBlogRequest'
 import type { VoteBlogCommentRequest } from '@/objects/blog/request/VoteBlogCommentRequest'
 import type { VoteBlogRequest } from '@/objects/blog/request/VoteBlogRequest'
+import { fromBlogCommentContentContract, toBlogCommentContentContract } from '@/objects/blog/BlogCommentContent'
+import { fromBlogCommentIdContract } from '@/objects/blog/BlogCommentId'
+import { fromBlogContentContract, toBlogContentContract } from '@/objects/blog/BlogContent'
+import { fromBlogIdContract } from '@/objects/blog/BlogId'
+import { fromBlogProblemReferenceContract } from '@/objects/blog/BlogProblemReference'
+import { fromBlogTitleContract, toBlogTitleContract } from '@/objects/blog/BlogTitle'
 import {
-  fromBlogCommentContentContract,
-  fromBlogCommentIdContract,
-  fromBlogContentContract,
-  fromBlogIdContract,
-  fromBlogProblemReferenceContract,
-  fromBlogTitleContract,
   fromBlogVisibilityContract,
-  fromBlogVoteContract,
-  toBlogCommentContentContract,
-  toBlogContentContract,
-  toBlogTitleContract,
   toBlogVisibilityContract,
-  toBlogVoteContract,
-  type BlogProblemReferenceContract,
-  type BlogVisibilityContract,
-  type BlogVoteContract,
-} from '@/apis/blog/codecs/BlogModelHttpCodecs'
-import {
-  fromUserIdentityContract,
-  type UserIdentityContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+  type BlogVisibility,
+} from '@/objects/blog/BlogVisibility'
+import { fromBlogVoteContract, toBlogVoteContract, type BlogVote } from '@/objects/blog/BlogVote'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+
+type UserIdentityContract = {
+  username: string
+  displayName: string
+}
+
+type BlogProblemReferenceContract = {
+  slug: string
+  title: string
+}
 
 type PageResponseContract<TItem> = {
   items: TItem[]
@@ -41,17 +42,17 @@ type PageResponseContract<TItem> = {
 type CreateBlogRequestContract = {
   title: string
   content: string
-  visibility: BlogVisibilityContract
+  visibility: BlogVisibility
 }
 
 type UpdateBlogRequestContract = {
   title: string
   content: string
-  visibility: BlogVisibilityContract
+  visibility: BlogVisibility
 }
 
 type VoteBlogRequestContract = {
-  vote: BlogVoteContract
+  vote: BlogVote
 }
 
 type CreateBlogCommentRequestContract = {
@@ -63,7 +64,7 @@ type UpdateBlogCommentRequestContract = {
 }
 
 type VoteBlogCommentRequestContract = {
-  vote: BlogVoteContract
+  vote: BlogVote
 }
 
 type BlogCommentSummaryContract = {
@@ -72,7 +73,7 @@ type BlogCommentSummaryContract = {
   content: string
   author: UserIdentityContract
   score: number
-  viewerVote: BlogVoteContract | null
+  viewerVote: BlogVote | null
   createdAt: string
   updatedAt: string
 }
@@ -82,10 +83,10 @@ type BlogSummaryContract = {
   title: string
   content: string
   author: UserIdentityContract
-  visibility: BlogVisibilityContract
+  visibility: BlogVisibility
   relatedProblems: BlogProblemReferenceContract[]
   score: number
-  viewerVote: BlogVoteContract | null
+  viewerVote: BlogVote | null
   createdAt: string
   updatedAt: string
 }
@@ -95,10 +96,10 @@ type BlogDetailContract = {
   title: string
   content: string
   author: UserIdentityContract
-  visibility: BlogVisibilityContract
+  visibility: BlogVisibility
   relatedProblems: BlogProblemReferenceContract[]
   score: number
-  viewerVote: BlogVoteContract | null
+  viewerVote: BlogVote | null
   comments: BlogCommentSummaryContract[]
   createdAt: string
   updatedAt: string

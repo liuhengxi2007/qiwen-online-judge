@@ -1,4 +1,4 @@
-import { formatDateTime, formatUtcOffsetTitle } from '@/objects/shared/date-time'
+import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 
 type DateTimeTextProps = {
   value: string

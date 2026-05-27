@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { submissionSourceCodeValue } from '@/objects/submission/submission-parsers'
+import { submissionSourceCodeValue } from '@/objects/submission/SubmissionSourceCode'
 import type { SubmissionSourceCode } from '@/objects/submission/SubmissionSourceCode'
 import { useI18n } from '@/system/i18n/use-i18n'
 

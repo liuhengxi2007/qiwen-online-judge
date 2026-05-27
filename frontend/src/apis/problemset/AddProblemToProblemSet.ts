@@ -1,7 +1,7 @@
 import type { AddProblemToProblemSetRequest } from '@/objects/problemset/request/AddProblemToProblemSetRequest'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
-import { problemSetSlugValue } from '@/objects/problemset/problemset-parsers'
+import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import {
   fromProblemSetDetailContract,
   toAddProblemToProblemSetRequestContract,

@@ -1,7 +1,8 @@
 import type { BlogCommentId } from '@/objects/blog/BlogCommentId'
+import { blogCommentIdValue } from '@/objects/blog/BlogCommentId'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { VoteBlogCommentRequest } from '@/objects/blog/request/VoteBlogCommentRequest'
-import { blogCommentIdValue, blogIdValue } from '@/objects/blog/blog-parsers'
+import { blogIdValue } from '@/objects/blog/BlogId'
 import {
   fromBlogDetailContract,
   toVoteBlogCommentRequestContract,

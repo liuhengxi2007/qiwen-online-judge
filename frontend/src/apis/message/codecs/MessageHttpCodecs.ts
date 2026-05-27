@@ -10,18 +10,11 @@ import type { MessageHistoryResponse } from '@/objects/message/response/MessageH
 import type { MessageId } from '@/objects/message/MessageId'
 import type { MessageInboxResponse } from '@/objects/message/response/MessageInboxResponse'
 import type { SendDirectMessageRequest } from '@/objects/message/request/SendDirectMessageRequest'
-import {
-  fromMessageContentContract,
-  fromMessageConversationIdContract,
-  fromMessageIdContract,
-  toMessageContentContract,
-  toMessageIdContract,
-} from '@/apis/message/codecs/MessageModelHttpCodecs'
-import {
-  fromUserIdentityContract,
-  fromUsernameContract,
-  toUsernameContract,
-} from '@/apis/user/codecs/UserModelHttpCodecs'
+import { fromMessageContentContract, toMessageContentContract } from '@/objects/message/MessageContent'
+import { fromMessageConversationIdContract } from '@/objects/message/MessageConversationId'
+import { fromMessageIdContract, toMessageIdContract } from '@/objects/message/MessageId'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
+import { fromUsernameContract, toUsernameContract } from '@/objects/user/Username'
 
 export type ConversationReadStreamPayload = {
   conversationId: MessageConversationId

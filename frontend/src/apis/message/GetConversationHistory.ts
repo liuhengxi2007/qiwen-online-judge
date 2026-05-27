@@ -1,7 +1,8 @@
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
+import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
 import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
 import type { MessageId } from '@/objects/message/MessageId'
-import { messageConversationIdValue, messageIdValue } from '@/objects/message/message-parsers'
+import { messageIdValue } from '@/objects/message/MessageId'
 import { fromMessageHistoryResponse } from '@/apis/message/codecs/MessageHttpCodecs'
 import { requestJson } from '@/system/api/http-client'
 

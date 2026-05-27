@@ -1,4 +1,4 @@
-import { blogContentValue } from '@/objects/blog/blog-parsers'
+import { blogContentValue } from '@/objects/blog/BlogContent'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import { MarkdownDocument } from '@/pages/components/markdown-document'
 

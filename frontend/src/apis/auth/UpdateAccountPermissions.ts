@@ -1,7 +1,7 @@
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
 import type { Username } from '@/objects/user/Username'
 import type { AuthAccountListItem } from '@/objects/auth/response/AuthAccountListItem'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import {
   fromAuthAccountListItemContract,
   toUpdateUserPermissionsRequestContract,

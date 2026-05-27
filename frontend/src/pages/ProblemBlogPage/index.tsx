@@ -1,6 +1,6 @@
 import { Navigate, useParams } from 'react-router-dom'
 
-import { parseProblemSlug } from '@/objects/problem/problem-parsers'
+import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { BlogListPageContent } from '@/pages/BlogPage/BlogListPageContent'
 
 export function ProblemBlogPage() {

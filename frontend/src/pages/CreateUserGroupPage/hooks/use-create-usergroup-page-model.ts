@@ -6,7 +6,7 @@ import {
   initialCreateUserGroupPageState,
   reduceCreateUserGroupPageState,
 } from '../functions/create-usergroup-page-state'
-import { validateUserGroupDraft } from '@/objects/usergroup/usergroup-form'
+import { validateUserGroupDraft } from '@/pages/objects/usergroup-form'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 

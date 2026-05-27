@@ -4,11 +4,11 @@ import { Bell, LogOut, Mail } from 'lucide-react'
 
 import { logout as logoutRequest } from '@/apis/auth/Logout'
 import { Button } from '@/components/ui/button'
-import { usernameValue } from '@/objects/user/user-parsers'
+import { usernameValue } from '@/objects/user/Username'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
 import { useMessageStore } from '@/pages/stores/message/use-message-store'
 import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
-import { formatUserDisplayLabel } from '@/objects/user/user-display-label'
+import { formatUserDisplayLabel } from '@/pages/objects/user-display-label'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type AccountActionsProps = {

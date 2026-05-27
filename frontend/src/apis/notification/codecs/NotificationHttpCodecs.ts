@@ -1,12 +1,10 @@
 import type { NotificationListResponse } from '@/objects/notification/response/NotificationListResponse'
 import type { NotificationSummary } from '@/objects/notification/response/NotificationSummary'
 import type { NotificationUnreadCountResponse } from '@/objects/notification/response/NotificationUnreadCountResponse'
-import {
-  fromNotificationIdContract,
-  fromNotificationKindContract,
-  fromNotificationPayloadContract,
-} from '@/apis/notification/codecs/NotificationModelHttpCodecs'
-import { fromUserIdentityContract } from '@/apis/user/codecs/UserModelHttpCodecs'
+import { fromNotificationIdContract } from '@/objects/notification/NotificationId'
+import { fromNotificationKindContract } from '@/objects/notification/NotificationKind'
+import { fromNotificationPayloadContract } from '@/objects/notification/NotificationPayload'
+import { fromUserIdentityContract } from '@/objects/user/UserIdentity'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null

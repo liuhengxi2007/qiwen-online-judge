@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { useProblemDetailPageModel } from '../hooks/use-problem-detail-page-model'
 import { ResourceAccessEditor } from '@/pages/components/resource-access-editor'
-import { resourceAccessSummary } from '@/objects/shared/resource-lifecycle'
+import { resourceAccessSummary } from '@/pages/objects/resource-access-display'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>

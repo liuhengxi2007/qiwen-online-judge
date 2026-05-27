@@ -1,4 +1,4 @@
-import { displayNameValue } from '@/objects/user/user-parsers'
+import { displayNameValue } from '@/objects/user/DisplayName'
 import type { useUserGroupDetailPageModel } from '../hooks/use-usergroup-detail-page-model'
 import { ConfirmActionDialog } from '@/pages/components/confirm-action-dialog'
 import { useI18n } from '@/system/i18n/use-i18n'

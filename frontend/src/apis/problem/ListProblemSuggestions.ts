@@ -1,5 +1,5 @@
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
-import { parseProblemSearchQuery } from '@/objects/problem/problem-parsers'
+import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
 import { fromProblemSuggestionContract } from '@/apis/problem/codecs/ProblemHttpCodecs'
 import { requestJson } from '@/system/api/http-client'
 

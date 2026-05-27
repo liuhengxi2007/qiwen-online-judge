@@ -8,17 +8,16 @@ import {
 } from '../functions/create-problem-page-state'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
-import { validateProblemDraft } from '@/objects/problem/problem-form'
-import { buildResourceAccessPolicy } from '@/objects/shared/resource-access-input'
-import { resourceAccessSubjectParsers } from '@/objects/shared/access/access-subject-parsers'
+import { validateProblemDraft } from '@/pages/objects/problem-form'
+import { buildResourceAccessPolicy } from '@/pages/objects/resource-access-input'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { createOwnerOnlyAccessPolicy, type BaseAccess } from '@/objects/shared/resource-lifecycle'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { createOwnerOnlyAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 
 export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
   const { t } = useI18n()
   const accessPolicyResult = buildResourceAccessPolicy(
-    resourceAccessSubjectParsers,
     state.draft.baseAccess,
     state.draft.grantedUsersInput,
     state.draft.grantedGroupsInput,

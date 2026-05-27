@@ -4,7 +4,9 @@ import { Navigate, useParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/pages/hooks/use-session-guard'
-import { parseProblemSlug, problemStatementTextValue, problemTitleValue } from '@/objects/problem/problem-parsers'
+import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
+import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
+import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { ProblemAccessDialog } from './components/problem-access-dialog'
 import { ProblemDetailHeaderCard } from './components/problem-detail-header-card'
@@ -18,7 +20,7 @@ import {
   grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
-} from '@/objects/shared/resource-access-input'
+} from '@/pages/objects/resource-access-input'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/use-before-unload-prompt'
 import { usePageTitle } from '@/pages/hooks/use-page-title'
 import { useI18n } from '@/system/i18n/use-i18n'
