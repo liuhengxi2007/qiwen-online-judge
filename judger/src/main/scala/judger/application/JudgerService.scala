@@ -2,7 +2,7 @@ package judger.application
 
 import cats.effect.IO
 import cats.effect.kernel.Ref
-import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judger.config.{AppConfig, RegisteredJudger}
 import judger.infra.{Cpp17Runtime, JudgeExecutor, JudgeHttpClient, ProblemDataCache, Python3Runtime}
 import org.typelevel.log4cats.Logger

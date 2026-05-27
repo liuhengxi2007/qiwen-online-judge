@@ -8,7 +8,7 @@ import domains.problem.objects.response.ProblemDetail
 import domains.problem.objects.{ProblemDataManifest, ProblemDataPath}
 import domains.submission.application.SubmissionCommands
 import domains.submission.objects.SubmissionId
-import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
+import judgeprotocol.objects.{JudgeTask, JudgerId, ReportJudgeResultRequest}
 
 import java.time.Instant
 

@@ -1,7 +1,7 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.model.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionVerdict}
+import judgeprotocol.objects.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionVerdict}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 

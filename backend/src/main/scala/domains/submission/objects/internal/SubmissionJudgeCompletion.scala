@@ -1,7 +1,7 @@
 package domains.submission.objects.internal
 
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
-import judgeprotocol.model.JudgeResult
+import judgeprotocol.objects.JudgeResult
 
 final case class SubmissionJudgeCompletion(
   status: SubmissionStatus,

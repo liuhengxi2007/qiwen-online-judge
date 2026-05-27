@@ -3,7 +3,7 @@ package judger.infra
 import cats.effect.IO
 import io.circe.parser.decode
 import io.circe.syntax.*
-import judgeprotocol.model.*
+import judgeprotocol.objects.*
 import judger.config.AppConfig
 
 import java.net.{URI, URLEncoder}

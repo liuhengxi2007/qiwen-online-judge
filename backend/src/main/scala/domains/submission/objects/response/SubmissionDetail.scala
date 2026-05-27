@@ -4,7 +4,7 @@ import domains.submission.objects.*
 
 import domains.user.objects.UserIdentity
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import judgeprotocol.model.JudgeResult
+import judgeprotocol.objects.JudgeResult
 
 import java.time.Instant
 

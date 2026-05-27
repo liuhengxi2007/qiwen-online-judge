@@ -4,7 +4,7 @@ package domains.judger.table.judger
 
 import cats.effect.IO
 import domains.judger.objects.response.RegisteredJudgerListItem
-import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
+import judgeprotocol.objects.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse, SubmissionLanguage}
 import domains.judger.table.judger.JudgerTableSchema.*
 import domains.judger.table.judger.JudgerTableSupport.*
 

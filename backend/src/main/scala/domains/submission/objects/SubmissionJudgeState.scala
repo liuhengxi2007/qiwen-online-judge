@@ -1,6 +1,6 @@
 package domains.submission.objects
 
-import judgeprotocol.model.JudgeResult
+import judgeprotocol.objects.JudgeResult
 import java.time.Instant
 
 final case class SubmissionJudgeState(

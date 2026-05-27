@@ -9,7 +9,7 @@ import database.utils.UserIdentitySql
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import io.circe.parser.decode
 import io.circe.syntax.*
-import judgeprotocol.model.JudgeResult
+import judgeprotocol.objects.JudgeResult
 
 import java.sql.{PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant

@@ -2,7 +2,7 @@ package judger.infra
 
 import cats.effect.IO
 import cats.syntax.all.*
-import judgeprotocol.model.{JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult, ReportJudgeResultRequest, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.{JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult, ReportJudgeResultRequest, SubmissionStatus, SubmissionVerdict}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 

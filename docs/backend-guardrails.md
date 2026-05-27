@@ -84,7 +84,7 @@ Bare `objects/` files must not import `objects/request` or `objects/response`; d
 `objects/request` and `objects/response` must not import `application`, `http`, or `table`.
 `objects/` must not import `application`, `http`, or `table`; if an object transition needs data from a response shape, put that adapter in `application` support code.
 
-Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol models because those types are cross-process wire contracts rather than backend business models.
+Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol objects because those types are cross-process wire contracts rather than backend business models.
 
 For `table`:
 

@@ -1,7 +1,7 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.model.{JudgeTask, JudgeTaskFileRef, ProblemSlug}
+import judgeprotocol.objects.{JudgeTask, JudgeTaskFileRef, ProblemSlug}
 import judger.config.AppConfig
 
 import java.nio.charset.StandardCharsets

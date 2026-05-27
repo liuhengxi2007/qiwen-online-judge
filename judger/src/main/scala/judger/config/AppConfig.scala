@@ -1,6 +1,6 @@
 package judger.config
 
-import judgeprotocol.model.{JudgerId, SubmissionLanguage}
+import judgeprotocol.objects.{JudgerId, SubmissionLanguage}
 
 import java.net.InetAddress
 import java.nio.file.Path

@@ -8,7 +8,7 @@ import cats.effect.{Clock, IO}
 import database.DatabaseSession
 import domains.judge.application.{JudgeCommands, JudgeConfig}
 import domains.problem.application.ProblemDataStorage
-import judgeprotocol.model.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
+import judgeprotocol.objects.{ClaimJudgeTaskRequest, ReportJudgeResultRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

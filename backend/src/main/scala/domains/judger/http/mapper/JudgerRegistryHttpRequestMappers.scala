@@ -1,6 +1,6 @@
 package domains.judger.http.mapper
 
-import judgeprotocol.model.JudgerId
+import judgeprotocol.objects.JudgerId
 
 object JudgerRegistryHttpRequestMappers:
 

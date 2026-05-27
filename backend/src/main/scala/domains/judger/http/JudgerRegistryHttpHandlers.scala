@@ -12,7 +12,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.judge.application.JudgeConfig
 import domains.judger.application.JudgerRegistryCommands
-import judgeprotocol.model.{JudgerHeartbeatRequest, RegisterJudgerRequest}
+import judgeprotocol.objects.{JudgerHeartbeatRequest, RegisterJudgerRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

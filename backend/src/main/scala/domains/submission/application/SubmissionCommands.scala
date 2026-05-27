@@ -7,7 +7,7 @@ import domains.submission.application.utils.SubmissionJudgeStateSupport
 import domains.submission.objects.{SubmissionId, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion}
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
-import judgeprotocol.model.{JudgerId, ReportJudgeResultRequest}
+import judgeprotocol.objects.{JudgerId, ReportJudgeResultRequest}
 
 import java.sql.Connection
 import java.time.Instant
@@ -29,7 +29,7 @@ object SubmissionCommands:
 
   def claimNextJudgeTask(
     connection: Connection,
-    supportedLanguages: List[judgeprotocol.model.SubmissionLanguage],
+    supportedLanguages: List[judgeprotocol.objects.SubmissionLanguage],
     claimedAt: Instant
   ): IO[ClaimNextJudgeTaskResult] =
     SubmissionLifecycle.beginJudging(SubmissionJudgeState.queued, claimedAt) match
@@ -75,7 +75,7 @@ object SubmissionCommands:
     completedAt: Instant
   ): IO[RecordJudgeResult] =
     request.status match
-      case judgeprotocol.model.SubmissionStatus.Completed | judgeprotocol.model.SubmissionStatus.Failed =>
+      case judgeprotocol.objects.SubmissionStatus.Completed | judgeprotocol.objects.SubmissionStatus.Failed =>
         SubmissionQueryTable.findById(connection, submissionId).flatMap {
           case None =>
             IO.pure(RecordJudgeResult.SubmissionNotFound)
@@ -105,23 +105,23 @@ object SubmissionCommands:
       case _ =>
         IO.pure(RecordJudgeResult.ValidationFailed("Judge results may only set status to completed or failed."))
 
-  private def fromProtocolStatus(status: judgeprotocol.model.SubmissionStatus): SubmissionStatus =
+  private def fromProtocolStatus(status: judgeprotocol.objects.SubmissionStatus): SubmissionStatus =
     status match
-      case judgeprotocol.model.SubmissionStatus.Queued => SubmissionStatus.Queued
-      case judgeprotocol.model.SubmissionStatus.Running => SubmissionStatus.Running
-      case judgeprotocol.model.SubmissionStatus.Completed => SubmissionStatus.Completed
-      case judgeprotocol.model.SubmissionStatus.Failed => SubmissionStatus.Failed
+      case judgeprotocol.objects.SubmissionStatus.Queued => SubmissionStatus.Queued
+      case judgeprotocol.objects.SubmissionStatus.Running => SubmissionStatus.Running
+      case judgeprotocol.objects.SubmissionStatus.Completed => SubmissionStatus.Completed
+      case judgeprotocol.objects.SubmissionStatus.Failed => SubmissionStatus.Failed
 
-  private def fromProtocolVerdict(verdict: judgeprotocol.model.SubmissionVerdict): SubmissionVerdict =
+  private def fromProtocolVerdict(verdict: judgeprotocol.objects.SubmissionVerdict): SubmissionVerdict =
     verdict match
-      case judgeprotocol.model.SubmissionVerdict.Accepted => SubmissionVerdict.Accepted
-      case judgeprotocol.model.SubmissionVerdict.WrongAnswer => SubmissionVerdict.WrongAnswer
-      case judgeprotocol.model.SubmissionVerdict.CompileError => SubmissionVerdict.CompileError
-      case judgeprotocol.model.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
-      case judgeprotocol.model.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
-      case judgeprotocol.model.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
+      case judgeprotocol.objects.SubmissionVerdict.Accepted => SubmissionVerdict.Accepted
+      case judgeprotocol.objects.SubmissionVerdict.WrongAnswer => SubmissionVerdict.WrongAnswer
+      case judgeprotocol.objects.SubmissionVerdict.CompileError => SubmissionVerdict.CompileError
+      case judgeprotocol.objects.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
+      case judgeprotocol.objects.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
+      case judgeprotocol.objects.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
 
-  private def toSubmissionLanguage(language: judgeprotocol.model.SubmissionLanguage): Option[domains.submission.objects.SubmissionLanguage] =
+  private def toSubmissionLanguage(language: judgeprotocol.objects.SubmissionLanguage): Option[domains.submission.objects.SubmissionLanguage] =
     language match
-      case judgeprotocol.model.SubmissionLanguage.Cpp17 => Some(domains.submission.objects.SubmissionLanguage.Cpp17)
-      case judgeprotocol.model.SubmissionLanguage.Python3 => Some(domains.submission.objects.SubmissionLanguage.Python3)
+      case judgeprotocol.objects.SubmissionLanguage.Cpp17 => Some(domains.submission.objects.SubmissionLanguage.Cpp17)
+      case judgeprotocol.objects.SubmissionLanguage.Python3 => Some(domains.submission.objects.SubmissionLanguage.Python3)

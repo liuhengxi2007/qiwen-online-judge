@@ -7,7 +7,7 @@ import database.DatabaseSession
 import domains.judge.application.JudgeConfig
 import domains.judger.objects.response.RegisteredJudgerListItem
 import domains.judger.table.judger.JudgerTable
-import judgeprotocol.model.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse}
+import judgeprotocol.objects.{JudgerId, RegisterJudgerRequest, RegisterJudgerResponse}
 
 import java.sql.Connection
 
@@ -61,7 +61,7 @@ object JudgerRegistryCommands:
     connection: Connection,
     judgeConfig: JudgeConfig,
     judgerId: JudgerId
-  ): IO[Option[List[judgeprotocol.model.SubmissionLanguage]]] =
+  ): IO[Option[List[judgeprotocol.objects.SubmissionLanguage]]] =
     JudgerTable.findActiveSupportedLanguages(connection, judgerId, judgeConfig.heartbeatTimeoutMs)
 
   private def validateRegisterRequest(request: RegisterJudgerRequest): Either[String, RegisterJudgerRequest] =
