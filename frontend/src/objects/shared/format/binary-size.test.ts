@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatBinarySizeBytes, formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
+import { formatBinarySizeBytes, formatOptionalBinarySizeBytes } from '@/objects/shared/format/binary-size'
 
 describe('binary size formatting', () => {
   it('formats byte values', () => {
