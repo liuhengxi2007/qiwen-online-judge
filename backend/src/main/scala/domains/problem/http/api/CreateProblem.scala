@@ -7,7 +7,7 @@ import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
-import domains.problem.model.request.{CreateProblemRequest}
+import domains.problem.objects.request.{CreateProblemRequest}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

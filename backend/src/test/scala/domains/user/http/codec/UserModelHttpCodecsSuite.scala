@@ -1,7 +1,7 @@
 package domains.user.http.codec
 
 import domains.user.http.codec.UserModelHttpCodecs.given
-import domains.user.model.Username
+import domains.user.objects.Username
 import io.circe.parser.decode
 import munit.FunSuite
 

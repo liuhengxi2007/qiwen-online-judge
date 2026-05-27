@@ -4,7 +4,7 @@ package domains.blog.application
 
 import cats.effect.IO
 import domains.blog.table.blog.BlogPostQueryTable
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.Connection
 

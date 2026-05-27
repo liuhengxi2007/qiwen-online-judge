@@ -6,7 +6,7 @@ import domains.auth.http.*
 import domains.auth.http.codec.AuthHttpCodecs.given
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.LoginResult
-import domains.auth.model.request.LoginRequest
+import domains.auth.objects.request.LoginRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

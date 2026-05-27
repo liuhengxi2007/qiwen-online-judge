@@ -9,8 +9,8 @@ import domains.usergroup.http.*
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import cats.effect.IO
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.request.{AddUserGroupMemberRequest}
-import domains.usergroup.model.UserGroupSlug
+import domains.usergroup.objects.request.{AddUserGroupMemberRequest}
+import domains.usergroup.objects.UserGroupSlug
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

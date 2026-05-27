@@ -3,12 +3,12 @@ package domains.notification.application
 
 
 import cats.effect.IO
-import domains.auth.model.AuthUser
-import domains.user.model.Username
-import domains.blog.model.BlogCommentId
-import domains.blog.model.internal.BlogCommentNotificationContext
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
+import domains.blog.objects.BlogCommentId
+import domains.blog.objects.internal.BlogCommentNotificationContext
 import domains.notification.application.NotificationCommandResults.{MarkAllNotificationsReadResult, MarkNotificationReadResult}
-import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
+import domains.notification.objects.{NotificationId, NotificationKind, NotificationPayload}
 import domains.notification.table.notification.NotificationTable
 
 import java.sql.Connection

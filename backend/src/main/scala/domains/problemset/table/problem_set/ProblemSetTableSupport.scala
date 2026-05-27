@@ -4,12 +4,12 @@ package domains.problemset.table.problem_set
 
 import cats.effect.IO
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
-import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
-import domains.problemset.model.response.ProblemSetSummary
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import shared.model.access.{ResourceAccessPolicy, ResourceId}
+import domains.auth.objects.AuthUser
+import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.objects.response.ProblemSetSummary
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import shared.objects.access.{ResourceAccessPolicy, ResourceId}
 import database.utils.UserIdentitySql
 
 import java.sql.{PreparedStatement, ResultSet}

@@ -3,7 +3,7 @@ package domains.problemset.application
 
 
 import cats.effect.IO
-import domains.problemset.model.ProblemSetSlug
+import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.table.problem_set.ProblemSetTable
 
 import java.sql.Connection

@@ -1,16 +1,16 @@
 package domains.message.application
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
+import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash}
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.internal.ConversationReadReceipt
-import domains.message.model.request.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
-import domains.message.model.{MessageContent, MessageConversationId, MessageId}
-import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, Username}
+import domains.message.objects.internal.ConversationReadReceipt
+import domains.message.objects.request.{CreateConversationRequest, MarkConversationReadMode, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.objects.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.objects.{MessageContent, MessageConversationId, MessageId}
+import domains.problem.objects.ProblemTitleDisplayMode
+import domains.user.objects.{DisplayName, UserDisplayMode, UserIdentity, UserLocale, Username}
 import munit.CatsEffectSuite
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 import java.sql.Connection
 import java.time.Instant

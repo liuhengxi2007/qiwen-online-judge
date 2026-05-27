@@ -2,10 +2,10 @@ package domains.message.table.message
 
 
 
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import domains.message.model.{MessageContent, MessageConversationId, MessageId}
-import domains.message.model.internal.ConversationReadReceipt
-import domains.message.model.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import domains.message.objects.{MessageContent, MessageConversationId, MessageId}
+import domains.message.objects.internal.ConversationReadReceipt
+import domains.message.objects.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
 import database.utils.UserIdentitySql
 
 import java.sql.ResultSet

@@ -4,7 +4,7 @@ package domains.user.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser}
+import domains.auth.objects.{AuthUser, SiteManagerUser}
 
 import java.sql.Connection
 

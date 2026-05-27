@@ -8,8 +8,8 @@ import domains.message.http.mapper.MessageHttpRequestMappers
 import domains.message.http.*
 import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
-import domains.message.model.request.MarkConversationReadRequest
-import domains.message.model.MessageConversationId
+import domains.message.objects.request.MarkConversationReadRequest
+import domains.message.objects.MessageConversationId
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

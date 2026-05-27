@@ -5,12 +5,12 @@ package domains.problemset.application.utils
 import domains.problemset.application.{ProblemSetAccessDecision, ProblemSetAccessFacts, ProblemSetPolicy}
 import cats.effect.IO
 import domains.auth.application.AuthCommands
-import domains.auth.model.AuthUser
-import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSet}
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
-import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
+import domains.auth.objects.AuthUser
+import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.objects.{ProblemSet}
+import domains.user.objects.Username
+import domains.usergroup.objects.UserGroupSlug
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 import shared.application.access.ResourceAccessFacts
 import domains.usergroup.application.UserGroupCommands
 

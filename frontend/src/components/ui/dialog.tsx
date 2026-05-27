@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
-import { translateMessage } from '@/shared/i18n/messages'
+import { translateMessage } from '@/system/i18n/messages'
 
 function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />

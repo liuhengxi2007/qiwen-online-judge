@@ -9,8 +9,8 @@ import domains.problemset.http.*
 import domains.problemset.http.codec.ProblemSetHttpCodecs.given
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
-import domains.problemset.model.request.{UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSetSlug}
+import domains.problemset.objects.request.{UpdateProblemSetRequest}
+import domains.problemset.objects.{ProblemSetSlug}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

@@ -5,14 +5,14 @@ package domains.problem.application
 import cats.effect.IO
 import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
-import domains.auth.model.AuthUser
-import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
-import domains.problem.model.{ProblemId}
+import domains.auth.objects.AuthUser
+import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.objects.{ProblemId}
 import domains.problem.table.problem.{ProblemMutationTable, ProblemQueryTable}
 import domains.problem.application.ProblemCommandResults.*
 import domains.problem.application.utils.ProblemCommandSupport.*
 import domains.problem.application.ProblemDecisions.*
-import shared.model.access.{ResourceId, ResourceKind}
+import shared.objects.access.{ResourceId, ResourceKind}
 
 import java.time.Instant
 import java.util.UUID
@@ -64,7 +64,7 @@ object ProblemMutationCommands:
   def updateProblem(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     request: UpdateProblemRequest
   ): IO[UpdateProblemResult] =
     databaseSession.withTransactionConnection(connection =>
@@ -74,7 +74,7 @@ object ProblemMutationCommands:
   def updateProblem(
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     request: UpdateProblemRequest
   ): IO[UpdateProblemResult] =
     ProblemValidation.validateUpdate(request) match
@@ -111,7 +111,7 @@ object ProblemMutationCommands:
   def deleteProblem(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[DeleteProblemResult] =
     databaseSession.withTransactionConnection(connection =>
       deleteProblem(connection, actor, problemSlug)
@@ -120,7 +120,7 @@ object ProblemMutationCommands:
   def deleteProblem(
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[DeleteProblemResult] =
     for
       maybeProblem <- ProblemQueryTable.findBySlug(connection, problemSlug)

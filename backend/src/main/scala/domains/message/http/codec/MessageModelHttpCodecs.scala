@@ -1,6 +1,6 @@
 package domains.message.http.codec
 
-import domains.message.model.*
+import domains.message.objects.*
 import io.circe.{Decoder, Encoder}
 
 object MessageModelHttpCodecs:

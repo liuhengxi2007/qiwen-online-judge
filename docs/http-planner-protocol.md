@@ -19,7 +19,7 @@ Preferred split:
 - `*HttpPlanDefinitions.scala`
   registers plans and binds `Output => Response[IO]`
 - `mapper/*HttpRequestMappers.scala`
-  maps raw HTTP path/query/body inputs into typed request models or plan inputs
+  maps raw HTTP path/query/body inputs into typed request objects or plan inputs
 - `mapper/*HttpResponseMappers.scala`
   maps typed outputs and command results into `Response[IO]`
 - actor-parameterized plan contracts in `shared/http`

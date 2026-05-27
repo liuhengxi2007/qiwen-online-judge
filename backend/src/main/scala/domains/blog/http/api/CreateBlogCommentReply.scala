@@ -7,8 +7,8 @@ import domains.blog.http.codec.BlogHttpCodecs.given
 import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
 import domains.blog.application.BlogCommands
-import domains.blog.model.request.CreateBlogCommentRequest
-import domains.blog.model.{BlogCommentId, BlogId}
+import domains.blog.objects.request.CreateBlogCommentRequest
+import domains.blog.objects.{BlogCommentId, BlogId}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

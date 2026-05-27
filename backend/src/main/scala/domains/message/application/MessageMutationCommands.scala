@@ -3,11 +3,11 @@ package domains.message.application
 
 
 import cats.effect.IO
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.message.application.MessageCommandResults.{AddBlockResult, CreateConversationResult, MarkAllMessagesReadResult, MarkConversationReadResult, RemoveBlockResult, SendMessageResult}
-import domains.message.model.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.message.model.request.MarkConversationReadMode
-import domains.message.model.MessageConversationId
+import domains.message.objects.request.{CreateConversationRequest, MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.message.objects.request.MarkConversationReadMode
+import domains.message.objects.MessageConversationId
 
 import java.sql.Connection
 
@@ -93,7 +93,7 @@ object MessageMutationCommands:
   def addBlock(
     connection: Connection,
     actor: AuthUser,
-    targetUsername: domains.user.model.Username,
+    targetUsername: domains.user.objects.Username,
     repository: MessageRepository = defaultRepository
   ): IO[AddBlockResult] =
     if actor.username == targetUsername then IO.pure(AddBlockResult.CannotBlockSelf)
@@ -106,7 +106,7 @@ object MessageMutationCommands:
   def removeBlock(
     connection: Connection,
     actor: AuthUser,
-    targetUsername: domains.user.model.Username,
+    targetUsername: domains.user.objects.Username,
     repository: MessageRepository = defaultRepository
   ): IO[RemoveBlockResult] =
     repository.removeBlock(connection, actor.username, targetUsername).as(RemoveBlockResult.Removed)

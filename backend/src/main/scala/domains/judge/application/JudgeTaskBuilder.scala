@@ -3,9 +3,9 @@ package domains.judge.application
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.model.ProblemDataPath
-import domains.submission.model.internal.ClaimedSubmission
+import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry}
+import domains.problem.objects.ProblemDataPath
+import domains.submission.objects.internal.ClaimedSubmission
 import judgeprotocol.model.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
@@ -34,10 +34,10 @@ object JudgeTaskBuilder:
         case Some(_) =>
           config
 
-  private def toProtocolLanguage(language: domains.submission.model.SubmissionLanguage): SubmissionLanguage =
+  private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
-      case domains.submission.model.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
-      case domains.submission.model.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
+      case domains.submission.objects.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
+      case domains.submission.objects.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
 
   private def loadConfig(
     problemDataStorage: ProblemDataStorage,
@@ -64,15 +64,15 @@ object JudgeTaskBuilder:
 
   def validateReadyConfigBytes(
     bytes: Array[Byte],
-    problem: domains.problem.model.response.ProblemDetail,
+    problem: domains.problem.objects.response.ProblemDetail,
     manifest: ProblemDataManifest
   ): Either[String, ReadyValidation] =
     val claimedSubmission = ClaimedSubmission(
-      id = domains.submission.model.SubmissionId(0L),
+      id = domains.submission.objects.SubmissionId(0L),
       problemId = problem.id,
       problemSlug = problem.slug,
-      language = domains.submission.model.SubmissionLanguage.Cpp17,
-      sourceCode = domains.submission.model.SubmissionSourceCode("int main() { return 0; }"),
+      language = domains.submission.objects.SubmissionLanguage.Cpp17,
+      sourceCode = domains.submission.objects.SubmissionSourceCode("int main() { return 0; }"),
       timeLimitMs = problem.timeLimitMs,
       spaceLimitMb = problem.spaceLimitMb
     )

@@ -1,11 +1,11 @@
 package domains.message.table.message
 
 import cats.effect.IO
-import domains.message.model.MessageConversationId
-import domains.message.model.response.{MessageConversationSummary, MessageInboxResponse}
+import domains.message.objects.MessageConversationId
+import domains.message.objects.response.{MessageConversationSummary, MessageInboxResponse}
 import domains.message.table.message.MessageTableSupport.*
-import domains.user.model.Username
-import shared.model.PageRequest
+import domains.user.objects.Username
+import shared.objects.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.util.UUID

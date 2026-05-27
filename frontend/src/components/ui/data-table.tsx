@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { translateMessage } from '@/shared/i18n/messages'
+import { translateMessage } from '@/system/i18n/messages'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

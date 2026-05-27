@@ -3,12 +3,12 @@ package domains.usergroup.table.user_group
 
 
 import cats.effect.IO
-import domains.auth.model.AuthUser
-import domains.user.model.{Username}
-import shared.model.PageResponse
-import domains.usergroup.model.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
-import domains.usergroup.model.{UserGroup, UserGroupId, UserGroupMember, UserGroupRole, UserGroupSlug}
-import domains.usergroup.model.response.{UserGroupSummary}
+import domains.auth.objects.AuthUser
+import domains.user.objects.{Username}
+import shared.objects.PageResponse
+import domains.usergroup.objects.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
+import domains.usergroup.objects.{UserGroup, UserGroupId, UserGroupMember, UserGroupRole, UserGroupSlug}
+import domains.usergroup.objects.response.{UserGroupSummary}
 import domains.usergroup.table.user_group.UserGroupTableSchema.*
 import domains.usergroup.table.user_group.UserGroupTableSupport.*
 

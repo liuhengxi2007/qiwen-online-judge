@@ -2,7 +2,7 @@ package domains.problemset.application
 
 
 
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 
 object ProblemSetPolicy:
 

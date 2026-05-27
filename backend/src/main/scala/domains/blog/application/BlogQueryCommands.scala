@@ -4,14 +4,14 @@ package domains.blog.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.user.model.Username
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
 import domains.blog.application.BlogCommandResults.*
-import domains.blog.model.BlogId
+import domains.blog.objects.BlogId
 import domains.blog.table.blog.{BlogPostQueryTable, BlogProblemLinkQueryTable}
 import domains.problem.application.ProblemCommands
-import domains.problem.model.ProblemSlug
-import shared.model.PageRequest
+import domains.problem.objects.ProblemSlug
+import shared.objects.PageRequest
 
 object BlogQueryCommands:
 
@@ -50,7 +50,7 @@ object BlogQueryCommands:
     val normalizedPageRequest = pageRequest.normalized
     databaseSession.withTransactionConnection { connection =>
       if !ProblemCommands.canManageProblemCatalog(actor) then
-        IO.pure(ListBlogsResult.Listed(shared.model.PageResponse(Nil, normalizedPageRequest.page, normalizedPageRequest.pageSize, 0L)))
+        IO.pure(ListBlogsResult.Listed(shared.objects.PageResponse(Nil, normalizedPageRequest.page, normalizedPageRequest.pageSize, 0L)))
       else BlogProblemLinkQueryTable.listPendingByProblem(connection, problemSlug, actor.username, normalizedPageRequest).map(blogs => ListBlogsResult.Listed(blogs))
     }
 

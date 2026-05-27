@@ -1,11 +1,11 @@
 # Backend Contract Alignment
 
-This document defines how backend HTTP-facing Scala models stay aligned with frontend transport models through mirrored files and alignment checks.
+This document defines how backend HTTP-facing Scala objects stay aligned with frontend transport objects through mirrored files and alignment checks.
 
 The goal is:
 
 - one shared HTTP shape across frontend and backend
-- backend-local domain model integrity
+- backend-local domain object integrity
 - explicit parsing and mapping at the frontend/backend boundary
 
 The non-goal is:
@@ -15,30 +15,30 @@ The non-goal is:
 
 ## Rule
 
-Frontend and backend boundary models are the source of truth together.
+Frontend and backend boundary objects are the source of truth together.
 
 That means:
 
-- frontend `model/request` and `model/response` field shape must match backend `model/request` and `model/response`
+- frontend `objects/request` and `objects/response` field shape must match backend `objects/request` and `objects/response`
 - enum string values exposed over HTTP must match exactly
 - backend domain objects may remain richer or stricter than HTTP payloads
 - frontend adapters may keep local wire DTO aliases when they parse raw JSON into branded frontend types
-- if a backend model is mirrored by the frontend model layer, the mirrored type name and file basename must match exactly
-- mirrored model files must stay focused on that mirrored type instead of accumulating mapping, persistence, or workflow responsibilities
+- if a backend object is mirrored by the frontend object layer, the mirrored type name and file basename must match exactly
+- mirrored object files must stay focused on that mirrored type instead of accumulating mapping, persistence, or workflow responsibilities
 
 ## Layer Split
 
 Keep these roles separate:
 
-- frontend `model/request` and `model/response`
-  frontend transport payload models
-- frontend `lib/*-parsers.ts`, `http/codec/*ModelHttpCodecs.ts`, and `http/codec/*HttpCodecs.ts`
+- frontend `objects/request` and `objects/response`
+  frontend transport payload objects
+- frontend `objects/<domain>/*-parsers.ts`, `apis/<domain>/codecs/*ModelHttpCodecs.ts`, and `apis/<domain>/codecs/*HttpCodecs.ts`
   boundary parsing and serialization helpers
-- backend `model/request` and `model/response`
-  backend HTTP-facing command/query models
-- backend bare `model`
+- backend `objects/request` and `objects/response`
+  backend HTTP-facing command/query objects
+- backend bare `objects`
   backend domain values and stable mirrored business concepts
-- backend `model/internal`
+- backend `objects/internal`
   backend-only collaboration objects that are not frontend mirrors and are skipped by contract alignment
 - backend `http`
   request mapping, response mapping, JSON codecs, and HTTP routing
@@ -51,25 +51,25 @@ Backend HTTP handlers should not expose raw persistence rows or broad domain ent
 
 Preferred flow:
 
-1. decode HTTP request into backend input model
+1. decode HTTP request into backend input object
 2. validate and convert into backend domain values
 3. run application logic
-4. map backend result into backend output model
-5. encode response consumed by the matching frontend response model
+4. map backend result into backend output object
+5. encode response consumed by the matching frontend response object
 
-On the frontend, parse raw response payloads at the feature boundary before handing values to UI state.
+On the frontend, parse raw response payloads at the API boundary before handing values to UI state.
 
 ## What Must Align
 
 These surfaces are checked by `node scripts/check-contract-alignment.mjs`:
 
-- shared response models such as `ErrorResponse`, `SuccessResponse`, and pagination shapes
+- shared response objects such as `ErrorResponse`, `SuccessResponse`, and pagination shapes
 - shared access and lifecycle values that are part of frontend/backend payloads
-- feature `model/request` files against backend `model/request`
-- feature `model/response` files against backend `model/response`
-- feature `model` files only when both sides expose the same key
+- domain `objects/request` files against backend `objects/request`
+- domain `objects/response` files against backend `objects/response`
+- domain `objects` files only when both sides expose the same key
 - enum string values for exposed unions/enums
-- backend `model/internal` files are intentionally skipped
+- backend `objects/internal` files are intentionally skipped
 
 Do not force these into cross-stack alignment:
 
@@ -80,7 +80,7 @@ Do not force these into cross-stack alignment:
 
 ## Required Review Discipline
 
-When changing an HTTP-facing model:
+When changing an HTTP-facing object:
 
 - inspect the matching frontend request/response file
 - inspect the matching backend input/output file
@@ -98,7 +98,7 @@ A change is incomplete if it updates only one side of the boundary.
 5. Backend encoders and decoders still accept/produce the same shape.
 6. Mirrored frontend and backend filenames still match exactly.
 7. Mirrored type names still match exactly.
-8. Mirrored model files have not accreted transport mapping, persistence helpers, reducers, or workflow logic.
+8. Mirrored object files have not accreted transport mapping, persistence helpers, reducers, or workflow logic.
 
 ## Enforcement
 

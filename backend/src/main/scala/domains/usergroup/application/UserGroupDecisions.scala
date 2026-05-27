@@ -2,11 +2,11 @@ package domains.usergroup.application
 
 
 
-import domains.auth.model.AuthUser
-import domains.user.model.Username
-import domains.usergroup.model.{UserGroup, UserGroupRole}
-import domains.usergroup.model.internal.ManagedUserGroup
-import domains.usergroup.model.request.{UpdateUserGroupMemberRoleRequest}
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
+import domains.usergroup.objects.{UserGroup, UserGroupRole}
+import domains.usergroup.objects.internal.ManagedUserGroup
+import domains.usergroup.objects.request.{UpdateUserGroupMemberRoleRequest}
 
 object UserGroupDecisions:
 

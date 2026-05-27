@@ -4,10 +4,10 @@ package domains.notification.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.notification.model.response.{NotificationListResponse, NotificationUnreadCountResponse}
+import domains.auth.objects.AuthUser
+import domains.notification.objects.response.{NotificationListResponse, NotificationUnreadCountResponse}
 import domains.notification.table.notification.NotificationTable
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 object NotificationQueryCommands:
 

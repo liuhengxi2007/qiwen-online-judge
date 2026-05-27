@@ -18,7 +18,7 @@ The project is organized by business domain rather than by technical layer. Cros
 
 ## Repository Layout
 
-- `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Feature code lives under `frontend/src/features/<domain>`.
+- `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Domain objects live under `frontend/src/objects/<domain>`, endpoint clients under `frontend/src/apis/<domain>`, and route code under `frontend/src/pages`.
 - `backend/`: Scala 3, Cats Effect, http4s, Circe, PostgreSQL. Domain code lives under `backend/src/main/scala/domains/<domain>`.
 - `judger/`: independent judge worker process.
 - `judge-protocol-scala/`: shared Scala protocol module used across backend and worker boundaries.
@@ -28,8 +28,8 @@ The project is organized by business domain rather than by technical layer. Cros
 
 ## Architecture Principles
 
-- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own model/application/http/table or frontend model/domain/api/hooks/pages code.
-- Keep mirrored model files type-only and name-aligned across frontend and backend.
+- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own backend objects/application/http/table code or frontend objects/apis/pages code.
+- Keep mirrored object files type-only and name-aligned across frontend and backend.
 - Parse raw JSON, route params, and form input at the boundary, then use named domain types such as `Username`, `ProblemSlug`, `SubmissionId`, and `BlogId`.
 - Keep business decisions in pure domain/application code when possible; push database, HTTP, file, clock, and process effects to the edges.
 - Keep workers independent from backend internals. Workers use HTTP/protocol boundaries, not backend application/table imports.
@@ -96,14 +96,14 @@ cd backend && sbt compile
 ```
 
 `scripts/check-all.mjs` runs all `scripts/check-*.mjs` checks.
-Run it whenever mirrored frontend/backend request, response, model, or shared type files change, whenever endpoint files under `http/api` change, and after moving files across frontend or backend layers.
+Run it whenever mirrored frontend/backend request, response, object, or shared type files change, whenever endpoint files under `src/apis` or backend `http/api` change, and after moving files across frontend or backend layers.
 
 ## Current Development Direction
 
 The stable direction is to keep extending features by domain:
 
-- New backend domains should use `model`, `application`, `http`, and `table`.
-- New frontend domains should use `model`, `domain`, `http/api`, `hooks`, and `pages`.
+- New backend domains should use `objects`, `application`, `http`, and `table`.
+- New frontend domains should use `objects`, `apis`, and `pages`, with runtime helpers in `system` only when ownership is not page or domain-specific.
 - New cross-process judge behavior should go through `judge-protocol-scala` or stable HTTP protocol types, not backend internals.
 - New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).
 

@@ -1,8 +1,8 @@
 package domains.submission.http.mapper
 
-import domains.submission.model.request.*
+import domains.submission.objects.request.*
 import munit.FunSuite
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 class SubmissionHttpRequestMappersSuite extends FunSuite:
 

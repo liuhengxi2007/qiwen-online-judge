@@ -2,11 +2,11 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus}
-import domains.submission.model.response.SubmissionDetail
+import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus}
+import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.nio.charset.StandardCharsets
 import java.sql.{Connection, Timestamp}

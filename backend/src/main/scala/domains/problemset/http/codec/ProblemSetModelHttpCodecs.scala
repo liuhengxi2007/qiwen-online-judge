@@ -1,7 +1,7 @@
 package domains.problemset.http.codec
 
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
-import domains.problemset.model.*
+import domains.problemset.objects.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

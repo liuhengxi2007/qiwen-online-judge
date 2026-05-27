@@ -6,8 +6,8 @@ import domains.auth.http.*
 import domains.auth.http.AuthHttpPlanDefinitions.updateUserPermissions
 import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.http.mapper.AuthHttpRequestMappers
-import domains.auth.model.request.UpdateUserPermissionsRequest
-import domains.user.model.Username
+import domains.auth.objects.request.UpdateUserPermissionsRequest
+import domains.user.objects.Username
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

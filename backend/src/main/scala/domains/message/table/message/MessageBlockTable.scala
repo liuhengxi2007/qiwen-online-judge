@@ -1,9 +1,9 @@
 package domains.message.table.message
 
 import cats.effect.IO
-import domains.message.model.response.MessageBlockEntry
+import domains.message.objects.response.MessageBlockEntry
 import domains.message.table.message.MessageTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 

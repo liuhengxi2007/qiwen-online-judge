@@ -2,12 +2,12 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import database.utils.{LikePatternSql, UserIdentitySql}
-import domains.auth.model.AuthUser
-import domains.submission.model.{SubmissionId, SubmissionVerdict}
-import domains.submission.model.request.{SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.model.response.{SubmissionDetail, SubmissionListResponse}
+import domains.auth.objects.AuthUser
+import domains.submission.objects.{SubmissionId, SubmissionVerdict}
+import domains.submission.objects.request.{SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
+import domains.submission.objects.response.{SubmissionDetail, SubmissionListResponse}
 import domains.submission.table.submission.SubmissionTableSupport.*
-import shared.model.PageResponse
+import shared.objects.PageResponse
 
 import java.sql.{Connection, PreparedStatement}
 

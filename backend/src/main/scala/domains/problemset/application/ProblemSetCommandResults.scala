@@ -2,7 +2,7 @@ package domains.problemset.application
 
 
 
-import domains.problemset.model.ProblemSet
+import domains.problemset.objects.ProblemSet
 
 object ProblemSetCommandResults:
 

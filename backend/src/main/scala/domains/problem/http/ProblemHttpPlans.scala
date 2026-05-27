@@ -4,11 +4,11 @@ package domains.problem.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
-import domains.problem.model.request.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
-import domains.problem.model.{ProblemDataFilename, ProblemSlug}
-import domains.problem.model.response.{ProblemSuggestion}
+import domains.problem.objects.request.{CreateProblemRequest, DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
+import domains.problem.objects.{ProblemDataFilename, ProblemSlug}
+import domains.problem.objects.response.{ProblemSuggestion}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 
 import java.sql.Connection
@@ -23,13 +23,13 @@ object ProblemHttpPlans:
     authorization: ProblemCommands.AuthorizeProblemDataDownloadResult
   )
 
-  case object ListProblems extends PlainAuthenticatedHttpPlan[AuthUser, ProblemListRequest, shared.model.PageResponse[domains.problem.model.response.ProblemSummary]]:
+  case object ListProblems extends PlainAuthenticatedHttpPlan[AuthUser, ProblemListRequest, shared.objects.PageResponse[domains.problem.objects.response.ProblemSummary]]:
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: ProblemListRequest
-    ): IO[shared.model.PageResponse[domains.problem.model.response.ProblemSummary]] =
+    ): IO[shared.objects.PageResponse[domains.problem.objects.response.ProblemSummary]] =
       ProblemCommands.listProblems(databaseSession, actor, input)
 
   case object CreateProblem extends TransactionAuthenticatedHttpPlan[AuthUser, CreateProblemRequest, ProblemCommands.CreateProblemResult]:

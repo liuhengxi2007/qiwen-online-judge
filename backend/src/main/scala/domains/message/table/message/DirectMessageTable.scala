@@ -1,10 +1,10 @@
 package domains.message.table.message
 
 import cats.effect.IO
-import domains.message.model.response.{ConversationMessageFacts, DirectMessage}
-import domains.message.model.{MessageContent, MessageConversationId, MessageId}
+import domains.message.objects.response.{ConversationMessageFacts, DirectMessage}
+import domains.message.objects.{MessageContent, MessageConversationId, MessageId}
 import domains.message.table.message.MessageTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 import java.util.UUID

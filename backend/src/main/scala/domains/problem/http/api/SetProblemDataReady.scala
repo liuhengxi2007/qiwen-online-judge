@@ -10,7 +10,7 @@ import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
-import domains.problem.model.ProblemSlug
+import domains.problem.objects.ProblemSlug
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

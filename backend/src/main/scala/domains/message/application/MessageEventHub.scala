@@ -3,9 +3,9 @@ package domains.message.application
 
 
 import cats.effect.{IO, Resource}
-import domains.user.model.Username
-import domains.message.model.response.{DirectMessage}
-import domains.message.model.{MessageConversationId, MessageId}
+import domains.user.objects.Username
+import domains.message.objects.response.{DirectMessage}
+import domains.message.objects.{MessageConversationId, MessageId}
 import fs2.Stream
 import fs2.concurrent.Topic
 

@@ -6,7 +6,7 @@ import domains.blog.http.*
 import domains.blog.http.codec.BlogHttpCodecs.given
 import cats.effect.IO
 import domains.blog.application.BlogCommands
-import domains.blog.model.request.CreateBlogRequest
+import domains.blog.objects.request.CreateBlogRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

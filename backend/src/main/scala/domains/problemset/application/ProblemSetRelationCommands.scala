@@ -4,9 +4,9 @@ package domains.problemset.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problemset.model.request.AddProblemToProblemSetRequest
+import domains.problemset.objects.request.AddProblemToProblemSetRequest
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.ProblemSetDecisions.*
@@ -19,7 +19,7 @@ object ProblemSetRelationCommands:
   def addProblemToProblemSet(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
     request: AddProblemToProblemSetRequest
   ): IO[AddProblemResult] =
     databaseSession.withTransactionConnection(connection =>
@@ -29,7 +29,7 @@ object ProblemSetRelationCommands:
   def addProblemToProblemSet(
     connection: Connection,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
     request: AddProblemToProblemSetRequest
   ): IO[AddProblemResult] =
     if !ProblemSetPolicy.canManageProblems(actor) then
@@ -66,8 +66,8 @@ object ProblemSetRelationCommands:
   def removeProblemFromProblemSet(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[RemoveProblemResult] =
     databaseSession.withTransactionConnection(connection =>
       removeProblemFromProblemSet(connection, actor, problemSetSlug, problemSlug)
@@ -76,8 +76,8 @@ object ProblemSetRelationCommands:
   def removeProblemFromProblemSet(
     connection: Connection,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[RemoveProblemResult] =
     if !ProblemSetPolicy.canManageProblems(actor) then
       IO.pure(RemoveProblemResult.Forbidden)

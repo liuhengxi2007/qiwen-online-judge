@@ -4,11 +4,11 @@ package domains.user.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.{AuthUser, SiteManagerUser}
-import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.Username
-import domains.user.model.request.{UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
-import domains.user.model.{UserDisplayMode, UserLocale}
+import domains.auth.objects.{AuthUser, SiteManagerUser}
+import domains.problem.objects.ProblemTitleDisplayMode
+import domains.user.objects.Username
+import domains.user.objects.request.{UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.objects.{UserDisplayMode, UserLocale}
 import domains.user.table.user.UserTable
 
 import java.sql.Connection
@@ -104,7 +104,7 @@ object UserMutationCommands:
   private def updateSettingsRecord(
     connection: Connection,
     targetUser: AuthUser,
-    displayName: domains.user.model.DisplayName,
+    displayName: domains.user.objects.DisplayName,
     displayMode: UserDisplayMode,
     locale: UserLocale,
     problemTitleDisplayMode: ProblemTitleDisplayMode,

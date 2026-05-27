@@ -4,12 +4,12 @@ import cats.effect.IO
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, sanitizePolicy, toLegacyVisibility}
 import database.utils.UserIdentitySql
-import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
-import domains.problem.model.{ProblemId}
-import domains.problem.model.response.ProblemDetail
+import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.objects.{ProblemId}
+import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemTableSupport.*
-import domains.user.model.Username
-import shared.model.access.{GrantRole, ResourceKind}
+import domains.user.objects.Username
+import shared.objects.access.{GrantRole, ResourceKind}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

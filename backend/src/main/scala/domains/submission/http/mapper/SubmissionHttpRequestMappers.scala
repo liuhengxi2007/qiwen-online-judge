@@ -1,7 +1,7 @@
 package domains.submission.http.mapper
 
-import domains.submission.model.SubmissionId
-import domains.submission.model.request.{
+import domains.submission.objects.SubmissionId
+import domains.submission.objects.request.{
   SubmissionListRequest,
   SubmissionProblemQuery,
   SubmissionSort,

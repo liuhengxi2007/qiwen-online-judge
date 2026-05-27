@@ -2,11 +2,11 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
-import domains.blog.model.BlogId
-import domains.blog.model.response.{BlogDetail, BlogSummary}
+import domains.blog.objects.BlogId
+import domains.blog.objects.response.{BlogDetail, BlogSummary}
 import domains.blog.table.blog.BlogTableSupport.*
-import domains.user.model.Username
-import shared.model.{PageRequest, PageResponse}
+import domains.user.objects.Username
+import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 

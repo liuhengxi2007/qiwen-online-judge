@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
-import { translateMessage } from '@/shared/i18n/messages'
+import { translateMessage } from '@/system/i18n/messages'
 
 function Sheet(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="sheet" {...props} />

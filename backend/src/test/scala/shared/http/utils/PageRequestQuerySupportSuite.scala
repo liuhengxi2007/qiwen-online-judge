@@ -1,7 +1,7 @@
 package shared.http.utils
 
 import munit.FunSuite
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 class PageRequestQuerySupportSuite extends FunSuite:
 

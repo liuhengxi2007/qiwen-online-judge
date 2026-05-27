@@ -2,9 +2,9 @@ package domains.auth.http.mapper
 
 import cats.effect.IO
 import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.auth.model.SessionToken
-import domains.auth.model.request.UpdateUserPermissionsRequest
-import domains.user.model.Username
+import domains.auth.objects.SessionToken
+import domains.auth.objects.request.UpdateUserPermissionsRequest
+import domains.user.objects.Username
 import org.http4s.Request
 
 object AuthHttpRequestMappers:

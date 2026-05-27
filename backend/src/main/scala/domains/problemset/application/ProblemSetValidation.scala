@@ -2,9 +2,9 @@ package domains.problemset.application
 
 
 
-import domains.problem.model.ProblemSlug
-import domains.problemset.model.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
+import domains.problem.objects.ProblemSlug
+import domains.problemset.objects.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.objects.{ProblemSetDescription, ProblemSetSlug, ProblemSetTitle}
 
 object ProblemSetValidation:
 

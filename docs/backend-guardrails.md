@@ -5,19 +5,19 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 ## Backend
 
 - `src/main/scala/domains/auth`
-  - Auth commands, HTTP routes, models, and persistence for accounts and sessions
+  - Auth commands, HTTP routes, objects, and persistence for accounts and sessions
 - `src/main/scala/domains/user`
-  - User profile, ranklist, settings, permission-management routes, and user-owned persistence/models
+  - User profile, ranklist, settings, permission-management routes, and user-owned persistence/objects
 - `src/main/scala/server/http`
   - Top-level HTTP app/router composition that wires domain routers together
 - `src/main/scala/server/health`
-  - Health endpoint and response model
+  - Health endpoint and response object
 - `src/main/scala/shared`
   - Dependency-pure shared contracts and platform helpers used across domains
-  - `shared/model`: shared transport/domain primitives such as pagination and lifecycle values
-  - `shared/model/access`: shared access-control contract types only
+  - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
+  - `shared/objects/access`: shared access-control contract types only
   - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
-  - `shared/http`: shared HTTP transport models, codecs, and actor-parameterized plan contracts
+  - `shared/http`: shared HTTP transport objects, codecs, and actor-parameterized plan contracts
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
 
@@ -55,34 +55,34 @@ For `http`:
 - `*HttpHandlers.scala`
   request decoding, auth/session wrapping, command invocation
 - `mapper/*HttpRequestMappers.scala`
-  translation from raw HTTP path/query/body inputs into typed request models or plan inputs
+  translation from raw HTTP path/query/body inputs into typed request objects or plan inputs
 - `mapper/*HttpResponseMappers.scala`
   translation from command results to HTTP responses
 - `codec/*HttpCodecs.scala`
   Circe encoders/decoders for HTTP request and response wire formats
 - `codec/*ModelHttpCodecs.scala`
-  Circe encoders/decoders for durable model values when those values appear in HTTP request or response wire formats
+  Circe encoders/decoders for durable object values when those values appear in HTTP request or response wire formats
 - `utils/*HttpSupport.scala`
   optional HTTP-only shared helpers for the domain
 
-For `model/request`:
+For `objects/request`:
 
 - `<Name>.scala`
   typed command/query inputs decoded by HTTP endpoints and consumed by application/table code, including inbound request bodies and query-derived list filters
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
-For `model/response`:
+For `objects/response`:
 
 - `<Name>.scala`
   read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
-Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `model/`. Put API contract payloads under `model/request` and `model/response`.
-Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `model/internal`. These types are not frontend mirrors and do not participate in HTTP contract alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
-`model/` files must not import Circe or define JSON encoders/decoders. HTTP JSON codecs belong in the owning domain's `http/codec`, or in `shared/http/codec` for shared transport primitives. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
-Bare `model/` files must not import `model/request` or `model/response`; dependency direction is from request/response payloads toward core model types only.
-`model/request` and `model/response` must not import `application`, `http`, or `table`.
-`model/` must not import `application`, `http`, or `table`; if a model transition needs data from a response shape, put that adapter in `application` support code.
+Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `objects/`. Put API contract payloads under `objects/request` and `objects/response`.
+Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `objects/internal`. These types are not frontend mirrors and do not participate in HTTP contract alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
+`objects/` files must not import Circe or define JSON encoders/decoders. HTTP JSON codecs belong in the owning domain's `http/codec`, or in `shared/http/codec` for shared transport primitives. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
+Bare `objects/` files must not import `objects/request` or `objects/response`; dependency direction is from request/response payloads toward core object types only.
+`objects/request` and `objects/response` must not import `application`, `http`, or `table`.
+`objects/` must not import `application`, `http`, or `table`; if an object transition needs data from a response shape, put that adapter in `application` support code.
 
 Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol models because those types are cross-process wire contracts rather than backend business models.
 
@@ -112,7 +112,7 @@ def deleteBook(...) = ...
 Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
-Do not move query/mutation orchestration into `model`, HTTP wire decoding into `application`, or business decisions into `table`.
+Do not move query/mutation orchestration into `objects`, HTTP wire decoding into `application`, or business decisions into `table`.
 
 Current application-adapter exceptions:
 
@@ -134,7 +134,7 @@ Rules:
 - keep validation, permission decisions, state transitions, and draft-building logic pure where possible
 - isolate JDBC, files, clocks, randomness, and network calls at the edge
 - make effectful helpers explicit in their signatures, typically as `IO[...]`
-- keep `http` as the execution shell, `application` as orchestration, and pure rule code in `model` or dedicated support modules
+- keep `http` as the execution shell, `application` as orchestration, and pure rule code in `objects` or dedicated support modules
 
 Prefer:
 
@@ -146,7 +146,7 @@ Avoid:
 
 - hiding SQL or file IO inside a helper that looks pure
 - mixing response formatting, permission logic, and JDBC in one block
-- moving effectful orchestration into mirrored model files
+- moving effectful orchestration into mirrored object files
 - using a small domain as an excuse to accumulate unrelated application concerns in one file
 
 ## Backend Shared Rules
@@ -155,7 +155,7 @@ Avoid:
 
 Allow only:
 
-- generic transport models
+- generic transport objects
 - lifecycle and pagination primitives
 - small utility types with no business ownership
 - cross-domain platform primitives whose ownership is genuinely shared
@@ -197,7 +197,7 @@ Preferred structure for business CRUD domains:
 - thin `*Router.scala`
   aggregator of `http/api/<Name>.scala` endpoint files
 
-Frontend and backend endpoint API basenames should match when both sides expose the endpoint. For example, the frontend `http/api/ListProblems.ts` client function corresponds to backend `http/api/ListProblems.scala`.
+Frontend and backend endpoint API basenames should match when both sides expose the endpoint. For example, the frontend `src/apis/problem/ListProblems.ts` client function corresponds to backend `http/api/ListProblems.scala`.
 
 `auth/http` is the exception. It keeps its own richer protocol because it needs public, authenticated, and site-manager plan families.
 
@@ -232,10 +232,10 @@ Each domain should own its:
 
 - `application`
 - `http`
-- `model`
+- `objects`
 - `table`
 
 Exception:
 
-- the internal `judge` domain may omit `model` or `table` when it intentionally reuses protocol or persistence types owned elsewhere
+- the internal `judge` domain may omit `objects` or `table` when it intentionally reuses protocol or persistence types owned elsewhere
 - this exception must still keep its orchestration in `application` and its transport boundary in `http`

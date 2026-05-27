@@ -1,6 +1,6 @@
 package shared.application.access
 
-import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, BaseAccess, ResourceAccessPolicy}
 
 object AccessPolicyEvaluator:
   def canView(

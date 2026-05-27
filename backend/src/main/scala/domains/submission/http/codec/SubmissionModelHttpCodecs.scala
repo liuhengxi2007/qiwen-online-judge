@@ -1,6 +1,6 @@
 package domains.submission.http.codec
 
-import domains.submission.model.*
+import domains.submission.objects.*
 import io.circe.{Decoder, Encoder}
 
 object SubmissionModelHttpCodecs:

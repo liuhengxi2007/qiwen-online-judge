@@ -2,11 +2,11 @@ package domains.submission.table.submission
 
 
 
-import domains.problem.model.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.model.response.{SubmissionDetail, SubmissionSummary}
-import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
+import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.submission.objects.response.{SubmissionDetail, SubmissionSummary}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
-import domains.user.model.{DisplayName, UserIdentity, Username}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
 import io.circe.parser.decode
 import io.circe.syntax.*
 import judgeprotocol.model.JudgeResult

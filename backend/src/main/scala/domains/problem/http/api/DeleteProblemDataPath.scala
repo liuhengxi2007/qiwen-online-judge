@@ -9,8 +9,8 @@ import domains.problem.http.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
 import cats.effect.IO
 import domains.problem.application.ProblemCommands
-import domains.problem.model.request.{DeleteProblemDataPathRequest}
-import domains.problem.model.ProblemSlug
+import domains.problem.objects.request.{DeleteProblemDataPathRequest}
+import domains.problem.objects.ProblemSlug
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

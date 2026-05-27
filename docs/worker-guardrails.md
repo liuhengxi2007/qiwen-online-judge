@@ -40,7 +40,7 @@ Prefer:
 Avoid:
 
 - `judger -> backend`
-- sharing backend internals just to reuse one model file
+- sharing backend internals just to reuse one object file
 - moving worker-specific execution code into backend `shared`
 
 See also:

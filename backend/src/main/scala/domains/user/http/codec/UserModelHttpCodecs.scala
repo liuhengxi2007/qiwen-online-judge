@@ -1,8 +1,8 @@
 package domains.user.http.codec
 
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
-import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
-import domains.user.model.*
+import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
+import domains.user.objects.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

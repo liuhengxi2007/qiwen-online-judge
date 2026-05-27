@@ -1,11 +1,11 @@
 package domains.problem.http.codec
 
-import domains.problem.model.request.*
-import domains.problem.model.response.*
+import domains.problem.objects.request.*
+import domains.problem.objects.response.*
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.user.http.codec.UserModelHttpCodecs.given
-import shared.model.PageRequest
+import shared.objects.PageRequest
 import shared.http.codec.SharedHttpCodecs
 import shared.http.codec.SharedHttpCodecs.given
 import io.circe.{Decoder, Encoder, Json}

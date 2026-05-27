@@ -1,0 +1,5 @@
+import type { UserPreferences } from '@/objects/user/UserPreferences'
+
+export type UpdateManagedUserPreferencesRequest = {
+  preferences: UserPreferences
+}

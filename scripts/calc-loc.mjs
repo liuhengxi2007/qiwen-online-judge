@@ -10,9 +10,10 @@ const profiles = {
     label: 'Business Code',
     include: [
       'backend/src/main/scala',
-      'frontend/src/features',
-      'frontend/src/shared',
-      'frontend/src/router.tsx',
+      'frontend/src/apis',
+      'frontend/src/objects',
+      'frontend/src/pages',
+      'frontend/src/system',
       'judger/src/main/scala',
     ],
   },
@@ -72,7 +73,7 @@ function printHelp() {
   node scripts/calc-loc.mjs --json
 
 Modes:
-  business  backend/src/main/scala + frontend feature/shared code + router + judger/src/main/scala
+  business  backend/src/main/scala + frontend app layers + judger/src/main/scala
   app       backend/src/main/scala + all frontend/src code + judger/src/main/scala
   all       print both business and app profiles
 `)

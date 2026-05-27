@@ -4,10 +4,10 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.judger.application.JudgerRegistryCommands
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.response.ProblemDetail
-import domains.problem.model.{ProblemDataManifest, ProblemDataPath}
+import domains.problem.objects.response.ProblemDetail
+import domains.problem.objects.{ProblemDataManifest, ProblemDataPath}
 import domains.submission.application.SubmissionCommands
-import domains.submission.model.SubmissionId
+import domains.submission.objects.SubmissionId
 import judgeprotocol.model.{JudgeTask, JudgerId, ReportJudgeResultRequest}
 
 import java.time.Instant

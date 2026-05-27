@@ -1,7 +1,7 @@
 package domains.notification.table.notification
 
-import domains.blog.model.{BlogCommentId, BlogId, BlogTitle}
-import domains.notification.model.NotificationPayload
+import domains.blog.objects.{BlogCommentId, BlogId, BlogTitle}
+import domains.notification.objects.NotificationPayload
 import io.circe.parser.decode as decodeJson
 import io.circe.syntax.*
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}

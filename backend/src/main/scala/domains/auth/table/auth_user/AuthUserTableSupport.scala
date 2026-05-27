@@ -2,10 +2,10 @@ package domains.auth.table.auth_user
 
 
 
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, PlaintextPassword}
-import domains.user.model.{DisplayName, Username}
-import domains.problem.model.ProblemTitleDisplayMode
-import domains.user.model.{UserDisplayMode, UserLocale}
+import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash, PlaintextPassword}
+import domains.user.objects.{DisplayName, Username}
+import domains.problem.objects.ProblemTitleDisplayMode
+import domains.user.objects.{UserDisplayMode, UserLocale}
 
 import java.sql.ResultSet
 

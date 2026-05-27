@@ -7,10 +7,10 @@ import domains.auth.http.mapper.AuthHttpResponseMappers
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
 import domains.auth.application.AuthCommands
-import domains.auth.model.request.{LoginRequest, RegisterRequest, UpdateManagedUserAccountRequest, UpdateOwnAccountRequest, UpdateUserPermissionsRequest}
-import domains.auth.model.response.SessionResponse
-import domains.auth.model.*
-import domains.user.model.Username
+import domains.auth.objects.request.{LoginRequest, RegisterRequest, UpdateManagedUserAccountRequest, UpdateOwnAccountRequest, UpdateUserPermissionsRequest}
+import domains.auth.objects.response.SessionResponse
+import domains.auth.objects.*
+import domains.user.objects.Username
 
 import java.sql.Connection
 

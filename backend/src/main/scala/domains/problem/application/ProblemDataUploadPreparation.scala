@@ -2,7 +2,7 @@ package domains.problem.application
 
 
 
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataPath}
 import shared.application.upload.{FileUploadPolicy, FileUploadPreparation, PreparedUploadFile, StoredFilePath}
 
 object ProblemDataUploadPreparation:

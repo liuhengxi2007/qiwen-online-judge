@@ -13,45 +13,44 @@ npm run build
 ```
 
 `npm run dev` starts the Vite development server. API calls are implemented under
-feature-owned `http/api` clients and are expected to reach the backend service.
+domain-owned `src/apis/<domain>` clients and are expected to reach the backend service.
 
 ## Structure
 
-- `src/features/<domain>/model`
-  Stable frontend domain/value types.
-- `src/features/<domain>/domain`
-  Pure parsing, formatting, contract mapping, reducers, and state helpers.
-- `src/features/<domain>/http/request`
-  Request payload and query types mirrored with backend `application/input`.
-- `src/features/<domain>/http/response`
-  Response payload types mirrored with backend `application/output` when they are
-  transport boundary shapes.
-- `src/features/<domain>/http/api`
-  One client file per endpoint, with basenames aligned to backend `http/api`.
-- `src/features/<domain>/hooks`
-  React hooks, query state, mutations, and browser-side orchestration.
-- `src/features/<domain>/components`
-  Feature-specific UI components.
-- `src/features/<domain>/pages`
+- `src/apis/<domain>`
+  One endpoint client per file, with basenames aligned to backend `http/api`.
+- `src/apis/<domain>/codecs`
+  HTTP boundary codecs for endpoint payloads and domain object wire values.
+- `src/objects/<domain>`
+  Stable frontend business objects, parsers, pure display helpers, pure form helpers, and mirrored object types.
+- `src/objects/<domain>/request`
+  Request payload types mirrored with backend `objects/request`.
+- `src/objects/<domain>/response`
+  Response payload types mirrored with backend `objects/response`.
+- `src/objects/shared`
+  Cross-domain business objects and pure helpers after there is a real shared owner.
+- `src/pages/<PageName>/index.tsx`
   Route-level page components.
-- `src/shared`
-  Cross-feature primitives only after there is a real shared owner.
+- `src/pages/components`, `src/pages/hooks`, `src/pages/objects`
+  Reusable page-layer UI, hooks, stores, route policies, URL/search-param state, and display-only state.
+- `src/system`
+  Runtime helpers such as HTTP client support and i18n.
 - `src/components/ui`
   Shared presentational UI primitives.
 
-Current feature domains include `auth`, `blog`, `dashboard`, `judger`, `message`,
+Current domains include `auth`, `blog`, `dashboard`, `judger`, `message`,
 `notification`, `problem`, `problemset`, `site-management`, `submission`, `user`,
 and `usergroup`.
 
 ## Boundary Rules
 
-- `model/` must not import `http/`, `hooks/`, `components/`, or `pages/`.
-- `domain/` must not import or re-export `hooks/`, `components/`, or `pages/`.
-- React hooks should live in `hooks/`, even when they expose display preferences
-  or other feature state.
-- Keep transport conversion in domain contract mappers, not in page components.
-- Prefer domain-first ownership. Move code to `shared` only after a second real
-  consumer appears.
+- `objects` must not import `apis`, `system`, `pages`, or `components/ui`.
+- `objects/shared` must not import domain objects.
+- `system` may import `objects/shared` only.
+- `apis` may import objects, peer API codecs, and `system/api`; never pages.
+- `components/ui` may import `system/i18n` for generic labels; never pages or domain objects.
+- `pages/objects` is page-layer only and may only be imported by `pages`.
+- Route pages compose APIs, objects, system helpers, UI components, page components, page hooks, and page objects.
 
 ## Validation
 
@@ -65,6 +64,6 @@ node scripts/check-api-alignment.mjs
 node scripts/check-structure-boundaries.mjs
 ```
 
-Run the contract check when mirrored types change. Run the API alignment check when
-endpoint files under `http/api` change. Run the structure boundary check after
-moving files between `model`, `domain`, `hooks`, `http`, `components`, or `pages`.
+Run the contract check when mirrored object types change. Run the API alignment
+check when endpoint files under `src/apis` change. Run the structure boundary
+check after moving files across frontend layers.

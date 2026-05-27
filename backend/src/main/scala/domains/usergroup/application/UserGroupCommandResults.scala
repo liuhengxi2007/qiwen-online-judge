@@ -2,7 +2,7 @@ package domains.usergroup.application
 
 
 
-import domains.usergroup.model.UserGroup
+import domains.usergroup.objects.UserGroup
 
 object UserGroupCommandResults:
 

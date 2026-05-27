@@ -3,12 +3,12 @@ package domains.problem.table.problem
 
 
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
-import domains.auth.model.AuthUser
-import domains.problem.model.request.ProblemSearchQuery
-import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.problem.model.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import shared.model.access.{ResourceAccessPolicy, ResourceId}
+import domains.auth.objects.AuthUser
+import domains.problem.objects.request.ProblemSearchQuery
+import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import shared.objects.access.{ResourceAccessPolicy, ResourceId}
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
 

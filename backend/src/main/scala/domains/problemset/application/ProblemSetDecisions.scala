@@ -1,7 +1,7 @@
 package domains.problemset.application
 
 import domains.problem.application.ProblemCommands
-import domains.problemset.model.ProblemSet
+import domains.problemset.objects.ProblemSet
 
 object ProblemSetDecisions:
   type ProblemSetMemberTarget = ProblemCommands.ProblemSetMemberTarget

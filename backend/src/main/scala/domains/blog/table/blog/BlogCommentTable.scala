@@ -2,11 +2,11 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogId, BlogTitle}
-import domains.blog.model.internal.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
-import domains.blog.model.response.{BlogCommentSummary, BlogDetail}
+import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId, BlogTitle}
+import domains.blog.objects.internal.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
+import domains.blog.objects.response.{BlogCommentSummary, BlogDetail}
 import domains.blog.table.blog.BlogTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

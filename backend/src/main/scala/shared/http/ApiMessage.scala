@@ -2,7 +2,7 @@ package shared.http
 
 
 
-import shared.model.ApiMessageParams
+import shared.objects.ApiMessageParams
 
 final case class ApiMessage(
   code: String,

@@ -4,7 +4,7 @@ import domains.submission.http.mapper.SubmissionHttpResponseMappers
 
 
 
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import shared.http.AuthenticatedHttpPlanRegistry
 
 object SubmissionHttpPlanDefinitions:
@@ -14,13 +14,13 @@ object SubmissionHttpPlanDefinitions:
   private type PlainPlan[Input, Output] = Plain[AuthUser, Input, Output]
   private type TransactionPlan[Input, Output] = WithTransaction[AuthUser, Input, Output]
 
-  val listSubmissions: PlainPlan[domains.submission.model.request.SubmissionListRequest, domains.submission.application.SubmissionCommands.ListSubmissionsResult] =
+  val listSubmissions: PlainPlan[domains.submission.objects.request.SubmissionListRequest, domains.submission.application.SubmissionCommands.ListSubmissionsResult] =
     Plain(SubmissionHttpPlans.ListSubmissions, SubmissionHttpResponseMappers.mapListResult)
-  val createSubmission: TransactionPlan[domains.submission.model.request.CreateSubmissionRequest, domains.submission.application.SubmissionCommands.CreateSubmissionResult] =
+  val createSubmission: TransactionPlan[domains.submission.objects.request.CreateSubmissionRequest, domains.submission.application.SubmissionCommands.CreateSubmissionResult] =
     WithTransaction(SubmissionHttpPlans.CreateSubmission, SubmissionHttpResponseMappers.mapCreateResult)
-  val getSubmission: PlainPlan[domains.submission.model.SubmissionId, domains.submission.application.SubmissionCommands.GetSubmissionResult] =
+  val getSubmission: PlainPlan[domains.submission.objects.SubmissionId, domains.submission.application.SubmissionCommands.GetSubmissionResult] =
     Plain(SubmissionHttpPlans.GetSubmission, SubmissionHttpResponseMappers.mapGetResult)
-  val deleteSubmission: TransactionPlan[domains.submission.model.SubmissionId, domains.submission.application.SubmissionCommands.DeleteSubmissionResult] =
+  val deleteSubmission: TransactionPlan[domains.submission.objects.SubmissionId, domains.submission.application.SubmissionCommands.DeleteSubmissionResult] =
     WithTransaction(SubmissionHttpPlans.DeleteSubmission, SubmissionHttpResponseMappers.mapDeleteResult)
-  val rejudgeSubmission: TransactionPlan[domains.submission.model.SubmissionId, domains.submission.application.SubmissionCommands.RejudgeSubmissionResult] =
+  val rejudgeSubmission: TransactionPlan[domains.submission.objects.SubmissionId, domains.submission.application.SubmissionCommands.RejudgeSubmissionResult] =
     WithTransaction(SubmissionHttpPlans.RejudgeSubmission, SubmissionHttpResponseMappers.mapRejudgeResult)

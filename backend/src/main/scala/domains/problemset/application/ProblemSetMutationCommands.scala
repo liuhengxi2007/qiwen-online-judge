@@ -5,11 +5,11 @@ package domains.problemset.application
 import cats.effect.IO
 import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.problemset.table.problem_set.ProblemSetTable
-import shared.model.access.{ResourceId, ResourceKind}
+import shared.objects.access.{ResourceId, ResourceKind}
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.utils.ProblemSetCommandSupport.*
 import domains.problemset.application.ProblemSetDecisions.*
@@ -59,7 +59,7 @@ object ProblemSetMutationCommands:
   def updateProblemSet(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
     request: UpdateProblemSetRequest
   ): IO[UpdateProblemSetResult] =
     databaseSession.withTransactionConnection(connection =>
@@ -69,7 +69,7 @@ object ProblemSetMutationCommands:
   def updateProblemSet(
     connection: Connection,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug,
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug,
     request: UpdateProblemSetRequest
   ): IO[UpdateProblemSetResult] =
     if !ProblemSetPolicy.canEdit(actor) then
@@ -101,7 +101,7 @@ object ProblemSetMutationCommands:
   def deleteProblemSet(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug
   ): IO[DeleteProblemSetResult] =
     databaseSession.withTransactionConnection(connection =>
       deleteProblemSet(connection, actor, problemSetSlug)
@@ -110,7 +110,7 @@ object ProblemSetMutationCommands:
   def deleteProblemSet(
     connection: Connection,
     actor: AuthUser,
-    problemSetSlug: domains.problemset.model.ProblemSetSlug
+    problemSetSlug: domains.problemset.objects.ProblemSetSlug
   ): IO[DeleteProblemSetResult] =
     if !ProblemSetPolicy.canDelete(actor) then
       IO.pure(DeleteProblemSetResult.Forbidden)

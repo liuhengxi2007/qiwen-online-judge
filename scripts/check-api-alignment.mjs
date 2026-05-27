@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path'
 
 const root = process.cwd()
 
-const frontendFeaturesRoot = resolve(root, 'frontend/src/features')
+const frontendApisRoot = resolve(root, 'frontend/src/apis')
 const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
@@ -34,7 +34,7 @@ function listFilesIfDirectory(path) {
 }
 
 function frontendEndpointNames(domain) {
-  return listFilesIfDirectory(join(frontendFeaturesRoot, domain, 'http/api'))
+  return listFilesIfDirectory(join(frontendApisRoot, domain))
     .map((filePath) => filePath.split('/').at(-1))
     .filter((fileName) => fileName.endsWith('.ts'))
     .map((fileName) => fileName.replace(/\.ts$/, ''))
@@ -64,7 +64,7 @@ function formatList(entries) {
 
 function run() {
   const errors = []
-  const frontendDomains = listDirectories(frontendFeaturesRoot).filter((domain) => frontendEndpointNames(domain).length > 0)
+  const frontendDomains = listDirectories(frontendApisRoot).filter((domain) => frontendEndpointNames(domain).length > 0)
   const backendDomains = listDirectories(backendDomainsRoot).filter((domain) => backendEndpointNames(domain).length > 0)
 
   const frontendDomainSet = new Set(frontendDomains)

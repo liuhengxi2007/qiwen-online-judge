@@ -5,14 +5,14 @@ package domains.problemset.table.problem_set
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.user.model.Username
-import domains.problem.model.{ProblemId}
-import domains.problemset.model.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
-import domains.problemset.model.response.ProblemSetSummary
-import shared.model.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
+import domains.user.objects.Username
+import domains.problem.objects.{ProblemId}
+import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.objects.response.ProblemSetSummary
+import shared.objects.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
 import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
-import shared.model.PageResponse
+import shared.objects.PageResponse
 import domains.problemset.table.problem_set.ProblemSetTableSchema.*
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
 
@@ -95,7 +95,7 @@ object ProblemSetTable:
       |  )
       |""".stripMargin
 
-  def listVisibleTo(connection: Connection, actor: domains.auth.model.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
+  def listVisibleTo(connection: Connection, actor: domains.auth.objects.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSQL)

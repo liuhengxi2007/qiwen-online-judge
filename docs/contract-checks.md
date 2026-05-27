@@ -1,6 +1,6 @@
 # Contract Checks
 
-Use this command to verify that frontend and backend boundary models have not drifted.
+Use this command to verify that frontend and backend boundary objects have not drifted.
 
 ```bash
 node scripts/check-contract-alignment.mjs
@@ -14,12 +14,12 @@ node scripts/check-api-alignment.mjs
 
 Current checks cover:
 
-- shared transport models
+- shared transport objects
 - shared access and lifecycle enum values
-- frontend feature `model/request` files against backend `model/request`
-- frontend feature `model/response` files against backend `model/response`
-- mirrored feature `model` files when both sides expose the same key
-- backend `model/internal` is skipped because it is backend-only collaboration state, not an HTTP contract
+- frontend domain `objects/request` files against backend `objects/request`
+- frontend domain `objects/response` files against backend `objects/response`
+- mirrored domain `objects` files when both sides expose the same key
+- backend `objects/internal` is skipped because it is backend-only collaboration state, not an HTTP contract
 
 The contract alignment check is intentionally structural:
 
@@ -32,4 +32,4 @@ The contract alignment check is intentionally structural:
 
 It does not replace runtime tests, endpoint fixtures, or parser tests.
 
-The API alignment check compares `frontend/src/features/*/http/api/*.ts` with `backend/src/main/scala/domains/*/http/api/*.scala`, with explicit backend-only domains such as judge integration endpoints recorded as script exceptions.
+The API alignment check compares `frontend/src/apis/*/*.ts` with `backend/src/main/scala/domains/*/http/api/*.scala`, with explicit backend-only domains such as judge integration endpoints recorded as script exceptions.

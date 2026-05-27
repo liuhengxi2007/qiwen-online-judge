@@ -3,15 +3,15 @@ package domains.user.table.user
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, SiteManagerUser}
-import domains.user.model.{DisplayName, Username}
-import domains.problem.model.ProblemTitleDisplayMode
-import shared.model.{PageRequest, PageResponse}
+import domains.auth.objects.{AuthUser, SiteManagerUser}
+import domains.user.objects.{DisplayName, Username}
+import domains.problem.objects.ProblemTitleDisplayMode
+import shared.objects.{PageRequest, PageResponse}
 import database.utils.LikePatternSql
-import domains.user.model.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
-import domains.user.model.request.UserSearchQuery
-import domains.user.model.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}
-import domains.user.model.request.{UserListRequest}
+import domains.user.objects.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem}
+import domains.user.objects.request.UserSearchQuery
+import domains.user.objects.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}
+import domains.user.objects.request.{UserListRequest}
 import domains.user.table.user.UserTableSupport.*
 
 import java.sql.Connection

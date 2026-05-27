@@ -4,25 +4,25 @@ package domains.usergroup.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.user.model.Username
-import shared.model.{PageRequest, PageResponse}
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
+import shared.objects.{PageRequest, PageResponse}
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
 import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.model.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
-import domains.usergroup.model.{UserGroupSlug}
+import domains.usergroup.objects.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupMemberRoleRequest, UpdateUserGroupRequest}
+import domains.usergroup.objects.{UserGroupSlug}
 
 import java.sql.Connection
 
 object UserGroupHttpPlans:
 
-  case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.model.response.UserGroupSummary]]:
+  case object ListUserGroups extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.usergroup.objects.response.UserGroupSummary]]:
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.usergroup.model.response.UserGroupSummary]] =
+    ): IO[PageResponse[domains.usergroup.objects.response.UserGroupSummary]] =
       UserGroupCommands.listUserGroups(databaseSession, actor, input)
 
   case object GetUserGroup extends PlainAuthenticatedHttpPlan[AuthUser, UserGroupSlug, UserGroupCommands.GetUserGroupResult]:

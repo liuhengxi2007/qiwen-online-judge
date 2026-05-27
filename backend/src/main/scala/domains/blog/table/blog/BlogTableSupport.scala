@@ -2,11 +2,11 @@ package domains.blog.table.blog
 
 
 
-import domains.blog.model.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
-import domains.blog.model.response.{BlogCommentSummary, BlogSummary}
-import domains.problem.model.{ProblemSlug, ProblemTitle}
+import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.objects.response.{BlogCommentSummary, BlogSummary}
+import domains.problem.objects.{ProblemSlug, ProblemTitle}
 import database.utils.UserIdentitySql
-import domains.user.model.{DisplayName, UserIdentity, Username}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
 
 import java.sql.ResultSet
 

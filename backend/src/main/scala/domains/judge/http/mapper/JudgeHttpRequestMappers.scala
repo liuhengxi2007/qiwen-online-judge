@@ -1,7 +1,7 @@
 package domains.judge.http.mapper
 
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
-import domains.submission.model.SubmissionId
+import domains.problem.objects.{ProblemDataPath, ProblemSlug}
+import domains.submission.objects.SubmissionId
 
 object JudgeHttpRequestMappers:
 

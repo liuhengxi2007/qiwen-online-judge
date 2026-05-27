@@ -2,7 +2,7 @@ package domains.submission.http.api
 
 import cats.effect.IO
 import domains.submission.application.SubmissionCommands
-import domains.submission.model.request.CreateSubmissionRequest
+import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.http.*
 import domains.submission.http.codec.SubmissionHttpCodecs.given
 import org.http4s.HttpRoutes

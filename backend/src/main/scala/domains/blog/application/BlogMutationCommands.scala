@@ -4,15 +4,15 @@ package domains.blog.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.blog.application.BlogCommandResults.*
-import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.model.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.blog.objects.{BlogCommentId, BlogId}
+import domains.blog.objects.request.{CreateBlogCommentRequest, CreateBlogRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
 import domains.blog.table.blog.{BlogCommentTable, BlogCommentVoteTable, BlogPostMutationTable, BlogProblemLinkMutationTable, BlogVoteTable}
 import domains.notification.application.NotificationCommands
 import domains.problem.application.ProblemCommands
-import domains.problem.model.ProblemSlug
-import domains.user.model.Username
+import domains.problem.objects.ProblemSlug
+import domains.user.objects.Username
 
 import java.sql.Connection
 

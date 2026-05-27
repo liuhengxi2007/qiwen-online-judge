@@ -7,7 +7,7 @@ import domains.problem.application.ProblemCommands
 import domains.problem.application.ProblemDataStorage
 import domains.problem.application.ProblemDataStorage.*
 import domains.problem.http.codec.ProblemHttpCodecs.given
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
 import domains.problem.http.ProblemHttpPlans.DownloadProblemDataOutput
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
@@ -27,12 +27,12 @@ object ProblemHttpResponseMappers:
     shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
   def listProblemsResponse(
-    response: shared.model.PageResponse[domains.problem.model.response.ProblemSummary]
+    response: shared.objects.PageResponse[domains.problem.objects.response.ProblemSummary]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def listProblemSuggestionsResponse(
-    response: List[domains.problem.model.response.ProblemSuggestion]
+    response: List[domains.problem.objects.response.ProblemSuggestion]
   ): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 

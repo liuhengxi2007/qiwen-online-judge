@@ -1,6 +1,6 @@
 package shared.application.access
 
-import shared.model.access.{AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
+import shared.objects.access.{AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 
 final case class ResourceAccessFacts(
   policy: ResourceAccessPolicy,

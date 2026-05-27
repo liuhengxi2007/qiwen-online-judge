@@ -1,7 +1,7 @@
 package domains.message.table.message
 
 import cats.effect.IO
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.Connection
 

@@ -1,7 +1,7 @@
 package domains.blog.http.codec
 
-import domains.blog.model.request.*
-import domains.blog.model.response.*
+import domains.blog.objects.request.*
+import domains.blog.objects.response.*
 import domains.blog.http.codec.BlogModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given
 import shared.http.codec.SharedHttpCodecs

@@ -1,8 +1,8 @@
 package domains.problem.http.mapper
 
 import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
-import domains.problem.model.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
-import domains.problem.model.request.{DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
+import domains.problem.objects.request.{DeleteProblemDataPathRequest, ProblemListRequest, ProblemSearchQuery, UpdateProblemRequest}
 import shared.http.utils.PageRequestQuerySupport
 
 object ProblemHttpRequestMappers:

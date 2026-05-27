@@ -3,7 +3,7 @@ package domains.notification.application
 
 
 import cats.effect.{IO, Resource}
-import domains.user.model.Username
+import domains.user.objects.Username
 import fs2.Stream
 import fs2.concurrent.Topic
 

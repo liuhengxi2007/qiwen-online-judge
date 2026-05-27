@@ -4,10 +4,10 @@ package domains.usergroup.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import shared.model.{PageRequest, PageResponse}
-import domains.usergroup.model.{UserGroupSlug}
-import domains.usergroup.model.response.{UserGroupSummary}
+import domains.auth.objects.AuthUser
+import shared.objects.{PageRequest, PageResponse}
+import domains.usergroup.objects.{UserGroupSlug}
+import domains.usergroup.objects.response.{UserGroupSummary}
 import domains.usergroup.table.user_group.UserGroupTable
 import domains.usergroup.application.UserGroupCommandResults.*
 

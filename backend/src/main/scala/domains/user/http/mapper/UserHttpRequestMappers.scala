@@ -1,9 +1,9 @@
 package domains.user.http.mapper
 
-import domains.user.model.Username
-import domains.user.model.request.{UserListRequest, UserSearchQuery}
+import domains.user.objects.Username
+import domains.user.objects.request.{UserListRequest, UserSearchQuery}
 import shared.http.utils.PageRequestQuerySupport
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 object UserHttpRequestMappers:
 

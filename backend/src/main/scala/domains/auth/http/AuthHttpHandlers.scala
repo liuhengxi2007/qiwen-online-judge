@@ -9,9 +9,9 @@ import domains.auth.application.SessionStore
 import domains.auth.http.AuthHttpPlanRegistry.RegisteredPlan
 import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.http.mapper.AuthHttpResponseMappers
-import domains.auth.model.{AuthUser, SiteManagerUser}
-import domains.auth.model.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
-import domains.user.model.Username
+import domains.auth.objects.{AuthUser, SiteManagerUser}
+import domains.auth.objects.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
+import domains.user.objects.Username
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

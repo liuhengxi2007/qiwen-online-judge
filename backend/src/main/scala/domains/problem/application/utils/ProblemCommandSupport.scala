@@ -5,13 +5,13 @@ package domains.problem.application.utils
 import domains.problem.application.{ProblemAccessDecision, ProblemAccessFacts, ProblemPolicy}
 import cats.effect.IO
 import domains.auth.application.AuthCommands
-import domains.auth.model.AuthUser
-import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
-import domains.problem.model.response.{ProblemDetail}
+import domains.auth.objects.AuthUser
+import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.objects.response.{ProblemDetail}
 import domains.problemset.application.ProblemSetCommands
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
-import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
+import domains.user.objects.Username
+import domains.usergroup.objects.UserGroupSlug
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, ResourceAccessPolicy}
 import shared.application.access.ResourceAccessFacts
 import domains.usergroup.application.UserGroupCommands
 import domains.problem.table.problem.ProblemQueryTable

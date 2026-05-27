@@ -2,7 +2,7 @@ package domains.blog.application
 
 
 
-import domains.blog.model.response.{BlogDetail, BlogListResponse, BlogSummary}
+import domains.blog.objects.response.{BlogDetail, BlogListResponse, BlogSummary}
 
 object BlogCommandResults:
 
@@ -52,7 +52,7 @@ object BlogCommandResults:
   enum CreateBlogCommentResult:
     case ValidationFailed(message: String)
     case BlogNotFound
-    case Created(blog: BlogDetail, createdCommentId: domains.blog.model.BlogCommentId)
+    case Created(blog: BlogDetail, createdCommentId: domains.blog.objects.BlogCommentId)
 
   enum VoteBlogCommentResult:
     case NotFound

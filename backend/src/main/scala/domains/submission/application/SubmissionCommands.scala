@@ -4,8 +4,8 @@ package domains.submission.application
 
 import cats.effect.IO
 import domains.submission.application.utils.SubmissionJudgeStateSupport
-import domains.submission.model.{SubmissionId, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
-import domains.submission.model.internal.{ClaimedSubmission, SubmissionJudgeCompletion}
+import domains.submission.objects.{SubmissionId, SubmissionJudgeState, SubmissionLifecycle, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion}
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
 import judgeprotocol.model.{JudgerId, ReportJudgeResultRequest}
 
@@ -121,7 +121,7 @@ object SubmissionCommands:
       case judgeprotocol.model.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
       case judgeprotocol.model.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
 
-  private def toSubmissionLanguage(language: judgeprotocol.model.SubmissionLanguage): Option[domains.submission.model.SubmissionLanguage] =
+  private def toSubmissionLanguage(language: judgeprotocol.model.SubmissionLanguage): Option[domains.submission.objects.SubmissionLanguage] =
     language match
-      case judgeprotocol.model.SubmissionLanguage.Cpp17 => Some(domains.submission.model.SubmissionLanguage.Cpp17)
-      case judgeprotocol.model.SubmissionLanguage.Python3 => Some(domains.submission.model.SubmissionLanguage.Python3)
+      case judgeprotocol.model.SubmissionLanguage.Cpp17 => Some(domains.submission.objects.SubmissionLanguage.Cpp17)
+      case judgeprotocol.model.SubmissionLanguage.Python3 => Some(domains.submission.objects.SubmissionLanguage.Python3)

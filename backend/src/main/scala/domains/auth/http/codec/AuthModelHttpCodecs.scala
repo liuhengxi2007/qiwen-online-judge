@@ -1,6 +1,6 @@
 package domains.auth.http.codec
 
-import domains.auth.model.{EmailAddress, PlaintextPassword}
+import domains.auth.objects.{EmailAddress, PlaintextPassword}
 import io.circe.{Decoder, Encoder}
 
 object AuthModelHttpCodecs:

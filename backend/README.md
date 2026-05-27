@@ -19,28 +19,27 @@ The service listens on `http://0.0.0.0:8080` by default.
   Shared database configuration, connection/session management, and
   cross-domain persistence primitives.
 - `src/main/scala/domains/<domain>`
-  Domain-first backend code. Most business domains are split into `model`,
+  Domain-first backend code. Most business domains are split into `objects`,
   `application`, `http`, and `table`.
 - `src/main/scala/shared`
   Cross-domain primitives such as pagination, access control, shared HTTP
-  execution support, and generic response models.
+  execution support, and generic response objects.
 
 Current domains are `auth`, `blog`, `judge`, `judger`, `message`, `notification`,
 `problem`, `problemset`, `submission`, `system`, `user`, and `usergroup`.
 
 ## Layer Rules
 
-- `model`
+- `objects`
   Durable domain entities, value objects, enums, lifecycle types, slugs, ids, and
-  titles. Model files must not import `application`, `http`, or `table`.
+  titles. Object files must not import `application`, `http`, or `table`.
+- `objects/request`
+  Typed command/query inputs decoded at HTTP boundaries and consumed by application/table code.
+- `objects/response`
+  Read/output shapes returned by application use cases.
 - `application`
   Use-case orchestration, validation, permission decisions, result ADTs, and
   domain-owned adapter interfaces.
-- `application/input`
-  Typed command/query inputs decoded at HTTP boundaries and consumed by
-  application/table code.
-- `application/output`
-  Read/output shapes returned by application use cases.
 - `http`
   Endpoint routing, request decoding, plan execution, and response mapping.
 - `table`
@@ -84,6 +83,6 @@ cd backend
 sbt compile
 ```
 
-Run the contract check when mirrored model/input/output types change. Run the API
+Run the contract check when mirrored object/request/response types change. Run the API
 alignment check when endpoint files under `http/api` change. Run the structure
 boundary check after moving files across backend layers.

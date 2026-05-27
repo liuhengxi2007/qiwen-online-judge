@@ -1,11 +1,11 @@
 package domains.message.http.mapper
 
 import domains.message.http.MessageHttpPlans
-import domains.message.model.{MessageConversationId, MessageId}
-import domains.message.model.request.{MarkConversationReadRequest, SendDirectMessageRequest}
-import domains.user.model.Username
+import domains.message.objects.{MessageConversationId, MessageId}
+import domains.message.objects.request.{MarkConversationReadRequest, SendDirectMessageRequest}
+import domains.user.objects.Username
 import shared.http.utils.PageRequestQuerySupport
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 object MessageHttpRequestMappers:
 

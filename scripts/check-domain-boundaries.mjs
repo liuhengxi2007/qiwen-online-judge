@@ -369,7 +369,7 @@ function importedType(importPath) {
 }
 
 function isPublicModelImport(domain, importPath) {
-  if (!importPath.startsWith(`domains.${domain}.model.`)) {
+  if (!importPath.startsWith(`domains.${domain}.objects.`)) {
     return false
   }
 

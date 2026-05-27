@@ -3,8 +3,8 @@ package domains.auth.table.session
 
 
 import cats.effect.IO
-import domains.auth.model.SessionToken
-import domains.user.model.Username
+import domains.auth.objects.SessionToken
+import domains.user.objects.Username
 import domains.auth.table.session.SessionTableSchema.*
 
 import java.sql.Connection

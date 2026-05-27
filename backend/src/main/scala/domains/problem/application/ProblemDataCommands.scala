@@ -5,10 +5,10 @@ package domains.problem.application
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.judge.application.JudgeCommands
-import domains.problem.model.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
-import domains.problem.model.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
+import domains.problem.objects.response.{ProblemDataFileListResponse, ProblemDataTreeResponse, ProblemDataUploadResult, ProblemDetail}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataManifestEntry, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
 import domains.problem.table.problem.{ProblemDataStateTable, ProblemQueryTable}
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.application.ProblemCommandResults.*
@@ -28,7 +28,7 @@ object ProblemDataCommands:
 
   private def writePreparedFiles(
     problemDataStorage: ProblemDataStorage,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     preparedFiles: List[shared.application.upload.PreparedUploadFile]
   ): IO[Unit] =
     preparedFiles.traverse_ { preparedFile =>
@@ -64,8 +64,8 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
-    path: domains.problem.model.ProblemDataPath,
+    problemSlug: domains.problem.objects.ProblemSlug,
+    path: domains.problem.objects.ProblemDataPath,
     bytes: Array[Byte]
   ): IO[UpdateProblemDataResult] =
     ProblemDataUploadPreparation.prepareSingleFile(path, bytes) match
@@ -82,8 +82,8 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
-    targetDirectory: Option[domains.problem.model.ProblemDataPath],
+    problemSlug: domains.problem.objects.ProblemSlug,
+    targetDirectory: Option[domains.problem.objects.ProblemDataPath],
     archiveBytes: Array[Byte]
   ): IO[UpdateProblemDataResult] =
     ProblemDataUploadPreparation.prepareArchive(archiveBytes, targetDirectory) match
@@ -100,7 +100,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     preparedFiles: List[shared.application.upload.PreparedUploadFile],
     summaryFilename: ProblemDataFilename
   ): IO[UpdateProblemDataResult] =
@@ -132,7 +132,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[ListProblemDataResult] =
     databaseSession.withTransactionConnection { connection =>
       ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
@@ -154,7 +154,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[AuthorizeProblemDataDownloadResult] =
     val _ = problemDataStorage
     databaseSession.withTransactionConnection { connection =>
@@ -172,7 +172,7 @@ object ProblemDataCommands:
   def listProblemDataTree(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[ListProblemDataTreeResult] =
     databaseSession.withTransactionConnection { connection =>
       ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
@@ -194,7 +194,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     filename: ProblemDataFilename
   ): IO[DeleteProblemDataResult] =
     databaseSession.withTransactionConnection(connection =>
@@ -205,7 +205,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     filename: ProblemDataFilename
   ): IO[DeleteProblemDataResult] =
     withManageableProblemForUpdate(connection, actor, problemSlug)(
@@ -239,7 +239,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     path: ProblemDataPath
   ): IO[DeleteProblemDataResult] =
     withManageableProblemForUpdate(connection, actor, problemSlug)(
@@ -276,7 +276,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[ClearProblemDataResult] =
     databaseSession.withTransactionConnection(connection =>
       clearProblemData(problemDataStorage, connection, actor, problemSlug)
@@ -286,7 +286,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug
+    problemSlug: domains.problem.objects.ProblemSlug
   ): IO[ClearProblemDataResult] =
     withManageableProblemForUpdate(connection, actor, problemSlug)(
       ClearProblemDataResult.ProblemNotFound,
@@ -315,7 +315,7 @@ object ProblemDataCommands:
     problemDataStorage: ProblemDataStorage,
     connection: java.sql.Connection,
     actor: AuthUser,
-    problemSlug: domains.problem.model.ProblemSlug,
+    problemSlug: domains.problem.objects.ProblemSlug,
     ready: Boolean
   ): IO[SetProblemReadyResult] =
     withManageableProblemForUpdate(connection, actor, problemSlug)(

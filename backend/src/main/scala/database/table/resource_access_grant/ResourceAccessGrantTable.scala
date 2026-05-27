@@ -2,8 +2,8 @@ package database.table.resource_access_grant
 
 import cats.effect.IO
 import database.utils.ResourceAccessTableSupport.{decodeGrantRoleColumn, decodeResourceKindColumn, encodeGrantRoleColumn, encodeResourceKindColumn}
-import domains.user.model.Username
-import shared.model.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
+import domains.user.objects.Username
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, GrantRole, ResourceAccessGrant, ResourceId, ResourceKind}
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant

@@ -2,10 +2,10 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
-import domains.blog.model.{BlogContent, BlogId, BlogTitle, BlogVisibility}
-import domains.blog.model.response.BlogSummary
+import domains.blog.objects.{BlogContent, BlogId, BlogTitle, BlogVisibility}
+import domains.blog.objects.response.BlogSummary
 import domains.blog.table.blog.BlogTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -76,7 +76,7 @@ object BlogPostMutationTable:
     title: BlogTitle,
     content: BlogContent,
     visibility: BlogVisibility
-  ): IO[Option[domains.blog.model.response.BlogDetail]] =
+  ): IO[Option[domains.blog.objects.response.BlogDetail]] =
     IO.blocking {
       val statement = connection.prepareStatement(updateBlogSQL)
       try

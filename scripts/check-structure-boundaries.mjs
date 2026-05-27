@@ -4,18 +4,34 @@ import { dirname, extname, join, relative, resolve, sep } from 'node:path'
 
 const root = process.cwd()
 
-const frontendBlockedModelSegments = new Set(['http', 'lib', 'state', 'hooks', 'components', 'pages'])
-const frontendBlockedPureSegments = new Set(['hooks', 'components', 'pages'])
-const backendBlockedModelSegments = new Set(['application', 'http', 'table'])
+const frontendObjectForbiddenPrefixes = [
+  'frontend/src/apis/',
+  'frontend/src/system/',
+  'frontend/src/pages/',
+  'frontend/src/components/ui/',
+]
+const frontendSystemForbiddenPrefixes = [
+  'frontend/src/apis/',
+  'frontend/src/pages/',
+  'frontend/src/components/ui/',
+]
+const frontendApiForbiddenPrefixes = [
+  'frontend/src/pages/',
+  'frontend/src/components/ui/',
+]
+const frontendUiForbiddenPrefixes = [
+  'frontend/src/apis/',
+  'frontend/src/objects/',
+  'frontend/src/pages/',
+]
+const backendBlockedObjectSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
-const backendModelPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
-const frontendFeatureHttpApiPathPattern = /^frontend\/src\/features\/[^/]+\/http\/api(?:\/|$)/
-const frontendFeatureBareHttpCodecPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec$/
-const frontendFeatureFlatHttpCodecPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec\.ts$/
-const frontendFeatureHttpCodecIndexPathPattern = /^frontend\/src\/features\/[^/]+\/http\/codec\/index\.ts$/
-const frontendFeatureHttpCodecFilePattern = /^frontend\/src\/features\/([^/]+)\/http\/codec\/([^/]+)\.ts$/
-const frontendFeatureHttpCodecBasenamePattern = /^[A-Za-z0-9_]*(?:Model)?HttpCodecs$/
+const backendObjectPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
+const frontendApiRootCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/[A-Za-z0-9_]*(?:Model)?HttpCodecs\.ts$/
+const frontendApiCodecIndexPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\/index\.ts$/
+const frontendApiCodecFilePattern = /^frontend\/src\/apis\/([^/]+)\/codecs\/([^/]+)\.ts$/
+const frontendApiCodecBasenamePattern = /^[A-Za-z0-9_]*(?:Model)?HttpCodecs$/
 const backendDomainHttpCodecFilePattern =
   /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/codec\/([^/]+)\.scala$/
 const backendDomainHttpMapperFilePattern =
@@ -29,6 +45,8 @@ const backendEffectfulReturnPattern = /:\s*(?:IO|Resource)\s*\[|:\s*Stream\s*\[\
 
 const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
+const removedFrontendFeatureRoot = `${pathOf('frontend', 'src', 'features')}/`
+const removedFrontendSharedRoot = `${pathOf('frontend', 'src', 'shared')}/`
 
 const bannedTrackedPaths = new Set([
   pathOf('backend', extension('package-lock', 'json')),
@@ -89,6 +107,10 @@ function hasBlockedSegment(path, blockedSegments) {
   return path.split('/').some((segment) => blockedSegments.has(segment))
 }
 
+function hasPrefix(path, prefixes) {
+  return prefixes.some((prefix) => path.startsWith(prefix))
+}
+
 function extractTsSpecifiers(source) {
   const importPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g
@@ -98,59 +120,80 @@ function extractTsSpecifiers(source) {
   }))
 }
 
-function checkFrontendFile(filePath, blockedSegments, errors) {
+function checkFrontendLayerFile(filePath, errors) {
   const source = read(filePath)
-  const isBareFeatureModel = /^frontend\/src\/features\/[^/]+\/model\/(?!request\/|response\/)/.test(filePath)
-  const isBareSharedModel = /^frontend\/src\/shared\/model\/(?!request\/|response\/)/.test(filePath)
   for (const match of extractTsSpecifiers(source)) {
     const resolved = resolveFrontendSpecifier(filePath, match.specifier)
-    if (hasBlockedSegment(resolved, blockedSegments)) {
+    const line = lineNumber(source, match.index)
+
+    if (resolved.startsWith('frontend/src/pages/objects/') && !filePath.startsWith('frontend/src/pages/')) {
       errors.push(
-        `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend layer "${match.specifier}"`,
+        `${filePath}:${line} imports page-only object "${match.specifier}" from outside pages`,
       )
     }
-    if (
-      (isBareFeatureModel || isBareSharedModel) &&
-      /\/model\/(?:request|response)(?:\/|$)/.test(resolved)
-    ) {
-      errors.push(
-        `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend boundary model "${match.specifier}"`,
-      )
+
+    if (filePath.startsWith('frontend/src/objects/')) {
+      if (hasPrefix(resolved, frontendObjectForbiddenPrefixes)) {
+        errors.push(`${filePath}:${line} objects layer imports forbidden frontend layer "${match.specifier}"`)
+      }
+
+      if (
+        filePath.startsWith('frontend/src/objects/shared/') &&
+        resolved.startsWith('frontend/src/objects/') &&
+        !resolved.startsWith('frontend/src/objects/shared/')
+      ) {
+        errors.push(`${filePath}:${line} shared objects import domain object "${match.specifier}"`)
+      }
+    }
+
+    if (filePath.startsWith('frontend/src/system/')) {
+      if (hasPrefix(resolved, frontendSystemForbiddenPrefixes)) {
+        errors.push(`${filePath}:${line} system layer imports forbidden frontend layer "${match.specifier}"`)
+      }
+
+      if (
+        resolved.startsWith('frontend/src/objects/') &&
+        !resolved.startsWith('frontend/src/objects/shared/')
+      ) {
+        errors.push(`${filePath}:${line} system layer imports domain object "${match.specifier}"`)
+      }
+    }
+
+    if (filePath.startsWith('frontend/src/apis/')) {
+      if (hasPrefix(resolved, frontendApiForbiddenPrefixes)) {
+        errors.push(`${filePath}:${line} api layer imports forbidden frontend layer "${match.specifier}"`)
+      }
+
+      if (
+        resolved.startsWith('frontend/src/system/') &&
+        !resolved.startsWith('frontend/src/system/api/')
+      ) {
+        errors.push(`${filePath}:${line} api layer imports non-api system module "${match.specifier}"`)
+      }
+    }
+
+    if (filePath.startsWith('frontend/src/components/ui/')) {
+      if (hasPrefix(resolved, frontendUiForbiddenPrefixes)) {
+        errors.push(`${filePath}:${line} ui component imports forbidden frontend layer "${match.specifier}"`)
+      }
+
+      if (
+        resolved.startsWith('frontend/src/system/') &&
+        !resolved.startsWith('frontend/src/system/i18n/')
+      ) {
+        errors.push(`${filePath}:${line} ui component imports non-i18n system module "${match.specifier}"`)
+      }
     }
   }
 }
 
-function checkFrontendPageComponentApiImports(filePath, errors) {
+function checkRemovedFrontendResidueImport(filePath, errors) {
   const source = read(filePath)
   for (const match of extractTsSpecifiers(source)) {
     const resolved = resolveFrontendSpecifier(filePath, match.specifier)
-    if (frontendFeatureHttpApiPathPattern.test(resolved)) {
+    if (resolved.startsWith(removedFrontendFeatureRoot) || resolved.startsWith(removedFrontendSharedRoot)) {
       errors.push(
-        `${filePath}:${lineNumber(source, match.index)} imports forbidden frontend API shell "${match.specifier}"`,
-      )
-    }
-  }
-}
-
-function checkFrontendSharedBoundaryFile(filePath, errors) {
-  const source = read(filePath)
-  for (const match of extractTsSpecifiers(source)) {
-    const resolved = resolveFrontendSpecifier(filePath, match.specifier)
-    if (resolved.startsWith('frontend/src/features/')) {
-      errors.push(
-        `${filePath}:${lineNumber(source, match.index)} shared frontend imports feature package "${match.specifier}"`,
-      )
-    }
-  }
-}
-
-function checkFrontendHttpCodecImports(filePath, errors) {
-  const source = read(filePath)
-  for (const match of extractTsSpecifiers(source)) {
-    const resolved = resolveFrontendSpecifier(filePath, match.specifier)
-    if (frontendFeatureBareHttpCodecPathPattern.test(resolved)) {
-      errors.push(
-        `${filePath}:${lineNumber(source, match.index)} imports removed frontend codec barrel "${match.specifier}"`,
+        `${filePath}:${lineNumber(source, match.index)} imports removed frontend layer "${match.specifier}"`,
       )
     }
   }
@@ -166,23 +209,27 @@ function collectFrontendHttpCodecFiles(files, errors) {
   const codecsByDomain = new Map()
 
   for (const filePath of files) {
-    if (frontendFeatureFlatHttpCodecPathPattern.test(filePath)) {
-      errors.push(`${filePath} is a removed flat frontend codec file; use http/codec/*HttpCodecs.ts`)
+    if (frontendApiRootCodecPathPattern.test(filePath)) {
+      errors.push(`${filePath} is a misplaced frontend codec file; use apis/<domain>/codecs/*HttpCodecs.ts`)
       continue
     }
 
-    if (frontendFeatureHttpCodecIndexPathPattern.test(filePath)) {
+    if (frontendApiCodecIndexPathPattern.test(filePath)) {
       errors.push(`${filePath} is a forbidden frontend codec barrel; import codec files directly`)
       continue
     }
 
-    const match = filePath.match(frontendFeatureHttpCodecFilePattern)
+    const match = filePath.match(frontendApiCodecFilePattern)
     if (!match) {
       continue
     }
 
     const [, domain, basename] = match
-    if (!frontendFeatureHttpCodecBasenamePattern.test(basename)) {
+    if (basename.endsWith('.test')) {
+      continue
+    }
+
+    if (!frontendApiCodecBasenamePattern.test(basename)) {
       errors.push(`${filePath} must be named *HttpCodecs.ts or *ModelHttpCodecs.ts`)
       continue
     }
@@ -223,7 +270,7 @@ function checkFrontendHttpCodecLayout(frontendFiles, backendFiles, errors) {
       if (!frontendDomainCodecs.has(basename)) {
         const backendPath = backendDomainCodecs.get(basename)
         errors.push(
-          `frontend/src/features/${domain}/http/codec/${basename}.ts is missing matching frontend codec for ${backendPath}`,
+          `frontend/src/apis/${domain}/codecs/${basename}.ts is missing matching frontend codec for ${backendPath}`,
         )
       }
 
@@ -242,27 +289,27 @@ function extractScalaImports(source) {
     .filter((entry) => entry.line.startsWith('import '))
 }
 
-function checkBackendModelFile(filePath, errors) {
+function checkBackendObjectFile(filePath, errors) {
   const source = read(filePath)
-  const isBareDomainModel = /^backend\/src\/main\/scala\/domains\/[^/]+\/model\/(?!request\/|response\/)/.test(filePath)
-  const isBareSharedModel = /^backend\/src\/main\/scala\/shared\/model\/(?!request\/|response\/)/.test(filePath)
+  const isBareDomainObject = /^backend\/src\/main\/scala\/domains\/[^/]+\/objects\/(?!request\/|response\/)/.test(filePath)
+  const isBareSharedObject = /^backend\/src\/main\/scala\/shared\/objects\/(?!request\/|response\/)/.test(filePath)
   for (const entry of extractScalaImports(source)) {
     const importedPath = entry.line.replace(/^import\s+/, '')
-    if (hasBlockedSegment(importedPath.replace(/[{}]/g, '.').replace(/,/g, '.'), backendBlockedModelSegments)) {
+    if (hasBlockedSegment(importedPath.replace(/[{}]/g, '.').replace(/,/g, '.'), backendBlockedObjectSegments)) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend layer "${importedPath}"`)
     }
     if (
-      (isBareDomainModel || isBareSharedModel) &&
-      /\.model\.(?:request|response)(?:\.|$|\{)/.test(importedPath)
+      (isBareDomainObject || isBareSharedObject) &&
+      /\.objects\.(?:request|response)(?:\.|$|\{)/.test(importedPath)
     ) {
-      errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary model "${importedPath}"`)
+      errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary object "${importedPath}"`)
     }
     if (backendWireCodecImportPattern.test(importedPath)) {
       errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
     }
   }
 
-  for (const match of source.matchAll(backendModelPersistenceHelperPattern)) {
+  for (const match of source.matchAll(backendObjectPersistenceHelperPattern)) {
     errors.push(`${filePath}:${lineNumber(source, match.index ?? 0)} defines persistence helper "${match[0].trim()}"`)
   }
 }
@@ -342,7 +389,7 @@ function checkBackendEffectfulMethodSignatures(filePath, errors) {
   }
 }
 
-function extractFrontendTopLevelModelTypes(source) {
+function extractFrontendTopLevelObjectTypes(source) {
   const cleanSource = source
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/(^|\s)\/\/.*$/gm, '')
@@ -352,7 +399,7 @@ function extractFrontendTopLevelModelTypes(source) {
   )
 }
 
-function extractBackendTopLevelModelTypes(source) {
+function extractBackendTopLevelObjectTypes(source) {
   const cleanSource = source
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/(^|\s)\/\/.*$/gm, '')
@@ -362,28 +409,33 @@ function extractBackendTopLevelModelTypes(source) {
   ].map((match) => match[1])
 }
 
-function checkOneTopLevelModelType(filePath, types, errors) {
+function checkOneTopLevelObjectType(filePath, types, errors) {
   if (types.length === 0) {
     return
   }
 
   if (types.length > 1) {
-    errors.push(`${filePath} defines multiple top-level model types: ${types.join(', ')}`)
+    errors.push(`${filePath} defines multiple top-level object types: ${types.join(', ')}`)
     return
   }
 
   const expectedName = basenameWithoutExtension(filePath)
   if (types[0] !== expectedName) {
-    errors.push(`${filePath} defines ${types[0]}, but model file basename must match the type name`)
+    errors.push(`${filePath} defines ${types[0]}, but object file basename must match the type name`)
   }
 }
 
-function checkFrontendModelFileShape(filePath, errors) {
-  checkOneTopLevelModelType(filePath, extractFrontendTopLevelModelTypes(read(filePath)), errors)
+function checkFrontendObjectFileShape(filePath, errors) {
+  checkOneTopLevelObjectType(filePath, extractFrontendTopLevelObjectTypes(read(filePath)), errors)
 }
 
-function checkBackendModelFileShape(filePath, errors) {
-  checkOneTopLevelModelType(filePath, extractBackendTopLevelModelTypes(read(filePath)), errors)
+function checkBackendObjectFileShape(filePath, errors) {
+  checkOneTopLevelObjectType(filePath, extractBackendTopLevelObjectTypes(read(filePath)), errors)
+}
+
+function isFrontendObjectContractFile(filePath) {
+  const basename = basenameWithoutExtension(filePath)
+  return /^[A-Z]/.test(basename) && !basename.endsWith('.test')
 }
 
 function trackedFiles() {
@@ -411,20 +463,20 @@ function checkTrackedResidues(errors) {
       errors.push(`${filePath} is a tracked template or misplaced file`)
     }
 
-    if (/^frontend\/src\/features\/[^/]+\/domain\//.test(filePath)) {
+    if (filePath.startsWith(removedFrontendFeatureRoot) && /\/domain\//.test(filePath)) {
       errors.push(`${filePath} is in removed frontend feature domain layer`)
     }
 
-    if (/^frontend\/src\/features\/[^/]+\/http\/(?:request|response)\//.test(filePath)) {
-      errors.push(`${filePath} is in removed frontend HTTP contract directory; use model/request or model/response`)
+    if (filePath.startsWith(removedFrontendFeatureRoot) && /\/http\/(?:request|response)\//.test(filePath)) {
+      errors.push(`${filePath} is in removed frontend HTTP contract directory; use objects/<domain>/request or objects/<domain>/response`)
     }
 
-    if (/^frontend\/src\/shared\/http\/response\//.test(filePath)) {
-      errors.push(`${filePath} is in removed shared frontend HTTP response directory; use shared/model/response`)
+    if (filePath.startsWith(removedFrontendSharedRoot) && /\/http\/response\//.test(filePath)) {
+      errors.push(`${filePath} is in removed shared frontend HTTP response directory; use objects/shared/response`)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
-      errors.push(`${filePath} is in removed backend application contract directory; use model/request or model/response`)
+      errors.push(`${filePath} is in removed backend application contract directory; use objects/request or objects/response`)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/response\//.test(filePath)) {
@@ -432,7 +484,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (/^backend\/src\/main\/scala\/shared\/http\/response\//.test(filePath)) {
-      errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/model/response`)
+      errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/objects/response`)
     }
 
     if (segments.includes('dist')) {
@@ -447,43 +499,39 @@ function checkTrackedResidues(errors) {
 
 function run() {
   const errors = []
-  const frontendFeatureFiles = walk('frontend/src/features', new Set(['.ts', '.tsx']))
+  const frontendFiles = [
+    ...walk('frontend/src/apis', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src/components/ui', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src/objects', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src/pages', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src/system', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src/test', new Set(['.ts', '.tsx'])),
+    ...walk('frontend/src', new Set(['.ts', '.tsx'])).filter((filePath) =>
+      /^frontend\/src\/[^/]+\.(?:ts|tsx)$/.test(filePath),
+    ),
+  ].sort()
   const backendDomainFiles = walk('backend/src/main/scala/domains', new Set(['.scala']))
 
-  for (const filePath of frontendFeatureFiles) {
-    checkFrontendHttpCodecImports(filePath, errors)
-
-    if (/^frontend\/src\/features\/[^/]+\/model\//.test(filePath)) {
-      checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
-      checkFrontendModelFileShape(filePath, errors)
-    }
-
-    if (/^frontend\/src\/features\/[^/]+\/(?:lib|state)\//.test(filePath)) {
-      checkFrontendFile(filePath, frontendBlockedPureSegments, errors)
-    }
-
-    if (/^frontend\/src\/features\/[^/]+\/(?:pages|components)\//.test(filePath)) {
-      checkFrontendPageComponentApiImports(filePath, errors)
-    }
+  for (const filePath of frontendFiles) {
+    checkRemovedFrontendResidueImport(filePath, errors)
+    checkFrontendLayerFile(filePath, errors)
   }
 
-  checkFrontendHttpCodecLayout(frontendFeatureFiles, backendDomainFiles, errors)
+  checkFrontendHttpCodecLayout(frontendFiles, backendDomainFiles, errors)
 
-  for (const filePath of walk('frontend/src/shared', new Set(['.ts', '.tsx']))) {
-    checkFrontendSharedBoundaryFile(filePath, errors)
-  }
-
-  for (const filePath of walk('frontend/src/shared/model', new Set(['.ts', '.tsx']))) {
-    checkFrontendFile(filePath, frontendBlockedModelSegments, errors)
-    if (!/^frontend\/src\/shared\/model\/access\//.test(filePath)) {
-      checkFrontendModelFileShape(filePath, errors)
+  for (const filePath of walk('frontend/src/objects', new Set(['.ts', '.tsx']))) {
+    if (
+      isFrontendObjectContractFile(filePath) &&
+      !/^frontend\/src\/objects\/shared\/access\//.test(filePath)
+    ) {
+      checkFrontendObjectFileShape(filePath, errors)
     }
   }
 
   for (const filePath of backendDomainFiles) {
-    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/model\//.test(filePath)) {
-      checkBackendModelFile(filePath, errors)
-      checkBackendModelFileShape(filePath, errors)
+    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/objects\//.test(filePath)) {
+      checkBackendObjectFile(filePath, errors)
+      checkBackendObjectFileShape(filePath, errors)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
@@ -503,15 +551,15 @@ function run() {
     }
   }
 
-  for (const filePath of walk('backend/src/main/scala/shared/model', new Set(['.scala']))) {
-    checkBackendModelFile(filePath, errors)
-    if (!/^backend\/src\/main\/scala\/shared\/model\/access\//.test(filePath)) {
-      checkBackendModelFileShape(filePath, errors)
+  for (const filePath of walk('backend/src/main/scala/shared/objects', new Set(['.scala']))) {
+    checkBackendObjectFile(filePath, errors)
+    if (!/^backend\/src\/main\/scala\/shared\/objects\/access\//.test(filePath)) {
+      checkBackendObjectFileShape(filePath, errors)
     }
   }
 
   for (const filePath of walk('backend/src/main/scala/shared', new Set(['.scala']))) {
-    if (!/^backend\/src\/main\/scala\/shared\/(?:model|http)\//.test(filePath)) {
+    if (!/^backend\/src\/main\/scala\/shared\/(?:objects|http)\//.test(filePath)) {
       checkBackendEffectfulMethodSignatures(filePath, errors)
     }
   }

@@ -2,9 +2,9 @@ package domains.notification.table.notification
 
 
 
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import domains.notification.model.{NotificationKind, NotificationPayload, NotificationStatus}
-import domains.notification.model.response.{NotificationSummary}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import domains.notification.objects.{NotificationKind, NotificationPayload, NotificationStatus}
+import domains.notification.objects.response.{NotificationSummary}
 import database.utils.UserIdentitySql
 
 import java.sql.ResultSet
@@ -20,7 +20,7 @@ object NotificationTableSupport:
 
   def readNotificationSummary(resultSet: ResultSet): NotificationSummary =
     NotificationSummary(
-      id = parseColumn("notifications.id", resultSet.getString("id"), domains.notification.model.NotificationId.parse),
+      id = parseColumn("notifications.id", resultSet.getString("id"), domains.notification.objects.NotificationId.parse),
       kind = parseColumn("notifications.kind", resultSet.getString("kind"), NotificationKind.parse),
       actor = readOptionalUsername(resultSet, "actor").map(_ => readUserIdentity(resultSet, "actor")),
       titleKey = resultSet.getString("title_key"),

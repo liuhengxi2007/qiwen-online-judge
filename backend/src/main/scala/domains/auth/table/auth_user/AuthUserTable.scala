@@ -3,12 +3,12 @@ package domains.auth.table.auth_user
 
 
 import cats.effect.IO
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
-import domains.user.model.{DisplayName, Username}
-import domains.problem.model.ProblemTitleDisplayMode
+import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
+import domains.user.objects.{DisplayName, Username}
+import domains.problem.objects.ProblemTitleDisplayMode
 import domains.auth.table.auth_user.AuthUserTableSchema.*
 import domains.auth.table.auth_user.AuthUserTableSupport.*
-import domains.user.model.{UserDisplayMode, UserLocale}
+import domains.user.objects.{UserDisplayMode, UserLocale}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, SQLException}

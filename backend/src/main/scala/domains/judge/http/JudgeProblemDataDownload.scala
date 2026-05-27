@@ -2,7 +2,7 @@ package domains.judge.http
 
 import cats.effect.IO
 import domains.problem.application.ProblemDataStorage
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
+import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.errorResponse
 import fs2.Stream

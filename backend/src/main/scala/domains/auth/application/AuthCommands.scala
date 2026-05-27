@@ -4,11 +4,11 @@ package domains.auth.application
 
 import cats.effect.IO
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
-import domains.auth.model.request.{LoginRequest, RegisterRequest, UpdateManagedUserAccountRequest, UpdateOwnAccountRequest, UpdateUserPermissionsRequest}
-import domains.auth.model.{AuthUser, EmailAddress, PlaintextPassword, PasswordHash, SiteManagerUser}
-import domains.problem.model.ProblemTitleDisplayMode
+import domains.auth.objects.request.{LoginRequest, RegisterRequest, UpdateManagedUserAccountRequest, UpdateOwnAccountRequest, UpdateUserPermissionsRequest}
+import domains.auth.objects.{AuthUser, EmailAddress, PlaintextPassword, PasswordHash, SiteManagerUser}
+import domains.problem.objects.ProblemTitleDisplayMode
 import domains.auth.table.auth_user.AuthUserTable
-import domains.user.model.{DisplayName, UserDisplayMode, UserLocale, Username}
+import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
 import domains.usergroup.application.UserGroupCommands
 
 import java.sql.Connection

@@ -1,7 +1,7 @@
 package domains.notification.http.codec
 
 import domains.blog.http.codec.BlogModelHttpCodecs.given
-import domains.notification.model.*
+import domains.notification.objects.*
 import io.circe.syntax.*
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}
 
@@ -33,10 +33,10 @@ object NotificationModelHttpCodecs:
 
   private def decodeBlogReply(cursor: HCursor): Decoder.Result[NotificationPayload] =
     for
-      blogId <- cursor.downField("blogId").as[domains.blog.model.BlogId]
-      blogTitle <- cursor.downField("blogTitle").as[domains.blog.model.BlogTitle]
-      triggerCommentId <- cursor.downField("triggerCommentId").as[domains.blog.model.BlogCommentId]
-      recipientCommentId <- cursor.downField("recipientCommentId").as[Option[domains.blog.model.BlogCommentId]]
+      blogId <- cursor.downField("blogId").as[domains.blog.objects.BlogId]
+      blogTitle <- cursor.downField("blogTitle").as[domains.blog.objects.BlogTitle]
+      triggerCommentId <- cursor.downField("triggerCommentId").as[domains.blog.objects.BlogCommentId]
+      recipientCommentId <- cursor.downField("recipientCommentId").as[Option[domains.blog.objects.BlogCommentId]]
       contentPreview <- cursor.downField("contentPreview").as[String]
     yield NotificationPayload.BlogReply(
       blogId = blogId,

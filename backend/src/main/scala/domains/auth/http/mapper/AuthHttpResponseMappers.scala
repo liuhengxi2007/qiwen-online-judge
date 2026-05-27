@@ -5,13 +5,13 @@ package domains.auth.http.mapper
 import cats.effect.IO
 import domains.auth.application.AuthCommands
 import domains.auth.application.AuthCommandResults.{LoginResult, RegisterResult}
-import domains.auth.model.response.{AuthAccountListItem, LoginResponse, RegisterResponse, SessionResponse}
+import domains.auth.objects.response.{AuthAccountListItem, LoginResponse, RegisterResponse, SessionResponse}
 import domains.auth.http.AuthHttpPlans
 import domains.auth.http.codec.AuthHttpCodecs.given
-import domains.auth.model.{AuthUser, SessionToken}
+import domains.auth.objects.{AuthUser, SessionToken}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
-import domains.user.model.UserPreferences
+import domains.user.objects.UserPreferences
 import io.circe.syntax.*
 import org.http4s.{Response, ResponseCookie, SameSite, Status}
 import org.http4s.circe.CirceEntityEncoder.*

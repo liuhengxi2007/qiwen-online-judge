@@ -6,7 +6,7 @@ import domains.message.http.*
 import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
 import domains.message.application.MessageCommandResults.CreateConversationResult
-import domains.message.model.request.CreateConversationRequest
+import domains.message.objects.request.CreateConversationRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

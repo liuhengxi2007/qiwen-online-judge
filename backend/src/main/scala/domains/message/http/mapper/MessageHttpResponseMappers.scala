@@ -20,7 +20,7 @@ object MessageHttpResponseMappers:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def inboxResponse(response: domains.message.model.response.MessageInboxResponse): IO[Response[IO]] =
+  def inboxResponse(response: domains.message.objects.response.MessageInboxResponse): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def historyResponse(result: GetConversationHistoryResult): IO[Response[IO]] =
@@ -59,7 +59,7 @@ object MessageHttpResponseMappers:
     val _ = output
     successResponse(Status.Ok, ApiMessages.directMessagesMarkedRead)
 
-  def listBlocksResponse(entries: List[domains.message.model.response.MessageBlockEntry]): IO[Response[IO]] =
+  def listBlocksResponse(entries: List[domains.message.objects.response.MessageBlockEntry]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(entries.asJson))
 
   def addBlockResponse(result: AddBlockResult): IO[Response[IO]] =

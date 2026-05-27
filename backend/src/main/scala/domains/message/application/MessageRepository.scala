@@ -3,11 +3,11 @@ package domains.message.application
 
 
 import cats.effect.IO
-import domains.user.model.Username
-import domains.message.model.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
-import domains.message.model.{MessageContent, MessageConversationId, MessageId}
-import domains.message.model.internal.ConversationReadReceipt
-import shared.model.PageRequest
+import domains.user.objects.Username
+import domains.message.objects.response.{ConversationMessageFacts, DirectMessage, MessageBlockEntry, MessageConversationSummary, MessageInboxResponse}
+import domains.message.objects.{MessageContent, MessageConversationId, MessageId}
+import domains.message.objects.internal.ConversationReadReceipt
+import shared.objects.PageRequest
 
 import java.sql.Connection
 

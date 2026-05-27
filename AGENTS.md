@@ -2,8 +2,8 @@
 
 ## Project Structure & Module Organization
 
-- `frontend/`: Vite + React 19 app. Business code lives in `src/features/<domain>`, shared UI and utilities in `src/shared` and `src/components/ui`.
-- `backend/`: Scala 3 + Cats Effect + http4s service. Each domain is split into `model`, `application`, `http`, and `table` under `src/main/scala/domains/<domain>`.
+- `frontend/`: Vite + React 19 app. Business objects live in `src/objects/<domain>`, endpoint clients in `src/apis/<domain>`, route/page code in `src/pages`, runtime helpers in `src/system`, and generic UI in `src/components/ui`.
+- `backend/`: Scala 3 + Cats Effect + http4s service. Each domain is split into `objects`, `application`, `http`, and `table` under `src/main/scala/domains/<domain>`.
 - `judger/` and `judge-protocol-scala/`: judge worker and shared protocol code.
 - `docs/architecture-guardrails.md`: source of truth for layering, type mirroring, and shared-code rules.
 - `scripts/`: maintenance scripts such as `check-contract-alignment.mjs` and `calc-loc.mjs`.
@@ -20,10 +20,10 @@
 
 ## Coding Style & Naming Conventions
 
-- Prefer domain-first ownership. Put code in `shared` only after a second real consumer appears.
+- Prefer domain-first ownership. Put code in `objects/shared` only after a second real consumer appears.
 - Frontend uses TypeScript, React function components, hooks, and reducer-style state files such as `*-state.ts`.
 - Backend uses Scala 3 objects/case classes, explicit `IO[...]` at effect boundaries, and domain-specific ADTs for results.
-- Mirrored cross-stack types must match exactly in basename and type name, for example `ProblemSummary.scala` and `ProblemSummary.ts`.
+- Mirrored cross-stack object types must match exactly in basename and type name, for example `ProblemSummary.scala` and `ProblemSummary.ts`.
 - Avoid raw primitives when a domain type exists (`Username`, `ProblemSlug`, `SubmissionId`).
 
 ## Testing Guidelines

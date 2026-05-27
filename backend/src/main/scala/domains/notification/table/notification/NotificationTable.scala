@@ -3,11 +3,11 @@ package domains.notification.table.notification
 
 
 import cats.effect.IO
-import domains.user.model.Username
-import domains.notification.model.{NotificationId, NotificationKind, NotificationPayload}
-import domains.notification.model.response.{NotificationListResponse}
+import domains.user.objects.Username
+import domains.notification.objects.{NotificationId, NotificationKind, NotificationPayload}
+import domains.notification.objects.response.{NotificationListResponse}
 import domains.notification.table.notification.NotificationTableSupport.{encodeNotificationKindColumn, readNotificationSummary}
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

@@ -1,10 +1,10 @@
 package domains.problemset.http.mapper
 
-import domains.problem.model.ProblemSlug
-import domains.problemset.model.ProblemSetSlug
-import domains.problemset.model.request.{AddProblemToProblemSetRequest, UpdateProblemSetRequest}
+import domains.problem.objects.ProblemSlug
+import domains.problemset.objects.ProblemSetSlug
+import domains.problemset.objects.request.{AddProblemToProblemSetRequest, UpdateProblemSetRequest}
 import shared.http.utils.PageRequestQuerySupport
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 object ProblemSetHttpRequestMappers:
 

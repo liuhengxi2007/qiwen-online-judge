@@ -3,7 +3,7 @@ package domains.auth.application
 
 
 import cats.effect.IO
-import domains.auth.model.{PasswordHash, PlaintextPassword}
+import domains.auth.objects.{PasswordHash, PlaintextPassword}
 
 import java.security.SecureRandom
 import java.util.Base64

@@ -1,7 +1,7 @@
 package domains.message.table
 
 import domains.message.table.message.MessageTableSupport
-import domains.user.model.Username
+import domains.user.objects.Username
 import munit.FunSuite
 
 class MessageTableSupportSuite extends FunSuite:

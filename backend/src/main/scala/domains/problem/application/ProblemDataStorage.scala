@@ -4,7 +4,7 @@ package domains.problem.application
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.model.{ProblemDataFilename, ProblemDataManifest, ProblemDataPath, ProblemSlug}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataManifest, ProblemDataPath, ProblemSlug}
 
 trait ProblemDataStorage:
   import ProblemDataStorage.ProblemDataSnapshot

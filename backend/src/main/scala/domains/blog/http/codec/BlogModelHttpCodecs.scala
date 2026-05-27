@@ -1,6 +1,6 @@
 package domains.blog.http.codec
 
-import domains.blog.model.*
+import domains.blog.objects.*
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

@@ -1,6 +1,6 @@
 package database.utils
 
-import shared.model.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessPolicy, ResourceKind}
+import shared.objects.access.{AccessSubject, BaseAccess, GrantRole, ResourceAccessGrant, ResourceAccessPolicy, ResourceKind}
 
 object ResourceAccessTableSupport:
 

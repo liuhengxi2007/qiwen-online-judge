@@ -2,14 +2,14 @@ package domains.user.table.user
 
 
 
-import domains.auth.model.{AuthUser, EmailAddress, PasswordHash}
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import domains.problem.model.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
+import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
-import domains.user.model.response.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
-import domains.user.model.request.UserSearchQuery
-import domains.user.model.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
+import domains.user.objects.response.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
+import domains.user.objects.request.UserSearchQuery
+import domains.user.objects.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
 
 import java.sql.{PreparedStatement, ResultSet}
 

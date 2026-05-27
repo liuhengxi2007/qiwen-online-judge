@@ -4,10 +4,10 @@ package domains.usergroup.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.user.model.Username
-import domains.usergroup.model.request.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest}
-import domains.usergroup.model.{UserGroupSlug}
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
+import domains.usergroup.objects.request.{AddUserGroupMemberRequest, UpdateUserGroupMemberRoleRequest}
+import domains.usergroup.objects.{UserGroupSlug}
 import domains.usergroup.table.user_group.UserGroupTable
 import domains.usergroup.application.UserGroupCommandResults.*
 import domains.usergroup.application.utils.UserGroupCommandSupport.*

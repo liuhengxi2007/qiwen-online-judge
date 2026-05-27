@@ -1,9 +1,9 @@
 package domains.problem.application
 
 import cats.effect.IO
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.problem.application.utils.ProblemCommandSupport.{enrichProblemPermissions, evaluateProblemPermissions}
-import domains.problem.model.{OthersSubmissionAccess, ProblemDataManifest, ProblemId, ProblemSlug}
+import domains.problem.objects.{OthersSubmissionAccess, ProblemDataManifest, ProblemId, ProblemSlug}
 import domains.problem.table.problem.ProblemQueryTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 
@@ -28,7 +28,7 @@ object ProblemCommands:
   enum ResolveSubmissionTargetResult:
     case ProblemNotFound
     case Forbidden
-    case Resolved(problem: domains.problem.model.response.ProblemDetail)
+    case Resolved(problem: domains.problem.objects.response.ProblemDetail)
 
   enum EvaluateProblemAccessResult:
     case ProblemNotFound

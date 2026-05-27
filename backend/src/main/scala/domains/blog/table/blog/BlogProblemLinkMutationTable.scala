@@ -1,9 +1,9 @@
 package domains.blog.table.blog
 
 import cats.effect.IO
-import domains.blog.model.BlogId
-import domains.problem.model.ProblemSlug
-import domains.user.model.Username
+import domains.blog.objects.BlogId
+import domains.problem.objects.ProblemSlug
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

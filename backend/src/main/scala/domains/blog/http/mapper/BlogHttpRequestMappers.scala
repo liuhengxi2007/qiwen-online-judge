@@ -1,10 +1,10 @@
 package domains.blog.http.mapper
 
 import domains.blog.http.BlogHttpPlans
-import domains.blog.model.{BlogCommentId, BlogId}
-import domains.blog.model.request.{CreateBlogCommentRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
-import domains.problem.model.ProblemSlug
-import domains.user.model.Username
+import domains.blog.objects.{BlogCommentId, BlogId}
+import domains.blog.objects.request.{CreateBlogCommentRequest, UpdateBlogCommentRequest, UpdateBlogRequest, VoteBlogCommentRequest, VoteBlogRequest}
+import domains.problem.objects.ProblemSlug
+import domains.user.objects.Username
 import shared.http.utils.PageRequestQuerySupport
 
 object BlogHttpRequestMappers:

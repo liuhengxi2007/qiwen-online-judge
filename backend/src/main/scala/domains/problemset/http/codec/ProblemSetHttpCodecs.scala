@@ -1,8 +1,8 @@
 package domains.problemset.http.codec
 
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
-import domains.problemset.model.request.*
-import domains.problemset.model.response.*
+import domains.problemset.objects.request.*
+import domains.problemset.objects.response.*
 import domains.problemset.http.codec.ProblemSetModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given
 import shared.http.codec.SharedHttpCodecs

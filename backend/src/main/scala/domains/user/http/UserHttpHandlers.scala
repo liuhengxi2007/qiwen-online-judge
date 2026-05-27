@@ -9,10 +9,10 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.auth.model.{AuthUser, SiteManagerUser}
-import domains.user.model.Username
+import domains.auth.objects.{AuthUser, SiteManagerUser}
+import domains.user.objects.Username
 import domains.user.http.UserHttpPlanRegistry.RegisteredPlan
-import domains.user.model.request.{UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
+import domains.user.objects.request.{UpdateManagedUserPreferencesRequest, UpdateManagedUserProfileRequest, UpdateOwnPreferencesRequest, UpdateOwnProfileRequest}
 import org.http4s.{Request, Response}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl

@@ -7,8 +7,8 @@ import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import domains.usergroup.application.UserGroupCommands
 import domains.usergroup.http.codec.UserGroupHttpCodecs.given
-import domains.usergroup.model.{UserGroup}
-import domains.usergroup.model.response.{UserGroupDetail}
+import domains.usergroup.objects.{UserGroup}
+import domains.usergroup.objects.response.{UserGroupDetail}
 import io.circe.syntax.*
 import org.http4s.{Response, Status}
 import org.http4s.circe.CirceEntityEncoder.*
@@ -21,7 +21,7 @@ object UserGroupHttpResponseMappers:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def listUserGroupsResponse(response: shared.model.PageResponse[domains.usergroup.model.response.UserGroupSummary]): IO[Response[IO]] =
+  def listUserGroupsResponse(response: shared.objects.PageResponse[domains.usergroup.objects.response.UserGroupSummary]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def toUserGroupDetail(group: UserGroup): UserGroupDetail =

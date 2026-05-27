@@ -1,9 +1,9 @@
 package domains.user.http.codec
 
 import domains.auth.http.codec.AuthModelHttpCodecs.given
-import domains.user.model.request.*
-import domains.user.model.response.*
-import shared.model.PageRequest
+import domains.user.objects.request.*
+import domains.user.objects.response.*
+import shared.objects.PageRequest
 import shared.http.codec.SharedHttpCodecs
 import shared.http.codec.SharedHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs.given

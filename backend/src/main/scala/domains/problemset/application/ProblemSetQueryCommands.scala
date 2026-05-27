@@ -4,10 +4,10 @@ package domains.problemset.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.problemset.model.response.ProblemSetSummary
+import domains.auth.objects.AuthUser
+import domains.problemset.objects.response.ProblemSetSummary
 import domains.problemset.table.problem_set.ProblemSetTable
-import shared.model.{PageRequest, PageResponse}
+import shared.objects.{PageRequest, PageResponse}
 import domains.problemset.application.ProblemSetCommandResults.*
 import domains.problemset.application.utils.ProblemSetCommandSupport.*
 
@@ -26,7 +26,7 @@ object ProblemSetQueryCommands:
   def getProblemSetBySlug(
     databaseSession: DatabaseSession,
     actor: AuthUser,
-    slug: domains.problemset.model.ProblemSetSlug
+    slug: domains.problemset.objects.ProblemSetSlug
   ): IO[GetProblemSetResult] =
     databaseSession.withTransactionConnection { connection =>
       ProblemSetTable.findBySlug(connection, slug).flatMap {

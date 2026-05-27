@@ -1,7 +1,7 @@
 package domains.usergroup.http.codec
 
 import domains.user.http.codec.UserModelHttpCodecs.given
-import domains.usergroup.model.*
+import domains.usergroup.objects.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

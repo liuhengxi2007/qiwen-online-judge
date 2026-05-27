@@ -3,7 +3,7 @@ package domains.auth.table.session
 
 
 import cats.effect.IO
-import domains.auth.model.SessionToken
+import domains.auth.objects.SessionToken
 
 import java.sql.{Connection, Timestamp}
 import java.time.Duration

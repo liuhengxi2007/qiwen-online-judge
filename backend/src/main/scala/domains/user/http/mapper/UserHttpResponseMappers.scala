@@ -3,13 +3,13 @@ package domains.user.http.mapper
 
 
 import cats.effect.IO
-import domains.auth.model.AuthUser
-import domains.user.model.UserPreferences
-import shared.model.PageResponse
+import domains.auth.objects.AuthUser
+import domains.user.objects.UserPreferences
+import shared.objects.PageResponse
 import domains.user.application.{UserMutationCommands, UserQueryCommands}
 import domains.user.http.codec.UserHttpCodecs.given
-import domains.user.model.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem, UserSettingsResponse}
-import domains.user.model.UserIdentity
+import domains.user.objects.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem, UserSettingsResponse}
+import domains.user.objects.UserIdentity
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Response, Status}

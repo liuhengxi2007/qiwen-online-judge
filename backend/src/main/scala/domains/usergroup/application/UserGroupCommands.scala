@@ -3,8 +3,8 @@ package domains.usergroup.application
 
 
 import cats.effect.IO
-import domains.user.model.Username
-import domains.usergroup.model.UserGroupSlug
+import domains.user.objects.Username
+import domains.usergroup.objects.UserGroupSlug
 import domains.usergroup.table.user_group.UserGroupTable
 
 import java.sql.Connection

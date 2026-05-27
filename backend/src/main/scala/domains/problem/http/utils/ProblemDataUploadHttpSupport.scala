@@ -6,7 +6,7 @@ import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
 import domains.problem.application.{ProblemCommands, ProblemDataStorage}
 import domains.problem.http.mapper.ProblemHttpResponseMappers
-import domains.problem.model.{ProblemDataPath, ProblemSlug}
+import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.text
 import org.http4s.{Request, Response}
 import org.http4s.multipart.{Multipart, Part}

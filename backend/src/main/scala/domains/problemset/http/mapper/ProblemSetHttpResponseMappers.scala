@@ -5,8 +5,8 @@ package domains.problemset.http.mapper
 import cats.effect.IO
 import domains.problemset.application.ProblemSetCommands
 import domains.problemset.http.codec.ProblemSetHttpCodecs.given
-import domains.problemset.model.{ProblemSet}
-import domains.problemset.model.response.{ProblemSetDetail}
+import domains.problemset.objects.{ProblemSet}
+import domains.problemset.objects.response.{ProblemSetDetail}
 import shared.http.ApiMessages
 import shared.http.utils.HttpResponseSupport.{errorResponse, successResponse, validationErrorResponse}
 import io.circe.syntax.*
@@ -21,7 +21,7 @@ object ProblemSetHttpResponseMappers:
   def validationErrorResponse(message: String): IO[Response[IO]] =
     shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
 
-  def listProblemSetsResponse(response: shared.model.PageResponse[domains.problemset.model.response.ProblemSetSummary]): IO[Response[IO]] =
+  def listProblemSetsResponse(response: shared.objects.PageResponse[domains.problemset.objects.response.ProblemSetSummary]): IO[Response[IO]] =
     IO.pure(Response[IO](status = Status.Ok).withEntity(response.asJson))
 
   def toProblemSetDetail(problemSet: ProblemSet): ProblemSetDetail =

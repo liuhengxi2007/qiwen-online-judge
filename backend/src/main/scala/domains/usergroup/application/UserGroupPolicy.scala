@@ -2,10 +2,10 @@ package domains.usergroup.application
 
 
 
-import domains.auth.model.AuthUser
-import domains.user.model.Username
-import domains.usergroup.model.{UserGroup, UserGroupRole}
-import domains.usergroup.model.internal.{ManagedUserGroup, OwnedUserGroup}
+import domains.auth.objects.AuthUser
+import domains.user.objects.Username
+import domains.usergroup.objects.{UserGroup, UserGroupRole}
+import domains.usergroup.objects.internal.{ManagedUserGroup, OwnedUserGroup}
 
 object UserGroupPolicy:
 

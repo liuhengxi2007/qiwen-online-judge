@@ -1,8 +1,8 @@
 package shared.http.codec
 
-import shared.model.access.*
-import shared.model.*
-import shared.model.response.{ErrorResponse, SuccessResponse}
+import shared.objects.access.*
+import shared.objects.*
+import shared.objects.response.{ErrorResponse, SuccessResponse}
 import shared.application.upload.StoredFilePath
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

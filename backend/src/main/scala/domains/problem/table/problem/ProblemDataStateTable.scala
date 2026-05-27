@@ -1,7 +1,7 @@
 package domains.problem.table.problem
 
 import cats.effect.IO
-import domains.problem.model.{ProblemDataFilename, ProblemId}
+import domains.problem.objects.{ProblemDataFilename, ProblemId}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

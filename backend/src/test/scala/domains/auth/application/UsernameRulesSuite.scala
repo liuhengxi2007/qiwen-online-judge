@@ -1,6 +1,6 @@
 package domains.auth.application
 
-import domains.user.model.Username
+import domains.user.objects.Username
 import munit.FunSuite
 
 class UsernameRulesSuite extends FunSuite:

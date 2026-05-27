@@ -6,7 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.application.SessionStore
 import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import shared.http.AuthenticatedHttpPlanRegistry.RegisteredPlan
 import org.http4s.{Request, Response}
 import org.http4s.dsl.Http4sDsl

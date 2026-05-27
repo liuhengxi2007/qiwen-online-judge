@@ -5,11 +5,11 @@ package domains.message.application
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.message.application.MessageCommandResults.GetConversationHistoryResult
-import domains.message.model.{MessageConversationId, MessageId}
-import domains.message.model.response.{MessageHistoryResponse, MessageInboxResponse}
-import shared.model.PageRequest
+import domains.message.objects.{MessageConversationId, MessageId}
+import domains.message.objects.response.{MessageHistoryResponse, MessageInboxResponse}
+import shared.objects.PageRequest
 
 object MessageQueryCommands:
   private val defaultHistoryLimit = 50
@@ -59,7 +59,7 @@ object MessageQueryCommands:
     databaseSession: DatabaseSession,
     actor: AuthUser,
     repository: MessageRepository = defaultRepository
-  ): IO[List[domains.message.model.response.MessageBlockEntry]] =
+  ): IO[List[domains.message.objects.response.MessageBlockEntry]] =
     databaseSession.withTransactionConnection(connection =>
       repository.listBlocks(connection, actor.username)
     )

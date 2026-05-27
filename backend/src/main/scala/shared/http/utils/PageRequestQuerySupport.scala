@@ -1,6 +1,6 @@
 package shared.http.utils
 
-import shared.model.PageRequest
+import shared.objects.PageRequest
 
 object PageRequestQuerySupport:
 

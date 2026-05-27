@@ -1,13 +1,13 @@
 package domains.judge.application
 
-import domains.problem.model.response.ProblemDetail
-import domains.problem.model.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.model.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.user.model.{DisplayName, UserIdentity, Username}
-import domains.submission.model.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
-import domains.submission.model.internal.ClaimedSubmission
+import domains.problem.objects.response.ProblemDetail
+import domains.problem.objects.{ProblemDataManifest, ProblemDataManifestEntry}
+import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.objects.internal.ClaimedSubmission
 import munit.FunSuite
-import shared.model.access.{BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant

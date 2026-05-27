@@ -1,9 +1,9 @@
 package domains.problem.application
 
-import domains.problem.model.{OthersSubmissionAccess, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
-import domains.problem.model.request.{CreateProblemRequest, UpdateProblemRequest}
+import domains.problem.objects.{OthersSubmissionAccess, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
 import munit.FunSuite
-import shared.model.access.{BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
 class ProblemValidationSuite extends FunSuite:
 

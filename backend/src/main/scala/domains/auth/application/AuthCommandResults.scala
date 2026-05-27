@@ -1,6 +1,6 @@
 package domains.auth.application
 
-import domains.auth.model.{AuthUser, SessionToken}
+import domains.auth.objects.{AuthUser, SessionToken}
 
 object AuthCommandResults:
 

@@ -11,10 +11,10 @@ object NotificationHttpPlanDefinitions:
   import AuthenticatedHttpPlanRegistry.RegisteredPlan.{Plain, WithTransaction}
 
   final case class RegisteredPlans(
-    listNotifications: Plain[domains.auth.model.AuthUser, shared.model.PageRequest, domains.notification.model.response.NotificationListResponse],
-    getUnreadCount: Plain[domains.auth.model.AuthUser, Unit, domains.notification.model.response.NotificationUnreadCountResponse],
-    markNotificationRead: WithTransaction[domains.auth.model.AuthUser, domains.notification.model.NotificationId, domains.notification.application.NotificationCommands.MarkNotificationReadResult],
-    markAllNotificationsRead: WithTransaction[domains.auth.model.AuthUser, Unit, domains.notification.application.NotificationCommands.MarkAllNotificationsReadResult]
+    listNotifications: Plain[domains.auth.objects.AuthUser, shared.objects.PageRequest, domains.notification.objects.response.NotificationListResponse],
+    getUnreadCount: Plain[domains.auth.objects.AuthUser, Unit, domains.notification.objects.response.NotificationUnreadCountResponse],
+    markNotificationRead: WithTransaction[domains.auth.objects.AuthUser, domains.notification.objects.NotificationId, domains.notification.application.NotificationCommands.MarkNotificationReadResult],
+    markAllNotificationsRead: WithTransaction[domains.auth.objects.AuthUser, Unit, domains.notification.application.NotificationCommands.MarkAllNotificationsReadResult]
   )
 
   def plans(notificationEventHub: NotificationEventHub): RegisteredPlans =

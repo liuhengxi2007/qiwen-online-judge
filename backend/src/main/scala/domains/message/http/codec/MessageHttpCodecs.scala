@@ -1,7 +1,7 @@
 package domains.message.http.codec
 
-import domains.message.model.request.*
-import domains.message.model.response.*
+import domains.message.objects.request.*
+import domains.message.objects.response.*
 import domains.message.http.codec.MessageModelHttpCodecs.given
 import domains.user.http.codec.UserModelHttpCodecs
 import domains.user.http.codec.UserModelHttpCodecs.given
@@ -38,7 +38,7 @@ object MessageHttpCodecs:
   given Decoder[MarkConversationReadRequest] = Decoder.instance { cursor =>
     for
       mode <- cursor.downField("mode").as[MarkConversationReadMode]
-      messageId <- cursor.downField("messageId").as[Option[domains.message.model.MessageId]]
+      messageId <- cursor.downField("messageId").as[Option[domains.message.objects.MessageId]]
       _ <- mode match
         case MarkConversationReadMode.Message if messageId.isEmpty =>
           Left(DecodingFailure("messageId is required when mode is message", cursor.history))

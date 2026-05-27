@@ -1,7 +1,7 @@
 package domains.submission.application.utils
 
-import domains.submission.model.response.SubmissionDetail
-import domains.submission.model.SubmissionJudgeState
+import domains.submission.objects.response.SubmissionDetail
+import domains.submission.objects.SubmissionJudgeState
 
 object SubmissionJudgeStateSupport:
 

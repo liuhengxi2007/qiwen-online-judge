@@ -4,10 +4,10 @@ package domains.submission.application
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
+import domains.auth.objects.AuthUser
 import domains.problem.application.ProblemCommands
-import domains.submission.model.{SubmissionId}
-import domains.submission.model.request.{SubmissionListRequest}
+import domains.submission.objects.{SubmissionId}
+import domains.submission.objects.request.{SubmissionListRequest}
 import domains.submission.table.submission.SubmissionQueryTable
 import domains.submission.application.SubmissionCommandResults.*
 

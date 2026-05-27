@@ -5,13 +5,13 @@ import cats.syntax.all.*
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import database.utils.ResourceAccessTableSupport.policyFrom
 import database.utils.UserIdentitySql
-import domains.auth.model.AuthUser
-import domains.problem.model.{ProblemId, ProblemSlug}
-import domains.problem.model.request.{ProblemListRequest, ProblemSearchQuery}
-import domains.problem.model.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.auth.objects.AuthUser
+import domains.problem.objects.{ProblemId, ProblemSlug}
+import domains.problem.objects.request.{ProblemListRequest, ProblemSearchQuery}
+import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.table.problem.ProblemTableSupport.*
-import shared.model.PageResponse
-import shared.model.access.{GrantRole, ResourceKind}
+import shared.objects.PageResponse
+import shared.objects.access.{GrantRole, ResourceKind}
 
 import java.sql.Connection
 

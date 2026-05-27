@@ -1,10 +1,10 @@
 package domains.blog.table.blog
 
 import cats.effect.IO
-import domains.blog.model.{BlogId, BlogVote}
-import domains.blog.model.response.BlogDetail
+import domains.blog.objects.{BlogId, BlogVote}
+import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogTableSupport.*
-import domains.user.model.Username
+import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

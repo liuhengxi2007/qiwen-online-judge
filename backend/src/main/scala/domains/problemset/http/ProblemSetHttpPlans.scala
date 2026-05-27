@@ -4,25 +4,25 @@ package domains.problemset.http
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.model.AuthUser
-import domains.problem.model.ProblemSlug
+import domains.auth.objects.AuthUser
+import domains.problem.objects.ProblemSlug
 import domains.problemset.application.ProblemSetCommands
 import shared.http.{PlainAuthenticatedHttpPlan, TransactionAuthenticatedHttpPlan}
-import domains.problemset.model.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.model.{ProblemSetSlug}
-import shared.model.{PageRequest, PageResponse}
+import domains.problemset.objects.request.{AddProblemToProblemSetRequest, CreateProblemSetRequest, UpdateProblemSetRequest}
+import domains.problemset.objects.{ProblemSetSlug}
+import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
 object ProblemSetHttpPlans:
 
-  case object ListProblemSets extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.problemset.model.response.ProblemSetSummary]]:
+  case object ListProblemSets extends PlainAuthenticatedHttpPlan[AuthUser, PageRequest, PageResponse[domains.problemset.objects.response.ProblemSetSummary]]:
 
     override def execute(
       databaseSession: DatabaseSession,
       actor: AuthUser,
       input: PageRequest
-    ): IO[PageResponse[domains.problemset.model.response.ProblemSetSummary]] =
+    ): IO[PageResponse[domains.problemset.objects.response.ProblemSetSummary]] =
       ProblemSetCommands.listProblemSets(databaseSession, actor, input)
 
   case object GetProblemSet extends PlainAuthenticatedHttpPlan[AuthUser, ProblemSetSlug, ProblemSetCommands.GetProblemSetResult]:
