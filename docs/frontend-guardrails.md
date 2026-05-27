@@ -114,6 +114,12 @@ by one page and that page's nested components, keep it under that page directory
 instead. Tests for shared files may stay next to the file they cover as
 `*.test.*` files.
 
+Route variants may import a canonical page implementation only through an
+explicit `scripts/check-structure-boundaries.mjs` allowlist entry. Keep the
+variant page focused on route parameter parsing and redirects, and keep the
+shared implementation in the canonical page directory. Do not broadly import
+private modules from other route page directories.
+
 Cross-page collaboration state belongs under `src/pages/stores`. This includes
 session state, realtime inbox state, notification counters, and internal browser
 storage adapters used by those stores. Keep Zustand stores out of

@@ -1,9 +1,7 @@
-import { useEffect } from 'react'
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 
-import { notificationEventsUrl } from '@/apis/notification/SubscribeNotificationEvents'
-import { BlogPage, ProblemBlogPage, UserBlogPage } from '@/pages/BlogPage'
+import { BlogPage } from '@/pages/BlogPage'
 import { BlogDetailPage } from '@/pages/BlogDetailPage'
 import { CreateBlogPage } from '@/pages/CreateBlogPage'
 import { CreateProblemPage } from '@/pages/CreateProblemPage'
@@ -20,84 +18,23 @@ import { MessageInboxPage } from '@/pages/MessageInboxPage'
 import { NotificationPage } from '@/pages/NotificationPage'
 import { ProblemSetDetailPage } from '@/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/pages/ProblemSetPage'
+import { ProblemBlogPage } from '@/pages/ProblemBlogPage'
 import { ForbiddenPage } from '@/pages/ForbiddenPage'
 import { SiteManagePage } from '@/pages/SiteManagePage'
 import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage'
-import { ProblemSubmissionPage, SubmissionPage } from '@/pages/SubmissionPage'
+import { ProblemSubmissionPage } from '@/pages/ProblemSubmissionPage'
+import { SubmissionPage } from '@/pages/SubmissionPage'
 import { UserProfilePage } from '@/pages/UserProfilePage'
+import { UserBlogPage } from '@/pages/UserBlogPage'
 import { RanklistPage } from '@/pages/RanklistPage'
 import { UserSettingsPage } from '@/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/pages/UserGroupDetailPage'
 import { UserGroupPage } from '@/pages/UserGroupPage'
 import { useMessageRealtimeConnection } from '@/pages/hooks/use-message-realtime-connection'
-import { useNotificationRefresh } from '@/pages/hooks/use-notification-refresh'
+import { useNotificationRealtimeConnection } from '@/pages/hooks/use-notification-realtime-connection'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
-import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
 import { I18nProvider } from '@/system/i18n/i18n'
-
-let notificationEventSource: EventSource | null = null
-let notificationSubscriberCount = 0
-
-function ensureNotificationEventSource(refreshNotifications: () => Promise<void>, refreshUnreadCount: () => Promise<void>) {
-  if (notificationEventSource) {
-    return
-  }
-
-  notificationEventSource = new EventSource(notificationEventsUrl(), { withCredentials: true })
-  notificationEventSource.addEventListener('notifications_changed', () => {
-    const store = useNotificationStore.getState()
-    void refreshUnreadCount()
-    if (store.hasLoadedList) {
-      void refreshNotifications()
-    }
-  })
-}
-
-function releaseNotificationEventSource() {
-  if (notificationSubscriberCount <= 0 && notificationEventSource) {
-    notificationEventSource.close()
-    notificationEventSource = null
-  }
-}
-
-function useNotificationRealtimeConnection() {
-  const session = useAuthStore((state) => state.session)
-  const { refreshNotifications, refreshUnreadCount } = useNotificationRefresh()
-  const hasLoadedUnreadCount = useNotificationStore((state) => state.hasLoadedUnreadCount)
-  const clear = useNotificationStore((state) => state.clear)
-
-  useEffect(() => {
-    if (session) {
-      return
-    }
-
-    clear()
-    if (notificationEventSource) {
-      notificationEventSource.close()
-      notificationEventSource = null
-    }
-    notificationSubscriberCount = 0
-  }, [clear, session])
-
-  useEffect(() => {
-    if (!session) {
-      return
-    }
-
-    const isFirstSubscriber = notificationSubscriberCount === 0
-    notificationSubscriberCount += 1
-    ensureNotificationEventSource(refreshNotifications, refreshUnreadCount)
-    if (isFirstSubscriber && !hasLoadedUnreadCount) {
-      void refreshUnreadCount()
-    }
-
-    return () => {
-      notificationSubscriberCount -= 1
-      releaseNotificationEventSource()
-    }
-  }, [hasLoadedUnreadCount, refreshNotifications, refreshUnreadCount, session])
-}
 
 function RootLayout() {
   const sessionLocale = useAuthStore((state) => state.session?.preferences.locale ?? null)

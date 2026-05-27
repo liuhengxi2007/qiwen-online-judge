@@ -29,6 +29,22 @@ const frontendUiForbiddenPrefixes = [
   'frontend/src/objects/',
   'frontend/src/pages/',
 ]
+const frontendPagesRoot = 'frontend/src/pages/'
+const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'stores'])
+const frontendAllowedCanonicalPageVariantImports = [
+  {
+    importerRoot: 'frontend/src/pages/UserBlogPage/',
+    importedPath: 'frontend/src/pages/BlogPage/BlogListPageContent',
+  },
+  {
+    importerRoot: 'frontend/src/pages/ProblemBlogPage/',
+    importedPath: 'frontend/src/pages/BlogPage/BlogListPageContent',
+  },
+  {
+    importerRoot: 'frontend/src/pages/ProblemSubmissionPage/',
+    importedPath: 'frontend/src/pages/SubmissionPage/SubmissionListPageContent',
+  },
+]
 const backendBlockedObjectSegments = new Set(['application', 'http', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
@@ -116,6 +132,31 @@ function hasPrefix(path, prefixes) {
   return prefixes.some((prefix) => path.startsWith(prefix))
 }
 
+function stripTsExtension(path) {
+  return path.replace(/\.(?:ts|tsx)$/, '')
+}
+
+function frontendRoutePageRoot(path) {
+  if (!path.startsWith(frontendPagesRoot)) {
+    return null
+  }
+
+  const rootName = path.slice(frontendPagesRoot.length).split('/')[0]
+  if (!rootName || frontendSharedPageRootNames.has(rootName)) {
+    return null
+  }
+
+  return `${frontendPagesRoot}${rootName}/`
+}
+
+function isAllowedCanonicalPageVariantImport(filePath, resolvedPath) {
+  const normalizedResolvedPath = stripTsExtension(resolvedPath)
+  return frontendAllowedCanonicalPageVariantImports.some(
+    ({ importerRoot, importedPath }) =>
+      filePath.startsWith(importerRoot) && normalizedResolvedPath === importedPath,
+  )
+}
+
 function extractTsSpecifiers(source) {
   const importPattern =
     /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g
@@ -134,6 +175,19 @@ function checkFrontendLayerFile(filePath, errors) {
     if (resolved.startsWith('frontend/src/pages/objects/') && !filePath.startsWith('frontend/src/pages/')) {
       errors.push(
         `${filePath}:${line} imports page-only object "${match.specifier}" from outside pages`,
+      )
+    }
+
+    const importerRoutePageRoot = frontendRoutePageRoot(filePath)
+    const importedRoutePageRoot = frontendRoutePageRoot(resolved)
+    if (
+      importerRoutePageRoot &&
+      importedRoutePageRoot &&
+      importerRoutePageRoot !== importedRoutePageRoot &&
+      !isAllowedCanonicalPageVariantImport(filePath, resolved)
+    ) {
+      errors.push(
+        `${filePath}:${line} imports another route page private module "${match.specifier}" without a canonical variant allowlist entry`,
       )
     }
 
