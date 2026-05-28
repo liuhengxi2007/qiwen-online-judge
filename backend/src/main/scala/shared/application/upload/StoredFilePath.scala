@@ -1,5 +1,6 @@
 package shared.application.upload
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class StoredFilePath(value: String):
@@ -10,6 +11,9 @@ final case class StoredFilePath(value: String):
     StoredFilePath.parse(s"$value/${child.value}")
 
 object StoredFilePath:
+  given Encoder[StoredFilePath] = Encoder.encodeString.contramap(_.value)
+  given Decoder[StoredFilePath] = Decoder.decodeString.emap(parse)
+
   private val separator = "/"
 
   def parse(raw: String): Either[String, StoredFilePath] =

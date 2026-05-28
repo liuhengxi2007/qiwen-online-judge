@@ -1,5 +1,6 @@
 package domains.problem.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 import shared.application.upload.StoredFilePath
@@ -12,6 +13,9 @@ final case class ProblemDataPath(value: String):
     StoredFilePath(value)
 
 object ProblemDataPath:
+  given Encoder[ProblemDataPath] = Encoder.encodeString.contramap(_.value)
+  given Decoder[ProblemDataPath] = Decoder.decodeString.emap(parse)
+
   def parse(raw: String): Either[String, ProblemDataPath] =
     StoredFilePath.parse(raw).map(path => ProblemDataPath(path.value))
 

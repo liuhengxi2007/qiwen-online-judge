@@ -1,10 +1,14 @@
 package domains.message.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class MessageContent(value: String)
 
 object MessageContent:
+  given Encoder[MessageContent] = Encoder.encodeString.contramap(_.value)
+  given Decoder[MessageContent] = Decoder.decodeString.emap(parse)
+
   private val maxLength = 5000
 
   def parse(raw: String): Either[String, MessageContent] =

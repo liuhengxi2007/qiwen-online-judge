@@ -4,9 +4,12 @@ import domains.submission.objects.*
 
 import domains.user.objects.UserIdentity
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import judgeprotocol.objects.JudgeResult
 
 import java.time.Instant
+import scala.util.Try
 
 final case class SubmissionDetail(
   id: SubmissionId,
@@ -29,3 +32,12 @@ final case class SubmissionDetail(
   startedAt: Option[Instant],
   finishedAt: Option[Instant]
 )
+
+object SubmissionDetail:
+  private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
+  private given Decoder[Instant] = Decoder.decodeString.emap { value =>
+    Try(Instant.parse(value)).toEither.left.map(_.getMessage)
+  }
+
+  given Encoder[SubmissionDetail] = deriveEncoder[SubmissionDetail]
+  given Decoder[SubmissionDetail] = deriveDecoder[SubmissionDetail]

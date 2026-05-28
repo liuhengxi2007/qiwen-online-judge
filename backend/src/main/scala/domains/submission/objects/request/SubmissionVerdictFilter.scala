@@ -1,5 +1,6 @@
 package domains.submission.objects.request
 
+import io.circe.{Decoder, Encoder}
 
 
 
@@ -14,6 +15,9 @@ enum SubmissionVerdictFilter:
   case SystemError
 
 object SubmissionVerdictFilter:
+  given Encoder[SubmissionVerdictFilter] = Encoder.encodeString.contramap(encode)
+  given Decoder[SubmissionVerdictFilter] = Decoder.decodeString.emap(parse)
+
   def parse(value: String): Either[String, SubmissionVerdictFilter] =
     value.trim match
       case "all" => Right(SubmissionVerdictFilter.All)

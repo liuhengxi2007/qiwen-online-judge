@@ -26,7 +26,7 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import server.http.ApiRouter
+import routes.ApiRouter
 
 object ApplicationResources:
 

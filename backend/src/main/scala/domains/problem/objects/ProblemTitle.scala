@@ -1,10 +1,14 @@
 package domains.problem.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class ProblemTitle(value: String)
 
 object ProblemTitle:
+  given Encoder[ProblemTitle] = Encoder.encodeString.contramap(_.value)
+  given Decoder[ProblemTitle] = Decoder.decodeString.emap(parse)
+
   def parse(raw: String): Either[String, ProblemTitle] =
     val normalized = raw.trim
     if normalized.isEmpty then Left("Problem title is required.")

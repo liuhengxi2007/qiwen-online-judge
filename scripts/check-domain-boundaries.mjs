@@ -14,18 +14,52 @@ const checkedSharedRoots = [
   'backend/src/test/scala/shared',
 ]
 
-const publicCommandFacades = new Set([
-  'domains.auth.application.AuthCommands',
-  'domains.blog.application.BlogCommands',
-  'domains.judge.application.JudgeCommands',
-  'domains.judger.application.JudgerRegistryCommands',
-  'domains.message.application.MessageCommands',
-  'domains.notification.application.NotificationCommands',
-  'domains.problem.application.ProblemCommands',
-  'domains.problemset.application.ProblemSetCommands',
-  'domains.submission.application.SubmissionCommands',
-  'domains.user.application.UserCommands',
-  'domains.usergroup.application.UserGroupCommands',
+const publicAuthApiObjectProtocol = new Set([
+  'domains.auth.api.ApiObjectContext',
+  'domains.auth.api.ApiObjectRouter',
+  'domains.auth.api.AuthenticatedApi',
+  'domains.auth.api.AuthenticatedResponseApi',
+  'domains.auth.api.PublicApi',
+  'domains.auth.api.PublicResponseApi',
+  'domains.auth.api.SessionResolver',
+  'domains.auth.api.SiteManagerApi',
+])
+
+const publicWiringTypes = new Set([
+  'domains.auth.utils.SessionStore',
+])
+
+const explicitCollaborationBoundaries = new Set([
+  'domains.judge.utils.JudgeConfig',
+  'domains.judge.utils.JudgeTaskBuilder',
+  'domains.judge.utils.JudgeTokenAuth',
+  'domains.auth.table.auth_user.AuthUserTable',
+  'domains.blog.table.blog.BlogPostQueryTable',
+  'domains.judger.table.judger.JudgerTable',
+  'domains.notification.objects.NotificationKind',
+  'domains.notification.objects.NotificationPayload',
+  'domains.notification.table.notification.NotificationTable',
+  'domains.notification.utils.NotificationEventHub',
+  'domains.notification.utils.NotificationStreamEvent',
+  'domains.problem.rules.ProblemAccessRules',
+  'domains.problem.table.problem.ProblemQueryTable',
+  'domains.problem.table.problem_data_file.ProblemDataFileTable',
+  'domains.problem.utils.ProblemDataStorage',
+  'domains.problemset.table.problem_set.ProblemSetTable',
+  'domains.submission.table.submission.SubmissionJudgeTable',
+  'domains.submission.table.submission.SubmissionQueryTable',
+  'domains.submission.objects.SubmissionStatus',
+  'domains.submission.objects.SubmissionVerdict',
+  'domains.submission.objects.internal.ClaimedSubmission',
+  'domains.submission.objects.internal.SubmissionJudgeCompletion',
+  'domains.submission.objects.internal.SubmissionJudgeState',
+  'domains.submission.rules.SubmissionJudgeRules',
+  'domains.usergroup.table.user_group.UserGroupTable',
+])
+
+const publicWiringBoundaries = new Set([
+  ...publicAuthApiObjectProtocol,
+  ...publicWiringTypes,
 ])
 
 const publicModelTypes = new Map([
@@ -377,35 +411,27 @@ function isPublicModelImport(domain, importPath) {
   return typeName !== null && (publicModelTypes.get(domain)?.has(typeName) ?? false)
 }
 
-function isPublicCommandResultImport(domain, importPath) {
-  return new RegExp(`^domains\\.${domain}\\.application\\.[A-Za-z0-9_]*CommandResults(?:\\.|$)`).test(importPath)
-}
-
-function isPublicInputOutputImport(domain, importPath) {
-  return new RegExp(`^domains\\.${domain}\\.application\\.(?:input|output)\\.`).test(importPath)
+function matchesPublicPath(importPath, publicPath) {
+  return importPath === publicPath || importPath.startsWith(`${publicPath}.`)
 }
 
 function isPublicWiringImport(domain, importPath) {
-  const wiringPattern = new RegExp(
-    `^domains\\.${domain}\\.application\\.(?:SessionStore|ProblemDataStorage|JudgeConfig|[A-Za-z0-9_]*(?:EventHub|StreamEvent))(?:\\.|$)`,
+  const routerPattern = new RegExp(`^domains\\.${domain}\\.routes\\.[A-Za-z0-9_]*Router(?:\\.|$)`)
+  return (
+    [...publicWiringBoundaries].some((publicPath) => matchesPublicPath(importPath, publicPath)) ||
+    routerPattern.test(importPath)
   )
-  const authHttpWiringPattern = /^domains\.auth\.http\.(?:AuthenticatedHttpExecutor|utils\.AuthHttpSessionSupport)(?:\.|$)/
-  const routerPattern = new RegExp(`^domains\\.${domain}\\.http\\.[A-Za-z0-9_]*Router(?:\\.|$)`)
-  return wiringPattern.test(importPath) || authHttpWiringPattern.test(importPath) || routerPattern.test(importPath)
 }
 
-function isPublicCodecImport(domain, importPath) {
-  return new RegExp(`^domains\\.${domain}\\.http\\.codec\\.[A-Za-z0-9_]*ModelHttpCodecs(?:\\.|$)`).test(importPath)
+function isExplicitCollaborationImport(importPath) {
+  return [...explicitCollaborationBoundaries].some((publicPath) => matchesPublicPath(importPath, publicPath))
 }
 
 function isPublicBoundaryImport(domain, importPath) {
   return (
-    publicCommandFacades.has(importPath) ||
-    isPublicCommandResultImport(domain, importPath) ||
-    isPublicInputOutputImport(domain, importPath) ||
     isPublicModelImport(domain, importPath) ||
     isPublicWiringImport(domain, importPath) ||
-    isPublicCodecImport(domain, importPath)
+    isExplicitCollaborationImport(importPath)
   )
 }
 
@@ -414,28 +440,12 @@ function forbiddenReason(importPath) {
     return 'imports another domain table layer'
   }
 
-  if (/^domains\.[^.]+\.application\.utils(?:\.|$)/.test(importPath)) {
-    return 'imports another domain application utils'
+  if (/^domains\.[^.]+\.api(?:\.|$)/.test(importPath)) {
+    return 'imports another domain API implementation'
   }
 
-  if (/^domains\.[^.]+\.application\.[A-Za-z0-9_]*(?:Query|Mutation|Relation|Member)Commands(?:\.|$)/.test(importPath)) {
-    return 'imports another domain command implementation'
-  }
-
-  if (/^domains\.[^.]+\.http\.api(?:\.|$)/.test(importPath)) {
-    return 'imports another domain HTTP API implementation'
-  }
-
-  if (/^domains\.[^.]+\.http\.(?:response(?:\.|$)|[A-Za-z0-9_]*Http(?:Plans|PlanDefinitions|Handlers|Responses)(?:\.|$))/.test(importPath)) {
-    return 'imports another domain HTTP implementation'
-  }
-
-  if (/^domains\.[^.]+\.http\.codec\.[A-Za-z0-9_]*HttpCodecs(?:\.|$)/.test(importPath)) {
-    return 'imports another domain full HTTP codecs'
-  }
-
-  if (/^domains\.[^.]+\.application\.[A-Za-z0-9_]*(?:Policy|Validation|Decisions)(?:\.|$)/.test(importPath)) {
-    return 'imports another domain application internals'
+  if (/^domains\.[^.]+\.routes(?:\.|$)/.test(importPath)) {
+    return 'imports another domain route implementation'
   }
 
   return 'is not an allowed public domain boundary'

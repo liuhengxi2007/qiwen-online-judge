@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const root = process.cwd()
@@ -42,9 +42,17 @@ function frontendEndpointNames(domain) {
 }
 
 function backendEndpointNames(domain) {
-  return listFilesIfDirectory(join(backendDomainsRoot, domain, 'http/api'))
+  return listFilesIfDirectory(join(backendDomainsRoot, domain, 'api'))
+    .filter((filePath) => {
+      const fileName = filePath.split('/').at(-1) ?? ''
+      if (!fileName.endsWith('.scala')) {
+        return false
+      }
+      const basename = fileName.replace(/\.scala$/, '')
+      const source = readFileSync(filePath, 'utf8')
+      return new RegExp(`(?:object|final\\s+case\\s+class|final\\s+class)\\s+${basename}\\b[\\s\\S]*?extends\\s+[A-Za-z0-9_]*Api\\b`).test(source)
+    })
     .map((filePath) => filePath.split('/').at(-1))
-    .filter((fileName) => fileName.endsWith('.scala'))
     .map((fileName) => fileName.replace(/\.scala$/, ''))
     .sort()
 }
@@ -72,13 +80,13 @@ function run() {
 
   for (const domain of frontendDomains) {
     if (!backendDomainSet.has(domain)) {
-      errors.push(`frontend domain ${domain} has http/api endpoints but no backend http/api domain`)
+      errors.push(`frontend domain ${domain} has api endpoints but no backend api domain`)
     }
   }
 
   for (const domain of backendDomains) {
     if (!frontendDomainSet.has(domain) && !allowedBackendOnlyDomains.has(domain)) {
-      errors.push(`backend domain ${domain} has http/api endpoints but no frontend http/api domain`)
+      errors.push(`backend domain ${domain} has api endpoints but no frontend api domain`)
     }
   }
 
@@ -93,7 +101,7 @@ function run() {
     if (frontendOnly.length > 0 || backendOnly.length > 0) {
       errors.push(
         [
-          `${domain} http/api endpoint mismatch:`,
+          `${domain} api endpoint mismatch:`,
           `  frontend-only: ${formatList(frontendOnly)}`,
           `  backend-only: ${formatList(backendOnly)}`,
         ].join('\n')

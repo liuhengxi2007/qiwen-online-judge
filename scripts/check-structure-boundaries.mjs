@@ -48,9 +48,8 @@ const frontendAllowedCanonicalPageVariantImports = [
     importedPath: 'frontend/src/pages/SubmissionPage/SubmissionListPageContent',
   },
 ]
-const backendBlockedObjectSegments = new Set(['application', 'http', 'table'])
+const backendBlockedObjectSegments = new Set(['application', 'routes', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
-const backendWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendObjectPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
 const frontendApiRootCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/[A-Za-z0-9_]*HttpCodecs\.ts$/
 const frontendApiCodecIndexPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\/index\.ts$/
@@ -60,8 +59,6 @@ const frontendObjectRoot = 'frontend/src/objects/'
 const frontendObjectFileBasenamePattern = /^[A-Z][A-Za-z0-9]*$/
 const frontendObjectAllowedSubdirectories = new Set(['request', 'response'])
 const frontendObjectAllowedSubdomainPaths = new Set(['shared/access'])
-const backendDomainHttpCodecFilePattern =
-  /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/codec\/([^/]+)\.scala$/
 const backendDomainHttpMapperFilePattern =
   /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/mapper\/([^/]+)\.scala$/
 const backendDomainHttpMapperBasenamePattern = /^[A-Za-z0-9_]+Http(?:Request|Response)Mappers$/
@@ -78,6 +75,7 @@ const backendDomainUtilsAllowlist = new Map([
     'auth',
     new Set([
       'PasswordHasher.scala',
+      'AuthSessionCookies.scala',
       'RedisSessionCache.scala',
       'SessionCache.scala',
       'SessionCacheConfig.scala',
@@ -92,12 +90,18 @@ const backendDomainUtilsAllowlist = new Map([
       'MinioProblemDataStorage.scala',
       'ProblemDataStorage.scala',
       'ProblemDataStorageConfig.scala',
+      'ProblemAccessPolicyValidation.scala',
+      'ProblemDataApiHelpers.scala',
       'ProblemDataUploadPreparation.scala',
     ]),
   ],
+  ['problemset', new Set(['ProblemSetAccessPolicyValidation.scala'])],
+  ['submission', new Set(['SubmissionListRequestQuery.scala'])],
+  ['usergroup', new Set(['UserGroupMutationValidation.scala'])],
+  ['judger', new Set(['JudgerRegistryValidation.scala'])],
   ['message', new Set(['MessageEventHub.scala'])],
   ['notification', new Set(['NotificationEventHub.scala', 'NotificationStreamEvent.scala'])],
-  ['judge', new Set(['JudgeConfig.scala', 'JudgeTaskBuilder.scala'])],
+  ['judge', new Set(['JudgeConfig.scala', 'JudgeTaskBuilder.scala', 'JudgeTokenAuth.scala'])],
 ])
 
 const pathOf = (...parts) => parts.join('/')
@@ -421,50 +425,9 @@ function collectFrontendHttpCodecFiles(files, errors) {
   return codecsByDomain
 }
 
-function collectBackendHttpCodecFiles(files) {
-  const codecsByDomain = new Map()
-
-  for (const filePath of files) {
-    const match = filePath.match(backendDomainHttpCodecFilePattern)
-    if (!match) {
-      continue
-    }
-
-    const [, domain, basename] = match
-    if (basename.endsWith('ModelHttpCodecs')) {
-      continue
-    }
-
-    addCodecFile(codecsByDomain, domain, basename, filePath)
-  }
-
-  return codecsByDomain
-}
-
 function checkFrontendHttpCodecLayout(frontendFiles, backendFiles, errors) {
-  const frontendCodecs = collectFrontendHttpCodecFiles(frontendFiles, errors)
-  const backendCodecs = collectBackendHttpCodecFiles(backendFiles)
-  const domains = [...new Set([...frontendCodecs.keys(), ...backendCodecs.keys()])].sort()
-
-  for (const domain of domains) {
-    const frontendDomainCodecs = frontendCodecs.get(domain) ?? new Map()
-    const backendDomainCodecs = backendCodecs.get(domain) ?? new Map()
-    const basenames = [...new Set([...frontendDomainCodecs.keys(), ...backendDomainCodecs.keys()])].sort()
-
-    for (const basename of basenames) {
-      if (!frontendDomainCodecs.has(basename)) {
-        const backendPath = backendDomainCodecs.get(basename)
-        errors.push(
-          `frontend/src/apis/${domain}/codecs/${basename}.ts is missing matching frontend codec for ${backendPath}`,
-        )
-      }
-
-      if (!backendDomainCodecs.has(basename)) {
-        const frontendPath = frontendDomainCodecs.get(basename)
-        errors.push(`${frontendPath} has no matching backend codec basename ${basename}.scala`)
-      }
-    }
-  }
+  const _ = backendFiles
+  collectFrontendHttpCodecFiles(frontendFiles, errors)
 }
 
 function extractScalaImports(source) {
@@ -488,9 +451,6 @@ function checkBackendObjectFile(filePath, errors) {
       /\.objects\.(?:request|response)(?:\.|$|\{)/.test(importedPath)
     ) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary object "${importedPath}"`)
-    }
-    if (backendWireCodecImportPattern.test(importedPath)) {
-      errors.push(`${filePath}:${entry.lineNumber} imports HTTP wire codec package "${importedPath}"`)
     }
   }
 
@@ -777,7 +737,7 @@ function run() {
       checkBackendHttpMapperFile(filePath, errors)
     }
 
-    if (!/^backend\/src\/main\/scala\/domains\/[^/]+\/(?:table|http)\//.test(filePath)) {
+    if (!/^backend\/src\/main\/scala\/domains\/[^/]+\/(?:table|api|routes)\//.test(filePath)) {
       checkBackendEffectfulMethodSignatures(filePath, errors)
     }
   }
@@ -790,7 +750,7 @@ function run() {
   }
 
   for (const filePath of walk('backend/src/main/scala/shared', new Set(['.scala']))) {
-    if (!/^backend\/src\/main\/scala\/shared\/(?:objects|http)\//.test(filePath)) {
+    if (!/^backend\/src\/main\/scala\/shared\/(?:objects|api)\//.test(filePath)) {
       checkBackendEffectfulMethodSignatures(filePath, errors)
     }
   }

@@ -1,10 +1,14 @@
 package domains.problemset.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class ProblemSetTitle(value: String)
 
 object ProblemSetTitle:
+  given Encoder[ProblemSetTitle] = Encoder.encodeString.contramap(_.value)
+  given Decoder[ProblemSetTitle] = Decoder.decodeString.emap(parse)
+
   def parse(raw: String): Either[String, ProblemSetTitle] =
     val normalized = raw.trim
     if normalized.isEmpty then Left("Problem set title is required.")

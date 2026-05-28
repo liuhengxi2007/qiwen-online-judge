@@ -28,7 +28,7 @@ The project is organized by business domain rather than by technical layer. Cros
 
 ## Architecture Principles
 
-- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own backend objects/application/http/table code or frontend objects/apis/pages code.
+- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own backend objects/api/routes/table code or frontend objects/apis/pages code.
 - Keep mirrored object files type-only and name-aligned across frontend and backend.
 - Parse raw JSON, route params, and form input at the boundary, then use named domain types such as `Username`, `ProblemSlug`, `SubmissionId`, and `BlogId`.
 - Keep business decisions in pure domain/application code when possible; push database, HTTP, file, clock, and process effects to the edges.
@@ -96,7 +96,7 @@ cd backend && sbt compile
 ```
 
 `scripts/check-all.mjs` runs all `scripts/check-*.mjs` checks.
-Run it whenever mirrored frontend/backend request, response, object, or shared type files change, whenever endpoint files under `src/apis` or backend `http/api` change, and after moving files across frontend or backend layers.
+Run it whenever mirrored frontend/backend request, response, object, or shared type files change, whenever endpoint files under `src/apis` or backend `api` change, and after moving files across frontend or backend layers.
 
 ## Current Development Direction
 

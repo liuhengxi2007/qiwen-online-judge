@@ -1,5 +1,6 @@
 package domains.submission.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 enum SubmissionVerdict:
@@ -11,6 +12,9 @@ enum SubmissionVerdict:
   case SystemError
 
 object SubmissionVerdict:
+  given Encoder[SubmissionVerdict] = Encoder.encodeString.contramap(encode)
+  given Decoder[SubmissionVerdict] = Decoder.decodeString.emap(parse)
+
   def parse(value: String): Either[String, SubmissionVerdict] =
     value.trim match
       case "accepted" => Right(SubmissionVerdict.Accepted)
@@ -23,3 +27,12 @@ object SubmissionVerdict:
         Left(
           "Submission verdict must be one of: accepted, wrong_answer, compile_error, runtime_error, time_limit_exceeded, system_error."
         )
+
+  private def encode(value: SubmissionVerdict): String =
+    value match
+      case SubmissionVerdict.Accepted => "accepted"
+      case SubmissionVerdict.WrongAnswer => "wrong_answer"
+      case SubmissionVerdict.CompileError => "compile_error"
+      case SubmissionVerdict.RuntimeError => "runtime_error"
+      case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdict.SystemError => "system_error"

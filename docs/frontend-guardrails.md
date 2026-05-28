@@ -67,7 +67,7 @@ Endpoint clients live in `src/apis/<domain>/<Name>.ts`.
 Rules:
 
 - one endpoint client per file
-- the frontend endpoint basename must match the backend `http/api/<Name>.scala` basename when both sides expose the endpoint
+- the frontend endpoint basename must match the backend `api/<Name>.scala` basename when both sides expose the endpoint
 - HTTP boundary codecs live in `src/apis/<domain>/codecs/*HttpCodecs.ts`
 - frontend `*ModelHttpCodecs.ts` files are forbidden; same-object parsing,
   value extraction, and contract mapping live in the matching object file

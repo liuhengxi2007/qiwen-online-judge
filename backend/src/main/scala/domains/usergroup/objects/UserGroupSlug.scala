@@ -1,10 +1,14 @@
 package domains.usergroup.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class UserGroupSlug(value: String)
 
 object UserGroupSlug:
+  given Encoder[UserGroupSlug] = Encoder.encodeString.contramap(_.value)
+  given Decoder[UserGroupSlug] = Decoder.decodeString.emap(parse)
+
   private val slugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$".r
 
   def parse(raw: String): Either[String, UserGroupSlug] =

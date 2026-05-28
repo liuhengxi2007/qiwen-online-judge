@@ -1,10 +1,14 @@
 package domains.problemset.objects
 
+import io.circe.{Decoder, Encoder}
 
 
 final case class ProblemSetSlug(value: String)
 
 object ProblemSetSlug:
+  given Encoder[ProblemSetSlug] = Encoder.encodeString.contramap(_.value)
+  given Decoder[ProblemSetSlug] = Decoder.decodeString.emap(parse)
+
   private val slugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$".r
 
   def parse(raw: String): Either[String, ProblemSetSlug] =

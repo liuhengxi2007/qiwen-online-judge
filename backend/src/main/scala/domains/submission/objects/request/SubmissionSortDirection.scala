@@ -1,5 +1,6 @@
 package domains.submission.objects.request
 
+import io.circe.{Decoder, Encoder}
 
 
 enum SubmissionSortDirection:
@@ -7,6 +8,9 @@ enum SubmissionSortDirection:
   case Desc
 
 object SubmissionSortDirection:
+  given Encoder[SubmissionSortDirection] = Encoder.encodeString.contramap(encode)
+  given Decoder[SubmissionSortDirection] = Decoder.decodeString.emap(parse)
+
   def parse(value: String): Either[String, SubmissionSortDirection] =
     value.trim match
       case "asc" => Right(SubmissionSortDirection.Asc)

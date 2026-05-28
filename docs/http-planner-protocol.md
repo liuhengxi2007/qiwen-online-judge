@@ -14,11 +14,9 @@ Preferred split:
   thin domain route aggregator that registers endpoint API objects in a list
 - `api/<Name>.scala`
   one REST endpoint API object or dependency-carrying case class, including method, path, input decode, and the complete `plan(...)` orchestration body
-- `codec/*HttpCodecs.scala`
-  Circe encoders/decoders for HTTP request and response wire formats
-- `codec/*ModelHttpCodecs.scala`
-  Circe encoders/decoders for durable object values when those values appear in HTTP request or response wire formats
-- auth-owned API object router and session resolver in `domains/auth/http`
+- object/request/response companion objects
+  Circe encoders/decoders for backend HTTP request and response wire formats
+- auth-owned API object router and session resolver in `domains/auth/api`
   match method/path, decode input, resolve session cookies to actors at the HTTP boundary, open the transaction, call `plan(...)`, and encode success/error responses
 - small HTTP helpers such as `HttpApiError`
   convert known failures to code-only API responses
@@ -29,7 +27,7 @@ API objects should return typed outputs unless the endpoint must customize the r
 
 For authenticated APIs:
 
-- session cookie resolution happens in `domains/auth/http/SessionResolver`
+- session cookie resolution happens in `domains/auth/api/SessionResolver`
 - `plan(...)` receives `AuthUser` or `SiteManagerUser`, never raw cookies or session tokens
 - transaction-backed APIs receive a `Connection`
 - the visible business workflow belongs directly in the API object's `plan(...)`

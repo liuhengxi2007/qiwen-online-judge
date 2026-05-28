@@ -1,10 +1,15 @@
 package domains.user.objects
 
+import io.circe.{Decoder, Encoder}
+
 import java.util.Locale
 
 final case class Username(value: String)
 
 object Username:
+  given Encoder[Username] = Encoder.encodeString.contramap(_.value)
+  given Decoder[Username] = Decoder.decodeString.emap(parse)
+
   private val usernamePattern = "^[a-z0-9_-]+$".r
 
   def normalize(raw: String): String =

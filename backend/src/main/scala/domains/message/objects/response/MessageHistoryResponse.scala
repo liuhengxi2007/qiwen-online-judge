@@ -1,5 +1,7 @@
 package domains.message.objects.response
 
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class MessageHistoryResponse(
   conversation: MessageConversationSummary,
@@ -7,3 +9,7 @@ final case class MessageHistoryResponse(
   hasMore: Boolean,
   facts: ConversationMessageFacts
 )
+
+object MessageHistoryResponse:
+  given Encoder[MessageHistoryResponse] = deriveEncoder[MessageHistoryResponse]
+  given Decoder[MessageHistoryResponse] = deriveDecoder[MessageHistoryResponse]

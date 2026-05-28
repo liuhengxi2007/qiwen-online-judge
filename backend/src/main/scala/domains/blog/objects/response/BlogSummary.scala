@@ -3,8 +3,11 @@ package domains.blog.objects.response
 import domains.blog.objects.*
 
 import domains.user.objects.UserIdentity
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
+import scala.util.Try
 
 final case class BlogSummary(
   id: BlogId,
@@ -18,3 +21,12 @@ final case class BlogSummary(
   createdAt: Instant,
   updatedAt: Instant
 )
+
+object BlogSummary:
+  private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
+  private given Decoder[Instant] = Decoder.decodeString.emap { value =>
+    Try(Instant.parse(value)).toEither.left.map(_.getMessage)
+  }
+
+  given Encoder[BlogSummary] = deriveEncoder[BlogSummary]
+  given Decoder[BlogSummary] = deriveDecoder[BlogSummary]
