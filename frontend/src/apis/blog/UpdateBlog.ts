@@ -1,13 +1,21 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
-import type { UpdateBlogRequest } from '@/objects/blog/request/UpdateBlogRequest'
-import { blogIdValue } from '@/objects/blog/BlogId'
-import {
-  fromBlogDetailContract,
-  toUpdateBlogRequestContract,
-} from '@/apis/blog/codecs/BlogHttpCodecs'
 import type { BlogId } from '@/objects/blog/BlogId'
-import { postJson } from '@/system/api/http-client'
+import { blogIdValue } from '@/objects/blog/BlogId'
+import type { UpdateBlogRequest } from '@/objects/blog/request/UpdateBlogRequest'
 
-export async function updateBlog(blogId: BlogId, request: UpdateBlogRequest): Promise<BlogDetail> {
-  return postJson(`/api/blogs/${blogIdValue(blogId)}/update`, fromBlogDetailContract, toUpdateBlogRequestContract(request))
+export class UpdateBlog implements APIWithSessionMessage<BlogDetail> {
+  declare readonly responseType?: BlogDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: UpdateBlogRequest
+
+  constructor(blogId: BlogId, request: UpdateBlogRequest) {
+    this.apiPath = `blogs/${blogIdValue(blogId)}/update`
+    this.request = request
+  }
+
+  body(): UpdateBlogRequest {
+    return this.request
+  }
 }

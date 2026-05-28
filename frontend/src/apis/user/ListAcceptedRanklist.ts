@@ -1,11 +1,17 @@
-import { fromUserAcceptedRanklistResponseContract } from '@/apis/user/codecs/UserHttpCodecs'
-import type { UserAcceptedRanklistItem } from '@/objects/user/response/UserAcceptedRanklistItem'
-import { requestJson } from '@/system/api/http-client'
+import type { APIMessage } from '@/system/api/api-message'
 import type { PageResponse } from '@/objects/shared/PageResponse'
+import type { UserAcceptedRanklistItem } from '@/objects/user/response/UserAcceptedRanklistItem'
 
-export async function listAcceptedRanklist(page: number): Promise<PageResponse<UserAcceptedRanklistItem>> {
-  return requestJson(
-    `/api/users/ranklist/accepted?page=${encodeURIComponent(String(page))}`,
-    fromUserAcceptedRanklistResponseContract,
-  )
+export class ListAcceptedRanklist implements APIMessage<PageResponse<UserAcceptedRanklistItem>> {
+  declare readonly responseType?: PageResponse<UserAcceptedRanklistItem>
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(page: number) {
+    this.apiPath = `users/ranklist/accepted?page=${encodeURIComponent(String(page))}`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

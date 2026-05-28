@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { getBlog } from '@/apis/blog/GetBlog'
+import { GetBlog } from '@/apis/blog/GetBlog'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogId } from '@/objects/blog/BlogId'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useBlogDetailQuery(blogId: BlogId | null) {
   const [queryState, setQueryState] = useState<{
@@ -22,7 +23,7 @@ export function useBlogDetailQuery(blogId: BlogId | null) {
 
     let cancelled = false
 
-    void getBlog(blogId)
+    void sendAPI(new GetBlog(blogId))
       .then((loadedBlog) => {
         if (cancelled) {
           return

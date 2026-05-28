@@ -1,11 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { CreateConversationRequest } from '@/objects/message/request/CreateConversationRequest'
 import type { MessageConversationSummary } from '@/objects/message/response/MessageConversationSummary'
-import {
-  fromMessageConversationSummary,
-  toCreateConversationRequest,
-} from '@/apis/message/codecs/MessageHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export function createConversation(request: CreateConversationRequest): Promise<MessageConversationSummary> {
-  return postJson('/api/messages/conversations', fromMessageConversationSummary, toCreateConversationRequest(request))
+export class CreateConversation implements APIWithSessionMessage<MessageConversationSummary> {
+  declare readonly responseType?: MessageConversationSummary
+  readonly method = 'POST'
+  readonly apiPath = 'messages/conversations'
+  private readonly request: CreateConversationRequest
+
+  constructor(request: CreateConversationRequest) {
+    this.request = request
+  }
+
+  body(): CreateConversationRequest {
+    return this.request
+  }
 }

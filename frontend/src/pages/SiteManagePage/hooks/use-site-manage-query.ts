@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import { ListRegisteredJudgers } from '@/apis/judger/ListRegisteredJudgers'
+import { ListUsers } from '@/apis/user/ListUsers'
 import { HttpClientError } from '@/system/api/http-client'
-import { listRegisteredJudgers } from '@/apis/judger/ListRegisteredJudgers'
-import { listUsers } from '@/apis/user/ListUsers'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
 import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import type { RegisteredJudgerListItem } from '@/objects/judger/response/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
+import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
 export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
@@ -51,7 +52,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
 
     const activeUserListRequest = JSON.parse(requestKey) as UserListRequest
 
-    void listUsers(activeUserListRequest)
+    void sendAPI(new ListUsers(activeUserListRequest))
       .then((loadedUsers) => {
         if (isCancelled) {
           return
@@ -103,7 +104,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
         }))
       })
 
-    void listRegisteredJudgers()
+    void sendAPI(new ListRegisteredJudgers())
       .then((loadedJudgers) => {
         if (isCancelled) {
           return

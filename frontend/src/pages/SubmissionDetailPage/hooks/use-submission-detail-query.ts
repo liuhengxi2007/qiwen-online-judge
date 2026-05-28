@@ -1,9 +1,10 @@
 import { useEffect, useReducer } from 'react'
 
-import { getSubmission } from '@/apis/submission/GetSubmission'
+import { GetSubmission } from '@/apis/submission/GetSubmission'
 import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 type SubmissionDetailQueryState = {
@@ -46,7 +47,7 @@ export function useSubmissionDetailQuery(submissionId: SubmissionId) {
     dispatch({ type: 'load_started' })
 
     const load = () => {
-      void getSubmission(submissionId)
+      void sendAPI(new GetSubmission(submissionId))
         .then((submission) => {
           if (cancelled) {
             return

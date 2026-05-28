@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { readProblemDataText } from '@/apis/problem/DownloadProblemDataPath'
-import { saveProblemDataText } from '@/apis/problem/UploadProblemDataFile'
+import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
+import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
 import {
   judgeConfigPath,
   judgeConfigTemplate,
@@ -10,6 +10,7 @@ import {
 import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from './use-problem-data-page-model'
+import { sendMultipartAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -38,7 +39,25 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     setErrorMessage('')
     setStatusMessage('')
     try {
-      const loaded = await readProblemDataText(problemSlug, judgeDataPath)
+      const api = new DownloadProblemDataPath(problemSlug, judgeDataPath)
+      const response = await fetch(api.downloadUrl(), {
+        credentials: 'same-origin',
+      })
+
+      if (!response.ok) {
+        throw new HttpClientError(
+          response.status === 404
+            ? 'not-found'
+            : response.status === 403
+              ? 'forbidden'
+              : response.status === 401
+                ? 'unauthorized'
+                : 'http',
+          response.statusText || `Unable to read ${judgeConfigPath}.`,
+        )
+      }
+
+      const loaded = await response.text()
       setContentValue(loaded)
       setLastSavedContent(loaded)
       setStatusMessage(t('problem.data.judgeConfig.loaded'))
@@ -65,7 +84,12 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
 
     setIsSaving(true)
     try {
-      const result = await saveProblemDataText(problemSlug, judgeDataPath, content)
+      const api = new UploadProblemDataFile(
+        problemSlug,
+        new File([content], judgeConfigPath, { type: 'text/plain' }),
+        judgeDataPath,
+      )
+      const result = await sendMultipartAPI(api, api.formData())
       model.replaceProblem(result.problem)
       await model.loadFiles()
       setLastSavedContent(content)

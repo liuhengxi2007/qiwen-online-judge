@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 
-import { createConversation } from '@/apis/message/CreateConversation'
-import { getConversationHistory } from '@/apis/message/GetConversationHistory'
-import { markConversationRead } from '@/apis/message/MarkConversationRead'
-import { sendDirectMessage } from '@/apis/message/SendDirectMessage'
+import { CreateConversation } from '@/apis/message/CreateConversation'
+import { GetConversationHistory } from '@/apis/message/GetConversationHistory'
+import { MarkConversationRead } from '@/apis/message/MarkConversationRead'
+import { SendDirectMessage } from '@/apis/message/SendDirectMessage'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
 import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
 import type { MessageId } from '@/objects/message/MessageId'
@@ -18,6 +18,7 @@ import {
 import { useMessageInboxRefresh } from '@/pages/hooks/use-message-inbox-refresh'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -64,9 +65,9 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       isAutoMarkingConversationReadRef.current = true
       setIsMarkingConversationRead(true)
       try {
-        await markConversationRead(activeConversationId, { mode: 'conversation' })
+        await sendAPI(new MarkConversationRead(activeConversationId, { mode: 'conversation' }))
         void refreshInbox()
-        return await getConversationHistory(activeConversationId)
+        return await sendAPI(new GetConversationHistory(activeConversationId))
       } finally {
         isAutoMarkingConversationReadRef.current = false
         setIsMarkingConversationRead(false)
@@ -80,7 +81,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       activeConversationId: MessageConversationId,
       options: { autoMarkRead?: boolean } = {},
     ): Promise<void> => {
-      const response = await getConversationHistory(activeConversationId)
+      const response = await sendAPI(new GetConversationHistory(activeConversationId))
       const syncedResponse = await syncConversationReadState(activeConversationId, response, options)
       setHistory(syncedResponse)
       setErrorMessage('')
@@ -103,7 +104,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       setErrorMessage('')
       setSendErrorMessage('')
       try {
-        const conversation = await createConversation({ targetUsername: activeTargetUsername })
+        const conversation = await sendAPI(new CreateConversation({ targetUsername: activeTargetUsername }))
         if (cancelled) {
           return
         }
@@ -159,8 +160,8 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     }
     setIsMarkingConversationRead(true)
     try {
-      await markConversationRead(conversationId, { mode: 'conversation' })
-      const response = await getConversationHistory(conversationId)
+      await sendAPI(new MarkConversationRead(conversationId, { mode: 'conversation' }))
+      const response = await sendAPI(new GetConversationHistory(conversationId))
       setHistory(response)
       setErrorMessage('')
       setSendErrorMessage('')
@@ -179,8 +180,8 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       }
       setPendingReadMessageId(messageIdValue(messageId))
       try {
-        await markConversationRead(conversationId, { mode: 'message', messageId })
-        const response = await getConversationHistory(conversationId)
+        await sendAPI(new MarkConversationRead(conversationId, { mode: 'message', messageId }))
+        const response = await sendAPI(new GetConversationHistory(conversationId))
         setHistory(response)
         setErrorMessage('')
         setSendErrorMessage('')
@@ -205,10 +206,10 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     }
 
     setIsSending(true)
-    void sendDirectMessage(conversationId, { content: validation.value })
+    void sendAPI(new SendDirectMessage(conversationId, { content: validation.value }))
       .then(async () => {
         setDraft('')
-        await markConversationRead(conversationId, { mode: 'conversation' })
+        await sendAPI(new MarkConversationRead(conversationId, { mode: 'conversation' }))
         await refreshConversationState(conversationId, { autoMarkRead: false })
       })
       .catch((error) => {
@@ -228,7 +229,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     setIsLoadingOlderMessages(true)
     setOlderMessagesError('')
     const earliestMessage = history.messages[0]
-    void getConversationHistory(conversationId, { beforeMessageId: earliestMessage.id })
+    void sendAPI(new GetConversationHistory(conversationId, { beforeMessageId: earliestMessage.id }))
       .then((response) => {
         setHistory((current) => {
           if (!current) {

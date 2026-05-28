@@ -1,27 +1,21 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
-import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
-import {
-  fromProblemSetDetailContract,
-  toUpdateProblemSetRequestContract,
-} from '@/apis/problemset/codecs/ProblemSetHttpCodecs'
-import { postJson } from '@/system/api/http-client'
+import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
 
-export function updateProblemSet(
-  problemSetSlug: ProblemSetSlug,
-  request: UpdateProblemSetRequest,
-): Promise<ProblemSetDetail> {
-  return updateProblemSetInternal(problemSetSlug, request)
-}
+export class UpdateProblemSet implements APIWithSessionMessage<ProblemSetDetail> {
+  declare readonly responseType?: ProblemSetDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: UpdateProblemSetRequest
 
-async function updateProblemSetInternal(
-  problemSetSlug: ProblemSetSlug,
-  request: UpdateProblemSetRequest,
-): Promise<ProblemSetDetail> {
-  return postJson(
-    `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}`,
-    fromProblemSetDetailContract,
-    toUpdateProblemSetRequestContract(request),
-  )
+  constructor(problemSetSlug: ProblemSetSlug, request: UpdateProblemSetRequest) {
+    this.apiPath = `problem-sets/${problemSetSlugValue(problemSetSlug)}`
+    this.request = request
+  }
+
+  body(): UpdateProblemSetRequest {
+    return this.request
+  }
 }

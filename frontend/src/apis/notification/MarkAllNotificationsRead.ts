@@ -1,9 +1,12 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
-import {
-  decodeSuccessResponse,
-  postJson,
-} from '@/system/api/http-client'
 
-export function markAllNotificationsRead(): Promise<SuccessResponse> {
-  return postJson('/api/notifications/read-all', decodeSuccessResponse, {})
+export class MarkAllNotificationsRead implements APIWithSessionMessage<SuccessResponse> {
+  declare readonly responseType?: SuccessResponse
+  readonly method = 'POST'
+  readonly apiPath = 'notifications/read-all'
+
+  body(): undefined {
+    return undefined
+  }
 }

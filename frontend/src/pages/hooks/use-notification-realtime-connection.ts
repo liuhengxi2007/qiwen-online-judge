@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import { notificationEventsUrl } from '@/apis/notification/SubscribeNotificationEvents'
+import { SubscribeNotificationEvents } from '@/apis/notification/SubscribeNotificationEvents'
 import { useNotificationRefresh } from '@/pages/hooks/use-notification-refresh'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
 import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
@@ -13,7 +13,7 @@ function ensureNotificationEventSource(refreshNotifications: () => Promise<void>
     return
   }
 
-  notificationEventSource = new EventSource(notificationEventsUrl(), { withCredentials: true })
+  notificationEventSource = new EventSource(new SubscribeNotificationEvents().eventUrl(), { withCredentials: true })
   notificationEventSource.addEventListener('notifications_changed', () => {
     const store = useNotificationStore.getState()
     void refreshUnreadCount()

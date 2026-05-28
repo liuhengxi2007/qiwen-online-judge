@@ -1,12 +1,13 @@
 import { useCallback, useReducer } from 'react'
 
-import { createUserGroup } from '@/apis/usergroup/CreateUserGroup'
+import { CreateUserGroup } from '@/apis/usergroup/CreateUserGroup'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import {
   initialCreateUserGroupPageState,
   reduceCreateUserGroupPageState,
 } from '../functions/create-usergroup-page-state'
 import { validateUserGroupDraft } from '../functions/usergroup-form'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -28,7 +29,7 @@ export function useCreateUserGroupPageModel() {
     dispatch({ type: 'submit_started' })
 
     try {
-      const createdGroup = await createUserGroup(validation.request)
+      const createdGroup = await sendAPI(new CreateUserGroup(validation.request))
       dispatch({ type: 'submit_succeeded', message: t('userGroup.message.createSuccess') })
       return createdGroup
     } catch (error) {

@@ -1,11 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
-import {
-  decodeSuccessResponse,
-  postJson,
-} from '@/system/api/http-client'
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 
-export async function deleteSubmission(submissionId: SubmissionId): Promise<SuccessResponse> {
-  return postJson(`/api/submissions/${submissionIdValue(submissionId)}/delete`, decodeSuccessResponse, {})
+export class DeleteSubmission implements APIWithSessionMessage<SuccessResponse> {
+  declare readonly responseType?: SuccessResponse
+  readonly method = 'POST'
+  readonly apiPath: string
+
+  constructor(submissionId: SubmissionId) {
+    this.apiPath = `submissions/${submissionIdValue(submissionId)}/delete`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

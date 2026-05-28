@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { listUserSuggestions } from '@/apis/user/ListUserSuggestions'
+import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
+import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 export function useMessageRecipientSuggestions(searchQuery: string, searchFailedMessage: string) {
@@ -15,7 +17,13 @@ export function useMessageRecipientSuggestions(searchQuery: string, searchFailed
 
     let cancelled = false
     const timeoutId = window.setTimeout(() => {
-      void listUserSuggestions(searchQuery)
+      const parsedQuery = parseUserSearchQuery(searchQuery)
+      if (!parsedQuery.ok) {
+        setSuggestions([])
+        return
+      }
+
+      void sendAPI(new ListUserSuggestions(parsedQuery.value))
         .then((items) => {
           if (cancelled) {
             return

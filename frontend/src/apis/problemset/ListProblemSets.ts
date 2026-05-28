@@ -1,13 +1,22 @@
-import type { ProblemSetListResponse } from '@/objects/problemset/response/ProblemSetListResponse'
-import { fromProblemSetListResponseContract } from '@/apis/problemset/codecs/ProblemSetHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
+import type { APIMessage } from '@/system/api/api-message'
 import type { PageRequest } from '@/objects/shared/PageRequest'
+import type { ProblemSetListResponse } from '@/objects/problemset/response/ProblemSetListResponse'
 
-export async function listProblemSets(pageRequest?: PageRequest): Promise<ProblemSetListResponse> {
-  const url = new URL('/api/problem-sets', window.location.origin)
-  if (pageRequest) {
-    url.searchParams.set('page', String(pageRequest.page))
-    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+export class ListProblemSets implements APIMessage<ProblemSetListResponse> {
+  declare readonly responseType?: ProblemSetListResponse
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(pageRequest?: PageRequest) {
+    const params = new URLSearchParams()
+    if (pageRequest) {
+      params.set('page', String(pageRequest.page))
+      params.set('pageSize', String(pageRequest.pageSize))
+    }
+    this.apiPath = `problem-sets${params.size > 0 ? `?${params.toString()}` : ''}`
   }
-  return requestJson(url.pathname + url.search, fromProblemSetListResponseContract)
+
+  body(): undefined {
+    return undefined
+  }
 }

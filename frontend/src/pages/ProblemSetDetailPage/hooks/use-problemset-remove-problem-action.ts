@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react'
 
+import { RemoveProblemFromProblemSet } from '@/apis/problemset/RemoveProblemFromProblemSet'
 import { HttpClientError } from '@/system/api/http-client'
-import { removeProblemFromProblemSet } from '@/apis/problemset/RemoveProblemFromProblemSet'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
+import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug) {
@@ -15,7 +16,7 @@ export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug)
     async (problemSlug: ProblemSlug): Promise<{ ok: true; problemSet: ProblemSetDetail; message: string } | { ok: false; message: string }> => {
       setActiveRemovingProblemSlug(problemSlug)
       try {
-        const updatedProblemSet = await removeProblemFromProblemSet(problemSetSlug, problemSlug)
+        const updatedProblemSet = await sendAPI(new RemoveProblemFromProblemSet(problemSetSlug, problemSlug))
         return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.removeSuccess') }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : t('problemSet.message.removeFailed')

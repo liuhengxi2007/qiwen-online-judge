@@ -1,19 +1,27 @@
+import type { APIMessage } from '@/system/api/api-message'
 import type { BlogListResponse } from '@/objects/blog/response/BlogListResponse'
-import { usernameValue } from '@/objects/user/Username'
-import type { Username } from '@/objects/user/Username'
-import { fromBlogListResponseContract } from '@/apis/blog/codecs/BlogHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
+import type { Username } from '@/objects/user/Username'
+import { usernameValue } from '@/objects/user/Username'
 
-export async function listBlogs(authorUsername?: Username | null, pageRequest?: PageRequest): Promise<BlogListResponse> {
-  const url = new URL('/api/blogs', window.location.origin)
-  if (authorUsername) {
-    url.searchParams.set('username', usernameValue(authorUsername))
-  }
-  if (pageRequest) {
-    url.searchParams.set('page', String(pageRequest.page))
-    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+export class ListBlogs implements APIMessage<BlogListResponse> {
+  declare readonly responseType?: BlogListResponse
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(authorUsername?: Username | null, pageRequest?: PageRequest) {
+    const params = new URLSearchParams()
+    if (authorUsername) {
+      params.set('username', usernameValue(authorUsername))
+    }
+    if (pageRequest) {
+      params.set('page', String(pageRequest.page))
+      params.set('pageSize', String(pageRequest.pageSize))
+    }
+    this.apiPath = `blogs${params.size > 0 ? `?${params.toString()}` : ''}`
   }
 
-  return requestJson(url.pathname + url.search, fromBlogListResponseContract)
+  body(): undefined {
+    return undefined
+  }
 }

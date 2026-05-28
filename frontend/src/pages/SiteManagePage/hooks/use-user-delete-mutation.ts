@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react'
 
 import type { Username } from '@/objects/user/Username'
+import { DeleteAccount } from '@/apis/auth/DeleteAccount'
 import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
 import { HttpClientError } from '@/system/api/http-client'
-import { deleteAccount } from '@/apis/auth/DeleteAccount'
 import { translateMessage } from '@/system/i18n/messages'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
+import { sendAPI } from '@/system/api/api-message'
 
 type DeleteUserResult =
   | { kind: 'deleted'; message: string }
@@ -22,7 +23,7 @@ export function useUserDeleteMutation() {
       setNavigationIntent(null)
 
       try {
-        const response = await deleteAccount(targetUsername)
+        const response = await sendAPI(new DeleteAccount(targetUsername))
         setDeletingUsername(null)
         return { kind: 'deleted', message: response.message ?? translateMessage('common.success.generic') }
       } catch (error) {

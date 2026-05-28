@@ -1,12 +1,13 @@
 import { useCallback, useReducer } from 'react'
 
+import { CreateProblemSet } from '@/apis/problemset/CreateProblemSet'
 import { HttpClientError } from '@/system/api/http-client'
-import { createProblemSet } from '@/apis/problemset/CreateProblemSet'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
 import { validateProblemSetDraft } from '../functions/problemset-form'
 import { buildResourceAccessPolicy } from '@/pages/components/resource-access-editor-input'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { createOwnerOnlyAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type CreateProblemSetPageState = {
@@ -105,7 +106,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     dispatch({ type: 'submit_started' })
 
     try {
-      const createdProblemSet = await createProblemSet(validation.request)
+      const createdProblemSet = await sendAPI(new CreateProblemSet(validation.request))
       dispatch({ type: 'submit_succeeded' })
       return createdProblemSet
     } catch (error) {

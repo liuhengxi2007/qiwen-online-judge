@@ -1,13 +1,12 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { MessageBlockEntry } from '@/objects/message/response/MessageBlockEntry'
-import { fromMessageBlockEntry } from '@/apis/message/codecs/MessageHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
 
-export function listMessageBlocks(): Promise<MessageBlockEntry[]> {
-  return requestJson('/api/messages/blocks', (value) => {
-    if (!Array.isArray(value)) {
-      throw new Error('Invalid message blocks payload.')
-    }
+export class ListMessageBlocks implements APIWithSessionMessage<MessageBlockEntry[]> {
+  declare readonly responseType?: MessageBlockEntry[]
+  readonly method = 'GET'
+  readonly apiPath = 'messages/blocks'
 
-    return value.map(fromMessageBlockEntry)
-  })
+  body(): undefined {
+    return undefined
+  }
 }

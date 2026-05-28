@@ -1,18 +1,23 @@
+import type { APIMessage } from '@/system/api/api-message'
 import type { ProblemListRequest } from '@/objects/problem/request/ProblemListRequest'
 import type { ProblemListResponse } from '@/objects/problem/response/ProblemListResponse'
-import {
-  fromProblemListResponseContract,
-  toProblemListRequestContract,
-} from '@/apis/problem/codecs/ProblemHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
 
-export async function listProblems(request: ProblemListRequest): Promise<ProblemListResponse> {
-  const url = new URL('/api/problems', window.location.origin)
-  const contractRequest = toProblemListRequestContract(request)
-  if (contractRequest.query !== null && contractRequest.query.trim()) {
-    url.searchParams.set('q', contractRequest.query)
+export class ListProblems implements APIMessage<ProblemListResponse> {
+  declare readonly responseType?: ProblemListResponse
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(request: ProblemListRequest) {
+    const params = new URLSearchParams()
+    if (request.query !== null && request.query.trim()) {
+      params.set('q', request.query)
+    }
+    params.set('page', String(request.pageRequest.page))
+    params.set('pageSize', String(request.pageRequest.pageSize))
+    this.apiPath = `problems?${params.toString()}`
   }
-  url.searchParams.set('page', String(contractRequest.page))
-  url.searchParams.set('pageSize', String(contractRequest.pageSize))
-  return requestJson(url.pathname + url.search, fromProblemListResponseContract)
+
+  body(): undefined {
+    return undefined
+  }
 }

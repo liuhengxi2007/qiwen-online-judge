@@ -1,11 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { CreateProblemSetRequest } from '@/objects/problemset/request/CreateProblemSetRequest'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
-import {
-  fromProblemSetSummaryContract,
-  toCreateProblemSetRequestContract,
-} from '@/apis/problemset/codecs/ProblemSetHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export async function createProblemSet(request: CreateProblemSetRequest): Promise<ProblemSetSummary> {
-  return postJson('/api/problem-sets', fromProblemSetSummaryContract, toCreateProblemSetRequestContract(request))
+export class CreateProblemSet implements APIWithSessionMessage<ProblemSetSummary> {
+  declare readonly responseType?: ProblemSetSummary
+  readonly method = 'POST'
+  readonly apiPath = 'problem-sets'
+  private readonly request: CreateProblemSetRequest
+
+  constructor(request: CreateProblemSetRequest) {
+    this.request = request
+  }
+
+  body(): CreateProblemSetRequest {
+    return this.request
+  }
 }

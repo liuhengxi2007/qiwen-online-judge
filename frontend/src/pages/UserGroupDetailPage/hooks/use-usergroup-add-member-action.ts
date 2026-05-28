@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react'
 
-import { addUserGroupMember } from '@/apis/usergroup/AddUserGroupMember'
+import { AddUserGroupMember } from '@/apis/usergroup/AddUserGroupMember'
 import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateAddUserGroupMemberDraft } from '../functions/usergroup-form'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -24,7 +25,7 @@ export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
 
       setIsAddingMember(true)
       try {
-        const updatedUserGroup = await addUserGroupMember(userGroupSlug, validation.request)
+        const updatedUserGroup = await sendAPI(new AddUserGroupMember(userGroupSlug, validation.request))
         return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.addMemberSuccess') }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : t('userGroup.message.addMemberFailed')

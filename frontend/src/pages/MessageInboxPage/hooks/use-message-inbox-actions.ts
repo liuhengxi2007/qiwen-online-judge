@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { markAllMessagesRead } from '@/apis/message/MarkAllMessagesRead'
+import { MarkAllMessagesRead } from '@/apis/message/MarkAllMessagesRead'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
@@ -20,7 +21,7 @@ export function useMessageInboxActions({
     async (pageRequest: PageRequest) => {
       setIsMarkingAllRead(true)
       try {
-        await markAllMessagesRead()
+        await sendAPI(new MarkAllMessagesRead())
         setInboxActionError('')
         await refreshInbox(pageRequest)
       } catch (error) {

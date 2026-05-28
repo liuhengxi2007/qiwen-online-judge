@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import type { Username } from '@/objects/user/Username'
-import { listBlogs } from '@/apis/blog/ListBlogs'
-import { listProblemBlogs } from '@/apis/blog/ListProblemBlogs'
+import { ListBlogs } from '@/apis/blog/ListBlogs'
+import { ListProblemBlogs } from '@/apis/blog/ListProblemBlogs'
 import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { PageRequest } from '@/objects/shared/PageRequest'
+import { sendAPI } from '@/system/api/api-message'
 
 type BlogListQuery = {
   authorUsername: Username | null
@@ -48,8 +49,8 @@ export function useBlogListQuery(authorUsername: Username | null = null, problem
     let cancelled = false
     const loadBlogs =
       query.problemSlug === null
-        ? listBlogs(query.authorUsername, query.pageRequest)
-        : listProblemBlogs(query.problemSlug, query.pageRequest)
+        ? sendAPI(new ListBlogs(query.authorUsername, query.pageRequest))
+        : sendAPI(new ListProblemBlogs(query.problemSlug, query.pageRequest))
 
     void loadBlogs
       .then((response) => {

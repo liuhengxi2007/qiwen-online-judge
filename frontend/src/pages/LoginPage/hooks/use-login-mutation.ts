@@ -3,9 +3,10 @@ import { useCallback, useState } from 'react'
 import { toAuthSession } from '@/pages/stores/auth/auth-session'
 import type { LoginRequest } from '@/objects/auth/request/LoginRequest'
 import type { LoginResponse } from '@/objects/auth/response/LoginResponse'
-import { login } from '@/apis/auth/Login'
+import { Login } from '@/apis/auth/Login'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
+import { sendAPI } from '@/system/api/api-message'
 
 type LoginMutationResult =
   | { kind: 'succeeded'; data: LoginResponse }
@@ -24,7 +25,7 @@ export function useLoginMutation() {
       setNavigationIntent(null)
 
       try {
-        const data = await login(request)
+        const data = await sendAPI(new Login(request))
         setSession(toAuthSession(data))
         setIsSubmitting(false)
         setNavigationIntent({ to: '/' })

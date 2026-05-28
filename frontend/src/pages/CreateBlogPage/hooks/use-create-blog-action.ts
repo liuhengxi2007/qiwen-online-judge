@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { createBlog } from '@/apis/blog/CreateBlog'
+import { CreateBlog } from '@/apis/blog/CreateBlog'
 import type { CreateBlogRequest } from '@/objects/blog/request/CreateBlogRequest'
 import { blogIdValue } from '@/objects/blog/BlogId'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useCreateBlogAction(createFailedMessage: string) {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ export function useCreateBlogAction(createFailedMessage: string) {
       setIsSubmitting(true)
       setErrorMessage('')
       try {
-        const createdBlog = await createBlog(request)
+        const createdBlog = await sendAPI(new CreateBlog(request))
         navigate(`/blogs/${blogIdValue(createdBlog.id)}`)
       } catch {
         setErrorMessage(createFailedMessage)

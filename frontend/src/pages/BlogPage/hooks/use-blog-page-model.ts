@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { acceptBlogProblemSubmission } from '@/apis/blog/AcceptBlogProblemSubmission'
-import { linkBlogToProblem } from '@/apis/blog/LinkBlogToProblem'
-import { listPendingProblemBlogs } from '@/apis/blog/ListPendingProblemBlogs'
-import { unlinkBlogFromProblem } from '@/apis/blog/UnlinkBlogFromProblem'
+import { AcceptBlogProblemSubmission } from '@/apis/blog/AcceptBlogProblemSubmission'
+import { LinkBlogToProblem } from '@/apis/blog/LinkBlogToProblem'
+import { ListPendingProblemBlogs } from '@/apis/blog/ListPendingProblemBlogs'
+import { UnlinkBlogFromProblem } from '@/apis/blog/UnlinkBlogFromProblem'
 import { parseBlogId } from '@/objects/blog/BlogId'
 import type { BlogId } from '@/objects/blog/BlogId'
 import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
 import { useBlogListQuery } from './use-blog-list-query'
 import type { Username } from '@/objects/user/Username'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
@@ -44,7 +45,7 @@ export function useBlogPageModel({
 
     setIsLoadingPending(true)
     setPendingMessage('')
-    void listPendingProblemBlogs(problemSlugFilter, { page: 1, pageSize: 10 })
+    void sendAPI(new ListPendingProblemBlogs(problemSlugFilter, { page: 1, pageSize: 10 }))
       .then((response) => {
         if (!isCancelled()) {
           setPendingBlogs(response.items)
@@ -82,7 +83,7 @@ export function useBlogPageModel({
     setIsLinking(true)
     setLinkMessage('')
     try {
-      await linkBlogToProblem(problemSlugFilter, parsedBlogId.value)
+      await sendAPI(new LinkBlogToProblem(problemSlugFilter, parsedBlogId.value))
       model.reload()
       refreshPendingBlogs()
       setLinkBlogId('')
@@ -100,7 +101,7 @@ export function useBlogPageModel({
     }
 
     try {
-      await unlinkBlogFromProblem(problemSlugFilter, blogId)
+      await sendAPI(new UnlinkBlogFromProblem(problemSlugFilter, blogId))
       model.reload()
       refreshPendingBlogs()
     } catch {
@@ -116,7 +117,7 @@ export function useBlogPageModel({
     setActiveReviewBlogId(blog.id)
     setPendingMessage('')
     try {
-      await acceptBlogProblemSubmission(problemSlugFilter, blog.id)
+      await sendAPI(new AcceptBlogProblemSubmission(problemSlugFilter, blog.id))
       model.reload()
       setPendingBlogs((blogs) => blogs.filter((item) => item.id !== blog.id))
       setPendingMessage(t('blog.problem.accepted'))
@@ -135,7 +136,7 @@ export function useBlogPageModel({
     setActiveReviewBlogId(blog.id)
     setPendingMessage('')
     try {
-      await unlinkBlogFromProblem(problemSlugFilter, blog.id)
+      await sendAPI(new UnlinkBlogFromProblem(problemSlugFilter, blog.id))
       setPendingBlogs((blogs) => blogs.filter((item) => item.id !== blog.id))
       setPendingMessage(t('blog.problem.rejected'))
     } catch {

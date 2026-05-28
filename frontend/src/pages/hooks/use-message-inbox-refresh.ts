@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 
-import { listInbox } from '@/apis/message/ListInbox'
+import { ListInbox } from '@/apis/message/ListInbox'
 import { useMessageStore } from '@/pages/stores/message/use-message-store'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
@@ -16,7 +17,7 @@ export function useMessageInboxRefresh() {
     async (pageRequest?: PageRequest) => {
       beginInboxLoad()
       try {
-        replaceInbox(await listInbox(pageRequest))
+        replaceInbox(await sendAPI(new ListInbox(pageRequest)))
       } catch (error) {
         failInboxLoad(error instanceof HttpClientError ? error.message : fallbackInboxLoadError)
       }

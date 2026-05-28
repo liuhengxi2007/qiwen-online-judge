@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { GetUserProfile } from '@/apis/user/GetUserProfile'
 import type { Username } from '@/objects/user/Username'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/pages/routing/route-policy'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
-import { getUserProfile } from '@/apis/user/GetUserProfile'
 import type { UserProfileResponse } from '@/objects/user/response/UserProfileResponse'
 import { translateMessage } from '@/system/i18n/messages'
 
@@ -31,7 +32,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
     requestIdRef.current += 1
     const nextRequestId = requestIdRef.current
 
-    void getUserProfile(targetUsername)
+    void sendAPI(new GetUserProfile(targetUsername))
       .then((loadedProfile) => {
         if (isCancelled || requestIdRef.current !== nextRequestId) {
           return

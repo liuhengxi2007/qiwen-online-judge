@@ -1,8 +1,9 @@
 import { useEffect, useReducer } from 'react'
 
-import { getUserGroup } from '@/apis/usergroup/GetUserGroup'
+import { GetUserGroup } from '@/apis/usergroup/GetUserGroup'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { translateMessage } from '@/system/i18n/messages'
 
@@ -46,7 +47,7 @@ export function useUserGroupDetailQuery(userGroupSlug: UserGroupSlug) {
   useEffect(() => {
     let cancelled = false
     dispatch({ type: 'load_started' })
-    void getUserGroup(userGroupSlug)
+    void sendAPI(new GetUserGroup(userGroupSlug))
       .then((userGroup) => {
         if (cancelled) {
           return

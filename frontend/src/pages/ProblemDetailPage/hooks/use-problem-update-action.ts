@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react'
 
+import { UpdateProblem } from '@/apis/problem/UpdateProblem'
 import { HttpClientError } from '@/system/api/http-client'
-import { updateProblem } from '@/apis/problem/UpdateProblem'
 import { validateProblemUpdateDraft } from '../functions/problem-form'
 import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useProblemUpdateAction(problemSlug: ProblemSlug) {
   const [isSaving, setIsSaving] = useState(false)
@@ -33,7 +34,7 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
 
       setIsSaving(true)
       try {
-        const updatedProblem = await updateProblem(problemSlug, validation.request)
+        const updatedProblem = await sendAPI(new UpdateProblem(problemSlug, validation.request))
         return { ok: true, problem: updatedProblem, message: t('problem.message.updateSuccess') }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : t('problem.message.updateFailed')

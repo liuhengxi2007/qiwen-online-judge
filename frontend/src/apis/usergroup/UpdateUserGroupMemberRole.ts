@@ -1,23 +1,23 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { UpdateUserGroupMemberRoleRequest } from '@/objects/usergroup/request/UpdateUserGroupMemberRoleRequest'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
-import {
-  fromUserGroupDetailContract,
-  toUpdateUserGroupMemberRoleRequestContract,
-} from '@/apis/usergroup/codecs/UserGroupHttpCodecs'
-import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
-import { postJson } from '@/system/api/http-client'
+import { usernameValue } from '@/objects/user/Username'
 
-export async function updateUserGroupMemberRole(
-  userGroupSlug: UserGroupSlug,
-  targetUsername: Username,
-  request: UpdateUserGroupMemberRoleRequest,
-): Promise<UserGroupDetail> {
-  return postJson(
-    `/api/user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/role`,
-    fromUserGroupDetailContract,
-    toUpdateUserGroupMemberRoleRequestContract(request),
-  )
+export class UpdateUserGroupMemberRole implements APIWithSessionMessage<UserGroupDetail> {
+  declare readonly responseType?: UserGroupDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: UpdateUserGroupMemberRoleRequest
+
+  constructor(userGroupSlug: UserGroupSlug, targetUsername: Username, request: UpdateUserGroupMemberRoleRequest) {
+    this.apiPath = `user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/role`
+    this.request = request
+  }
+
+  body(): UpdateUserGroupMemberRoleRequest {
+    return this.request
+  }
 }

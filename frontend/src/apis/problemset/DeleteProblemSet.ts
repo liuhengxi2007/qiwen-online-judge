@@ -1,11 +1,18 @@
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
-import {
-  decodeSuccessResponse,
-  postJson,
-} from '@/system/api/http-client'
+import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 
-export function deleteProblemSet(problemSetSlug: ProblemSetSlug): Promise<SuccessResponse> {
-  return postJson(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/delete`, decodeSuccessResponse, {})
+export class DeleteProblemSet implements APIWithSessionMessage<SuccessResponse> {
+  declare readonly responseType?: SuccessResponse
+  readonly method = 'POST'
+  readonly apiPath: string
+
+  constructor(problemSetSlug: ProblemSetSlug) {
+    this.apiPath = `problem-sets/${problemSetSlugValue(problemSetSlug)}/delete`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

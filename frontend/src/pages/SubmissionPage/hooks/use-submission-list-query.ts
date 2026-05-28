@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 
-import { getSubmission } from '@/apis/submission/GetSubmission'
-import { listSubmissions } from '@/apis/submission/ListSubmissions'
+import { GetSubmission } from '@/apis/submission/GetSubmission'
+import { ListSubmissions } from '@/apis/submission/ListSubmissions'
 import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
+import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
+import { sendAPI } from '@/system/api/api-message'
 
 function requestKey(request: SubmissionListRequest): string {
   return JSON.stringify({
@@ -52,7 +54,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
       totalItems: 0,
     }
 
-    function mergeSubmissionSummary(summary: SubmissionSummary, detail: Awaited<ReturnType<typeof getSubmission>>): SubmissionSummary {
+    function mergeSubmissionSummary(summary: SubmissionSummary, detail: SubmissionDetail): SubmissionSummary {
       return {
         ...summary,
         status: detail.status,
@@ -84,7 +86,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
       }
 
       refreshInFlight = true
-      void Promise.allSettled(activeSubmissions.map((submission) => getSubmission(submission.id))).then((results) => {
+      void Promise.allSettled(activeSubmissions.map((submission) => sendAPI(new GetSubmission(submission.id)))).then((results) => {
         refreshInFlight = false
         if (cancelled) {
           return
@@ -118,7 +120,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     }
 
     const load = () => {
-      void listSubmissions(activeRequest)
+      void sendAPI(new ListSubmissions(activeRequest))
         .then((loadedResponse) => {
           if (cancelled) {
             return

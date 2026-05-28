@@ -1,8 +1,9 @@
 import { useCallback } from 'react'
 
-import { getNotificationUnreadCount } from '@/apis/notification/GetNotificationUnreadCount'
-import { listNotifications } from '@/apis/notification/ListNotifications'
+import { GetNotificationUnreadCount } from '@/apis/notification/GetNotificationUnreadCount'
+import { ListNotifications } from '@/apis/notification/ListNotifications'
 import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
@@ -19,7 +20,7 @@ export function useNotificationRefresh() {
     async (pageRequest?: PageRequest) => {
       beginNotificationsLoad()
       try {
-        replaceNotifications(await listNotifications(pageRequest))
+        replaceNotifications(await sendAPI(new ListNotifications(pageRequest)))
       } catch (error) {
         failNotificationsLoad(error instanceof HttpClientError ? error.message : fallbackNotificationLoadError)
       }
@@ -29,7 +30,7 @@ export function useNotificationRefresh() {
 
   const refreshUnreadCount = useCallback(async () => {
     try {
-      const response = await getNotificationUnreadCount()
+      const response = await sendAPI(new GetNotificationUnreadCount())
       replaceUnreadCount(response.unreadCount)
     } catch {
       finishUnreadCountLoad()

@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
+import { CreateProblem } from '@/apis/problem/CreateProblem'
 import { HttpClientError } from '@/system/api/http-client'
-import { createProblem } from '@/apis/problem/CreateProblem'
 import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
@@ -13,6 +13,7 @@ import { buildResourceAccessPolicy } from '@/pages/components/resource-access-ed
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { createOwnerOnlyAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
@@ -40,7 +41,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     dispatch({ type: 'submit_started' })
 
     try {
-      const createdProblem = await createProblem(validation.request)
+      const createdProblem = await sendAPI(new CreateProblem(validation.request))
       dispatch({ type: 'submit_succeeded', message: t('problem.message.createSuccess') })
       return createdProblem
     } catch (error) {

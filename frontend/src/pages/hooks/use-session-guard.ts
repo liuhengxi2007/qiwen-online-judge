@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { asSiteManagerSession } from '@/pages/stores/auth/auth-session'
+import { GetSession } from '@/apis/auth/GetSession'
 import { HttpClientError } from '@/system/api/http-client'
-import { getSession } from '@/apis/auth/GetSession'
-import { logout as logoutRequest } from '@/apis/auth/Logout'
+import { Logout } from '@/apis/auth/Logout'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import {
   toSessionExpiredRedirect,
@@ -11,6 +11,7 @@ import {
   toSiteManageDeniedRedirect,
 } from '@/pages/routing/route-policy'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
+import { sendAPI } from '@/system/api/api-message'
 
 type UseSessionGuardOptions = {
   requireSiteManager?: boolean
@@ -28,7 +29,7 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
 
     const syncSession = async () => {
       try {
-        const nextSession = await getSession()
+        const nextSession = await sendAPI(new GetSession())
 
         if (isCancelled) {
           return
@@ -63,7 +64,7 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
   }, [clearSession, options.requireSiteManager, setSession])
 
   const signOut = useCallback(async () => {
-    await logoutRequest()
+    await sendAPI(new Logout()).catch(() => undefined)
     clearSession()
     setNavigationIntent(toSignedOutRedirect())
   }, [clearSession])

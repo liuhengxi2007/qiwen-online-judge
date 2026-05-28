@@ -3,9 +3,10 @@ import { useCallback, useState } from 'react'
 import { toAuthSession } from '@/pages/stores/auth/auth-session'
 import type { RegisterRequest } from '@/objects/auth/request/RegisterRequest'
 import type { RegisterResponse } from '@/objects/auth/response/RegisterResponse'
-import { register } from '@/apis/auth/Register'
+import { Register } from '@/apis/auth/Register'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
+import { sendAPI } from '@/system/api/api-message'
 
 type RegisterMutationResult =
   | { kind: 'succeeded'; data: RegisterResponse }
@@ -24,7 +25,7 @@ export function useRegisterMutation() {
       setNavigationIntent(null)
 
       try {
-        const data = await register(request)
+        const data = await sendAPI(new Register(request))
         setSession(toAuthSession(data))
         setIsSubmitting(false)
         setNavigationIntent({ to: '/' })

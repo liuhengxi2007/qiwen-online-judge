@@ -1,13 +1,14 @@
 import { useState } from 'react'
 
-import { createBlogComment } from '@/apis/blog/CreateBlogComment'
-import { deleteBlog } from '@/apis/blog/DeleteBlog'
-import { deleteBlogComment } from '@/apis/blog/DeleteBlogComment'
-import { submitBlogToProblem } from '@/apis/blog/SubmitBlogToProblem'
-import { updateBlog } from '@/apis/blog/UpdateBlog'
-import { updateBlogComment } from '@/apis/blog/UpdateBlogComment'
-import { voteBlog } from '@/apis/blog/VoteBlog'
-import { voteBlogComment } from '@/apis/blog/VoteBlogComment'
+import { CreateBlogComment } from '@/apis/blog/CreateBlogComment'
+import { CreateBlogCommentReply } from '@/apis/blog/CreateBlogCommentReply'
+import { DeleteBlog } from '@/apis/blog/DeleteBlog'
+import { DeleteBlogComment } from '@/apis/blog/DeleteBlogComment'
+import { SubmitBlogToProblem } from '@/apis/blog/SubmitBlogToProblem'
+import { UpdateBlog } from '@/apis/blog/UpdateBlog'
+import { UpdateBlogComment } from '@/apis/blog/UpdateBlogComment'
+import { VoteBlog } from '@/apis/blog/VoteBlog'
+import { VoteBlogComment } from '@/apis/blog/VoteBlogComment'
 import { blogCommentContentValue, parseBlogCommentContent } from '@/objects/blog/BlogCommentContent'
 import { parseBlogContent } from '@/objects/blog/BlogContent'
 import { parseBlogTitle } from '@/objects/blog/BlogTitle'
@@ -17,6 +18,7 @@ import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
 import type { BlogVote } from '@/objects/blog/BlogVote'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
+import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UseBlogDetailPageModelArgs = {
@@ -52,7 +54,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
 
     setIsVoting(true)
     try {
-      setBlog(await voteBlog(blog.id, { vote }))
+      setBlog(await sendAPI(new VoteBlog(blog.id, { vote })))
     } finally {
       setIsVoting(false)
     }
@@ -87,11 +89,13 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
     }
 
     setBlog(
-      await updateBlog(blog.id, {
-        title: parsedTitle.value,
-        content: parsedContent.value,
-        visibility: editBlogVisibility,
-      }),
+      await sendAPI(
+        new UpdateBlog(blog.id, {
+          title: parsedTitle.value,
+          content: parsedContent.value,
+          visibility: editBlogVisibility,
+        }),
+      ),
     )
     setIsEditingBlog(false)
   }
@@ -101,7 +105,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
       return
     }
 
-    await deleteBlog(blog.id)
+    await sendAPI(new DeleteBlog(blog.id))
     onDeleted()
   }
 
@@ -119,7 +123,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
     setIsSubmittingToProblem(true)
     setSubmitProblemMessage('')
     try {
-      await submitBlogToProblem(parsedProblemSlug.value, blog.id)
+      await sendAPI(new SubmitBlogToProblem(parsedProblemSlug.value, blog.id))
       setSubmitProblemSlug('')
       setSubmitProblemMessage(t('blog.problem.submitCreated'))
     } catch {
@@ -143,7 +147,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
     setIsSubmittingComment(true)
     setCommentErrorMessage('')
     try {
-      setBlog(await createBlogComment(blog.id, { content: parsedContent.value }))
+      setBlog(await sendAPI(new CreateBlogComment(blog.id, { content: parsedContent.value })))
       setCommentContent('')
     } catch {
       setCommentErrorMessage(t('blog.comment.createFailed'))
@@ -166,7 +170,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
     setIsSubmittingReply(true)
     setCommentErrorMessage('')
     try {
-      setBlog(await createBlogComment(blog.id, { content: parsedContent.value }, parentCommentId))
+      setBlog(await sendAPI(new CreateBlogCommentReply(blog.id, parentCommentId, { content: parsedContent.value })))
       setReplyTargetId(null)
       setReplyContent('')
     } catch {
@@ -183,7 +187,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
 
     setVotingCommentId(commentId)
     try {
-      setBlog(await voteBlogComment(blog.id, commentId, { vote }))
+      setBlog(await sendAPI(new VoteBlogComment(blog.id, commentId, { vote })))
     } finally {
       setVotingCommentId(null)
     }
@@ -206,7 +210,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
       return
     }
 
-    setBlog(await updateBlogComment(blog.id, commentId, { content: parsedContent.value }))
+    setBlog(await sendAPI(new UpdateBlogComment(blog.id, commentId, { content: parsedContent.value })))
     setEditingCommentId(null)
     setEditingCommentContent('')
   }
@@ -216,7 +220,7 @@ export function useBlogDetailPageModel({ blog, setBlog, onDeleted }: UseBlogDeta
       return
     }
 
-    setBlog(await deleteBlogComment(blog.id, commentId))
+    setBlog(await sendAPI(new DeleteBlogComment(blog.id, commentId)))
   }
 
   return {

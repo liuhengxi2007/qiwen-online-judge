@@ -1,41 +1,31 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
-import { problemDataFilenameValue } from '@/objects/problem/ProblemDataFilename'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
-import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataUploadResult } from '@/objects/problem/response/ProblemDataUploadResult'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { fromProblemDataUploadResultContract } from '@/apis/problem/codecs/ProblemHttpCodecs'
-import { postMultipart } from '@/system/api/http-client'
 
-export async function uploadProblemDataFile(
-  problemSlug: ProblemSlug,
-  file: File,
-  filename: ProblemDataFilename,
-): Promise<ProblemDataUploadResult> {
-  const formData = new FormData()
-  formData.set('file', file)
-  formData.set('path', problemDataFilenameValue(filename))
+export class UploadProblemDataFile implements APIWithSessionMessage<ProblemDataUploadResult> {
+  declare readonly responseType?: ProblemDataUploadResult
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly file: File
+  private readonly path: ProblemDataFilename | ProblemDataPath
 
-  return postMultipart(
-    `/api/problems/${problemSlugValue(problemSlug)}/data/files`,
-    fromProblemDataUploadResultContract,
-    formData,
-  )
-}
+  constructor(problemSlug: ProblemSlug, file: File, path: ProblemDataFilename | ProblemDataPath) {
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files`
+    this.file = file
+    this.path = path
+  }
 
-export async function saveProblemDataText(
-  problemSlug: ProblemSlug,
-  path: ProblemDataPath,
-  content: string,
-): Promise<ProblemDataUploadResult> {
-  const formData = new FormData()
-  formData.set('file', new File([content], path.split('/').slice(-1)[0] || 'data.txt', { type: 'text/plain' }))
-  formData.set('path', problemDataPathValue(path))
+  body(): undefined {
+    return undefined
+  }
 
-  return postMultipart(
-    `/api/problems/${problemSlugValue(problemSlug)}/data/files`,
-    fromProblemDataUploadResultContract,
-    formData,
-  )
+  formData(): FormData {
+    const formData = new FormData()
+    formData.set('file', this.file)
+    formData.set('path', this.path)
+    return formData
+  }
 }

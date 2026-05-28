@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, LogOut, Mail } from 'lucide-react'
 
-import { logout as logoutRequest } from '@/apis/auth/Logout'
+import { Logout } from '@/apis/auth/Logout'
 import { Button } from '@/components/ui/button'
 import { usernameValue } from '@/objects/user/Username'
 import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
@@ -10,6 +10,7 @@ import { useMessageStore } from '@/pages/stores/message/use-message-store'
 import { useNotificationStore } from '@/pages/stores/notification/use-notification-store'
 import { formatUserDisplayLabel } from '@/pages/objects/user-display-label'
 import { useI18n } from '@/system/i18n/use-i18n'
+import { sendAPI } from '@/system/api/api-message'
 
 type AccountActionsProps = {
   showSignOutLabel?: boolean
@@ -21,7 +22,7 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
   const clearSession = useAuthStore((state) => state.clearSession)
   const navigate = useNavigate()
   const signOut = useCallback(async () => {
-    await logoutRequest().catch(() => undefined)
+    await sendAPI(new Logout()).catch(() => undefined)
     clearSession()
     navigate('/login?notice=signed-out', { replace: true })
   }, [clearSession, navigate])

@@ -1,8 +1,9 @@
 import { useEffect, useReducer } from 'react'
 
-import { getProblem } from '@/apis/problem/GetProblem'
+import { GetProblem } from '@/apis/problem/GetProblem'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 type ProblemDetailQueryState = {
@@ -45,7 +46,7 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug) {
   useEffect(() => {
     let cancelled = false
     dispatch({ type: 'load_started' })
-    void getProblem(problemSlug)
+    void sendAPI(new GetProblem(problemSlug))
       .then((problem) => {
         if (cancelled) {
           return

@@ -1,13 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { fromProblemDetailContract } from '@/apis/problem/codecs/ProblemHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export async function clearProblemData(problemSlug: ProblemSlug): Promise<ProblemDetail> {
-  return postJson(
-    `/api/problems/${problemSlugValue(problemSlug)}/data/clear`,
-    fromProblemDetailContract,
-    {},
-  )
+export class ClearProblemData implements APIWithSessionMessage<ProblemDetail> {
+  declare readonly responseType?: ProblemDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+
+  constructor(problemSlug: ProblemSlug) {
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/clear`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

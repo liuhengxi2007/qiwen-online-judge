@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { addMessageBlock } from '@/apis/message/AddMessageBlock'
-import { listMessageBlocks } from '@/apis/message/ListMessageBlocks'
-import { removeMessageBlock } from '@/apis/message/RemoveMessageBlock'
+import { AddMessageBlock } from '@/apis/message/AddMessageBlock'
+import { ListMessageBlocks } from '@/apis/message/ListMessageBlocks'
+import { RemoveMessageBlock } from '@/apis/message/RemoveMessageBlock'
 import type { MessageBlockEntry } from '@/objects/message/response/MessageBlockEntry'
+import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
-import { listUserSuggestions } from '@/apis/user/ListUserSuggestions'
+import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -33,7 +35,7 @@ export function useUserSettingsBlockList({
       return
     }
 
-    void listMessageBlocks()
+    void sendAPI(new ListMessageBlocks())
       .then((entries) => {
         setBlockedUsers(entries)
         setBlockErrorMessage('')
@@ -49,7 +51,13 @@ export function useUserSettingsBlockList({
     }
 
     const timeoutId = window.setTimeout(() => {
-      void listUserSuggestions(blockSearch)
+      const parsedQuery = parseUserSearchQuery(blockSearch)
+      if (!parsedQuery.ok) {
+        setBlockSuggestions([])
+        return
+      }
+
+      void sendAPI(new ListUserSuggestions(parsedQuery.value))
         .then((items) => {
           setBlockSuggestions(items.filter((item) => item.username !== viewerUsername))
         })
@@ -78,7 +86,7 @@ export function useUserSettingsBlockList({
     async (username: Username) => {
       setIsUpdatingBlocks(true)
       try {
-        const entry = await addMessageBlock(username)
+        const entry = await sendAPI(new AddMessageBlock(username))
         setBlockedUsers((current) => [
           entry,
           ...current.filter((item) => item.user.username !== entry.user.username),
@@ -99,7 +107,7 @@ export function useUserSettingsBlockList({
     async (username: Username) => {
       setIsUpdatingBlocks(true)
       try {
-        await removeMessageBlock(username)
+        await sendAPI(new RemoveMessageBlock(username))
         setBlockedUsers((current) => current.filter((item) => item.user.username !== username))
         setBlockErrorMessage('')
       } catch (error) {

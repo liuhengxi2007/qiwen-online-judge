@@ -1,8 +1,12 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
+import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 
+export class Logout implements APIWithSessionMessage<SuccessResponse> {
+  declare readonly responseType?: SuccessResponse
+  readonly method = 'POST'
+  readonly apiPath = 'auth/logout'
 
-export async function logout(): Promise<void> {
-  await fetch('/api/auth/logout', {
-    method: 'POST',
-    credentials: 'same-origin',
-  }).catch(() => undefined)
+  body(): undefined {
+    return undefined
+  }
 }

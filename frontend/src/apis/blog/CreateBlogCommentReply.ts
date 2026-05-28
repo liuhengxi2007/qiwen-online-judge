@@ -1,23 +1,23 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { BlogCommentId } from '@/objects/blog/BlogCommentId'
 import { blogCommentIdValue } from '@/objects/blog/BlogCommentId'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { blogIdValue } from '@/objects/blog/BlogId'
 import type { CreateBlogCommentRequest } from '@/objects/blog/request/CreateBlogCommentRequest'
-import {
-  fromBlogDetailContract,
-  toCreateBlogCommentRequestContract,
-} from '@/apis/blog/codecs/BlogHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export function createBlogCommentReply(
-  blogId: BlogId,
-  parentCommentId: BlogCommentId,
-  request: CreateBlogCommentRequest,
-): Promise<BlogDetail> {
-  return postJson(
-    `/api/blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(parentCommentId)}/replies`,
-    fromBlogDetailContract,
-    toCreateBlogCommentRequestContract(request),
-  )
+export class CreateBlogCommentReply implements APIWithSessionMessage<BlogDetail> {
+  declare readonly responseType?: BlogDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: CreateBlogCommentRequest
+
+  constructor(blogId: BlogId, parentCommentId: BlogCommentId, request: CreateBlogCommentRequest) {
+    this.apiPath = `blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(parentCommentId)}/replies`
+    this.request = request
+  }
+
+  body(): CreateBlogCommentRequest {
+    return this.request
+  }
 }

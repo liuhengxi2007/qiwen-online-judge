@@ -1,11 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
+import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
-import {
-  decodeSuccessResponse,
-  postJson,
-} from '@/system/api/http-client'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 
-export function deleteAccount(username: Username): Promise<SuccessResponse> {
-  return postJson(`/api/auth/accounts/${encodeURIComponent(usernameValue(username))}/delete`, decodeSuccessResponse, {})
+export class DeleteAccount implements APIWithSessionMessage<SuccessResponse> {
+  declare readonly responseType?: SuccessResponse
+  readonly method = 'POST'
+  readonly apiPath: string
+
+  constructor(username: Username) {
+    this.apiPath = `auth/accounts/${encodeURIComponent(usernameValue(username))}/delete`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

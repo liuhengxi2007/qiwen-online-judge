@@ -1,24 +1,25 @@
+import { apiPath, type APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { HttpClientError } from '@/system/api/http-client'
 
-export async function readProblemDataText(problemSlug: ProblemSlug, path: ProblemDataPath): Promise<string> {
-  const response = await fetch(problemDataPathDownloadUrl(problemSlug, path), {
-    credentials: 'same-origin',
-  })
+export class DownloadProblemDataPath implements APIWithSessionMessage<Blob> {
+  declare readonly responseType?: Blob
+  readonly method = 'GET'
+  readonly apiPath: string
 
-  if (!response.ok) {
-    throw new HttpClientError(
-      response.status === 404 ? 'not-found' : response.status === 403 ? 'forbidden' : response.status === 401 ? 'unauthorized' : 'http',
-      response.statusText || `Unable to read ${problemDataPathValue(path)}.`,
-    )
+  constructor(problemSlug: ProblemSlug, path: ProblemDataPath) {
+    const params = new URLSearchParams()
+    params.set('path', problemDataPathValue(path))
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/file?${params.toString()}`
   }
 
-  return response.text()
-}
+  body(): undefined {
+    return undefined
+  }
 
-export function problemDataPathDownloadUrl(problemSlug: ProblemSlug, path: ProblemDataPath): string {
-  return `/api/problems/${problemSlugValue(problemSlug)}/data/file?path=${encodeURIComponent(problemDataPathValue(path))}`
+  downloadUrl(): string {
+    return apiPath(this)
+  }
 }

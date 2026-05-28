@@ -1,8 +1,9 @@
 import { useEffect, useReducer } from 'react'
 
-import { listProblemSets } from '@/apis/problemset/ListProblemSets'
+import { ListProblemSets } from '@/apis/problemset/ListProblemSets'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
 import type { PageRequest } from '@/objects/shared/PageRequest'
+import { sendAPI } from '@/system/api/api-message'
 
 type ProblemSetPageState = {
   problemSets: ProblemSetSummary[]
@@ -47,7 +48,7 @@ export function useProblemSetPageModel(pageRequest: PageRequest) {
     let cancelled = false
     const nextPageRequest = { page, pageSize }
     dispatch({ type: 'load_started' })
-    void listProblemSets(nextPageRequest)
+    void sendAPI(new ListProblemSets(nextPageRequest))
       .then((response) => {
         if (cancelled) {
           return

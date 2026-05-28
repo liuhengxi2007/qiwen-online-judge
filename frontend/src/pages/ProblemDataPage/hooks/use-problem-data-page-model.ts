@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useReducer } from 'react'
 
-import { clearProblemData } from '@/apis/problem/ClearProblemData'
-import { deleteProblemData } from '@/apis/problem/DeleteProblemData'
-import { deleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
-import { listProblemDataFiles } from '@/apis/problem/ListProblemDataFiles'
-import { listProblemDataTree } from '@/apis/problem/ListProblemDataTree'
-import { problemDataPathDownloadUrl } from '@/apis/problem/DownloadProblemDataPath'
-import { setProblemDataReady } from '@/apis/problem/SetProblemDataReady'
-import { uploadProblemDataArchive } from '@/apis/problem/UploadProblemDataArchive'
-import { uploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
+import { ClearProblemData } from '@/apis/problem/ClearProblemData'
+import { DeleteProblemData } from '@/apis/problem/DeleteProblemData'
+import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
+import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
+import { ListProblemDataFiles } from '@/apis/problem/ListProblemDataFiles'
+import { ListProblemDataTree } from '@/apis/problem/ListProblemDataTree'
+import { SetProblemDataReady } from '@/apis/problem/SetProblemDataReady'
+import { UploadProblemDataArchive } from '@/apis/problem/UploadProblemDataArchive'
+import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
 import { parseProblemDataFilename, problemDataFilenameValue } from '@/objects/problem/ProblemDataFilename'
 import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
@@ -19,6 +19,7 @@ import {
   reduceProblemDataPageState,
 } from '../functions/problem-data-page-state'
 import { useProblemDetailQuery } from '@/pages/hooks/use-problem-detail-query'
+import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -55,7 +56,10 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
     try {
-      const [files, tree] = await Promise.all([listProblemDataFiles(problemSlug), listProblemDataTree(problemSlug)])
+      const [files, tree] = await Promise.all([
+        sendAPI(new ListProblemDataFiles(problemSlug)),
+        sendAPI(new ListProblemDataTree(problemSlug)),
+      ])
       dispatch({ type: 'load_succeeded', files: files.items, tree: tree.items })
       return { ok: true as const }
     } catch (error) {
@@ -86,9 +90,15 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
 
     try {
       const isZipArchive = state.selectedFile.name.toLowerCase().endsWith('.zip')
-      const updatedProblem = isZipArchive
-        ? await uploadProblemDataArchive(problemSlug, state.selectedFile)
-        : await uploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
+      const updatedProblem = await (() => {
+        if (isZipArchive) {
+          const api = new UploadProblemDataArchive(problemSlug, state.selectedFile)
+          return sendMultipartAPI(api, api.formData())
+        }
+
+        const api = new UploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
+        return sendMultipartAPI(api, api.formData())
+      })()
 
       replaceProblem(updatedProblem.problem)
       dispatch({
@@ -111,7 +121,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'delete_started', filename })
 
       try {
-        const updatedProblem = await deleteProblemData(problemSlug, filename)
+        const updatedProblem = await sendAPI(new DeleteProblemData(problemSlug, filename))
         replaceProblem(updatedProblem)
         dispatch({
           type: 'delete_succeeded',
@@ -133,7 +143,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'delete_started', filename: path.split('/').slice(-1)[0] as ProblemDataFilename })
 
       try {
-        const updatedProblem = await deleteProblemDataPath(problemSlug, path)
+        const updatedProblem = await sendAPI(new DeleteProblemDataPath(problemSlug, path))
         replaceProblem(updatedProblem)
         dispatch({
           type: 'delete_succeeded',
@@ -154,7 +164,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     dispatch({ type: 'clear_started' })
 
     try {
-      const updatedProblem = await clearProblemData(problemSlug)
+      const updatedProblem = await sendAPI(new ClearProblemData(problemSlug))
       replaceProblem(updatedProblem)
       dispatch({ type: 'clear_succeeded', message: 'Cleared all data files successfully.' })
       await loadFiles()
@@ -169,7 +179,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const setReady = useCallback(async (ready: boolean): Promise<ReadyResult> => {
     dispatch({ type: 'ready_save_started' })
     try {
-      const updatedProblem = await setProblemDataReady(problemSlug, ready)
+      const updatedProblem = await sendAPI(new SetProblemDataReady(problemSlug, ready))
       replaceProblem(updatedProblem)
       dispatch({
         type: 'ready_save_succeeded',
@@ -209,7 +219,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     uploadSelectedFile,
     deleteDataFile,
     deleteDataPath,
-    downloadDataPathUrl: (path: ProblemDataPath) => problemDataPathDownloadUrl(problemSlug, path),
+    downloadDataPathUrl: (path: ProblemDataPath) => new DownloadProblemDataPath(problemSlug, path).downloadUrl(),
     clearAllDataFiles,
     setReady,
   }

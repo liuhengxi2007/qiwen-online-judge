@@ -1,20 +1,21 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { DirectMessage } from '@/objects/message/response/DirectMessage'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
 import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
 import type { SendDirectMessageRequest } from '@/objects/message/request/SendDirectMessageRequest'
-import {
-  fromDirectMessage,
-  toSendDirectMessageRequest,
-} from '@/apis/message/codecs/MessageHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export function sendDirectMessage(
-  conversationId: MessageConversationId,
-  request: SendDirectMessageRequest,
-): Promise<DirectMessage> {
-  return postJson(
-    `/api/messages/conversations/${encodeURIComponent(messageConversationIdValue(conversationId))}/messages`,
-    fromDirectMessage,
-    toSendDirectMessageRequest(request),
-  )
+export class SendDirectMessage implements APIWithSessionMessage<DirectMessage> {
+  declare readonly responseType?: DirectMessage
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: SendDirectMessageRequest
+
+  constructor(conversationId: MessageConversationId, request: SendDirectMessageRequest) {
+    this.apiPath = `messages/conversations/${encodeURIComponent(messageConversationIdValue(conversationId))}/messages`
+    this.request = request
+  }
+
+  body(): SendDirectMessageRequest {
+    return this.request
+  }
 }

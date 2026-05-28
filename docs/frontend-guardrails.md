@@ -40,7 +40,7 @@ Allowed direction:
 - `system`
   May import `objects/shared` only. Do not import domain objects, APIs, pages, or UI components.
 - `apis/<domain>`
-  May import `objects`, `objects/shared`, peer API codecs, and `system/api`. Never import `pages`.
+  May import `objects`, `objects/shared`, and `system/api`. Never import `pages`.
 - `components/ui`
   May import external UI libraries and `system/i18n` for generic translated labels. Never import pages or domain objects.
 - `pages/stores`
@@ -68,10 +68,9 @@ Rules:
 
 - one endpoint client per file
 - the frontend endpoint basename must match the backend `api/<Name>.scala` basename when both sides expose the endpoint
-- HTTP boundary codecs live in `src/apis/<domain>/codecs/*HttpCodecs.ts`
-- frontend `*ModelHttpCodecs.ts` files are forbidden; same-object parsing,
-  value extraction, and contract mapping live in the matching object file
-- do not add compatibility barrels; import endpoint and codec files directly
+- frontend API codec files are forbidden; same-object parsing, value extraction,
+  and contract mapping live in the matching object file
+- do not add compatibility barrels; import endpoint files directly
 - non-JSON helpers such as download URL builders or realtime event URL helpers live in the matched endpoint file
 - run `node scripts/check-api-alignment.mjs` when endpoint files change
 
@@ -204,7 +203,7 @@ Rules:
 - keep parsing, validation, policy, and state transition logic pure where possible
 - isolate HTTP, browser storage, time, and other runtime effects in APIs, hooks, page stores, or system helpers
 - keep business objects independent of React and UI components
-- keep transport conversion in API codecs, not page components
+- keep transport conversion in object helpers and API endpoint messages, not page components
 
 Prefer one more small pure function and one more explicit typed value over a
 shared mutable state path or helper that mixes business logic with IO.

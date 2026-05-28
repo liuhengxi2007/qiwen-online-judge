@@ -1,30 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemDataFileListResponse } from '@/objects/problem/response/ProblemDataFileListResponse'
-import { parseProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { requestJson } from '@/system/api/http-client'
 
-export async function listProblemDataFiles(problemSlug: ProblemSlug): Promise<ProblemDataFileListResponse> {
-  return requestJson(
-    `/api/problems/${problemSlugValue(problemSlug)}/data`,
-    (value) => {
-      if (typeof value !== 'object' || value === null || !('items' in value) || !Array.isArray(value.items)) {
-        throw new Error('Invalid problem data file list payload.')
-      }
+export class ListProblemDataFiles implements APIWithSessionMessage<ProblemDataFileListResponse> {
+  declare readonly responseType?: ProblemDataFileListResponse
+  readonly method = 'GET'
+  readonly apiPath: string
 
-      const items = value.items.map((item: unknown, index: number) => {
-        if (typeof item !== 'string') {
-          throw new Error(`Invalid problem data filename at index ${index}: expected string.`)
-        }
+  constructor(problemSlug: ProblemSlug) {
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data`
+  }
 
-        const result = parseProblemDataFilename(item)
-        if (!result.ok) {
-          throw new Error(`Invalid problem data filename at index ${index}: ${result.error}`)
-        }
-        return result.value
-      })
-
-      return { items }
-    },
-  )
+  body(): undefined {
+    return undefined
+  }
 }

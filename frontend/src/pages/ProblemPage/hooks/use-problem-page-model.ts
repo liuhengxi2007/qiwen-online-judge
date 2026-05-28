@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { listProblems } from '@/apis/problem/ListProblems'
+import { ListProblems } from '@/apis/problem/ListProblems'
 import type { ProblemListRequest } from '@/objects/problem/request/ProblemListRequest'
 import type { ProblemListResponse } from '@/objects/problem/response/ProblemListResponse'
+import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
 function requestKey(request: ProblemListRequest): string {
@@ -34,7 +35,7 @@ export function useProblemPageModel(request: ProblemListRequest) {
   useEffect(() => {
     let cancelled = false
     const nextRequest = { query, pageRequest: { page, pageSize } }
-    void listProblems(nextRequest)
+    void sendAPI(new ListProblems(nextRequest))
       .then((response) => {
         if (cancelled) {
           return

@@ -3,11 +3,11 @@ import { useCallback, useState } from 'react'
 import { toAuthSession } from '@/pages/stores/auth/auth-session'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
-import { logout } from '@/apis/auth/Logout'
+import { Logout } from '@/apis/auth/Logout'
 import { HttpClientError } from '@/system/api/http-client'
-import { updateManagedAccount, updateOwnAccount } from '@/apis/auth/UpdateAccount'
-import { updateManagedUserPreferences, updateOwnUserPreferences } from '@/apis/user/UpdateUserPreferences'
-import { updateManagedUserProfile, updateOwnUserProfile } from '@/apis/user/UpdateUserProfile'
+import { UpdateAccount } from '@/apis/auth/UpdateAccount'
+import { UpdateUserPreferences } from '@/apis/user/UpdateUserPreferences'
+import { UpdateUserProfile } from '@/apis/user/UpdateUserProfile'
 import type { UpdateManagedUserAccountRequest } from '@/objects/auth/request/UpdateManagedUserAccountRequest'
 import type { UpdateManagedUserPreferencesRequest } from '@/objects/user/request/UpdateManagedUserPreferencesRequest'
 import type { UpdateManagedUserProfileRequest } from '@/objects/user/request/UpdateManagedUserProfileRequest'
@@ -16,6 +16,7 @@ import type { UpdateOwnPreferencesRequest } from '@/objects/user/request/UpdateO
 import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnProfileRequest'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
+import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmitSettingsParams =
@@ -75,17 +76,17 @@ export function useUserSettingsMutation() {
         const updatedUser = await (() => {
           switch (params.kind) {
             case 'own_profile':
-              return updateOwnUserProfile(params.targetUsername, params.request)
+              return sendAPI(new UpdateUserProfile(params.targetUsername, params.request))
             case 'own_preferences':
-              return updateOwnUserPreferences(params.targetUsername, params.request)
+              return sendAPI(new UpdateUserPreferences(params.targetUsername, params.request))
             case 'own_account':
-              return updateOwnAccount(params.targetUsername, params.request)
+              return sendAPI(new UpdateAccount(params.targetUsername, params.request))
             case 'managed_profile':
-              return updateManagedUserProfile(params.targetUsername, params.request)
+              return sendAPI(new UpdateUserProfile(params.targetUsername, params.request))
             case 'managed_preferences':
-              return updateManagedUserPreferences(params.targetUsername, params.request)
+              return sendAPI(new UpdateUserPreferences(params.targetUsername, params.request))
             case 'managed_account':
-              return updateManagedAccount(params.targetUsername, params.request)
+              return sendAPI(new UpdateAccount(params.targetUsername, params.request))
           }
         })()
 
@@ -96,7 +97,7 @@ export function useUserSettingsMutation() {
         }
 
         if (shouldSignOutAfterUpdate) {
-          await logout()
+          await sendAPI(new Logout()).catch(() => undefined)
           params.setViewer(null)
           setNavigationIntent(toPasswordChangedRedirect())
           return { kind: 'updated_and_signed_out' }

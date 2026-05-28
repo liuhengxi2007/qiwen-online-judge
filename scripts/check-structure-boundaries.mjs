@@ -51,10 +51,7 @@ const frontendAllowedCanonicalPageVariantImports = [
 const backendBlockedObjectSegments = new Set(['application', 'routes', 'table'])
 const backendApplicationWireCodecImportPattern = /^io\.circe(?:\.|$|\{)/
 const backendObjectPersistenceHelperPattern = /\bdef\s+(?:toDatabase|fromDatabase)\b/g
-const frontendApiRootCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/[A-Za-z0-9_]*HttpCodecs\.ts$/
-const frontendApiCodecIndexPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\/index\.ts$/
-const frontendApiCodecFilePattern = /^frontend\/src\/apis\/([^/]+)\/codecs\/([^/]+)\.ts$/
-const frontendApiCodecBasenamePattern = /^[A-Za-z0-9_]*HttpCodecs$/
+const frontendApiCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\//
 const frontendObjectRoot = 'frontend/src/objects/'
 const frontendObjectFileBasenamePattern = /^[A-Z][A-Za-z0-9]*$/
 const frontendObjectAllowedSubdirectories = new Set(['request', 'response'])
@@ -379,55 +376,17 @@ function checkRemovedFrontendResidueImport(filePath, errors) {
   }
 }
 
-function addCodecFile(map, domain, basename, filePath) {
-  const domainFiles = map.get(domain) ?? new Map()
-  domainFiles.set(basename, filePath)
-  map.set(domain, domainFiles)
-}
-
-function collectFrontendHttpCodecFiles(files, errors) {
-  const codecsByDomain = new Map()
-
+function checkForbiddenFrontendApiCodecFiles(files, errors) {
   for (const filePath of files) {
-    if (frontendApiRootCodecPathPattern.test(filePath)) {
-      errors.push(`${filePath} is a misplaced frontend codec file; use apis/<domain>/codecs/*HttpCodecs.ts`)
-      continue
+    if (frontendApiCodecPathPattern.test(filePath)) {
+      errors.push(`${filePath} is a forbidden frontend API codec file; keep contract mapping in object files and endpoint messages`)
     }
-
-    if (frontendApiCodecIndexPathPattern.test(filePath)) {
-      errors.push(`${filePath} is a forbidden frontend codec barrel; import codec files directly`)
-      continue
-    }
-
-    const match = filePath.match(frontendApiCodecFilePattern)
-    if (!match) {
-      continue
-    }
-
-    const [, domain, basename] = match
-    if (basename.endsWith('.test')) {
-      continue
-    }
-
-    if (basename.endsWith('ModelHttpCodecs')) {
-      errors.push(`${filePath} is a forbidden frontend model codec; keep same-object codecs in object files`)
-      continue
-    }
-
-    if (!frontendApiCodecBasenamePattern.test(basename)) {
-      errors.push(`${filePath} must be named *HttpCodecs.ts`)
-      continue
-    }
-
-    addCodecFile(codecsByDomain, domain, basename, filePath)
   }
-
-  return codecsByDomain
 }
 
-function checkFrontendHttpCodecLayout(frontendFiles, backendFiles, errors) {
+function checkFrontendApiCodecLayout(frontendFiles, backendFiles, errors) {
   const _ = backendFiles
-  collectFrontendHttpCodecFiles(frontendFiles, errors)
+  checkForbiddenFrontendApiCodecFiles(frontendFiles, errors)
 }
 
 function extractScalaImports(source) {
@@ -707,7 +666,7 @@ function run() {
     checkFrontendObjectFileLayout(filePath, errors)
   }
 
-  checkFrontendHttpCodecLayout(frontendFiles, backendDomainFiles, errors)
+  checkFrontendApiCodecLayout(frontendFiles, backendDomainFiles, errors)
   checkBackendDomainUtilsAllowlist(backendDomainFiles, errors)
 
   for (const filePath of walk('frontend/src/objects', new Set(['.ts', '.tsx']))) {

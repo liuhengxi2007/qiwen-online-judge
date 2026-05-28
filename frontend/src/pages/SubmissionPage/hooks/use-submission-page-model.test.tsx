@@ -28,14 +28,6 @@ vi.mock('./use-submission-list-query', () => ({
   useSubmissionListQuery: (request: SubmissionListRequest) => queryState.implementation(request),
 }))
 
-vi.mock('@/apis/problem/ListProblemSuggestions', () => ({
-  listProblemSuggestions: vi.fn(),
-}))
-
-vi.mock('@/apis/user/ListUserSuggestions', () => ({
-  listUserSuggestions: vi.fn(),
-}))
-
 let currentSearch = ''
 
 function LocationCapture() {

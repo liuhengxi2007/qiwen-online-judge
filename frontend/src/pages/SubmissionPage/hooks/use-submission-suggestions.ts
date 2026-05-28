@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 
-import { listProblemSuggestions } from '@/apis/problem/ListProblemSuggestions'
+import { ListProblemSuggestions } from '@/apis/problem/ListProblemSuggestions'
+import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
-import { listUserSuggestions } from '@/apis/user/ListUserSuggestions'
+import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
+import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
+import { sendAPI } from '@/system/api/api-message'
 
 type UseSubmissionSuggestionsArgs = {
   usernameFilterInput: string
@@ -30,8 +33,14 @@ export function useSubmissionSuggestions({
 
     let cancelled = false
     const timeoutId = window.setTimeout(() => {
+      const parsedQuery = parseUserSearchQuery(usernameFilterInput)
+      if (!parsedQuery.ok) {
+        setUserSuggestions([])
+        return
+      }
+
       setIsLoadingUserSuggestions(true)
-      void listUserSuggestions(usernameFilterInput.trim())
+      void sendAPI(new ListUserSuggestions(parsedQuery.value))
         .then((suggestions) => {
           if (!cancelled) {
             setUserSuggestions(suggestions)
@@ -59,8 +68,14 @@ export function useSubmissionSuggestions({
 
     let cancelled = false
     const timeoutId = window.setTimeout(() => {
+      const parsedQuery = parseProblemSearchQuery(problemFilterInput)
+      if (!parsedQuery.ok) {
+        setProblemSuggestions([])
+        return
+      }
+
       setIsLoadingProblemSuggestions(true)
-      void listProblemSuggestions(problemFilterInput.trim())
+      void sendAPI(new ListProblemSuggestions(parsedQuery.value))
         .then((suggestions) => {
           if (!cancelled) {
             setProblemSuggestions(suggestions)

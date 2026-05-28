@@ -1,11 +1,18 @@
+import type { APIMessage } from '@/system/api/api-message'
 import type { RegisterRequest } from '@/objects/auth/request/RegisterRequest'
 import type { RegisterResponse } from '@/objects/auth/response/RegisterResponse'
-import {
-  fromRegisterResponseContract,
-  toRegisterRequestContract,
-} from '@/apis/auth/codecs/AuthHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export async function register(request: RegisterRequest): Promise<RegisterResponse> {
-  return postJson('/api/auth/register', fromRegisterResponseContract, toRegisterRequestContract(request))
+export class Register implements APIMessage<RegisterResponse> {
+  declare readonly responseType?: RegisterResponse
+  readonly method = 'POST'
+  readonly apiPath = 'auth/register'
+  private readonly request: RegisterRequest
+
+  constructor(request: RegisterRequest) {
+    this.request = request
+  }
+
+  body(): RegisterRequest {
+    return this.request
+  }
 }

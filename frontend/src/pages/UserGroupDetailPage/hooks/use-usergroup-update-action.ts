@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 
-import { updateUserGroup } from '@/apis/usergroup/UpdateUserGroup'
+import { UpdateUserGroup } from '@/apis/usergroup/UpdateUserGroup'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateUserGroupUpdateDraft } from '../functions/usergroup-form'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -23,7 +24,7 @@ export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
 
       setIsSaving(true)
       try {
-        const updatedUserGroup = await updateUserGroup(userGroupSlug, validation.request)
+        const updatedUserGroup = await sendAPI(new UpdateUserGroup(userGroupSlug, validation.request))
         return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.updateSuccess') }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : t('userGroup.message.updateFailed')

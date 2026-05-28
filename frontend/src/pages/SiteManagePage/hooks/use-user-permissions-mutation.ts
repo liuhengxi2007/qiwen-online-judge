@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react'
 
 import type { Username } from '@/objects/user/Username'
+import { UpdateAccountPermissions } from '@/apis/auth/UpdateAccountPermissions'
 import { HttpClientError } from '@/system/api/http-client'
-import { updateAccountPermissions } from '@/apis/auth/UpdateAccountPermissions'
 import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { toSiteManageDeniedRedirect } from '@/pages/routing/route-policy'
+import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
 type SavePermissionsResult =
@@ -24,7 +25,7 @@ export function useUserPermissionsMutation() {
       setNavigationIntent(null)
 
       try {
-        const updatedUser = await updateAccountPermissions(targetUsername, nextPermissions)
+        const updatedUser = await sendAPI(new UpdateAccountPermissions(targetUsername, nextPermissions))
         setUpdatingUsername(null)
         return { kind: 'updated', user: updatedUser }
       } catch (error) {

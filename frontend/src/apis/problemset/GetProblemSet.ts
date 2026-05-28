@@ -1,9 +1,18 @@
+import type { APIMessage } from '@/system/api/api-message'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
-import { fromProblemSetDetailContract } from '@/apis/problemset/codecs/ProblemSetHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
 
-export async function getProblemSet(problemSetSlug: ProblemSetSlug): Promise<ProblemSetDetail> {
-  return requestJson(`/api/problem-sets/${problemSetSlugValue(problemSetSlug)}`, fromProblemSetDetailContract)
+export class GetProblemSet implements APIMessage<ProblemSetDetail> {
+  declare readonly responseType?: ProblemSetDetail
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(problemSetSlug: ProblemSetSlug) {
+    this.apiPath = `problem-sets/${problemSetSlugValue(problemSetSlug)}`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

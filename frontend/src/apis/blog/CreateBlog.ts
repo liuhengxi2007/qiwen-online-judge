@@ -1,11 +1,18 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
 import type { CreateBlogRequest } from '@/objects/blog/request/CreateBlogRequest'
-import {
-  fromBlogSummaryContract,
-  toCreateBlogRequestContract,
-} from '@/apis/blog/codecs/BlogHttpCodecs'
-import { postJson } from '@/system/api/http-client'
 
-export async function createBlog(request: CreateBlogRequest): Promise<BlogSummary> {
-  return postJson('/api/blogs', fromBlogSummaryContract, toCreateBlogRequestContract(request))
+export class CreateBlog implements APIWithSessionMessage<BlogSummary> {
+  declare readonly responseType?: BlogSummary
+  readonly method = 'POST'
+  readonly apiPath = 'blogs'
+  private readonly request: CreateBlogRequest
+
+  constructor(request: CreateBlogRequest) {
+    this.request = request
+  }
+
+  body(): CreateBlogRequest {
+    return this.request
+  }
 }

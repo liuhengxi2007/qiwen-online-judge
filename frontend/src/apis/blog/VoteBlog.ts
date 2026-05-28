@@ -1,13 +1,21 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
-import type { VoteBlogRequest } from '@/objects/blog/request/VoteBlogRequest'
-import { blogIdValue } from '@/objects/blog/BlogId'
-import {
-  fromBlogDetailContract,
-  toVoteBlogRequestContract,
-} from '@/apis/blog/codecs/BlogHttpCodecs'
 import type { BlogId } from '@/objects/blog/BlogId'
-import { postJson } from '@/system/api/http-client'
+import { blogIdValue } from '@/objects/blog/BlogId'
+import type { VoteBlogRequest } from '@/objects/blog/request/VoteBlogRequest'
 
-export async function voteBlog(blogId: BlogId, request: VoteBlogRequest): Promise<BlogDetail> {
-  return postJson(`/api/blogs/${blogIdValue(blogId)}/vote`, fromBlogDetailContract, toVoteBlogRequestContract(request))
+export class VoteBlog implements APIWithSessionMessage<BlogDetail> {
+  declare readonly responseType?: BlogDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: VoteBlogRequest
+
+  constructor(blogId: BlogId, request: VoteBlogRequest) {
+    this.apiPath = `blogs/${blogIdValue(blogId)}/vote`
+    this.request = request
+  }
+
+  body(): VoteBlogRequest {
+    return this.request
+  }
 }

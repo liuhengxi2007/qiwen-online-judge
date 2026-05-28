@@ -1,13 +1,22 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { NotificationListResponse } from '@/objects/notification/response/NotificationListResponse'
-import { fromNotificationListResponse } from '@/apis/notification/codecs/NotificationHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
-export function listNotifications(pageRequest?: PageRequest): Promise<NotificationListResponse> {
-  const url = new URL('/api/notifications', window.location.origin)
-  if (pageRequest) {
-    url.searchParams.set('page', String(pageRequest.page))
-    url.searchParams.set('pageSize', String(pageRequest.pageSize))
+export class ListNotifications implements APIWithSessionMessage<NotificationListResponse> {
+  declare readonly responseType?: NotificationListResponse
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(pageRequest?: PageRequest) {
+    const params = new URLSearchParams()
+    if (pageRequest) {
+      params.set('page', String(pageRequest.page))
+      params.set('pageSize', String(pageRequest.pageSize))
+    }
+    this.apiPath = `notifications${params.size > 0 ? `?${params.toString()}` : ''}`
   }
-  return requestJson(url.pathname + url.search, fromNotificationListResponse)
+
+  body(): undefined {
+    return undefined
+  }
 }

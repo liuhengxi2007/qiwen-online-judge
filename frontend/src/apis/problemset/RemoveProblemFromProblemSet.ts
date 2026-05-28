@@ -1,24 +1,20 @@
-import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
-import { fromProblemSetDetailContract } from '@/apis/problemset/codecs/ProblemSetHttpCodecs'
-import { postJson } from '@/system/api/http-client'
+import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
-export function removeProblemFromProblemSet(
-  problemSetSlug: ProblemSetSlug,
-  problemSlug: ProblemSlug,
-): Promise<ProblemSetDetail> {
-  return removeProblemFromProblemSetInternal(problemSetSlug, problemSlug)
-}
+export class RemoveProblemFromProblemSet implements APIWithSessionMessage<ProblemSetDetail> {
+  declare readonly responseType?: ProblemSetDetail
+  readonly method = 'POST'
+  readonly apiPath: string
 
-async function removeProblemFromProblemSetInternal(
-  problemSetSlug: ProblemSetSlug,
-  problemSlug: ProblemSlug,
-): Promise<ProblemSetDetail> {
-  return postJson(
-    `/api/problem-sets/${problemSetSlugValue(problemSetSlug)}/problems/${problemSlug}/remove`,
-    fromProblemSetDetailContract,
-    {},
-  )
+  constructor(problemSetSlug: ProblemSetSlug, problemSlug: ProblemSlug) {
+    this.apiPath = `problem-sets/${problemSetSlugValue(problemSetSlug)}/problems/${problemSlugValue(problemSlug)}/remove`
+  }
+
+  body(): undefined {
+    return undefined
+  }
 }

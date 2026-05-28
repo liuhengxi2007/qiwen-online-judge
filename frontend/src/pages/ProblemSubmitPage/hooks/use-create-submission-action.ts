@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { createSubmission } from '@/apis/submission/CreateSubmission'
+import { CreateSubmission } from '@/apis/submission/CreateSubmission'
 import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 export function useCreateSubmissionAction(createFailedMessage: string) {
@@ -19,7 +20,7 @@ export function useCreateSubmissionAction(createFailedMessage: string) {
       setStatusMessage('')
 
       try {
-        const submission = await createSubmission(request)
+        const submission = await sendAPI(new CreateSubmission(request))
         navigate(`/submissions/${submissionIdValue(submission.id)}`)
       } catch (error) {
         setErrorMessage(error instanceof HttpClientError ? error.message : createFailedMessage)

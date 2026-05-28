@@ -6,17 +6,16 @@ import type { SubmissionListResponse } from '@/objects/submission/response/Submi
 import { useSubmissionListQuery } from './use-submission-list-query'
 
 const submissionClient = vi.hoisted(() => ({
-  getSubmission: vi.fn(),
-  listSubmissions: vi.fn(),
+  sendAPI: vi.fn(),
 }))
 
-vi.mock('@/apis/submission/GetSubmission', () => ({
-  getSubmission: submissionClient.getSubmission,
-}))
-
-vi.mock('@/apis/submission/ListSubmissions', () => ({
-  listSubmissions: submissionClient.listSubmissions,
-}))
+vi.mock('@/system/api/api-message', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/system/api/api-message')>()
+  return {
+    ...actual,
+    sendAPI: submissionClient.sendAPI,
+  }
+})
 
 function emptyResponseFor(request: SubmissionListRequest): SubmissionListResponse {
   return {
@@ -29,11 +28,23 @@ function emptyResponseFor(request: SubmissionListRequest): SubmissionListRespons
 
 describe('useSubmissionListQuery', () => {
   beforeEach(() => {
-    submissionClient.getSubmission.mockReset()
-    submissionClient.listSubmissions.mockReset()
-    submissionClient.listSubmissions.mockImplementation((request: SubmissionListRequest) =>
-      Promise.resolve(emptyResponseFor(request)),
-    )
+    submissionClient.sendAPI.mockReset()
+    submissionClient.sendAPI.mockImplementation((message: { apiPath: string }) => {
+      const url = new URL(`http://example.test/${message.apiPath}`)
+      return Promise.resolve(
+        emptyResponseFor({
+          userQuery: null,
+          problemQuery: null,
+          verdict: 'all',
+          sort: 'submitted',
+          direction: 'desc',
+          pageRequest: {
+            page: Number(url.searchParams.get('page') ?? 1),
+            pageSize: Number(url.searchParams.get('pageSize') ?? 10),
+          },
+        }),
+      )
+    })
   })
 
   it('loads submissions with the nested page request preserved from the request key', async () => {
@@ -52,7 +63,11 @@ describe('useSubmissionListQuery', () => {
     renderHook(() => useSubmissionListQuery(request), { reactStrictMode: false })
 
     await waitFor(() => {
-      expect(submissionClient.listSubmissions).toHaveBeenCalledWith(request)
+      expect(submissionClient.sendAPI).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiPath: 'submissions?verdict=all&sort=submitted&direction=desc&page=3&pageSize=25',
+        }),
+      )
     })
   })
 })

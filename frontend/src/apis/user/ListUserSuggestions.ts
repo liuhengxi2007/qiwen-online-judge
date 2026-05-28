@@ -1,21 +1,19 @@
+import type { APIMessage } from '@/system/api/api-message'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
-import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
-import { fromUserIdentityContract } from '@/apis/user/codecs/UserHttpCodecs'
-import { requestJson } from '@/system/api/http-client'
+import type { UserSearchQuery } from '@/objects/user/request/UserSearchQuery'
 
-export async function listUserSuggestions(query: string): Promise<UserIdentity[]> {
-  const parsedQuery = parseUserSearchQuery(query)
-  if (!parsedQuery.ok) {
-    return []
+export class ListUserSuggestions implements APIMessage<UserIdentity[]> {
+  declare readonly responseType?: UserIdentity[]
+  readonly method = 'GET'
+  readonly apiPath: string
+
+  constructor(query: UserSearchQuery) {
+    const params = new URLSearchParams()
+    params.set('q', query)
+    this.apiPath = `users/suggestions?${params.toString()}`
   }
 
-  const url = new URL('/api/users/suggestions', window.location.origin)
-  url.searchParams.set('q', parsedQuery.value)
-  return requestJson(url.pathname + url.search, (value) => {
-    if (!Array.isArray(value)) {
-      throw new Error('Invalid user suggestion payload.')
-    }
-
-    return value.map(fromUserIdentityContract)
-  })
+  body(): undefined {
+    return undefined
+  }
 }

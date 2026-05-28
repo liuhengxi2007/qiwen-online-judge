@@ -4,8 +4,9 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
 import type { NavigationIntent } from '@/pages/routing/navigation-intent'
 import { toForbiddenRedirect } from '@/pages/routing/route-policy'
+import { GetUserSettings } from '@/apis/user/GetUserSettings'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
-import { getUserSettings } from '@/apis/user/GetUserSettings'
 import { translateMessage } from '@/system/i18n/messages'
 
 type UseUserSettingsQueryArgs = {
@@ -36,7 +37,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
     requestIdRef.current += 1
     const nextRequestId = requestIdRef.current
 
-    void getUserSettings(targetUsername)
+    void sendAPI(new GetUserSettings(targetUsername))
       .then((loadedUser) => {
         if (isCancelled) {
           return

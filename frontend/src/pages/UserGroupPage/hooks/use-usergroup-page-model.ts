@@ -1,12 +1,13 @@
 import { useEffect, useReducer } from 'react'
 
-import { listUserGroups } from '@/apis/usergroup/ListUserGroups'
+import { ListUserGroups } from '@/apis/usergroup/ListUserGroups'
 import {
   initialUserGroupPageState,
   reduceUserGroupPageState,
 } from '../functions/usergroup-page-state'
 import { translateMessage } from '@/system/i18n/messages'
 import type { PageRequest } from '@/objects/shared/PageRequest'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useUserGroupPageModel(pageRequest: PageRequest) {
   const page = pageRequest.page
@@ -17,7 +18,7 @@ export function useUserGroupPageModel(pageRequest: PageRequest) {
     let cancelled = false
     const nextPageRequest = { page, pageSize }
     dispatch({ type: 'load_started' })
-    void listUserGroups(nextPageRequest)
+    void sendAPI(new ListUserGroups(nextPageRequest))
       .then((response) => {
         if (cancelled) {
           return

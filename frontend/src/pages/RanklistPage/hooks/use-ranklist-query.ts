@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { listAcceptedRanklist } from '@/apis/user/ListAcceptedRanklist'
-import { listContributionRanklist } from '@/apis/user/ListContributionRanklist'
+import { ListAcceptedRanklist } from '@/apis/user/ListAcceptedRanklist'
+import { ListContributionRanklist } from '@/apis/user/ListContributionRanklist'
 import type { UserAcceptedRanklistItem } from '@/objects/user/response/UserAcceptedRanklistItem'
 import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'
 import type { PageResponse } from '@/objects/shared/PageResponse'
+import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
 type UseRanklistQueryArgs = {
@@ -39,7 +40,7 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
     contributionRequestIdRef.current += 1
     const nextRequestId = contributionRequestIdRef.current
 
-    void listContributionRanklist(contributionPage)
+    void sendAPI(new ListContributionRanklist(contributionPage))
       .then((response) => {
         if (isCancelled || contributionRequestIdRef.current !== nextRequestId) {
           return
@@ -73,7 +74,7 @@ export function useRanklistQuery({ acceptedPage, contributionPage }: UseRanklist
     acceptedRequestIdRef.current += 1
     const nextRequestId = acceptedRequestIdRef.current
 
-    void listAcceptedRanklist(acceptedPage)
+    void sendAPI(new ListAcceptedRanklist(acceptedPage))
       .then((response) => {
         if (isCancelled || acceptedRequestIdRef.current !== nextRequestId) {
           return

@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 
-import { deleteSubmission } from '@/apis/submission/DeleteSubmission'
-import { rejudgeSubmission } from '@/apis/submission/RejudgeSubmission'
+import { DeleteSubmission } from '@/apis/submission/DeleteSubmission'
+import { RejudgeSubmission } from '@/apis/submission/RejudgeSubmission'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
+import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 type UseSubmissionDetailActionsOptions = {
@@ -28,7 +29,7 @@ export function useSubmissionDetailActions({
     setActionErrorMessage('')
     setIsRejudging(true)
     try {
-      const submission = await rejudgeSubmission(submissionId)
+      const submission = await sendAPI(new RejudgeSubmission(submissionId))
       replaceSubmission(submission)
     } catch (error) {
       setActionErrorMessage(error instanceof HttpClientError ? error.message : rejudgeFailedMessage)
@@ -41,7 +42,7 @@ export function useSubmissionDetailActions({
     setActionErrorMessage('')
     setIsDeleting(true)
     try {
-      await deleteSubmission(submissionId)
+      await sendAPI(new DeleteSubmission(submissionId))
       setDeleted(true)
     } catch (error) {
       setActionErrorMessage(error instanceof HttpClientError ? error.message : deleteFailedMessage)

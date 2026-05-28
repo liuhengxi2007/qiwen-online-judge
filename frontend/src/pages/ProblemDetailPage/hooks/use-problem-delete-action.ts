@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react'
 
+import { DeleteProblem } from '@/apis/problem/DeleteProblem'
 import { HttpClientError } from '@/system/api/http-client'
-import { deleteProblem } from '@/apis/problem/DeleteProblem'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { sendAPI } from '@/system/api/api-message'
 
 export function useProblemDeleteAction(problemSlug: ProblemSlug) {
   const [isDeleting, setIsDeleting] = useState(false)
@@ -10,7 +11,7 @@ export function useProblemDeleteAction(problemSlug: ProblemSlug) {
   const deleteCurrentProblem = useCallback(async (): Promise<{ ok: true; message: string } | { ok: false; message: string }> => {
     setIsDeleting(true)
     try {
-      await deleteProblem(problemSlug)
+      await sendAPI(new DeleteProblem(problemSlug))
       return { ok: true, message: 'Problem deleted.' }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem.'

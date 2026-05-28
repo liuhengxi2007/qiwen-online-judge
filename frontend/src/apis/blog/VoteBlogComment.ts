@@ -1,23 +1,23 @@
+import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { BlogCommentId } from '@/objects/blog/BlogCommentId'
 import { blogCommentIdValue } from '@/objects/blog/BlogCommentId'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
-import type { VoteBlogCommentRequest } from '@/objects/blog/request/VoteBlogCommentRequest'
-import { blogIdValue } from '@/objects/blog/BlogId'
-import {
-  fromBlogDetailContract,
-  toVoteBlogCommentRequestContract,
-} from '@/apis/blog/codecs/BlogHttpCodecs'
 import type { BlogId } from '@/objects/blog/BlogId'
-import { postJson } from '@/system/api/http-client'
+import { blogIdValue } from '@/objects/blog/BlogId'
+import type { VoteBlogCommentRequest } from '@/objects/blog/request/VoteBlogCommentRequest'
 
-export async function voteBlogComment(
-  blogId: BlogId,
-  commentId: BlogCommentId,
-  request: VoteBlogCommentRequest,
-): Promise<BlogDetail> {
-  return postJson(
-    `/api/blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(commentId)}/vote`,
-    fromBlogDetailContract,
-    toVoteBlogCommentRequestContract(request),
-  )
+export class VoteBlogComment implements APIWithSessionMessage<BlogDetail> {
+  declare readonly responseType?: BlogDetail
+  readonly method = 'POST'
+  readonly apiPath: string
+  private readonly request: VoteBlogCommentRequest
+
+  constructor(blogId: BlogId, commentId: BlogCommentId, request: VoteBlogCommentRequest) {
+    this.apiPath = `blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(commentId)}/vote`
+    this.request = request
+  }
+
+  body(): VoteBlogCommentRequest {
+    return this.request
+  }
 }
