@@ -3,7 +3,7 @@ package domains.problem.http
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.objects.AuthUser
-import domains.problem.application.{ProblemDataStorage, ProblemDataUploadPreparation}
+import domains.problem.utils.{ProblemDataStorage, ProblemDataUploadPreparation}
 import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.objects.response.{ProblemDataTreeResponse, ProblemDetail}
 import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}

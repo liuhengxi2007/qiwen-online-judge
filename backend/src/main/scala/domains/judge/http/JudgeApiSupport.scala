@@ -1,7 +1,7 @@
 package domains.judge.http
 
 import cats.effect.IO
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import org.http4s.Request
 import org.typelevel.ci.CIString
 import shared.http.{ApiMessages, HttpApiError}

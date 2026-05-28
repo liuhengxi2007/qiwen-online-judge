@@ -20,6 +20,8 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - `shared/http`: shared HTTP transport objects, codecs, API paths, and small response/error helpers
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
+- `src/main/scala/domains/<domain>/utils`
+  - Owner-domain support code such as small runtime adapters, parsers, constructors, event hubs, and storage/session/config helpers
 
 ## Backend File Templates
 
@@ -27,11 +29,12 @@ Backend domains should use consistent file-role templates instead of ad hoc mixe
 
 These templates define the default shape for a business domain, not a minimum file count.
 
-For `application`:
+For `utils`:
 
-- do not add new endpoint orchestration here
-- keep only reusable infrastructure adapters or pure helpers that cannot live closer to `objects`, `rules`, `table`, storage, or events
-- migrate legacy command/query/mutation files into API-object `plan(...)` bodies or smaller rule/adapter modules when touching those endpoints
+- keep only owner-domain support code that cannot live closer to `objects`, `rules`, `table`, or `http/utils`
+- allowed examples include small runtime adapters, parser/constructor helpers, event hubs, and session/storage/config boundaries owned by that domain
+- do not put API orchestration here; the API object's `plan(...)` remains the readable workflow
+- do not create a domain `application` package for new code
 
 For `http`:
 
@@ -62,8 +65,8 @@ Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids,
 Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `objects/internal`. These types are not frontend mirrors and do not participate in HTTP contract alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
 `objects/` files must not import Circe or define JSON encoders/decoders. HTTP JSON codecs belong in the owning domain's `http/codec`, or in `shared/http/codec` for shared transport primitives. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
 Bare `objects/` files must not import `objects/request` or `objects/response`; dependency direction is from request/response payloads toward core object types only.
-`objects/request` and `objects/response` must not import `application`, `http`, or `table`.
-`objects/` must not import `application`, `http`, or `table`; if an object transition needs data from a response shape, put that adapter in `application` support code.
+`objects/request` and `objects/response` must not import `utils`, `http`, or `table`.
+`objects/` must not import `utils`, `http`, or `table`; if an object transition needs data from a response shape, put that adapter in domain-owned support code outside `objects`.
 
 Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol objects because those types are cross-process wire contracts rather than backend business models.
 
@@ -93,27 +96,21 @@ def deleteBook(...) = ...
 Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
-Do not move endpoint orchestration into `objects`, `application`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in rules/helpers and SQL belongs in table modules.
+Do not move endpoint orchestration into `objects`, `utils`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in rules/helpers and SQL belongs in table modules.
 
-Current application-adapter exceptions:
+Current domain-owned utility examples:
 
-- `domains/problem/application/LocalProblemDataStorage.scala`
-- `domains/problem/application/MinioProblemDataStorage.scala`
-- `domains/problem/application/ProblemDataStorage.scala`
-- `domains/problem/application/ProblemDataStorageConfig.scala`
-- `domains/problem/application/ProblemDataUploadPreparation.scala`
-- `domains/auth/application/*Session*.scala`
-- `domains/auth/application/PasswordHasher.scala`
-- `domains/message/application/MessageEventHub.scala`
-- `domains/notification/application/NotificationEventHub.scala`
-- `domains/notification/application/NotificationStreamEvent.scala`
-- `domains/judge/application/JudgeConfig.scala`
-- `domains/judge/application/JudgeTaskBuilder.scala`
+- `domains/problem/utils/*ProblemDataStorage*.scala`
+- `domains/problem/utils/ProblemDataUploadPreparation.scala`
+- `domains/auth/utils/*Session*.scala`
+- `domains/auth/utils/PasswordHasher.scala`
+- `domains/message/utils/MessageEventHub.scala`
+- `domains/notification/utils/NotificationEventHub.scala`
+- `domains/notification/utils/NotificationStreamEvent.scala`
+- `domains/judge/utils/JudgeConfig.scala`
+- `domains/judge/utils/JudgeTaskBuilder.scala`
 
-These files are allowed to stay in `application` for now because they implement
-domain-owned adapter behavior and moving them to a new infrastructure layer would
-be a separate behavior-risking migration. Do not use this exception as a pattern
-for new session, event, judge, or storage files without documenting the boundary decision first.
+These files are domain-owned support code, not endpoint orchestration. Do not use `utils` as a replacement for API-object `plan(...)` bodies.
 
 ## Functional Core, Imperative Shell
 
@@ -172,7 +169,7 @@ Rules:
 
 - keep normal REST routers such as `ProblemRouter` and `UserGroupRouter`
 - model each HTTP use case as a typed API object inside the owning domain
-- keep endpoint orchestration in the API object's `plan(...)`, not in `application`
+- keep endpoint orchestration in the API object's `plan(...)`, not in `utils`
 - let API objects return typed outputs unless the endpoint needs a custom raw response
 - keep auth/session resolution and generic dispatch in `domains/auth/http`
 - keep `plan(...)` inputs at the HTTP boundary: raw session tokens and cookies must not enter business flow
@@ -222,7 +219,7 @@ Each domain should own its:
 - `http`
 - `objects`
 - `table`
-- optional `rules`, `storage`, or `events` modules when pure rules or adapters need a clearer home than `http` or `table`
+- optional `rules` or `utils` modules when pure rules or owner-domain support code needs a clearer home than `http` or `table`
 
 Exception:
 

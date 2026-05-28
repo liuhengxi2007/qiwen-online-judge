@@ -3,7 +3,7 @@ package domains.judger.http.api
 import cats.effect.IO
 import domains.auth.http.SiteManagerApi
 import domains.auth.objects.SiteManagerUser
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import domains.judger.http.codec.JudgerRegistryHttpCodecs.given
 import domains.judger.objects.response.RegisteredJudgerListItem
 import domains.judger.table.judger.JudgerTable

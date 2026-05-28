@@ -1,4 +1,4 @@
-package domains.judge.application
+package domains.judge.utils
 
 import scala.util.Try
 

@@ -3,7 +3,7 @@ package domains.message.http.api
 import cats.effect.IO
 import domains.auth.http.AuthenticatedResponseApi
 import domains.auth.objects.AuthUser
-import domains.message.application.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.http.codec.MessageHttpCodecs.given
 import fs2.text
 import io.circe.Encoder

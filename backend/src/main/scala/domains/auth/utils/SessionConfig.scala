@@ -1,4 +1,4 @@
-package domains.auth.application
+package domains.auth.utils
 
 
 

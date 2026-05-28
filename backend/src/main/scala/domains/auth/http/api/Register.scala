@@ -1,7 +1,7 @@
 package domains.auth.http.api
 
 import cats.effect.IO
-import domains.auth.application.{PasswordHasher, SessionStore}
+import domains.auth.utils.{PasswordHasher, SessionStore}
 import domains.auth.http.{AuthApiSupport, PublicResponseApi}
 import domains.auth.http.codec.AuthHttpCodecs.given
 import domains.auth.objects.EmailAddress

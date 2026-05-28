@@ -1,4 +1,4 @@
-package domains.notification.application
+package domains.notification.utils
 
 
 

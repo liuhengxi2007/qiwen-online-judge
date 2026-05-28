@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.http.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.message.application.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.table.message.MessageReadTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}

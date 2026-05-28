@@ -3,11 +3,11 @@ package server.http
 import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
-import domains.auth.application.SessionStore
-import domains.judge.application.JudgeConfig
-import domains.message.application.MessageEventHub
-import domains.notification.application.NotificationEventHub
-import domains.problem.application.ProblemDataStorage
+import domains.auth.utils.SessionStore
+import domains.judge.utils.JudgeConfig
+import domains.message.utils.MessageEventHub
+import domains.notification.utils.NotificationEventHub
+import domains.problem.utils.ProblemDataStorage
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*

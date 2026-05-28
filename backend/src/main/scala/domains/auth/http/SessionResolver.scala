@@ -1,7 +1,7 @@
 package domains.auth.http
 
 import cats.effect.IO
-import domains.auth.application.SessionStore
+import domains.auth.utils.SessionStore
 import domains.auth.objects.{AuthUser, SessionToken, SiteManagerUser}
 import domains.auth.table.auth_user.AuthUserTable
 import org.http4s.Request

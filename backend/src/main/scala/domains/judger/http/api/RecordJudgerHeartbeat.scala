@@ -2,7 +2,7 @@ package domains.judger.http.api
 
 import cats.effect.IO
 import domains.auth.http.PublicApi
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import domains.judge.http.JudgeApiSupport
 import domains.judger.table.judger.JudgerTable
 import io.circe.Encoder

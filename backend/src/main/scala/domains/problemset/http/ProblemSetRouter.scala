@@ -11,7 +11,7 @@ import domains.problemset.http.api.AddProblemToProblemSet
 import domains.problemset.http.api.UpdateProblemSet
 import domains.problemset.http.api.DeleteProblemSet
 import domains.problemset.http.api.RemoveProblemFromProblemSet
-import domains.auth.application.SessionStore
+import domains.auth.utils.SessionStore
 import domains.auth.http.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl

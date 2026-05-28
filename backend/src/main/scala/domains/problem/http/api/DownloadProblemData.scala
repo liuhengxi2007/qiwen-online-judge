@@ -3,7 +3,7 @@ package domains.problem.http.api
 import cats.effect.IO
 import domains.auth.http.AuthenticatedResponseApi
 import domains.auth.objects.AuthUser
-import domains.problem.application.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorage
 import domains.problem.objects.{ProblemDataFilename, ProblemSlug}
 import domains.problem.rules.ProblemAccessRules
 import domains.problem.table.problem.ProblemQueryTable

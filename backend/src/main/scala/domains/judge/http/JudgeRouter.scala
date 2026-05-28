@@ -3,9 +3,9 @@ package domains.judge.http
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.http.{ApiObjectContext, ApiObjectRouter}
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import domains.judge.http.api.*
-import domains.problem.application.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorage
 import org.http4s.HttpRoutes
 
 object JudgeRouter:

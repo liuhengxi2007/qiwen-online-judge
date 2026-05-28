@@ -1,4 +1,4 @@
-package domains.judge.application
+package domains.judge.utils
 
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}

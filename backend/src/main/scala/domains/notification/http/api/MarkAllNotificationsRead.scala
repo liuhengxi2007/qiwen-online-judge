@@ -3,7 +3,7 @@ package domains.notification.http.api
 import cats.effect.IO
 import domains.auth.http.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}

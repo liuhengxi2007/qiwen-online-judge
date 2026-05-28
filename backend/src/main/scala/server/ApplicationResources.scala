@@ -4,18 +4,18 @@ import cats.effect.{IO, Resource}
 import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
 import database.table.resource_access_grant.ResourceAccessGrantTable
-import domains.auth.application.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
+import domains.auth.utils.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
 import domains.auth.table.auth_user.AuthUserTableSupport
 import domains.auth.table.auth_user.AuthUserTable
 import domains.auth.table.session.SessionTable
 import domains.blog.table.blog.BlogTable
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import domains.judger.table.judger.JudgerTable
-import domains.message.application.MessageEventHub
+import domains.message.utils.MessageEventHub
 import domains.message.table.message.MessageTable
-import domains.notification.application.NotificationEventHub
+import domains.notification.utils.NotificationEventHub
 import domains.notification.table.notification.NotificationTable
-import domains.problem.application.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
+import domains.problem.utils.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problemset.table.problem_set.ProblemSetTable

@@ -1,12 +1,8 @@
-package domains.judge.application
+package domains.judge.utils
 
-import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.application.ProblemDataStorage
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.table.problem.ProblemQueryTable
-import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.submission.objects.internal.ClaimedSubmission
 import judgeprotocol.objects.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
@@ -21,52 +17,18 @@ object JudgeTaskBuilder:
   )
 
   def buildJudgeTask(
-    connection: java.sql.Connection,
-    problemDataStorage: ProblemDataStorage,
-    claimedSubmission: ClaimedSubmission
-  ): IO[Either[String, JudgeTask]] =
-    for
-      maybeManifest <- judgeTaskManifest(connection, claimedSubmission)
-      manifest = maybeManifest.getOrElse(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
-      config <- loadConfig(problemDataStorage, claimedSubmission, manifest)
-    yield
-      maybeManifest match
-        case None =>
-          Left("Problem not found for claimed submission.")
-        case Some(_) =>
-          config
-
-  private def judgeTaskManifest(
-    connection: java.sql.Connection,
-    claimedSubmission: ClaimedSubmission
-  ): IO[Option[ProblemDataManifest]] =
-    ProblemQueryTable.findBySlug(connection, claimedSubmission.problemSlug).flatMap {
-      case Some(problem) if problem.id == claimedSubmission.problemId =>
-        ProblemDataFileTable.manifestForProblem(connection, claimedSubmission.problemId, claimedSubmission.problemSlug).map(Some(_))
-      case _ =>
-        IO.pure(None)
-    }
+    bytes: Array[Byte],
+    claimedSubmission: ClaimedSubmission,
+    manifest: ProblemDataManifest
+  ): Either[String, JudgeTask] =
+    parseConfigBytes(bytes, claimedSubmission, manifest)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
       case domains.submission.objects.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
       case domains.submission.objects.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
 
-  private def loadConfig(
-    problemDataStorage: ProblemDataStorage,
-    claimedSubmission: ClaimedSubmission,
-    manifest: ProblemDataManifest
-  ): IO[Either[String, JudgeTask]] =
-    ProblemDataPath.parse("judge.yaml") match
-      case Left(message) => IO.pure(Left(message))
-      case Right(configPath) =>
-        problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
-          case None => Left("judge.yaml is required at the problem data root.")
-          case Some((_, bytes)) =>
-            parseConfigBytes(bytes, claimedSubmission, manifest)
-        }
-
-  private[application] def parseConfigBytes(
+  private[utils] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     manifest: ProblemDataManifest

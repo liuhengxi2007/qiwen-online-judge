@@ -1,7 +1,7 @@
 package domains.auth.http.api
 
 import cats.effect.IO
-import domains.auth.application.SessionStore
+import domains.auth.utils.SessionStore
 import domains.auth.http.{AuthApiSupport, PublicResponseApi}
 import domains.auth.objects.SessionToken
 import org.http4s.circe.CirceEntityEncoder.*

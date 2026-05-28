@@ -2,7 +2,7 @@ package domains.judge.http.api
 
 import cats.effect.IO
 import domains.auth.http.PublicApi
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import domains.judge.http.JudgeApiSupport
 import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeCompletion

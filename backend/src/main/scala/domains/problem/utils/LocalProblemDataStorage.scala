@@ -1,9 +1,9 @@
-package domains.problem.application
+package domains.problem.utils
 
 
 
 import cats.effect.IO
-import domains.problem.application.ProblemDataStorage.ProblemDataSnapshot
+import domains.problem.utils.ProblemDataStorage.ProblemDataSnapshot
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 

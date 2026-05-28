@@ -1,4 +1,4 @@
-package domains.message.application
+package domains.message.utils
 
 
 

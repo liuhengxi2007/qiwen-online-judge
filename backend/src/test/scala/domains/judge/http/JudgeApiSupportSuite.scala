@@ -1,7 +1,7 @@
 package domains.judge.http
 
 import cats.effect.IO
-import domains.judge.application.JudgeConfig
+import domains.judge.utils.JudgeConfig
 import munit.CatsEffectSuite
 import org.http4s.{Header, Request, Status}
 import org.typelevel.ci.CIString

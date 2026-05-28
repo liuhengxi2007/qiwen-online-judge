@@ -10,7 +10,7 @@ import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
 import domains.blog.objects.request.CreateBlogCommentRequest
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
-import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.objects.{NotificationKind, NotificationPayload}
 import domains.notification.table.notification.NotificationTable
 import domains.user.objects.Username

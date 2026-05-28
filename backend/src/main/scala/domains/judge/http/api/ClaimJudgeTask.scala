@@ -2,11 +2,15 @@ package domains.judge.http.api
 
 import cats.effect.IO
 import domains.auth.http.PublicResponseApi
-import domains.judge.application.JudgeConfig
-import domains.judge.application.JudgeTaskBuilder
+import domains.judge.utils.JudgeConfig
+import domains.judge.utils.JudgeTaskBuilder
 import domains.judge.http.JudgeApiSupport
 import domains.judger.table.judger.JudgerTable
-import domains.problem.application.ProblemDataStorage
+import domains.problem.objects.ProblemDataPath
+import domains.problem.objects.internal.ProblemDataManifest
+import domains.problem.table.problem.ProblemQueryTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.problem.utils.ProblemDataStorage
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.rules.SubmissionJudgeRules
@@ -59,7 +63,7 @@ final case class ClaimJudgeTask(
             case None =>
               IO.pure(Response[IO](status = Status.NoContent))
             case Some(claimedSubmission) =>
-              JudgeTaskBuilder.buildJudgeTask(connection, problemDataStorage, claimedSubmission).flatMap {
+              buildJudgeTask(connection, claimedSubmission).flatMap {
                 case Left(message) =>
                   failClaimedJudgeTask(connection, claimedSubmission, judgerId, claimedAt, message).flatMap {
                     case Left(lifecycleMessage) => HttpApiError.raise(HttpApiError.badRequest(lifecycleMessage))
@@ -69,6 +73,43 @@ final case class ClaimJudgeTask(
                   IO.pure(taskResponse(task))
               }
           }
+
+  private def buildJudgeTask(
+    connection: Connection,
+    claimedSubmission: ClaimedSubmission
+  ): IO[Either[String, JudgeTask]] =
+    judgeTaskManifest(connection, claimedSubmission).flatMap {
+      case None =>
+        IO.pure(Left("Problem not found for claimed submission."))
+      case Some(manifest) =>
+        loadConfig(claimedSubmission, manifest)
+    }
+
+  private def judgeTaskManifest(
+    connection: Connection,
+    claimedSubmission: ClaimedSubmission
+  ): IO[Option[ProblemDataManifest]] =
+    ProblemQueryTable.findBySlug(connection, claimedSubmission.problemSlug).flatMap {
+      case Some(problem) if problem.id == claimedSubmission.problemId =>
+        ProblemDataFileTable.manifestForProblem(connection, claimedSubmission.problemId, claimedSubmission.problemSlug).map(Some(_))
+      case _ =>
+        IO.pure(None)
+    }
+
+  private def loadConfig(
+    claimedSubmission: ClaimedSubmission,
+    manifest: ProblemDataManifest
+  ): IO[Either[String, JudgeTask]] =
+    ProblemDataPath.parse("judge.yaml") match
+      case Left(message) =>
+        IO.pure(Left(message))
+      case Right(configPath) =>
+        problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
+          case None =>
+            Left("judge.yaml is required at the problem data root.")
+          case Some((_, bytes)) =>
+            JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, manifest)
+        }
 
   private def failClaimedJudgeTask(
     connection: Connection,

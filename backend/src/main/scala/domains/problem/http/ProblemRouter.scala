@@ -20,8 +20,8 @@ import domains.problem.http.api.UploadProblemDataFile
 import domains.problem.http.api.UploadProblemDataArchive
 import domains.problem.http.api.UpdateProblem
 import domains.problem.http.api.DeleteProblem
-import domains.auth.application.SessionStore
-import domains.problem.application.ProblemDataStorage
+import domains.auth.utils.SessionStore
+import domains.problem.utils.ProblemDataStorage
 import domains.auth.http.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
