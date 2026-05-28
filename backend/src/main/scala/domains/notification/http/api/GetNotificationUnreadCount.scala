@@ -1,22 +1,32 @@
 package domains.notification.http.api
 
-
-
-import domains.notification.http.*
-import domains.notification.http.mapper.NotificationHttpRequestMappers
 import cats.effect.IO
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
-import org.http4s.HttpRoutes
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.notification.http.codec.NotificationHttpCodecs.given
+import domains.notification.objects.response.NotificationUnreadCountResponse
+import domains.notification.table.notification.NotificationTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, PathParams}
 
-object GetNotificationUnreadCount:
+import java.sql.Connection
 
-  def routes(context: NotificationHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "notifications" / "unread-count" =>
-        context.handlers.execute(
-          request,
-          NotificationHttpRequestMappers.unit,
-          context.plans.getUnreadCount
-        )
-    }
+object GetNotificationUnreadCount extends AuthenticatedApi[Unit, NotificationUnreadCountResponse]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/notifications/unread-count")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[NotificationUnreadCountResponse] = summon[Encoder[NotificationUnreadCountResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
+    val _ = (request, pathParams)
+    IO.unit
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    input: Unit
+  ): IO[NotificationUnreadCountResponse] =
+    val _ = input
+    NotificationTable.countUnreadForRecipient(connection, actor.username).map(NotificationUnreadCountResponse(_))

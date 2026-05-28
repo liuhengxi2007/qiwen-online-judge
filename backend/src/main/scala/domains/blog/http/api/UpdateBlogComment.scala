@@ -1,30 +1,40 @@
 package domains.blog.http.api
 
-
-
-import domains.blog.http.*
-import domains.blog.http.codec.BlogHttpCodecs.given
-import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
-import domains.blog.application.BlogCommands
-import domains.blog.objects.{BlogCommentId, BlogId}
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.blog.http.BlogApiSupport.UpdateBlogCommentInput
+import domains.blog.http.codec.BlogHttpCodecs.given
+import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
 import domains.blog.objects.request.UpdateBlogCommentRequest
-import org.http4s.HttpRoutes
+import domains.blog.objects.response.BlogDetail
+import domains.blog.table.blog.BlogCommentTable
+import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object UpdateBlogComment:
+import java.sql.Connection
 
-  def routes(context: BlogHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "update" =>
-        (BlogHttpRequestMappers.blogId(rawBlogId), BlogHttpRequestMappers.blogCommentId(rawCommentId)) match
-          case (Left(message), _) => shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) => shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            context.handlers.executeDecoded[UpdateBlogCommentRequest, BlogHttpPlans.UpdateBlogCommentInput, BlogCommands.UpdateBlogCommentResult](
-              request,
-              context.plans.updateBlogComment
-            )(updateRequest => BlogHttpPlans.UpdateBlogCommentInput(blogId, commentId, updateRequest))
-    }
+object UpdateBlogComment extends AuthenticatedApi[UpdateBlogCommentInput, BlogDetail]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/blogs/:blogId/comments/:commentId/update")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[BlogDetail] = summon[Encoder[BlogDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[UpdateBlogCommentInput] =
+    for
+      blogId <- HttpApiError.fromEitherBadRequest(pathParams.require("blogId").flatMap(BlogId.parse))
+      commentId <- HttpApiError.fromEitherBadRequest(pathParams.require("commentId").flatMap(BlogCommentId.parse))
+      body <- request.as[UpdateBlogCommentRequest]
+    yield UpdateBlogCommentInput(blogId, commentId, body)
+
+  override def plan(connection: Connection, actor: AuthUser, input: UpdateBlogCommentInput): IO[BlogDetail] =
+    for
+      content <- HttpApiError.fromEitherBadRequest(BlogCommentContent.parse(input.request.content.value))
+      maybeBlog <- BlogCommentTable.updateComment(connection, input.blogId, input.commentId, actor.username, content)
+      blog <- maybeBlog match
+        case Some(blog) => IO.pure(blog)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogCommentNotFound))
+    yield blog

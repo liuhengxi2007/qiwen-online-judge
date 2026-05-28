@@ -1,23 +1,31 @@
 package domains.user.http.api
 
-import domains.user.http.mapper.UserHttpResponseMappers
-import domains.user.http.mapper.UserHttpRequestMappers
-
-
-
-import domains.user.http.*
 import cats.effect.IO
-import domains.user.http.UserHttpPlanDefinitions.{listUserSuggestions}
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.user.http.UserApiSupport
+import domains.user.http.codec.UserHttpCodecs.given
+import domains.user.objects.UserIdentity
+import domains.user.objects.request.UserSearchQuery
+import domains.user.table.user.UserTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, HttpApiError, PathParams}
 
-object ListUserSuggestions:
+import java.sql.Connection
 
-  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "users" / "suggestions" =>
-        UserHttpRequestMappers.userSearchQuery(request.uri.query.params) match
-          case Left(message) => UserHttpResponseMappers.validationErrorResponse(message)
-          case Right(query) => handlers.execute(request, query, listUserSuggestions)
-    }
+object ListUserSuggestions extends AuthenticatedApi[UserSearchQuery, List[UserIdentity]]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/users/suggestions")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[List[UserIdentity]] = summon[Encoder[List[UserIdentity]]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[UserSearchQuery] =
+    val _ = pathParams
+    HttpApiError.fromEitherBadRequest(UserSearchQuery.parse(request.uri.query.params.get("q").getOrElse("")))
+
+  override def plan(connection: Connection, actor: AuthUser, query: UserSearchQuery): IO[List[UserIdentity]] =
+    val _ = actor
+    if query.value.length < UserApiSupport.minSuggestionQueryLength then IO.pure(Nil)
+    else UserTable.listSuggestions(connection, query)

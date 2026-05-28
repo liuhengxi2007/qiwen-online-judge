@@ -17,7 +17,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
   - `shared/objects/access`: shared access-control contract types only
   - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
-  - `shared/http`: shared HTTP transport objects, codecs, and actor-parameterized plan contracts
+  - `shared/http`: shared HTTP transport objects, codecs, API paths, and small response/error helpers
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
 
@@ -29,35 +29,16 @@ These templates define the default shape for a business domain, not a minimum fi
 
 For `application`:
 
-- `*CommandResults.scala`
-  result ADTs returned by the application layer
-- `utils/*CommandSupport.scala`
-  internal helpers shared by multiple commands in the domain
-- `*QueryCommands.scala`
-  read-only use cases
-- `*MutationCommands.scala`
-  write-oriented use cases
-- `*Commands.scala`
-  facade-only file that re-exports the domain command surface
-
-Domains may omit any application file role that they do not need yet.
-For example, a small or integration-heavy domain may have only `*Commands.scala`, or only a query/mutation split, as long as responsibilities stay clear.
-When a responsibility becomes non-trivial, split it into its matching role file instead of continuing to grow an unrelated file.
-
-Domain-specific specialized command files are allowed when a domain has one extra responsibility that does not fit cleanly into generic query or mutation buckets.
+- do not add new endpoint orchestration here
+- keep only reusable infrastructure adapters or pure helpers that cannot live closer to `objects`, `rules`, `table`, storage, or events
+- migrate legacy command/query/mutation files into API-object `plan(...)` bodies or smaller rule/adapter modules when touching those endpoints
 
 For `http`:
 
 - `*Router.scala`
-  thin aggregator that combines endpoint API route files
+  thin aggregator that registers endpoint API objects in a list through the auth-owned API object router
 - `api/<Name>.scala`
-  one HTTP endpoint route fragment, including path matching, request mapper calls, plan execution, and response mapper calls for that endpoint
-- `*HttpHandlers.scala`
-  request decoding, auth/session wrapping, command invocation
-- `mapper/*HttpRequestMappers.scala`
-  translation from raw HTTP path/query/body inputs into typed request objects or plan inputs
-- `mapper/*HttpResponseMappers.scala`
-  translation from command results to HTTP responses
+  one HTTP endpoint API object or dependency-carrying case class, including method, path, typed input decode, and the complete `plan(...)` orchestration body
 - `codec/*HttpCodecs.scala`
   Circe encoders/decoders for HTTP request and response wire formats
 - `codec/*ModelHttpCodecs.scala`
@@ -112,18 +93,27 @@ def deleteBook(...) = ...
 Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
-Do not move query/mutation orchestration into `objects`, HTTP wire decoding into `application`, or business decisions into `table`.
+Do not move endpoint orchestration into `objects`, `application`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in rules/helpers and SQL belongs in table modules.
 
 Current application-adapter exceptions:
 
-- `domains/message/application/JdbcMessageRepository.scala`
 - `domains/problem/application/LocalProblemDataStorage.scala`
 - `domains/problem/application/MinioProblemDataStorage.scala`
+- `domains/problem/application/ProblemDataStorage.scala`
+- `domains/problem/application/ProblemDataStorageConfig.scala`
+- `domains/problem/application/ProblemDataUploadPreparation.scala`
+- `domains/auth/application/*Session*.scala`
+- `domains/auth/application/PasswordHasher.scala`
+- `domains/message/application/MessageEventHub.scala`
+- `domains/notification/application/NotificationEventHub.scala`
+- `domains/notification/application/NotificationStreamEvent.scala`
+- `domains/judge/application/JudgeConfig.scala`
+- `domains/judge/application/JudgeTaskBuilder.scala`
 
 These files are allowed to stay in `application` for now because they implement
 domain-owned adapter behavior and moving them to a new infrastructure layer would
 be a separate behavior-risking migration. Do not use this exception as a pattern
-for new JDBC or storage files without documenting the boundary decision first.
+for new session, event, judge, or storage files without documenting the boundary decision first.
 
 ## Functional Core, Imperative Shell
 
@@ -134,7 +124,7 @@ Rules:
 - keep validation, permission decisions, state transitions, and draft-building logic pure where possible
 - isolate JDBC, files, clocks, randomness, and network calls at the edge
 - make effectful helpers explicit in their signatures, typically as `IO[...]`
-- keep `http` as the execution shell, `application` as orchestration, and pure rule code in `objects` or dedicated support modules
+- keep the API object's `plan(...)` as endpoint orchestration, with pure rule code in `objects`, `rules`, or dedicated support modules
 
 Prefer:
 
@@ -159,11 +149,11 @@ Allow only:
 - lifecycle and pagination primitives
 - small utility types with no business ownership
 - cross-domain platform primitives whose ownership is genuinely shared
-  examples: shared HTTP plan contracts, reusable access-control primitives used by multiple resource domains
+  examples: API path/error helpers, reusable access-control primitives used by multiple resource domains
 
 Cross-domain persistence helpers belong in `database` when they are infrastructure-level and do not have a single business-domain owner.
 `shared` must not import `domains.*`; pass domain actors, facts, or values in as type parameters or shared contracts instead.
-Auth-aware session execution belongs to `domains/auth/http`, while `shared/http` owns only the actor-parameterized plan contracts and transport helpers.
+Auth-aware session execution and API-object dispatch belong to `domains/auth/http`, while `shared/http` owns only domain-free transport helpers.
 
 Do not move these into `shared`:
 
@@ -174,38 +164,37 @@ Do not move these into `shared`:
 
 If code in `shared` starts reading like a hidden `problem`, `problemset`, or `usergroup` subdomain, or like a JDBC/DDL utility layer, it is in the wrong place.
 
-## Backend HTTP Planner Protocol
+## Backend HTTP API Object Protocol
 
-The backend uses a per-domain HTTP planner protocol, not a global planner domain.
+The backend uses a per-domain HTTP API object protocol, not a global planner domain.
 
 Rules:
 
 - keep normal REST routers such as `ProblemRouter` and `UserGroupRouter`
-- model each HTTP use case as a typed plan inside the owning domain
-- keep planners in the `http` layer, not in `application`
-- let plans return typed outputs, then map those outputs to `Response[IO]`
-- choose transaction boundaries explicitly with plain vs transaction plan variants
-- keep auth/session wrapping in `domains/auth/http`; shared plan contracts stay actor-parameterized and domain-free
+- model each HTTP use case as a typed API object inside the owning domain
+- keep endpoint orchestration in the API object's `plan(...)`, not in `application`
+- let API objects return typed outputs unless the endpoint needs a custom raw response
+- keep auth/session resolution and generic dispatch in `domains/auth/http`
+- keep `plan(...)` inputs at the HTTP boundary: raw session tokens and cookies must not enter business flow
 
 Preferred structure for business CRUD domains:
 
-- `*HttpPlans.scala`
-  endpoint-level plan implementations
-- `*HttpPlanDefinitions.scala`
-  registered plans plus `toResponse` mapping
-- auth-owned authenticated executor in `domains/auth/http`
 - thin `*Router.scala`
-  aggregator of `http/api/<Name>.scala` endpoint files
+  registers API objects with `ApiObjectRouter.routes(...)`
+- `http/api/<Name>.scala`
+  endpoint object/case class with method, path, decode, and `plan(...)`
+- auth-owned API object router and `SessionResolver` in `domains/auth/http`
 
 Frontend and backend endpoint API basenames should match when both sides expose the endpoint. For example, the frontend `src/apis/problem/ListProblems.ts` client function corresponds to backend `http/api/ListProblems.scala`.
 
-`auth/http` is the exception. It keeps its own richer protocol because it needs public, authenticated, and site-manager plan families.
+Do not add new `*HttpPlans.scala`, `*HttpPlanDefinitions.scala`, request mappers, response mappers, or command/query/mutation orchestration wrappers. Endpoint workflow belongs in the API object `plan(...)`.
 
 Do not:
 
 - reintroduce a generic `planner` domain
 - replace REST paths with a global planner endpoint
-- move domain rules, SQL, or policy evaluation into plans
+- hide endpoint orchestration behind command/service wrappers
+- move SQL into API objects
 
 See also:
 
@@ -230,12 +219,12 @@ Future OJ modules should follow the same layout:
 
 Each domain should own its:
 
-- `application`
 - `http`
 - `objects`
 - `table`
+- optional `rules`, `storage`, or `events` modules when pure rules or adapters need a clearer home than `http` or `table`
 
 Exception:
 
 - the internal `judge` domain may omit `objects` or `table` when it intentionally reuses protocol or persistence types owned elsewhere
-- this exception must still keep its orchestration in `application` and its transport boundary in `http`
+- this exception must still keep endpoint orchestration in API object `plan(...)` bodies and its transport boundary in `http`

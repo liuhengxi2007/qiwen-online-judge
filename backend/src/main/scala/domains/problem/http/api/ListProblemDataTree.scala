@@ -1,24 +1,44 @@
 package domains.problem.http.api
 
-import domains.problem.http.mapper.ProblemHttpResponseMappers
-import domains.problem.http.mapper.ProblemHttpRequestMappers
-
-
-
-import domains.problem.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.problem.http.ProblemDataApiSupport
+import domains.problem.http.codec.ProblemHttpCodecs.given
+import domains.problem.objects.ProblemSlug
+import domains.problem.objects.response.ProblemDataTreeResponse
+import domains.problem.rules.ProblemAccessRules
+import domains.problem.table.problem.ProblemQueryTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object ListProblemDataTree:
+import java.sql.Connection
 
-  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "problems" / problemSlug / "data" / "tree" =>
-        ProblemHttpRequestMappers.problemSlug(problemSlug) match
-          case Left(message) =>
-            ProblemHttpResponseMappers.validationErrorResponse(message)
-          case Right(parsedProblemSlug) =>
-            context.handlers.execute(request, parsedProblemSlug, context.plans.listProblemDataTree)
+object ListProblemDataTree extends AuthenticatedApi[ProblemSlug, ProblemDataTreeResponse]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/tree")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[ProblemDataTreeResponse] = summon[Encoder[ProblemDataTreeResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSlug] =
+    val _ = request
+    HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug
+  ): IO[ProblemDataTreeResponse] =
+    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+      case Some(problem) =>
+        for
+          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
+          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+          manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
+        yield ProblemDataApiSupport.buildTreeResponse(manifest.entries)
     }

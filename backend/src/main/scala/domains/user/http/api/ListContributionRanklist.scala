@@ -1,19 +1,30 @@
 package domains.user.http.api
 
-
-
-import domains.user.http.*
-import domains.user.http.mapper.UserHttpRequestMappers
 import cats.effect.IO
-import domains.user.http.UserHttpPlanDefinitions.{listContributionRanklist}
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.user.http.UserApiSupport
+import domains.user.http.codec.UserHttpCodecs.given
+import domains.user.objects.response.UserRanklistItem
+import domains.user.table.user.UserTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, PathParams}
+import shared.objects.{PageRequest, PageResponse}
 
-object ListContributionRanklist:
+import java.sql.Connection
 
-  def routes(handlers: UserHttpHandlers)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "users" / "ranklist" =>
-        handlers.execute(request, UserHttpRequestMappers.ranklistRequest(request.uri.query.params), listContributionRanklist)
-    }
+object ListContributionRanklist extends AuthenticatedApi[PageRequest, PageResponse[UserRanklistItem]]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/users/ranklist")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[PageResponse[UserRanklistItem]] = summon[Encoder[PageResponse[UserRanklistItem]]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
+    val _ = pathParams
+    IO.pure(PageRequest(page = request.uri.query.params.get("page").flatMap(_.toIntOption).getOrElse(1)))
+
+  override def plan(connection: Connection, actor: AuthUser, pageRequest: PageRequest): IO[PageResponse[UserRanklistItem]] =
+    val _ = actor
+    UserTable.listContributionRanklist(connection, PageRequest(page = pageRequest.page, pageSize = UserApiSupport.ranklistPageSize))

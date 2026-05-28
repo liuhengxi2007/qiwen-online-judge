@@ -1,17 +1,29 @@
 package domains.submission.http.api
 
 import cats.effect.IO
-import domains.submission.http.*
-import domains.submission.http.mapper.SubmissionHttpRequestMappers
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.submission.http.SubmissionApiSupport
+import domains.submission.http.codec.SubmissionHttpCodecs.given
+import domains.submission.objects.request.SubmissionListRequest
+import domains.submission.objects.response.SubmissionListResponse
+import domains.submission.table.submission.SubmissionQueryTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, PathParams}
 
-object ListSubmissions:
+import java.sql.Connection
 
-  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "submissions" =>
-        val listRequest = SubmissionHttpRequestMappers.listSubmissionsRequest(request.uri.query.params)
-        handlers.execute(request, listRequest, SubmissionHttpPlanDefinitions.listSubmissions)
-    }
+object ListSubmissions extends AuthenticatedApi[SubmissionListRequest, SubmissionListResponse]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/submissions")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[SubmissionListResponse] = summon[Encoder[SubmissionListResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionListRequest] =
+    val _ = pathParams
+    IO.pure(SubmissionApiSupport.listSubmissionsRequest(request.uri.query.params))
+
+  override def plan(connection: Connection, actor: AuthUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
+    SubmissionQueryTable.listVisibleTo(connection, actor, request, SubmissionApiSupport.hasGlobalViewOverride(actor))

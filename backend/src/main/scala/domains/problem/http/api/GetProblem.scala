@@ -1,24 +1,41 @@
 package domains.problem.http.api
 
-import domains.problem.http.mapper.ProblemHttpResponseMappers
-import domains.problem.http.mapper.ProblemHttpRequestMappers
-
-
-
-import domains.problem.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.problem.http.codec.ProblemHttpCodecs.given
+import domains.problem.objects.ProblemSlug
+import domains.problem.objects.response.ProblemDetail
+import domains.problem.rules.ProblemAccessRules
+import domains.problem.table.problem.ProblemQueryTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object GetProblem:
+import java.sql.Connection
 
-  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "problems" / problemSlug =>
-        ProblemHttpRequestMappers.problemSlug(problemSlug) match
-          case Left(message) =>
-            ProblemHttpResponseMappers.validationErrorResponse(message)
-          case Right(parsedProblemSlug) =>
-            context.handlers.execute(request, parsedProblemSlug, context.plans.getProblem)
+object GetProblem extends AuthenticatedApi[ProblemSlug, ProblemDetail]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSlug] =
+    val _ = request
+    HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug
+  ): IO[ProblemDetail] =
+    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+      case Some(problem) =>
+        ProblemAccessRules.enrichProblemPermissions(connection, actor, problem).flatMap {
+          case Some(enrichedProblem) => IO.pure(enrichedProblem)
+          case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        }
     }

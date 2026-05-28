@@ -1,18 +1,29 @@
 package domains.message.http.api
 
-
-
-import domains.message.http.*
-import domains.message.http.mapper.MessageHttpRequestMappers
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.message.http.codec.MessageHttpCodecs.given
+import domains.message.objects.response.MessageInboxResponse
+import domains.message.table.message.MessageConversationTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.utils.PageRequestQuerySupport
+import shared.http.{ApiPath, PathParams}
+import shared.objects.PageRequest
 
-object ListInbox:
+import java.sql.Connection
 
-  def routes(context: MessageHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "messages" / "inbox" =>
-        context.handlers.execute(request, MessageHttpRequestMappers.inboxRequest(request.uri.query.params), context.plans.listInbox)
-    }
+object ListInbox extends AuthenticatedApi[PageRequest, MessageInboxResponse]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/messages/inbox")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[MessageInboxResponse] = summon[Encoder[MessageInboxResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
+    val _ = pathParams
+    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+
+  override def plan(connection: Connection, actor: AuthUser, pageRequest: PageRequest): IO[MessageInboxResponse] =
+    MessageConversationTable.listInbox(connection, actor.username, pageRequest.normalized)

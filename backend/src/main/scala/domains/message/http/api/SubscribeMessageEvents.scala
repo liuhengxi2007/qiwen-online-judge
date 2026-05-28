@@ -1,39 +1,45 @@
 package domains.message.http.api
 
-
-
-import domains.message.http.*
-import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
-import domains.auth.http.utils.AuthHttpSessionSupport
-import domains.message.application.MessageStreamEvent
+import domains.auth.http.AuthenticatedResponseApi
+import domains.auth.objects.AuthUser
+import domains.message.application.{MessageEventHub, MessageStreamEvent}
+import domains.message.http.codec.MessageHttpCodecs.given
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
-import org.http4s.{Header, HttpRoutes, Response, Status}
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
-import org.http4s.ServerSentEvent
+import org.http4s.{Header, Method, Request, Response, ServerSentEvent, Status}
 import org.typelevel.ci.CIString
+import shared.http.{ApiPath, PathParams}
 
-object SubscribeMessageEvents:
+import java.sql.Connection
 
-  def routes(context: MessageHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "messages" / "events" =>
-        AuthHttpSessionSupport.withAuthenticatedUser(context.databaseSession, context.sessionStore, request) { actor =>
-          IO.pure(
-            Response[IO](status = Status.Ok)
-              .putHeaders(
-                Header.Raw(CIString("Content-Type"), "text/event-stream"),
-                Header.Raw(CIString("Cache-Control"), "no-cache")
-              )
-              .withBodyStream(
-                context.messageEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
-              )
-          )
-        }
-    }
+final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends AuthenticatedResponseApi[Unit]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/messages/events")
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
+    val _ = (request, pathParams)
+    IO.unit
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    input: Unit
+  ): IO[Response[IO]] =
+    val _ = (connection, input)
+    IO.pure(
+      Response[IO](status = Status.Ok)
+        .putHeaders(
+          Header.Raw(CIString("Content-Type"), "text/event-stream"),
+          Header.Raw(CIString("Cache-Control"), "no-cache")
+        )
+        .withBodyStream(
+          messageEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
+        )
+    )
+
   private given Encoder[MessageStreamEvent] = Encoder.instance {
     case MessageStreamEvent.MessageReceived(message) =>
       message.asJson

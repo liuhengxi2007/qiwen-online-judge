@@ -1,24 +1,42 @@
 package domains.problemset.http.api
 
-import domains.problemset.http.mapper.ProblemSetHttpResponseMappers
-import domains.problemset.http.mapper.ProblemSetHttpRequestMappers
-
-
-
-import domains.problemset.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.problemset.http.{ProblemSetApiSupport}
+import domains.problemset.http.codec.ProblemSetHttpCodecs.given
+import domains.problemset.objects.ProblemSetSlug
+import domains.problemset.objects.response.ProblemSetDetail
+import domains.problemset.rules.ProblemSetAccessRules
+import domains.problemset.table.problem_set.ProblemSetTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object GetProblemSet:
+import java.sql.Connection
 
-  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "problem-sets" / problemSetSlug =>
-        ProblemSetHttpRequestMappers.problemSetSlug(problemSetSlug) match
-          case Left(message) =>
-            ProblemSetHttpResponseMappers.validationErrorResponse(message)
-          case Right(parsedProblemSetSlug) =>
-            handlers.execute(request, parsedProblemSetSlug, ProblemSetHttpPlanDefinitions.getProblemSet)
+object GetProblemSet extends AuthenticatedApi[ProblemSetSlug, ProblemSetDetail]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/problem-sets/:problemSetSlug")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSetSlug] =
+    val _ = request
+    HttpApiError.fromEitherBadRequest(pathParams.require("problemSetSlug").flatMap(ProblemSetSlug.parse))
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    slug: ProblemSetSlug
+  ): IO[ProblemSetDetail] =
+    ProblemSetTable.findBySlug(connection, slug).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
+      case Some(problemSet) =>
+        ProblemSetAccessRules.canViewProblemSet(connection, actor, problemSet).flatMap { canView =>
+          if canView then IO.pure(ProblemSetApiSupport.toProblemSetDetail(problemSet))
+          else HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
+        }
     }

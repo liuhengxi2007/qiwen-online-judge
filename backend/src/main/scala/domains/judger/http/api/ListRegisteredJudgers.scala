@@ -1,22 +1,31 @@
 package domains.judger.http.api
 
-
-
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
+import domains.auth.http.SiteManagerApi
+import domains.auth.objects.SiteManagerUser
 import domains.judge.application.JudgeConfig
-import domains.judger.http.*
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.judger.http.codec.JudgerRegistryHttpCodecs.given
+import domains.judger.objects.response.RegisteredJudgerListItem
+import domains.judger.table.judger.JudgerTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, PathParams}
 
-object ListRegisteredJudgers:
+import java.sql.Connection
 
-  def routes(databaseSession: DatabaseSession, judgeConfig: JudgeConfig, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new JudgerRegistryHttpHandlers(databaseSession, judgeConfig, sessionStore)
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "judgers" =>
-        handlers.listRegistered(request)
-    }
+final case class ListRegisteredJudgers(judgeConfig: JudgeConfig) extends SiteManagerApi[Unit, List[RegisteredJudgerListItem]]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/judgers")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[List[RegisteredJudgerListItem]] = summon[Encoder[List[RegisteredJudgerListItem]]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
+    val _ = request
+    val _ = pathParams
+    IO.unit
+
+  override def plan(connection: Connection, actor: SiteManagerUser, input: Unit): IO[List[RegisteredJudgerListItem]] =
+    val _ = actor
+    val _ = input
+    JudgerTable.listJudgers(connection, judgeConfig.heartbeatTimeoutMs)

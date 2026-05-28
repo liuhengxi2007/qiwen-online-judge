@@ -1,18 +1,34 @@
 package domains.problemset.http.api
 
-
-
-import domains.problemset.http.*
-import domains.problemset.http.mapper.ProblemSetHttpRequestMappers
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.problemset.http.codec.ProblemSetHttpCodecs.given
+import domains.problemset.objects.response.ProblemSetSummary
+import domains.problemset.table.problem_set.ProblemSetTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.utils.PageRequestQuerySupport
+import shared.http.{ApiPath, PathParams}
+import shared.objects.{PageRequest, PageResponse}
 
-object ListProblemSets:
+import java.sql.Connection
 
-  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ GET -> Root / "api" / "problem-sets" =>
-        handlers.execute(request, ProblemSetHttpRequestMappers.listProblemSetsRequest(request.uri.query.params), ProblemSetHttpPlanDefinitions.listProblemSets)
-    }
+object ListProblemSets extends AuthenticatedApi[PageRequest, PageResponse[ProblemSetSummary]]:
+
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/problem-sets")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[PageResponse[ProblemSetSummary]] = summon[Encoder[PageResponse[ProblemSetSummary]]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
+    val _ = pathParams
+    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    pageRequest: PageRequest
+  ): IO[PageResponse[ProblemSetSummary]] =
+    val normalizedPageRequest = pageRequest.normalized
+    ProblemSetTable.listVisibleTo(connection, actor, normalizedPageRequest.page, normalizedPageRequest.pageSize)

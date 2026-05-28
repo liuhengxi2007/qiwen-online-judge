@@ -1,24 +1,44 @@
 package domains.usergroup.http.api
 
-
-
-import domains.usergroup.http.*
-import domains.usergroup.http.codec.UserGroupHttpCodecs.given
 import cats.effect.IO
-import domains.usergroup.application.UserGroupCommands
-import domains.usergroup.objects.request.{CreateUserGroupRequest}
-import org.http4s.HttpRoutes
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.auth.table.auth_user.AuthUserTable
+import domains.user.objects.Username
+import domains.usergroup.http.UserGroupApiSupport
+import domains.usergroup.http.codec.UserGroupHttpCodecs.given
+import domains.usergroup.objects.request.CreateUserGroupRequest
+import domains.usergroup.objects.response.UserGroupDetail
+import domains.usergroup.rules.UserGroupAccessRules
+import domains.usergroup.table.user_group.UserGroupTable
+import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object CreateUserGroup:
+import java.sql.Connection
 
-  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "user-groups" =>
-        handlers.executeDecoded[CreateUserGroupRequest, UserGroupCommands.CreateUserGroupResult](
-          request,
-          UserGroupHttpPlanDefinitions.createUserGroup
-        )
-    }
+object CreateUserGroup extends AuthenticatedApi[CreateUserGroupRequest, UserGroupDetail]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/user-groups")
+  override val successStatus: Status = Status.Created
+  override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[CreateUserGroupRequest] =
+    val _ = pathParams
+    request.as[CreateUserGroupRequest]
+
+  override def plan(connection: Connection, actor: AuthUser, request: CreateUserGroupRequest): IO[UserGroupDetail] =
+    for
+      _ <- HttpApiError.ensure(
+        UserGroupAccessRules.canCreate(actor),
+        HttpApiError.forbidden(ApiMessages.userGroupCreationForbidden)
+      )
+      validRequest <- HttpApiError.fromEitherBadRequest(UserGroupApiSupport.validateCreate(request))
+      existing <- UserGroupTable.findBySlug(connection, validRequest.slug)
+      _ <- HttpApiError.ensure(existing.isEmpty, HttpApiError.conflict(ApiMessages.userGroupSlugExists))
+      conflictingUser <- AuthUserTable.findByUsername(connection, Username.canonical(validRequest.slug.value)).map(_.nonEmpty)
+      _ <- HttpApiError.ensure(!conflictingUser, HttpApiError.conflict(ApiMessages.userGroupSlugConflictsWithUsername))
+      group <- UserGroupTable.insert(connection, actor.username, validRequest)
+    yield UserGroupApiSupport.toUserGroupDetail(group)

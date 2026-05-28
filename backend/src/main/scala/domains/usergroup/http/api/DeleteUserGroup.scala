@@ -1,24 +1,36 @@
 package domains.usergroup.http.api
 
-import domains.usergroup.http.mapper.UserGroupHttpResponseMappers
-import domains.usergroup.http.mapper.UserGroupHttpRequestMappers
-
-
-
-import domains.usergroup.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.usergroup.objects.UserGroupSlug
+import domains.usergroup.rules.UserGroupAccessRules
+import domains.usergroup.table.user_group.UserGroupTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.codec.SharedHttpCodecs.given
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.objects.response.SuccessResponse
 
-object DeleteUserGroup:
+import java.sql.Connection
 
-  def routes(handlers: domains.auth.http.AuthenticatedHttpExecutor)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "user-groups" / groupSlug / "delete" =>
-        UserGroupHttpRequestMappers.userGroupSlug(groupSlug) match
-          case Left(message) =>
-            UserGroupHttpResponseMappers.validationErrorResponse(message)
-          case Right(parsedGroupSlug) =>
-            handlers.execute(request, parsedGroupSlug, UserGroupHttpPlanDefinitions.deleteUserGroup)
-    }
+object DeleteUserGroup extends AuthenticatedApi[UserGroupSlug, SuccessResponse]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/user-groups/:groupSlug/delete")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[UserGroupSlug] =
+    val _ = request
+    HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
+
+  override def plan(connection: Connection, actor: AuthUser, groupSlug: UserGroupSlug): IO[SuccessResponse] =
+    for
+      maybeGroup <- UserGroupTable.findBySlug(connection, groupSlug)
+      group <- maybeGroup match
+        case Some(group) => IO.pure(group)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userGroupNotFound))
+      _ <- HttpApiError.ensure(UserGroupAccessRules.canDelete(actor, group), HttpApiError.notFound(ApiMessages.userGroupNotFound))
+      _ <- UserGroupTable.delete(connection, group.id)
+    yield SuccessResponse(code = Some(ApiMessages.userGroupDeleted.code), message = None, params = ApiMessages.userGroupDeleted.params)

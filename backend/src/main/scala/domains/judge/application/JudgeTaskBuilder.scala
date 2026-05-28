@@ -2,9 +2,11 @@ package domains.judge.application
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.problem.application.{ProblemCommands, ProblemDataStorage}
+import domains.problem.application.ProblemDataStorage
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
+import domains.problem.table.problem.ProblemQueryTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.submission.objects.internal.ClaimedSubmission
 import judgeprotocol.objects.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
@@ -24,7 +26,7 @@ object JudgeTaskBuilder:
     claimedSubmission: ClaimedSubmission
   ): IO[Either[String, JudgeTask]] =
     for
-      maybeManifest <- ProblemCommands.judgeTaskManifest(connection, claimedSubmission.problemId, claimedSubmission.problemSlug)
+      maybeManifest <- judgeTaskManifest(connection, claimedSubmission)
       manifest = maybeManifest.getOrElse(ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, Nil))
       config <- loadConfig(problemDataStorage, claimedSubmission, manifest)
     yield
@@ -33,6 +35,17 @@ object JudgeTaskBuilder:
           Left("Problem not found for claimed submission.")
         case Some(_) =>
           config
+
+  private def judgeTaskManifest(
+    connection: java.sql.Connection,
+    claimedSubmission: ClaimedSubmission
+  ): IO[Option[ProblemDataManifest]] =
+    ProblemQueryTable.findBySlug(connection, claimedSubmission.problemSlug).flatMap {
+      case Some(problem) if problem.id == claimedSubmission.problemId =>
+        ProblemDataFileTable.manifestForProblem(connection, claimedSubmission.problemId, claimedSubmission.problemSlug).map(Some(_))
+      case _ =>
+        IO.pure(None)
+    }
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match

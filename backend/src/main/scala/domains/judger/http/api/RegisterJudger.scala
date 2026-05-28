@@ -1,22 +1,32 @@
 package domains.judger.http.api
 
-
-
-import domains.judger.http.*
 import cats.effect.IO
-import database.DatabaseSession
-import domains.auth.application.SessionStore
+import domains.auth.http.PublicApi
 import domains.judge.application.JudgeConfig
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.judge.http.JudgeApiSupport
+import domains.judger.http.JudgerRegistryApiSupport
+import domains.judger.table.judger.JudgerTable
+import io.circe.Encoder
+import judgeprotocol.objects.{RegisterJudgerRequest, RegisterJudgerResponse}
+import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiPath, HttpApiError, PathParams}
 
-object RegisterJudger:
+import java.sql.Connection
 
-  def routes(databaseSession: DatabaseSession, judgeConfig: JudgeConfig, sessionStore: SessionStore): HttpRoutes[IO] =
-    given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val handlers = new JudgerRegistryHttpHandlers(databaseSession, judgeConfig, sessionStore)
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "internal" / "judgers" / "register" =>
-        handlers.register(request)
-    }
+final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[RegisterJudgerRequest, RegisterJudgerResponse]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/internal/judgers/register")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[RegisterJudgerResponse] = summon[Encoder[RegisterJudgerResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[RegisterJudgerRequest] =
+    val _ = pathParams
+    JudgeApiSupport.ensureJudgeToken(request, judgeConfig) *> request.as[RegisterJudgerRequest]
+
+  override def plan(connection: Connection, request: RegisterJudgerRequest): IO[RegisterJudgerResponse] =
+    for
+      validRequest <- HttpApiError.fromEitherBadRequest(JudgerRegistryApiSupport.validateRegisterRequest(request))
+      response <- JudgerTable.register(connection, validRequest, judgeConfig.heartbeatIntervalMs, judgeConfig.heartbeatTimeoutMs)
+    yield response

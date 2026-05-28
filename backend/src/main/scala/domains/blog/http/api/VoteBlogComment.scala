@@ -1,32 +1,37 @@
 package domains.blog.http.api
 
-
-
-import domains.blog.http.*
-import domains.blog.http.codec.BlogHttpCodecs.given
-import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
-import domains.blog.application.BlogCommands
-import domains.blog.objects.request.VoteBlogCommentRequest
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.blog.http.BlogApiSupport.VoteBlogCommentInput
+import domains.blog.http.codec.BlogHttpCodecs.given
 import domains.blog.objects.{BlogCommentId, BlogId}
-import org.http4s.HttpRoutes
+import domains.blog.objects.request.VoteBlogCommentRequest
+import domains.blog.objects.response.BlogDetail
+import domains.blog.table.blog.BlogCommentVoteTable
+import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object VoteBlogComment:
+import java.sql.Connection
 
-  def routes(context: BlogHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "comments" / rawCommentId / "vote" =>
-        (BlogHttpRequestMappers.blogId(rawBlogId), BlogHttpRequestMappers.blogCommentId(rawCommentId)) match
-          case (Left(message), _) =>
-            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
-          case (_, Left(message)) =>
-            shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
-          case (Right(blogId), Right(commentId)) =>
-            context.handlers.executeDecoded[VoteBlogCommentRequest, BlogHttpPlans.VoteBlogCommentInput, BlogCommands.VoteBlogCommentResult](
-              request,
-              context.plans.voteBlogComment
-            )(voteRequest => BlogHttpPlans.VoteBlogCommentInput(blogId, commentId, voteRequest))
+object VoteBlogComment extends AuthenticatedApi[VoteBlogCommentInput, BlogDetail]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/blogs/:blogId/comments/:commentId/vote")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[BlogDetail] = summon[Encoder[BlogDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[VoteBlogCommentInput] =
+    for
+      blogId <- HttpApiError.fromEitherBadRequest(pathParams.require("blogId").flatMap(BlogId.parse))
+      commentId <- HttpApiError.fromEitherBadRequest(pathParams.require("commentId").flatMap(BlogCommentId.parse))
+      body <- request.as[VoteBlogCommentRequest]
+    yield VoteBlogCommentInput(blogId, commentId, body)
+
+  override def plan(connection: Connection, actor: AuthUser, input: VoteBlogCommentInput): IO[BlogDetail] =
+    BlogCommentVoteTable.voteComment(connection, input.blogId, input.commentId, actor.username, input.request.vote).flatMap {
+      case Some(blog) => IO.pure(blog)
+      case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogCommentNotFound))
     }

@@ -1,26 +1,61 @@
 package domains.problem.http.api
 
-import domains.problem.http.mapper.ProblemHttpResponseMappers
-import domains.problem.http.mapper.ProblemHttpRequestMappers
-
-
-
-import domains.problem.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import domains.auth.http.AuthenticatedResponseApi
+import domains.auth.objects.AuthUser
+import domains.problem.application.ProblemDataStorage
+import domains.problem.objects.{ProblemDataPath, ProblemSlug}
+import domains.problem.rules.ProblemAccessRules
+import domains.problem.table.problem.ProblemQueryTable
+import fs2.Stream
+import org.http4s.{Header, Method, Request, Response, Status}
+import org.typelevel.ci.CIString
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-private object PathQueryParamMatcher extends org.http4s.dsl.impl.QueryParamDecoderMatcher[String]("path")
+import java.sql.Connection
 
-object DownloadProblemDataPath:
+final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
+    extends AuthenticatedResponseApi[(ProblemSlug, ProblemDataPath)]:
 
-  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case GET -> Root / "api" / "problems" / problemSlug / "data" / "file" :? PathQueryParamMatcher(rawPath) =>
-        ProblemHttpRequestMappers.problemSlugAndPath(problemSlug, rawPath) match
-          case Left(message) =>
-            ProblemHttpResponseMappers.validationErrorResponse(message)
-          case Right((parsedProblemSlug, parsedPath)) =>
-            ProblemHttpResponseMappers.downloadDataPathResponse(context.problemDataStorage, parsedProblemSlug, parsedPath)
+  override val method: Method = Method.GET
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/file")
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, ProblemDataPath)] =
+    HttpApiError.fromEitherBadRequest(
+      for
+        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
+        rawPath <- request.uri.query.params.get("path").toRight("Missing query parameter: path.")
+        path <- ProblemDataPath.parse(rawPath)
+      yield (problemSlug, path)
+    )
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    input: (ProblemSlug, ProblemDataPath)
+  ): IO[Response[IO]] =
+    val (problemSlug, path) = input
+    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+      case Some(problem) =>
+        for
+          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
+          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+          response <- problemDataStorage.readPath(problem.slug, path).flatMap {
+            case None =>
+              HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+            case Some((storedPath, bytes)) =>
+              IO.pure(binaryResponse(storedPath.fileName, bytes))
+          }
+        yield response
     }
+
+  private def binaryResponse(filename: String, bytes: Array[Byte]): Response[IO] =
+    Response[IO](status = Status.Ok)
+      .putHeaders(
+        Header.Raw(CIString("Content-Type"), "application/octet-stream"),
+        Header.Raw(CIString("Content-Disposition"), s"""attachment; filename="$filename""""),
+        Header.Raw(CIString("Content-Length"), bytes.length.toString)
+      )
+      .withBodyStream(Stream.emits(bytes).covary[IO])

@@ -1,24 +1,45 @@
 package domains.problem.http.api
 
-import domains.problem.http.mapper.ProblemHttpResponseMappers
-import domains.problem.http.mapper.ProblemHttpRequestMappers
-
-
-
-import domains.problem.http.*
 import cats.effect.IO
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import database.table.resource_access_grant.ResourceAccessGrantTable
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.problem.objects.ProblemSlug
+import domains.problem.rules.ProblemAccessRules
+import domains.problem.table.problem.{ProblemMutationTable, ProblemQueryTable}
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.codec.SharedHttpCodecs.given
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.objects.access.{ResourceId, ResourceKind}
+import shared.objects.response.SuccessResponse
 
-object DeleteProblem:
+import java.sql.Connection
 
-  def routes(context: ProblemHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "problems" / problemSlug / "delete" =>
-        ProblemHttpRequestMappers.problemSlug(problemSlug) match
-          case Left(message) =>
-            ProblemHttpResponseMappers.validationErrorResponse(message)
-          case Right(parsedProblemSlug) =>
-            context.handlers.execute(request, parsedProblemSlug, context.plans.deleteProblem)
+object DeleteProblem extends AuthenticatedApi[ProblemSlug, SuccessResponse]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/delete")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSlug] =
+    val _ = request
+    HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    problemSlug: ProblemSlug
+  ): IO[SuccessResponse] =
+    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+      case Some(problem) =>
+        for
+          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
+          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+          _ <- ResourceAccessGrantTable.deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
+          _ <- ProblemMutationTable.delete(connection, problem.id)
+        yield SuccessResponse(code = Some(ApiMessages.problemDeleted.code), message = None, params = ApiMessages.problemDeleted.params)
     }

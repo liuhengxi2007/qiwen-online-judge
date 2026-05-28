@@ -1,24 +1,38 @@
 package domains.message.http.api
 
-
-
-import domains.message.http.*
-import domains.message.http.codec.MessageHttpCodecs.given
 import cats.effect.IO
-import domains.message.application.MessageCommandResults.CreateConversationResult
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.message.http.codec.MessageHttpCodecs.given
 import domains.message.objects.request.CreateConversationRequest
-import org.http4s.HttpRoutes
+import domains.message.objects.response.MessageConversationSummary
+import domains.message.table.message.{MessageConversationTable, MessageUserTable}
+import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object CreateConversation:
+import java.sql.Connection
 
-  def routes(context: MessageHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "messages" / "conversations" =>
-        context.handlers.executeDecoded[CreateConversationRequest, CreateConversationResult](
-          request,
-          context.plans.createConversation
-        )
-    }
+object CreateConversation extends AuthenticatedApi[CreateConversationRequest, MessageConversationSummary]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/messages/conversations")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[MessageConversationSummary] = summon[Encoder[MessageConversationSummary]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[CreateConversationRequest] =
+    val _ = pathParams
+    request.as[CreateConversationRequest]
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    request: CreateConversationRequest
+  ): IO[MessageConversationSummary] =
+    for
+      _ <- HttpApiError.ensure(actor.username != request.targetUsername, HttpApiError.badRequest(ApiMessages.directMessageSelfForbidden))
+      targetExists <- MessageUserTable.userExists(connection, request.targetUsername)
+      _ <- HttpApiError.ensure(targetExists, HttpApiError.notFound(ApiMessages.userNotFound))
+      conversation <- MessageConversationTable.getOrCreateConversation(connection, actor.username, request.targetUsername)
+    yield conversation

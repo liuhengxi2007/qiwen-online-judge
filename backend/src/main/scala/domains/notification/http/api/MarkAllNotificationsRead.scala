@@ -1,22 +1,40 @@
 package domains.notification.http.api
 
-
-
-import domains.notification.http.*
-import domains.notification.http.mapper.NotificationHttpRequestMappers
 import cats.effect.IO
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
-import org.http4s.HttpRoutes
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.notification.application.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.table.notification.NotificationTable
+import io.circe.Encoder
+import org.http4s.{Method, Request, Status}
+import shared.http.codec.SharedHttpCodecs.given
+import shared.http.{ApiMessages, ApiPath, PathParams}
+import shared.objects.response.SuccessResponse
 
-object MarkAllNotificationsRead:
+import java.sql.Connection
 
-  def routes(context: NotificationHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "notifications" / "read-all" =>
-        context.handlers.execute(
-          request,
-          NotificationHttpRequestMappers.unit,
-          context.plans.markAllNotificationsRead
-        )
-    }
+final class MarkAllNotificationsRead(notificationEventHub: NotificationEventHub) extends AuthenticatedApi[Unit, SuccessResponse]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/notifications/read-all")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
+    val _ = (request, pathParams)
+    IO.unit
+
+  override def plan(
+    connection: Connection,
+    actor: AuthUser,
+    input: Unit
+  ): IO[SuccessResponse] =
+    val _ = input
+    for
+      _ <- NotificationTable.markAllRead(connection, actor.username)
+      _ <- notificationEventHub.publish(actor.username, NotificationStreamEvent.NotificationsChanged)
+    yield SuccessResponse(
+      code = Some(ApiMessages.notificationsMarkedRead.code),
+      message = None,
+      params = ApiMessages.notificationsMarkedRead.params
+    )

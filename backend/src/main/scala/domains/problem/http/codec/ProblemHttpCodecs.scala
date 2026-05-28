@@ -3,7 +3,6 @@ package domains.problem.http.codec
 import domains.problem.objects.request.*
 import domains.problem.objects.response.*
 import domains.problem.http.codec.ProblemModelHttpCodecs.given
-import domains.problem.http.ProblemHttpPlans.SetProblemReadyRequest
 import domains.user.http.codec.UserModelHttpCodecs.given
 import shared.objects.PageRequest
 import shared.http.codec.SharedHttpCodecs
@@ -49,9 +48,6 @@ object ProblemHttpCodecs:
   given Decoder[UpdateProblemRequest] = deriveDecoder[UpdateProblemRequest]
   given Encoder[DeleteProblemDataPathRequest] = deriveEncoder[DeleteProblemDataPathRequest]
   given Decoder[DeleteProblemDataPathRequest] = deriveDecoder[DeleteProblemDataPathRequest]
-  given Encoder[SetProblemReadyRequest] = deriveEncoder[SetProblemReadyRequest]
-  given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
-
   given Encoder[ProblemSummary] = deriveEncoder[ProblemSummary]
   given Decoder[ProblemSummary] = deriveDecoder[ProblemSummary]
   given Encoder[ProblemDetail] = deriveEncoder[ProblemDetail]

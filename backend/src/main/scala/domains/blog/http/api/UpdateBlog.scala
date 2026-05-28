@@ -1,29 +1,48 @@
 package domains.blog.http.api
 
-
-
-import domains.blog.http.*
-import domains.blog.http.codec.BlogHttpCodecs.given
-import domains.blog.http.mapper.BlogHttpRequestMappers
 import cats.effect.IO
-import domains.blog.application.BlogCommands
+import domains.auth.http.AuthenticatedApi
+import domains.auth.objects.AuthUser
+import domains.blog.http.BlogApiSupport.UpdateBlogInput
+import domains.blog.http.codec.BlogHttpCodecs.given
+import domains.blog.objects.{BlogContent, BlogId, BlogTitle}
 import domains.blog.objects.request.UpdateBlogRequest
-import domains.blog.objects.BlogId
-import org.http4s.HttpRoutes
+import domains.blog.objects.response.BlogDetail
+import domains.blog.table.blog.BlogPostMutationTable
+import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io.*
+import org.http4s.{Method, Request, Status}
+import shared.http.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
-object UpdateBlog:
+import java.sql.Connection
 
-  def routes(context: BlogHttpRouteContext)(using Http4sDsl[IO]): HttpRoutes[IO] =
-    HttpRoutes.of[IO] {
-      case request @ POST -> Root / "api" / "blogs" / rawBlogId / "update" =>
-        BlogHttpRequestMappers.blogId(rawBlogId) match
-          case Left(message) => shared.http.utils.HttpResponseSupport.validationErrorResponse(message)
-          case Right(blogId) =>
-            context.handlers.executeDecoded[UpdateBlogRequest, BlogHttpPlans.UpdateBlogInput, BlogCommands.UpdateBlogResult](
-              request,
-              context.plans.updateBlog
-            )(updateRequest => BlogHttpPlans.UpdateBlogInput(blogId, updateRequest))
-    }
+object UpdateBlog extends AuthenticatedApi[UpdateBlogInput, BlogDetail]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/blogs/:blogId/update")
+  override val successStatus: Status = Status.Ok
+  override protected val outputEncoder: Encoder[BlogDetail] = summon[Encoder[BlogDetail]]
+
+  override def decode(request: Request[IO], pathParams: PathParams): IO[UpdateBlogInput] =
+    for
+      blogId <- HttpApiError.fromEitherBadRequest(pathParams.require("blogId").flatMap(BlogId.parse))
+      body <- request.as[UpdateBlogRequest]
+    yield UpdateBlogInput(blogId, body)
+
+  override def plan(connection: Connection, actor: AuthUser, input: UpdateBlogInput): IO[BlogDetail] =
+    for
+      title <- HttpApiError.fromEitherBadRequest(BlogTitle.parse(input.request.title.value))
+      content <- HttpApiError.fromEitherBadRequest(BlogContent.parse(input.request.content.value))
+      validRequest = input.request.copy(title = title, content = content)
+      maybeBlog <- BlogPostMutationTable.update(
+        connection,
+        input.blogId,
+        actor.username,
+        validRequest.title,
+        validRequest.content,
+        validRequest.visibility
+      )
+      blog <- maybeBlog match
+        case Some(blog) => IO.pure(blog)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogNotFound))
+    yield blog
