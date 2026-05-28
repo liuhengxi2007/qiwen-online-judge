@@ -20,7 +20,7 @@ The service listens on `http://0.0.0.0:8080` by default.
   cross-domain persistence primitives.
 - `src/main/scala/domains/<domain>`
   Domain-first backend code. Most business domains are split into `objects`,
-  `application`, `http`, and `table`.
+  `http`, and `table`, with optional `rules` and guarded `utils`.
 - `src/main/scala/shared`
   Cross-domain primitives such as pagination, access control, shared HTTP
   execution support, and generic response objects.
@@ -32,22 +32,21 @@ Current domains are `auth`, `blog`, `judge`, `judger`, `message`, `notification`
 
 - `objects`
   Durable domain entities, value objects, enums, lifecycle types, slugs, ids, and
-  titles. Object files must not import `application`, `http`, or `table`.
+  titles. Object files must not import `utils`, `http`, or `table`.
 - `objects/request`
-  Typed command/query inputs decoded at HTTP boundaries and consumed by application/table code.
+  Typed command/query inputs decoded at HTTP boundaries and consumed by API plans, rules, or table code.
 - `objects/response`
-  Read/output shapes returned by application use cases.
-- `application`
-  Use-case orchestration, validation, permission decisions, result ADTs, and
-  domain-owned adapter interfaces.
+  Read/output shapes returned by endpoint workflows.
+- `rules`
+  Optional pure validation, permission, lifecycle, and draft-building helpers.
 - `http`
   Endpoint routing, request decoding, plan execution, and response mapping.
 - `table`
   PostgreSQL persistence APIs, SQL, schema setup, and row mapping.
-
-`JdbcMessageRepository.scala`, `LocalProblemDataStorage.scala`, and
-`MinioProblemDataStorage.scala` are current application-adapter exceptions. They
-remain in `application` for now to avoid a behavior-changing infrastructure split.
+- `utils`
+  Guarded owner-domain infrastructure such as storage/session/config helpers or
+  event hubs. New files must update `backendDomainUtilsAllowlist` in
+  `scripts/check-structure-boundaries.mjs` and the guardrails docs.
 
 Detailed rules live in [docs/backend-guardrails.md](../docs/backend-guardrails.md).
 

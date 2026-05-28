@@ -67,9 +67,38 @@ const backendDomainHttpMapperFilePattern =
 const backendDomainHttpMapperBasenamePattern = /^[A-Za-z0-9_]+Http(?:Request|Response)Mappers$/
 const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
 const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
+const backendDomainUtilsFilePattern =
+  /^backend\/src\/main\/scala\/domains\/([^/]+)\/utils\/(.+\.scala)$/
 const backendEffectPattern =
   /(?:\.prepareStatement\s*\(|\bFiles\.|\bInstant\.now\s*\(|\bLocalDateTime\.now\s*\(|\bSystem\.currentTimeMillis\s*\(|\bUUID\.randomUUID\s*\(|\bSecureRandom\s*\(|\.nextBytes\s*\(|\.publish1\s*\(|\.publish\s*\(|\bclient\.(?:get|set|setex|del|listObjects|putObject|getObject|removeObject|bucketExists|makeBucket)\s*\(|\bproblemDataStorage\.(?:list|read|write|delete|snapshot|restore)\w*\s*\()/
 const backendEffectfulReturnPattern = /:\s*(?:IO|Resource)\s*\[|:\s*Stream\s*\[\s*IO\b/
+
+const backendDomainUtilsAllowlist = new Map([
+  [
+    'auth',
+    new Set([
+      'PasswordHasher.scala',
+      'RedisSessionCache.scala',
+      'SessionCache.scala',
+      'SessionCacheConfig.scala',
+      'SessionConfig.scala',
+      'SessionStore.scala',
+    ]),
+  ],
+  [
+    'problem',
+    new Set([
+      'LocalProblemDataStorage.scala',
+      'MinioProblemDataStorage.scala',
+      'ProblemDataStorage.scala',
+      'ProblemDataStorageConfig.scala',
+      'ProblemDataUploadPreparation.scala',
+    ]),
+  ],
+  ['message', new Set(['MessageEventHub.scala'])],
+  ['notification', new Set(['NotificationEventHub.scala', 'NotificationStreamEvent.scala'])],
+  ['judge', new Set(['JudgeConfig.scala', 'JudgeTaskBuilder.scala'])],
+])
 
 const pathOf = (...parts) => parts.join('/')
 const extension = (name, ext) => `${name}.${ext}`
@@ -492,6 +521,46 @@ function checkBackendApplicationBoundaryFile(filePath, errors) {
   }
 }
 
+function checkBackendDomainUtilsAllowlist(files, errors) {
+  const actualUtilsFiles = new Set()
+
+  for (const filePath of files) {
+    const match = filePath.match(backendDomainUtilsFilePattern)
+    if (!match) {
+      continue
+    }
+
+    const [, domain, utilsPath] = match
+    actualUtilsFiles.add(filePath)
+
+    if (utilsPath.includes('/')) {
+      errors.push(`${filePath} is nested under domain utils; allowed domain utilities must live directly under utils/*.scala`)
+      continue
+    }
+
+    const allowedFiles = backendDomainUtilsAllowlist.get(domain) ?? new Set()
+    if (!allowedFiles.has(utilsPath)) {
+      errors.push(
+        `${filePath} is not in backendDomainUtilsAllowlist; update scripts/check-structure-boundaries.mjs and docs/backend-guardrails.md after an explicit architecture decision`,
+      )
+    }
+  }
+
+  for (const [domain, allowedFiles] of backendDomainUtilsAllowlist) {
+    for (const fileName of allowedFiles) {
+      if (fileName.includes('/') || !fileName.endsWith('.scala')) {
+        errors.push(`backendDomainUtilsAllowlist entry ${domain}/${fileName} must be a utils/*.scala filename`)
+        continue
+      }
+
+      const expectedPath = `backend/src/main/scala/domains/${domain}/utils/${fileName}`
+      if (!actualUtilsFiles.has(expectedPath)) {
+        errors.push(`${expectedPath} is listed in backendDomainUtilsAllowlist but does not exist`)
+      }
+    }
+  }
+}
+
 function checkBackendHttpPlansFile(filePath, errors) {
   const source = read(filePath)
   for (const entry of extractScalaImports(source)) {
@@ -679,6 +748,7 @@ function run() {
   }
 
   checkFrontendHttpCodecLayout(frontendFiles, backendDomainFiles, errors)
+  checkBackendDomainUtilsAllowlist(backendDomainFiles, errors)
 
   for (const filePath of walk('frontend/src/objects', new Set(['.ts', '.tsx']))) {
     if (

@@ -21,7 +21,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/database`
   - Shared database bootstrap, connection management, and cross-domain persistence primitives that do not belong to one business domain
 - `src/main/scala/domains/<domain>/utils`
-  - Owner-domain support code such as small runtime adapters, parsers, constructors, event hubs, and storage/session/config helpers
+  - Explicitly allowlisted owner-domain support code such as runtime adapters, event hubs, and storage/session/config helpers
 
 ## Backend File Templates
 
@@ -31,8 +31,10 @@ These templates define the default shape for a business domain, not a minimum fi
 
 For `utils`:
 
+- domain `utils` is protected by `node scripts/check-structure-boundaries.mjs`; only files listed in `backendDomainUtilsAllowlist` may exist there
 - keep only owner-domain support code that cannot live closer to `objects`, `rules`, `table`, or `http/utils`
-- allowed examples include small runtime adapters, parser/constructor helpers, event hubs, and session/storage/config boundaries owned by that domain
+- before adding a new util file, prove it does not belong in `objects`, `rules`, `table`, or `http/utils`, then update both `backendDomainUtilsAllowlist` and this document in the same change
+- keep allowed files directly under `utils/*.scala`; nested `utils` subdirectories are forbidden
 - do not put API orchestration here; the API object's `plan(...)` remains the readable workflow
 - do not create a domain `application` package for new code
 
@@ -52,13 +54,13 @@ For `http`:
 For `objects/request`:
 
 - `<Name>.scala`
-  typed command/query inputs decoded by HTTP endpoints and consumed by application/table code, including inbound request bodies and query-derived list filters
+  typed command/query inputs decoded by HTTP endpoints and consumed by API plans, rules, or table code, including inbound request bodies and query-derived list filters
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
 For `objects/response`:
 
 - `<Name>.scala`
-  read/output shapes returned by application use cases, such as summaries, details, list responses, unread counts, upload results, and session/profile views
+  read/output shapes returned by endpoint workflows, such as summaries, details, list responses, unread counts, upload results, and session/profile views
 - do not define Circe encoders/decoders here; HTTP wire codecs belong in the owning domain's `http/codec`
 
 Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `objects/`. Put API contract payloads under `objects/request` and `objects/response`.
@@ -98,19 +100,26 @@ Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 The rule is "you may have fewer files, but you may not blur responsibilities".
 Do not move endpoint orchestration into `objects`, `utils`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in rules/helpers and SQL belongs in table modules.
 
-Current domain-owned utility examples:
+Current domain-owned utility allowlist:
 
-- `domains/problem/utils/*ProblemDataStorage*.scala`
-- `domains/problem/utils/ProblemDataUploadPreparation.scala`
-- `domains/auth/utils/*Session*.scala`
 - `domains/auth/utils/PasswordHasher.scala`
+- `domains/auth/utils/RedisSessionCache.scala`
+- `domains/auth/utils/SessionCache.scala`
+- `domains/auth/utils/SessionCacheConfig.scala`
+- `domains/auth/utils/SessionConfig.scala`
+- `domains/auth/utils/SessionStore.scala`
+- `domains/problem/utils/LocalProblemDataStorage.scala`
+- `domains/problem/utils/MinioProblemDataStorage.scala`
+- `domains/problem/utils/ProblemDataStorage.scala`
+- `domains/problem/utils/ProblemDataStorageConfig.scala`
+- `domains/problem/utils/ProblemDataUploadPreparation.scala`
 - `domains/message/utils/MessageEventHub.scala`
 - `domains/notification/utils/NotificationEventHub.scala`
 - `domains/notification/utils/NotificationStreamEvent.scala`
 - `domains/judge/utils/JudgeConfig.scala`
 - `domains/judge/utils/JudgeTaskBuilder.scala`
 
-These files are domain-owned support code, not endpoint orchestration. Do not use `utils` as a replacement for API-object `plan(...)` bodies.
+These files are domain-owned support code, not endpoint orchestration. Do not use `utils` as a replacement for API-object `plan(...)` bodies. Adding to this list is an explicit architecture decision, not the default place for miscellaneous helpers.
 
 ## Functional Core, Imperative Shell
 
