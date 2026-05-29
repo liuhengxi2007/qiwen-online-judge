@@ -20,6 +20,7 @@ object AuthRouter:
         Register(sessionStore),
         UpdateAccount(sessionStore),
         UpdateAccountPermissions,
-        DeleteAccount
+        DeleteAccount,
+        ResolveAccountUsername
       )
     )

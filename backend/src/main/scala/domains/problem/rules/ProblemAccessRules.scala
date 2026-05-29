@@ -5,8 +5,8 @@ import domains.auth.objects.AuthUser
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemQueryTable
 import domains.user.objects.Username
+import domains.usergroup.api.ListUserGroupSlugsForMember
 import domains.usergroup.objects.UserGroupSlug
-import domains.usergroup.table.user_group.UserGroupTable
 import shared.application.access.{ResourceAccessDecision, ResourceAccessFacts}
 import shared.objects.access.{AccessUserGroupSlug, AccessUsername}
 
@@ -33,11 +33,11 @@ object ProblemAccessRules:
     actor: AuthUser,
     problem: ProblemDetail
   ): IO[ProblemPermissionEvaluation] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).flatMap { actorGroupSlugs =>
+    ListUserGroupSlugsForMember.plan(connection, actor.username).flatMap { actorGroupSlugs =>
       val resourceAccessFacts = ResourceAccessFacts(
         policy = problem.accessPolicy,
         actorUsername = toAccessUsername(actor.username),
-        actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
+        actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs.slugs.toSet),
         hasGlobalViewOverride = hasGlobalViewOverride(actor),
         hasGlobalManageOverride = hasGlobalManageOverride(actor)
       )
@@ -57,13 +57,13 @@ object ProblemAccessRules:
     actor: AuthUser,
     problem: ProblemDetail
   ): IO[Boolean] =
-    UserGroupTable.listGroupSlugsForMember(connection, actor.username).map { actorGroupSlugs =>
+    ListUserGroupSlugsForMember.plan(connection, actor.username).map { actorGroupSlugs =>
       ResourceAccessDecision
         .evaluate(
           ResourceAccessFacts(
             policy = problem.accessPolicy,
             actorUsername = toAccessUsername(actor.username),
-            actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
+            actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs.slugs.toSet),
             hasGlobalViewOverride = hasGlobalViewOverride(actor),
             hasGlobalManageOverride = hasGlobalManageOverride(actor)
           )

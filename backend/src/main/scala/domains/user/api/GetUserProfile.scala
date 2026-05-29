@@ -3,7 +3,7 @@ package domains.user.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.blog.table.blog.BlogPostQueryTable
+import domains.blog.api.GetBlogContributionForAuthor
 
 import domains.user.objects.{UserContribution, Username}
 import domains.user.objects.response.UserProfileResponse
@@ -34,12 +34,12 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       case Some(targetUser) =>
         for
-          contribution <- BlogPostQueryTable.contributionByAuthor(connection, targetUsername)
+          contribution <- GetBlogContributionForAuthor.plan(connection, targetUsername).map(_.contribution)
           acceptedProblems <- UserTable.listAcceptedProblems(connection, targetUsername)
         yield UserProfileResponse(
           username = targetUser.username,
           displayName = targetUser.displayName,
-          contribution = UserContribution(contribution),
+          contribution = UserContribution(BigDecimal(contribution)),
           acceptedProblems = acceptedProblems
         )
     }

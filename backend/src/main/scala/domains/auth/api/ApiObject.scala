@@ -7,7 +7,7 @@ import io.circe.Encoder
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Method, Request, Response, Status}
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
@@ -75,6 +75,17 @@ trait PublicResponseApi[Input] extends ApiObject:
         plan(connection, input)
       }
     yield response
+
+trait InternalOnlyApi[Input, Output] extends ApiObject:
+  def plan(connection: Connection, input: Input): IO[Output]
+
+  override private[api] final def handle(
+    context: ApiObjectContext,
+    request: Request[IO],
+    pathParams: PathParams
+  ): IO[Response[IO]] =
+    val _ = (context, request, pathParams)
+    HttpApiError.forbidden(ApiMessages.internalApiNotCallable).toResponse
 
 trait AuthenticatedApi[Input, Output] extends ApiObject:
   def successStatus: Status = Status.Ok
@@ -149,6 +160,17 @@ trait AuthenticatedResponseApi[Input] extends ApiObject:
         yield response
       }
     yield response
+
+trait InternalOnlyAuthenticatedApi[Input, Output] extends ApiObject:
+  def plan(connection: Connection, actor: AuthUser, input: Input): IO[Output]
+
+  override private[api] final def handle(
+    context: ApiObjectContext,
+    request: Request[IO],
+    pathParams: PathParams
+  ): IO[Response[IO]] =
+    val _ = (context, request, pathParams)
+    HttpApiError.forbidden(ApiMessages.internalApiNotCallable).toResponse
 
 private def requiredSessionResolver(context: ApiObjectContext): SessionResolver =
   context.sessionResolver.getOrElse(throw new IllegalStateException("Session resolver is required for authenticated API objects."))

@@ -7,8 +7,8 @@ import domains.auth.objects.AuthUser
 
 import domains.blog.objects.BlogId
 import domains.blog.table.blog.BlogProblemLinkMutationTable
+import domains.problem.api.ResolveProblemReference
 import domains.problem.objects.ProblemSlug
-import domains.problem.table.problem.ProblemQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
@@ -31,8 +31,8 @@ object LinkBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessR
   override def plan(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for
       _ <- HttpApiError.ensure(canManageProblemCatalog(actor), HttpApiError.forbidden(ApiMessages.problemBlogLinkManageForbidden))
-      problem <- ProblemQueryTable.findBySlug(connection, input.problemSlug)
-      _ <- HttpApiError.ensure(problem.nonEmpty, HttpApiError.notFound(ApiMessages.problemOrPublicBlogNotFound))
+      problem <- ResolveProblemReference.plan(connection, input.problemSlug)
+      _ <- HttpApiError.ensure(problem.problem.nonEmpty, HttpApiError.notFound(ApiMessages.problemOrPublicBlogNotFound))
       linked <- BlogProblemLinkMutationTable.linkProblem(connection, input.problemSlug, input.blogId, actor.username)
       _ <- HttpApiError.ensure(linked, HttpApiError.notFound(ApiMessages.problemOrPublicBlogNotFound))
     yield SuccessResponse.fromApiMessage(ApiMessages.blogLinkedToProblem)

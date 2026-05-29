@@ -19,6 +19,8 @@ const publicAuthApiObjectProtocol = new Set([
   'domains.auth.api.ApiObjectRouter',
   'domains.auth.api.AuthenticatedApi',
   'domains.auth.api.AuthenticatedResponseApi',
+  'domains.auth.api.InternalOnlyApi',
+  'domains.auth.api.InternalOnlyAuthenticatedApi',
   'domains.auth.api.PublicApi',
   'domains.auth.api.PublicResponseApi',
   'domains.auth.api.SessionResolver',
@@ -417,11 +419,16 @@ function isExplicitCollaborationImport(importPath) {
   return [...explicitCollaborationBoundaries].some((publicPath) => matchesPublicPath(importPath, publicPath))
 }
 
+function isNamedApiObjectImport(domain, importPath) {
+  return new RegExp(`^domains\\.${domain}\\.api\\.[A-Z][A-Za-z0-9_]*(?:\\.|$)`).test(importPath)
+}
+
 function isPublicBoundaryImport(domain, importPath) {
   return (
     isPublicModelImport(domain, importPath) ||
     isPublicWiringImport(domain, importPath) ||
-    isExplicitCollaborationImport(importPath)
+    isExplicitCollaborationImport(importPath) ||
+    isNamedApiObjectImport(domain, importPath)
   )
 }
 
@@ -431,6 +438,9 @@ function forbiddenReason(importPath) {
   }
 
   if (/^domains\.[^.]+\.api(?:\.|$)/.test(importPath)) {
+    if (/^domains\.[^.]+\.api\.\*$/.test(importPath)) {
+      return 'imports another domain API wildcard'
+    }
     return 'imports another domain API implementation'
   }
 

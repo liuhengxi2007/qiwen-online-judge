@@ -5,16 +5,15 @@ import domains.auth.api.PublicResponseApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTaskBuilder
 import domains.judge.utils.JudgeTokenAuth
-import domains.judger.table.judger.JudgerTable
+import domains.judger.api.GetActiveJudgerSupportedLanguages
+import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
-import domains.problem.table.problem.ProblemQueryTable
-import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.ProblemDataStorage
+import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.rules.SubmissionJudgeRules
-import domains.submission.table.submission.SubmissionJudgeTable
 import io.circe.syntax.*
 import judgeprotocol.objects.{ClaimJudgeTaskRequest, JudgeTask, JudgerId}
 import org.http4s.circe.CirceEntityCodec.*
@@ -39,7 +38,10 @@ final case class ClaimJudgeTask(
   override def plan(connection: Connection, request: ClaimJudgeTaskRequest): IO[Response[IO]] =
     for
       claimedAt <- IO.realTimeInstant
-      maybeSupportedLanguages <- JudgerTable.findActiveSupportedLanguages(connection, request.judgerId, judgeConfig.heartbeatTimeoutMs)
+      maybeSupportedLanguages <- GetActiveJudgerSupportedLanguages.plan(
+        connection,
+        GetActiveJudgerSupportedLanguages.input(request.judgerId, judgeConfig.heartbeatTimeoutMs)
+      )
       response <- maybeSupportedLanguages match
         case None =>
           HttpApiError.raise(HttpApiError.badRequest(s"Judger ${request.judgerId.value} is not registered or its lease expired."))
@@ -57,8 +59,11 @@ final case class ClaimJudgeTask(
       case Left(message) =>
         HttpApiError.raise(HttpApiError.badRequest(message))
       case Right(runningState) =>
-        SubmissionJudgeTable
-          .claimNextForLanguages(connection, supportedLanguages.flatMap(SubmissionJudgeRules.toSubmissionLanguage), runningState)
+        ClaimNextJudgeSubmission
+          .plan(
+            connection,
+            ClaimNextJudgeSubmission.input(supportedLanguages.flatMap(SubmissionJudgeRules.toSubmissionLanguage), runningState)
+          )
           .flatMap {
             case None =>
               IO.pure(Response[IO](status = Status.NoContent))
@@ -89,12 +94,10 @@ final case class ClaimJudgeTask(
     connection: Connection,
     claimedSubmission: ClaimedSubmission
   ): IO[Option[ProblemDataManifest]] =
-    ProblemQueryTable.findBySlug(connection, claimedSubmission.problemSlug).flatMap {
-      case Some(problem) if problem.id == claimedSubmission.problemId =>
-        ProblemDataFileTable.manifestForProblem(connection, claimedSubmission.problemId, claimedSubmission.problemSlug).map(Some(_))
-      case _ =>
-        IO.pure(None)
-    }
+    GetJudgeProblemDataManifest.plan(
+      connection,
+      GetJudgeProblemDataManifest.input(claimedSubmission.problemId, claimedSubmission.problemSlug)
+    )
 
   private def loadConfig(
     claimedSubmission: ClaimedSubmission,
@@ -136,7 +139,9 @@ final case class ClaimJudgeTask(
       case Left(lifecycleMessage) =>
         IO.pure(Left(lifecycleMessage))
       case Right(failedState) =>
-        SubmissionJudgeTable.updateJudgeState(connection, claimedSubmission.id, failedState).as(Right(()))
+        UpdateSubmissionJudgeState
+          .plan(connection, UpdateSubmissionJudgeState.input(claimedSubmission.id, failedState))
+          .as(Right(()))
 
   private def taskResponse(task: JudgeTask): Response[IO] =
     Response[IO](status = Status.Ok).withEntity(task.asJson)

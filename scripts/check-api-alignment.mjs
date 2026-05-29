@@ -8,7 +8,9 @@ const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
 const allowedBackendOnlyEndpoints = new Map([
-  ['judger', new Set(['RecordJudgerHeartbeat', 'RegisterJudger'])],
+  ['judger', new Set(['GetActiveJudgerSupportedLanguages', 'RecordJudgerHeartbeat', 'RegisterJudger'])],
+  ['problem', new Set(['GetJudgeProblemDataManifest'])],
+  ['submission', new Set(['ClaimNextJudgeSubmission', 'GetSubmissionJudgeState', 'UpdateSubmissionJudgeState'])],
 ])
 
 function listDirectories(path) {

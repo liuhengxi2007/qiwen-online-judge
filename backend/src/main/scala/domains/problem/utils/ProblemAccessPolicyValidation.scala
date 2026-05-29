@@ -2,12 +2,12 @@ package domains.problem.utils
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.api.ResolveAccountUsername
+import domains.problemset.api.ResolveProblemSetSlug
 import domains.problemset.objects.ProblemSetSlug
-import domains.problemset.table.problem_set.ProblemSetTable
 import domains.user.objects.Username
+import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
-import domains.usergroup.table.user_group.UserGroupTable
 import shared.api.HttpApiError
 import shared.objects.access.{AccessSubject, ResourceAccessPolicy}
 
@@ -20,7 +20,7 @@ object ProblemAccessPolicyValidation:
       case Left(_) =>
         IO.pure(false)
       case Right(slug) =>
-        ProblemSetTable.findBySlug(connection, slug).map(_.nonEmpty)
+        ResolveProblemSetSlug.plan(connection, slug).map(_.exists)
 
   def validateAccessPolicySubjects(connection: Connection, policy: ResourceAccessPolicy): IO[Unit] =
     (policy.viewerGrants ++ policy.managerGrants).traverse_(validateAccessPolicySubject(connection, _))
@@ -28,16 +28,16 @@ object ProblemAccessPolicyValidation:
   private def validateAccessPolicySubject(connection: Connection, subject: AccessSubject): IO[Unit] =
     subject match
       case AccessSubject.User(username) =>
-        AuthUserTable.findByUsername(connection, Username(username.value)).flatMap { user =>
+        ResolveAccountUsername.plan(connection, Username(username.value)).flatMap { user =>
           HttpApiError.ensure(
-            user.nonEmpty,
+            user.username.nonEmpty,
             HttpApiError.badRequest(s"Granted user not found: ${username.value}.")
           )
         }
       case AccessSubject.UserGroup(slug) =>
-        UserGroupTable.findBySlug(connection, UserGroupSlug(slug.value)).flatMap { userGroup =>
+        ResolveUserGroupSlug.plan(connection, UserGroupSlug(slug.value)).flatMap { userGroup =>
           HttpApiError.ensure(
-            userGroup.nonEmpty,
+            userGroup.exists,
             HttpApiError.badRequest(s"Granted user group not found: ${slug.value}.")
           )
         }

@@ -10,9 +10,9 @@ import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
 import domains.blog.objects.request.CreateBlogCommentRequest
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
+import domains.notification.api.CreateNotification
 import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.objects.{NotificationKind, NotificationPayload}
-import domains.notification.table.notification.NotificationTable
 import domains.user.objects.Username
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -82,17 +82,19 @@ final class CreateBlogComment(notificationEventHub: NotificationEventHub) extend
           contentPreview = preview(context.triggerCommentContent)
         )
 
-        NotificationTable
-          .insert(
-            connection = connection,
-            recipientUsername = recipientUsername,
-            actorUsername = Some(actor.username),
-            kind = NotificationKind.BlogReply,
-            titleKey = blogReplyTitleKey,
-            bodyKey = blogReplyBodyKey,
-            payload = payload,
-            targetPath = s"/blogs/${context.blogId.value}",
-            targetAnchor = Some(s"comment-${context.triggerCommentId.value}")
+        CreateNotification
+          .plan(
+            connection,
+            CreateNotification.request(
+              recipientUsername = recipientUsername,
+              actorUsername = Some(actor.username),
+              kind = NotificationKind.BlogReply,
+              titleKey = blogReplyTitleKey,
+              bodyKey = blogReplyBodyKey,
+              payload = payload,
+              targetPath = s"/blogs/${context.blogId.value}",
+              targetAnchor = Some(s"comment-${context.triggerCommentId.value}")
+            )
           )
           .as(acc :+ recipientUsername)
       }

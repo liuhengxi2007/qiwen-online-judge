@@ -3,9 +3,8 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
+import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
 
 import domains.submission.objects.SubmissionSourceCode
 import domains.submission.objects.request.CreateSubmissionRequest
@@ -34,11 +33,10 @@ object CreateSubmission extends AuthenticatedApi[CreateSubmissionRequest, Submis
       problemSlug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.problemSlug.value))
       sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))
       validRequest = request.copy(problemSlug = problemSlug, sourceCode = sourceCode)
-      maybeProblem <- ProblemQueryTable.findBySlug(connection, validRequest.problemSlug)
-      problem <- maybeProblem match
+      access <- EvaluateProblemAccess.plan(connection, actor, validRequest.problemSlug)
+      problem <- access.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      access <- ProblemAccessRules.evaluateProblemPermissions(connection, actor, problem)
       _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.problemNotFound))
       created <- SubmissionMutationTable.insert(
         connection = connection,

@@ -8,8 +8,8 @@ import domains.auth.table.auth_user.AuthUserTable
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
 import domains.problem.objects.ProblemTitleDisplayMode
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
+import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
-import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -57,7 +57,7 @@ final case class Register(sessionStore: SessionStore) extends PublicResponseApi[
   private def userGroupSlugConflictsWith(connection: Connection, rawValue: String): IO[Boolean] =
     UserGroupSlug.parse(rawValue) match
       case Left(_) => IO.pure(false)
-      case Right(slug) => UserGroupTable.findBySlug(connection, slug).map(_.nonEmpty)
+      case Right(slug) => ResolveUserGroupSlug.plan(connection, slug).map(_.exists)
 
   private def validateDisplayName(displayName: DisplayName): IO[DisplayName] =
     val normalized = displayName.value.trim

@@ -44,6 +44,7 @@ export const enApiMessages: Record<string, string> = {
   'api.error.message.block_self_forbidden': 'You cannot block yourself.',
   'api.error.judge.token_invalid': 'Judge token is invalid.',
   'api.error.judger.not_found_or_expired': 'Judger not found or lease expired.',
+  'api.error.internal_api.not_callable': 'This API is only available to backend internal calls.',
   'api.success.auth.logged_out': 'Logged out.',
   'api.success.user.deleted': 'User deleted.',
   'api.success.problem.deleted': 'Problem deleted.',

@@ -3,8 +3,7 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
+import domains.problem.api.EvaluateProblemAccess
 import domains.submission.rules.SubmissionAccessRules
 
 import domains.submission.objects.SubmissionId
@@ -32,11 +31,11 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
       case Some(submission) =>
-        ProblemQueryTable.findBySlug(connection, submission.problemSlug).flatMap {
-          case None =>
-            HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-          case Some(problem) =>
-            ProblemAccessRules.evaluateProblemPermissions(connection, actor, problem).flatMap { access =>
+        EvaluateProblemAccess.plan(connection, actor, submission.problemSlug).flatMap { access =>
+          access.problem match
+            case None =>
+              HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
+            case Some(problem) =>
               if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) then
                 IO.pure(submission.copy(canManage = access.canManage))
               else
@@ -47,6 +46,5 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
                     HttpApiError.notFound(ApiMessages.submissionNotFound)
                   )
                 yield submission.copy(canManage = access.canManage)
-            }
         }
     }

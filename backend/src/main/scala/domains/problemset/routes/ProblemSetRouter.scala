@@ -11,6 +11,7 @@ import domains.problemset.api.AddProblemToProblemSet
 import domains.problemset.api.UpdateProblemSet
 import domains.problemset.api.DeleteProblemSet
 import domains.problemset.api.RemoveProblemFromProblemSet
+import domains.problemset.api.ResolveProblemSetSlug
 import domains.auth.utils.SessionStore
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import org.http4s.HttpRoutes
@@ -31,6 +32,7 @@ object ProblemSetRouter:
         RemoveProblemFromProblemSet,
         GetProblemSet,
         UpdateProblemSet,
-        DeleteProblemSet
+        DeleteProblemSet,
+        ResolveProblemSetSlug
       )
     )

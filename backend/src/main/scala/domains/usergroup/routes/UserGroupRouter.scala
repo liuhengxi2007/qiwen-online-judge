@@ -22,6 +22,8 @@ object UserGroupRouter:
         DeleteUserGroup,
         AddUserGroupMember,
         UpdateUserGroupMemberRole,
-        RemoveUserGroupMember
+        RemoveUserGroupMember,
+        ResolveUserGroupSlug,
+        ListUserGroupSlugsForMember
       )
     )

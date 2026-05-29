@@ -1,9 +1,8 @@
 package domains.usergroup.api
 
 import cats.effect.IO
-import domains.auth.api.AuthenticatedApi
+import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
 import domains.auth.objects.AuthUser
-import domains.auth.table.auth_user.AuthUserTable
 import domains.user.objects.Username
 import domains.usergroup.utils.UserGroupMutationValidation
 
@@ -38,7 +37,7 @@ object CreateUserGroup extends AuthenticatedApi[CreateUserGroupRequest, UserGrou
       validRequest <- HttpApiError.fromEitherBadRequest(UserGroupMutationValidation.validateCreate(request))
       existing <- UserGroupTable.findBySlug(connection, validRequest.slug)
       _ <- HttpApiError.ensure(existing.isEmpty, HttpApiError.conflict(ApiMessages.userGroupSlugExists))
-      conflictingUser <- AuthUserTable.findByUsername(connection, Username.canonical(validRequest.slug.value)).map(_.nonEmpty)
+      conflictingUser <- ResolveAccountUsername.plan(connection, Username.canonical(validRequest.slug.value)).map(_.username.nonEmpty)
       _ <- HttpApiError.ensure(!conflictingUser, HttpApiError.conflict(ApiMessages.userGroupSlugConflictsWithUsername))
       group <- UserGroupTable.insert(connection, actor.username, validRequest)
     yield UserGroupDetail.fromUserGroup(group)

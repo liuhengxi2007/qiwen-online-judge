@@ -19,6 +19,9 @@ object SubmissionRouter:
         CreateSubmission,
         GetSubmission,
         DeleteSubmission,
-        RejudgeSubmission
+        RejudgeSubmission,
+        ClaimNextJudgeSubmission,
+        GetSubmissionJudgeState,
+        UpdateSubmissionJudgeState
       )
     )

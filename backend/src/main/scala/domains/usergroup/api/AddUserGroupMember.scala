@@ -1,9 +1,8 @@
 package domains.usergroup.api
 
 import cats.effect.IO
-import domains.auth.api.AuthenticatedApi
+import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
 import domains.auth.objects.AuthUser
-import domains.auth.table.auth_user.AuthUserTable
 import domains.usergroup.utils.UserGroupMutationValidation
 
 import domains.usergroup.objects.UserGroupSlug
@@ -44,9 +43,10 @@ object AddUserGroupMember extends AuthenticatedApi[(UserGroupSlug, AddUserGroupM
         case Some(group) => IO.pure(group)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userGroupNotFound))
       _ <- HttpApiError.ensure(UserGroupAccessRules.canEdit(actor, group), HttpApiError.notFound(ApiMessages.userGroupNotFound))
-      targetUsername <- AuthUserTable.findByUsername(connection, validRequest.username).flatMap {
-        case Some(user) => IO.pure(user.username)
-        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
+      targetUsername <- ResolveAccountUsername.plan(connection, validRequest.username).flatMap { response =>
+        response.username match
+          case Some(username) => IO.pure(username)
+          case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }
       result <- UserGroupTable.addMember(connection, group.id, validRequest.copy(username = targetUsername))
       _ <- result match

@@ -55,6 +55,7 @@ object ApiMessages:
   val directMessageBlockSelfForbidden: ApiMessage = ApiMessage("api.error.message.block_self_forbidden")
   val judgeTokenInvalid: ApiMessage = ApiMessage("api.error.judge.token_invalid")
   val judgerNotFoundOrExpired: ApiMessage = ApiMessage("api.error.judger.not_found_or_expired")
+  val internalApiNotCallable: ApiMessage = ApiMessage("api.error.internal_api.not_callable")
 
   val loggedOut: ApiMessage = ApiMessage("api.success.auth.logged_out")
   val userDeleted: ApiMessage = ApiMessage("api.success.user.deleted")

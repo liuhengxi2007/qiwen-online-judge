@@ -16,6 +16,7 @@ object JudgerRegistryRouter:
       List(
         ListRegisteredJudgers(judgeConfig),
         RegisterJudger(judgeConfig),
-        RecordJudgerHeartbeat(judgeConfig)
+        RecordJudgerHeartbeat(judgeConfig),
+        GetActiveJudgerSupportedLanguages
       )
     )

@@ -44,6 +44,7 @@ export const zhCnApiMessages: Record<string, string> = {
   'api.error.message.block_self_forbidden': '不能拉黑你自己。',
   'api.error.judge.token_invalid': '评测 token 无效。',
   'api.error.judger.not_found_or_expired': '评测机不存在或租约已过期。',
+  'api.error.internal_api.not_callable': '此 API 仅供后端内部调用。',
   'api.success.auth.logged_out': '已退出登录。',
   'api.success.user.deleted': '用户已删除。',
   'api.success.problem.deleted': '题目已删除。',

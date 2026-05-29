@@ -32,6 +32,7 @@ object BlogRouter:
         CreateBlogCommentReply(notificationEventHub),
         VoteBlogComment,
         UpdateBlogComment,
-        DeleteBlogComment
+        DeleteBlogComment,
+        GetBlogContributionForAuthor
       )
     )

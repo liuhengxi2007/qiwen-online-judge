@@ -3,8 +3,7 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
+import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.SubmissionId
 import domains.submission.table.submission.{SubmissionMutationTable, SubmissionQueryTable}
 import io.circe.Encoder
@@ -32,11 +31,10 @@ object DeleteSubmission extends AuthenticatedApi[SubmissionId, SuccessResponse]:
       submission <- maybeSubmission match
         case Some(submission) => IO.pure(submission)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-      maybeProblem <- ProblemQueryTable.findBySlug(connection, submission.problemSlug)
-      problem <- maybeProblem match
+      access <- EvaluateProblemAccess.plan(connection, actor, submission.problemSlug)
+      _ <- access.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-      access <- ProblemAccessRules.evaluateProblemPermissions(connection, actor, problem)
       _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.submissionNotFound))
       _ <- SubmissionMutationTable.deleteById(connection, submissionId)
     yield SuccessResponse(code = Some(ApiMessages.submissionDeleted.code), message = None, params = ApiMessages.submissionDeleted.params)

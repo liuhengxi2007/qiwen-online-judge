@@ -3,8 +3,8 @@ package domains.problemset.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
+import domains.problem.api.ResolveProblemReference
 import domains.problem.objects.ProblemSlug
-import domains.problem.table.problem.ProblemQueryTable
 
 import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.objects.response.ProblemSetDetail
@@ -47,7 +47,7 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
       problemSet <- maybeProblemSet match
         case Some(problemSet) => IO.pure(problemSet)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
-      maybeProblem <- ProblemQueryTable.findBySlug(connection, problemSlug)
+      maybeProblem <- ResolveProblemReference.plan(connection, problemSlug).map(_.problem)
       problem <- maybeProblem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))

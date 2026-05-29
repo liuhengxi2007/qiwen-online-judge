@@ -11,6 +11,9 @@ import domains.problem.api.GetProblem
 import domains.problem.api.ListProblemDataFiles
 import domains.problem.api.ListProblemDataTree
 import domains.problem.api.DownloadProblemDataPath
+import domains.problem.api.EvaluateProblemAccess
+import domains.problem.api.GetJudgeProblemDataManifest
+import domains.problem.api.ResolveProblemReference
 import domains.problem.api.DeleteProblemDataPath
 import domains.problem.api.ClearProblemData
 import domains.problem.api.SetProblemDataReady
@@ -46,6 +49,9 @@ object ProblemRouter:
         ClearProblemData(problemDataStorage),
         SetProblemDataReady(problemDataStorage),
         UploadProblemDataFile(problemDataStorage),
-        UploadProblemDataArchive(problemDataStorage)
+        UploadProblemDataArchive(problemDataStorage),
+        ResolveProblemReference,
+        EvaluateProblemAccess,
+        GetJudgeProblemDataManifest
       )
     )

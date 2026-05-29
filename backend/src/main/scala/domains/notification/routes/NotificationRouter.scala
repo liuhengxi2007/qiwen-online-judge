@@ -20,6 +20,7 @@ object NotificationRouter:
         GetNotificationUnreadCount,
         MarkNotificationRead(notificationEventHub),
         MarkAllNotificationsRead(notificationEventHub),
-        SubscribeNotificationEvents(notificationEventHub)
+        SubscribeNotificationEvents(notificationEventHub),
+        CreateNotification
       )
     )

@@ -135,9 +135,16 @@ These files are domain-owned support code, not endpoint orchestration. Do not us
 Allowed public domain boundaries:
 
 - allowlisted durable/public object types under `domains/<domain>/objects`
+- explicitly imported owner-domain API objects under `domains.<target>.api.<Name>` for cross-domain `plan(...)` calls
 - domain routers, such as `domains.problem.routes.ProblemRouter`
-- auth-owned API-object protocol types in `domains.auth.api`: `AuthenticatedApi`, `AuthenticatedResponseApi`, `PublicApi`, `PublicResponseApi`, `SiteManagerApi`, `ApiObjectContext`, `ApiObjectRouter`, and `SessionResolver`
+- auth-owned API-object protocol types in `domains.auth.api`: `AuthenticatedApi`, `AuthenticatedResponseApi`, `InternalOnlyApi`, `InternalOnlyAuthenticatedApi`, `PublicApi`, `PublicResponseApi`, `SiteManagerApi`, `ApiObjectContext`, `ApiObjectRouter`, and `SessionResolver`
 - router/session wiring through `domains.auth.utils.SessionStore`
+
+Cross-domain application code should call the target domain's API object `plan(...)` instead of importing the target domain's `table` package. Wildcard imports such as `domains.problem.api.*` are intentionally forbidden across domains; name the API object being used.
+
+Use `InternalOnlyApi` or `InternalOnlyAuthenticatedApi` for API-object plans that need a frontend-mirrored contract but must never be callable through HTTP. These API objects are registered normally, and their HTTP handler always returns `403 Forbidden` without decoding the request or running business logic.
+
+The judge worker channel is the frontend API mirroring exception. Worker-only API objects in `domains.judge.api` and owner-domain internal helpers used only by judge claim/complete workflows do not need site frontend wrappers; site management APIs such as judger listing still need frontend mirrors.
 
 Current explicitly guarded collaboration boundaries:
 
@@ -146,7 +153,7 @@ Current explicitly guarded collaboration boundaries:
 - problem data access through `ProblemDataStorage`
 - submission judge state/rules used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeCompletion`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
 - submission-facing problem access checks through `ProblemAccessRules`
-- legacy table-level collaborations explicitly listed in `check-domain-boundaries.mjs`; new cross-domain table imports must use owner-domain support/query facades instead
+- cross-domain API-object collaborations explicitly named at the call site; new cross-domain table imports are forbidden
 
 ## Functional Core, Imperative Shell
 

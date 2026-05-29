@@ -2,13 +2,13 @@ package domains.problemset.utils
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.api.ResolveAccountUsername
+import domains.problem.api.ResolveProblemReference
 import domains.problem.objects.ProblemSlug
-import domains.problem.table.problem.ProblemQueryTable
 import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
 import domains.user.objects.Username
+import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
-import domains.usergroup.table.user_group.UserGroupTable
 import shared.api.HttpApiError
 import shared.objects.access.{AccessSubject, ResourceAccessPolicy}
 
@@ -38,21 +38,21 @@ object ProblemSetAccessPolicyValidation:
       case Left(_) =>
         IO.pure(false)
       case Right(slug) =>
-        ProblemQueryTable.findBySlug(connection, slug).map(_.nonEmpty)
+        ResolveProblemReference.plan(connection, slug).map(_.problem.nonEmpty)
 
   private def validateAccessPolicySubject(connection: Connection, subject: AccessSubject): IO[Unit] =
     subject match
       case AccessSubject.User(username) =>
-        AuthUserTable.findByUsername(connection, Username(username.value)).flatMap { user =>
+        ResolveAccountUsername.plan(connection, Username(username.value)).flatMap { user =>
           HttpApiError.ensure(
-            user.nonEmpty,
+            user.username.nonEmpty,
             HttpApiError.badRequest(s"Granted user not found: ${username.value}.")
           )
         }
       case AccessSubject.UserGroup(slug) =>
-        UserGroupTable.findBySlug(connection, UserGroupSlug(slug.value)).flatMap { userGroup =>
+        ResolveUserGroupSlug.plan(connection, UserGroupSlug(slug.value)).flatMap { userGroup =>
           HttpApiError.ensure(
-            userGroup.nonEmpty,
+            userGroup.exists,
             HttpApiError.badRequest(s"Granted user group not found: ${slug.value}.")
           )
         }
