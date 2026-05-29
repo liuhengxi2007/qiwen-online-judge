@@ -23,8 +23,7 @@ object ApiRouter:
     notificationEventHub: NotificationEventHub
   ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
-      routes.HealthRouter.routes <+>
-        domains.auth.routes.AuthRouter.routes(databaseSession, sessionStore) <+>
+      domains.auth.routes.AuthRouter.routes(databaseSession, sessionStore) <+>
         domains.user.routes.UserRouter.routes(databaseSession, sessionStore) <+>
         domains.judger.routes.JudgerRegistryRouter.routes(databaseSession, judgeConfig, sessionStore) <+>
         domains.judge.routes.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage) <+>
