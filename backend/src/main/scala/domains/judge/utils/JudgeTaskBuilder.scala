@@ -190,7 +190,7 @@ object JudgeTaskBuilder:
         yield AggregationConfig(testcases, subtasks)
     }
 
-  private val allowedAggregations = Vector(
+  private val allowedAggregations = List(
     "min_max_max" -> JudgeTaskAggregation("min", "max", "max"),
     "min_sum_max" -> JudgeTaskAggregation("min", "sum", "max"),
     "sum_max_max" -> JudgeTaskAggregation("sum", "max", "max"),

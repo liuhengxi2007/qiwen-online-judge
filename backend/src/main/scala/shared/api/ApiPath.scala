@@ -2,7 +2,7 @@ package shared.api
 
 import java.net.URLDecoder
 
-final case class ApiPath private (segments: Vector[ApiPath.Segment]):
+final case class ApiPath private (segments: List[ApiPath.Segment]):
 
   def matchParams(rawPath: String): Option[PathParams] =
     val requestSegments = ApiPath.pathSegments(rawPath)
@@ -38,10 +38,10 @@ object ApiPath:
       }
     )
 
-  private def pathSegments(path: String): Vector[String] =
+  private def pathSegments(path: String): List[String] =
     path
       .split('/')
-      .toVector
+      .toList
       .filter(_.nonEmpty)
       .map(segment => URLDecoder.decode(segment, "UTF-8"))
 
