@@ -6,7 +6,7 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
 
 import domains.problemset.objects.ProblemSetSlug
-import domains.problemset.rules.ProblemSetAccessRules
+import domains.problemset.utils.ProblemSetAccessRules
 import domains.problemset.table.problem_set.ProblemSetTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}

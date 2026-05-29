@@ -8,7 +8,7 @@ import domains.problemset.utils.ProblemSetAccessPolicyValidation
 import domains.problemset.objects.*
 import domains.problemset.objects.request.UpdateProblemSetRequest
 import domains.problemset.objects.response.ProblemSetDetail
-import domains.problemset.rules.ProblemSetAccessRules
+import domains.problemset.utils.ProblemSetAccessRules
 import domains.problemset.table.problem_set.ProblemSetTable
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*

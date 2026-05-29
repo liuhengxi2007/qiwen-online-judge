@@ -1,4 +1,4 @@
-package domains.submission.rules
+package domains.submission.utils
 
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}

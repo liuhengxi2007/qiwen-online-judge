@@ -2,11 +2,9 @@ package domains.problem.utils
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.auth.objects.AuthUser
 import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.objects.response.{ProblemDataTreeResponse, ProblemDetail}
 import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
-import domains.problem.rules.ProblemAccessRules
 import domains.problem.table.problem.ProblemQueryTable
 
 import java.security.MessageDigest
@@ -14,21 +12,15 @@ import java.sql.Connection
 
 object ProblemDataApiHelpers:
 
-  def withManageableProblemForUpdate[A](
+  def withProblemForUpdate[A](
     connection: Connection,
-    actor: AuthUser,
     problemSlug: ProblemSlug
   )(useProblem: ProblemDetail => IO[A]): IO[A] =
     ProblemQueryTable.findBySlugForUpdate(connection, problemSlug).flatMap {
       case None =>
         shared.api.HttpApiError.raise(shared.api.HttpApiError.notFound(shared.api.ApiMessages.problemNotFound))
       case Some(problem) =>
-        ProblemAccessRules.canManageProblem(connection, actor, problem).flatMap { canManage =>
-          shared.api.HttpApiError.ensure(
-            canManage,
-            shared.api.HttpApiError.notFound(shared.api.ApiMessages.problemNotFound)
-          ) *> useProblem(problem)
-        }
+        useProblem(problem)
     }
 
   def refreshedManagedProblem(

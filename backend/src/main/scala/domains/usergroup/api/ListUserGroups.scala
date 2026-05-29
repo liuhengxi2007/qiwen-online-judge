@@ -5,7 +5,7 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
 
 import domains.usergroup.objects.response.UserGroupSummary
-import domains.usergroup.rules.UserGroupAccessRules
+import domains.usergroup.utils.UserGroupAccessRules
 import domains.usergroup.table.user_group.UserGroupTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}

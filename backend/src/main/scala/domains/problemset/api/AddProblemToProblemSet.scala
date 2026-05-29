@@ -9,7 +9,7 @@ import domains.problem.objects.ProblemSlug
 import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.objects.request.AddProblemToProblemSetRequest
 import domains.problemset.objects.response.ProblemSetDetail
-import domains.problemset.rules.ProblemSetAccessRules
+import domains.problemset.utils.ProblemSetAccessRules
 import domains.problemset.table.problem_set.ProblemSetTable
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*

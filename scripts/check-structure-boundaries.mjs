@@ -71,6 +71,7 @@ const backendDomainUtilsAllowlist = new Map([
   [
     'auth',
     new Set([
+      'AuthAccountRules.scala',
       'PasswordHasher.scala',
       'AuthSessionCookies.scala',
       'RedisSessionCache.scala',
@@ -87,14 +88,16 @@ const backendDomainUtilsAllowlist = new Map([
       'MinioProblemDataStorage.scala',
       'ProblemDataStorage.scala',
       'ProblemDataStorageConfig.scala',
+      'ProblemAccessRules.scala',
       'ProblemAccessPolicyValidation.scala',
       'ProblemDataApiHelpers.scala',
       'ProblemDataUploadPreparation.scala',
     ]),
   ],
-  ['problemset', new Set(['ProblemSetAccessPolicyValidation.scala'])],
-  ['submission', new Set(['SubmissionListRequestQuery.scala'])],
-  ['usergroup', new Set(['UserGroupMutationValidation.scala'])],
+  ['problemset', new Set(['ProblemSetAccessPolicyValidation.scala', 'ProblemSetAccessRules.scala'])],
+  ['submission', new Set(['SubmissionAccessRules.scala', 'SubmissionJudgeRules.scala', 'SubmissionListRequestQuery.scala'])],
+  ['user', new Set(['UserApiRules.scala'])],
+  ['usergroup', new Set(['UserGroupAccessRules.scala', 'UserGroupMutationValidation.scala'])],
   ['judger', new Set(['JudgerRegistryValidation.scala'])],
   ['message', new Set(['MessageEventHub.scala'])],
   ['notification', new Set(['NotificationEventHub.scala', 'NotificationStreamEvent.scala'])],
@@ -480,6 +483,12 @@ function checkBackendDomainUtilsAllowlist(files, errors) {
   }
 }
 
+function checkBackendDomainRulesPackage(filePath, errors) {
+  if (/^backend\/src\/main\/scala\/domains\/[^/]+\/rules\//.test(filePath)) {
+    errors.push(`${filePath} is under forbidden backend domain rules package; put pure rules in allowlisted utils or orchestration in api`)
+  }
+}
+
 function checkBackendHttpPlansFile(filePath, errors) {
   const source = read(filePath)
   for (const entry of extractScalaImports(source)) {
@@ -679,6 +688,8 @@ function run() {
   }
 
   for (const filePath of backendDomainFiles) {
+    checkBackendDomainRulesPackage(filePath, errors)
+
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/objects\//.test(filePath)) {
       checkBackendObjectFile(filePath, errors)
       checkBackendObjectFileShape(filePath, errors)

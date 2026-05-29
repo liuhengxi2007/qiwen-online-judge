@@ -1,4 +1,4 @@
-package domains.usergroup.rules
+package domains.usergroup.utils
 
 import domains.auth.objects.AuthUser
 import domains.user.objects.Username

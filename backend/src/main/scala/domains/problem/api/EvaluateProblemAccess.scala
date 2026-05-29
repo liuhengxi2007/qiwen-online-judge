@@ -5,8 +5,9 @@ import domains.auth.api.InternalOnlyAuthenticatedApi
 import domains.auth.objects.AuthUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemAccessEvaluationResponse
-import domains.problem.rules.ProblemAccessRules
+import domains.problem.utils.ProblemAccessRules
 import domains.problem.table.problem.ProblemQueryTable
+import domains.usergroup.api.ListUserGroupSlugsForMember
 import org.http4s.Method
 import shared.api.ApiPath
 
@@ -22,7 +23,14 @@ object EvaluateProblemAccess extends InternalOnlyAuthenticatedApi[ProblemSlug, P
       case None =>
         IO.pure(ProblemAccessEvaluationResponse(problem = None, canView = false, canManage = false))
       case Some(problem) =>
-        ProblemAccessRules.evaluateProblemPermissions(connection, actor, problem).map { access =>
-          ProblemAccessEvaluationResponse(problem = Some(problem), canView = access.canView, canManage = access.canManage)
-        }
+        for
+          actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
+          hasVisibleContainingProblemSet <- ProblemQueryTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
+          access = ProblemAccessRules.evaluateProblemPermissions(
+            actor,
+            problem,
+            actorGroupSlugs.slugs.toSet,
+            hasVisibleContainingProblemSet
+          )
+        yield ProblemAccessEvaluationResponse(problem = Some(problem), canView = access.canView, canManage = access.canManage)
     }

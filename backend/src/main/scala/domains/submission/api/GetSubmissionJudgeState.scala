@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
 import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeState
-import domains.submission.rules.SubmissionJudgeRules
+import domains.submission.utils.SubmissionJudgeRules
 import domains.submission.table.submission.SubmissionQueryTable
 import org.http4s.Method
 import shared.api.ApiPath

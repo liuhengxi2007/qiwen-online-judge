@@ -39,14 +39,13 @@ const explicitCollaborationBoundaries = new Set([
   'domains.notification.objects.NotificationPayload',
   'domains.notification.utils.NotificationEventHub',
   'domains.notification.utils.NotificationStreamEvent',
-  'domains.problem.rules.ProblemAccessRules',
   'domains.problem.utils.ProblemDataStorage',
   'domains.submission.objects.SubmissionStatus',
   'domains.submission.objects.SubmissionVerdict',
   'domains.submission.objects.internal.ClaimedSubmission',
   'domains.submission.objects.internal.SubmissionJudgeCompletion',
   'domains.submission.objects.internal.SubmissionJudgeState',
-  'domains.submission.rules.SubmissionJudgeRules',
+  'domains.submission.utils.SubmissionJudgeRules',
 ])
 
 const publicWiringBoundaries = new Set([

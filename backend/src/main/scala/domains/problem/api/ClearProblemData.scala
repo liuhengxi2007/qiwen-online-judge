@@ -12,7 +12,7 @@ import domains.problem.table.problem.ProblemDataStateTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 import java.time.Instant
@@ -34,16 +34,23 @@ final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
     actor: AuthUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDetail] =
-    ProblemDataApiHelpers.withManageableProblemForUpdate(connection, actor, problemSlug) { problem =>
-      for
-        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-        clearedProblem <- problemDataStorage
-          .deleteAllFiles(problem.slug)
-          .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
-          .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
-          .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after clearing data."))
-          .handleErrorWith { error =>
-            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-          }
-      yield clearedProblem
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case None =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        case Some(_) =>
+          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
+            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+              for
+                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+                clearedProblem <- problemDataStorage
+                  .deleteAllFiles(problem.slug)
+                  .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
+                  .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
+                  .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after clearing data."))
+                  .handleErrorWith { error =>
+                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                  }
+              yield clearedProblem
+            }
     }

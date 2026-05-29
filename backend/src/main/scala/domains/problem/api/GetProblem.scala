@@ -6,8 +6,6 @@ import domains.auth.objects.AuthUser
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -30,12 +28,10 @@ object GetProblem extends AuthenticatedApi[ProblemSlug, ProblemDetail]:
     actor: AuthUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDetail] =
-    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
-      case None =>
-        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      case Some(problem) =>
-        ProblemAccessRules.enrichProblemPermissions(connection, actor, problem).flatMap {
-          case Some(enrichedProblem) => IO.pure(enrichedProblem)
-          case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-        }
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case Some(problem) if access.canView =>
+          IO.pure(problem.copy(canManage = access.canManage))
+        case _ =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
     }

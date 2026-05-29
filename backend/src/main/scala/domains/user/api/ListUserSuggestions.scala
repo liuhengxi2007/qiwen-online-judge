@@ -3,7 +3,7 @@ package domains.user.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.user.rules.UserApiRules
+import domains.user.utils.UserApiRules
 
 import domains.user.objects.UserIdentity
 import domains.user.objects.request.UserSearchQuery

@@ -17,7 +17,7 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveDecoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 import java.time.Instant
@@ -46,9 +46,16 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
     input: (ProblemSlug, SetProblemReadyRequest)
   ): IO[ProblemDetail] =
     val (problemSlug, request) = input
-    ProblemDataApiHelpers.withManageableProblemForUpdate(connection, actor, problemSlug) { problem =>
-      if request.ready then markProblemReady(connection, problem)
-      else markProblemNotReady(connection, problem)
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case None =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        case Some(_) =>
+          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
+            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+              if request.ready then markProblemReady(connection, problem)
+              else markProblemNotReady(connection, problem)
+            }
     }
 
   private def markProblemNotReady(connection: Connection, problem: ProblemDetail): IO[ProblemDetail] =

@@ -3,7 +3,7 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
-import domains.submission.rules.SubmissionAccessRules
+import domains.submission.utils.SubmissionAccessRules
 import domains.submission.utils.SubmissionListRequestQuery
 
 import domains.submission.objects.request.SubmissionListRequest

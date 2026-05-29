@@ -8,7 +8,6 @@ import domains.problem.utils.ProblemAccessPolicyValidation
 import domains.problem.objects.*
 import domains.problem.objects.request.UpdateProblemRequest
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.rules.ProblemAccessRules
 import domains.problem.table.problem.{ProblemMutationTable, ProblemQueryTable}
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -48,12 +47,11 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
         timeLimitMs = timeLimitMs,
         spaceLimitMb = spaceLimitMb
       )
-      maybeProblem <- ProblemQueryTable.findBySlug(connection, problemSlug)
-      problem <- maybeProblem match
+      access <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
+      problem <- access.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
-      _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+      _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- ProblemAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
       _ <- ProblemMutationTable.update(connection, problem.id, Instant.now(), validRequest)
       updatedProblem <- ProblemQueryTable.findBySlug(connection, problem.slug).flatMap {

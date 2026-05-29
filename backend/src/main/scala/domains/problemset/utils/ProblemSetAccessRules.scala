@@ -1,36 +1,30 @@
-package domains.problemset.rules
+package domains.problemset.utils
 
-import cats.effect.IO
 import domains.auth.objects.AuthUser
 import domains.problemset.objects.ProblemSet
 import domains.user.objects.Username
-import domains.usergroup.api.ListUserGroupSlugsForMember
 import domains.usergroup.objects.UserGroupSlug
 import shared.application.access.{ResourceAccessDecision, ResourceAccessFacts}
 import shared.objects.access.{AccessUserGroupSlug, AccessUsername}
 
-import java.sql.Connection
-
 object ProblemSetAccessRules:
 
   def canViewProblemSet(
-    connection: Connection,
     actor: AuthUser,
-    problemSet: ProblemSet
-  ): IO[Boolean] =
-    ListUserGroupSlugsForMember.plan(connection, actor.username).map { viewerGroupSlugs =>
-      ResourceAccessDecision
-        .evaluate(
-          ResourceAccessFacts(
-            policy = problemSet.accessPolicy,
-            actorUsername = toAccessUsername(actor.username),
-            actorGroupSlugs = toAccessGroupSlugs(viewerGroupSlugs.slugs.toSet),
-            hasGlobalViewOverride = hasGlobalViewOverride(actor),
-            hasGlobalManageOverride = hasGlobalViewOverride(actor)
-          )
+    problemSet: ProblemSet,
+    actorGroupSlugs: Set[UserGroupSlug]
+  ): Boolean =
+    ResourceAccessDecision
+      .evaluate(
+        ResourceAccessFacts(
+          policy = problemSet.accessPolicy,
+          actorUsername = toAccessUsername(actor.username),
+          actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
+          hasGlobalViewOverride = hasGlobalViewOverride(actor),
+          hasGlobalManageOverride = hasGlobalViewOverride(actor)
         )
-        .canViewDirectly
-    }
+      )
+      .canViewDirectly
 
   def hasGlobalViewOverride(actor: AuthUser): Boolean =
     actor.siteManager || actor.problemManager

@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.AuthUser
 import domains.problem.api.EvaluateProblemAccess
-import domains.submission.rules.SubmissionAccessRules
+import domains.submission.utils.SubmissionAccessRules
 
 import domains.submission.objects.SubmissionId
 import domains.submission.objects.response.SubmissionDetail

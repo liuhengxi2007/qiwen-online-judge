@@ -5,8 +5,6 @@ import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.AuthUser
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
@@ -35,20 +33,20 @@ final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
     input: (ProblemSlug, ProblemDataPath)
   ): IO[Response[IO]] =
     val (problemSlug, path) = input
-    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
-      case None =>
-        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      case Some(problem) =>
-        for
-          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
-          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-          response <- problemDataStorage.readPath(problem.slug, path).flatMap {
-            case None =>
-              HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
-            case Some((storedPath, bytes)) =>
-              IO.pure(binaryResponse(storedPath.fileName, bytes))
-          }
-        yield response
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case None =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        case Some(problem) =>
+          for
+            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+            response <- problemDataStorage.readPath(problem.slug, path).flatMap {
+              case None =>
+                HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+              case Some((storedPath, bytes)) =>
+                IO.pure(binaryResponse(storedPath.fileName, bytes))
+            }
+          yield response
     }
 
   private def binaryResponse(filename: String, bytes: Array[Byte]): Response[IO] =

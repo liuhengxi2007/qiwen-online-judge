@@ -32,8 +32,9 @@ These templates define the default shape for a business domain, not a minimum fi
 For `utils`:
 
 - domain `utils` is protected by `node scripts/check-structure-boundaries.mjs`; only files listed in `backendDomainUtilsAllowlist` may exist there
-- keep only owner-domain support code that cannot live closer to `objects`, `rules`, `table`, or `api`
-- before adding a new util file, prove it does not belong in `objects`, `rules`, `table`, or `api`, then update both `backendDomainUtilsAllowlist` and this document in the same change
+- keep only owner-domain support code that cannot live closer to `objects`, `table`, or `api`
+- pure owner-domain rules may live in allowlisted `utils`; effectful orchestration belongs in the API object's `plan(...)`, while allowlisted `IO` or `Connection` utilities must stay limited to support adapters/helpers and must not own endpoint decisions
+- before adding a new util file, prove it does not belong in `objects`, `table`, or `api`, then update both `backendDomainUtilsAllowlist` and this document in the same change
 - keep allowed files directly under `utils/*.scala`; nested `utils` subdirectories are forbidden
 - do not put API orchestration here; the API object's `plan(...)` remains the readable workflow
 - do not create a domain `application` package for new code
@@ -53,7 +54,7 @@ For `api`:
 For `objects/request`:
 
 - `<Name>.scala`
-  typed command/query inputs decoded by HTTP endpoints and consumed by API plans, rules, or table code, including inbound request bodies and query-derived list filters
+  typed command/query inputs decoded by HTTP endpoints and consumed by API plans, pure decisions, or table code, including inbound request bodies and query-derived list filters
 - define the matching Circe encoder/decoder in the companion object when the type crosses the HTTP boundary
 
 For `objects/response`:
@@ -97,10 +98,11 @@ def deleteBook(...) = ...
 Run `node scripts/check-table-sql-locality.mjs` after table-layer SQL edits.
 
 The rule is "you may have fewer files, but you may not blur responsibilities".
-Do not move endpoint orchestration into `objects`, `utils`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in rules/helpers and SQL belongs in table modules.
+Do not move endpoint orchestration into `objects`, `utils`, or `table`. The API object's `plan(...)` is the readable workflow; pure business decisions belong in objects or allowlisted `utils`, and SQL belongs in table modules.
 
 Current domain-owned utility allowlist:
 
+- `domains/auth/utils/AuthAccountRules.scala`
 - `domains/auth/utils/PasswordHasher.scala`
 - `domains/auth/utils/AuthSessionCookies.scala`
 - `domains/auth/utils/RedisSessionCache.scala`
@@ -112,11 +114,17 @@ Current domain-owned utility allowlist:
 - `domains/problem/utils/MinioProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorageConfig.scala`
+- `domains/problem/utils/ProblemAccessRules.scala`
 - `domains/problem/utils/ProblemAccessPolicyValidation.scala`
 - `domains/problem/utils/ProblemDataApiHelpers.scala`
 - `domains/problem/utils/ProblemDataUploadPreparation.scala`
+- `domains/problemset/utils/ProblemSetAccessRules.scala`
 - `domains/problemset/utils/ProblemSetAccessPolicyValidation.scala`
+- `domains/submission/utils/SubmissionAccessRules.scala`
+- `domains/submission/utils/SubmissionJudgeRules.scala`
 - `domains/submission/utils/SubmissionListRequestQuery.scala`
+- `domains/user/utils/UserApiRules.scala`
+- `domains/usergroup/utils/UserGroupAccessRules.scala`
 - `domains/usergroup/utils/UserGroupMutationValidation.scala`
 - `domains/judger/utils/JudgerRegistryValidation.scala`
 - `domains/message/utils/MessageEventHub.scala`
@@ -151,8 +159,7 @@ Current explicitly guarded collaboration boundaries:
 - notification event dispatch and payload typing: `NotificationEventHub`, `NotificationStreamEvent`, `NotificationKind`, and `NotificationPayload`
 - judge registration/execution support: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
 - problem data access through `ProblemDataStorage`
-- submission judge state/rules used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeCompletion`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
-- submission-facing problem access checks through `ProblemAccessRules`
+- submission judge state transitions used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeCompletion`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
 - cross-domain API-object collaborations explicitly named at the call site; new cross-domain table imports are forbidden
 
 ## Functional Core, Imperative Shell
@@ -164,7 +171,7 @@ Rules:
 - keep validation, permission decisions, state transitions, and draft-building logic pure where possible
 - isolate JDBC, files, clocks, randomness, and network calls at the edge
 - make effectful helpers explicit in their signatures, typically as `IO[...]`
-- keep the API object's `plan(...)` as endpoint orchestration, with pure rule code in `objects`, `rules`, or dedicated support modules
+- keep the API object's `plan(...)` as endpoint orchestration, with pure rule code in `objects` or allowlisted `utils`
 
 Prefer:
 
@@ -262,7 +269,7 @@ Each domain should own its:
 - `http`
 - `objects`
 - `table`
-- optional `rules` or `utils` modules when pure rules or owner-domain support code needs a clearer home than `http` or `table`
+- optional allowlisted `utils` modules when pure rules or owner-domain support code needs a clearer home than `objects`, `api`, or `table`
 
 Exception:
 

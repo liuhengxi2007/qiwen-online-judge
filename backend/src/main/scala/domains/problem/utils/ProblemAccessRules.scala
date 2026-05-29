@@ -1,0 +1,75 @@
+package domains.problem.utils
+
+import domains.auth.objects.AuthUser
+import domains.problem.objects.response.ProblemDetail
+import domains.user.objects.Username
+import domains.usergroup.objects.UserGroupSlug
+import shared.application.access.{ResourceAccessDecision, ResourceAccessFacts}
+import shared.objects.access.{AccessUserGroupSlug, AccessUsername}
+
+object ProblemAccessRules:
+
+  final case class ProblemPermissionEvaluation(
+    canView: Boolean,
+    canManage: Boolean
+  )
+
+  def enrichProblemPermissions(
+    actor: AuthUser,
+    problem: ProblemDetail,
+    actorGroupSlugs: Set[UserGroupSlug],
+    hasVisibleContainingProblemSet: Boolean
+  ): Option[ProblemDetail] =
+    val decision = evaluateProblemPermissions(actor, problem, actorGroupSlugs, hasVisibleContainingProblemSet)
+    if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
+
+  def evaluateProblemPermissions(
+    actor: AuthUser,
+    problem: ProblemDetail,
+    actorGroupSlugs: Set[UserGroupSlug],
+    hasVisibleContainingProblemSet: Boolean
+  ): ProblemPermissionEvaluation =
+    val resourceDecision =
+      ResourceAccessDecision.evaluate(
+        ResourceAccessFacts(
+          policy = problem.accessPolicy,
+          actorUsername = toAccessUsername(actor.username),
+          actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
+          hasGlobalViewOverride = hasGlobalViewOverride(actor),
+          hasGlobalManageOverride = hasGlobalManageOverride(actor)
+        )
+      )
+
+    ProblemPermissionEvaluation(
+      canView = resourceDecision.canViewDirectly || hasVisibleContainingProblemSet,
+      canManage = resourceDecision.canManage
+    )
+
+  def canManageProblem(
+    actor: AuthUser,
+    problem: ProblemDetail,
+    actorGroupSlugs: Set[UserGroupSlug]
+  ): Boolean =
+    ResourceAccessDecision
+      .evaluate(
+        ResourceAccessFacts(
+          policy = problem.accessPolicy,
+          actorUsername = toAccessUsername(actor.username),
+          actorGroupSlugs = toAccessGroupSlugs(actorGroupSlugs),
+          hasGlobalViewOverride = hasGlobalViewOverride(actor),
+          hasGlobalManageOverride = hasGlobalManageOverride(actor)
+        )
+      )
+      .canManage
+
+  def hasGlobalViewOverride(actor: AuthUser): Boolean =
+    actor.siteManager || actor.problemManager
+
+  def hasGlobalManageOverride(actor: AuthUser): Boolean =
+    actor.siteManager || actor.problemManager
+
+  private def toAccessUsername(username: Username): AccessUsername =
+    AccessUsername(username.value)
+
+  private def toAccessGroupSlugs(slugs: Set[UserGroupSlug]): Set[AccessUserGroupSlug] =
+    slugs.map(slug => AccessUserGroupSlug(slug.value))

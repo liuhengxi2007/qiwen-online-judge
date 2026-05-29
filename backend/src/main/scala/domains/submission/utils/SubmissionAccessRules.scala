@@ -1,4 +1,4 @@
-package domains.submission.rules
+package domains.submission.utils
 
 import domains.auth.objects.AuthUser
 import domains.problem.objects.OthersSubmissionAccess

@@ -1,4 +1,4 @@
-package domains.user.rules
+package domains.user.utils
 
 object UserApiRules:
   val ranklistPageSize: Int = 10

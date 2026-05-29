@@ -7,8 +7,6 @@ import domains.problem.utils.ProblemDataStorage
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDataFileListResponse
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -32,13 +30,13 @@ final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorage)
     actor: AuthUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDataFileListResponse] =
-    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
-      case None =>
-        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      case Some(problem) =>
-        for
-          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
-          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-          files <- problemDataStorage.listFiles(problem.slug)
-        yield ProblemDataFileListResponse(files)
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case None =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        case Some(problem) =>
+          for
+            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+            files <- problemDataStorage.listFiles(problem.slug)
+          yield ProblemDataFileListResponse(files)
     }

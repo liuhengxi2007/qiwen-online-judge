@@ -7,8 +7,6 @@ import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDataTreeResponse
-import domains.problem.rules.ProblemAccessRules
-import domains.problem.table.problem.ProblemQueryTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
@@ -32,13 +30,13 @@ object ListProblemDataTree extends AuthenticatedApi[ProblemSlug, ProblemDataTree
     actor: AuthUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDataTreeResponse] =
-    ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
-      case None =>
-        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      case Some(problem) =>
-        for
-          canManage <- ProblemAccessRules.canManageProblem(connection, actor, problem)
-          _ <- HttpApiError.ensure(canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-          manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
-        yield ProblemDataApiHelpers.buildTreeResponse(manifest.entries)
+    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
+      access.problem match
+        case None =>
+          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        case Some(problem) =>
+          for
+            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+            manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
+          yield ProblemDataApiHelpers.buildTreeResponse(manifest.entries)
     }

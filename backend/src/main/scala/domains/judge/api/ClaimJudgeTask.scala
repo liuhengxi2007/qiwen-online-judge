@@ -13,7 +13,7 @@ import domains.problem.utils.ProblemDataStorage
 import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
-import domains.submission.rules.SubmissionJudgeRules
+import domains.submission.utils.SubmissionJudgeRules
 import io.circe.syntax.*
 import judgeprotocol.objects.{ClaimJudgeTaskRequest, JudgeTask, JudgerId}
 import org.http4s.circe.CirceEntityCodec.*

@@ -2,7 +2,7 @@ package domains.auth.api
 
 import cats.effect.IO
 import domains.auth.objects.SiteManagerUser
-import domains.auth.rules.AuthAccountRules
+import domains.auth.utils.AuthAccountRules
 import domains.auth.table.auth_user.AuthUserTable
 import domains.user.objects.Username
 import io.circe.Encoder

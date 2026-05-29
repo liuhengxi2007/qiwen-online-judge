@@ -7,7 +7,7 @@ import domains.judge.utils.JudgeTokenAuth
 import domains.submission.api.{GetSubmissionJudgeState, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeCompletion
-import domains.submission.rules.SubmissionJudgeRules
+import domains.submission.utils.SubmissionJudgeRules
 import io.circe.Encoder
 import judgeprotocol.objects.ReportJudgeResultRequest
 import org.http4s.circe.CirceEntityCodec.*

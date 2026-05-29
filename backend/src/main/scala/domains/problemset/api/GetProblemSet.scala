@@ -6,8 +6,9 @@ import domains.auth.objects.AuthUser
 
 import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.objects.response.ProblemSetDetail
-import domains.problemset.rules.ProblemSetAccessRules
+import domains.problemset.utils.ProblemSetAccessRules
 import domains.problemset.table.problem_set.ProblemSetTable
+import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -34,8 +35,9 @@ object GetProblemSet extends AuthenticatedApi[ProblemSetSlug, ProblemSetDetail]:
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
       case Some(problemSet) =>
-        ProblemSetAccessRules.canViewProblemSet(connection, actor, problemSet).flatMap { canView =>
-          if canView then IO.pure(ProblemSetDetail.fromProblemSet(problemSet))
+        ListUserGroupSlugsForMember.plan(connection, actor.username).flatMap { actorGroupSlugs =>
+          if ProblemSetAccessRules.canViewProblemSet(actor, problemSet, actorGroupSlugs.slugs.toSet) then
+            IO.pure(ProblemSetDetail.fromProblemSet(problemSet))
           else HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
         }
     }
