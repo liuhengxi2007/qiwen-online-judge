@@ -6,7 +6,6 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.dsl.io.*
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import server.health.HealthResponse
 
 object HealthRouter:
 

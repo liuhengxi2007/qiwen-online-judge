@@ -1,4 +1,4 @@
-package server.health
+package routes
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

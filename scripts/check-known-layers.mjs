@@ -27,13 +27,10 @@ const backendMainScalaAllowedEntries = new Set([
   'database',
   'domains',
   'routes',
-  'server',
   'shared',
 ])
 const backendMainDatabaseAllowedLayers = new Set(['table', 'utils'])
 const backendMainDomainAllowedLayers = new Set(['api', 'objects', 'routes', 'table', 'utils'])
-const backendMainServerAllowedLayers = new Set(['health'])
-const backendMainServerAllowedRootFiles = new Set(['ApplicationResources.scala'])
 const backendMainSharedAllowedLayers = new Set(['api', 'application', 'objects'])
 const backendTestScalaAllowedEntries = new Set(['domains', 'shared'])
 const backendTestDomainAllowedLayers = new Set(['api', 'objects', 'table', 'utils'])
@@ -150,14 +147,6 @@ function checkBackendMainFile(filePath, errors) {
     if (segments.length > 6) {
       errors.push(`${filePath} is in unknown backend routes layer "${segments[5]}"`)
     }
-    return
-  }
-
-  if (entry === 'server') {
-    if (segments.length === 6 && backendMainServerAllowedRootFiles.has(segments[5])) {
-      return
-    }
-    requireNestedLayer(filePath, segments, 5, backendMainServerAllowedLayers, 'backend server', errors)
     return
   }
 

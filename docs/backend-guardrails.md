@@ -9,9 +9,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/domains/user`
   - User profile, ranklist, settings, permission-management routes, and user-owned persistence/objects
 - `src/main/scala/routes`
-  - Top-level HTTP app/router composition that wires domain routers together
-- `src/main/scala/server/health`
-  - Health endpoint and response object
+  - Top-level HTTP app/router composition that wires domain routers together, plus the health endpoint
 - `src/main/scala/shared`
   - Dependency-pure shared contracts and platform helpers used across domains
   - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
