@@ -16,7 +16,7 @@ import java.sql.Connection
 final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends AuthenticatedApi[Unit, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/messages/read-all")
+  override val path: ApiPath = ApiPath("/api/messages/mark-all-read")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

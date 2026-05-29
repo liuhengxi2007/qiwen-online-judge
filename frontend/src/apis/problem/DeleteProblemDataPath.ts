@@ -12,7 +12,7 @@ export class DeleteProblemDataPath implements APIWithSessionMessage<ProblemDetai
   private readonly request: DeleteProblemDataPathRequest
 
   constructor(problemSlug: ProblemSlug, path: ProblemDataPath) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/file/delete`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/delete`
     this.request = { path }
   }
 

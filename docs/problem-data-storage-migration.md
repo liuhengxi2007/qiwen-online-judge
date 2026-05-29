@@ -41,10 +41,13 @@ Replace the current management upload API with binary upload endpoints.
 Recommended routes:
 
 - `POST /api/problems/{slug}/data/files`
-- `POST /api/problems/{slug}/data/archive`
-- `GET /api/problems/{slug}/data/tree`
-- `POST /api/problems/{slug}/data/files/{path...}/delete`
-- `POST /api/problems/{slug}/data/directories/{path...}/delete`
+- `GET /api/problems/{slug}/data/files`
+- `POST /api/problems/{slug}/data/archive-imports`
+- `GET /api/problems/{slug}/data/files/tree`
+- `GET /api/problems/{slug}/data/files/download?path=...`
+- `POST /api/problems/{slug}/data/files/delete`
+- `POST /api/problems/{slug}/data/files/delete-all`
+- `POST /api/problems/{slug}/data/ready-state`
 
 Recommended request shape for single-file upload:
 

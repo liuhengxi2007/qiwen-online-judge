@@ -30,7 +30,7 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
   private given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/ready")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/ready-state")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 

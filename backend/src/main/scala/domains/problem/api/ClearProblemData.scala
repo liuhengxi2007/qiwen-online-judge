@@ -21,7 +21,7 @@ final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[ProblemSlug, ProblemDetail]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/clear")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/delete-all")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 

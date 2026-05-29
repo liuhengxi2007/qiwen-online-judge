@@ -80,19 +80,28 @@ The current cache layout is:
   - `file`
   - optional `path`
 
-- `POST /api/problems/{slug}/data/archive`
+- `GET /api/problems/{slug}/data/files`
+  Returns the flat filename list for compatibility with existing problem-data summaries.
+
+- `POST /api/problems/{slug}/data/archive-imports`
   Multipart zip upload with fields:
   - `file`
   - optional `targetDir`
 
-- `GET /api/problems/{slug}/data/tree`
+- `GET /api/problems/{slug}/data/files/tree`
   Returns flat tree nodes for files and directories.
 
-- `GET /api/problems/{slug}/data/file?path=...`
+- `GET /api/problems/{slug}/data/files/download?path=...`
   Path-aware file download.
 
-- `POST /api/problems/{slug}/data/file/delete`
+- `POST /api/problems/{slug}/data/files/delete`
   JSON body with `path`.
+
+- `POST /api/problems/{slug}/data/files/delete-all`
+  Deletes all uploaded problem-data files.
+
+- `POST /api/problems/{slug}/data/ready-state`
+  JSON body with `ready`.
 
 ### Judger Internal Access
 

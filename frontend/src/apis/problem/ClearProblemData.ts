@@ -9,7 +9,7 @@ export class ClearProblemData implements APIWithSessionMessage<ProblemDetail> {
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/clear`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/delete-all`
   }
 
   body(): undefined {

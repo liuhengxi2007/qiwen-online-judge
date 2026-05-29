@@ -19,7 +19,7 @@ import java.sql.Connection
 object UpdateBlog extends AuthenticatedApi[UpdateBlogInput, BlogDetail]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/blogs/:blogId/update")
+  override val path: ApiPath = ApiPath("/api/blogs/:blogId")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[BlogDetail] = summon[Encoder[BlogDetail]]
 

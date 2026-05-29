@@ -13,7 +13,7 @@ export class UpdateBlogComment implements APIWithSessionMessage<BlogDetail> {
   private readonly request: UpdateBlogCommentRequest
 
   constructor(blogId: BlogId, commentId: BlogCommentId, request: UpdateBlogCommentRequest) {
-    this.apiPath = `blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(commentId)}/update`
+    this.apiPath = `blogs/${blogIdValue(blogId)}/comments/${blogCommentIdValue(commentId)}`
     this.request = request
   }
 

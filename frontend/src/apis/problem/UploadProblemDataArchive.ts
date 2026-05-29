@@ -10,7 +10,7 @@ export class UploadProblemDataArchive implements APIWithSessionMessage<ProblemDa
   private readonly file: File
 
   constructor(problemSlug: ProblemSlug, file: File) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/archive`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/archive-imports`
     this.file = file
   }
 

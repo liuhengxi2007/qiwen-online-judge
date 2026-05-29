@@ -19,7 +19,7 @@ import java.sql.Connection
 object ListProblemDataTree extends AuthenticatedApi[ProblemSlug, ProblemDataTreeResponse]:
 
   override val method: Method = Method.GET
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/tree")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/tree")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDataTreeResponse] = summon[Encoder[ProblemDataTreeResponse]]
 

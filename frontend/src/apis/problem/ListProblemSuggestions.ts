@@ -10,7 +10,7 @@ export class ListProblemSuggestions implements APIMessage<ProblemSuggestion[]> {
   constructor(query: ProblemSearchQuery) {
     const params = new URLSearchParams()
     params.set('q', query)
-    this.apiPath = `problems/suggestions?${params.toString()}`
+    this.apiPath = `problem-suggestions?${params.toString()}`
   }
 
   body(): undefined {

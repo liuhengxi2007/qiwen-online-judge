@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useReducer } from 'react'
 
 import { ClearProblemData } from '@/apis/problem/ClearProblemData'
-import { DeleteProblemData } from '@/apis/problem/DeleteProblemData'
 import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
 import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
-import { ListProblemDataFiles } from '@/apis/problem/ListProblemDataFiles'
 import { ListProblemDataTree } from '@/apis/problem/ListProblemDataTree'
 import { SetProblemDataReady } from '@/apis/problem/SetProblemDataReady'
 import { UploadProblemDataArchive } from '@/apis/problem/UploadProblemDataArchive'
 import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
 import { parseProblemDataFilename, problemDataFilenameValue } from '@/objects/problem/ProblemDataFilename'
 import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
-import type { ProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import {
@@ -56,11 +53,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
     try {
-      const [files, tree] = await Promise.all([
-        sendAPI(new ListProblemDataFiles(problemSlug)),
-        sendAPI(new ListProblemDataTree(problemSlug)),
-      ])
-      dispatch({ type: 'load_succeeded', files: files.items, tree: tree.items })
+      const tree = await sendAPI(new ListProblemDataTree(problemSlug))
+      dispatch({ type: 'load_succeeded', tree: tree.items })
       return { ok: true as const }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
@@ -116,31 +110,9 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     }
   }, [loadFiles, problemSlug, replaceProblem, state.selectedFile])
 
-  const deleteDataFile = useCallback(
-    async (filename: ProblemDataFilename): Promise<DeleteResult> => {
-      dispatch({ type: 'delete_started', filename })
-
-      try {
-        const updatedProblem = await sendAPI(new DeleteProblemData(problemSlug, filename))
-        replaceProblem(updatedProblem)
-        dispatch({
-          type: 'delete_succeeded',
-          message: `Deleted ${problemDataFilenameValue(filename)} successfully.`,
-        })
-        await loadFiles()
-        return { ok: true }
-      } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem data.'
-        dispatch({ type: 'delete_failed', message })
-        return { ok: false, message }
-      }
-    },
-    [loadFiles, problemSlug, replaceProblem],
-  )
-
   const deleteDataPath = useCallback(
     async (path: ProblemDataPath): Promise<DeleteResult> => {
-      dispatch({ type: 'delete_started', filename: path.split('/').slice(-1)[0] as ProblemDataFilename })
+      dispatch({ type: 'delete_started', path })
 
       try {
         const updatedProblem = await sendAPI(new DeleteProblemDataPath(problemSlug, path))
@@ -202,9 +174,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     selectedFile: state.selectedFile,
     isUploading: state.isUploading,
     isLoadingFiles: state.isLoadingFiles,
-    deletingFilename: state.deletingFilename,
+    deletingPath: state.deletingPath,
     isClearingAll: state.isClearingAll,
-    dataFiles: state.dataFiles,
     dataTree: state.dataTree,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage,
@@ -217,7 +188,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     replaceProblem,
     loadFiles,
     uploadSelectedFile,
-    deleteDataFile,
     deleteDataPath,
     downloadDataPathUrl: (path: ProblemDataPath) => new DownloadProblemDataPath(problemSlug, path).downloadUrl(),
     clearAllDataFiles,

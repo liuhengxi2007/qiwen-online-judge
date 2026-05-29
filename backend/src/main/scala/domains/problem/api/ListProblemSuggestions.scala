@@ -16,7 +16,7 @@ import java.sql.Connection
 object ListProblemSuggestions extends AuthenticatedApi[ProblemSearchQuery, List[ProblemSuggestion]]:
 
   override val method: Method = Method.GET
-  override val path: ApiPath = ApiPath("/api/problems/suggestions")
+  override val path: ApiPath = ApiPath("/api/problem-suggestions")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[List[ProblemSuggestion]] = summon[Encoder[List[ProblemSuggestion]]]
 

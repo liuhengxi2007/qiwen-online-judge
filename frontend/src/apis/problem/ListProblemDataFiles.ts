@@ -9,7 +9,7 @@ export class ListProblemDataFiles implements APIWithSessionMessage<ProblemDataFi
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files`
   }
 
   body(): undefined {

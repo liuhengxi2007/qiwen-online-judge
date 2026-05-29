@@ -24,7 +24,7 @@ final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage
     extends AuthenticatedApi[(ProblemSlug, Option[ProblemDataPath], Array[Byte]), ProblemDataUploadResult]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/archive")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/archive-imports")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDataUploadResult] = summon[Encoder[ProblemDataUploadResult]]
 

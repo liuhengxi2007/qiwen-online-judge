@@ -8,7 +8,7 @@ export class ListAcceptedRanklist implements APIMessage<PageResponse<UserAccepte
   readonly apiPath: string
 
   constructor(page: number) {
-    this.apiPath = `users/ranklist/accepted?page=${encodeURIComponent(String(page))}`
+    this.apiPath = `users/ranklists/accepted-problems?page=${encodeURIComponent(String(page))}`
   }
 
   body(): undefined {

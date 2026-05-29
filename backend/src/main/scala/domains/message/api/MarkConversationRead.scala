@@ -19,7 +19,7 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
     extends AuthenticatedApi[(MessageConversationId, MarkConversationReadRequest), MessageConversationSummary]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/messages/conversations/:conversationId/read")
+  override val path: ApiPath = ApiPath("/api/messages/conversations/:conversationId/mark-read")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[MessageConversationSummary] = summon[Encoder[MessageConversationSummary]]
 

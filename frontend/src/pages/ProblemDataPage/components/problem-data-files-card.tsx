@@ -84,7 +84,7 @@ export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
                         <Button
                           type="button"
                           variant="outline"
-                          disabled={model.deletingFilename === (node.path.split('/').slice(-1)[0] as never)}
+                          disabled={model.deletingPath === node.path}
                           className="rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
                           onClick={() => {
                             void model.deleteDataPath(node.path)

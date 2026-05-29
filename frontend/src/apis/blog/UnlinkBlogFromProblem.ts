@@ -11,7 +11,7 @@ export class UnlinkBlogFromProblem implements APIWithSessionMessage<SuccessRespo
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug, blogId: BlogId) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/blog-links/${blogIdValue(blogId)}/delete`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/blog-links/${blogIdValue(blogId)}/unlink`
   }
 
   body(): undefined {

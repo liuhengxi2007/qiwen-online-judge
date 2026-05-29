@@ -14,7 +14,7 @@ export class SetProblemDataReady implements APIWithSessionMessage<ProblemDetail>
   private readonly request: SetProblemDataReadyRequest
 
   constructor(problemSlug: ProblemSlug, ready: boolean) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/ready`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/ready-state`
     this.request = { ready }
   }
 

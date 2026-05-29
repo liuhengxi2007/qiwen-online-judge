@@ -8,7 +8,7 @@ export class ListContributionRanklist implements APIMessage<PageResponse<UserRan
   readonly apiPath: string
 
   constructor(page: number) {
-    this.apiPath = `users/ranklist?page=${encodeURIComponent(String(page))}`
+    this.apiPath = `users/ranklists/contribution?page=${encodeURIComponent(String(page))}`
   }
 
   body(): undefined {

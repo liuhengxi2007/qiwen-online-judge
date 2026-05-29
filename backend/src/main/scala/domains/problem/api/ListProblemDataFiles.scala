@@ -19,7 +19,7 @@ final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[ProblemSlug, ProblemDataFileListResponse]:
 
   override val method: Method = Method.GET
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDataFileListResponse] = summon[Encoder[ProblemDataFileListResponse]]
 

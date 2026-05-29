@@ -24,7 +24,7 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[(ProblemSlug, DeleteProblemDataPathRequest), ProblemDetail]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/file/delete")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/delete")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 

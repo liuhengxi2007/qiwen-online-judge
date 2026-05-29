@@ -11,7 +11,7 @@ export class UpdateBlog implements APIWithSessionMessage<BlogDetail> {
   private readonly request: UpdateBlogRequest
 
   constructor(blogId: BlogId, request: UpdateBlogRequest) {
-    this.apiPath = `blogs/${blogIdValue(blogId)}/update`
+    this.apiPath = `blogs/${blogIdValue(blogId)}`
     this.request = request
   }
 

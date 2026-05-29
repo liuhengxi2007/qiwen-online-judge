@@ -16,7 +16,7 @@ import java.sql.Connection
 final class MarkNotificationRead(notificationEventHub: NotificationEventHub) extends AuthenticatedApi[NotificationId, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/notifications/:notificationId/read")
+  override val path: ApiPath = ApiPath("/api/notifications/:notificationId/mark-read")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

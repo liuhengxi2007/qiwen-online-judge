@@ -11,7 +11,7 @@ export class MarkConversationRead implements APIWithSessionMessage<ConversationM
   private readonly request: MarkConversationReadRequest
 
   constructor(conversationId: MessageConversationId, request: MarkConversationReadRequest) {
-    this.apiPath = `messages/conversations/${encodeURIComponent(messageConversationIdValue(conversationId))}/read`
+    this.apiPath = `messages/conversations/${encodeURIComponent(messageConversationIdValue(conversationId))}/mark-read`
     this.request = request
   }
 

@@ -4,7 +4,7 @@ import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 export class MarkAllMessagesRead implements APIWithSessionMessage<SuccessResponse> {
   declare readonly responseType?: SuccessResponse
   readonly method = 'POST'
-  readonly apiPath = 'messages/read-all'
+  readonly apiPath = 'messages/mark-all-read'
 
   body(): undefined {
     return undefined

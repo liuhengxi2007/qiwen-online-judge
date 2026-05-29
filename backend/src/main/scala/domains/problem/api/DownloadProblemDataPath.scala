@@ -18,7 +18,7 @@ final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedResponseApi[(ProblemSlug, ProblemDataPath)]:
 
   override val method: Method = Method.GET
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/file")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/download")
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, ProblemDataPath)] =
     HttpApiError.fromEitherBadRequest(

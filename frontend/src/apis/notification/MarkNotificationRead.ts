@@ -9,7 +9,7 @@ export class MarkNotificationRead implements APIWithSessionMessage<SuccessRespon
   readonly apiPath: string
 
   constructor(notificationId: NotificationId) {
-    this.apiPath = `notifications/${encodeURIComponent(notificationIdValue(notificationId))}/read`
+    this.apiPath = `notifications/${encodeURIComponent(notificationIdValue(notificationId))}/mark-read`
   }
 
   body(): undefined {

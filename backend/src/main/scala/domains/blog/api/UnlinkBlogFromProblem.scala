@@ -19,7 +19,7 @@ import java.sql.Connection
 object UnlinkBlogFromProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/blog-links/:blogId/delete")
+  override val path: ApiPath = ApiPath("/api/problems/:problemSlug/blog-links/:blogId/unlink")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

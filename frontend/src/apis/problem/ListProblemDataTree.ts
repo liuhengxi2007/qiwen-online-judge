@@ -9,7 +9,7 @@ export class ListProblemDataTree implements APIWithSessionMessage<ProblemDataTre
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/tree`
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/tree`
   }
 
   body(): undefined {
