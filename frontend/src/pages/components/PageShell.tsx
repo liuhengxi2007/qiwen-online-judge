@@ -39,7 +39,7 @@ export function PageShell({
         <div className={cn('mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', headerClassName)}>
           <div className="space-y-2">
             <p className={cn('text-sm uppercase tracking-[0.25em]', siteNameClassName)}>{t('common.siteName')}</p>
-            <h1 className={cn("font-['Georgia'] text-4xl font-semibold tracking-tight", titleClassName)}>{title}</h1>
+            <h1 className={cn('page-title-font text-4xl font-semibold tracking-tight', titleClassName)}>{title}</h1>
             {description ? <p className="text-sm text-slate-600">{description}</p> : null}
           </div>
 

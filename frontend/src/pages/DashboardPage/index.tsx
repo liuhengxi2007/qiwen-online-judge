@@ -39,7 +39,7 @@ export function DashboardPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="mt-2 font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
+            <h1 className="page-title-font mt-2 text-4xl font-semibold tracking-tight text-slate-950">
               {t('dashboard.welcome', {
                 displayName: formatUserDisplayLabel(user, user.preferences.displayMode),
               })}

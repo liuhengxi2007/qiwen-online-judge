@@ -122,6 +122,10 @@ p {
   margin: 0;
 }
 
+.page-title-font {
+  font-family: Georgia, serif;
+}
+
 a {
   color: inherit;
 }

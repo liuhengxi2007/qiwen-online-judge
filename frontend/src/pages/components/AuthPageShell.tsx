@@ -37,7 +37,7 @@ export function AuthPageShell({
         <div className={cn('grid w-full items-center gap-10', gridClassName)}>
           <div className="space-y-6">
             <div className="max-w-xl space-y-4">
-              <h1 className={cn("font-['Georgia'] text-4xl leading-tight font-semibold tracking-tight sm:text-5xl", titleClassName)}>
+              <h1 className={cn('page-title-font text-4xl leading-tight font-semibold tracking-tight sm:text-5xl', titleClassName)}>
                 {heroTitle}
               </h1>
               <p className={cn('text-base leading-8 sm:text-lg', descriptionClassName)}>{heroDescription}</p>
