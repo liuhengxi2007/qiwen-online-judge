@@ -3,26 +3,26 @@ import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
-import { ProblemAccessDialog } from './components/problem-access-dialog'
-import { ProblemDetailHeaderCard } from './components/problem-detail-header-card'
-import { ProblemEditDialog } from './components/problem-edit-dialog'
-import { useProblemDetailPageModel } from './hooks/use-problem-detail-page-model'
-import { AppSectionBar } from '@/pages/components/app-section-bar'
-import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
+import { ProblemAccessDialog } from './components/ProblemAccessDialog'
+import { ProblemDetailHeaderCard } from './components/ProblemDetailHeaderCard'
+import { ProblemEditDialog } from './components/ProblemEditDialog'
+import { useProblemDetailPageModel } from './hooks/useProblemDetailPageModel'
+import { AppSectionBar } from '@/pages/components/AppSectionBar'
+import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedManagerGroupsInputFromAccessPolicy,
   grantedManagerUsersInputFromAccessPolicy,
   grantedUsersInputFromAccessPolicy,
   normalizeAccessSubjectInput,
-} from '@/pages/components/resource-access-editor-input'
-import { useBeforeUnloadPrompt } from '@/pages/hooks/use-before-unload-prompt'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
+} from '@/pages/components/ResourceAccessEditorInput'
+import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function ProblemDetailPage() {

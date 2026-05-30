@@ -1,5 +1,5 @@
-import { BlogCommentThread } from './blog-comment-thread'
-import type { useBlogDetailPageModel } from '../hooks/use-blog-detail-page-model'
+import { BlogCommentThread } from './BlogCommentThread'
+import type { useBlogDetailPageModel } from '../hooks/useBlogDetailPageModel'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 

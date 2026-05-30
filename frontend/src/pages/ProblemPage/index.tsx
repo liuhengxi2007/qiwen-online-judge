@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
-import { shouldShowProblemSlugSupplement } from '@/pages/objects/problem-title-display'
-import { useProblemPageModel } from './hooks/use-problem-page-model'
-import { useProblemTitleDisplayMode } from '@/pages/hooks/use-problem-title-display'
-import { AppSectionBar } from '@/pages/components/app-section-bar'
+import { shouldShowProblemSlugSupplement } from '@/pages/objects/ProblemTitleDisplay'
+import { useProblemPageModel } from './hooks/useProblemPageModel'
+import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
+import { AppSectionBar } from '@/pages/components/AppSectionBar'
 import {
   buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
-} from '@/pages/objects/pagination'
-import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
+} from '@/pages/objects/Pagination'
+import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { usePageSearchParamCorrection } from '@/pages/hooks/use-page-search-param-correction'
+import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
 import { ProblemListCard } from './components/ProblemListCard'
 

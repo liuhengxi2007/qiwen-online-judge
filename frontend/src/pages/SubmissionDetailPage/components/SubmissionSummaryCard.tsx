@@ -3,10 +3,10 @@ import { Files, RotateCcw, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ConfirmActionDialog } from '@/pages/components/confirm-action-dialog'
-import { DateTimeText } from '@/pages/components/date-time-text'
-import { UserProfileLink } from '@/pages/components/user-profile-link'
-import { formatProblemTitleDisplay } from '@/pages/objects/problem-title-display'
+import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
+import { DateTimeText } from '@/pages/components/DateTimeText'
+import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
 import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
@@ -18,7 +18,7 @@ import {
   formatOptionalScore,
   submissionJudgeStateLabel,
   submissionLanguageLabel,
-} from '@/pages/objects/submission-display'
+} from '@/pages/objects/SubmissionDisplay'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 

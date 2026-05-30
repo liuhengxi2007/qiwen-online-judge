@@ -1,6 +1,6 @@
 import { blogContentValue } from '@/objects/blog/BlogContent'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
-import { MarkdownDocument } from '@/pages/components/markdown-document'
+import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
 
 type BlogArticleContentProps = {
   blog: BlogDetail

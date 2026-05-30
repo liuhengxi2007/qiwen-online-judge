@@ -3,7 +3,7 @@ import { ShieldAlert } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function ForbiddenPage() {

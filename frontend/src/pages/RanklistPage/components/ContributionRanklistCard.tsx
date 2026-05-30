@@ -1,8 +1,8 @@
 import { Medal, Trophy } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { UserProfileLink } from '@/pages/components/user-profile-link'
-import { contributionTextClassName } from '@/pages/objects/user-display-label'
+import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { contributionTextClassName } from '@/pages/objects/UserDisplayLabel'
 import { userContributionValue } from '@/objects/user/UserContribution'
 import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'
 import { useI18n } from '@/system/i18n/use-i18n'

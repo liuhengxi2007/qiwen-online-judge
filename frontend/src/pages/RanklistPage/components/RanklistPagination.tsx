@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import { pagePath } from '../functions/page-query'
+import { pagePath } from '../functions/PageQuery'
 
 type RanklistPaginationProps = {
   acceptedPage: number

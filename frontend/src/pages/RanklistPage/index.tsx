@@ -1,16 +1,16 @@
 import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useRanklistQuery } from './hooks/use-ranklist-query'
-import { useSessionGuard } from '@/pages/hooks/use-session-guard'
-import { AppSectionBar } from '@/pages/components/app-section-bar'
-import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
+import { useRanklistQuery } from './hooks/useRanklistQuery'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { AppSectionBar } from '@/pages/components/AppSectionBar'
+import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import { AcceptedRanklistCard } from './components/AcceptedRanklistCard'
 import { ContributionRanklistCard } from './components/ContributionRanklistCard'
-import { normalizePage } from './functions/page-query'
+import { normalizePage } from './functions/PageQuery'
 
 export function RanklistPage() {
   const { t } = useI18n()

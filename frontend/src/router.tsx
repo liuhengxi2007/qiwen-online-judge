@@ -31,9 +31,9 @@ import { UserSettingsPage } from '@/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/pages/UserGroupDetailPage'
 import { UserGroupPage } from '@/pages/UserGroupPage'
-import { useMessageRealtimeConnection } from '@/pages/hooks/use-message-realtime-connection'
-import { useNotificationRealtimeConnection } from '@/pages/hooks/use-notification-realtime-connection'
-import { useAuthStore } from '@/pages/stores/auth/use-auth-store'
+import { useMessageRealtimeConnection } from '@/pages/hooks/useMessageRealtimeConnection'
+import { useNotificationRealtimeConnection } from '@/pages/hooks/useNotificationRealtimeConnection'
+import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { I18nProvider } from '@/system/i18n/i18n'
 
 function RootLayout() {

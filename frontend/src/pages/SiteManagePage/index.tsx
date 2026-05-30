@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 
-import { SiteManageJudgersCard } from './components/site-manage-judgers-card'
-import { SiteManageUserCard } from './components/site-manage-user-card'
-import { AppSectionBar } from '@/pages/components/app-section-bar'
-import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
-import { useSiteManageModel } from './hooks/use-site-manage-model'
-import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { SiteManageJudgersCard } from './components/SiteManageJudgersCard'
+import { SiteManageUserCard } from './components/SiteManageUserCard'
+import { AppSectionBar } from '@/pages/components/AppSectionBar'
+import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
+import { useSiteManageModel } from './hooks/useSiteManageModel'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
-import { calculateTotalPages, parsePositivePage } from '@/pages/objects/pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { usePageSearchParamCorrection } from '@/pages/hooks/use-page-search-param-correction'
+import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
 export function SiteManagePage() {
   const { t } = useI18n()

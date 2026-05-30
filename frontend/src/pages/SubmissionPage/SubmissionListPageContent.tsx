@@ -2,14 +2,14 @@ import { Navigate } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
-import { AncestorNavigation } from '@/pages/components/ancestor-navigation'
-import { AppSectionBar } from '@/pages/components/app-section-bar'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
-import { useSessionGuard } from '@/pages/hooks/use-session-guard'
+import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { AppSectionBar } from '@/pages/components/AppSectionBar'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { SubmissionFilterCard } from './components/submission-filter-card'
-import { SubmissionSummaryList } from './components/submission-summary-list'
-import { useSubmissionPageModel } from './hooks/use-submission-page-model'
+import { SubmissionFilterCard } from './components/SubmissionFilterCard'
+import { SubmissionSummaryList } from './components/SubmissionSummaryList'
+import { useSubmissionPageModel } from './hooks/useSubmissionPageModel'
 
 type SubmissionListPageContentProps = {
   fixedProblemSlugFilter?: ProblemSlug

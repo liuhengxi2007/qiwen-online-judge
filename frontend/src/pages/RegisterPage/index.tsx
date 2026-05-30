@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
-import { useRegisterModel } from './hooks/use-register-model'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
+import { useRegisterModel } from './hooks/useRegisterModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function RegisterPage() {

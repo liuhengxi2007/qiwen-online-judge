@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { useLoginModel } from './hooks/use-login-model'
-import { usePageTitle } from '@/pages/hooks/use-page-title'
+import { useLoginModel } from './hooks/useLoginModel'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
 
 export function LoginPage() {
   const { t } = useI18n()
