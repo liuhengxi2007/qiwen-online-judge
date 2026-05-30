@@ -6,7 +6,7 @@ import domains.user.objects.UserIdentity
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import judgeprotocol.objects.JudgeResult
+import judgeprotocol.objects.response.JudgeResult
 
 import java.time.Instant
 import scala.util.Try

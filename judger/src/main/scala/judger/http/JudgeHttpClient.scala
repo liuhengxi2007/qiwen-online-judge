@@ -1,9 +1,11 @@
-package judger.infra
+package judger.http
 
 import cats.effect.IO
 import io.circe.parser.decode
 import io.circe.syntax.*
-import judgeprotocol.objects.*
+import judgeprotocol.objects.{JudgerId, ProblemSlug, SubmissionId}
+import judgeprotocol.objects.request.{ClaimJudgeTaskRequest, JudgerHeartbeatRequest, RegisterJudgerRequest, ReportJudgeResultRequest}
+import judgeprotocol.objects.response.{JudgeTask, RegisterJudgerResponse}
 import judger.config.AppConfig
 
 import java.net.{URI, URLEncoder}

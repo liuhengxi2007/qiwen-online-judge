@@ -1,6 +1,7 @@
-package judger.config
+package judger.objects
 
-import judgeprotocol.objects.{JudgerId, RegisterJudgerResponse}
+import judgeprotocol.objects.JudgerId
+import judgeprotocol.objects.response.RegisterJudgerResponse
 
 final case class RegisteredJudger(
   judgerId: JudgerId,

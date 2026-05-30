@@ -1,19 +1,16 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.request.ReportJudgeResultRequest
+import judgeprotocol.objects.response.JudgeTask
 import judger.config.AppConfig
+import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
-
-final case class RuntimeCommand(
-  command: String,
-  args: List[String],
-  processLimit: Int
-)
 
 trait JudgeRuntime:
   def language: SubmissionLanguage

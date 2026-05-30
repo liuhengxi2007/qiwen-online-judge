@@ -1,8 +1,10 @@
 import cats.effect.{IO, IOApp}
 import cats.effect.kernel.Ref
 import judger.application.JudgerService
-import judger.config.{AppConfig, RegisteredJudger}
-import judger.infra.{JudgeHttpClient, LeaseExpiredException, ProblemDataCache}
+import judger.config.AppConfig
+import judger.http.{JudgeHttpClient, LeaseExpiredException}
+import judger.infra.ProblemDataCache
+import judger.objects.RegisteredJudger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration.DurationLong

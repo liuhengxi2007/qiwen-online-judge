@@ -41,7 +41,7 @@ Keep these roles separate:
 - backend bare `objects`
   backend domain values and stable mirrored business concepts
 - backend `objects/internal`
-  backend-only collaboration objects that are not frontend mirrors and are skipped by contract alignment
+  backend-only collaboration objects that are not frontend mirrors and are skipped by object alignment
 - backend `http`
   request mapping, response mapping, JSON codecs, and HTTP routing
 
@@ -63,7 +63,7 @@ On the frontend, keep object-specific parsing, value extraction, and contract ma
 
 ## What Must Align
 
-These surfaces are checked by `node scripts/check-contract-alignment.mjs`:
+These surfaces are checked by `node scripts/check-object-alignment.mjs`:
 
 - shared response objects such as `ErrorResponse`, `SuccessResponse`, and pagination shapes
 - shared access and lifecycle values that are part of frontend/backend payloads
@@ -87,7 +87,7 @@ When changing an HTTP-facing object:
 - inspect the matching frontend request/response file
 - inspect the matching backend input/output file
 - inspect the frontend adapter that parses or serializes the payload
-- run `node scripts/check-contract-alignment.mjs`
+- run `node scripts/check-object-alignment.mjs`
 
 A change is incomplete if it updates only one side of the boundary.
 
@@ -106,7 +106,7 @@ A change is incomplete if it updates only one side of the boundary.
 
 Current lightweight checks:
 
-- `node scripts/check-contract-alignment.mjs`
+- `node scripts/check-object-alignment.mjs`
 - `node scripts/check-api-alignment.mjs`
 
 These checks do not replace runtime tests or endpoint-level response decoding tests.

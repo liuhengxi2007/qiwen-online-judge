@@ -9,7 +9,7 @@ import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeCompletion
 import domains.submission.utils.SubmissionJudgeRules
 import io.circe.Encoder
-import judgeprotocol.objects.ReportJudgeResultRequest
+import judgeprotocol.objects.request.ReportJudgeResultRequest
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
 

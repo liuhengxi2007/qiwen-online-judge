@@ -4,7 +4,7 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "judge-protocol-scala",
+    name := "judge-protocol",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-generic" % "0.14.9"
     )

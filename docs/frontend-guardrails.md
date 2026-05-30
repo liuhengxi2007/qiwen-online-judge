@@ -177,7 +177,7 @@ Rules:
 - response payloads mirror between `frontend/src/objects/<domain>/response` and `backend/src/main/scala/domains/<domain>/objects/response`
 - core domain objects mirror between `frontend/src/objects/<domain>` and `backend/src/main/scala/domains/<domain>/objects`
 - shared objects mirror between `frontend/src/objects/shared` and `backend/src/main/scala/shared/objects`
-- backend `objects/internal` files are backend-only and skipped by contract alignment
+- backend `objects/internal` files are backend-only and skipped by object alignment
 - mirrored object files must not accumulate reducers, HTTP clients, persistence helpers, or workflow orchestration
 
 Prefer:
@@ -192,7 +192,7 @@ Avoid:
 - a mirrored object file quietly becoming a dumping ground for unrelated helpers
 - one aggregate file on one side while the same mirrored types are split on the other
 
-Run `node scripts/check-contract-alignment.mjs` when mirrored object files change.
+Run `node scripts/check-object-alignment.mjs` when mirrored object files change.
 
 ## Functional Core, Imperative Shell
 

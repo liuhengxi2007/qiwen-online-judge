@@ -6,7 +6,8 @@ import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
 import domains.judger.table.judger.JudgerTable
 import io.circe.Encoder
-import judgeprotocol.objects.{JudgerHeartbeatRequest, JudgerId}
+import judgeprotocol.objects.JudgerId
+import judgeprotocol.objects.request.JudgerHeartbeatRequest
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
 

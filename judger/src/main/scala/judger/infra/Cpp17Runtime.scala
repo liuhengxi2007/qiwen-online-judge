@@ -1,9 +1,12 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{JudgeTask, ReportJudgeResultRequest, SubmissionLanguage, SubmissionVerdict}
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionVerdict}
+import judgeprotocol.objects.request.ReportJudgeResultRequest
+import judgeprotocol.objects.response.JudgeTask
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
+import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}

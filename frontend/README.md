@@ -59,11 +59,11 @@ From the repository root, run the cheapest relevant checks before committing:
 ```bash
 npm --prefix frontend run typecheck
 npm --prefix frontend run lint
-node scripts/check-contract-alignment.mjs
+node scripts/check-object-alignment.mjs
 node scripts/check-api-alignment.mjs
 node scripts/check-structure-boundaries.mjs
 ```
 
-Run the contract check when mirrored object types change. Run the API alignment
+Run the object alignment check when mirrored object types change. Run the API alignment
 check when endpoint files under `src/apis` change. Run the structure boundary
 check after moving files across frontend layers.

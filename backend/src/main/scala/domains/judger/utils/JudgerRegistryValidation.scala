@@ -1,6 +1,6 @@
 package domains.judger.utils
 
-import judgeprotocol.objects.RegisterJudgerRequest
+import judgeprotocol.objects.request.RegisterJudgerRequest
 
 object JudgerRegistryValidation:
 

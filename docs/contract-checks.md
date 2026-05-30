@@ -3,7 +3,7 @@
 Use this command to verify that frontend and backend boundary objects have not drifted.
 
 ```bash
-node scripts/check-contract-alignment.mjs
+node scripts/check-object-alignment.mjs
 ```
 
 Use this command to verify that frontend and backend endpoint API file basenames stay aligned.
@@ -19,7 +19,7 @@ Current checks cover a narrow object-file surface:
 - frontend domain `objects/response/*.ts` files against backend domain `objects/response/*.scala` files
 - the same direct, `request`, and `response` pattern for `frontend/src/objects/shared` and `backend/src/main/scala/shared/objects`
 
-The contract alignment check first compares object file keys one-to-one. Keys include the domain or `shared` scope, the optional `request` or `response` segment, and the basename without extension, for example:
+The object alignment check first compares object file keys one-to-one. Keys include the domain or `shared` scope, the optional `request` or `response` segment, and the basename without extension, for example:
 
 - `problem/ProblemSlug`
 - `problem/request/CreateProblemRequest`
@@ -28,7 +28,7 @@ The contract alignment check first compares object file keys one-to-one. Keys in
 
 Scoped files that exist on only one side fail as `frontend-only object file` or `backend-only object file` drift. Frontend object directories are reserved for PascalCase object files, request/response payloads, real object subdomains, and same-object parse/value/contract helpers. Parser helper files, form helpers, display helpers, tests, and barrels belong outside `frontend/src/objects`.
 
-The file-level contract check is intentionally not recursive beyond the scoped directories above. Structure boundaries separately reject arbitrary frontend object helper subdirectories and allow only request/response directories plus real object subdomains such as shared access objects.
+The file-level object check is intentionally not recursive beyond the scoped directories above. Structure boundaries separately reject arbitrary frontend object helper subdirectories and allow only request/response directories plus real object subdomains such as shared access objects.
 
 When a new backend-only object appears in this check, resolve it in this order:
 
@@ -36,7 +36,7 @@ When a new backend-only object appears in this check, resolve it in this order:
 2. If the type is backend-only persistence, state-machine, aggregation, or workflow data, move it under `objects/internal` or into the owning `application` or `table` layer.
 3. Add a backend-only exception only when the type cannot reasonably move and is intentionally not serialized to the frontend.
 
-The contract alignment check is intentionally structural:
+The object alignment check is intentionally structural:
 
 - matched exported type field names and field order must match
 - matched exported enum string values must match

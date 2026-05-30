@@ -7,7 +7,8 @@ import domains.judge.utils.JudgeTokenAuth
 import domains.judger.utils.JudgerRegistryValidation
 import domains.judger.table.judger.JudgerTable
 import io.circe.Encoder
-import judgeprotocol.objects.{RegisterJudgerRequest, RegisterJudgerResponse}
+import judgeprotocol.objects.request.RegisterJudgerRequest
+import judgeprotocol.objects.response.RegisterJudgerResponse
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}

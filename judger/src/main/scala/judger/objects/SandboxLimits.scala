@@ -1,4 +1,4 @@
-package judger.infra
+package judger.objects
 
 final case class TimeLimitMs(value: Long) extends AnyVal
 final case class WallTimeLimitMs(value: Long) extends AnyVal

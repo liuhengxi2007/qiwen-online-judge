@@ -2,9 +2,12 @@ package judger.infra
 
 import cats.effect.IO
 import cats.syntax.all.*
-import judgeprotocol.objects.{JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult, ReportJudgeResultRequest, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.{SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.request.ReportJudgeResultRequest
+import judgeprotocol.objects.response.{JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
+import judger.objects.{ProcessResult, RuntimeCommand, SandboxExecutionRequest, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}

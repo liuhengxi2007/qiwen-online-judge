@@ -18,15 +18,15 @@ const allowedExceptions = new Map([
   ],
   [
     'frontend-only:submission/JudgeResult',
-    'Frontend submission detail mirrors judge-protocol-scala JudgeResult, which is shared through the judge protocol module rather than backend domain objects.',
+    'Frontend submission detail mirrors judge-protocol JudgeResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],
   [
     'frontend-only:submission/JudgeSubtaskResult',
-    'Frontend submission detail mirrors judge-protocol-scala JudgeSubtaskResult, which is shared through the judge protocol module rather than backend domain objects.',
+    'Frontend submission detail mirrors judge-protocol JudgeSubtaskResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],
   [
     'frontend-only:submission/JudgeTestcaseResult',
-    'Frontend submission detail mirrors judge-protocol-scala JudgeTestcaseResult, which is shared through the judge protocol module rather than backend domain objects.',
+    'Frontend submission detail mirrors judge-protocol JudgeTestcaseResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],
   // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
@@ -511,7 +511,7 @@ function sameList(left, right) {
 function validateAllowedExceptions(errors) {
   for (const [exceptionKey, reason] of allowedExceptions) {
     if (typeof reason !== 'string' || reason.trim().length === 0) {
-      errors.push(`${exceptionKey}: contract alignment exception must include a non-empty reason`)
+      errors.push(`${exceptionKey}: object alignment exception must include a non-empty reason`)
     }
   }
 }
@@ -528,7 +528,7 @@ function useAllowedException(exceptionKey) {
 function checkUnusedAllowedExceptions(errors) {
   for (const exceptionKey of allowedExceptions.keys()) {
     if (!usedExceptions.has(exceptionKey)) {
-      errors.push(`${exceptionKey}: unused contract alignment exception`)
+      errors.push(`${exceptionKey}: unused object alignment exception`)
     }
   }
 }
@@ -656,7 +656,7 @@ function run() {
   checkUnusedAllowedExceptions(errors)
 
   if (errors.length > 0) {
-    console.error(`Frontend/backend alignment check failed with ${errors.length} issue(s):`)
+    console.error(`Frontend/backend object alignment check failed with ${errors.length} issue(s):`)
     for (const error of errors) {
       console.error(`- ${error}`)
     }
@@ -664,7 +664,7 @@ function run() {
   }
 
   console.log(
-    `Frontend/backend alignment check passed for ${allTypeKeys.length} discovered type key(s) across ${
+    `Frontend/backend object alignment check passed for ${allTypeKeys.length} discovered type key(s) across ${
       matchedFileKeys.size
     } matched object file key(s).`,
   )

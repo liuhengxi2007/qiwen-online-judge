@@ -1,8 +1,10 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{JudgeTask, JudgeTaskFileRef, ProblemSlug}
+import judgeprotocol.objects.ProblemSlug
+import judgeprotocol.objects.response.JudgeTaskFileRef
 import judger.config.AppConfig
+import judger.http.JudgeHttpClient
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, StandardCopyOption}

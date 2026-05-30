@@ -10,7 +10,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - Backend-owned judger registry: worker registration, heartbeat state, and site-management views of registered workers.
 - `judger/`
   - Independent worker process for claiming judge tasks, running code, collecting execution results, and reporting results back to the backend.
-- `judge-protocol-scala/`
+- `judge-protocol/`
   - Shared Scala protocol module for backend/worker boundary types such as tasks, registration payloads, and reported judge results.
 
 Worker processes are separate applications, not submodules of the backend runtime.
@@ -23,7 +23,7 @@ Rules:
 - if backend and a worker need shared Scala types, extract a small dedicated shared protocol module
 - shared protocol modules may contain typed values, parsing, and codecs
 - shared protocol modules must not contain SQL, routers, command handlers, or service orchestration
-- backend `judge` and `judger` domains may depend on `judge-protocol-scala`, but `judge-protocol-scala` must not depend on backend domains
+- backend `judge` and `judger` domains may depend on `judge-protocol`, but `judge-protocol` must not depend on backend domains
 - judger language runtimes should only prepare executable artifacts and describe the sandbox run command
 - judger testcase traversal, output comparison, verdict selection, score or usage aggregation, and result reporting must stay in shared worker logic
 
@@ -34,8 +34,8 @@ Current judger language support:
 
 Prefer:
 
-- `backend -> shared-judge-protocol`
-- `judger -> shared-judge-protocol`
+- `backend -> judge-protocol`
+- `judger -> judge-protocol`
 
 Avoid:
 

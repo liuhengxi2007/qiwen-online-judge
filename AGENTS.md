@@ -4,9 +4,9 @@
 
 - `frontend/`: Vite + React 19 app. Business objects live in `src/objects/<domain>`, endpoint clients in `src/apis/<domain>`, route/page code in `src/pages`, runtime helpers in `src/system`, and generic UI in `src/components/ui`.
 - `backend/`: Scala 3 + Cats Effect + http4s service. Each domain is split into `objects`, `application`, `http`, and `table` under `src/main/scala/domains/<domain>`.
-- `judger/` and `judge-protocol-scala/`: judge worker and shared protocol code.
+- `judger/` and `judge-protocol/`: judge worker and shared protocol code.
 - `docs/architecture-guardrails.md`: source of truth for layering, type mirroring, and shared-code rules.
-- `scripts/`: maintenance scripts such as `check-contract-alignment.mjs` and `calc-loc.mjs`.
+- `scripts/`: maintenance scripts such as `check-object-alignment.mjs` and `calc-loc.mjs`.
 
 ## Build, Test, and Development Commands
 
@@ -16,7 +16,7 @@
 - Frontend lint: `cd frontend && npm run lint`
 - Backend run: `cd backend && sbt run`
 - Backend compile check: `cd backend && sbt compile`
-- Contract alignment check: `node scripts/check-contract-alignment.mjs`
+- Object alignment check: `node scripts/check-object-alignment.mjs`
 
 ## Coding Style & Naming Conventions
 
@@ -29,7 +29,7 @@
 ## Testing Guidelines
 
 - Run `npm run typecheck` before frontend commits and `sbt compile` before backend commits.
-- If you touch mirrored frontend/backend types, also run `node scripts/check-contract-alignment.mjs`.
+- If you touch mirrored frontend/backend types, also run `node scripts/check-object-alignment.mjs`.
 - Keep tests or checks close to the changed layer; do not skip validation for “small” refactors.
 
 ## Commit & Pull Request Guidelines
@@ -55,7 +55,7 @@
 - Validate with the cheapest effective command first:
   - frontend: `npm run typecheck`
   - backend: `sbt compile`
-  - mirrored types: `node scripts/check-contract-alignment.mjs`
+  - mirrored types: `node scripts/check-object-alignment.mjs`
 - When investigating UI copy or routing, search exact keys or route fragments first, for example:
   - `rg -n "site-manage-denied|toForbiddenRedirect" frontend/src`
   - `rg -n "common.cancel" frontend/src`

@@ -16,7 +16,7 @@ judger/project/target/
 judger/project/.sbt-boot/
 judger/project/.sbt-global/
 judger/.bsp/
-judge-protocol-scala/target/
-judge-protocol-scala/project/target/
-judge-protocol-scala/project/.sbt-boot/
-judge-protocol-scala/project/.sbt-global/
+judge-protocol/target/
+judge-protocol/project/target/
+judge-protocol/project/.sbt-boot/
+judge-protocol/project/.sbt-global/

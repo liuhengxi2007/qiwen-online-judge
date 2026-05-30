@@ -21,9 +21,9 @@ The project is organized by business domain rather than by technical layer. Cros
 - `frontend/`: Vite, React, TypeScript, Tailwind, shadcn/ui. Domain objects live under `frontend/src/objects/<domain>`, endpoint clients under `frontend/src/apis/<domain>`, and route code under `frontend/src/pages`.
 - `backend/`: Scala 3, Cats Effect, http4s, Circe, PostgreSQL. Domain code lives under `backend/src/main/scala/domains/<domain>`.
 - `judger/`: independent judge worker process.
-- `judge-protocol-scala/`: shared Scala protocol module used across backend and worker boundaries.
-- `docs/`: architecture, type-safety, contract-alignment, lifecycle, and worker guardrails.
-- `scripts/`: maintenance checks such as contract alignment.
+- `judge-protocol/`: shared Scala protocol module used across backend and worker boundaries.
+- `docs/`: architecture, type-safety, object alignment, lifecycle, and worker guardrails.
+- `scripts/`: maintenance checks such as object alignment.
 - `references/library-project/`: archived reference sample only; it is not current application source and is ignored by default ripgrep searches.
 
 ## Architecture Principles
@@ -104,7 +104,7 @@ The stable direction is to keep extending features by domain:
 
 - New backend domains should use `objects`, `application`, `http`, and `table`.
 - New frontend domains should use `objects`, `apis`, and `pages`, with runtime helpers in `system` only when ownership is not page or domain-specific.
-- New cross-process judge behavior should go through `judge-protocol-scala` or stable HTTP protocol types, not backend internals.
+- New cross-process judge behavior should go through `judge-protocol` or stable HTTP protocol types, not backend internals.
 - New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).
 
 Generated dependency/build output such as `node_modules/`, `dist/`, and `target/` should not be committed.

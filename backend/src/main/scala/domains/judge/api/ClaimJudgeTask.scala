@@ -15,7 +15,9 @@ import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.utils.SubmissionJudgeRules
 import io.circe.syntax.*
-import judgeprotocol.objects.{ClaimJudgeTaskRequest, JudgeTask, JudgerId}
+import judgeprotocol.objects.{JudgerId, SubmissionLanguage}
+import judgeprotocol.objects.request.ClaimJudgeTaskRequest
+import judgeprotocol.objects.response.JudgeTask
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -52,7 +54,7 @@ final case class ClaimJudgeTask(
   private def claimTask(
     connection: Connection,
     judgerId: JudgerId,
-    supportedLanguages: List[judgeprotocol.objects.SubmissionLanguage],
+    supportedLanguages: List[SubmissionLanguage],
     claimedAt: Instant
   ): IO[Response[IO]] =
     SubmissionJudgeRules.beginJudging(SubmissionJudgeState.queued, claimedAt) match

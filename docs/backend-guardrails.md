@@ -62,13 +62,13 @@ For `objects/response`:
 - define the matching Circe encoder/decoder in the companion object when the type crosses the HTTP boundary
 
 Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `objects/`. Put API contract payloads under `objects/request` and `objects/response`.
-Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `objects/internal`. These types are not frontend mirrors and do not participate in HTTP contract alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
+Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `objects/internal`. These types are not frontend mirrors and do not participate in object alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
 `objects/` files may define their own HTTP wire Circe encoders/decoders in companion objects. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
 Bare `objects/` files must not import `objects/request` or `objects/response`; dependency direction is from request/response payloads toward core object types only.
 `objects/request` and `objects/response` must not import `utils`, `routes`, or `table`.
 `objects/` must not import `utils`, `routes`, or `table`; if an object transition needs data from a response shape, put that adapter in domain-owned support code outside `objects`.
 
-Protocol modules are the exception: `judge-protocol-scala` may keep Circe codecs next to protocol objects because those types are cross-process wire contracts rather than backend business models.
+Protocol modules are the exception: `judge-protocol` may keep Circe codecs next to protocol objects because those types are cross-process wire contracts rather than backend business models.
 
 For `table`:
 

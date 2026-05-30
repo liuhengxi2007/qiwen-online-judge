@@ -410,7 +410,8 @@ function checkBackendObjectFile(filePath, errors) {
     }
     if (
       (isBareDomainObject || isBareSharedObject) &&
-      /\.objects\.(?:request|response)(?:\.|$|\{)/.test(importedPath)
+      /\.objects\.(?:request|response)(?:\.|$|\{)/.test(importedPath) &&
+      !/^judgeprotocol\.objects\.response(?:\.|$|\{)/.test(importedPath)
     ) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary object "${importedPath}"`)
     }

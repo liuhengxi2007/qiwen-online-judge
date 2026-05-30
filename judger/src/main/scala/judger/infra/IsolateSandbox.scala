@@ -2,31 +2,12 @@ package judger.infra
 
 import cats.effect.IO
 import judger.config.AppConfig
+import judger.objects.{ProcessResult, SandboxExecutionRequest}
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeUnit
-
-final case class ProcessResult(
-  exitCode: Option[Int],
-  isolateStatus: Option[String],
-  isolateMessage: Option[String],
-  stdout: String,
-  stderr: String,
-  timedOut: Boolean,
-  timeUsedMs: Option[Long],
-  memoryUsedKb: Option[Long]
-)
-
-final case class SandboxExecutionRequest(
-  phase: String,
-  command: String,
-  args: List[String],
-  stdin: Option[Array[Byte]],
-  limits: SandboxLimits,
-  processLimit: Int
-)
 
 private final case class SandboxState(
   boxId: Int,

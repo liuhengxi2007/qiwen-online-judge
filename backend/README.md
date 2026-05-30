@@ -75,13 +75,13 @@ From the repository root, run the relevant checks before committing:
 
 ```bash
 npm --prefix frontend run typecheck
-node scripts/check-contract-alignment.mjs
+node scripts/check-object-alignment.mjs
 node scripts/check-api-alignment.mjs
 node scripts/check-structure-boundaries.mjs
 cd backend
 sbt compile
 ```
 
-Run the contract check when mirrored object/request/response types change. Run the API
+Run the object alignment check when mirrored object/request/response types change. Run the API
 alignment check when endpoint files under `http/api` change. Run the structure
 boundary check after moving files across backend layers.
