@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ProblemSummary } from '@/objects/problem/response/ProblemSummary'
+import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import { ProblemListItem } from './ProblemListItem'
@@ -116,37 +117,14 @@ export function ProblemListCard({
         )}
 
         {!isLoading && problems.length > 0 && totalPages > 1 ? (
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-2xl border-slate-300 bg-white"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            >
-              {t('common.pagination.previous')}
-            </Button>
-            {pageNumbers.map((page) => (
-              <Button
-                key={page}
-                type="button"
-                variant={page === currentPage ? 'default' : 'outline'}
-                className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'}
-                onClick={() => onPageChange(page)}
-              >
-                {page}
-              </Button>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-2xl border-slate-300 bg-white"
-              disabled={currentPage === totalPages}
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-            >
-              {t('common.pagination.next')}
-            </Button>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            pageNumbers={pageNumbers}
+            totalPages={totalPages}
+            previousLabel={t('common.pagination.previous')}
+            nextLabel={t('common.pagination.next')}
+            onPageChange={onPageChange}
+          />
         ) : null}
       </CardContent>
     </Card>

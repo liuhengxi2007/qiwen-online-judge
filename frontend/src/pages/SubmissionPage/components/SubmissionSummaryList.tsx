@@ -18,8 +18,8 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { usernameValue } from '@/objects/user/Username'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { SubmissionPaginationControls } from './SubmissionPaginationControls'
 
 type SubmissionSummaryListProps = {
   submissions: SubmissionSummary[]
@@ -51,10 +51,12 @@ export function SubmissionSummaryList({
     return (
       <>
         <div className="mb-6">
-          <SubmissionPaginationControls
+          <PaginationControls
             currentPage={currentPage}
-            totalPages={totalPages}
             pageNumbers={pageNumbers}
+            totalPages={totalPages}
+            previousLabel={t('submission.pagination.previous')}
+            nextLabel={t('submission.pagination.next')}
             onPageChange={onPageChange}
           />
         </div>
@@ -151,10 +153,12 @@ export function SubmissionSummaryList({
               </CardContent>
             </Card>
           ))}
-          <SubmissionPaginationControls
+          <PaginationControls
             currentPage={currentPage}
-            totalPages={totalPages}
             pageNumbers={pageNumbers}
+            totalPages={totalPages}
+            previousLabel={t('submission.pagination.previous')}
+            nextLabel={t('submission.pagination.next')}
             onPageChange={onPageChange}
           />
         </div>

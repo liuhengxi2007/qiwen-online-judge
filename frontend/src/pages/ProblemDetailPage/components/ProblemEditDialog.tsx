@@ -1,4 +1,3 @@
-import { useDeferredValue } from 'react'
 import { PencilLine, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -6,12 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 import { useNavigate } from 'react-router-dom'
 import type { useProblemDetailPageModel } from '../hooks/useProblemDetailPageModel'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
-import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
+import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
@@ -33,7 +30,6 @@ export function ProblemEditDialog({
 }: ProblemEditDialogProps) {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const deferredStatement = useDeferredValue(model.statement)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,33 +58,14 @@ export function ProblemEditDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="problem-statement">{t('problem.create.statement')}</Label>
-            <Tabs value={statementTab} onValueChange={(value) => setStatementTab(value as 'write' | 'preview')}>
-              <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
-                <TabsTrigger value="write" className="rounded-xl">
-                  {t('common.write')}
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="rounded-xl">
-                  {t('common.preview')}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="write" className="mt-3">
-                <Textarea
-                  id="problem-statement"
-                  className="min-h-64 !font-mono"
-                  value={model.statement}
-                  onChange={(event) => model.setStatement(event.target.value)}
-                />
-              </TabsContent>
-              <TabsContent value="preview" className="mt-3">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
-                  {deferredStatement.trim() ? (
-                    <MarkdownDocument content={deferredStatement} />
-                  ) : (
-                    <p className="text-sm text-slate-500">{t('common.nothingToPreview')}</p>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+            <MarkdownEditorTabs
+              textareaId="problem-statement"
+              value={model.statement}
+              tab={statementTab}
+              onTabChange={setStatementTab}
+              onValueChange={model.setStatement}
+              textareaClassName="min-h-64 !font-mono"
+            />
             <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">

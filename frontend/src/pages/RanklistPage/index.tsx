@@ -3,8 +3,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useRanklistQuery } from './hooks/useRanklistQuery'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -36,53 +35,43 @@ export function RanklistPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fef3c7_0,#f8fafc_36%,#eef2f7_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('ranklist.heading')}</h1>
-          </div>
+    <PageShell
+      title={t('ranklist.heading')}
+      mainClassName="bg-[radial-gradient(circle_at_top_left,#fef3c7_0,#f8fafc_36%,#eef2f7_100%)]"
+    >
+      {query.contributionRanklistLoadError ? (
+        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">{query.contributionRanklistLoadError}</AlertDescription>
+        </Alert>
+      ) : null}
 
-          <AncestorNavigation />
-        </div>
+      {query.acceptedRanklistLoadError ? (
+        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">{query.acceptedRanklistLoadError}</AlertDescription>
+        </Alert>
+      ) : null}
 
-        <AppSectionBar />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <AcceptedRanklistCard
+          acceptedPage={acceptedPage}
+          contributionPage={contributionPage}
+          errorMessage={query.acceptedRanklistLoadError}
+          isLoading={query.isLoadingAcceptedRanklist}
+          items={acceptedResponse?.items ?? []}
+          pageSize={acceptedPageSize}
+          totalPages={acceptedTotalPages}
+        />
 
-        {query.contributionRanklistLoadError ? (
-          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{query.contributionRanklistLoadError}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {query.acceptedRanklistLoadError ? (
-          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{query.acceptedRanklistLoadError}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        <div className="grid gap-6 xl:grid-cols-2">
-          <AcceptedRanklistCard
-            acceptedPage={acceptedPage}
-            contributionPage={contributionPage}
-            errorMessage={query.acceptedRanklistLoadError}
-            isLoading={query.isLoadingAcceptedRanklist}
-            items={acceptedResponse?.items ?? []}
-            pageSize={acceptedPageSize}
-            totalPages={acceptedTotalPages}
-          />
-
-          <ContributionRanklistCard
-            acceptedPage={acceptedPage}
-            contributionPage={contributionPage}
-            errorMessage={query.contributionRanklistLoadError}
-            isLoading={query.isLoadingContributionRanklist}
-            items={contributionResponse?.items ?? []}
-            pageSize={contributionPageSize}
-            totalPages={contributionTotalPages}
-          />
-        </div>
-      </section>
-    </main>
+        <ContributionRanklistCard
+          acceptedPage={acceptedPage}
+          contributionPage={contributionPage}
+          errorMessage={query.contributionRanklistLoadError}
+          isLoading={query.isLoadingContributionRanklist}
+          items={contributionResponse?.items ?? []}
+          pageSize={contributionPageSize}
+          totalPages={contributionTotalPages}
+        />
+      </div>
+    </PageShell>
   )
 }

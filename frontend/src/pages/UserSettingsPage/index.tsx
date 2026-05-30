@@ -5,13 +5,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { MessageBlockListCard } from './components/MessageBlockListCard'
-import { UserAccountPageShell } from './components/UserAccountPageShell'
 import { UserPermissionsCard } from './components/UserPermissionsCard'
 import { UserProfileOverviewCard } from './components/UserProfileOverviewCard'
 import { UserSettingsAccountCard } from './components/UserSettingsAccountCard'
 import { UserSettingsPreferencesCard } from './components/UserSettingsPreferencesCard'
 import { UserSettingsProfileCard } from './components/UserSettingsProfileCard'
 import { displayNameValue } from '@/objects/user/DisplayName'
+import { PageShell } from '@/pages/components/PageShell'
 import { useUserSettingsBlockList } from './hooks/useUserSettingsBlockList'
 import { useUserSettingsModel } from './hooks/useUserSettingsModel'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
@@ -90,9 +90,9 @@ function UserSettingsPageContent({
   }
 
   return (
-    <UserAccountPageShell
-      heading={t('userSettings.heading')}
-      subheading={
+    <PageShell
+      title={t('userSettings.heading')}
+      description={
         displayedUser
           ? isEditingOwnSettings
             ? t('userSettings.managingOwn', {
@@ -103,72 +103,75 @@ function UserSettingsPageContent({
               })
           : t('userSettings.loadingFor', { username: t('common.loading') })
       }
+      mainClassName="bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)]"
     >
-      <UserProfileOverviewCard
-        description={t('userSettings.profileDescription')}
-        fallbackUsername={targetUsername}
-        icon={<Settings className="size-5" />}
-        loadingMessage={t('userSettings.loadingSelected')}
-        title={t('userSettings.profileTitle')}
-        user={displayedUser}
-      />
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <UserProfileOverviewCard
+          description={t('userSettings.profileDescription')}
+          fallbackUsername={targetUsername}
+          icon={<Settings className="size-5" />}
+          loadingMessage={t('userSettings.loadingSelected')}
+          title={t('userSettings.profileTitle')}
+          user={displayedUser}
+        />
 
-      {loadErrorMessage ? (
-        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{loadErrorMessage}</AlertDescription>
-        </Alert>
-      ) : null}
+        {loadErrorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{loadErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
 
-      <UserSettingsProfileCard
-        displayedUser={displayedUser}
-        displayName={displayName}
-        section={sections.profile}
-        setDisplayName={setDisplayName}
-        submit={() => {
-          void submit('profile')
-        }}
-      />
+        <UserSettingsProfileCard
+          displayedUser={displayedUser}
+          displayName={displayName}
+          section={sections.profile}
+          setDisplayName={setDisplayName}
+          submit={() => {
+            void submit('profile')
+          }}
+        />
 
-      <UserSettingsPreferencesCard
-        autoMarkMessageRead={autoMarkMessageRead}
-        displayedUser={displayedUser}
-        displayMode={displayMode}
-        locale={locale}
-        problemTitleDisplayMode={problemTitleDisplayMode}
-        section={sections.preferences}
-        setAutoMarkMessageRead={setAutoMarkMessageRead}
-        setDisplayMode={setDisplayMode}
-        setLocale={setLocale}
-        setProblemTitleDisplayMode={setProblemTitleDisplayMode}
-        submit={() => {
-          void submit('preferences')
-        }}
-      />
+        <UserSettingsPreferencesCard
+          autoMarkMessageRead={autoMarkMessageRead}
+          displayedUser={displayedUser}
+          displayMode={displayMode}
+          locale={locale}
+          problemTitleDisplayMode={problemTitleDisplayMode}
+          section={sections.preferences}
+          setAutoMarkMessageRead={setAutoMarkMessageRead}
+          setDisplayMode={setDisplayMode}
+          setLocale={setLocale}
+          setProblemTitleDisplayMode={setProblemTitleDisplayMode}
+          submit={() => {
+            void submit('preferences')
+          }}
+        />
 
-      <UserSettingsAccountCard
-        confirmNewPassword={confirmNewPassword}
-        currentPassword={currentPassword}
-        displayedUser={displayedUser}
-        email={email}
-        isEditingOwnSettings={isEditingOwnSettings}
-        newPassword={newPassword}
-        section={sections.account}
-        setConfirmNewPassword={setConfirmNewPassword}
-        setCurrentPassword={setCurrentPassword}
-        setEmail={setEmail}
-        setNewPassword={setNewPassword}
-        submit={() => {
-          void submit('account')
-        }}
-      />
+        <UserSettingsAccountCard
+          confirmNewPassword={confirmNewPassword}
+          currentPassword={currentPassword}
+          displayedUser={displayedUser}
+          email={email}
+          isEditingOwnSettings={isEditingOwnSettings}
+          newPassword={newPassword}
+          section={sections.account}
+          setConfirmNewPassword={setConfirmNewPassword}
+          setCurrentPassword={setCurrentPassword}
+          setEmail={setEmail}
+          setNewPassword={setNewPassword}
+          submit={() => {
+            void submit('account')
+          }}
+        />
 
-      <UserPermissionsCard
-        description={t('userSettings.permissionsDescription')}
-        title={t('userSettings.permissionsTitle')}
-        user={displayedUser}
-      />
+        <UserPermissionsCard
+          description={t('userSettings.permissionsDescription')}
+          title={t('userSettings.permissionsTitle')}
+          user={displayedUser}
+        />
 
-      {isEditingOwnSettings ? <MessageBlockListCard {...blockList} /> : null}
-    </UserAccountPageShell>
+        {isEditingOwnSettings ? <MessageBlockListCard {...blockList} /> : null}
+      </div>
+    </PageShell>
   )
 }

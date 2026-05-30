@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
@@ -12,8 +11,8 @@ import { ProblemAccessDialog } from './components/ProblemAccessDialog'
 import { ProblemDetailHeaderCard } from './components/ProblemDetailHeaderCard'
 import { ProblemEditDialog } from './components/ProblemEditDialog'
 import { useProblemDetailPageModel } from './hooks/useProblemDetailPageModel'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
+import { PageShell } from '@/pages/components/PageShell'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedManagerGroupsInputFromAccessPolicy,
@@ -78,19 +77,8 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.detail.heading')}</h1>
-          </div>
-
-          <AncestorNavigation />
-        </div>
-
-        <AppSectionBar />
-
+    <>
+      <PageShell title={t('problem.detail.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)]">
         {!model.isLoading && !model.problem && model.loadErrorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
@@ -98,9 +86,7 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
         ) : null}
 
         {model.isLoading ? (
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">{t('problem.detail.loading')}</CardContent>
-          </Card>
+          <PageLoadingCard message={t('problem.detail.loading')} />
         ) : model.problem ? (
           <div className="space-y-6">
             <ProblemDetailHeaderCard
@@ -111,7 +97,7 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
             />
           </div>
         ) : null}
-      </section>
+      </PageShell>
 
       <ProblemEditDialog
         model={model}
@@ -130,6 +116,6 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
           setManagementPanel(open ? 'access' : null)
         }}
       />
-    </main>
+    </>
   )
 }

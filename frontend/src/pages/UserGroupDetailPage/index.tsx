@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent } from '@/components/ui/card'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
 import { userGroupNameValue } from '@/objects/usergroup/UserGroupName'
@@ -16,8 +15,8 @@ import { UserGroupMembersCard } from './components/UserGroupMembersCard'
 import { UserGroupOwnershipTransferDialog } from './components/UserGroupOwnershipTransferDialog'
 import { UserGroupSummaryCard } from './components/UserGroupSummaryCard'
 import { useUserGroupDetailPageModel } from './hooks/useUserGroupDetailPageModel'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
+import { PageShell } from '@/pages/components/PageShell'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -70,19 +69,11 @@ function UserGroupDetailPageContent({
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eff4fb_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('userGroup.detail.heading')}</h1>
-          </div>
-
-          <AncestorNavigation />
-        </div>
-
-        <AppSectionBar />
-
+    <>
+      <PageShell
+        title={t('userGroup.detail.heading')}
+        mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#eff4fb_100%)]"
+      >
         {!model.isLoading && !model.userGroup && model.errorMessage ? (
           <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
             <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
@@ -90,9 +81,7 @@ function UserGroupDetailPageContent({
         ) : null}
 
         {model.isLoading ? (
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardContent className="py-10 text-sm text-slate-500">{t('userGroup.detail.loading')}</CardContent>
-          </Card>
+          <PageLoadingCard message={t('userGroup.detail.loading')} />
         ) : model.userGroup ? (
           <div className="space-y-6">
             <UserGroupSummaryCard model={model} />
@@ -102,7 +91,7 @@ function UserGroupDetailPageContent({
             <UserGroupDeleteCard model={model} />
           </div>
         ) : null}
-      </section>
+      </PageShell>
       <UserGroupOwnershipTransferDialog
         model={model}
         ownershipTargetMember={ownershipTargetMember}
@@ -112,6 +101,6 @@ function UserGroupDetailPageContent({
           }
         }}
       />
-    </main>
+    </>
   )
 }

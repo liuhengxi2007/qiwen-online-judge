@@ -12,8 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useUserProfileQuery } from './hooks/useUserProfileQuery'
 import { resolveUserProfileRoutePolicy } from '@/pages/routing/RoutePolicy'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -81,77 +80,65 @@ function UserProfilePageContent({ routeUsername, viewer }: { routeUsername?: str
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">
-              {t('userProfile.heading')}
-            </h1>
-            <p className="text-sm text-slate-600">{t('userProfile.description', { username: profileUsername })}</p>
+    <PageShell
+      title={t('userProfile.heading')}
+      description={t('userProfile.description', { username: profileUsername })}
+      mainClassName="bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)]"
+    >
+      {query.profileLoadError ? (
+        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">{query.profileLoadError}</AlertDescription>
+        </Alert>
+      ) : null}
+      <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+              <UserRound className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-slate-950">{t('userProfile.profileTitle')}</CardTitle>
+              <CardDescription>{t('userProfile.profileDescription')}</CardDescription>
+            </div>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-5 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.45fr)]">
+            <div className="space-y-5">
+              <ProfileOverviewPanel
+                canManageTarget={routePolicy.canManageTarget}
+                isLoadingProfile={query.isLoadingProfile}
+                isOwnProfile={isOwnProfile}
+                onOpenMessage={() => navigate(messageConversationPath(routePolicy.targetUsername))}
+                profileName={profileName}
+                targetUsername={targetUsername}
+              />
 
-          <AncestorNavigation />
-        </div>
-
-        <AppSectionBar />
-
-        {query.profileLoadError ? (
-          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{query.profileLoadError}</AlertDescription>
-          </Alert>
-        ) : null}
-        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                <UserRound className="size-5" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-slate-950">{t('userProfile.profileTitle')}</CardTitle>
-                <CardDescription>{t('userProfile.profileDescription')}</CardDescription>
-              </div>
+              {isOwnProfile ? <OwnMessagePanel targetUsername={targetUsername} /> : null}
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-5 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.45fr)]">
-              <div className="space-y-5">
-                <ProfileOverviewPanel
-                  canManageTarget={routePolicy.canManageTarget}
-                  isLoadingProfile={query.isLoadingProfile}
-                  isOwnProfile={isOwnProfile}
-                  onOpenMessage={() => navigate(messageConversationPath(routePolicy.targetUsername))}
-                  profileName={profileName}
-                  targetUsername={targetUsername}
-                />
 
-                {isOwnProfile ? <OwnMessagePanel targetUsername={targetUsername} /> : null}
-              </div>
+            <div className="space-y-5">
+              <ContributionPanel displayedContribution={displayedContribution} isLoadingProfile={query.isLoadingProfile} />
 
-              <div className="space-y-5">
-                <ContributionPanel displayedContribution={displayedContribution} isLoadingProfile={query.isLoadingProfile} />
-
-                <AcceptedProblemsPanel
-                  acceptedProblems={acceptedProblems}
-                  acceptedProblemsExpanded={acceptedProblemsExpanded}
-                  acceptedProblemsPageItems={acceptedProblemsPageItems}
-                  acceptedProblemsTotalPages={acceptedProblemsTotalPages}
-                  hasProfile={Boolean(displayedUser)}
-                  isLoadingProfile={query.isLoadingProfile}
-                  normalizedAcceptedProblemsPage={normalizedAcceptedProblemsPage}
-                  onNextPage={() => setAcceptedProblemsPage((page) => Math.min(acceptedProblemsTotalPages, page + 1))}
-                  onPreviousPage={() => setAcceptedProblemsPage((page) => Math.max(1, page - 1))}
-                  onToggleExpanded={() => {
-                    setAcceptedProblemsExpanded((isExpanded) => !isExpanded)
-                    setAcceptedProblemsPage(1)
-                  }}
-                />
-              </div>
+              <AcceptedProblemsPanel
+                acceptedProblems={acceptedProblems}
+                acceptedProblemsExpanded={acceptedProblemsExpanded}
+                acceptedProblemsPageItems={acceptedProblemsPageItems}
+                acceptedProblemsTotalPages={acceptedProblemsTotalPages}
+                hasProfile={Boolean(displayedUser)}
+                isLoadingProfile={query.isLoadingProfile}
+                normalizedAcceptedProblemsPage={normalizedAcceptedProblemsPage}
+                onNextPage={() => setAcceptedProblemsPage((page) => Math.min(acceptedProblemsTotalPages, page + 1))}
+                onPreviousPage={() => setAcceptedProblemsPage((page) => Math.max(1, page - 1))}
+                onToggleExpanded={() => {
+                  setAcceptedProblemsExpanded((isExpanded) => !isExpanded)
+                  setAcceptedProblemsPage(1)
+                }}
+              />
             </div>
-          </CardContent>
-        </Card>
-      </section>
-    </main>
+          </div>
+        </CardContent>
+      </Card>
+    </PageShell>
   )
 }

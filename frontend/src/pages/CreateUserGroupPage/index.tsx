@@ -10,8 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import { useCreateUserGroupPageModel } from './hooks/useCreateUserGroupPageModel'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -36,86 +35,72 @@ export function CreateUserGroupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <PageShell
+      title={t('userGroup.create.heading')}
+      mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]"
+    >
+      <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+              <Users className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-slate-950">{t('userGroup.create.cardTitle')}</CardTitle>
+              <CardDescription>{t('userGroup.create.cardDescription')}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
           <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('userGroup.create.heading')}</h1>
+            <Label htmlFor="user-group-slug">{t('userGroup.create.slug')}</Label>
+            <Input
+              id="user-group-slug"
+              value={model.slug}
+              onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
+            />
           </div>
 
-          <AncestorNavigation />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="user-group-name">{t('userGroup.create.name')}</Label>
+            <Input id="user-group-name" value={model.name} onChange={(event) => model.setName(event.target.value)} />
+          </div>
 
-        <AppSectionBar />
+          <div className="space-y-2">
+            <Label htmlFor="user-group-description">{t('userGroup.create.description')}</Label>
+            <Textarea
+              id="user-group-description"
+              value={model.description}
+              onChange={(event) => model.setDescription(event.target.value)}
+            />
+          </div>
 
-        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                <Users className="size-5" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-slate-950">{t('userGroup.create.cardTitle')}</CardTitle>
-                <CardDescription>{t('userGroup.create.cardDescription')}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="user-group-slug">{t('userGroup.create.slug')}</Label>
-              <Input
-                id="user-group-slug"
-                value={model.slug}
-                onChange={(event) => model.setSlug(event.target.value.toLowerCase())}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="user-group-name">{t('userGroup.create.name')}</Label>
-              <Input
-                id="user-group-name"
-                value={model.name}
-                onChange={(event) => model.setName(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="user-group-description">{t('userGroup.create.description')}</Label>
-              <Textarea
-                id="user-group-description"
-                value={model.description}
-                onChange={(event) => model.setDescription(event.target.value)}
-              />
-            </div>
-
-            {model.errorMessage ? (
-              <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-            {model.successMessage ? (
-              <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-                <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-            <Button
-              type="button"
-              disabled={model.isSubmitting}
-              className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
-              onClick={() => {
-                void model.submit().then((createdGroup) => {
-                  if (createdGroup) {
-                    void navigate(`/user-groups/${userGroupSlugValue(createdGroup.slug)}`)
-                  }
-                })
-              }}
-            >
-              {model.isSubmitting ? t('userGroup.create.submitting') : t('userGroup.create.submit')}
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    </main>
+          {model.errorMessage ? (
+            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+              <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          {model.successMessage ? (
+            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+              <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          <Button
+            type="button"
+            disabled={model.isSubmitting}
+            className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
+            onClick={() => {
+              void model.submit().then((createdGroup) => {
+                if (createdGroup) {
+                  void navigate(`/user-groups/${userGroupSlugValue(createdGroup.slug)}`)
+                }
+              })
+            }}
+          >
+            {model.isSubmitting ? t('userGroup.create.submitting') : t('userGroup.create.submit')}
+          </Button>
+        </CardContent>
+      </Card>
+    </PageShell>
   )
 }

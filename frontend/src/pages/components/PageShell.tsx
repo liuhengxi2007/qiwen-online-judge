@@ -1,0 +1,55 @@
+import type { ReactNode } from 'react'
+
+import { cn } from '@/components/ui/class-names'
+import { useI18n } from '@/system/i18n/use-i18n'
+
+import { AncestorNavigation } from './AncestorNavigation'
+import { AppSectionBar } from './AppSectionBar'
+
+type PageShellProps = {
+  children: ReactNode
+  title: ReactNode
+  description?: ReactNode
+  action?: ReactNode
+  mainClassName?: string
+  sectionClassName?: string
+  siteNameClassName?: string
+  titleClassName?: string
+  headerClassName?: string
+  showSectionBar?: boolean
+}
+
+export function PageShell({
+  children,
+  title,
+  description,
+  action,
+  mainClassName,
+  sectionClassName,
+  siteNameClassName = 'text-slate-500',
+  titleClassName = 'text-slate-950',
+  headerClassName,
+  showSectionBar = true,
+}: PageShellProps) {
+  const { t } = useI18n()
+
+  return (
+    <main className={cn('min-h-screen px-6 py-12 sm:px-8', mainClassName)}>
+      <section className={cn('mx-auto max-w-6xl', sectionClassName)}>
+        <div className={cn('mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', headerClassName)}>
+          <div className="space-y-2">
+            <p className={cn('text-sm uppercase tracking-[0.25em]', siteNameClassName)}>{t('common.siteName')}</p>
+            <h1 className={cn("font-['Georgia'] text-4xl font-semibold tracking-tight", titleClassName)}>{title}</h1>
+            {description ? <p className="text-sm text-slate-600">{description}</p> : null}
+          </div>
+
+          {action ?? <AncestorNavigation />}
+        </div>
+
+        {showSectionBar ? <AppSectionBar /> : null}
+
+        {children}
+      </section>
+    </main>
+  )
+}

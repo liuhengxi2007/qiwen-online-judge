@@ -3,8 +3,8 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { SiteManageJudgersCard } from './components/SiteManageJudgersCard'
 import { SiteManageUserCard } from './components/SiteManageUserCard'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
 import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSiteManageModel } from './hooks/useSiteManageModel'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -76,89 +76,70 @@ export function SiteManagePage() {
     return <Navigate replace to="/login" />
   }
 
+  const siteManageModel = {
+    users,
+    judgers,
+    userListError,
+    judgerListError,
+    notice,
+    isLoadingUsers,
+    isLoadingJudgers,
+    userPage,
+    userPageSize,
+    totalUsers,
+    updatingUsername,
+    deletingUsername,
+    navigationIntent: modelNavigationIntent,
+    savePermissions,
+    deleteUser,
+  }
+
+  const applyQuery = () => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    if (!queryInput.trim()) {
+      nextSearchParams.delete('q')
+    } else {
+      nextSearchParams.set('q', queryInput.trim())
+    }
+    nextSearchParams.delete('page')
+    setSearchParams(nextSearchParams)
+  }
+
+  const clearQuery = () => {
+    setQueryInput('')
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.delete('q')
+    nextSearchParams.delete('page')
+    setSearchParams(nextSearchParams)
+  }
+
+  const setPage = (page: number) => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('page', String(page))
+    setSearchParams(nextSearchParams)
+  }
+
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#f4efe5_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-stone-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-stone-950">
-              {t('siteManage.heading')}
-            </h1>
-          </div>
-
-          <AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />
-        </div>
-
-        <AppSectionBar />
-
-        <SiteManageUserCard
-          model={{
-            users,
-            judgers,
-            userListError,
-            judgerListError,
-          notice,
-          isLoadingUsers,
-          isLoadingJudgers,
-          userPage,
-          userPageSize,
-          totalUsers,
-          updatingUsername,
-          deletingUsername,
-          navigationIntent: modelNavigationIntent,
-          savePermissions,
-          deleteUser,
-        }}
+    <PageShell
+      title={t('siteManage.heading')}
+      mainClassName="bg-[linear-gradient(180deg,#fffaf4_0%,#f4efe5_100%)]"
+      siteNameClassName="text-stone-500"
+      titleClassName="text-stone-950"
+      action={<AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />}
+    >
+      <SiteManageUserCard
+        model={siteManageModel}
         siteManagerSession={Boolean(siteManagerSession)}
         queryInput={queryInput}
         hasActiveQuery={Boolean(activeQuery)}
         onQueryInputChange={setQueryInput}
-        onApplyQuery={() => {
-          const nextSearchParams = new URLSearchParams(searchParams)
-          if (!queryInput.trim()) {
-            nextSearchParams.delete('q')
-          } else {
-            nextSearchParams.set('q', queryInput.trim())
-          }
-          nextSearchParams.delete('page')
-          setSearchParams(nextSearchParams)
-        }}
-        onClearQuery={() => {
-          setQueryInput('')
-          const nextSearchParams = new URLSearchParams(searchParams)
-          nextSearchParams.delete('q')
-          nextSearchParams.delete('page')
-          setSearchParams(nextSearchParams)
-        }}
+        onApplyQuery={applyQuery}
+        onClearQuery={clearQuery}
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={(page) => {
-          const nextSearchParams = new URLSearchParams(searchParams)
-          nextSearchParams.set('page', String(page))
-          setSearchParams(nextSearchParams)
-        }}
+        onPageChange={setPage}
       />
-        <SiteManageJudgersCard
-          model={{
-            users,
-            judgers,
-            userListError,
-            judgerListError,
-            notice,
-            isLoadingUsers,
-            isLoadingJudgers,
-            userPage,
-            userPageSize,
-            totalUsers,
-            updatingUsername,
-            deletingUsername,
-            navigationIntent: modelNavigationIntent,
-            savePermissions,
-            deleteUser,
-          }}
-        />
-      </section>
-    </main>
+      <SiteManageJudgersCard model={siteManageModel} />
+    </PageShell>
   )
 }

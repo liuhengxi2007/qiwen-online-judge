@@ -7,13 +7,12 @@ import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearch
 import { shouldShowProblemSlugSupplement } from '@/pages/objects/ProblemTitleDisplay'
 import { useProblemPageModel } from './hooks/useProblemPageModel'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
 import {
   buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
 } from '@/pages/objects/Pagination'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
@@ -98,42 +97,29 @@ function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problem.list.heading')}</h1>
-          </div>
+    <PageShell title={t('problem.list.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)]">
+      <div className="space-y-6">
+        {model.errorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
 
-          <AncestorNavigation />
-        </div>
-
-        <AppSectionBar />
-
-        <div className="space-y-6">
-          {model.errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <ProblemListCard
-            canCreate={canCreate}
-            currentPage={currentPage}
-            isLoading={model.isLoading}
-            onApplyQuery={applyQuery}
-            onClearQuery={clearQuery}
-            onPageChange={setPage}
-            pageNumbers={pageNumbers}
-            problems={model.problems}
-            queryInput={queryInput}
-            setQueryInput={setQueryInput}
-            showSlugSupplement={shouldShowProblemSlugSupplement(problemTitleDisplayMode)}
-            totalPages={totalPages}
-          />
-        </div>
-      </section>
-    </main>
+        <ProblemListCard
+          canCreate={canCreate}
+          currentPage={currentPage}
+          isLoading={model.isLoading}
+          onApplyQuery={applyQuery}
+          onClearQuery={clearQuery}
+          onPageChange={setPage}
+          pageNumbers={pageNumbers}
+          problems={model.problems}
+          queryInput={queryInput}
+          setQueryInput={setQueryInput}
+          showSlugSupplement={shouldShowProblemSlugSupplement(problemTitleDisplayMode)}
+          totalPages={totalPages}
+        />
+      </div>
+    </PageShell>
   )
 }

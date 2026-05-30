@@ -11,8 +11,7 @@ import { useBlogDetailQuery } from './hooks/useBlogDetailQuery'
 import { useBlogDetailPageModel } from './hooks/useBlogDetailPageModel'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
+import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -61,66 +60,54 @@ export function BlogDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fff7ed_0%,#eef6ff_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('blog.detail.heading')}</h1>
-          </div>
-          <AncestorNavigation />
-        </div>
+    <PageShell title={t('blog.detail.heading')} mainClassName="bg-[linear-gradient(180deg,#fff7ed_0%,#eef6ff_100%)]">
+      {query.errorMessage ? (
+        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">
+            {query.errorMessage === 'invalid' ? t('blog.detail.invalidUrl') : t('blog.detail.loadFailed')}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
-        <AppSectionBar />
-
-        {query.errorMessage ? (
-          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">
-              {query.errorMessage === 'invalid' ? t('blog.detail.invalidUrl') : t('blog.detail.loadFailed')}
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
-                <NotebookPen className="size-5" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl text-slate-950">
-                  {query.blog ? blogTitleValue(query.blog.title) : t('blog.detail.cardTitle')}
-                </CardTitle>
-                <CardDescription>
-                  {t('blog.detail.cardDescription')}
-                  {query.blog ? (
-                    <span className="ml-3 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">
-                      {t(`blog.visibility.${query.blog.visibility}`)}
-                    </span>
-                  ) : null}
-                </CardDescription>
-              </div>
+      <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+              <NotebookPen className="size-5" />
             </div>
-          </CardHeader>
-          <CardContent>
-            {query.isLoading ? (
-              <p className="text-sm text-slate-500">{t('blog.detail.loading')}</p>
-            ) : query.blog ? (
-              <article>
-                {usernameValue(query.blog.author.username) === usernameValue(user.username) ? (
-                  <BlogOwnerActions blog={query.blog} model={model} />
+            <div>
+              <CardTitle className="text-2xl text-slate-950">
+                {query.blog ? blogTitleValue(query.blog.title) : t('blog.detail.cardTitle')}
+              </CardTitle>
+              <CardDescription>
+                {t('blog.detail.cardDescription')}
+                {query.blog ? (
+                  <span className="ml-3 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">
+                    {t(`blog.visibility.${query.blog.visibility}`)}
+                  </span>
                 ) : null}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {query.isLoading ? (
+            <p className="text-sm text-slate-500">{t('blog.detail.loading')}</p>
+          ) : query.blog ? (
+            <article>
+              {usernameValue(query.blog.author.username) === usernameValue(user.username) ? (
+                <BlogOwnerActions blog={query.blog} model={model} />
+              ) : null}
 
-                {model.isEditingBlog ? <BlogEditForm model={model} /> : null}
+              {model.isEditingBlog ? <BlogEditForm model={model} /> : null}
 
-                <BlogMetaVoteBar blog={query.blog} model={model} problemTitleDisplayMode={problemTitleDisplayMode} />
-                <BlogArticleContent blog={query.blog} />
-                <BlogCommentsSection blog={query.blog} currentUsername={usernameValue(user.username)} model={model} />
-              </article>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
-    </main>
+              <BlogMetaVoteBar blog={query.blog} model={model} problemTitleDisplayMode={problemTitleDisplayMode} />
+              <BlogArticleContent blog={query.blog} />
+              <BlogCommentsSection blog={query.blog} currentUsername={usernameValue(user.username)} model={model} />
+            </article>
+          ) : null}
+        </CardContent>
+      </Card>
+    </PageShell>
   )
 }

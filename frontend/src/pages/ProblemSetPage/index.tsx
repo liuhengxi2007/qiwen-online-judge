@@ -10,9 +10,9 @@ import { problemSetDescriptionValue } from '@/objects/problemset/ProblemSetDescr
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetTitleValue } from '@/objects/problemset/ProblemSetTitle'
 import { useProblemSetPageModel } from './hooks/useProblemSetPageModel'
-import { AppSectionBar } from '@/pages/components/AppSectionBar'
+import { PageShell } from '@/pages/components/PageShell'
+import { PaginationControls } from '@/pages/components/PaginationControls'
 import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -47,103 +47,94 @@ export function ProblemSetPage() {
   }
 
   const canCreate = user.siteManager || user.problemManager
+  const onPageChange = (page: number) => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('page', String(page))
+    setSearchParams(nextSearchParams)
+  }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fdf8fb_0%,#f4edf7_48%,#ecf3fb_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
-            <h1 className="font-['Georgia'] text-4xl font-semibold tracking-tight text-slate-950">{t('problemSet.heading')}</h1>
-          </div>
+    <PageShell
+      title={t('problemSet.heading')}
+      mainClassName="bg-[linear-gradient(180deg,#fdf8fb_0%,#f4edf7_48%,#ecf3fb_100%)]"
+    >
+      <div className="space-y-6">
+        {model.errorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
 
-          <AncestorNavigation />
-        </div>
-
-        <AppSectionBar />
-
-        <div className="space-y-6">
-          {model.errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <CardHeader>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
-                    <Layers3 className="size-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-slate-950">{t('problemSet.list.cardTitle')}</CardTitle>
-                    <CardDescription>{t('problemSet.list.cardDescription')}</CardDescription>
-                  </div>
+        <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                  <Layers3 className="size-5" />
                 </div>
-                {canCreate ? (
-                  <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
-                    <Link to="/problem-sets/new">
-                      <BookPlus className="size-4" />
-                      {t('problemSet.list.create')}
-                    </Link>
-                  </Button>
-                ) : null}
+                <div>
+                  <CardTitle className="text-xl text-slate-950">{t('problemSet.list.cardTitle')}</CardTitle>
+                  <CardDescription>{t('problemSet.list.cardDescription')}</CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {model.isLoading ? (
-                <p className="text-sm text-slate-500">{t('problemSet.list.loading')}</p>
-              ) : model.problemSets.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-                  <p className="text-base font-medium text-slate-900">{t('problemSet.list.emptyTitle')}</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">{t('problemSet.list.emptyDescription')}</p>
-                </div>
-              ) : (
-                model.problemSets.map((problemSet) => (
-                  <div key={problemSet.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Link className="text-lg font-semibold text-slate-950 hover:underline" to={`/problem-sets/${problemSetSlugValue(problemSet.slug)}`}>
-                        {problemSetTitleValue(problemSet.title)}
-                      </Link>
-                      <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy, t)}</Badge>
-                    </div>
-                    <p className="mt-2 font-mono text-sm text-slate-500">{problemSetSlugValue(problemSet.slug)}</p>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">
-                      {problemSetDescriptionValue(problemSet.description) || t('common.noDescription')}
-                    </p>
-                    <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                      <span>{t('common.createdByLabel')} </span>
-                      <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problemSet.creator} />
-                    </p>
-                  </div>
-                ))
-              )}
-              {!model.isLoading && model.problemSets.length > 0 && totalPages > 1 ? (
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === 1} onClick={() => {
-                    const nextSearchParams = new URLSearchParams(searchParams)
-                    nextSearchParams.set('page', String(Math.max(1, currentPage - 1)))
-                    setSearchParams(nextSearchParams)
-                  }}>{t('common.pagination.previous')}</Button>
-                  {pageNumbers.map((page) => (
-                    <Button key={page} type="button" variant={page === currentPage ? 'default' : 'outline'} className={page === currentPage ? 'rounded-2xl bg-slate-950 text-white' : 'rounded-2xl border-slate-300 bg-white'} onClick={() => {
-                      const nextSearchParams = new URLSearchParams(searchParams)
-                      nextSearchParams.set('page', String(page))
-                      setSearchParams(nextSearchParams)
-                    }}>{page}</Button>
-                  ))}
-                  <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" disabled={currentPage === totalPages} onClick={() => {
-                    const nextSearchParams = new URLSearchParams(searchParams)
-                    nextSearchParams.set('page', String(Math.min(totalPages, currentPage + 1)))
-                    setSearchParams(nextSearchParams)
-                  }}>{t('common.pagination.next')}</Button>
-                </div>
+              {canCreate ? (
+                <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
+                  <Link to="/problem-sets/new">
+                    <BookPlus className="size-4" />
+                    {t('problemSet.list.create')}
+                  </Link>
+                </Button>
               ) : null}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    </main>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {model.isLoading ? (
+              <p className="text-sm text-slate-500">{t('problemSet.list.loading')}</p>
+            ) : model.problemSets.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                <p className="text-base font-medium text-slate-900">{t('problemSet.list.emptyTitle')}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{t('problemSet.list.emptyDescription')}</p>
+              </div>
+            ) : (
+              model.problemSets.map((problemSet) => (
+                <div key={problemSet.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      className="text-lg font-semibold text-slate-950 hover:underline"
+                      to={`/problem-sets/${problemSetSlugValue(problemSet.slug)}`}
+                    >
+                      {problemSetTitleValue(problemSet.title)}
+                    </Link>
+                    <Badge variant="secondary">{resourceAccessBadgeLabel(problemSet.accessPolicy, t)}</Badge>
+                  </div>
+                  <p className="mt-2 font-mono text-sm text-slate-500">{problemSetSlugValue(problemSet.slug)}</p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {problemSetDescriptionValue(problemSet.description) || t('common.noDescription')}
+                  </p>
+                  <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
+                    <span>{t('common.createdByLabel')} </span>
+                    <UserProfileLink
+                      className="inline-flex items-baseline gap-2 normal-case tracking-normal"
+                      showUsername
+                      user={problemSet.creator}
+                    />
+                  </p>
+                </div>
+              ))
+            )}
+            {!model.isLoading && model.problemSets.length > 0 && totalPages > 1 ? (
+              <PaginationControls
+                currentPage={currentPage}
+                pageNumbers={pageNumbers}
+                totalPages={totalPages}
+                previousLabel={t('common.pagination.previous')}
+                nextLabel={t('common.pagination.next')}
+                onPageChange={onPageChange}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
+    </PageShell>
   )
 }
