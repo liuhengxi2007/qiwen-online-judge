@@ -71,7 +71,25 @@ probe_backend_url() {
     return 1
   fi
 
-  curl --silent --show-error --fail --max-time 2 "${candidate}/api/health" >/dev/null 2>&1
+  local status=""
+  status="$(
+    curl \
+      --silent \
+      --show-error \
+      --output /dev/null \
+      --write-out "%{http_code}" \
+      --max-time 2 \
+      "${candidate}/api/auth/session" 2>/dev/null || true
+  )"
+
+  case "${status}" in
+    200 | 401 | 403)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }
 
 resolve_backend_base_url() {
@@ -131,7 +149,7 @@ wait_for_backend_base_url() {
 
     attempts=$((attempts + 1))
     if (( attempts == 1 || attempts % 10 == 0 )); then
-      echo "Waiting for backend to become reachable at port 8080..." >&2
+      echo "Waiting for backend API to become reachable..." >&2
     fi
     sleep 1
   done
