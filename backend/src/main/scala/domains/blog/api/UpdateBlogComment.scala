@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
@@ -30,7 +30,7 @@ object UpdateBlogComment extends AuthenticatedApi[UpdateBlogCommentInput, BlogDe
       body <- request.as[UpdateBlogCommentRequest]
     yield UpdateBlogCommentInput(blogId, commentId, body)
 
-  override def plan(connection: Connection, actor: AuthUser, input: UpdateBlogCommentInput): IO[BlogDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: UpdateBlogCommentInput): IO[BlogDetail] =
     for
       content <- HttpApiError.fromEitherBadRequest(BlogCommentContent.parse(input.request.content.value))
       maybeBlog <- BlogCommentTable.updateComment(connection, input.blogId, input.commentId, actor.username, content)

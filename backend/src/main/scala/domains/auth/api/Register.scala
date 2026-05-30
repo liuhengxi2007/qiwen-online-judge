@@ -4,9 +4,10 @@ import cats.effect.IO
 import domains.auth.objects.EmailAddress
 import domains.auth.objects.request.RegisterRequest
 import domains.auth.objects.response.RegisterResponse
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.table.auth_account.AuthAccountTable
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
 import domains.problem.objects.ProblemTitleDisplayMode
+import domains.user.api.UserProfileRecords
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
 import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
@@ -30,28 +31,36 @@ final case class Register(sessionStore: SessionStore) extends PublicResponseApi[
     for
       username <- HttpApiError.fromEitherBadRequest(Username.parse(request.username.value))
       validRequest = request.copy(username = username)
-      existingUser <- AuthUserTable.findByUsername(connection, validRequest.username)
+      existingUser <- AuthAccountTable.findAccountByUsername(connection, validRequest.username)
       _ <- HttpApiError.ensure(existingUser.isEmpty, HttpApiError.conflict(ApiMessages.usernameExists))
       conflictingUserGroupSlug <- userGroupSlugConflictsWith(connection, validRequest.username.value)
       _ <- HttpApiError.ensure(!conflictingUserGroupSlug, HttpApiError.conflict(ApiMessages.usernameConflictsWithGroup))
       displayName <- validateDisplayName(validRequest.displayName)
       email <- validateEmail(validRequest.email)
       passwordHash <- PasswordHasher.hashPassword(validRequest.password)
-      createdUser <- AuthUserTable.insert(
+      createdAccount <- AuthAccountTable.insertAccount(
         connection,
         username = validRequest.username,
-        displayName = displayName,
         email = email,
+        passwordHash = passwordHash
+      )
+      profile <- UserProfileRecords.create(
+        connection,
+        username = createdAccount.username,
+        displayName = displayName,
         displayMode = UserDisplayMode.DisplayName,
         locale = UserLocale.En,
         problemTitleDisplayMode = ProblemTitleDisplayMode.Title,
-        autoMarkMessageRead = false,
-        passwordHash = passwordHash
+        autoMarkMessageRead = false
       )
-      sessionToken <- sessionStore.createSessionInConnection(connection, createdUser.username)
+      sessionToken <- sessionStore.createSessionInConnection(connection, createdAccount.username)
     yield
       Response[IO](status = Status.Created)
-        .withEntity(RegisterResponse.fromAuthUser(createdUser, "Registration successful").asJson)
+        .withEntity(
+          RegisterResponse
+            .fromParts(profile, createdAccount.email, createdAccount.siteManager, createdAccount.problemManager, "Registration successful")
+            .asJson
+        )
         .addCookie(AuthSessionCookies.sessionCookie(sessionToken))
 
   private def userGroupSlugConflictsWith(connection: Connection, rawValue: String): IO[Boolean] =

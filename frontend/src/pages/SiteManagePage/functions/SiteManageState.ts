@@ -1,6 +1,6 @@
 import type { DisplayName } from '@/objects/user/DisplayName'
 import type { Username } from '@/objects/user/Username'
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 
 export type SiteManageNotice =
@@ -16,7 +16,7 @@ export type SiteManageState = {
 
 export type SiteManageAction =
   | { type: 'update_started'; username: Username }
-  | { type: 'update_succeeded'; user: AuthUserListItem }
+  | { type: 'update_succeeded'; user: ManagedUserListItem }
   | { type: 'delete_started'; username: Username }
   | { type: 'delete_succeeded'; message: string }
   | { type: 'update_failed'; message: string }

@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.objects.MessageConversationId
 import domains.message.objects.request.{MarkConversationReadMode, MarkConversationReadRequest}
@@ -31,7 +31,7 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (MessageConversationId, MarkConversationReadRequest)
   ): IO[MessageConversationSummary] =
     val (conversationId, request) = input

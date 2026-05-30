@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.objects.response.MessageBlockEntry
 import domains.message.table.message.{MessageBlockTable, MessageUserTable}
@@ -24,7 +24,7 @@ final class AddMessageBlock(messageEventHub: MessageEventHub) extends Authentica
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("targetUsername").map(Username.canonical))
 
-  override def plan(connection: Connection, actor: AuthUser, targetUsername: Username): IO[MessageBlockEntry] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[MessageBlockEntry] =
     for
       _ <- HttpApiError.ensure(actor.username != targetUsername, HttpApiError.badRequest(ApiMessages.directMessageBlockSelfForbidden))
       targetExists <- MessageUserTable.userExists(connection, targetUsername)

@@ -5,12 +5,8 @@ const root = process.cwd()
 
 const allowedExceptions = new Map([
   [
-    'backend-only:auth/AuthUser',
-    'Backend-only authenticated account model includes password hash and permission flags; frontend receives sanitized response contracts instead.',
-  ],
-  [
     'backend-only:auth/ProblemManagerUser',
-    'Backend-only problem-manager permission proof wraps AuthUser for server authorization and is not serialized as a frontend JSON contract.',
+    'Backend-only problem-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON contract.',
   ],
   [
     'backend-only:auth/SessionToken',
@@ -18,7 +14,7 @@ const allowedExceptions = new Map([
   ],
   [
     'backend-only:auth/SiteManagerUser',
-    'Backend-only site-manager permission proof wraps AuthUser for server authorization and is not serialized as a frontend JSON contract.',
+    'Backend-only site-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON contract.',
   ],
   [
     'frontend-only:submission/JudgeResult',

@@ -55,7 +55,7 @@ const publicWiringBoundaries = new Set([
 
 const publicModelTypes = new Map([
   ['auth', new Set([
-    'AuthUser',
+    'AuthenticatedUser',
     'EmailAddress',
     'PasswordHash',
     'PlaintextPassword',
@@ -111,6 +111,7 @@ const publicModelTypes = new Map([
     'UserDisplayMode',
     'UserIdentity',
     'UserLocale',
+    'UserProfileSettings',
     'UserPreferences',
     'Username',
   ])],

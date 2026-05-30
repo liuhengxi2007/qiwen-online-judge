@@ -251,7 +251,7 @@ object BlogCommentTable:
       |from blog_comments c
       |join blogs b on b.id = c.blog_id
       |left join blog_comments pc on pc.id = c.parent_comment_id
-      |${UserIdentitySql.joinAuthUsers("c.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("c.author_username", "au")}
       |left join (
       |  select comment_id,
       |         sum(case when vote = 'up' then 1 when vote = 'down' then -1 else 0 end)::int as score

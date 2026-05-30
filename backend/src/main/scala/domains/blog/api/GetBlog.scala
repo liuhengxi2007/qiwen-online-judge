@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.blog.objects.BlogId
 import domains.blog.objects.response.BlogDetail
@@ -24,7 +24,7 @@ object GetBlog extends AuthenticatedApi[BlogId, BlogDetail]:
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("blogId").flatMap(BlogId.parse))
 
-  override def plan(connection: Connection, actor: AuthUser, blogId: BlogId): IO[BlogDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, blogId: BlogId): IO[BlogDetail] =
     BlogPostQueryTable.findById(connection, blogId, actor.username).flatMap {
       case Some(blog) => IO.pure(blog)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogNotFound))

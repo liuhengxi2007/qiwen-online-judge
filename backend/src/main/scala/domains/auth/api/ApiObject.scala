@@ -2,7 +2,8 @@ package domains.auth.api
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.objects.{AuthUser, SiteManagerUser}
+import domains.auth.objects.SiteManagerUser
+import domains.auth.objects.internal.AuthenticatedUser
 import io.circe.Encoder
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
@@ -93,7 +94,7 @@ trait AuthenticatedApi[Input, Output] extends ApiObject:
 
   def decode(request: Request[IO], pathParams: PathParams): IO[Input]
 
-  def plan(connection: Connection, actor: AuthUser, input: Input): IO[Output]
+  def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Output]
 
   override private[api] final def handle(
     context: ApiObjectContext,
@@ -104,7 +105,7 @@ trait AuthenticatedApi[Input, Output] extends ApiObject:
       input <- decode(request, pathParams)
       response <- context.databaseSession.withTransactionConnection { connection =>
         for
-          actor <- requiredSessionResolver(context).resolveAuthUser(connection, request)
+          actor <- requiredSessionResolver(context).resolveAuthenticatedUser(connection, request)
           output <- plan(connection, actor, input)
           response <- jsonResponse(output)
         yield response
@@ -144,7 +145,7 @@ trait SiteManagerApi[Input, Output] extends ApiObject:
 trait AuthenticatedResponseApi[Input] extends ApiObject:
   def decode(request: Request[IO], pathParams: PathParams): IO[Input]
 
-  def plan(connection: Connection, actor: AuthUser, input: Input): IO[Response[IO]]
+  def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Response[IO]]
 
   override private[api] final def handle(
     context: ApiObjectContext,
@@ -155,14 +156,14 @@ trait AuthenticatedResponseApi[Input] extends ApiObject:
       input <- decode(request, pathParams)
       response <- context.databaseSession.withTransactionConnection { connection =>
         for
-          actor <- requiredSessionResolver(context).resolveAuthUser(connection, request)
+          actor <- requiredSessionResolver(context).resolveAuthenticatedUser(connection, request)
           response <- plan(connection, actor, input)
         yield response
       }
     yield response
 
 trait InternalOnlyAuthenticatedApi[Input, Output] extends ApiObject:
-  def plan(connection: Connection, actor: AuthUser, input: Input): IO[Output]
+  def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Output]
 
   override private[api] final def handle(
     context: ApiObjectContext,

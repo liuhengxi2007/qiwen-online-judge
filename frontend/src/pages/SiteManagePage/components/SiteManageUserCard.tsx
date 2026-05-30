@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { displayNameValue } from '@/objects/user/DisplayName'
 import { usernameValue } from '@/objects/user/Username'
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import { emailAddressValue } from '@/objects/auth/EmailAddress'
 import type { useSiteManageModel } from '../hooks/useSiteManageModel'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
@@ -47,7 +47,7 @@ export function SiteManageUserCard({
   onPageChange,
 }: SiteManageUserCardProps) {
   const { t } = useI18n()
-  const isProtectedAdmin = (listedUser: AuthUserListItem) => usernameValue(listedUser.username) === 'admin'
+  const isProtectedAdmin = (listedUser: ManagedUserListItem) => usernameValue(listedUser.username) === 'admin'
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
   const statusMessage =
     model.notice?.kind === 'permissions_updated'

@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemAccessPolicyValidation
 
 import domains.problem.objects.*
@@ -30,7 +30,7 @@ object CreateProblem extends AuthenticatedApi[CreateProblemRequest, ProblemDetai
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     request: CreateProblemRequest
   ): IO[ProblemDetail] =
     for

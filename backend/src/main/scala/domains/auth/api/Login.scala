@@ -4,7 +4,8 @@ import cats.effect.IO
 import domains.auth.objects.response.LoginResponse
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
 import domains.auth.objects.request.LoginRequest
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.table.auth_account.AuthAccountTable
+import domains.user.api.UserProfileRecords
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -22,20 +23,30 @@ final case class Login(sessionStore: SessionStore) extends PublicResponseApi[Log
     request.as[LoginRequest]
 
   override def plan(connection: Connection, request: LoginRequest): IO[Response[IO]] =
-    AuthUserTable.findByUsername(connection, request.username).flatMap {
+    AuthAccountTable.findAccountByUsername(connection, request.username).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.unauthorized(ApiMessages.invalidCredentials))
-      case Some(user) =>
-        PasswordHasher.verifyPassword(request.password, user.passwordHash).flatMap {
+      case Some(account) =>
+        PasswordHasher.verifyPassword(request.password, account.passwordHash).flatMap {
           case false =>
             HttpApiError.raise(HttpApiError.unauthorized(ApiMessages.invalidCredentials))
           case true =>
-            sessionStore
-              .createSessionInConnection(connection, user.username)
-              .map(sessionToken =>
+            for
+              profile <- findProfile(connection, account.username)
+              sessionToken <- sessionStore.createSessionInConnection(connection, account.username)
+            yield
                 Response[IO](status = Status.Ok)
-                  .withEntity(LoginResponse.fromAuthUser(user, "Login successful").asJson)
+                  .withEntity(
+                    LoginResponse
+                      .fromParts(profile, account.email, account.siteManager, account.problemManager, "Login successful")
+                      .asJson
+                  )
                   .addCookie(AuthSessionCookies.sessionCookie(sessionToken))
-              )
         }
+    }
+
+  private def findProfile(connection: Connection, username: domains.user.objects.Username) =
+    UserProfileRecords.findSettings(connection, username).flatMap {
+      case Some(profile) => IO.pure(profile)
+      case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
     }

@@ -5,7 +5,8 @@ import domains.auth.objects.SiteManagerUser
 import domains.auth.objects.request.UpdateUserPermissionsRequest
 import domains.auth.objects.response.AuthAccountListItem
 import domains.auth.utils.AuthAccountRules
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.table.auth_account.AuthAccountTable
+import domains.user.api.UserProfileRecords
 import domains.user.objects.Username
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -38,7 +39,7 @@ object UpdateAccountPermissions extends SiteManagerApi[(Username, UpdateUserPerm
         targetUsername.value != AuthAccountRules.protectedAdminUsername,
         HttpApiError.forbidden(ApiMessages.adminPermissionsImmutable)
       )
-      updated <- AuthUserTable.updatePermissions(
+      updated <- AuthAccountTable.updatePermissions(
         connection,
         actor,
         targetUsername,
@@ -48,4 +49,8 @@ object UpdateAccountPermissions extends SiteManagerApi[(Username, UpdateUserPerm
       user <- updated match
         case Some(user) => IO.pure(user)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-    yield AuthAccountListItem.fromAuthUser(user)
+      profile <- UserProfileRecords.findSettings(connection, user.username).flatMap {
+        case Some(profile) => IO.pure(profile)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
+      }
+    yield AuthAccountListItem.fromParts(user, profile)

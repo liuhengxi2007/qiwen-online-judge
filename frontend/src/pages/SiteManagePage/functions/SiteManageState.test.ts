@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { initialSiteManageState, reduceSiteManageState } from './SiteManageState'
 import type { Username } from '@/objects/user/Username'
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 
 describe('site-manage-state', () => {
   it('records the active username when an update starts', () => {
@@ -19,7 +19,7 @@ describe('site-manage-state', () => {
   it('stores a permissions notice after a successful update', () => {
     const next = reduceSiteManageState(initialSiteManageState, {
       type: 'update_succeeded',
-      user: { displayName: 'Alice' } as AuthUserListItem,
+      user: { displayName: 'Alice' } as ManagedUserListItem,
     })
 
     expect(next.updatingUsername).toBeNull()

@@ -7,7 +7,7 @@ import domains.user.objects.{DisplayName, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-final case class AuthUserListItem(
+final case class ManagedUserListItem(
   username: Username,
   displayName: DisplayName,
   email: EmailAddress,
@@ -15,6 +15,6 @@ final case class AuthUserListItem(
   problemManager: Boolean
 )
 
-object AuthUserListItem:
-  given Encoder[AuthUserListItem] = deriveEncoder[AuthUserListItem]
-  given Decoder[AuthUserListItem] = deriveDecoder[AuthUserListItem]
+object ManagedUserListItem:
+  given Encoder[ManagedUserListItem] = deriveEncoder[ManagedUserListItem]
+  given Decoder[ManagedUserListItem] = deriveDecoder[ManagedUserListItem]

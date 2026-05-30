@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.BlogId
@@ -28,7 +28,7 @@ object LinkBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessR
     val _ = request
     blogProblemLinkInput(pathParams)
 
-  override def plan(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for
       _ <- HttpApiError.ensure(canManageProblemCatalog(actor), HttpApiError.forbidden(ApiMessages.problemBlogLinkManageForbidden))
       problem <- ResolveProblemReference.plan(connection, input.problemSlug)
@@ -45,5 +45,5 @@ object LinkBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessR
       yield BlogProblemLinkInput(problemSlug, blogId)
     }
 
-  private def canManageProblemCatalog(actor: AuthUser): Boolean =
+  private def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager

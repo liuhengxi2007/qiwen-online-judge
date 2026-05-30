@@ -2,7 +2,7 @@ package domains.problemset.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.objects.response.ProblemSetDetail
@@ -28,7 +28,7 @@ object GetProblemSet extends AuthenticatedApi[ProblemSetSlug, ProblemSetDetail]:
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     slug: ProblemSetSlug
   ): IO[ProblemSetDetail] =
     ProblemSetTable.findBySlug(connection, slug).flatMap {

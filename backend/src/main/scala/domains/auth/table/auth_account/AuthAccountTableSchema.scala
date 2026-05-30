@@ -1,4 +1,4 @@
-package domains.auth.table.auth_user
+package domains.auth.table.auth_account
 
 
 
@@ -6,18 +6,13 @@ import cats.effect.IO
 
 import java.sql.Connection
 
-object AuthUserTableSchema:
+object AuthAccountTableSchema:
 
   val initTableSql: String =
     """
       |create table if not exists auth_users (
       |  username varchar(120) primary key,
-      |  display_name varchar(120) not null,
       |  email varchar(255) not null,
-      |  display_mode varchar(64) not null default 'display_name',
-      |  locale varchar(32) not null default 'en',
-      |  problem_title_display_mode varchar(64) not null default 'title',
-      |  auto_mark_message_read boolean not null default false,
       |  password_hash varchar(255) not null,
       |  site_manager boolean not null default false,
       |  problem_manager boolean not null default false
@@ -78,66 +73,58 @@ object AuthUserTableSchema:
       |end $$;
       |""".stripMargin
 
-  val addDisplayModeColumnSql: String =
+  val relaxLegacyProfileColumnsSql: String =
     """
       |do $$
       |begin
-      |  if not exists (
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_users'
+      |      and column_name = 'display_name'
+      |  ) then
+      |    alter table auth_users alter column display_name set default '';
+      |  end if;
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'auth_users'
       |      and column_name = 'display_mode'
       |  ) then
-      |    alter table auth_users add column display_mode varchar(64) not null default 'display_name';
+      |    alter table auth_users alter column display_mode set default 'display_name';
       |  end if;
-      |end $$;
-      |""".stripMargin
-
-  val addLocaleColumnSql: String =
-    """
-      |do $$
-      |begin
-      |  if not exists (
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'auth_users'
       |      and column_name = 'locale'
       |  ) then
-      |    alter table auth_users add column locale varchar(32) not null default 'en';
+      |    alter table auth_users alter column locale set default 'en';
       |  end if;
-      |end $$;
-      |""".stripMargin
-
-  val addProblemTitleDisplayModeColumnSql: String =
-    """
-      |do $$
-      |begin
-      |  if not exists (
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'auth_users'
       |      and column_name = 'problem_title_display_mode'
       |  ) then
-      |    alter table auth_users add column problem_title_display_mode varchar(64) not null default 'title';
+      |    alter table auth_users alter column problem_title_display_mode set default 'title';
       |  end if;
-      |end $$;
-      |""".stripMargin
-
-  val addAutoMarkMessageReadColumnSql: String =
-    """
-      |do $$
-      |begin
-      |  if not exists (
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'auth_users'
       |      and column_name = 'auto_mark_message_read'
       |  ) then
-      |    alter table auth_users add column auto_mark_message_read boolean not null default false;
+      |    alter table auth_users alter column auto_mark_message_read set default false;
       |  end if;
       |end $$;
       |""".stripMargin
@@ -201,10 +188,7 @@ object AuthUserTableSchema:
         statement.execute(migratePasswordColumnSql)
         statement.execute(initTableSql)
         statement.execute(addEmailColumnSql)
-        statement.execute(addDisplayModeColumnSql)
-        statement.execute(addLocaleColumnSql)
-        statement.execute(addProblemTitleDisplayModeColumnSql)
-        statement.execute(addAutoMarkMessageReadColumnSql)
+        statement.execute(relaxLegacyProfileColumnsSql)
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
         statement.executeUpdate(backfillEmailSql)

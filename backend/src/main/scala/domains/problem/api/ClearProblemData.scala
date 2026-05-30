@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.utils.ProblemDataApiHelpers
 
@@ -31,7 +31,7 @@ final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDetail] =
     EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>

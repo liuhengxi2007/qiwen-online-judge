@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.response.BlogListResponse
@@ -29,5 +29,5 @@ object ListProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogListResp
       }
     }
 
-  override def plan(connection: Connection, actor: AuthUser, input: ProblemBlogsInput): IO[BlogListResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: ProblemBlogsInput): IO[BlogListResponse] =
     BlogProblemLinkQueryTable.listByProblem(connection, input.problemSlug, actor.username, input.pageRequest.normalized)

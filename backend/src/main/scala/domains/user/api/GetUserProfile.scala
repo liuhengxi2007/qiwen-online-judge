@@ -2,7 +2,7 @@ package domains.user.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.blog.api.GetBlogContributionForAuthor
 
 import domains.user.objects.{UserContribution, Username}
@@ -27,18 +27,18 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
       case Right(rawUsername) => IO.pure(Username.canonical(rawUsername))
       case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
 
-  override def plan(connection: Connection, actor: AuthUser, targetUsername: Username): IO[UserProfileResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[UserProfileResponse] =
     val _ = actor
-    UserTable.findByUsername(connection, targetUsername).flatMap {
+    UserTable.findSettingsByUsername(connection, targetUsername).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      case Some(targetUser) =>
+      case Some(targetProfile) =>
         for
           contribution <- GetBlogContributionForAuthor.plan(connection, targetUsername).map(_.contribution)
           acceptedProblems <- UserTable.listAcceptedProblems(connection, targetUsername)
         yield UserProfileResponse(
-          username = targetUser.username,
-          displayName = targetUser.displayName,
+          username = targetProfile.username,
+          displayName = targetProfile.displayName,
           contribution = UserContribution(BigDecimal(contribution)),
           acceptedProblems = acceptedProblems
         )

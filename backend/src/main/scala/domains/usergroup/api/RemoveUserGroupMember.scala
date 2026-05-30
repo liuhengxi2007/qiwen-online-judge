@@ -2,7 +2,7 @@ package domains.usergroup.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.usergroup.utils.UserGroupMutationValidation
 
@@ -30,7 +30,7 @@ object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username),
       rawUsername <- HttpApiError.fromEitherBadRequest(pathParams.require("memberUsername"))
     yield (groupSlug, Username.canonical(rawUsername))
 
-  override def plan(connection: Connection, actor: AuthUser, input: (UserGroupSlug, Username)): IO[UserGroupDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: (UserGroupSlug, Username)): IO[UserGroupDetail] =
     val (groupSlug, targetUsername) = input
     for
       maybeGroup <- UserGroupTable.findBySlug(connection, groupSlug)

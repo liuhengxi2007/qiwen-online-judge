@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.problem.objects.request.ProblemSearchQuery
 import domains.problem.objects.response.ProblemSuggestion
@@ -26,7 +26,7 @@ object ListProblemSuggestions extends AuthenticatedApi[ProblemSearchQuery, List[
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     query: ProblemSearchQuery
   ): IO[List[ProblemSuggestion]] =
     ProblemQueryTable.listSuggestions(connection, actor, query)

@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.utils.ProblemDataApiHelpers
@@ -42,7 +42,7 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (ProblemSlug, SetProblemReadyRequest)
   ): IO[ProblemDetail] =
     val (problemSlug, request) = input

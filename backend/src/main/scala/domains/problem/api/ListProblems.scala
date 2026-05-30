@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.problem.objects.request.{ProblemListRequest, ProblemSearchQuery}
 import domains.problem.objects.response.ProblemSummary
@@ -34,7 +34,7 @@ object ListProblems extends AuthenticatedApi[ProblemListRequest, PageResponse[Pr
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     request: ProblemListRequest
   ): IO[PageResponse[ProblemSummary]] =
     val normalizedRequest = request.copy(pageRequest = request.pageRequest.normalized)

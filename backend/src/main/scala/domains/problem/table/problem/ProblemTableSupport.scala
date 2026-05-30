@@ -3,7 +3,7 @@ package domains.problem.table.problem
 
 
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.request.ProblemSearchQuery
 import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
@@ -69,7 +69,7 @@ object ProblemTableSupport:
 
   private def bindVisibilityQuery(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     startIndex: Int
   ): Int =
     statement.setBoolean(startIndex, actor.siteManager || actor.problemManager)
@@ -93,7 +93,7 @@ object ProblemTableSupport:
 
   def bindListQuery(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     query: Option[ProblemSearchQuery],
     pageSize: Option[Int],
     offset: Option[Int]
@@ -105,7 +105,7 @@ object ProblemTableSupport:
 
   def bindSuggestionQuery(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     query: ProblemSearchQuery
   ): Unit =
     val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
@@ -127,7 +127,7 @@ object ProblemTableSupport:
 
   def bindContainingProblemSetVisibilityQuery(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemId: ProblemId
   ): Unit =
     statement.setObject(1, problemId.value)

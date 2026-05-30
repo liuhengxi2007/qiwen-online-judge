@@ -2,7 +2,7 @@ package domains.submission.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.utils.SubmissionAccessRules
 
@@ -26,7 +26,7 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("submissionId").flatMap(SubmissionId.parse))
 
-  override def plan(connection: Connection, actor: AuthUser, submissionId: SubmissionId): IO[SubmissionDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SubmissionDetail] =
     SubmissionQueryTable.findById(connection, submissionId).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))

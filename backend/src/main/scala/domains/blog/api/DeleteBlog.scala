@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.blog.objects.BlogId
 import domains.blog.table.blog.BlogPostMutationTable
@@ -25,7 +25,7 @@ object DeleteBlog extends AuthenticatedApi[BlogId, SuccessResponse]:
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("blogId").flatMap(BlogId.parse))
 
-  override def plan(connection: Connection, actor: AuthUser, blogId: BlogId): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, blogId: BlogId): IO[SuccessResponse] =
     for
       deleted <- BlogPostMutationTable.delete(connection, blogId, actor.username)
       _ <- HttpApiError.ensure(deleted, HttpApiError.notFound(ApiMessages.blogNotFound))

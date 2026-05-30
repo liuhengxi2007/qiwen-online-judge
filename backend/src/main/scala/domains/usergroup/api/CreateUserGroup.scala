@@ -2,7 +2,7 @@ package domains.usergroup.api
 
 import cats.effect.IO
 import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.usergroup.utils.UserGroupMutationValidation
 
@@ -28,7 +28,7 @@ object CreateUserGroup extends AuthenticatedApi[CreateUserGroupRequest, UserGrou
     val _ = pathParams
     request.as[CreateUserGroupRequest]
 
-  override def plan(connection: Connection, actor: AuthUser, request: CreateUserGroupRequest): IO[UserGroupDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateUserGroupRequest): IO[UserGroupDetail] =
     for
       _ <- HttpApiError.ensure(
         UserGroupAccessRules.canCreate(actor),

@@ -2,7 +2,7 @@ package domains.notification.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.notification.objects.response.NotificationListResponse
 import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
@@ -26,7 +26,7 @@ object ListNotifications extends AuthenticatedApi[PageRequest, NotificationListR
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     pageRequest: PageRequest
   ): IO[NotificationListResponse] =
     NotificationTable.listForRecipient(connection, actor.username, pageRequest.normalized)

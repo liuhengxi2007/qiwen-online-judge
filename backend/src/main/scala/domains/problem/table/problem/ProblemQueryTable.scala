@@ -5,7 +5,7 @@ import cats.syntax.all.*
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import database.utils.ResourceAccessTableSupport.policyFrom
 import database.utils.UserIdentitySql
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.{ProblemId, ProblemSlug}
 import domains.problem.objects.request.{ProblemListRequest, ProblemSearchQuery}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
@@ -84,7 +84,7 @@ object ProblemQueryTable:
     s"""
       |select p.id, p.slug, p.title, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
       |from problems p
-      |${UserIdentitySql.joinAuthUsers("p.creator_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
       |where
       |  $visibilityPredicate
       |  and $searchPredicate
@@ -101,7 +101,7 @@ object ProblemQueryTable:
       |  and $searchPredicate
       |""".stripMargin
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, request: ProblemListRequest): IO[PageResponse[ProblemSummary]] =
+  def listVisibleTo(connection: Connection, actor: AuthenticatedUser, request: ProblemListRequest): IO[PageResponse[ProblemSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSQL)
@@ -149,7 +149,7 @@ object ProblemQueryTable:
     s"""
       |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
       |from problems p
-      |${UserIdentitySql.joinAuthUsers("p.creator_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
       |where p.slug = ?
       |""".stripMargin
 
@@ -207,7 +207,7 @@ object ProblemQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
-  def listSuggestions(connection: Connection, actor: AuthUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
+  def listSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSQL)
       try
@@ -258,7 +258,7 @@ object ProblemQueryTable:
 
   def hasVisibleContainingProblemSet(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemId: ProblemId
   ): IO[Boolean] =
     IO.blocking {

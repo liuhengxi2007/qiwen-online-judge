@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogCommentId, BlogId}
@@ -30,7 +30,7 @@ object VoteBlogComment extends AuthenticatedApi[VoteBlogCommentInput, BlogDetail
       body <- request.as[VoteBlogCommentRequest]
     yield VoteBlogCommentInput(blogId, commentId, body)
 
-  override def plan(connection: Connection, actor: AuthUser, input: VoteBlogCommentInput): IO[BlogDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: VoteBlogCommentInput): IO[BlogDetail] =
     BlogCommentVoteTable.voteComment(connection, input.blogId, input.commentId, actor.username, input.request.vote).flatMap {
       case Some(blog) => IO.pure(blog)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogCommentNotFound))

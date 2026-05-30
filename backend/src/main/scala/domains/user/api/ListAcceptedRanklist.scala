@@ -2,7 +2,7 @@ package domains.user.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.utils.UserApiRules
 
 import domains.user.objects.response.UserAcceptedRanklistItem
@@ -25,6 +25,6 @@ object ListAcceptedRanklist extends AuthenticatedApi[PageRequest, PageResponse[U
     val _ = pathParams
     IO.pure(PageRequest(page = request.uri.query.params.get("page").flatMap(_.toIntOption).getOrElse(1)))
 
-  override def plan(connection: Connection, actor: AuthUser, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
     val _ = actor
     UserTable.listAcceptedRanklist(connection, PageRequest(page = pageRequest.page, pageSize = UserApiRules.ranklistPageSize))

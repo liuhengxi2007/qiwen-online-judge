@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.utils.ProblemDataApiHelpers
 
@@ -36,7 +36,7 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (ProblemSlug, DeleteProblemDataPathRequest)
   ): IO[ProblemDetail] =
     val (problemSlug, request) = input

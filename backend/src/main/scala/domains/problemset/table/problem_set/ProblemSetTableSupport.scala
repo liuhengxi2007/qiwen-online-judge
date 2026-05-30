@@ -4,7 +4,7 @@ package domains.problemset.table.problem_set
 
 import cats.effect.IO
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.objects.response.ProblemSetSummary
@@ -75,7 +75,7 @@ object ProblemSetTableSupport:
 
   def bindVisibilityQuery(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     pageSize: Option[Int],
     offset: Option[Int]
   ): Unit =

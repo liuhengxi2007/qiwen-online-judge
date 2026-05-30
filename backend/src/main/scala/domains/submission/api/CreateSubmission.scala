@@ -2,7 +2,7 @@ package domains.submission.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
 
@@ -28,7 +28,7 @@ object CreateSubmission extends AuthenticatedApi[CreateSubmissionRequest, Submis
     val _ = pathParams
     request.as[CreateSubmissionRequest]
 
-  override def plan(connection: Connection, actor: AuthUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     for
       problemSlug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.problemSlug.value))
       sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))

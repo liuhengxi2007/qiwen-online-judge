@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.table.problem.ProblemMutationTable
 import io.circe.Encoder
@@ -28,7 +28,7 @@ object DeleteProblem extends AuthenticatedApi[ProblemSlug, SuccessResponse]:
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemSlug: ProblemSlug
   ): IO[SuccessResponse] =
     EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>

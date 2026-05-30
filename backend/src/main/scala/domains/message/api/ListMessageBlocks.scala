@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.objects.response.MessageBlockEntry
 import domains.message.table.message.MessageBlockTable
 import io.circe.Encoder
@@ -22,6 +22,6 @@ object ListMessageBlocks extends AuthenticatedApi[Unit, List[MessageBlockEntry]]
     val _ = (request, pathParams)
     IO.unit
 
-  override def plan(connection: Connection, actor: AuthUser, input: Unit): IO[List[MessageBlockEntry]] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: Unit): IO[List[MessageBlockEntry]] =
     val _ = input
     MessageBlockTable.listBlocks(connection, actor.username)

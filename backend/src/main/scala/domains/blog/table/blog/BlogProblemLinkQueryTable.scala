@@ -42,7 +42,7 @@ object BlogProblemLinkQueryTable:
       |from blogs b
       |join blog_problem_links bpl on bpl.blog_id = b.id
       |join problems p on p.id = bpl.problem_id
-      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where p.slug = ?
@@ -97,7 +97,7 @@ object BlogProblemLinkQueryTable:
       |from blogs b
       |join blog_problem_links bpl on bpl.blog_id = b.id
       |join problems p on p.id = bpl.problem_id
-      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where p.slug = ?

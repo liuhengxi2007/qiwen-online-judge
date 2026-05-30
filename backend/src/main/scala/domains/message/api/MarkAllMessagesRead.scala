@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.table.message.MessageReadTable
 import io.circe.Encoder
@@ -26,7 +26,7 @@ final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends Authen
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: Unit
   ): IO[SuccessResponse] =
     val _ = input

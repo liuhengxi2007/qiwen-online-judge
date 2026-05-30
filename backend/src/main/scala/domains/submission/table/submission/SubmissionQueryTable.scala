@@ -2,7 +2,7 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import database.utils.{LikePatternSql, UserIdentitySql}
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.submission.objects.{SubmissionId, SubmissionVerdict}
 import domains.submission.objects.request.{SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
 import domains.submission.objects.response.{SubmissionDetail, SubmissionListResponse}
@@ -182,7 +182,7 @@ object SubmissionQueryTable:
       |select count(*) as total_items
       |from submissions s
       |join problems p on p.id = s.problem_id
-      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where
       |  $summaryVisibilityPredicate
       |  and $usernameFilterPredicate
@@ -210,7 +210,7 @@ object SubmissionQueryTable:
       |       s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
-      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where
       |  $summaryVisibilityPredicate
       |  and $usernameFilterPredicate
@@ -222,7 +222,7 @@ object SubmissionQueryTable:
 
   def listVisibleTo(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     request: SubmissionListRequest,
     hasGlobalViewOverride: Boolean
   ): IO[SubmissionListResponse] =
@@ -266,7 +266,7 @@ object SubmissionQueryTable:
       |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.judge_message, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, octet_length(s.source_code) as code_length, s.source_code, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
-      |${UserIdentitySql.joinAuthUsers("s.submitter_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where s.public_id = ?
       |""".stripMargin
 
@@ -283,7 +283,7 @@ object SubmissionQueryTable:
 
   private def bindListFilterStatement(
     statement: PreparedStatement,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     request: SubmissionListRequest,
     includeDetailVisibility: Boolean,
     hasGlobalViewOverride: Boolean
@@ -315,7 +315,7 @@ object SubmissionQueryTable:
   private def bindVisibility(
     statement: PreparedStatement,
     startIndex: Int,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     hasGlobalViewOverride: Boolean
   ): Int =
     val afterGlobalOverride = bindBoolean(statement, startIndex, hasGlobalViewOverride)

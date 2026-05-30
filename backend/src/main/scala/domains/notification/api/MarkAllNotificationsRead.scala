@@ -2,7 +2,7 @@ package domains.notification.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
@@ -25,7 +25,7 @@ final class MarkAllNotificationsRead(notificationEventHub: NotificationEventHub)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: Unit
   ): IO[SuccessResponse] =
     val _ = input

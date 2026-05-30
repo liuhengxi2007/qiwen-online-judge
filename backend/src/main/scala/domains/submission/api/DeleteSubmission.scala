@@ -2,7 +2,7 @@ package domains.submission.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.SubmissionId
 import domains.submission.table.submission.{SubmissionMutationTable, SubmissionQueryTable}
@@ -25,7 +25,7 @@ object DeleteSubmission extends AuthenticatedApi[SubmissionId, SuccessResponse]:
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("submissionId").flatMap(SubmissionId.parse))
 
-  override def plan(connection: Connection, actor: AuthUser, submissionId: SubmissionId): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SuccessResponse] =
     for
       maybeSubmission <- SubmissionQueryTable.findById(connection, submissionId)
       submission <- maybeSubmission match

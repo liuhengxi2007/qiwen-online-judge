@@ -1,6 +1,6 @@
 package domains.problemset.utils
 
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problemset.objects.ProblemSet
 import domains.user.objects.Username
 import domains.usergroup.objects.UserGroupSlug
@@ -10,7 +10,7 @@ import shared.objects.access.{AccessUserGroupSlug, AccessUsername}
 object ProblemSetAccessRules:
 
   def canViewProblemSet(
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemSet: ProblemSet,
     actorGroupSlugs: Set[UserGroupSlug]
   ): Boolean =
@@ -26,10 +26,10 @@ object ProblemSetAccessRules:
       )
       .canViewDirectly
 
-  def hasGlobalViewOverride(actor: AuthUser): Boolean =
+  def hasGlobalViewOverride(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager
 
-  def canManageProblemSets(actor: AuthUser): Boolean =
+  def canManageProblemSets(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager
 
   private def toAccessUsername(username: Username): AccessUsername =

@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import fs2.text
 import io.circe.Encoder
@@ -24,7 +24,7 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends Aut
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: Unit
   ): IO[Response[IO]] =
     val _ = (connection, input)

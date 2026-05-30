@@ -2,7 +2,7 @@ package domains.usergroup.api
 
 import cats.effect.IO
 import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.usergroup.utils.UserGroupMutationValidation
 
 import domains.usergroup.objects.UserGroupSlug
@@ -32,7 +32,7 @@ object AddUserGroupMember extends AuthenticatedApi[(UserGroupSlug, AddUserGroupM
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (UserGroupSlug, AddUserGroupMemberRequest)
   ): IO[UserGroupDetail] =
     val (groupSlug, request) = input

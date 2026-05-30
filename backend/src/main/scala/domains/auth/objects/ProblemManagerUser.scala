@@ -1,7 +1,13 @@
 package domains.auth.objects
 
-final case class ProblemManagerUser private (authUser: AuthUser)
+import domains.auth.objects.internal.AuthenticatedUser
+import domains.user.objects.Username
+
+final case class ProblemManagerUser private (authenticatedUser: AuthenticatedUser):
+  def username: Username = authenticatedUser.username
+  def siteManager: Boolean = authenticatedUser.siteManager
+  def problemManager: Boolean = authenticatedUser.problemManager
 
 object ProblemManagerUser:
-  def from(authUser: AuthUser): Option[ProblemManagerUser] =
-    Option.when(authUser.problemManager)(ProblemManagerUser(authUser))
+  def from(authenticatedUser: AuthenticatedUser): Option[ProblemManagerUser] =
+    Option.when(authenticatedUser.problemManager)(ProblemManagerUser(authenticatedUser))

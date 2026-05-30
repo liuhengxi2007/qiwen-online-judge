@@ -2,7 +2,7 @@ package domains.submission.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.submission.utils.SubmissionAccessRules
 import domains.submission.utils.SubmissionListRequestQuery
 
@@ -26,5 +26,5 @@ object ListSubmissions extends AuthenticatedApi[SubmissionListRequest, Submissio
     val _ = pathParams
     IO.pure(SubmissionListRequestQuery.parse(request.uri.query.params))
 
-  override def plan(connection: Connection, actor: AuthUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
     SubmissionQueryTable.listVisibleTo(connection, actor, request, SubmissionAccessRules.hasGlobalViewOverride(actor))

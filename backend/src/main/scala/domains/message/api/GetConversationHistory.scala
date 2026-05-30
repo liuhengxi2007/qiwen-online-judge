@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.objects.response.MessageHistoryResponse
 import domains.message.objects.{MessageConversationId, MessageId}
 import domains.message.table.message.{DirectMessageTable, MessageConversationTable}
@@ -40,7 +40,7 @@ object GetConversationHistory extends AuthenticatedApi[GetConversationHistory.In
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: Input
   ): IO[MessageHistoryResponse] =
     for

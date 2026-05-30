@@ -3,7 +3,7 @@ package domains.usergroup.table.user_group
 
 
 import cats.effect.IO
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.{Username}
 import shared.objects.PageResponse
 import domains.usergroup.objects.request.{AddUserGroupMemberRequest, CreateUserGroupRequest, UpdateUserGroupRequest}
@@ -64,7 +64,7 @@ object UserGroupTable:
       |limit ? offset ?
       |""".stripMargin
 
-  def listVisibleTo(connection: Connection, actor: AuthUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
+  def listVisibleTo(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countVisibleSQL)

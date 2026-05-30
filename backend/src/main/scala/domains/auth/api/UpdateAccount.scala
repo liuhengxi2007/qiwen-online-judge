@@ -1,11 +1,12 @@
 package domains.auth.api
 
 import cats.effect.IO
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
 import domains.auth.objects.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
 import domains.auth.objects.response.SessionResponse
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.table.auth_account.AuthAccountTable
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
+import domains.user.api.UserProfileRecords
 import domains.user.objects.Username
 import io.circe.Json
 import io.circe.syntax.*
@@ -28,7 +29,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (Username, Json)
   ): IO[Response[IO]] =
     val (targetUsername, body) = input
@@ -41,18 +42,18 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
 
   private def updateOwnAccount(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     targetUsername: Username,
     body: Json
   ): IO[Response[IO]] =
     for
       request <- decodeBody[UpdateOwnAccountRequest](body)
-      targetUser <- findTargetUser(connection, targetUsername)
-      passwordValid <- PasswordHasher.verifyPassword(request.currentPassword, actor.passwordHash)
+      targetAccount <- findTargetAccount(connection, targetUsername)
+      passwordValid <- PasswordHasher.verifyPassword(request.currentPassword, targetAccount.passwordHash)
       _ <- HttpApiError.ensure(passwordValid, HttpApiError.unauthorized(ApiMessages.invalidCurrentPassword))
       response <- updateAccountRecord(
         connection,
-        targetUser,
+        targetAccount,
         request.email,
         request.newPassword,
         clearSessionOnPasswordChange = true
@@ -66,10 +67,10 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
   ): IO[Response[IO]] =
     for
       request <- decodeBody[UpdateManagedUserAccountRequest](body)
-      targetUser <- findTargetUser(connection, targetUsername)
+      targetAccount <- findTargetAccount(connection, targetUsername)
       response <- updateAccountRecord(
         connection,
-        targetUser,
+        targetAccount,
         request.email,
         request.newPassword,
         clearSessionOnPasswordChange = false
@@ -81,15 +82,15 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
       case Right(value) => IO.pure(value)
       case Left(error) => HttpApiError.raise(HttpApiError.badRequest(error.getMessage))
 
-  private def findTargetUser(connection: Connection, targetUsername: Username): IO[AuthUser] =
-    AuthUserTable.findByUsername(connection, targetUsername).flatMap {
-      case Some(user) => IO.pure(user)
+  private def findTargetAccount(connection: Connection, targetUsername: Username): IO[AuthAccount] =
+    AuthAccountTable.findAccountByUsername(connection, targetUsername).flatMap {
+      case Some(account) => IO.pure(account)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
     }
 
   private def updateAccountRecord(
     connection: Connection,
-    targetUser: AuthUser,
+    targetAccount: AuthAccount,
     email: domains.auth.objects.EmailAddress,
     newPassword: Option[domains.auth.objects.PlaintextPassword],
     clearSessionOnPasswordChange: Boolean
@@ -98,18 +99,24 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
     for
       nextPasswordHash <- newPassword match
         case Some(password) => PasswordHasher.hashPassword(password)
-        case None => IO.pure(targetUser.passwordHash)
-      updated <- AuthUserTable.updateAccount(
+        case None => IO.pure(targetAccount.passwordHash)
+      updated <- AuthAccountTable.updateAccount(
         connection,
-        targetUser.username,
+        targetAccount.username,
         email = domains.auth.objects.EmailAddress(email.value.trim),
         passwordHash = nextPasswordHash
       )
-      user <- updated match
-        case Some(user) => IO.pure(user)
+      account <- updated match
+        case Some(account) => IO.pure(account)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      _ <- if passwordChanged then sessionStore.deleteSessionsForUsername(targetUser.username) else IO.unit
+      profile <- UserProfileRecords.findSettings(connection, account.username).flatMap {
+        case Some(profile) => IO.pure(profile)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
+      }
+      _ <- if passwordChanged then sessionStore.deleteSessionsForUsername(targetAccount.username) else IO.unit
     yield
-      val response = Response[IO](status = Status.Ok).withEntity(SessionResponse.fromAuthUser(user).asJson)
+      val response =
+        Response[IO](status = Status.Ok)
+          .withEntity(SessionResponse.fromParts(profile, account.email, account.siteManager, account.problemManager).asJson)
       if passwordChanged && clearSessionOnPasswordChange then response.addCookie(AuthSessionCookies.clearedSessionCookie)
       else response

@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import type { Username } from '@/objects/user/Username'
 import { UpdateAccountPermissions } from '@/apis/auth/UpdateAccountPermissions'
 import { HttpClientError } from '@/system/api/http-client'
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import { toSiteManageDeniedRedirect } from '@/pages/routing/RoutePolicy'
@@ -11,7 +11,7 @@ import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
 type SavePermissionsResult =
-  | { kind: 'updated'; user: AuthUserListItem }
+  | { kind: 'updated'; user: ManagedUserListItem }
   | { kind: 'forbidden' }
   | { kind: 'failed'; message: string }
 

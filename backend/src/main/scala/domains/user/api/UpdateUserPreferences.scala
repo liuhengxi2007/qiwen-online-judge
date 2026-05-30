@@ -2,7 +2,7 @@ package domains.user.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.user.objects.Username
 import domains.user.objects.request.UpdateOwnPreferencesRequest
@@ -30,7 +30,7 @@ object UpdateUserPreferences extends AuthenticatedApi[(Username, UpdateOwnPrefer
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (Username, UpdateOwnPreferencesRequest)
   ): IO[UserSettingsResponse] =
     val (targetUsername, request) = input
@@ -39,20 +39,24 @@ object UpdateUserPreferences extends AuthenticatedApi[(Username, UpdateOwnPrefer
         targetUsername.value == actor.username.value || actor.siteManager,
         HttpApiError.forbidden(ApiMessages.siteManagerRequired)
       )
-      maybeTargetUser <- UserTable.findByUsername(connection, targetUsername)
-      targetUser <- maybeTargetUser match
-        case Some(user) => IO.pure(user)
+      maybeTargetProfile <- UserTable.findSettingsByUsername(connection, targetUsername)
+      targetProfile <- maybeTargetProfile match
+        case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       updated <- UserTable.updateSettings(
         connection,
-        targetUser.username,
-        displayName = targetUser.displayName,
+        targetProfile.username,
+        displayName = targetProfile.displayName,
         displayMode = request.preferences.displayMode,
         locale = request.preferences.locale,
         problemTitleDisplayMode = request.preferences.problemTitleDisplayMode,
         autoMarkMessageRead = request.preferences.autoMarkMessageRead
       )
-      user <- updated match
-        case Some(user) => IO.pure(user)
+      _ <- updated match
+        case Some(_) => IO.unit
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-    yield UserSettingsResponse.fromAuthUser(user)
+      settings <- UserTable.findUserSettingsByUsername(connection, targetUsername).flatMap {
+        case Some(settings) => IO.pure(settings)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
+      }
+    yield settings

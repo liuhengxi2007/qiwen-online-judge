@@ -2,7 +2,7 @@ package domains.user.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.utils.UserApiRules
 
 import domains.user.objects.UserIdentity
@@ -25,7 +25,7 @@ object ListUserSuggestions extends AuthenticatedApi[UserSearchQuery, List[UserId
     val _ = pathParams
     HttpApiError.fromEitherBadRequest(UserSearchQuery.parse(request.uri.query.params.get("q").getOrElse("")))
 
-  override def plan(connection: Connection, actor: AuthUser, query: UserSearchQuery): IO[List[UserIdentity]] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, query: UserSearchQuery): IO[List[UserIdentity]] =
     val _ = actor
     if query.value.length < UserApiRules.minSuggestionQueryLength then IO.pure(Nil)
     else UserTable.listSuggestions(connection, query)

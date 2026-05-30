@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.InternalOnlyAuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemAccessEvaluationResponse
 import domains.problem.utils.ProblemAccessRules
@@ -18,7 +18,7 @@ object EvaluateProblemAccess extends InternalOnlyAuthenticatedApi[ProblemSlug, P
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/problems/evaluate-access")
 
-  override def plan(connection: Connection, actor: AuthUser, slug: ProblemSlug): IO[ProblemAccessEvaluationResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, slug: ProblemSlug): IO[ProblemAccessEvaluationResponse] =
     ProblemQueryTable.findBySlug(connection, slug).flatMap {
       case None =>
         IO.pure(ProblemAccessEvaluationResponse(problem = None, canView = false, canManage = false))

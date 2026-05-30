@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.internal.BlogCommentNotificationContext
@@ -34,7 +34,7 @@ final class CreateBlogComment(notificationEventHub: NotificationEventHub) extend
       body <- request.as[CreateBlogCommentRequest]
     yield CreateBlogCommentInput(blogId, None, body)
 
-  override def plan(connection: Connection, actor: AuthUser, input: CreateBlogCommentInput): IO[BlogDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: CreateBlogCommentInput): IO[BlogDetail] =
     for
       content <- HttpApiError.fromEitherBadRequest(BlogCommentContent.parse(input.request.content.value))
       maybeCreated <- BlogCommentTable.insertComment(connection, input.blogId, input.parentCommentId, actor.username, content)
@@ -57,7 +57,7 @@ final class CreateBlogComment(notificationEventHub: NotificationEventHub) extend
 
   private def createBlogReplyNotifications(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     context: BlogCommentNotificationContext
   ): IO[List[Username]] =
     val candidates =

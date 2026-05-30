@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.objects.request.CreateConversationRequest
 import domains.message.objects.response.MessageConversationSummary
 import domains.message.table.message.{MessageConversationTable, MessageUserTable}
@@ -26,7 +26,7 @@ object CreateConversation extends AuthenticatedApi[CreateConversationRequest, Me
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     request: CreateConversationRequest
   ): IO[MessageConversationSummary] =
     for

@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.BlogId
@@ -27,7 +27,7 @@ object SubmitBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, Succes
     val _ = request
     blogProblemLinkInput(pathParams)
 
-  override def plan(connection: Connection, actor: AuthUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for
       submitted <- BlogProblemLinkMutationTable.submitProblem(connection, input.problemSlug, input.blogId, actor.username)
       _ <- HttpApiError.ensure(submitted, HttpApiError.notFound(ApiMessages.problemOrOwnedPublicBlogNotFound))

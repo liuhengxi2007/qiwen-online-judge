@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemAccessPolicyValidation
 
 import domains.problem.objects.*
@@ -32,7 +32,7 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (ProblemSlug, UpdateProblemRequest)
   ): IO[ProblemDetail] =
     val (problemSlug, request) = input

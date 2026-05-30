@@ -1,29 +1,29 @@
 package domains.usergroup.utils
 
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.usergroup.objects.{UserGroup, UserGroupRole}
 
 object UserGroupAccessRules:
 
-  def canCreate(actor: AuthUser): Boolean =
+  def canCreate(actor: AuthenticatedUser): Boolean =
     val _ = actor
     true
 
-  def canList(actor: AuthUser): Boolean =
+  def canList(actor: AuthenticatedUser): Boolean =
     val _ = actor
     true
 
-  def canView(actor: AuthUser, group: UserGroup): Boolean =
+  def canView(actor: AuthenticatedUser, group: UserGroup): Boolean =
     actor.siteManager || isMember(actor.username, group)
 
-  def canEdit(actor: AuthUser, group: UserGroup): Boolean =
+  def canEdit(actor: AuthenticatedUser, group: UserGroup): Boolean =
     actor.siteManager || hasManagementRole(actor.username, group)
 
-  def canDelete(actor: AuthUser, group: UserGroup): Boolean =
+  def canDelete(actor: AuthenticatedUser, group: UserGroup): Boolean =
     actor.siteManager || hasOwnerRole(actor.username, group)
 
-  def canRemoveMember(actor: AuthUser, group: UserGroup, targetUsername: Username, targetRole: UserGroupRole): Boolean =
+  def canRemoveMember(actor: AuthenticatedUser, group: UserGroup, targetUsername: Username, targetRole: UserGroupRole): Boolean =
     if actor.siteManager then true
     else
       membershipRole(actor.username, group) match

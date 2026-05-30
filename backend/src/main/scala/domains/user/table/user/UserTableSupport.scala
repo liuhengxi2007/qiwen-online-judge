@@ -2,12 +2,13 @@ package domains.user.table.user
 
 
 
-import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash}
+import domains.auth.objects.EmailAddress
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
-import domains.user.objects.response.{AuthUserListItem, UserAcceptedRanklistItem, UserRanklistItem}
+import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.response.{ManagedUserListItem, UserAcceptedRanklistItem, UserRanklistItem, UserSettingsResponse}
 import domains.user.objects.request.UserSearchQuery
 import domains.user.objects.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
 
@@ -29,30 +30,34 @@ object UserTableSupport:
       displayName = DisplayName(row.displayName)
     )
 
-  def readAuthUser(resultSet: ResultSet): AuthUser =
-    AuthUser(
+  def readProfileSettings(resultSet: ResultSet): UserProfileSettings =
+    UserProfileSettings(
+      username = Username.canonical(resultSet.getString("username")),
+      displayName = DisplayName(resultSet.getString("display_name")),
+      displayMode =
+        decodeUserDisplayModeColumn(resultSet.getString("display_mode"))
+          .getOrElse(throw new IllegalStateException("Invalid user_profiles.display_mode.")),
+      locale =
+        decodeUserLocaleColumn(resultSet.getString("locale"))
+          .getOrElse(throw new IllegalStateException("Invalid user_profiles.locale.")),
+      problemTitleDisplayMode =
+        decodeProblemTitleDisplayModeColumn(resultSet.getString("problem_title_display_mode"))
+          .getOrElse(throw new IllegalStateException("Invalid user_profiles.problem_title_display_mode.")),
+      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read")
+    )
+
+  def readUserListItem(resultSet: ResultSet): ManagedUserListItem =
+    ManagedUserListItem(
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
-      displayMode =
-        decodeUserDisplayModeColumn(resultSet.getString("display_mode"))
-          .getOrElse(throw new IllegalStateException("Invalid auth_users.display_mode.")),
-      locale =
-        decodeUserLocaleColumn(resultSet.getString("locale"))
-          .getOrElse(throw new IllegalStateException("Invalid auth_users.locale.")),
-      problemTitleDisplayMode =
-        decodeProblemTitleDisplayModeColumn(resultSet.getString("problem_title_display_mode"))
-          .getOrElse(throw new IllegalStateException("Invalid auth_users.problem_title_display_mode.")),
-      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
-      passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")
     )
 
-  def readUserListItem(resultSet: ResultSet): AuthUserListItem =
-    AuthUserListItem(
-      username = Username.canonical(resultSet.getString("username")),
-      displayName = DisplayName(resultSet.getString("display_name")),
+  def readUserSettingsResponse(resultSet: ResultSet): UserSettingsResponse =
+    UserSettingsResponse.fromParts(
+      profile = readProfileSettings(resultSet),
       email = EmailAddress(resultSet.getString("email")),
       siteManager = resultSet.getBoolean("site_manager"),
       problemManager = resultSet.getBoolean("problem_manager")

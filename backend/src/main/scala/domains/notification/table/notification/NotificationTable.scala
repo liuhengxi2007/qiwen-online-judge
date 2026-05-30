@@ -82,7 +82,7 @@ object NotificationTable:
       |       n.created_at,
       |       ${UserIdentitySql.selectColumns("n.actor_username", "actor", "actor_user")}
       |from notifications n
-      |left join auth_users actor_user on actor_user.username = n.actor_username
+      |left join user_profiles actor_user on actor_user.username = n.actor_username
       |where n.recipient_username = ?
       |order by n.created_at desc, n.id desc
       |limit ? offset ?

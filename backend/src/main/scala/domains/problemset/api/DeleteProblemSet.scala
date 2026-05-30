@@ -3,7 +3,7 @@ package domains.problemset.api
 import cats.effect.IO
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.problemset.objects.ProblemSetSlug
 import domains.problemset.utils.ProblemSetAccessRules
@@ -29,7 +29,7 @@ object DeleteProblemSet extends AuthenticatedApi[ProblemSetSlug, SuccessResponse
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemSetSlug: ProblemSetSlug
   ): IO[SuccessResponse] =
     for

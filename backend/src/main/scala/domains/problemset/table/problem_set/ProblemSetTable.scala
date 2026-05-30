@@ -5,6 +5,7 @@ package domains.problemset.table.problem_set
 import database.table.resource_access_grant.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.problem.objects.{ProblemId}
 import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
@@ -38,7 +39,7 @@ object ProblemSetTable:
     s"""
       |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
       |from problem_sets ps
-      |${UserIdentitySql.joinAuthUsers("ps.creator_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("ps.creator_username", "au")}
       |where
       |  ? = true
       |  or ps.base_access = 'public'
@@ -95,7 +96,7 @@ object ProblemSetTable:
       |  )
       |""".stripMargin
 
-  def listVisibleTo(connection: Connection, actor: domains.auth.objects.AuthUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
+  def listVisibleTo(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
     for
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSQL)
@@ -132,7 +133,7 @@ object ProblemSetTable:
     s"""
       |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
       |from problem_sets ps
-      |${UserIdentitySql.joinAuthUsers("ps.creator_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("ps.creator_username", "au")}
       |where ps.slug = ?
       |""".stripMargin
 

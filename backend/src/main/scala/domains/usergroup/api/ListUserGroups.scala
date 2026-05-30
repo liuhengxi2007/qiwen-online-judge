@@ -2,7 +2,7 @@ package domains.usergroup.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.usergroup.objects.response.UserGroupSummary
 import domains.usergroup.utils.UserGroupAccessRules
@@ -26,7 +26,7 @@ object ListUserGroups extends AuthenticatedApi[PageRequest, PageResponse[UserGro
     val _ = pathParams
     IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
-  override def plan(connection: Connection, actor: AuthUser, pageRequest: PageRequest): IO[PageResponse[UserGroupSummary]] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[PageResponse[UserGroupSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     if !UserGroupAccessRules.canList(actor) then
       IO.pure(PageResponse(items = Nil, page = normalizedPageRequest.page, pageSize = normalizedPageRequest.pageSize, totalItems = 0L))

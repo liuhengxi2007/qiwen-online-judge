@@ -1,7 +1,9 @@
 package domains.auth.objects.response
 
-import domains.auth.objects.{AuthUser, EmailAddress}
+import domains.auth.objects.EmailAddress
+import domains.auth.objects.internal.AuthAccount
 import domains.user.objects.{DisplayName, Username}
+import domains.user.objects.internal.UserProfileSettings
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -17,11 +19,11 @@ object AuthAccountListItem:
   given Encoder[AuthAccountListItem] = deriveEncoder[AuthAccountListItem]
   given Decoder[AuthAccountListItem] = deriveDecoder[AuthAccountListItem]
 
-  def fromAuthUser(user: AuthUser): AuthAccountListItem =
+  def fromParts(account: AuthAccount, profile: UserProfileSettings): AuthAccountListItem =
     AuthAccountListItem(
-      username = user.username,
-      displayName = user.displayName,
-      email = user.email,
-      siteManager = user.siteManager,
-      problemManager = user.problemManager
+      username = account.username,
+      displayName = profile.displayName,
+      email = account.email,
+      siteManager = account.siteManager,
+      problemManager = account.problemManager
     )

@@ -1,6 +1,6 @@
 import { useReducer } from 'react'
 
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
 import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import {
@@ -22,7 +22,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean, userListRequest:
   const saveUserPermissions = mutation.savePermissions
   const deleteTargetUser = deleteMutation.deleteTargetUser
 
-  async function savePermissions(listedUser: AuthUserListItem, nextPermissions: UpdateUserPermissionsRequest) {
+  async function savePermissions(listedUser: ManagedUserListItem, nextPermissions: UpdateUserPermissionsRequest) {
     if (currentUpdatingUsername) {
       return
     }
@@ -45,7 +45,7 @@ export function useSiteManageModel(siteManagerEnabled: boolean, userListRequest:
     }
   }
 
-  async function deleteUser(listedUser: AuthUserListItem) {
+  async function deleteUser(listedUser: ManagedUserListItem) {
     if (currentUpdatingUsername || currentDeletingUsername) {
       return
     }

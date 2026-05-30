@@ -3,7 +3,7 @@ package domains.auth.api
 import cats.effect.IO
 import domains.auth.objects.SiteManagerUser
 import domains.auth.utils.AuthAccountRules
-import domains.auth.table.auth_user.AuthUserTable
+import domains.auth.table.auth_account.AuthAccountTable
 import domains.user.objects.Username
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
@@ -32,15 +32,15 @@ object DeleteAccount extends SiteManagerApi[Username, SuccessResponse]:
         HttpApiError.forbidden(ApiMessages.adminDeleteForbidden)
       )
       _ <- HttpApiError.ensure(
-        targetUsername.value != actor.authUser.username.value,
+        targetUsername.value != actor.username.value,
         HttpApiError.badRequest(ApiMessages.cannotDeleteSelf)
       )
-      deleteResult <- AuthUserTable.delete(connection, targetUsername)
+      deleteResult <- AuthAccountTable.delete(connection, targetUsername)
       _ <- deleteResult match
-        case AuthUserTable.DeleteAccountTableResult.NotFound =>
+        case AuthAccountTable.DeleteAccountTableResult.NotFound =>
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-        case AuthUserTable.DeleteAccountTableResult.HasOwnedResources =>
+        case AuthAccountTable.DeleteAccountTableResult.HasOwnedResources =>
           HttpApiError.raise(HttpApiError.conflict(ApiMessages.userHasOwnedResources))
-        case AuthUserTable.DeleteAccountTableResult.Deleted =>
+        case AuthAccountTable.DeleteAccountTableResult.Deleted =>
           IO.unit
     yield SuccessResponse.fromApiMessage(ApiMessages.userDeleted)

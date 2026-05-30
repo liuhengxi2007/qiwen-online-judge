@@ -1,6 +1,7 @@
 package domains.auth.objects.response
 
-import domains.auth.objects.*
+import domains.auth.objects.EmailAddress
+import domains.user.objects.internal.UserProfileSettings
 
 import domains.user.objects.{DisplayName, UserPreferences, Username}
 import io.circe.{Decoder, Encoder}
@@ -20,13 +21,19 @@ object LoginResponse:
   given Encoder[LoginResponse] = deriveEncoder[LoginResponse]
   given Decoder[LoginResponse] = deriveDecoder[LoginResponse]
 
-  def fromAuthUser(user: AuthUser, message: String): LoginResponse =
+  def fromParts(
+    profile: UserProfileSettings,
+    email: EmailAddress,
+    siteManager: Boolean,
+    problemManager: Boolean,
+    message: String
+  ): LoginResponse =
     LoginResponse(
-      displayName = user.displayName,
-      username = user.username,
-      email = user.email,
-      preferences = SessionResponse.fromAuthUser(user).preferences,
-      siteManager = user.siteManager,
-      problemManager = user.problemManager,
+      displayName = profile.displayName,
+      username = profile.username,
+      email = email,
+      preferences = profile.preferences,
+      siteManager = siteManager,
+      problemManager = problemManager,
       message = message
     )

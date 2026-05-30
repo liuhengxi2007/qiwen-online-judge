@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.utils.{MessageEventHub, MessageStreamEvent}
 import domains.message.table.message.MessageBlockTable
 import domains.user.objects.Username
@@ -24,7 +24,7 @@ final class RemoveMessageBlock(messageEventHub: MessageEventHub) extends Authent
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("targetUsername").map(Username.canonical))
 
-  override def plan(connection: Connection, actor: AuthUser, targetUsername: Username): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[SuccessResponse] =
     for
       _ <- MessageBlockTable.removeBlock(connection, actor.username, targetUsername)
       _ <- messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)

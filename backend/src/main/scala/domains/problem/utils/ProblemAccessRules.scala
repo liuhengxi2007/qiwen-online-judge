@@ -1,6 +1,6 @@
 package domains.problem.utils
 
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.response.ProblemDetail
 import domains.user.objects.Username
 import domains.usergroup.objects.UserGroupSlug
@@ -15,7 +15,7 @@ object ProblemAccessRules:
   )
 
   def enrichProblemPermissions(
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
     hasVisibleContainingProblemSet: Boolean
@@ -24,7 +24,7 @@ object ProblemAccessRules:
     if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
 
   def evaluateProblemPermissions(
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
     hasVisibleContainingProblemSet: Boolean
@@ -46,7 +46,7 @@ object ProblemAccessRules:
     )
 
   def canManageProblem(
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug]
   ): Boolean =
@@ -62,10 +62,10 @@ object ProblemAccessRules:
       )
       .canManage
 
-  def hasGlobalViewOverride(actor: AuthUser): Boolean =
+  def hasGlobalViewOverride(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager
 
-  def hasGlobalManageOverride(actor: AuthUser): Boolean =
+  def hasGlobalManageOverride(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager
 
   private def toAccessUsername(username: Username): AccessUsername =

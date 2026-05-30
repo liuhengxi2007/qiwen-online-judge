@@ -1,7 +1,7 @@
 package domains.user.objects.response
 
-import domains.auth.objects.AuthUser
 import domains.auth.objects.EmailAddress
+import domains.user.objects.internal.UserProfileSettings
 import domains.user.objects.{DisplayName, UserPreferences, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -19,17 +19,17 @@ object UserSettingsResponse:
   given Encoder[UserSettingsResponse] = deriveEncoder[UserSettingsResponse]
   given Decoder[UserSettingsResponse] = deriveDecoder[UserSettingsResponse]
 
-  def fromAuthUser(user: AuthUser): UserSettingsResponse =
+  def fromParts(
+    profile: UserProfileSettings,
+    email: EmailAddress,
+    siteManager: Boolean,
+    problemManager: Boolean
+  ): UserSettingsResponse =
     UserSettingsResponse(
-      displayName = user.displayName,
-      username = user.username,
-      email = user.email,
-      preferences = UserPreferences(
-        displayMode = user.displayMode,
-        locale = user.locale,
-        problemTitleDisplayMode = user.problemTitleDisplayMode,
-        autoMarkMessageRead = user.autoMarkMessageRead
-      ),
-      siteManager = user.siteManager,
-      problemManager = user.problemManager
+      displayName = profile.displayName,
+      username = profile.username,
+      email = email,
+      preferences = profile.preferences,
+      siteManager = siteManager,
+      problemManager = problemManager
     )

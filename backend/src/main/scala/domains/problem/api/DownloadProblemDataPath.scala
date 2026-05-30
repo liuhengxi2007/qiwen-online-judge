@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.Stream
@@ -29,7 +29,7 @@ final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (ProblemSlug, ProblemDataPath)
   ): IO[Response[IO]] =
     val (problemSlug, path) = input

@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDetail
@@ -25,7 +25,7 @@ object GetProblem extends AuthenticatedApi[ProblemSlug, ProblemDetail]:
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     problemSlug: ProblemSlug
   ): IO[ProblemDetail] =
     EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>

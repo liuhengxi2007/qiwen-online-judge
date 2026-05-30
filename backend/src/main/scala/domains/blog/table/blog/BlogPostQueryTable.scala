@@ -39,7 +39,7 @@ object BlogPostQueryTable:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.visibility = 'public' or b.author_username = ?
@@ -82,7 +82,7 @@ object BlogPostQueryTable:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.author_username = ?
@@ -180,7 +180,7 @@ object BlogPostQueryTable:
     s"""
       |select $blogSelectColumns
       |from blogs b
-      |${UserIdentitySql.joinAuthUsers("b.author_username", "au")}
+      |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.public_id = ?

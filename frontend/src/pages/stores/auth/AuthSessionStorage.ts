@@ -6,27 +6,62 @@ import { parseUserLocale } from '@/objects/user/UserLocale'
 import { parseUsername } from '@/objects/user/Username'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 
-const authUserStorageKey = 'auth_user'
+const authSessionStorageKey = 'auth_session'
+const legacyAuthSessionStorageKey = 'auth_user'
 
 export function persistAuthSession(session: SessionResponse): void {
-  window.localStorage.setItem(authUserStorageKey, JSON.stringify(session))
+  window.localStorage.setItem(authSessionStorageKey, JSON.stringify(session))
+  window.localStorage.removeItem(legacyAuthSessionStorageKey)
 }
 
 export function clearAuthSession(): void {
-  window.localStorage.removeItem(authUserStorageKey)
+  window.localStorage.removeItem(authSessionStorageKey)
+  window.localStorage.removeItem(legacyAuthSessionStorageKey)
 }
 
 export function readAuthSession(): SessionResponse | null {
-  const rawSession = window.localStorage.getItem(authUserStorageKey)
-  if (!rawSession) {
+  const storedSession = readStoredSession()
+
+  if (!storedSession) {
     return null
   }
 
+  const { rawSession, migratedFromLegacyKey } = storedSession
+
+  const session = parseStoredAuthSession(rawSession)
+
+  if (!session) {
+    clearAuthSession()
+    return null
+  }
+
+  if (migratedFromLegacyKey) {
+    persistAuthSession(session)
+  }
+
+  return session
+}
+
+function readStoredSession(): { rawSession: string; migratedFromLegacyKey: boolean } | null {
+  const rawSession = window.localStorage.getItem(authSessionStorageKey)
+  if (!rawSession) {
+    const legacyRawSession = window.localStorage.getItem(legacyAuthSessionStorageKey)
+
+    if (!legacyRawSession) {
+      return null
+    }
+
+    return { rawSession: legacyRawSession, migratedFromLegacyKey: true }
+  }
+
+  return { rawSession, migratedFromLegacyKey: false }
+}
+
+function parseStoredAuthSession(rawSession: string): SessionResponse | null {
   try {
     const parsed = JSON.parse(rawSession) as unknown
 
     if (!isStoredAuthSessionValue(parsed)) {
-      clearAuthSession()
       return null
     }
 
@@ -45,7 +80,6 @@ export function readAuthSession(): SessionResponse | null {
       !localeResult.ok ||
       !problemTitleDisplayModeResult.ok
     ) {
-      clearAuthSession()
       return null
     }
 
@@ -63,7 +97,6 @@ export function readAuthSession(): SessionResponse | null {
       problemManager: parsed.problemManager,
     }
   } catch {
-    clearAuthSession()
     return null
   }
 }

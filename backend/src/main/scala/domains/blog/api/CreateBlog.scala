@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.blog.objects.{BlogContent, BlogTitle}
 import domains.blog.objects.request.CreateBlogRequest
@@ -26,7 +26,7 @@ object CreateBlog extends AuthenticatedApi[CreateBlogRequest, BlogSummary]:
     val _ = pathParams
     request.as[CreateBlogRequest]
 
-  override def plan(connection: Connection, actor: AuthUser, request: CreateBlogRequest): IO[BlogSummary] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateBlogRequest): IO[BlogSummary] =
     for
       title <- HttpApiError.fromEitherBadRequest(BlogTitle.parse(request.title.value))
       content <- HttpApiError.fromEitherBadRequest(BlogContent.parse(request.content.value))

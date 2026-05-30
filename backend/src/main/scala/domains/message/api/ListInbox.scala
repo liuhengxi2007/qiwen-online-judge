@@ -2,7 +2,7 @@ package domains.message.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.objects.response.MessageInboxResponse
 import domains.message.table.message.MessageConversationTable
 import io.circe.Encoder
@@ -24,5 +24,5 @@ object ListInbox extends AuthenticatedApi[PageRequest, MessageInboxResponse]:
     val _ = pathParams
     IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
-  override def plan(connection: Connection, actor: AuthUser, pageRequest: PageRequest): IO[MessageInboxResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[MessageInboxResponse] =
     MessageConversationTable.listInbox(connection, actor.username, pageRequest.normalized)

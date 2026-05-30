@@ -2,7 +2,7 @@ package domains.notification.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
 import domains.notification.objects.NotificationId
 import domains.notification.table.notification.NotificationTable
@@ -26,7 +26,7 @@ final class MarkNotificationRead(notificationEventHub: NotificationEventHub) ext
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     notificationId: NotificationId
   ): IO[SuccessResponse] =
     for

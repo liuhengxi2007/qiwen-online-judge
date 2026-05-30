@@ -1,19 +1,18 @@
-package domains.auth.table.auth_user
+package domains.auth.table.auth_account
 
 
 
 import cats.effect.IO
-import domains.auth.objects.{AuthUser, EmailAddress, PasswordHash, SiteManagerUser}
-import domains.user.objects.{DisplayName, Username}
-import domains.problem.objects.ProblemTitleDisplayMode
-import domains.auth.table.auth_user.AuthUserTableSchema.*
-import domains.auth.table.auth_user.AuthUserTableSupport.*
-import domains.user.objects.{UserDisplayMode, UserLocale}
+import domains.auth.objects.{EmailAddress, PasswordHash, SiteManagerUser}
+import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
+import domains.user.objects.Username
+import domains.auth.table.auth_account.AuthAccountTableSchema.*
+import domains.auth.table.auth_account.AuthAccountTableSupport.*
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, SQLException}
 
-object AuthUserTable:
+object AuthAccountTable:
 
   enum DeleteAccountTableResult:
     case NotFound
@@ -23,15 +22,14 @@ object AuthUserTable:
   private val logger = Slf4jLogger.getLogger[IO]
 
   private val seedAdminUsername: Username = Username.canonical("admin")
-  private val seedAdminDisplayName: DisplayName = DisplayName("Admin User")
   private val seedAdminEmail: EmailAddress = EmailAddress("admin@example.com")
   private val seedAdminSiteManager: Boolean = true
   private val seedAdminProblemManager: Boolean = true
 
   private val seedAuthAdminSQL: String =
     """
-      |insert into auth_users (username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |insert into auth_users (username, email, password_hash, site_manager, problem_manager)
+      |values (?, ?, ?, ?, ?)
       |on conflict (username) do nothing
       |""".stripMargin
 
@@ -41,15 +39,10 @@ object AuthUserTable:
         val statement = connection.prepareStatement(seedAuthAdminSQL)
         try
           statement.setString(1, seedAdminUsername.value)
-          statement.setString(2, seedAdminDisplayName.value)
-          statement.setString(3, seedAdminEmail.value)
-          statement.setString(4, encodeUserDisplayModeColumn(UserDisplayMode.DisplayName))
-          statement.setString(5, encodeUserLocaleColumn(UserLocale.En))
-          statement.setString(6, encodeProblemTitleDisplayModeColumn(ProblemTitleDisplayMode.Title))
-          statement.setBoolean(7, false)
-          statement.setString(8, passwordHash.value)
-          statement.setBoolean(9, seedAdminSiteManager)
-          statement.setBoolean(10, seedAdminProblemManager)
+          statement.setString(2, seedAdminEmail.value)
+          statement.setString(3, passwordHash.value)
+          statement.setBoolean(4, seedAdminSiteManager)
+          statement.setBoolean(5, seedAdminProblemManager)
           statement.executeUpdate()
         finally statement.close()
       }
@@ -58,65 +51,75 @@ object AuthUserTable:
 
   def initialize(connection: Connection, seedAdminPasswordHash: PasswordHash): IO[Unit] =
     for
-      _ <- AuthUserTableSchema.initializeSchema(connection)
+      _ <- AuthAccountTableSchema.initializeSchema(connection)
       _ <- seedAdmin(connection, seedAdminPasswordHash)
     yield ()
 
-  private val findAuthUserByUsernameSQL: String =
+  private val findAuthAccountByUsernameSQL: String =
     """
-      |select username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |select username, email, password_hash, site_manager, problem_manager
       |from auth_users
       |where lower(username) = lower(?)
       |""".stripMargin
 
-  def findByUsername(connection: Connection, username: Username): IO[Option[AuthUser]] =
+  def findAccountByUsername(connection: Connection, username: Username): IO[Option[AuthAccount]] =
     IO.blocking {
-      val statement = connection.prepareStatement(findAuthUserByUsernameSQL)
+      val statement = connection.prepareStatement(findAuthAccountByUsernameSQL)
       try
         statement.setString(1, username.value.trim)
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then Some(readAuthUser(resultSet))
+          if resultSet.next() then Some(readAuthAccount(resultSet))
           else None
         finally resultSet.close()
       finally statement.close()
     }
 
-  private val insertAuthUserSQL: String =
+  private val findAuthenticatedUserByUsernameSQL: String =
     """
-      |insert into auth_users (username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |select username, site_manager, problem_manager
+      |from auth_users
+      |where lower(username) = lower(?)
       |""".stripMargin
 
-  def insert(
-    connection: Connection,
-    username: Username,
-    displayName: DisplayName,
-    email: EmailAddress,
-    displayMode: UserDisplayMode,
-    locale: UserLocale,
-    problemTitleDisplayMode: ProblemTitleDisplayMode,
-    autoMarkMessageRead: Boolean,
-    passwordHash: PasswordHash
-  ): IO[AuthUser] =
+  def findAuthenticatedUserByUsername(connection: Connection, username: Username): IO[Option[AuthenticatedUser]] =
     IO.blocking {
-      val statement = connection.prepareStatement(insertAuthUserSQL)
+      val statement = connection.prepareStatement(findAuthenticatedUserByUsernameSQL)
       try
         statement.setString(1, username.value.trim)
-        statement.setString(2, displayName.value.trim)
-        statement.setString(3, email.value.trim)
-        statement.setString(4, encodeUserDisplayModeColumn(displayMode))
-        statement.setString(5, encodeUserLocaleColumn(locale))
-        statement.setString(6, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
-        statement.setBoolean(7, autoMarkMessageRead)
-        statement.setString(8, passwordHash.value)
-        statement.setBoolean(9, false)
-        statement.setBoolean(10, false)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then Some(readAuthenticatedUser(resultSet))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val insertAuthAccountSQL: String =
+    """
+      |insert into auth_users (username, email, password_hash, site_manager, problem_manager)
+      |values (?, ?, ?, ?, ?)
+      |returning username, email, password_hash, site_manager, problem_manager
+      |""".stripMargin
+
+  def insertAccount(
+    connection: Connection,
+    username: Username,
+    email: EmailAddress,
+    passwordHash: PasswordHash
+  ): IO[AuthAccount] =
+    IO.blocking {
+      val statement = connection.prepareStatement(insertAuthAccountSQL)
+      try
+        statement.setString(1, username.value.trim)
+        statement.setString(2, email.value.trim)
+        statement.setString(3, passwordHash.value)
+        statement.setBoolean(4, false)
+        statement.setBoolean(5, false)
 
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then readAuthUser(resultSet)
+          if resultSet.next() then readAuthAccount(resultSet)
           else missingInsertResult("user")
         finally resultSet.close()
       finally statement.close()
@@ -127,7 +130,7 @@ object AuthUserTable:
       |update auth_users
       |set email = ?, password_hash = ?
       |where username = ?
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |returning username, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
   def updateAccount(
@@ -135,7 +138,7 @@ object AuthUserTable:
     username: Username,
     email: EmailAddress,
     passwordHash: PasswordHash
-  ): IO[Option[AuthUser]] =
+  ): IO[Option[AuthAccount]] =
     IO.blocking {
       val statement = connection.prepareStatement(updateAccountSQL)
       try
@@ -145,7 +148,7 @@ object AuthUserTable:
 
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then Some(readAuthUser(resultSet))
+          if resultSet.next() then Some(readAuthAccount(resultSet))
           else None
         finally resultSet.close()
       finally statement.close()
@@ -156,7 +159,7 @@ object AuthUserTable:
       |update auth_users
       |set site_manager = ?, problem_manager = ?
       |where username = ?
-      |returning username, display_name, email, display_mode, locale, problem_title_display_mode, auto_mark_message_read, password_hash, site_manager, problem_manager
+      |returning username, email, password_hash, site_manager, problem_manager
       |""".stripMargin
 
   def updatePermissions(
@@ -165,7 +168,7 @@ object AuthUserTable:
     username: Username,
     siteManager: Boolean,
     problemManager: Boolean
-  ): IO[Option[AuthUser]] =
+  ): IO[Option[AuthAccount]] =
     IO.blocking {
       val _ = actor
       val statement = connection.prepareStatement(updatePermissionsSQL)
@@ -176,7 +179,7 @@ object AuthUserTable:
 
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then Some(readAuthUser(resultSet))
+          if resultSet.next() then Some(readAuthAccount(resultSet))
           else None
         finally resultSet.close()
       finally statement.close()

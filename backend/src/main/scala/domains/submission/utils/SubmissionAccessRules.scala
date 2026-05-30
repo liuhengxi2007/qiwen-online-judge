@@ -1,14 +1,14 @@
 package domains.submission.utils
 
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.OthersSubmissionAccess
 import domains.user.objects.Username
 
 object SubmissionAccessRules:
-  def hasGlobalViewOverride(actor: AuthUser): Boolean =
+  def hasGlobalViewOverride(actor: AuthenticatedUser): Boolean =
     actor.siteManager || actor.problemManager
 
-  def canViewOwnOrWithGlobalOverride(actor: AuthUser, submitterUsername: Username): Boolean =
+  def canViewOwnOrWithGlobalOverride(actor: AuthenticatedUser, submitterUsername: Username): Boolean =
     hasGlobalViewOverride(actor) || actor.username.value == submitterUsername.value
 
   def canViewDetailOfOthers(othersSubmissionAccess: OthersSubmissionAccess): Boolean =

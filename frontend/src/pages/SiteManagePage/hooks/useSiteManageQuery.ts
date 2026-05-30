@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { ListRegisteredJudgers } from '@/apis/judger/ListRegisteredJudgers'
 import { ListUsers } from '@/apis/user/ListUsers'
 import { HttpClientError } from '@/system/api/http-client'
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import type { RegisteredJudgerListItem } from '@/objects/judger/response/RegisteredJudgerListItem'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
@@ -18,7 +18,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
   const [queryState, setQueryState] = useState<{
     enabled: boolean | null
     requestKey: string
-    users: AuthUserListItem[]
+    users: ManagedUserListItem[]
     userPage: number
     userPageSize: number
     totalUsers: number
@@ -178,7 +178,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
     judgerListError: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.judgerListError : '',
     navigationIntent:
       siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.navigationIntent : null,
-    replaceUser(updatedUser: AuthUserListItem) {
+    replaceUser(updatedUser: ManagedUserListItem) {
       setQueryState((currentState) => ({
         ...currentState,
         users: currentState.users.map((currentUser) =>
@@ -186,7 +186,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
         ),
       }))
     },
-    removeUser(targetUsername: AuthUserListItem['username']) {
+    removeUser(targetUsername: ManagedUserListItem['username']) {
       setQueryState((currentState) => ({
         ...currentState,
         users: currentState.users.filter((currentUser) => currentUser.username !== targetUsername),

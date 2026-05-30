@@ -2,7 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.{ProblemDataStorage, ProblemDataUploadPreparation}
 import domains.problem.utils.ProblemDataApiHelpers
 
@@ -45,7 +45,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
 
   override def plan(
     connection: Connection,
-    actor: AuthUser,
+    actor: AuthenticatedUser,
     input: (ProblemSlug, ProblemDataPath, Array[Byte])
   ): IO[ProblemDataUploadResult] =
     val (problemSlug, path, bytes) = input

@@ -2,7 +2,7 @@ package domains.usergroup.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 import domains.usergroup.objects.UserGroupSlug
 import domains.usergroup.utils.UserGroupAccessRules
 import domains.usergroup.table.user_group.UserGroupTable
@@ -25,7 +25,7 @@ object DeleteUserGroup extends AuthenticatedApi[UserGroupSlug, SuccessResponse]:
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
 
-  override def plan(connection: Connection, actor: AuthUser, groupSlug: UserGroupSlug): IO[SuccessResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, groupSlug: UserGroupSlug): IO[SuccessResponse] =
     for
       maybeGroup <- UserGroupTable.findBySlug(connection, groupSlug)
       group <- maybeGroup match

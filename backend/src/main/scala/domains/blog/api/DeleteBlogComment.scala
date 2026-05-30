@@ -2,7 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogCommentId, BlogId}
@@ -30,7 +30,7 @@ object DeleteBlogComment extends AuthenticatedApi[DeleteBlogCommentInput, BlogDe
       yield DeleteBlogCommentInput(blogId, commentId)
     }
 
-  override def plan(connection: Connection, actor: AuthUser, input: DeleteBlogCommentInput): IO[BlogDetail] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: DeleteBlogCommentInput): IO[BlogDetail] =
     BlogCommentTable.deleteComment(connection, input.blogId, input.commentId, actor.username).flatMap {
       case Some(blog) => IO.pure(blog)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.blogCommentNotFound))

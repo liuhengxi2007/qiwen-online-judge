@@ -1,4 +1,4 @@
-import type { AuthUserListItem } from '@/objects/user/response/AuthUserListItem'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { PageResponse } from '@/objects/shared/PageResponse'
 
-export type UserListResponse = PageResponse<AuthUserListItem>
+export type UserListResponse = PageResponse<ManagedUserListItem>

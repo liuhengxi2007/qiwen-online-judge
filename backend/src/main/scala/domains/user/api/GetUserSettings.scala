@@ -2,7 +2,7 @@ package domains.user.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
-import domains.auth.objects.AuthUser
+import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.user.objects.Username
 import domains.user.objects.response.UserSettingsResponse
@@ -26,14 +26,14 @@ object GetUserSettings extends AuthenticatedApi[Username, UserSettingsResponse]:
       case Right(rawUsername) => IO.pure(Username.canonical(rawUsername))
       case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
 
-  override def plan(connection: Connection, actor: AuthUser, targetUsername: Username): IO[UserSettingsResponse] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[UserSettingsResponse] =
     for
       _ <- HttpApiError.ensure(
         targetUsername.value == actor.username.value || actor.siteManager,
         HttpApiError.forbidden(ApiMessages.siteManagerRequired)
       )
-      maybeUser <- UserTable.findByUsername(connection, targetUsername)
-      targetUser <- maybeUser match
-        case Some(user) => IO.pure(user)
+      maybeSettings <- UserTable.findUserSettingsByUsername(connection, targetUsername)
+      settings <- maybeSettings match
+        case Some(settings) => IO.pure(settings)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-    yield UserSettingsResponse.fromAuthUser(targetUser)
+    yield settings
