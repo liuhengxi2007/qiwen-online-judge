@@ -8,7 +8,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class AddUserGroupMemberRequest(
   username: Username,
-  role: AddUserGroupMemberRole
+  role: NewUserGroupMemberRole
 )
 
 object AddUserGroupMemberRequest:

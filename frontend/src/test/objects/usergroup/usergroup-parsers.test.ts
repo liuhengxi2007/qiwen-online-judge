@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseAddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import { parseNewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
 import { parseUserGroupDescription, userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
 import { parseUserGroupId } from '@/objects/usergroup/UserGroupId'
 import { parseUserGroupName } from '@/objects/usergroup/UserGroupName'
@@ -80,9 +80,9 @@ describe('usergroup-parsers', () => {
     expect(parseUserGroupRole('manager')).toEqual({ ok: true, value: 'manager' })
     expect(parseUserGroupRole('member')).toEqual({ ok: true, value: 'member' })
     expect(parseUserGroupRole('guest')).toEqual({ ok: false, error: 'Unknown user group role.' })
-    expect(parseAddUserGroupMemberRole('manager')).toEqual({ ok: true, value: 'manager' })
-    expect(parseAddUserGroupMemberRole('member')).toEqual({ ok: true, value: 'member' })
-    expect(parseAddUserGroupMemberRole('owner')).toEqual({
+    expect(parseNewUserGroupMemberRole('manager')).toEqual({ ok: true, value: 'manager' })
+    expect(parseNewUserGroupMemberRole('member')).toEqual({ ok: true, value: 'member' })
+    expect(parseNewUserGroupMemberRole('owner')).toEqual({
       ok: false,
       error: 'New members may only be added as member or manager.',
     })

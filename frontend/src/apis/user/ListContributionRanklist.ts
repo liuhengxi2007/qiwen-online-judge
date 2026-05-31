@@ -1,9 +1,9 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { PageResponse } from '@/objects/shared/PageResponse'
-import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'
+import type { UserContributionRanklistItem } from '@/objects/user/response/UserContributionRanklistItem'
 
-export class ListContributionRanklist implements APIMessage<PageResponse<UserRanklistItem>> {
-  declare readonly responseType?: PageResponse<UserRanklistItem>
+export class ListContributionRanklist implements APIMessage<PageResponse<UserContributionRanklistItem>> {
+  declare readonly responseType?: PageResponse<UserContributionRanklistItem>
   readonly method = 'GET'
   readonly apiPath: string
 

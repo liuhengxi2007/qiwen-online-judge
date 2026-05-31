@@ -17,6 +17,7 @@ Current checks cover a narrow object-file surface:
 - direct frontend domain `objects/*.ts` files against direct backend domain `objects/*.scala` files
 - frontend domain `objects/request/*.ts` files against backend domain `objects/request/*.scala` files
 - frontend domain `objects/response/*.ts` files against backend domain `objects/response/*.scala` files
+- explicitly mirrored backend `objects/internal/*.scala` plan contracts against direct frontend domain `objects/*.ts` files
 - the same direct, `request`, and `response` pattern for `frontend/src/objects/shared` and `backend/src/main/scala/shared/objects`
 
 The object alignment check first compares object file keys one-to-one. Keys include the domain or `shared` scope, the optional `request` or `response` segment, and the basename without extension, for example:

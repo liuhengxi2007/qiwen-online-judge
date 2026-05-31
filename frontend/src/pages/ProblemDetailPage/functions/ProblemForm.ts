@@ -1,4 +1,4 @@
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import { parseProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import { parseProblemStatementText, problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
 import { parseProblemTimeLimitMs } from '@/objects/problem/ProblemTimeLimitMs'
@@ -24,7 +24,7 @@ export type UpdateProblemDraft = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
 export function validateProblemUpdateDraft(
@@ -69,7 +69,7 @@ export function validateProblemUpdateDraft(
       timeLimitMs: timeLimitResult.value,
       spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
-      othersSubmissionAccess: draft.othersSubmissionAccess,
+      otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
     },
   }
 }
@@ -80,7 +80,7 @@ type ProblemEditorAccessState = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
 type ProblemEditorContentState = ProblemEditorAccessState & {
@@ -104,7 +104,7 @@ export function buildProblemContentUpdateDraft(
     grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
     managerUsersInput: grantedManagerUsersInputFromAccessPolicy(problem.accessPolicy),
     managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(problem.accessPolicy),
-    othersSubmissionAccess: problem.othersSubmissionAccess,
+    otherUserSubmissionAccess: problem.otherUserSubmissionAccess,
   }
 }
 
@@ -122,7 +122,7 @@ export function buildProblemAccessUpdateDraft(
     grantedGroupsInput: editor.grantedGroupsInput,
     managerUsersInput: editor.managerUsersInput,
     managerGroupsInput: editor.managerGroupsInput,
-    othersSubmissionAccess: editor.othersSubmissionAccess,
+    otherUserSubmissionAccess: editor.otherUserSubmissionAccess,
   }
 }
 

@@ -1,7 +1,7 @@
 package domains.judge.utils
 
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.objects.{OthersSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
@@ -43,7 +43,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     timeLimitMs = ProblemTimeLimitMs(1000),
     spaceLimitMb = ProblemSpaceLimitMb(256),
     accessPolicy = ResourceAccessPolicy(BaseAccess.OwnerOnly, Nil, Nil),
-    othersSubmissionAccess = OthersSubmissionAccess.None,
+    otherUserSubmissionAccess = OtherUserSubmissionAccess.None,
     creator = UserIdentity(Username("owner"), DisplayName("Owner")),
     canManage = true,
     createdAt = Instant.EPOCH,

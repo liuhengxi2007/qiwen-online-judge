@@ -103,9 +103,9 @@ The current cache layout is:
 - `POST /api/problems/{slug}/data/ready-state`
   JSON body with `ready`.
 
-### Judger Internal Access
+### Judger Worker Access
 
-- `GET /api/internal/judge/problem-data?problemSlug=...&path=...`
+- `GET /api/worker/judge/problem-data?problemSlug=...&path=...`
   Judge-token-protected endpoint used by judgers to fill cache entries.
 
 ## Operational Notes

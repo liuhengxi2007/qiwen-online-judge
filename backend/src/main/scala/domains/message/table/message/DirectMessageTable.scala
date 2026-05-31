@@ -16,13 +16,13 @@ object DirectMessageTable:
       |select dm.id,
       |       dm.conversation_id,
       |       dm.sender_username,
-      |       sender.display_name as sender_display_name,
+      |       sender_profile.display_name as sender_display_name,
       |       dm.recipient_username,
       |       dm.content,
       |       dm.created_at,
       |       dm.read_at
       |from direct_messages dm
-      |join auth_users sender on lower(sender.username) = lower(dm.sender_username)
+      |join user_profiles sender_profile on lower(sender_profile.username) = lower(dm.sender_username)
       |where dm.conversation_id = ?
       |order by dm.created_at desc, dm.id desc
       |limit ?
@@ -33,13 +33,13 @@ object DirectMessageTable:
       |select dm.id,
       |       dm.conversation_id,
       |       dm.sender_username,
-      |       sender.display_name as sender_display_name,
+      |       sender_profile.display_name as sender_display_name,
       |       dm.recipient_username,
       |       dm.content,
       |       dm.created_at,
       |       dm.read_at
       |from direct_messages dm
-      |join auth_users sender on lower(sender.username) = lower(dm.sender_username)
+      |join user_profiles sender_profile on lower(sender_profile.username) = lower(dm.sender_username)
       |where dm.conversation_id = ?
       |  and (dm.created_at, dm.id) < (
       |    select created_at, id
@@ -139,13 +139,13 @@ object DirectMessageTable:
       |select dm.id,
       |       dm.conversation_id,
       |       dm.sender_username,
-      |       sender.display_name as sender_display_name,
+      |       sender_profile.display_name as sender_display_name,
       |       dm.recipient_username,
       |       dm.content,
       |       dm.created_at,
       |       dm.read_at
       |from direct_messages dm
-      |join auth_users sender on lower(sender.username) = lower(dm.sender_username)
+      |join user_profiles sender_profile on lower(sender_profile.username) = lower(dm.sender_username)
       |where dm.id = ?
       |""".stripMargin
 

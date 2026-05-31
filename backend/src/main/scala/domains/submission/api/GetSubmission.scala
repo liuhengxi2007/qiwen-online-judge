@@ -42,7 +42,7 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
                 for
                   _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
                   _ <- HttpApiError.ensure(
-                    SubmissionAccessRules.canViewDetailOfOthers(problem.othersSubmissionAccess),
+                    SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
                     HttpApiError.notFound(ApiMessages.submissionNotFound)
                   )
                 yield submission.copy(canManage = access.canManage)

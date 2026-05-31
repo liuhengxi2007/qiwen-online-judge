@@ -6,7 +6,7 @@ import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
 } from '../functions/CreateProblemPageState'
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import { validateProblemDraft } from '../functions/ProblemForm'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
@@ -67,7 +67,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
     setManagerUsersInput: (value: string) => dispatch({ type: 'set_manager_users_input', value }),
     setManagerGroupsInput: (value: string) => dispatch({ type: 'set_manager_groups_input', value }),
-    setOthersSubmissionAccess: (value: OthersSubmissionAccess) => dispatch({ type: 'set_others_submission_access', value }),
+    setOtherUserSubmissionAccess: (value: OtherUserSubmissionAccess) => dispatch({ type: 'set_other_user_submission_access', value }),
     submit,
   }
 }

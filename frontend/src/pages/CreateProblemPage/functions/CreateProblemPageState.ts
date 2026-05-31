@@ -1,4 +1,4 @@
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type CreateProblemPageDraft = {
@@ -12,7 +12,7 @@ export type CreateProblemPageDraft = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
 export type CreateProblemPageState = {
@@ -33,7 +33,7 @@ export type CreateProblemPageAction =
   | { type: 'set_granted_groups_input'; value: string }
   | { type: 'set_manager_users_input'; value: string }
   | { type: 'set_manager_groups_input'; value: string }
-  | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
+  | { type: 'set_other_user_submission_access'; value: OtherUserSubmissionAccess }
   | { type: 'submit_started' }
   | { type: 'submit_succeeded'; message: string }
   | { type: 'submit_failed'; message: string }
@@ -49,7 +49,7 @@ export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   grantedGroupsInput: '',
   managerUsersInput: '',
   managerGroupsInput: '',
-  othersSubmissionAccess: 'none',
+  otherUserSubmissionAccess: 'none',
 }
 
 export const initialCreateProblemPageState: CreateProblemPageState = {
@@ -97,8 +97,8 @@ export function reduceCreateProblemPageState(
       return { ...state, draft: { ...state.draft, managerUsersInput: action.value } }
     case 'set_manager_groups_input':
       return { ...state, draft: { ...state.draft, managerGroupsInput: action.value } }
-    case 'set_others_submission_access':
-      return { ...state, draft: { ...state.draft, othersSubmissionAccess: action.value } }
+    case 'set_other_user_submission_access':
+      return { ...state, draft: { ...state.draft, otherUserSubmissionAccess: action.value } }
     case 'submit_started':
       return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
     case 'submit_succeeded':

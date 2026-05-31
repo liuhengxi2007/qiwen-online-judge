@@ -21,8 +21,8 @@ object ProblemTableSchema:
       |  time_limit_ms integer not null default 1000,
       |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  others_submission_access varchar(32) not null default 'none' check (others_submission_access in ('none', 'summary', 'detail')),
-      |  creator_username varchar(120) not null references auth_users(username),
+      |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
+      |  creator_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
@@ -224,7 +224,29 @@ object ProblemTableSchema:
       |alter column base_access set default 'owner_only'
       |""".stripMargin
 
-  val addOthersSubmissionAccessColumnSql: String =
+  val migrateOtherUserSubmissionAccessColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'others_submission_access'
+      |  ) and not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'other_user_submission_access'
+      |  ) then
+      |    alter table problems rename column others_submission_access to other_user_submission_access;
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val addOtherUserSubmissionAccessColumnSql: String =
     """
       |do $$
       |begin
@@ -233,27 +255,27 @@ object ProblemTableSchema:
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'problems'
-      |      and column_name = 'others_submission_access'
+      |      and column_name = 'other_user_submission_access'
       |  ) then
-      |    alter table problems add column others_submission_access varchar(32);
+      |    alter table problems add column other_user_submission_access varchar(32) check (other_user_submission_access in ('none', 'summary', 'detail'));
       |  end if;
       |
       |  update problems
-      |  set others_submission_access = 'none'
-      |  where others_submission_access is null or btrim(others_submission_access) = '';
+      |  set other_user_submission_access = 'none'
+      |  where other_user_submission_access is null or btrim(other_user_submission_access) = '';
       |end $$;
       |""".stripMargin
 
-  val setOthersSubmissionAccessNotNullSql: String =
+  val setOtherUserSubmissionAccessNotNullSql: String =
     """
       |alter table problems
-      |alter column others_submission_access set not null
+      |alter column other_user_submission_access set not null
       |""".stripMargin
 
-  val setOthersSubmissionAccessDefaultSql: String =
+  val setOtherUserSubmissionAccessDefaultSql: String =
     """
       |alter table problems
-      |alter column others_submission_access set default 'none'
+      |alter column other_user_submission_access set default 'none'
       |""".stripMargin
 
   val dropStatusColumnSql: String =
@@ -275,9 +297,10 @@ object ProblemTableSchema:
         statement.execute(setReadyNotNullSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
-        statement.execute(addOthersSubmissionAccessColumnSql)
-        statement.execute(setOthersSubmissionAccessDefaultSql)
-        statement.execute(setOthersSubmissionAccessNotNullSql)
+        statement.execute(migrateOtherUserSubmissionAccessColumnSql)
+        statement.execute(addOtherUserSubmissionAccessColumnSql)
+        statement.execute(setOtherUserSubmissionAccessDefaultSql)
+        statement.execute(setOtherUserSubmissionAccessNotNullSql)
         statement.execute(setTimeLimitDefaultSql)
         statement.execute(setTimeLimitNotNullSql)
         statement.execute(setSpaceLimitDefaultSql)

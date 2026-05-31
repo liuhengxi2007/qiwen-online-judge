@@ -19,7 +19,7 @@ final case class DownloadJudgeProblemData(
 ) extends PublicResponseApi[(ProblemSlug, ProblemDataPath)]:
 
   override val method: Method = Method.GET
-  override val path: ApiPath = ApiPath("/api/internal/judge/problem-data")
+  override val path: ApiPath = ApiPath("/api/worker/judge/problem-data")
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, ProblemDataPath)] =
     val _ = pathParams

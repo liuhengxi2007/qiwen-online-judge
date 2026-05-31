@@ -1,122 +1,37 @@
-package domains.user.table.user
-
-
+package domains.user.table.user_profile
 
 import cats.effect.IO
-import domains.auth.objects.SiteManagerUser
-import domains.user.objects.{DisplayName, Username}
-import domains.problem.objects.ProblemTitleDisplayMode
-import shared.objects.{PageRequest, PageResponse}
 import database.utils.LikePatternSql
-import domains.user.objects.internal.UserProfileSettings
-import domains.user.objects.response.{UserAcceptedRanklistItem, UserListResponse, UserRanklistItem, UserSettingsResponse}
-import domains.user.objects.request.UserSearchQuery
-import domains.user.objects.{UserAcceptedProblem, UserDisplayMode, UserIdentity, UserLocale}
-import domains.user.objects.request.{UserListRequest}
-import domains.user.table.user.UserTableSupport.*
+import domains.auth.objects.SiteManagerUser
+import domains.user.objects.request.{UserListRequest, UserSearchQuery}
+import domains.user.objects.response.{UserAcceptedRanklistItem, UserContributionRanklistItem, UserListResponse}
+import domains.user.objects.{UserAcceptedProblem, UserIdentity, Username}
+import domains.user.table.user_profile.UserProfileTableSupport.*
+import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
-object UserTable:
-
-  def initialize(connection: Connection): IO[Unit] =
-    UserTableSchema.initializeSchema(connection)
-
-  private val findSettingsByUsernameSQL: String =
-    """
-      |select username, display_name, display_mode, locale, problem_title_display_mode, auto_mark_message_read
-      |from user_profiles
-      |where lower(username) = lower(?)
-      |""".stripMargin
-
-  def findSettingsByUsername(connection: Connection, username: Username): IO[Option[UserProfileSettings]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(findSettingsByUsernameSQL)
-      try
-        statement.setString(1, username.value.trim)
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then Some(readProfileSettings(resultSet))
-          else None
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private val findUserSettingsByUsernameSQL: String =
-    """
-      |select up.username, up.display_name, up.display_mode, up.locale, up.problem_title_display_mode, up.auto_mark_message_read,
-      |       au.email, au.site_manager, au.problem_manager
-      |from user_profiles up
-      |join auth_users au on au.username = up.username
-      |where lower(up.username) = lower(?)
-      |""".stripMargin
-
-  def findUserSettingsByUsername(connection: Connection, username: Username): IO[Option[UserSettingsResponse]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(findUserSettingsByUsernameSQL)
-      try
-        statement.setString(1, username.value.trim)
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then Some(readUserSettingsResponse(resultSet))
-          else None
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private val insertProfileSQL: String =
-    """
-      |insert into user_profiles (username, display_name, display_mode, locale, problem_title_display_mode, auto_mark_message_read)
-      |values (?, ?, ?, ?, ?, ?)
-      |returning username, display_name, display_mode, locale, problem_title_display_mode, auto_mark_message_read
-      |""".stripMargin
-
-  def insertProfile(
-    connection: Connection,
-    username: Username,
-    displayName: DisplayName,
-    displayMode: UserDisplayMode,
-    locale: UserLocale,
-    problemTitleDisplayMode: ProblemTitleDisplayMode,
-    autoMarkMessageRead: Boolean
-  ): IO[UserProfileSettings] =
-    IO.blocking {
-      val statement = connection.prepareStatement(insertProfileSQL)
-      try
-        statement.setString(1, username.value.trim)
-        statement.setString(2, displayName.value.trim)
-        statement.setString(3, encodeUserDisplayModeColumn(displayMode))
-        statement.setString(4, encodeUserLocaleColumn(locale))
-        statement.setString(5, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
-        statement.setBoolean(6, autoMarkMessageRead)
-
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then readProfileSettings(resultSet)
-          else throw new IllegalStateException("Insert succeeded but returned no user profile")
-        finally resultSet.close()
-      finally statement.close()
-    }
+object UserProfileQueryTable:
 
   private def searchPredicate(usernameColumn: String, displayNameColumn: String): String =
     s"(? = false or lower($usernameColumn) like lower(?) escape '\\' or lower($displayNameColumn) like lower(?) escape '\\')"
 
   private val listUsersSQL: String =
     s"""
-      |select au.username, up.display_name, au.email, au.site_manager, au.problem_manager
-      |from auth_users au
-      |join user_profiles up on up.username = au.username
-      |where ${searchPredicate("au.username", "up.display_name")}
-      |order by au.username asc
+      |select aa.username, up.display_name, aa.email, aa.site_manager, aa.problem_manager
+      |from auth_accounts aa
+      |join user_profiles up on up.username = aa.username
+      |where ${searchPredicate("aa.username", "up.display_name")}
+      |order by aa.username asc
       |limit ? offset ?
       |""".stripMargin
 
   private val countUsersSQL: String =
     s"""
       |select count(*) as total_items
-      |from auth_users au
-      |join user_profiles up on up.username = au.username
-      |where ${searchPredicate("au.username", "up.display_name")}
+      |from auth_accounts aa
+      |join user_profiles up on up.username = aa.username
+      |where ${searchPredicate("aa.username", "up.display_name")}
       |""".stripMargin
 
   def listUsers(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
@@ -215,21 +130,21 @@ object UserTable:
       |  left join blog_comment_votes bcv on bcv.comment_id = c.id
       |  group by c.author_username
       |)
-      |select au.username,
+      |select aa.username,
       |       up.display_name,
       |       round(coalesce(blog_scores.blog_score, 0)::numeric + coalesce(comment_scores.comment_score, 0)::numeric * 0.1) as contribution
-      |from auth_users au
-      |join user_profiles up on up.username = au.username
-      |left join blog_scores on blog_scores.author_username = au.username
-      |left join comment_scores on comment_scores.author_username = au.username
-      |order by contribution desc, lower(up.display_name) asc, lower(au.username) asc
+      |from auth_accounts aa
+      |join user_profiles up on up.username = aa.username
+      |left join blog_scores on blog_scores.author_username = aa.username
+      |left join comment_scores on comment_scores.author_username = aa.username
+      |order by contribution desc, lower(up.display_name) asc, lower(aa.username) asc
       |limit ? offset ?
       |""".stripMargin
 
-  def listContributionRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserRanklistItem]] =
+  def listContributionRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserContributionRanklistItem]] =
     IO.blocking {
       val normalizedPageRequest = pageRequest.normalized
-      val totalItems = countUsers(connection)
+      val totalItems = countAllUsers(connection)
       val statement = connection.prepareStatement(listContributionRanklistSQL)
       try
         statement.setInt(1, normalizedPageRequest.pageSize)
@@ -239,7 +154,7 @@ object UserTable:
           val items = Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
-            .map(_ => readRanklistItem(resultSet))
+            .map(_ => readContributionRanklistItem(resultSet))
             .toList
 
           PageResponse(
@@ -261,20 +176,20 @@ object UserTable:
       |  where s.verdict = 'accepted'
       |  group by lower(s.submitter_username)
       |)
-      |select au.username,
+      |select aa.username,
       |       up.display_name,
       |       coalesce(accepted_counts.accepted_count, 0) as accepted_count
-      |from auth_users au
-      |join user_profiles up on up.username = au.username
-      |left join accepted_counts on accepted_counts.submitter_username = lower(au.username)
-      |order by accepted_count desc, lower(up.display_name) asc, lower(au.username) asc
+      |from auth_accounts aa
+      |join user_profiles up on up.username = aa.username
+      |left join accepted_counts on accepted_counts.submitter_username = lower(aa.username)
+      |order by accepted_count desc, lower(up.display_name) asc, lower(aa.username) asc
       |limit ? offset ?
       |""".stripMargin
 
   def listAcceptedRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
     IO.blocking {
       val normalizedPageRequest = pageRequest.normalized
-      val totalItems = countUsers(connection)
+      val totalItems = countAllUsers(connection)
       val statement = connection.prepareStatement(listAcceptedRanklistSQL)
       try
         statement.setInt(1, normalizedPageRequest.pageSize)
@@ -326,48 +241,13 @@ object UserTable:
       finally statement.close()
     }
 
-  private val updateSettingsSQL: String =
-    """
-      |update user_profiles
-      |set display_name = ?, display_mode = ?, locale = ?, problem_title_display_mode = ?, auto_mark_message_read = ?
-      |where username = ?
-      |returning username, display_name, display_mode, locale, problem_title_display_mode, auto_mark_message_read
-      |""".stripMargin
-
-  def updateSettings(
-    connection: Connection,
-    username: Username,
-    displayName: DisplayName,
-    displayMode: UserDisplayMode,
-    locale: UserLocale,
-    problemTitleDisplayMode: ProblemTitleDisplayMode,
-    autoMarkMessageRead: Boolean
-  ): IO[Option[UserProfileSettings]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(updateSettingsSQL)
-      try
-        statement.setString(1, displayName.value.trim)
-        statement.setString(2, encodeUserDisplayModeColumn(displayMode))
-        statement.setString(3, encodeUserLocaleColumn(locale))
-        statement.setString(4, encodeProblemTitleDisplayModeColumn(problemTitleDisplayMode))
-        statement.setBoolean(5, autoMarkMessageRead)
-        statement.setString(6, username.value.trim)
-
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then Some(readProfileSettings(resultSet))
-          else None
-        finally resultSet.close()
-      finally statement.close()
-    }
-
   private val countAllUsersSQL: String =
     """
       |select count(*) as total_items
-      |from auth_users
+      |from auth_accounts
       |""".stripMargin
 
-  private def countUsers(connection: Connection): Long =
+  private def countAllUsers(connection: Connection): Long =
     val statement = connection.prepareStatement(countAllUsersSQL)
     try
       val resultSet = statement.executeQuery()

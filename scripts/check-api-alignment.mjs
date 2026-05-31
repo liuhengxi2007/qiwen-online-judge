@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join, relative, resolve } from 'node:path'
 
 const root = process.cwd()
 
@@ -9,9 +9,8 @@ const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
 const allowedBackendOnlyEndpoints = new Map([
   ['judger', new Set(['GetActiveJudgerSupportedLanguages', 'RecordJudgerHeartbeat', 'RegisterJudger'])],
-  ['problem', new Set(['GetJudgeProblemDataManifest'])],
-  ['submission', new Set(['ClaimNextJudgeSubmission', 'GetSubmissionJudgeState', 'UpdateSubmissionJudgeState'])],
 ])
+const internalOnlyApiTraits = new Set(['InternalOnlyApi', 'InternalOnlyAuthenticatedApi'])
 
 function listDirectories(path) {
   return readdirSync(path)
@@ -43,19 +42,36 @@ function frontendEndpointNames(domain) {
     .sort()
 }
 
-function backendEndpointNames(domain) {
+function backendEndpointDetails(domain) {
   return listFilesIfDirectory(join(backendDomainsRoot, domain, 'api'))
-    .filter((filePath) => {
+    .map((filePath) => {
       const fileName = filePath.split('/').at(-1) ?? ''
       if (!fileName.endsWith('.scala')) {
-        return false
+        return null
       }
       const basename = fileName.replace(/\.scala$/, '')
       const source = readFileSync(filePath, 'utf8')
-      return new RegExp(`(?:object|final\\s+case\\s+class|final\\s+class)\\s+${basename}\\b[\\s\\S]*?extends\\s+[A-Za-z0-9_]*Api\\b`).test(source)
+      const apiTrait = source.match(
+        new RegExp(`(?:object|final\\s+case\\s+class|final\\s+class)\\s+${basename}\\b[\\s\\S]*?extends\\s+([A-Za-z0-9_]*Api)\\b`),
+      )?.[1]
+      if (!apiTrait) {
+        return null
+      }
+
+      return {
+        name: basename,
+        filePath,
+        apiTrait,
+        apiPath: source.match(/override\s+val\s+path\s*:\s*ApiPath\s*=\s*ApiPath\("([^"]+)"\)/)?.[1] ?? null,
+      }
     })
-    .map((filePath) => filePath.split('/').at(-1))
-    .map((fileName) => fileName.replace(/\.scala$/, ''))
+    .filter(Boolean)
+    .sort((left, right) => left.name.localeCompare(right.name))
+}
+
+function backendEndpointNames(domain) {
+  return backendEndpointDetails(domain)
+    .map((endpoint) => endpoint.name)
     .sort()
 }
 
@@ -70,6 +86,32 @@ function allowedBackendOnlyNames(domain) {
 
 function formatList(entries) {
   return entries.length === 0 ? '(none)' : entries.join(', ')
+}
+
+function formatBackendEndpoint(endpoint) {
+  return `${relative(root, endpoint.filePath)} (${endpoint.name})`
+}
+
+function checkBackendApiPathBoundary(endpoint, errors) {
+  if (!endpoint.apiPath) {
+    errors.push(`${formatBackendEndpoint(endpoint)} is missing a literal ApiPath declaration`)
+    return
+  }
+
+  const isInternalOnly = internalOnlyApiTraits.has(endpoint.apiTrait)
+  const usesInternalPath = endpoint.apiPath.startsWith('/api/internal/')
+
+  if (isInternalOnly && !usesInternalPath) {
+    errors.push(
+      `${formatBackendEndpoint(endpoint)} extends ${endpoint.apiTrait} but uses ${endpoint.apiPath}; internal-only APIs must use /api/internal/...`,
+    )
+  }
+
+  if (!isInternalOnly && usesInternalPath) {
+    errors.push(
+      `${formatBackendEndpoint(endpoint)} extends ${endpoint.apiTrait} but uses ${endpoint.apiPath}; callable APIs must not use /api/internal/...`,
+    )
+  }
 }
 
 function run() {
@@ -108,6 +150,12 @@ function run() {
           `  backend-only: ${formatList(backendOnly)}`,
         ].join('\n')
       )
+    }
+  }
+
+  for (const domain of backendDomains) {
+    for (const endpoint of backendEndpointDetails(domain)) {
+      checkBackendApiPathBoundary(endpoint, errors)
     }
   }
 

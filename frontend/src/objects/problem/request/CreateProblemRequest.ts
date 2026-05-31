@@ -1,4 +1,4 @@
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import type { ProblemStatementText } from '@/objects/problem/ProblemStatementText'
@@ -13,5 +13,5 @@ export type CreateProblemRequest = {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }

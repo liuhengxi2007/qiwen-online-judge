@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 
 import domains.user.objects.Username
 import domains.user.objects.response.UserSettingsResponse
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -32,7 +32,7 @@ object GetUserSettings extends AuthenticatedApi[Username, UserSettingsResponse]:
         targetUsername.value == actor.username.value || actor.siteManager,
         HttpApiError.forbidden(ApiMessages.siteManagerRequired)
       )
-      maybeSettings <- UserTable.findUserSettingsByUsername(connection, targetUsername)
+      maybeSettings <- UserProfileTable.findUserSettingsByUsername(connection, targetUsername)
       settings <- maybeSettings match
         case Some(settings) => IO.pure(settings)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))

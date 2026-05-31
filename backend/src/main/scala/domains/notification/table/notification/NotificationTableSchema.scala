@@ -12,8 +12,8 @@ object NotificationTableSchema:
     """
       |create table if not exists notifications (
       |  id uuid primary key,
-      |  recipient_username varchar(120) not null references auth_users(username) on delete cascade,
-      |  actor_username varchar(120) references auth_users(username) on delete set null,
+      |  recipient_username varchar(120) not null references auth_accounts(username) on delete cascade,
+      |  actor_username varchar(120) references auth_accounts(username) on delete set null,
       |  kind varchar(64) not null,
       |  status varchar(16) not null default 'unread',
       |  title_key varchar(160) not null,

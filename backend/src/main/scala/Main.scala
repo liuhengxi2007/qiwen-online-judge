@@ -17,7 +17,7 @@ import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.submission.table.submission.SubmissionTable
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileTable
 import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
@@ -72,7 +72,7 @@ object Main extends IOApp.Simple:
           for
             _ <- logger.info("Initializing database schema")
             _ <- AuthAccountTable.initialize(connection, seedAdminPasswordHash)
-            _ <- UserTable.initialize(connection)
+            _ <- UserProfileTable.initialize(connection)
             _ <- SessionTable.initialize(connection, SessionConfig.default.ttl)
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemDataFileTable.initialize(connection)

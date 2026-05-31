@@ -5,7 +5,7 @@ import domains.auth.objects.response.LoginResponse
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
 import domains.auth.objects.request.LoginRequest
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.user.api.UserProfileRecords
+import domains.user.api.FindUserProfileSettings
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -46,7 +46,7 @@ final case class Login(sessionStore: SessionStore) extends PublicResponseApi[Log
     }
 
   private def findProfile(connection: Connection, username: domains.user.objects.Username) =
-    UserProfileRecords.findSettings(connection, username).flatMap {
+    FindUserProfileSettings.plan(connection, username).flatMap {
       case Some(profile) => IO.pure(profile)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
     }

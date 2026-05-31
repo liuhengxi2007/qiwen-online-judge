@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { UpdateProblem } from '@/apis/problem/UpdateProblem'
 import { HttpClientError } from '@/system/api/http-client'
 import { validateProblemUpdateDraft } from '../functions/ProblemForm'
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -25,7 +25,7 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
       grantedGroupsInput: string
       managerUsersInput: string
       managerGroupsInput: string
-      othersSubmissionAccess: OthersSubmissionAccess
+      otherUserSubmissionAccess: OtherUserSubmissionAccess
     }): Promise<{ ok: true; problem: ProblemDetail; message: string } | { ok: false; message: string }> => {
       const validation = validateProblemUpdateDraft(draft)
       if (!validation.ok) {

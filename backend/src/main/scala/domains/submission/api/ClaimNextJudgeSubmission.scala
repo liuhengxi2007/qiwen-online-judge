@@ -18,7 +18,7 @@ final case class ClaimNextJudgeSubmissionInput(
 object ClaimNextJudgeSubmission extends InternalOnlyApi[ClaimNextJudgeSubmissionInput, Option[ClaimedSubmission]]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/submissions/claim-next-judge")
+  override val path: ApiPath = ApiPath("/api/internal/submissions/judge/claim-next")
 
   def input(languages: List[SubmissionLanguage], runningState: SubmissionJudgeState): ClaimNextJudgeSubmissionInput =
     ClaimNextJudgeSubmissionInput(languages = languages, runningState = runningState)

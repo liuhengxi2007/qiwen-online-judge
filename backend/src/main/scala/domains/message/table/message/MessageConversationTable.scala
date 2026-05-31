@@ -66,7 +66,7 @@ object MessageConversationTable:
       |         when lower(mc.participant_a_username) = lower(?) then mc.participant_b_username
       |         else mc.participant_a_username
       |       end as other_username,
-      |       au.display_name as other_display_name,
+      |       up.display_name as other_display_name,
       |       lm.sender_username as last_message_sender_username,
       |       case
       |         when lm.content is null then null
@@ -76,7 +76,7 @@ object MessageConversationTable:
       |       coalesce(lm.created_at, mc.last_message_at) as last_message_at,
       |       coalesce(unread.unread_count, 0) as unread_count
       |from message_conversations mc
-      |join auth_users au on lower(au.username) = lower(
+      |join user_profiles up on lower(up.username) = lower(
       |  case
       |    when lower(mc.participant_a_username) = lower(?) then mc.participant_b_username
       |    else mc.participant_a_username
@@ -127,7 +127,7 @@ object MessageConversationTable:
       |         when lower(mc.participant_a_username) = lower(?) then mc.participant_b_username
       |         else mc.participant_a_username
       |       end as other_username,
-      |       au.display_name as other_display_name,
+      |       up.display_name as other_display_name,
       |       lm.sender_username as last_message_sender_username,
       |       case
       |         when lm.content is null then null
@@ -137,7 +137,7 @@ object MessageConversationTable:
       |       coalesce(lm.created_at, mc.last_message_at) as last_message_at,
       |       coalesce(unread.unread_count, 0) as unread_count
       |from message_conversations mc
-      |join auth_users au on lower(au.username) = lower(
+      |join user_profiles up on lower(up.username) = lower(
       |  case
       |    when lower(mc.participant_a_username) = lower(?) then mc.participant_b_username
       |    else mc.participant_a_username

@@ -150,7 +150,7 @@ Cross-domain application code should call the target domain's API object `plan(.
 
 Use `InternalOnlyApi` or `InternalOnlyAuthenticatedApi` for API-object plans that need a frontend-mirrored contract but must never be callable through HTTP. These API objects are registered normally, and their HTTP handler always returns `403 Forbidden` without decoding the request or running business logic.
 
-The judge worker channel is the frontend API mirroring exception. Worker-only API objects in `domains.judge.api` and owner-domain internal helpers used only by judge claim/complete workflows do not need site frontend wrappers; site management APIs such as judger listing still need frontend mirrors.
+The judge worker channel is the frontend API mirroring exception. Worker-only callable API objects in `domains.judge.api` and judge-registry worker endpoints in `domains.judger.api` do not need site frontend wrappers; plan-only owner-domain helpers still keep frontend contract mirrors even though they are not runtime-callable. Site management APIs such as judger listing still need frontend mirrors.
 
 Current explicitly guarded collaboration boundaries:
 

@@ -16,7 +16,7 @@ object UserGroupTableSchema:
       |  name varchar(120) not null,
       |  description text not null,
       |  visibility varchar(32) not null default 'private' check (visibility in ('private', 'group', 'public')),
-      |  owner_username varchar(120) not null references auth_users(username),
+      |  owner_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
@@ -61,7 +61,7 @@ object UserGroupTableSchema:
     """
       |create table if not exists user_group_memberships (
       |  user_group_id uuid not null references user_groups(id) on delete cascade,
-      |  username varchar(120) not null references auth_users(username) on delete cascade,
+      |  username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  role varchar(32) not null check (role in ('owner', 'manager', 'member')),
       |  joined_at timestamp not null,
       |  primary key (user_group_id, username)

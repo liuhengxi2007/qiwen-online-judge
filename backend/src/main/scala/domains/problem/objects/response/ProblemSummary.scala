@@ -19,7 +19,7 @@ final case class ProblemSummary(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  othersSubmissionAccess: OthersSubmissionAccess,
+  otherUserSubmissionAccess: OtherUserSubmissionAccess,
   creator: UserIdentity,
   createdAt: Instant,
   updatedAt: Instant

@@ -77,7 +77,7 @@ const publicModelTypes = new Map([
     'NotificationId',
   ])],
   ['problem', new Set([
-    'OthersSubmissionAccess',
+    'OtherUserSubmissionAccess',
     'ProblemData',
     'ProblemDataFilename',
     'ProblemDataManifest',
@@ -116,7 +116,7 @@ const publicModelTypes = new Map([
     'Username',
   ])],
   ['usergroup', new Set([
-    'AddUserGroupMemberRole',
+    'NewUserGroupMemberRole',
     'UserGroupDescription',
     'UserGroupName',
     'UserGroupRole',

@@ -19,7 +19,7 @@ final case class UpdateSubmissionJudgeStateInput(
 object UpdateSubmissionJudgeState extends InternalOnlyApi[UpdateSubmissionJudgeStateInput, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/submissions/judge-state/update")
+  override val path: ApiPath = ApiPath("/api/internal/submissions/judge/state/update")
 
   def input(submissionId: SubmissionId, judgeState: SubmissionJudgeState): UpdateSubmissionJudgeStateInput =
     UpdateSubmissionJudgeStateInput(submissionId = submissionId, judgeState = judgeState)

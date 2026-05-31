@@ -1,6 +1,6 @@
 import { parseUsername } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
-import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
 import { parseUserGroupDescription } from '@/objects/usergroup/UserGroupDescription'
 import { parseUserGroupName } from '@/objects/usergroup/UserGroupName'
 import type { UpdateUserGroupRequest } from '@/objects/usergroup/request/UpdateUserGroupRequest'
@@ -34,8 +34,8 @@ export function validateUserGroupUpdateDraft(
 
 export function validateAddUserGroupMemberDraft(
   username: string,
-  role: AddUserGroupMemberRole,
-): { ok: true; request: { username: Username; role: AddUserGroupMemberRole } } | { ok: false; message: string } {
+  role: NewUserGroupMemberRole,
+): { ok: true; request: { username: Username; role: NewUserGroupMemberRole } } | { ok: false; message: string } {
   const usernameResult = parseUsername(username)
   if (!usernameResult.ok) {
     return { ok: false, message: usernameResult.error }

@@ -28,7 +28,7 @@ object AuthAccountTable:
 
   private val seedAuthAdminSQL: String =
     """
-      |insert into auth_users (username, email, password_hash, site_manager, problem_manager)
+      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager)
       |values (?, ?, ?, ?, ?)
       |on conflict (username) do nothing
       |""".stripMargin
@@ -58,7 +58,7 @@ object AuthAccountTable:
   private val findAuthAccountByUsernameSQL: String =
     """
       |select username, email, password_hash, site_manager, problem_manager
-      |from auth_users
+      |from auth_accounts
       |where lower(username) = lower(?)
       |""".stripMargin
 
@@ -78,7 +78,7 @@ object AuthAccountTable:
   private val findAuthenticatedUserByUsernameSQL: String =
     """
       |select username, site_manager, problem_manager
-      |from auth_users
+      |from auth_accounts
       |where lower(username) = lower(?)
       |""".stripMargin
 
@@ -97,7 +97,7 @@ object AuthAccountTable:
 
   private val insertAuthAccountSQL: String =
     """
-      |insert into auth_users (username, email, password_hash, site_manager, problem_manager)
+      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager)
       |values (?, ?, ?, ?, ?)
       |returning username, email, password_hash, site_manager, problem_manager
       |""".stripMargin
@@ -127,7 +127,7 @@ object AuthAccountTable:
 
   private val updateAccountSQL: String =
     """
-      |update auth_users
+      |update auth_accounts
       |set email = ?, password_hash = ?
       |where username = ?
       |returning username, email, password_hash, site_manager, problem_manager
@@ -156,7 +156,7 @@ object AuthAccountTable:
 
   private val updatePermissionsSQL: String =
     """
-      |update auth_users
+      |update auth_accounts
       |set site_manager = ?, problem_manager = ?
       |where username = ?
       |returning username, email, password_hash, site_manager, problem_manager
@@ -187,7 +187,7 @@ object AuthAccountTable:
 
   private val deleteSQL: String =
     """
-      |delete from auth_users
+      |delete from auth_accounts
       |where username = ?
       |""".stripMargin
 

@@ -1,15 +1,15 @@
-package domains.user.table.user
+package domains.user.table.user_profile
 
 import cats.effect.IO
 
 import java.sql.Connection
 
-object UserTableSchema:
+object UserProfileTableSchema:
 
   val initTableSql: String =
     """
       |create table if not exists user_profiles (
-      |  username varchar(120) primary key references auth_users(username) on delete cascade,
+      |  username varchar(120) primary key references auth_accounts(username) on delete cascade,
       |  display_name varchar(120) not null,
       |  display_mode varchar(64) not null default 'display_name',
       |  locale varchar(32) not null default 'en',
@@ -32,7 +32,7 @@ object UserTableSchema:
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'auth_users'
+      |      and table_name = 'auth_accounts'
       |      and column_name = 'display_name'
       |  ) then
       |    display_name_expression := 'coalesce(nullif(btrim(display_name), ''''), case when lower(username) = ''admin'' then ''Admin User'' else username end)';
@@ -44,7 +44,7 @@ object UserTableSchema:
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'auth_users'
+      |      and table_name = 'auth_accounts'
       |      and column_name = 'display_mode'
       |  ) then
       |    display_mode_expression := 'coalesce(nullif(display_mode, ''''), ''display_name'')';
@@ -56,7 +56,7 @@ object UserTableSchema:
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'auth_users'
+      |      and table_name = 'auth_accounts'
       |      and column_name = 'locale'
       |  ) then
       |    locale_expression := 'coalesce(nullif(locale, ''''), ''en'')';
@@ -68,7 +68,7 @@ object UserTableSchema:
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'auth_users'
+      |      and table_name = 'auth_accounts'
       |      and column_name = 'problem_title_display_mode'
       |  ) then
       |    problem_title_display_mode_expression := 'coalesce(nullif(problem_title_display_mode, ''''), ''title'')';
@@ -80,7 +80,7 @@ object UserTableSchema:
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
-      |      and table_name = 'auth_users'
+      |      and table_name = 'auth_accounts'
       |      and column_name = 'auto_mark_message_read'
       |  ) then
       |    auto_mark_message_read_expression := 'coalesce(auto_mark_message_read, false)';
@@ -91,7 +91,7 @@ object UserTableSchema:
       |  execute format(
       |    'insert into user_profiles (username, display_name, display_mode, locale, problem_title_display_mode, auto_mark_message_read)
       |     select username, %s, %s, %s, %s, %s
-      |     from auth_users
+      |     from auth_accounts
       |     on conflict (username) do nothing',
       |    display_name_expression,
       |    display_mode_expression,
@@ -104,7 +104,7 @@ object UserTableSchema:
 
   val dropLegacyAuthAccountProfileColumnsSql: String =
     """
-      |alter table auth_users
+      |alter table auth_accounts
       |  drop column if exists display_name,
       |  drop column if exists display_mode,
       |  drop column if exists locale,

@@ -14,7 +14,7 @@ object SessionTableSchema:
     """
       |create table if not exists auth_sessions (
       |  token varchar(255) primary key,
-      |  username varchar(120) not null references auth_users(username) on delete cascade,
+      |  username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  created_at timestamp not null,
       |  last_active_at timestamp not null,
       |  expires_at timestamp not null

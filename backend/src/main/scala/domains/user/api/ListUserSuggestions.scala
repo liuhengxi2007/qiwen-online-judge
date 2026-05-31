@@ -7,7 +7,7 @@ import domains.user.utils.UserApiRules
 
 import domains.user.objects.UserIdentity
 import domains.user.objects.request.UserSearchQuery
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -28,4 +28,4 @@ object ListUserSuggestions extends AuthenticatedApi[UserSearchQuery, List[UserId
   override def plan(connection: Connection, actor: AuthenticatedUser, query: UserSearchQuery): IO[List[UserIdentity]] =
     val _ = actor
     if query.value.length < UserApiRules.minSuggestionQueryLength then IO.pure(Nil)
-    else UserTable.listSuggestions(connection, query)
+    else UserProfileQueryTable.listSuggestions(connection, query)

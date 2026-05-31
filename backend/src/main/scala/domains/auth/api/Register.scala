@@ -7,7 +7,7 @@ import domains.auth.objects.response.RegisterResponse
 import domains.auth.table.auth_account.AuthAccountTable
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
 import domains.problem.objects.ProblemTitleDisplayMode
-import domains.user.api.UserProfileRecords
+import domains.user.api.CreateUserProfileSettings
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
 import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
@@ -44,14 +44,16 @@ final case class Register(sessionStore: SessionStore) extends PublicResponseApi[
         email = email,
         passwordHash = passwordHash
       )
-      profile <- UserProfileRecords.create(
+      profile <- CreateUserProfileSettings.plan(
         connection,
-        username = createdAccount.username,
-        displayName = displayName,
-        displayMode = UserDisplayMode.DisplayName,
-        locale = UserLocale.En,
-        problemTitleDisplayMode = ProblemTitleDisplayMode.Title,
-        autoMarkMessageRead = false
+        CreateUserProfileSettings.Input(
+          username = createdAccount.username,
+          displayName = displayName,
+          displayMode = UserDisplayMode.DisplayName,
+          locale = UserLocale.En,
+          problemTitleDisplayMode = ProblemTitleDisplayMode.Title,
+          autoMarkMessageRead = false
+        )
       )
       sessionToken <- sessionStore.createSessionInConnection(connection, createdAccount.username)
     yield

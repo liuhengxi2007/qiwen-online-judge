@@ -48,10 +48,10 @@ export function ProblemDetailPage() {
 
 function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
   const { t } = useI18n()
-  const othersSubmissionAccessOptions = [
-    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
-    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
-    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
+  const otherUserSubmissionAccessOptions = [
+    { value: 'none', label: t('problem.otherUserSubmissionAccess.none.label'), description: t('problem.otherUserSubmissionAccess.none.description') },
+    { value: 'summary', label: t('problem.otherUserSubmissionAccess.summary.label'), description: t('problem.otherUserSubmissionAccess.summary.description') },
+    { value: 'detail', label: t('problem.otherUserSubmissionAccess.detail.label'), description: t('problem.otherUserSubmissionAccess.detail.description') },
   ] as const
   const model = useProblemDetailPageModel(problemSlug)
   const canManageProblem = model.canManage
@@ -72,7 +72,7 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
         grantedManagerUsersInputFromAccessPolicy(model.problem.accessPolicy) ||
       normalizeAccessSubjectInput(model.managerGroupsInput) !==
         grantedManagerGroupsInputFromAccessPolicy(model.problem.accessPolicy) ||
-      model.othersSubmissionAccess !== model.problem.othersSubmissionAccess)
+      model.otherUserSubmissionAccess !== model.problem.otherUserSubmissionAccess)
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -111,7 +111,7 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
       <ProblemAccessDialog
         model={model}
         open={canManageProblem && managementPanel === 'access'}
-        othersSubmissionAccessOptions={othersSubmissionAccessOptions}
+        otherUserSubmissionAccessOptions={otherUserSubmissionAccessOptions}
         setOpen={(open) => {
           setManagementPanel(open ? 'access' : null)
         }}

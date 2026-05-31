@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.utils.UserApiRules
 
 import domains.user.objects.response.UserAcceptedRanklistItem
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, PathParams}
@@ -27,4 +27,4 @@ object ListAcceptedRanklist extends AuthenticatedApi[PageRequest, PageResponse[U
 
   override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
     val _ = actor
-    UserTable.listAcceptedRanklist(connection, PageRequest(page = pageRequest.page, pageSize = UserApiRules.ranklistPageSize))
+    UserProfileQueryTable.listAcceptedRanklist(connection, PageRequest(page = pageRequest.page, pageSize = UserApiRules.ranklistPageSize))

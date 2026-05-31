@@ -68,7 +68,7 @@ Page name: Create problem page
 Path: `/problems/new`
 File: `src/pages/CreateProblemPage/index.tsx`
 Purpose:
-- Create a problem with slug, title, statement, limits, access policy, and others-submission access settings.
+- Create a problem with slug, title, statement, limits, access policy, and other-user-submission access settings.
 
 Page name: Problem detail page
 Path: `/problems/:slug`

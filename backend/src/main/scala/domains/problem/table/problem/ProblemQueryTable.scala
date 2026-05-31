@@ -82,7 +82,7 @@ object ProblemQueryTable:
 
   private val listSQL: String =
     s"""
-      |select p.id, p.slug, p.title, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
       |from problems p
       |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
       |where
@@ -147,7 +147,7 @@ object ProblemQueryTable:
 
   private val findBySlugSQL: String =
     s"""
-      |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.others_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.ready, p.time_limit_ms, p.space_limit_mb, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
       |from problems p
       |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
       |where p.slug = ?

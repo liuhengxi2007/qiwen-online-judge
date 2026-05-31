@@ -33,6 +33,11 @@ const allowedExceptions = new Map([
 const usedExceptions = new Set()
 
 const scopedObjectSubdirectories = ['request', 'response']
+const backendInternalFrontendContractMirrors = new Map([
+  ['problem', new Set(['ProblemDataManifest', 'ProblemDataManifestEntry'])],
+  ['submission', new Set(['ClaimedSubmission', 'SubmissionJudgeState'])],
+  ['user', new Set(['UserProfileSettings'])],
+])
 
 function read(relativePath) {
   return readFileSync(resolve(root, relativePath), 'utf8').replace(/\r\n/g, '\n')
@@ -114,14 +119,38 @@ function collectFrontendObjectFiles() {
 function collectBackendObjectFiles() {
   const backendDomainsRoot = 'backend/src/main/scala/domains'
   const backendSharedObjectsRoot = 'backend/src/main/scala/shared/objects'
-  const domainFiles = directDirectories(backendDomainsRoot).flatMap((directory) =>
+  const domainDirectories = directDirectories(backendDomainsRoot)
+  const domainFiles = domainDirectories.flatMap((directory) =>
     collectScopedObjectFiles('backend', directory.name, join(directory.path, 'objects'), '.scala'),
+  )
+  const internalContractFiles = domainDirectories.flatMap((directory) =>
+    collectBackendInternalFrontendContractFiles(directory),
   )
 
   return indexObjectFiles([
     ...domainFiles,
+    ...internalContractFiles,
     ...collectScopedObjectFiles('backend', 'shared', backendSharedObjectsRoot, '.scala'),
   ])
+}
+
+function collectBackendInternalFrontendContractFiles(directory) {
+  const mirroredNames = backendInternalFrontendContractMirrors.get(directory.name)
+  if (!mirroredNames) {
+    return []
+  }
+
+  return directFiles(join(directory.path, 'objects', 'internal'), '.scala')
+    .filter((path) => mirroredNames.has(objectFileName(path)))
+    .map((path) => ({
+      side: 'backend',
+      scope: directory.name,
+      subdirectory: null,
+      name: objectFileName(path),
+      key: objectFileKey(directory.name, null, path),
+      path,
+      required: false,
+    }))
 }
 
 function stripComments(source) {

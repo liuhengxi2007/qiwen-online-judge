@@ -6,7 +6,7 @@ import domains.auth.objects.request.UpdateUserPermissionsRequest
 import domains.auth.objects.response.AuthAccountListItem
 import domains.auth.utils.AuthAccountRules
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.user.api.UserProfileRecords
+import domains.user.api.FindUserProfileSettings
 import domains.user.objects.Username
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -49,7 +49,7 @@ object UpdateAccountPermissions extends SiteManagerApi[(Username, UpdateUserPerm
       user <- updated match
         case Some(user) => IO.pure(user)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      profile <- UserProfileRecords.findSettings(connection, user.username).flatMap {
+      profile <- FindUserProfileSettings.plan(connection, user.username).flatMap {
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }

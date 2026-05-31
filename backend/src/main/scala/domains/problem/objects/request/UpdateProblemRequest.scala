@@ -12,7 +12,7 @@ final case class UpdateProblemRequest(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 )
 
 object UpdateProblemRequest:

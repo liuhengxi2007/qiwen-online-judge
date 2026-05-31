@@ -3,7 +3,7 @@ package domains.usergroup.table.user_group
 
 
 import domains.user.objects.{DisplayName, Username}
-import domains.usergroup.objects.{AddUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.objects.{NewUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
 import domains.usergroup.objects.response.{UserGroupSummary}
 
 import java.sql.ResultSet
@@ -41,10 +41,10 @@ object UserGroupTableSupport:
       joinedAt = resultSet.getTimestamp("joined_at").toInstant
     )
 
-  def encodeAddUserGroupMemberRoleColumn(value: AddUserGroupMemberRole): String =
+  def encodeNewUserGroupMemberRoleColumn(value: NewUserGroupMemberRole): String =
     value match
-      case AddUserGroupMemberRole.Manager => "manager"
-      case AddUserGroupMemberRole.Member => "member"
+      case NewUserGroupMemberRole.Manager => "manager"
+      case NewUserGroupMemberRole.Member => "member"
 
   def encodeUserGroupRoleColumn(value: UserGroupRole): String =
     value match

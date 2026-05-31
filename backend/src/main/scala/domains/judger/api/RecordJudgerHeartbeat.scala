@@ -19,7 +19,7 @@ import java.sql.Connection
 final case class RecordJudgerHeartbeat(judgeConfig: JudgeConfig) extends PublicApi[JudgerId, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/judgers/:judgerId/heartbeat")
+  override val path: ApiPath = ApiPath("/api/worker/judge/judgers/:judgerId/heartbeat")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

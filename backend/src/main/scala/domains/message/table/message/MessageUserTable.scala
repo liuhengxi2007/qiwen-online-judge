@@ -10,7 +10,7 @@ object MessageUserTable:
   private val userExistsSQL: String =
     """
       |select 1
-      |from auth_users
+      |from auth_accounts
       |where lower(username) = lower(?)
       |""".stripMargin
 

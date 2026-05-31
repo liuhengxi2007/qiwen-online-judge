@@ -13,7 +13,7 @@ object SubmissionTableSchema:
       |create table if not exists submissions (
       |  id uuid primary key,
       |  problem_id uuid not null references problems(id) on delete cascade,
-      |  submitter_username varchar(120) not null references auth_users(username),
+      |  submitter_username varchar(120) not null references auth_accounts(username),
       |  language varchar(32) not null,
       |  status varchar(32) not null default 'queued',
       |  verdict varchar(64),

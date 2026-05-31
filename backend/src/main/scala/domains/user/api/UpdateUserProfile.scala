@@ -7,7 +7,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.user.objects.request.UpdateOwnProfileRequest
 import domains.user.objects.response.UserSettingsResponse
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileTable
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
@@ -39,11 +39,11 @@ object UpdateUserProfile extends AuthenticatedApi[(Username, UpdateOwnProfileReq
         targetUsername.value == actor.username.value || actor.siteManager,
         HttpApiError.forbidden(ApiMessages.siteManagerRequired)
       )
-      maybeTargetProfile <- UserTable.findSettingsByUsername(connection, targetUsername)
+      maybeTargetProfile <- UserProfileTable.findSettingsByUsername(connection, targetUsername)
       targetProfile <- maybeTargetProfile match
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      updated <- UserTable.updateSettings(
+      updated <- UserProfileTable.updateSettings(
         connection,
         targetProfile.username,
         displayName = request.displayName,
@@ -55,7 +55,7 @@ object UpdateUserProfile extends AuthenticatedApi[(Username, UpdateOwnProfileReq
       _ <- updated match
         case Some(_) => IO.unit
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      settings <- UserTable.findUserSettingsByUsername(connection, targetUsername).flatMap {
+      settings <- UserProfileTable.findUserSettingsByUsername(connection, targetUsername).flatMap {
         case Some(settings) => IO.pure(settings)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }

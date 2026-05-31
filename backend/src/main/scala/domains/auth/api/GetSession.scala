@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.auth.objects.response.SessionResponse
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.user.api.UserProfileRecords
+import domains.user.api.FindUserProfileSettings
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -30,7 +30,7 @@ object GetSession extends AuthenticatedApi[Unit, SessionResponse]:
         case Some(account) => IO.pure(account)
         case None => HttpApiError.raise(HttpApiError.unauthorized(ApiMessages.authenticationRequired))
       }
-      profile <- UserProfileRecords.findSettings(connection, actor.username).flatMap {
+      profile <- FindUserProfileSettings.plan(connection, actor.username).flatMap {
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }

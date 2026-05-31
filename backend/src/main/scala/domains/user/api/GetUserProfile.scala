@@ -7,7 +7,7 @@ import domains.blog.api.GetBlogContributionForAuthor
 
 import domains.user.objects.{UserContribution, Username}
 import domains.user.objects.response.UserProfileResponse
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.{UserProfileQueryTable, UserProfileTable}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -29,13 +29,13 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
 
   override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[UserProfileResponse] =
     val _ = actor
-    UserTable.findSettingsByUsername(connection, targetUsername).flatMap {
+    UserProfileTable.findSettingsByUsername(connection, targetUsername).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       case Some(targetProfile) =>
         for
           contribution <- GetBlogContributionForAuthor.plan(connection, targetUsername).map(_.contribution)
-          acceptedProblems <- UserTable.listAcceptedProblems(connection, targetUsername)
+          acceptedProblems <- UserProfileQueryTable.listAcceptedProblems(connection, targetUsername)
         yield UserProfileResponse(
           username = targetProfile.username,
           displayName = targetProfile.displayName,

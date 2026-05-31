@@ -16,7 +16,7 @@ object ProblemSetTableSchema:
       |  title varchar(120) not null,
       |  description text not null,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
-      |  creator_username varchar(120) not null references auth_users(username),
+      |  creator_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);

@@ -37,10 +37,10 @@ export function CreateProblemPage() {
 
 function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
   const { t } = useI18n()
-  const othersSubmissionAccessOptions = [
-    { value: 'none', label: t('problem.others.none.label'), description: t('problem.others.none.description') },
-    { value: 'summary', label: t('problem.others.summary.label'), description: t('problem.others.summary.description') },
-    { value: 'detail', label: t('problem.others.detail.label'), description: t('problem.others.detail.description') },
+  const otherUserSubmissionAccessOptions = [
+    { value: 'none', label: t('problem.otherUserSubmissionAccess.none.label'), description: t('problem.otherUserSubmissionAccess.none.description') },
+    { value: 'summary', label: t('problem.otherUserSubmissionAccess.summary.label'), description: t('problem.otherUserSubmissionAccess.summary.description') },
+    { value: 'detail', label: t('problem.otherUserSubmissionAccess.detail.label'), description: t('problem.otherUserSubmissionAccess.detail.description') },
   ] as const
   const navigate = useNavigate()
   const model = useCreateProblemPageModel(canCreate)
@@ -54,7 +54,7 @@ function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
     model.grantedGroupsInput.trim().length > 0 ||
     model.managerUsersInput.trim().length > 0 ||
     model.managerGroupsInput.trim().length > 0 ||
-    model.othersSubmissionAccess !== 'none'
+    model.otherUserSubmissionAccess !== 'none'
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -122,13 +122,13 @@ function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
           />
 
           <div className="space-y-2">
-            <Label htmlFor="problem-others-submission-access">{t('problem.create.othersSubmissionAccess')}</Label>
-            <Select value={model.othersSubmissionAccess} onValueChange={model.setOthersSubmissionAccess}>
-              <SelectTrigger id="problem-others-submission-access" className="rounded-2xl">
+            <Label htmlFor="problem-other-user-submission-access">{t('problem.create.otherUserSubmissionAccess')}</Label>
+            <Select value={model.otherUserSubmissionAccess} onValueChange={model.setOtherUserSubmissionAccess}>
+              <SelectTrigger id="problem-other-user-submission-access" className="rounded-2xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {othersSubmissionAccessOptions.map((option) => (
+                {otherUserSubmissionAccessOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -136,7 +136,7 @@ function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
               </SelectContent>
             </Select>
             <p className="text-xs text-slate-500">
-              {othersSubmissionAccessOptions.find((option) => option.value === model.othersSubmissionAccess)?.description}
+              {otherUserSubmissionAccessOptions.find((option) => option.value === model.otherUserSubmissionAccess)?.description}
             </p>
           </div>
 

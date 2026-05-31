@@ -14,7 +14,7 @@ import java.sql.Connection
 object GetSubmissionJudgeState extends InternalOnlyApi[SubmissionId, Option[SubmissionJudgeState]]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/submissions/judge-state")
+  override val path: ApiPath = ApiPath("/api/internal/submissions/judge/state")
 
   override def plan(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionJudgeState]] =
     SubmissionQueryTable

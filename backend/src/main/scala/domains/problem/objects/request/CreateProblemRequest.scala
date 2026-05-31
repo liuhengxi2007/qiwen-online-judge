@@ -13,7 +13,7 @@ final case class CreateProblemRequest(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 )
 
 object CreateProblemRequest:

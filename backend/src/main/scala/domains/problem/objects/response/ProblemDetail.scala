@@ -20,7 +20,7 @@ final case class ProblemDetail(
   timeLimitMs: ProblemTimeLimitMs,
   spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
-  othersSubmissionAccess: OthersSubmissionAccess,
+  otherUserSubmissionAccess: OtherUserSubmissionAccess,
   creator: UserIdentity,
   canManage: Boolean,
   createdAt: Instant,

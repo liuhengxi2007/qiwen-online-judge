@@ -18,7 +18,7 @@ import java.sql.Connection
 final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[RegisterJudgerRequest, RegisterJudgerResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/judgers/register")
+  override val path: ApiPath = ApiPath("/api/worker/judge/judgers/register")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[RegisterJudgerResponse] = summon[Encoder[RegisterJudgerResponse]]
 

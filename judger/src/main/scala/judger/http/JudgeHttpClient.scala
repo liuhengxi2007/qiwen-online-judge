@@ -18,7 +18,7 @@ final case class LeaseExpiredException(message: String) extends RuntimeException
 final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
   def registerJudger: IO[RegisterJudgerResponse] =
     requestExpectJson[RegisterJudgerResponse](
-      path = "/api/internal/judgers/register",
+      path = "/api/worker/judge/judgers/register",
       method = "POST",
       body = Some(
         RegisterJudgerRequest(
@@ -32,14 +32,14 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
 
   def heartbeat(judgerId: JudgerId): IO[Unit] =
     requestRaw(
-      path = s"/api/internal/judgers/${URLEncoder.encode(judgerId.value, StandardCharsets.UTF_8)}/heartbeat",
+      path = s"/api/worker/judge/judgers/${URLEncoder.encode(judgerId.value, StandardCharsets.UTF_8)}/heartbeat",
       method = "POST",
       body = Some(JudgerHeartbeatRequest().asJson.noSpaces)
     ).flatMap(handleHeartbeatResponse(judgerId, _))
 
   def claimTask(judgerId: JudgerId): IO[Option[JudgeTask]] =
     requestRaw(
-      path = "/api/internal/judge/claim",
+      path = "/api/worker/judge/claim",
       method = "POST",
       body = Some(ClaimJudgeTaskRequest(judgerId).asJson.noSpaces)
     ).flatMap { response =>
@@ -52,7 +52,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
 
   def reportResult(submissionId: SubmissionId, result: ReportJudgeResultRequest): IO[Unit] =
     requestExpectSuccess(
-      path = s"/api/internal/judge/submissions/${submissionId.value}/complete",
+      path = s"/api/worker/judge/submissions/${submissionId.value}/complete",
       method = "POST",
       body = Some(result.asJson.noSpaces)
     ).void
@@ -60,7 +60,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
   def downloadProblemData(problemSlug: ProblemSlug, path: String): IO[Array[Byte]] =
     requestBytes(
       path =
-        s"/api/internal/judge/problem-data?problemSlug=${encode(problemSlug.value)}&path=${encode(path)}",
+        s"/api/worker/judge/problem-data?problemSlug=${encode(problemSlug.value)}&path=${encode(path)}",
       method = "GET"
     )
 

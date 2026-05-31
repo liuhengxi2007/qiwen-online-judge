@@ -32,10 +32,10 @@ object MessageBlockTable:
   private val listBlocksSQL: String =
     """
       |select mb.blocked_username,
-      |       au.display_name as blocked_display_name,
+      |       up.display_name as blocked_display_name,
       |       mb.created_at
       |from message_blocks mb
-      |join auth_users au on lower(au.username) = lower(mb.blocked_username)
+      |join user_profiles up on lower(up.username) = lower(mb.blocked_username)
       |where lower(mb.owner_username) = lower(?)
       |order by mb.created_at desc, lower(mb.blocked_username) asc
       |""".stripMargin
@@ -62,10 +62,10 @@ object MessageBlockTable:
   private val readBlockEntrySQL: String =
     """
       |select mb.blocked_username,
-      |       au.display_name as blocked_display_name,
+      |       up.display_name as blocked_display_name,
       |       mb.created_at
       |from message_blocks mb
-      |join auth_users au on lower(au.username) = lower(mb.blocked_username)
+      |join user_profiles up on lower(up.username) = lower(mb.blocked_username)
       |where lower(mb.owner_username) = lower(?)
       |  and lower(mb.blocked_username) = lower(?)
       |""".stripMargin

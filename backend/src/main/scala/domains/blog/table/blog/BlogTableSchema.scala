@@ -13,7 +13,7 @@ object BlogTableSchema:
       |create table if not exists blogs (
       |  id uuid primary key,
       |  public_id bigint unique not null,
-      |  author_username varchar(120) not null references auth_users(username),
+      |  author_username varchar(120) not null references auth_accounts(username),
       |  title varchar(160) not null,
       |  content text not null,
       |  visibility varchar(16) not null default 'public',
@@ -57,7 +57,7 @@ object BlogTableSchema:
       |create table if not exists blog_problem_links (
       |  blog_id uuid not null references blogs(id) on delete cascade,
       |  problem_id uuid not null references problems(id) on delete cascade,
-      |  linked_by varchar(120) not null references auth_users(username),
+      |  linked_by varchar(120) not null references auth_accounts(username),
       |  linked_at timestamp not null,
       |  status varchar(16) not null default 'accepted',
       |  primary key (blog_id, problem_id)
@@ -163,7 +163,7 @@ object BlogTableSchema:
     """
       |create table if not exists blog_votes (
       |  blog_id uuid not null references blogs(id) on delete cascade,
-      |  username varchar(120) not null references auth_users(username) on delete cascade,
+      |  username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  vote varchar(16) not null,
       |  created_at timestamp not null,
       |  updated_at timestamp not null,
@@ -189,7 +189,7 @@ object BlogTableSchema:
       |  public_id bigint unique not null default nextval('blog_comment_public_id_seq'),
       |  blog_id uuid not null references blogs(id) on delete cascade,
       |  parent_comment_id uuid references blog_comments(id) on delete cascade,
-      |  author_username varchar(120) not null references auth_users(username) on delete cascade,
+      |  author_username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  content text not null,
       |  created_at timestamp not null,
       |  updated_at timestamp not null
@@ -216,7 +216,7 @@ object BlogTableSchema:
     """
       |create table if not exists blog_comment_votes (
       |  comment_id uuid not null references blog_comments(id) on delete cascade,
-      |  username varchar(120) not null references auth_users(username) on delete cascade,
+      |  username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  vote varchar(16) not null,
       |  created_at timestamp not null,
       |  updated_at timestamp not null,

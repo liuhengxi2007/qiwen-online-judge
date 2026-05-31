@@ -94,9 +94,9 @@ object UserGroupTable:
 
   private val listMembersSQL: String =
     """
-      |select ugm.username, au.display_name, ugm.role, ugm.joined_at
+      |select ugm.username, up.display_name, ugm.role, ugm.joined_at
       |from user_group_memberships ugm
-      |join auth_users au on au.username = ugm.username
+      |join user_profiles up on up.username = ugm.username
       |where ugm.user_group_id = ?
       |order by
       |  case ugm.role
@@ -248,7 +248,7 @@ object UserGroupTable:
   private val userExistsSQL: String =
     """
       |select 1
-      |from auth_users
+      |from auth_accounts
       |where username = ?
       |""".stripMargin
 
@@ -296,7 +296,7 @@ object UserGroupTable:
           try
             statement.setObject(1, groupId.value)
             statement.setString(2, request.username.value)
-            statement.setString(3, encodeAddUserGroupMemberRoleColumn(request.role))
+            statement.setString(3, encodeNewUserGroupMemberRoleColumn(request.role))
             statement.setTimestamp(4, Timestamp.from(Instant.now()))
             statement.executeUpdate()
             AddMemberTableResult.Added

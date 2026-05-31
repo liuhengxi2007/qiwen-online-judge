@@ -6,7 +6,7 @@ import domains.auth.objects.request.{UpdateManagedUserAccountRequest, UpdateOwnA
 import domains.auth.objects.response.SessionResponse
 import domains.auth.table.auth_account.AuthAccountTable
 import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
-import domains.user.api.UserProfileRecords
+import domains.user.api.FindUserProfileSettings
 import domains.user.objects.Username
 import io.circe.Json
 import io.circe.syntax.*
@@ -109,7 +109,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
       account <- updated match
         case Some(account) => IO.pure(account)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      profile <- UserProfileRecords.findSettings(connection, account.username).flatMap {
+      profile <- FindUserProfileSettings.plan(connection, account.username).flatMap {
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }

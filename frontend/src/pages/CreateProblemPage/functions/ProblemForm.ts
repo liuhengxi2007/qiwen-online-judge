@@ -1,4 +1,4 @@
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { parseProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import { parseProblemStatementText } from '@/objects/problem/ProblemStatementText'
@@ -19,7 +19,7 @@ export type ProblemDraft = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
 type ProblemDraftValidation =
@@ -72,7 +72,7 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
       timeLimitMs: timeLimitResult.value,
       spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
-      othersSubmissionAccess: draft.othersSubmissionAccess,
+      otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
     },
   }
 }

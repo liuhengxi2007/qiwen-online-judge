@@ -12,8 +12,8 @@ object MessageTableSchema:
     """
       |create table if not exists message_conversations (
       |  id uuid primary key,
-      |  participant_a_username varchar(120) not null references auth_users(username) on delete cascade,
-      |  participant_b_username varchar(120) not null references auth_users(username) on delete cascade,
+      |  participant_a_username varchar(120) not null references auth_accounts(username) on delete cascade,
+      |  participant_b_username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  created_at timestamp not null,
       |  updated_at timestamp not null,
       |  last_message_at timestamp not null,
@@ -38,8 +38,8 @@ object MessageTableSchema:
       |create table if not exists direct_messages (
       |  id uuid primary key,
       |  conversation_id uuid not null references message_conversations(id) on delete cascade,
-      |  sender_username varchar(120) not null references auth_users(username) on delete cascade,
-      |  recipient_username varchar(120) not null references auth_users(username) on delete cascade,
+      |  sender_username varchar(120) not null references auth_accounts(username) on delete cascade,
+      |  recipient_username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  content text not null,
       |  created_at timestamp not null,
       |  read_at timestamp null
@@ -61,8 +61,8 @@ object MessageTableSchema:
   val initBlockTableSql: String =
     """
       |create table if not exists message_blocks (
-      |  owner_username varchar(120) not null references auth_users(username) on delete cascade,
-      |  blocked_username varchar(120) not null references auth_users(username) on delete cascade,
+      |  owner_username varchar(120) not null references auth_accounts(username) on delete cascade,
+      |  blocked_username varchar(120) not null references auth_accounts(username) on delete cascade,
       |  created_at timestamp not null,
       |  primary key (owner_username, blocked_username),
       |  constraint message_blocks_distinct_users_check check (lower(owner_username) <> lower(blocked_username))

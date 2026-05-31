@@ -36,7 +36,7 @@ object SubmissionQueryTable:
       |  ? = true
       |  or s.submitter_username = ?
       |  or (
-      |    p.others_submission_access in ('summary', 'detail')
+      |    p.other_user_submission_access in ('summary', 'detail')
       |    and (
       |      p.base_access = 'public'
       |      or exists (
@@ -119,7 +119,7 @@ object SubmissionQueryTable:
       |  ? = true
       |  or s.submitter_username = ?
       |  or (
-      |    p.others_submission_access = 'detail'
+      |    p.other_user_submission_access = 'detail'
       |    and (
       |      p.base_access = 'public'
       |      or exists (

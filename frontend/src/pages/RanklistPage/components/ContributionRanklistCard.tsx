@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { contributionTextClassName } from '@/pages/objects/UserDisplayLabel'
 import { userContributionValue } from '@/objects/user/UserContribution'
-import type { UserRanklistItem } from '@/objects/user/response/UserRanklistItem'
+import type { UserContributionRanklistItem } from '@/objects/user/response/UserContributionRanklistItem'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import { RanklistPagination } from './RanklistPagination'
@@ -13,7 +13,7 @@ type ContributionRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
   errorMessage: string
-  items: UserRanklistItem[]
+  items: UserContributionRanklistItem[]
   isLoading: boolean
   pageSize: number
   totalPages: number

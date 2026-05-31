@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import {
   initialUserGroupEditorState,
@@ -19,7 +19,7 @@ export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
     setName: (value: string) => dispatch({ type: 'set_name', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),
     setMemberUsername: (value: string) => dispatch({ type: 'set_member_username', value }),
-    setMemberRole: (value: AddUserGroupMemberRole) => dispatch({ type: 'set_member_role', value }),
+    setMemberRole: (value: NewUserGroupMemberRole) => dispatch({ type: 'set_member_role', value }),
     clearMemberDraft: () => dispatch({ type: 'clear_member_draft' }),
   }
 }

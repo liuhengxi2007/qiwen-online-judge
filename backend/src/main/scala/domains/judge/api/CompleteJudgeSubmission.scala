@@ -21,7 +21,7 @@ import java.sql.Connection
 final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends PublicApi[(SubmissionId, ReportJudgeResultRequest), SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/judge/submissions/:submissionId/complete")
+  override val path: ApiPath = ApiPath("/api/worker/judge/submissions/:submissionId/complete")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

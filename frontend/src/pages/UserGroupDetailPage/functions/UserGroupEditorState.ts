@@ -1,4 +1,4 @@
-import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import { userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
 import { userGroupNameValue } from '@/objects/usergroup/UserGroupName'
@@ -7,7 +7,7 @@ export type UserGroupEditorState = {
   name: string
   description: string
   memberUsername: string
-  memberRole: AddUserGroupMemberRole
+  memberRole: NewUserGroupMemberRole
 }
 
 export type UserGroupEditorAction =
@@ -15,7 +15,7 @@ export type UserGroupEditorAction =
   | { type: 'set_name'; value: string }
   | { type: 'set_description'; value: string }
   | { type: 'set_member_username'; value: string }
-  | { type: 'set_member_role'; value: AddUserGroupMemberRole }
+  | { type: 'set_member_role'; value: NewUserGroupMemberRole }
   | { type: 'clear_member_draft' }
 
 export const initialUserGroupEditorState: UserGroupEditorState = {

@@ -6,7 +6,7 @@ import domains.auth.objects.SiteManagerUser
 
 import domains.user.objects.request.{UserListRequest, UserSearchQuery}
 import domains.user.objects.response.UserListResponse
-import domains.user.table.user.UserTable
+import domains.user.table.user_profile.UserProfileQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
@@ -31,4 +31,4 @@ object ListUsers extends SiteManagerApi[UserListRequest, UserListResponse]:
     )
 
   override def plan(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
-    UserTable.listUsers(connection, actor, request)
+    UserProfileQueryTable.listUsers(connection, actor, request)

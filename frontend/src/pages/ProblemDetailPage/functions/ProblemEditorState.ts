@@ -1,4 +1,4 @@
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import {
   grantedGroupsInputFromAccessPolicy,
@@ -18,7 +18,7 @@ export type ProblemEditorState = {
   grantedGroupsInput: string
   managerUsersInput: string
   managerGroupsInput: string
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
 export type ProblemEditorAction =
@@ -32,7 +32,7 @@ export type ProblemEditorAction =
   | { type: 'set_granted_groups_input'; value: string }
   | { type: 'set_manager_users_input'; value: string }
   | { type: 'set_manager_groups_input'; value: string }
-  | { type: 'set_others_submission_access'; value: OthersSubmissionAccess }
+  | { type: 'set_other_user_submission_access'; value: OtherUserSubmissionAccess }
 
 export const initialProblemEditorState: ProblemEditorState = {
   title: '',
@@ -44,7 +44,7 @@ export const initialProblemEditorState: ProblemEditorState = {
   grantedGroupsInput: '',
   managerUsersInput: '',
   managerGroupsInput: '',
-  othersSubmissionAccess: 'none',
+  otherUserSubmissionAccess: 'none',
 }
 
 export function hydrateProblemEditorState(problem: ProblemDetail | null): ProblemEditorState {
@@ -59,7 +59,7 @@ export function hydrateProblemEditorState(problem: ProblemDetail | null): Proble
         grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
         managerUsersInput: grantedManagerUsersInputFromAccessPolicy(problem.accessPolicy),
         managerGroupsInput: grantedManagerGroupsInputFromAccessPolicy(problem.accessPolicy),
-        othersSubmissionAccess: problem.othersSubmissionAccess,
+        otherUserSubmissionAccess: problem.otherUserSubmissionAccess,
       }
     : initialProblemEditorState
 }
@@ -89,7 +89,7 @@ export function reduceProblemEditorState(
       return { ...state, managerUsersInput: action.value }
     case 'set_manager_groups_input':
       return { ...state, managerGroupsInput: action.value }
-    case 'set_others_submission_access':
-      return { ...state, othersSubmissionAccess: action.value }
+    case 'set_other_user_submission_access':
+      return { ...state, otherUserSubmissionAccess: action.value }
   }
 }

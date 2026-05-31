@@ -1,4 +1,4 @@
-package domains.user.table.user
+package domains.user.table.user_profile
 
 
 
@@ -8,13 +8,13 @@ import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMo
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
 import domains.user.objects.internal.UserProfileSettings
-import domains.user.objects.response.{ManagedUserListItem, UserAcceptedRanklistItem, UserRanklistItem, UserSettingsResponse}
+import domains.user.objects.response.{ManagedUserListItem, UserAcceptedRanklistItem, UserContributionRanklistItem, UserSettingsResponse}
 import domains.user.objects.request.UserSearchQuery
 import domains.user.objects.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
 
 import java.sql.{PreparedStatement, ResultSet}
 
-object UserTableSupport:
+object UserProfileTableSupport:
 
   def readUserIdentity(resultSet: ResultSet): UserIdentity =
     val row = UserIdentitySql.readUserIdentityRow(resultSet)
@@ -63,8 +63,8 @@ object UserTableSupport:
       problemManager = resultSet.getBoolean("problem_manager")
     )
 
-  def readRanklistItem(resultSet: ResultSet): UserRanklistItem =
-    UserRanklistItem(
+  def readContributionRanklistItem(resultSet: ResultSet): UserContributionRanklistItem =
+    UserContributionRanklistItem(
       user = readUserIdentity(resultSet),
       contribution = UserContribution(BigDecimal(resultSet.getBigDecimal("contribution")))
     )

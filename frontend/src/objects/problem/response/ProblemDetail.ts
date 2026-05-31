@@ -1,5 +1,5 @@
 import type { UserIdentity } from '@/objects/user/UserIdentity'
-import type { OthersSubmissionAccess } from '@/objects/problem/OthersSubmissionAccess'
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemData } from '@/objects/problem/ProblemData'
 import type { ProblemId } from '@/objects/problem/ProblemId'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
@@ -20,7 +20,7 @@ export type ProblemDetail = AuditFields & {
   timeLimitMs: ProblemTimeLimitMs
   spaceLimitMb: ProblemSpaceLimitMb
   accessPolicy: ResourceAccessPolicy
-  othersSubmissionAccess: OthersSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
   creator: UserIdentity
   canManage: boolean
 }

@@ -31,7 +31,7 @@ final case class ClaimJudgeTask(
 ) extends PublicResponseApi[ClaimJudgeTaskRequest]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/internal/judge/claim")
+  override val path: ApiPath = ApiPath("/api/worker/judge/claim")
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[ClaimJudgeTaskRequest] =
     val _ = pathParams

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { AddUserGroupMember } from '@/apis/usergroup/AddUserGroupMember'
-import type { AddUserGroupMemberRole } from '@/objects/usergroup/AddUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateAddUserGroupMemberDraft } from '../functions/UserGroupForm'
@@ -16,7 +16,7 @@ export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
   const addMember = useCallback(
     async (
       username: string,
-      role: AddUserGroupMemberRole,
+      role: NewUserGroupMemberRole,
     ): Promise<{ ok: true; userGroup: UserGroupDetail; message: string } | { ok: false; message: string }> => {
       const validation = validateAddUserGroupMemberDraft(username, role)
       if (!validation.ok) {
