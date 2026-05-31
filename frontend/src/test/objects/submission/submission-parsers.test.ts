@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { isJudgeFailureReason } from '@/objects/submission/JudgeFailureReason'
 import { isSubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { parseSubmissionId } from '@/objects/submission/SubmissionId'
 import { parseSubmissionSourceCode } from '@/objects/submission/SubmissionSourceCode'
@@ -20,6 +21,8 @@ describe('submission-parsers', () => {
     expect(isSubmissionStatus('finished')).toBe(false)
     expect(isSubmissionVerdict('accepted')).toBe(true)
     expect(isSubmissionVerdict('pending')).toBe(false)
+    expect(isJudgeFailureReason('checker_runtime_failed')).toBe(true)
+    expect(isJudgeFailureReason('wrong_answer')).toBe(false)
     expect(isSubmissionVerdictFilter('pending')).toBe(true)
     expect(isSubmissionVerdictFilter('mystery')).toBe(false)
     expect(isSubmissionSort('time')).toBe(true)

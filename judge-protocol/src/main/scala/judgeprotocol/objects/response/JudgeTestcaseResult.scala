@@ -9,6 +9,7 @@ final case class JudgeTestcaseResult(
   score: BigDecimal,
   verdict: SubmissionVerdict,
   message: Option[String],
+  reason: Option[JudgeFailureReason],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long]
 )

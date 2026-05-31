@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.kernel.Ref
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.JudgeTask
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
 import judger.config.AppConfig
 import judger.http.JudgeHttpClient
 import judger.infra.{Cpp17Runtime, JudgeExecutor, ProblemDataCache, Python3Runtime}
@@ -58,6 +58,6 @@ final class JudgerService(
 
     (result.status, resultVerdict) match
       case (SubmissionStatus.Failed, _) | (_, Some(SubmissionVerdict.SystemError)) =>
-        logger.error(s"$summary ${result.judgeResult.flatMap(_.message).getOrElse("")}".trim)
+        logger.error(s"$summary ${result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("")}".trim)
       case _ =>
         IO.unit

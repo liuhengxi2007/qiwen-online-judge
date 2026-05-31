@@ -10,7 +10,7 @@ final case class JudgeSubtaskResult(
   verdict: SubmissionVerdict,
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
-  message: Option[String],
+  reason: Option[JudgeFailureReason],
   testcases: List[JudgeTestcaseResult]
 )
 

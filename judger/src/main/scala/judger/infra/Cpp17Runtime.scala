@@ -3,10 +3,10 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.JudgeTask
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
-import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
+import judger.objects.{RuntimeCommand, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -22,8 +22,8 @@ object Cpp17Runtime extends JudgeRuntime:
     workingDirectory: Path
   ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
     resolveCompilerPath(config).flatMap {
-      case Left(message) =>
-        IO.pure(Left(taskSystemError(task, message)))
+      case Left(_) =>
+        IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(compilerPath) =>
         val sourceFile = workingDirectory.resolve("main.cpp")
         for
@@ -39,17 +39,11 @@ object Cpp17Runtime extends JudgeRuntime:
           )
           result <-
             if compileResult.timedOut then
-              IO.pure(
-                Left(
-                  taskCompleted(
-                    task,
-                    SubmissionVerdict.CompileError,
-                    s"Compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
-                  )
-                )
-              )
+              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+            else if compileResult.exitCode.contains(127) then
+              IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
             else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError, formatCompileError(compilerPath, compileResult))))
+              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
             else
               ensureExecutableExists(workingDirectory.resolve("main")).as(Right(RuntimeCommand("/box/main", Nil, processLimit = 1)))
         yield result
@@ -68,14 +62,3 @@ object Cpp17Runtime extends JudgeRuntime:
               "Use a compiler under /usr or /bin, or adjust the judger configuration."
           )
     }
-
-  private def formatCompileError(compilerPath: String, result: ProcessResult): String =
-    val exitCode = result.exitCode.getOrElse(-1)
-    if exitCode == 127 then
-      renderDetail(s"Compiler '$compilerPath' was not found on the judger host (exit status 127).", result)
-    else
-      nonEmptyOrFallback(
-        result.stderr,
-        result.stdout,
-        s"Compilation failed with exit status $exitCode using $compilerPath."
-      )

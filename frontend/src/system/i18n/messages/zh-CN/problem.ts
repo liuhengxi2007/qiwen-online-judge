@@ -116,7 +116,7 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.submit.loading': '正在加载可提交的题目...',
   'problem.submit.description': '在这里提交解答，并在进入评测队列后跟踪结果。',
   'problem.submit.editorTitle': '提交编辑器',
-  'problem.submit.editorDescription': '选择语言并提交源代码。提交会立即保存，然后由评测系统拾取并更新状态、结果和评测消息。',
+  'problem.submit.editorDescription': '选择语言并提交源代码。提交会立即保存，然后由评测系统拾取并更新状态、结果和评测详情。',
   'problem.submit.languagePlaceholder': '选择语言',
   'problem.submit.sourceCode': '源代码',
   'problem.submit.sourcePlaceholder': '在这里编写你的解答。',

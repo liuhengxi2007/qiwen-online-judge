@@ -13,7 +13,8 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % "0.14.9",
       "io.circe" %% "circe-parser" % "0.14.9",
       "org.typelevel" %% "log4cats-slf4j" % "2.7.0",
-      "org.slf4j" % "slf4j-simple" % "2.0.13"
+      "org.slf4j" % "slf4j-simple" % "2.0.13",
+      "org.scalameta" %% "munit" % "1.1.1" % Test
     ),
     Compile / run / mainClass := Some("Main"),
     Compile / run / fork := true

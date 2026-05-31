@@ -3,7 +3,7 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeResult, JudgeSubtaskResult, JudgeTask}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask}
 import judger.config.AppConfig
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
@@ -108,19 +108,18 @@ object JudgeRuntimeSupport:
         throw RuntimeException(s"Prepared executable is not executable: ${path.toAbsolutePath}.")
     }
 
-  def taskCompleted(task: JudgeTask, verdict: SubmissionVerdict, message: String = ""): ReportJudgeResultRequest =
-    taskResult(task, SubmissionStatus.Completed, verdict, message)
+  def taskCompleted(task: JudgeTask, verdict: SubmissionVerdict): ReportJudgeResultRequest =
+    taskResult(task, SubmissionStatus.Completed, verdict, None)
 
-  def taskSystemError(task: JudgeTask, message: String): ReportJudgeResultRequest =
-    taskResult(task, SubmissionStatus.Failed, SubmissionVerdict.SystemError, message)
+  def taskSystemError(task: JudgeTask, reason: JudgeFailureReason): ReportJudgeResultRequest =
+    taskResult(task, SubmissionStatus.Failed, SubmissionVerdict.SystemError, Some(reason))
 
   private def taskResult(
     task: JudgeTask,
     status: SubmissionStatus,
     verdict: SubmissionVerdict,
-    message: String
+    reason: Option[JudgeFailureReason]
   ): ReportJudgeResultRequest =
-    val resultMessage = Option.when(message.trim.nonEmpty)(message)
     val subtasks = task.subtasks.map { subtask =>
       JudgeSubtaskResult(
         name = subtask.name,
@@ -128,7 +127,7 @@ object JudgeRuntimeSupport:
         verdict = verdict,
         timeUsedMs = None,
         memoryUsedKb = None,
-        message = resultMessage,
+        reason = reason,
         testcases = Nil
       )
     }
@@ -138,7 +137,7 @@ object JudgeRuntimeSupport:
         JudgeResult(
           score = BigDecimal(0),
           verdict = verdict,
-          message = resultMessage,
+          reason = reason,
           timeUsedMs = None,
           memoryUsedKb = None,
           subtasks = subtasks

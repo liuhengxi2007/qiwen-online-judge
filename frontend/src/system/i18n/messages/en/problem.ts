@@ -116,7 +116,7 @@ export const enProblemMessages: Record<string, string> = {
   'problem.submit.loading': 'Loading problem for submission...',
   'problem.submit.description': 'Submit your solution here and track its result after it enters the judging queue.',
   'problem.submit.editorTitle': 'Submission Editor',
-  'problem.submit.editorDescription': 'Choose a language and submit your source code. The submission is saved immediately, then picked up by the judge system and updated with status, verdict, and judge messages.',
+  'problem.submit.editorDescription': 'Choose a language and submit your source code. The submission is saved immediately, then picked up by the judge system and updated with status, verdict, and judge details.',
   'problem.submit.languagePlaceholder': 'Choose a language',
   'problem.submit.sourceCode': 'Source code',
   'problem.submit.sourcePlaceholder': 'Write your solution here.',

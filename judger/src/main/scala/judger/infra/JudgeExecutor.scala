@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import judgeprotocol.objects.{SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxExecutionRequest, SandboxLimits}
@@ -32,9 +32,8 @@ object JudgeExecutor:
             }
         }
       }
-    }.handleError { error =>
-      val message = Option(error.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(error.getClass.getName)
-      taskSystemError(task, s"${error.getClass.getSimpleName}: $message")
+    }.handleError { _ =>
+      taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)
     }
 
   private def judgeSubtasks(
@@ -76,48 +75,69 @@ object JudgeExecutor:
     command: RuntimeCommand,
     compiledCheckers: Map[String, RuntimeCommand]
   ): IO[JudgeTestcaseResult] =
-    for
-      input <- testcase.input.traverse(ref => problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, ref)).map(_.getOrElse(Array.emptyByteArray))
-      answerBytes <- problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, testcase.answer)
-      runResult <- sandbox.run(
-        SandboxExecutionRequest(
-          phase = s"run-${subtaskName}-${testcase.name.value}",
-          command = command.command,
-          args = command.args,
-          stdin = Some(input),
-          limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-          processLimit = command.processLimit
-        ),
-        workingDirectory
-      )
-      result <-
-        if runResult.timedOut then
-          IO.pure(testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.TimeLimitExceeded, Some(s"Time limit exceeded on testcase ${testcase.name.value}."), runResult))
-        else if runResult.exitCode.getOrElse(-1) != 0 then
-          IO.pure(testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.RuntimeError, Some(formatRuntimeError(testcase.name.value, command, runResult)), runResult))
-        else
-          scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.stdout, answerBytes, compiledCheckers).map {
-            case Right(score) =>
-              testcaseResult(
-                testcase,
-                score,
-                if score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
-                Option.when(score != BigDecimal(1))(s"Wrong answer on testcase ${testcase.name.value}."),
-                runResult
-              )
-            case Left(message) =>
-              testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, Some(message), runResult)
-          }
-    yield result
+    loadTestcaseData(task, testcase, problemDataCache).flatMap {
+      case Left(reason) =>
+        IO.pure(testcaseSystemError(testcase, reason))
+      case Right((input, answerBytes)) =>
+        for
+          runResult <- sandbox.run(
+            SandboxExecutionRequest(
+              phase = s"run-${subtaskName}-${testcase.name.value}",
+              command = command.command,
+              args = command.args,
+              stdin = Some(input),
+              limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
+              processLimit = command.processLimit
+            ),
+            workingDirectory
+          )
+          result <-
+            if runResult.timedOut then
+              IO.pure(testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.TimeLimitExceeded, None, None, runResult))
+            else if runResult.exitCode.getOrElse(-1) != 0 then
+              IO.pure(testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.RuntimeError, None, None, runResult))
+            else
+              scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.stdout, answerBytes, compiledCheckers).map {
+                case Right(checkerScore) =>
+                  testcaseResult(
+                    testcase,
+                    checkerScore.score,
+                    if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
+                    checkerScore.message,
+                    None,
+                    runResult
+                  )
+                case Left(reason) =>
+                  testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult)
+              }
+        yield result
+    }
 
   private def testcaseResult(
     testcase: JudgeTaskTestcase,
     score: BigDecimal,
     verdict: SubmissionVerdict,
     message: Option[String],
+    reason: Option[JudgeFailureReason],
     runResult: ProcessResult
   ): JudgeTestcaseResult =
-    JudgeTestcaseResult(testcase.name.value, clampScore(score), verdict, message, runResult.timeUsedMs, runResult.memoryUsedKb)
+    JudgeTestcaseResult(testcase.name.value, clampScore(score), verdict, message, reason, runResult.timeUsedMs, runResult.memoryUsedKb)
+
+  private def testcaseSystemError(testcase: JudgeTaskTestcase, reason: JudgeFailureReason): JudgeTestcaseResult =
+    JudgeTestcaseResult(testcase.name.value, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), None, None)
+
+  private def loadTestcaseData(
+    task: JudgeTask,
+    testcase: JudgeTaskTestcase,
+    problemDataCache: ProblemDataCache
+  ): IO[Either[JudgeFailureReason, (Array[Byte], Array[Byte])]] =
+    (for
+      input <- testcase.input.traverse(ref => problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, ref)).map(_.getOrElse(Array.emptyByteArray))
+      answerBytes <- problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, testcase.answer)
+    yield (input, answerBytes)).attempt.map {
+      case Right(data) => Right(data)
+      case Left(_) => Left(JudgeFailureReason.ProblemDataLoadFailed)
+    }
 
   private def scoreWithChecker(
     task: JudgeTask,
@@ -128,16 +148,16 @@ object JudgeExecutor:
     contestantOutput: String,
     answerBytes: Array[Byte],
     compiledCheckers: Map[String, RuntimeCommand]
-  ): IO[Either[String, BigDecimal]] =
+  ): IO[Either[JudgeFailureReason, CheckerScore]] =
     testcase.checker.`type` match
       case "builtin" if testcase.checker.name.contains("exact") =>
         val expectedOutput = String(answerBytes, StandardCharsets.UTF_8)
-        IO.pure(Right(if normalizeOutput(contestantOutput) == normalizeOutput(expectedOutput) then BigDecimal(1) else BigDecimal(0)))
+        IO.pure(Right(CheckerScore(if normalizeOutput(contestantOutput) == normalizeOutput(expectedOutput) then BigDecimal(1) else BigDecimal(0), None)))
       case "cpp" =>
         testcase.checker.source match
           case Some(source) =>
             compiledCheckers.get(source.path) match
-              case None => IO.pure(Left(s"Compiled checker was not found for ${source.path}."))
+              case None => IO.pure(Left(JudgeFailureReason.CheckerCompileFailed))
               case Some(checkerCommand) =>
                 val safeName = IsolateSandbox.sanitizeFilename(testcase.name.value)
                 val inputPath = workingDirectory.resolve(s"checker-$safeName.in")
@@ -161,8 +181,8 @@ object JudgeExecutor:
                     workingDirectory
                   )
                 yield parseCheckerResult(checkerResult)
-          case None => IO.pure(Left("C++ checker source is missing."))
-      case other => IO.pure(Left(s"Unsupported checker type: $other."))
+          case None => IO.pure(Left(JudgeFailureReason.SystemError))
+      case _ => IO.pure(Left(JudgeFailureReason.SystemError))
 
   private def prepareCheckers(
     task: JudgeTask,
@@ -183,30 +203,38 @@ object JudgeExecutor:
     sourceRef: JudgeTaskFileRef
   ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
     resolveCompilerPath(config).flatMap {
-      case Left(message) => IO.pure(Left(taskSystemError(task, message)))
+      case Left(_) => IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(compilerPath) =>
         val sourceName = s"checker-${math.abs(sourceRef.path.hashCode)}.cpp"
         val executableName = s"checker-${math.abs(sourceRef.path.hashCode)}"
-        for
-          sourceBytes <- problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, sourceRef)
-          _ <- IO.blocking {
-            Files.write(workingDirectory.resolve(sourceName), sourceBytes)
-            Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
-          }
-          compileResult <- runHostProcess(
-            command = compilerPath,
-            args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
-            cwd = workingDirectory,
-            stdin = None,
-            limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
-            stdoutName = s".$executableName.compile.stdout",
-            stderrName = s".$executableName.compile.stderr"
-          )
-          result <-
-            if compileResult.timedOut then IO.pure(Left(taskSystemError(task, s"Checker compilation timed out for ${sourceRef.path}.")))
-            else if compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(Left(taskSystemError(task, s"Checker compilation failed for ${sourceRef.path}.\n${compileResult.stderr.trim}")))
-            else ensureExecutableExists(workingDirectory.resolve(executableName)).as(Right(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)))
-        yield result
+        problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, sourceRef).attempt.flatMap {
+          case Left(_) =>
+            IO.pure(Left(taskSystemError(task, JudgeFailureReason.ProblemDataLoadFailed)))
+          case Right(sourceBytes) =>
+            for
+              _ <- IO.blocking {
+                Files.write(workingDirectory.resolve(sourceName), sourceBytes)
+                Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
+              }
+              compileResult <- runHostProcess(
+                command = compilerPath,
+                args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
+                cwd = workingDirectory,
+                stdin = None,
+                limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
+                stdoutName = s".$executableName.compile.stdout",
+                stderrName = s".$executableName.compile.stderr"
+              )
+              result <-
+                if compileResult.timedOut then IO.pure(Left(taskSystemError(task, JudgeFailureReason.CheckerCompileFailed)))
+                else if compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(Left(taskSystemError(task, JudgeFailureReason.CheckerCompileFailed)))
+                else
+                  ensureExecutableExists(workingDirectory.resolve(executableName)).attempt.map {
+                    case Right(_) => Right(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
+                    case Left(_) => Left(taskSystemError(task, JudgeFailureReason.CheckerCompileFailed))
+                  }
+            yield result
+        }
     }
 
   private def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
@@ -219,29 +247,35 @@ object JudgeExecutor:
 
   private val ScoreNumber: Regex = """(?<![\w.])(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\w.])""".r
 
-  private def parseCheckerResult(result: ProcessResult): Either[String, BigDecimal] =
-    if result.timedOut then Left("Checker timed out.")
-    else if result.exitCode.contains(0) then Right(BigDecimal(1))
+  private final case class CheckerScore(score: BigDecimal, message: Option[String])
+
+  private def parseCheckerResult(result: ProcessResult): Either[JudgeFailureReason, CheckerScore] =
+    if result.timedOut then Left(JudgeFailureReason.CheckerRuntimeFailed)
+    else if result.exitCode.contains(0) then Right(CheckerScore(BigDecimal(1), checkerReport(result)))
     else
       ScoreNumber.findFirstIn(s"${result.stdout}\n${result.stderr}") match
-        case Some(raw) => Right(clampScore(BigDecimal(raw)))
-        case None => Left(renderDetail("Checker failed without a parseable score in [0, 1].", result, includeIsolateDetail = true))
+        case Some(raw) => Right(CheckerScore(clampScore(BigDecimal(raw)), checkerReport(result)))
+        case None => Left(JudgeFailureReason.CheckerRuntimeFailed)
+
+  private def checkerReport(result: ProcessResult): Option[String] =
+    List(result.stderr.trim, result.stdout.trim).find(_.nonEmpty)
 
   private def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
     val score = aggregateScore(subtask.aggregation.score, testcases.map(_.score), subtask.testcases.map(_.scoreRatio))
     val verdict = aggregateVerdict(score, testcases.map(result => result.score -> result.verdict))
-    val message =
-      if verdict == SubmissionVerdict.Accepted then None
-      else testcases.find(_.verdict != SubmissionVerdict.Accepted).flatMap(_.message)
-    JudgeSubtaskResult(subtask.name, score, verdict, aggregateUsage(subtask.aggregation.time, testcases.flatMap(_.timeUsedMs)), aggregateUsage(subtask.aggregation.memory, testcases.flatMap(_.memoryUsedKb)), message, testcases)
+    val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
+      testcases.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
+    )
+    JudgeSubtaskResult(subtask.name, score, verdict, aggregateUsage(subtask.aggregation.time, testcases.flatMap(_.timeUsedMs)), aggregateUsage(subtask.aggregation.memory, testcases.flatMap(_.memoryUsedKb)), reason, testcases)
 
   private def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
     val rawScore = aggregateScore(task.aggregation.score, subtasks.map(_.score), task.subtasks.map(_.scoreRatio))
     val score = roundFinalScore(rawScore, task.roundingScale)
     val verdict = aggregateVerdict(score, subtasks.map(result => result.score -> result.verdict))
-    val resultWithoutMessage =
-      JudgeResult(score, verdict, None, aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)), aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)), subtasks)
-    resultWithoutMessage.copy(message = Some(resultMessage(resultWithoutMessage)))
+    val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
+      subtasks.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
+    )
+    JudgeResult(score, verdict, reason, aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)), aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)), subtasks)
 
   private def aggregateScore(kind: String, scores: List[BigDecimal], ratios: List[BigDecimal]): BigDecimal =
     kind match
@@ -271,23 +305,6 @@ object JudgeExecutor:
   private def containsSystemError(result: JudgeResult): Boolean =
     result.verdict == SubmissionVerdict.SystemError ||
       result.subtasks.exists(subtask => subtask.verdict == SubmissionVerdict.SystemError || subtask.testcases.exists(_.verdict == SubmissionVerdict.SystemError))
-
-  private def resultMessage(result: JudgeResult): String =
-    if result.verdict == SubmissionVerdict.Accepted then "Accepted."
-    else
-      result.subtasks.iterator
-        .find(_.verdict != SubmissionVerdict.Accepted)
-        .flatMap(subtask => subtask.message.orElse(subtask.testcases.find(_.verdict != SubmissionVerdict.Accepted).flatMap(_.message)))
-        .getOrElse(SubmissionVerdict.render(result.verdict))
-
-  private def formatRuntimeError(testcaseName: String, command: RuntimeCommand, result: ProcessResult): String =
-    val exitCode = result.exitCode.getOrElse(-1)
-    val detail =
-      if exitCode == 127 then
-        s"Runtime command '${command.command}' was not found or was not executable inside isolate sandbox on testcase $testcaseName."
-      else
-        s"Runtime error on testcase $testcaseName (exit status $exitCode)."
-    renderDetail(detail, result, includeIsolateDetail = true)
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()

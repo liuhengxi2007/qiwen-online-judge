@@ -3,10 +3,10 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.JudgeTask
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
-import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
+import judger.objects.{RuntimeCommand, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -22,8 +22,8 @@ object Python3Runtime extends JudgeRuntime:
     workingDirectory: Path
   ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
     resolveInterpreterPath(config).flatMap {
-      case Left(message) =>
-        IO.pure(Left(taskSystemError(task, message)))
+      case Left(_) =>
+        IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(interpreterPath) =>
         val sourceFile = workingDirectory.resolve("main.py")
         val bytecodeFile = workingDirectory.resolve("main.pyc")
@@ -40,17 +40,11 @@ object Python3Runtime extends JudgeRuntime:
           )
           result <-
             if compileResult.timedOut then
-              IO.pure(
-                Left(
-                  taskCompleted(
-                    task,
-                    SubmissionVerdict.CompileError,
-                    s"Python bytecode compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
-                  )
-                )
-              )
+              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+            else if compileResult.exitCode.contains(127) then
+              IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
             else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError, formatCompileError(interpreterPath, compileResult))))
+              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
             else
               ensureBytecodeExists(bytecodeFile).as(Right(RuntimeCommand(interpreterPath, List("/box/main.pyc"), processLimit = 1)))
         yield result
@@ -77,14 +71,3 @@ object Python3Runtime extends JudgeRuntime:
       if !Files.isRegularFile(path) then
         throw RuntimeException(s"Python bytecode path is not a regular file: ${path.toAbsolutePath}.")
     }
-
-  private def formatCompileError(interpreterPath: String, result: ProcessResult): String =
-    val exitCode = result.exitCode.getOrElse(-1)
-    if exitCode == 127 then
-      renderDetail(s"Python 3 interpreter '$interpreterPath' was not found on the judger host (exit status 127).", result)
-    else
-      nonEmptyOrFallback(
-        result.stderr,
-        result.stdout,
-        s"Python bytecode compilation failed with exit status $exitCode using $interpreterPath."
-      )

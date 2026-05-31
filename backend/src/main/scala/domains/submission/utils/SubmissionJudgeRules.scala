@@ -3,7 +3,7 @@ package domains.submission.utils
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.objects.internal.SubmissionDetailRecord
-import judgeprotocol.objects.response.JudgeResult
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult}
 
 import java.time.Instant
 
@@ -34,6 +34,7 @@ object SubmissionJudgeRules:
           case SubmissionStatus.Completed | SubmissionStatus.Failed =>
             for
               judgeResult <- completion.judgeResult.toRight("Terminal judge updates must include judgeResult.")
+              _ <- validateReasonMatchesVerdict(judgeResult)
               _ <- validateStatusMatchesResult(completion.status, judgeResult)
             yield
               state.copy(
@@ -84,9 +85,12 @@ object SubmissionJudgeRules:
 
   private def validateStatusMatchesResult(status: SubmissionStatus, judgeResult: JudgeResult): Either[String, Unit] =
     val hasSystemError = containsSystemError(judgeResult)
+    val hasReason = containsFailureReason(judgeResult)
     status match
       case SubmissionStatus.Completed if hasSystemError =>
         Left("Completed judge updates must not include a system error judgeResult.")
+      case SubmissionStatus.Completed if hasReason =>
+        Left("Completed judge updates must not include judge failure reasons.")
       case SubmissionStatus.Failed if !hasSystemError =>
         Left("Failed judge updates must include a system error judgeResult.")
       case SubmissionStatus.Completed | SubmissionStatus.Failed =>
@@ -94,9 +98,45 @@ object SubmissionJudgeRules:
       case _ =>
         Left("Judging may only finish with completed or failed status.")
 
+  private def validateReasonMatchesVerdict(judgeResult: JudgeResult): Either[String, Unit] =
+    validateNodeReason("judgeResult", judgeResult.verdict, judgeResult.reason)
+      .flatMap(_ =>
+        judgeResult.subtasks
+          .map(subtask =>
+            validateNodeReason(s"subtask ${subtask.name}", subtask.verdict, subtask.reason)
+              .flatMap(_ =>
+                subtask.testcases
+                  .map(testcase => validateNodeReason(s"testcase ${testcase.name}", testcase.verdict, testcase.reason))
+                  .collectFirst { case Left(message) => Left(message) }
+                  .getOrElse(Right(()))
+              )
+          )
+          .collectFirst { case Left(message) => Left(message) }
+          .getOrElse(Right(()))
+      )
+
+  private def validateNodeReason(
+    label: String,
+    verdict: judgeprotocol.objects.SubmissionVerdict,
+    reason: Option[JudgeFailureReason]
+  ): Either[String, Unit] =
+    if reason.nonEmpty && verdict != judgeprotocol.objects.SubmissionVerdict.SystemError then
+      Left(s"$label reason is only allowed with system_error verdict.")
+    else if verdict == judgeprotocol.objects.SubmissionVerdict.SystemError && reason.isEmpty then
+      Left(s"$label system_error verdict must include reason.")
+    else
+      Right(())
+
   private def containsSystemError(judgeResult: JudgeResult): Boolean =
     judgeResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
       judgeResult.subtasks.exists(subtask =>
         subtask.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
           subtask.testcases.exists(_.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError)
+      )
+
+  private def containsFailureReason(judgeResult: JudgeResult): Boolean =
+    judgeResult.reason.nonEmpty ||
+      judgeResult.subtasks.exists(subtask =>
+        subtask.reason.nonEmpty ||
+          subtask.testcases.exists(_.reason.nonEmpty)
       )

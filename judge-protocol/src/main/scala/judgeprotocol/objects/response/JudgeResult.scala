@@ -7,7 +7,7 @@ import judgeprotocol.objects.SubmissionVerdict
 final case class JudgeResult(
   score: BigDecimal,
   verdict: SubmissionVerdict,
-  message: Option[String],
+  reason: Option[JudgeFailureReason],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
   subtasks: List[JudgeSubtaskResult]

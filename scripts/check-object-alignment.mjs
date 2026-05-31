@@ -17,6 +17,10 @@ const allowedExceptions = new Map([
     'Backend-only site-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON contract.',
   ],
   [
+    'frontend-only:submission/JudgeFailureReason',
+    'Frontend submission detail mirrors judge-protocol JudgeFailureReason, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
+  [
     'frontend-only:submission/JudgeResult',
     'Frontend submission detail mirrors judge-protocol JudgeResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],

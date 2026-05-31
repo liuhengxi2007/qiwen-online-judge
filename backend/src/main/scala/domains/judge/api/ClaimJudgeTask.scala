@@ -16,9 +16,9 @@ import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCo
 import domains.submission.utils.SubmissionJudgeRules
 import domains.submission.utils.SubmissionProgramStorage
 import io.circe.syntax.*
-import judgeprotocol.objects.{JudgerId, SubmissionLanguage}
+import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
-import judgeprotocol.objects.response.{JudgeResult, JudgeTask}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeTask}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -50,12 +50,11 @@ final case class ClaimJudgeTask(
         case None =>
           HttpApiError.raise(HttpApiError.badRequest(s"Judger ${request.judgerId.value} is not registered or its lease expired."))
         case Some(supportedLanguages) =>
-          claimTask(connection, request.judgerId, supportedLanguages, claimedAt)
+          claimTask(connection, supportedLanguages, claimedAt)
     yield response
 
   private def claimTask(
     connection: Connection,
-    judgerId: JudgerId,
     supportedLanguages: List[SubmissionLanguage],
     claimedAt: Instant
   ): IO[Response[IO]] =
@@ -74,7 +73,7 @@ final case class ClaimJudgeTask(
             case Some(claimedSubmission) =>
               buildJudgeTask(connection, claimedSubmission).flatMap {
                 case Left(message) =>
-                  failClaimedJudgeTask(connection, claimedSubmission, judgerId, claimedAt, message).flatMap {
+                  failClaimedJudgeTask(connection, claimedSubmission, claimedAt).flatMap {
                     case Left(lifecycleMessage) => HttpApiError.raise(HttpApiError.badRequest(lifecycleMessage))
                     case Right(_) => HttpApiError.raise(HttpApiError.badRequest(message))
                   }
@@ -128,16 +127,14 @@ final case class ClaimJudgeTask(
   private def failClaimedJudgeTask(
     connection: Connection,
     claimedSubmission: ClaimedSubmission,
-    judgerId: JudgerId,
-    claimedAt: Instant,
-    message: String
+    claimedAt: Instant
   ): IO[Either[String, Unit]] =
     SubmissionJudgeRules.beginJudging(SubmissionJudgeState.queued, claimedAt).flatMap { runningState =>
       SubmissionJudgeRules.completeJudging(
         runningState,
         SubmissionJudgeCompletion(
           status = SubmissionStatus.Failed,
-          judgeResult = Some(systemErrorJudgeResult(s"${judgerId.value}: $message"))
+          judgeResult = Some(systemErrorJudgeResult)
         ),
         claimedAt
       )
@@ -152,11 +149,11 @@ final case class ClaimJudgeTask(
   private def taskResponse(task: JudgeTask): Response[IO] =
     Response[IO](status = Status.Ok).withEntity(task.asJson)
 
-  private def systemErrorJudgeResult(message: String): JudgeResult =
+  private def systemErrorJudgeResult: JudgeResult =
     JudgeResult(
       score = BigDecimal(0),
       verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
-      message = Some(message),
+      reason = Some(JudgeFailureReason.JudgeTaskBuildFailed),
       timeUsedMs = None,
       memoryUsedKb = None,
       subtasks = Nil

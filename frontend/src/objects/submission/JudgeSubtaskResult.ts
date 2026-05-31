@@ -1,3 +1,4 @@
+import type { JudgeFailureReason } from '@/objects/submission/JudgeFailureReason'
 import type { JudgeTestcaseResult } from '@/objects/submission/JudgeTestcaseResult'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 
@@ -7,6 +8,6 @@ export type JudgeSubtaskResult = {
   verdict: SubmissionVerdict
   timeUsedMs: number | null
   memoryUsedKb: number | null
-  message: string | null
+  reason: JudgeFailureReason | null
   testcases: JudgeTestcaseResult[]
 }
