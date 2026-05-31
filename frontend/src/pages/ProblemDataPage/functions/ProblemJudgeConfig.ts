@@ -1,7 +1,7 @@
 import { parseDocument } from 'yaml'
 
 import { parseProblemDataPath, problemDataPathValue } from '@/objects/problem/ProblemDataPath'
-import type { ProblemDataTreeNode } from '@/objects/problem/ProblemDataTreeNode'
+import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
 export const judgeConfigPath = 'judge.yaml' as const
 

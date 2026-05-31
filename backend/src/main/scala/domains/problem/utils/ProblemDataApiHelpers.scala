@@ -4,7 +4,8 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.objects.response.{ProblemDataTreeResponse, ProblemDetail}
-import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemDataTreeNode, ProblemDataTreeNodeKind, ProblemSlug}
+import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemSlug}
+import domains.problem.objects.response.{ProblemDataTreeNode, ProblemDataTreeNodeKind}
 import domains.problem.table.problem.ProblemQueryTable
 
 import java.security.MessageDigest

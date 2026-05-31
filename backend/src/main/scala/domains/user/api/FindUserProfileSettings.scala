@@ -3,7 +3,7 @@ package domains.user.api
 import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
 import domains.user.objects.Username
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import domains.user.table.user_profile.UserProfileTable
 import org.http4s.Method
 import shared.api.ApiPath

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseNewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
+import { parseNewUserGroupMemberRole } from '@/objects/usergroup/request/NewUserGroupMemberRole'
 import { parseUserGroupDescription, userGroupDescriptionValue } from '@/objects/usergroup/UserGroupDescription'
 import { parseUserGroupId } from '@/objects/usergroup/UserGroupId'
 import { parseUserGroupName } from '@/objects/usergroup/UserGroupName'

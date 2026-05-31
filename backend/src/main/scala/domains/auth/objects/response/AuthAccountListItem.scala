@@ -3,7 +3,7 @@ package domains.auth.objects.response
 import domains.auth.objects.EmailAddress
 import domains.auth.objects.internal.AuthAccount
 import domains.user.objects.{DisplayName, Username}
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

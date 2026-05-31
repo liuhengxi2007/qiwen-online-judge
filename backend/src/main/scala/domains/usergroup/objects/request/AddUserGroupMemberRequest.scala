@@ -1,7 +1,5 @@
 package domains.usergroup.objects.request
 
-import domains.usergroup.objects.*
-
 import domains.user.objects.Username
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

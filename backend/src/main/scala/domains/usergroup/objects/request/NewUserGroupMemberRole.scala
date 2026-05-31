@@ -1,7 +1,6 @@
-package domains.usergroup.objects
+package domains.usergroup.objects.request
 
 import io.circe.{Decoder, Encoder}
-
 
 enum NewUserGroupMemberRole:
   case Manager

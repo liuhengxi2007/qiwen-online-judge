@@ -1,7 +1,6 @@
-package domains.user.objects.internal
+package domains.user.objects
 
 import domains.problem.objects.ProblemTitleDisplayMode
-import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, UserPreferences, Username}
 
 final case class UserProfileSettings(
   username: Username,

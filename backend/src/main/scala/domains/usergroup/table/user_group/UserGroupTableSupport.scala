@@ -3,7 +3,8 @@ package domains.usergroup.table.user_group
 
 
 import domains.user.objects.{DisplayName, Username}
-import domains.usergroup.objects.{NewUserGroupMemberRole, UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.objects.{UserGroup, UserGroupDescription, UserGroupId, UserGroupMember, UserGroupName, UserGroupRole, UserGroupSlug}
+import domains.usergroup.objects.request.NewUserGroupMemberRole
 import domains.usergroup.objects.response.{UserGroupSummary}
 
 import java.sql.ResultSet

@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
 import domains.problem.objects.ProblemTitleDisplayMode
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import domains.user.table.user_profile.UserProfileTable
 import org.http4s.Method
 import shared.api.ApiPath

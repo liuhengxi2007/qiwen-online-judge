@@ -36,7 +36,6 @@ const scopedObjectSubdirectories = ['request', 'response']
 const backendInternalFrontendContractMirrors = new Map([
   ['problem', new Set(['ProblemDataManifest', 'ProblemDataManifestEntry'])],
   ['submission', new Set(['ClaimedSubmission', 'SubmissionJudgeState'])],
-  ['user', new Set(['UserProfileSettings'])],
 ])
 
 function read(relativePath) {

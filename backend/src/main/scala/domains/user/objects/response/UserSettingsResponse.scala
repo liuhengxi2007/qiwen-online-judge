@@ -1,7 +1,7 @@
 package domains.user.objects.response
 
 import domains.auth.objects.EmailAddress
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import domains.user.objects.{DisplayName, UserPreferences, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

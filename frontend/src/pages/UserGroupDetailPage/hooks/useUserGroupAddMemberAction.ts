@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { AddUserGroupMember } from '@/apis/usergroup/AddUserGroupMember'
-import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/request/NewUserGroupMemberRole'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateAddUserGroupMemberDraft } from '../functions/UserGroupForm'

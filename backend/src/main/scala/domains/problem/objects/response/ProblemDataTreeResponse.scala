@@ -1,6 +1,5 @@
 package domains.problem.objects.response
 
-import domains.problem.objects.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

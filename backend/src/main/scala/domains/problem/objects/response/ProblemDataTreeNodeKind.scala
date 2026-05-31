@@ -1,4 +1,4 @@
-package domains.problem.objects
+package domains.problem.objects.response
 
 import io.circe.{Decoder, Encoder}
 

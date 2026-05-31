@@ -1,5 +1,5 @@
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
-import type { ProblemDataTreeNode } from '@/objects/problem/ProblemDataTreeNode'
+import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
 export type ProblemDataPageState = {
   isSavingReady: boolean

@@ -5,7 +5,7 @@ import {
   validateJudgeConfigYaml,
 } from './ProblemJudgeConfig'
 import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
-import type { ProblemDataTreeNode } from '@/objects/problem/ProblemDataTreeNode'
+import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
 function file(path: string): ProblemDataTreeNode {
   const parsed = parseProblemDataPath(path)

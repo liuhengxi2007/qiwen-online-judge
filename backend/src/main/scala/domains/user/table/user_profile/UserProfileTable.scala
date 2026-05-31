@@ -5,7 +5,7 @@ package domains.user.table.user_profile
 import cats.effect.IO
 import domains.user.objects.{DisplayName, Username}
 import domains.problem.objects.ProblemTitleDisplayMode
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import domains.user.objects.response.UserSettingsResponse
 import domains.user.objects.{UserDisplayMode, UserLocale}
 import domains.user.table.user_profile.UserProfileTableSupport.*

@@ -1,6 +1,6 @@
 import { parseUsername } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
-import type { NewUserGroupMemberRole } from '@/objects/usergroup/NewUserGroupMemberRole'
+import type { NewUserGroupMemberRole } from '@/objects/usergroup/request/NewUserGroupMemberRole'
 import { parseUserGroupDescription } from '@/objects/usergroup/UserGroupDescription'
 import { parseUserGroupName } from '@/objects/usergroup/UserGroupName'
 import type { UpdateUserGroupRequest } from '@/objects/usergroup/request/UpdateUserGroupRequest'

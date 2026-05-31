@@ -7,7 +7,7 @@ import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
 import database.utils.UserIdentitySql
-import domains.user.objects.internal.UserProfileSettings
+import domains.user.objects.UserProfileSettings
 import domains.user.objects.response.{ManagedUserListItem, UserAcceptedRanklistItem, UserContributionRanklistItem, UserSettingsResponse}
 import domains.user.objects.request.UserSearchQuery
 import domains.user.objects.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
