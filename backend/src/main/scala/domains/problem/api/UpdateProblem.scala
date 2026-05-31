@@ -39,13 +39,9 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
     for
       title <- HttpApiError.fromEitherBadRequest(ProblemTitle.parse(request.title.value))
       statement <- HttpApiError.fromEitherBadRequest(ProblemStatementText.parse(request.statement.value))
-      timeLimitMs <- HttpApiError.fromEitherBadRequest(ProblemTimeLimitMs.parse(request.timeLimitMs.value))
-      spaceLimitMb <- HttpApiError.fromEitherBadRequest(ProblemSpaceLimitMb.parse(request.spaceLimitMb.value))
       validRequest = request.copy(
         title = title,
-        statement = statement,
-        timeLimitMs = timeLimitMs,
-        spaceLimitMb = spaceLimitMb
+        statement = statement
       )
       access <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
       problem <- access.problem match

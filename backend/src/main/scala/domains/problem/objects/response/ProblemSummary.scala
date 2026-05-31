@@ -16,8 +16,6 @@ final case class ProblemSummary(
   title: ProblemTitle,
   data: ProblemData,
   ready: Boolean,
-  timeLimitMs: ProblemTimeLimitMs,
-  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   otherUserSubmissionAccess: OtherUserSubmissionAccess,
   creator: UserIdentity,

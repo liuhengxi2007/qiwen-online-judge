@@ -18,8 +18,6 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
     async (draft: {
       title: string
       statement: string
-      timeLimitMs: number
-      spaceLimitMb: number
       baseAccess: BaseAccess
       grantedUsersInput: string
       grantedGroupsInput: string

@@ -1,8 +1,6 @@
 import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
-import { parseProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import { parseProblemStatementText } from '@/objects/problem/ProblemStatementText'
-import { parseProblemTimeLimitMs } from '@/objects/problem/ProblemTimeLimitMs'
 import { parseProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { CreateProblemRequest } from '@/objects/problem/request/CreateProblemRequest'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
@@ -12,8 +10,6 @@ export type ProblemDraft = {
   slug: string
   title: string
   statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -42,16 +38,6 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
     return { ok: false, message: statementResult.error }
   }
 
-  const timeLimitResult = parseProblemTimeLimitMs(draft.timeLimitMs)
-  if (!timeLimitResult.ok) {
-    return { ok: false, message: timeLimitResult.error }
-  }
-
-  const spaceLimitResult = parseProblemSpaceLimitMb(draft.spaceLimitMb)
-  if (!spaceLimitResult.ok) {
-    return { ok: false, message: spaceLimitResult.error }
-  }
-
   const accessPolicyResult = buildResourceAccessPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
@@ -69,8 +55,6 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
       slug: slugResult.value,
       title: titleResult.value,
       statement: statementResult.value,
-      timeLimitMs: timeLimitResult.value,
-      spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
       otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
     },

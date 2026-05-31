@@ -1,7 +1,7 @@
 package domains.submission.table.submission
 
 import cats.effect.IO
-import domains.problem.objects.{ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs}
+import domains.problem.objects.{ProblemId, ProblemSlug}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeState}
 import domains.submission.table.submission.SubmissionTableSupport.*
@@ -37,7 +37,7 @@ object SubmissionJudgeTable:
       |from next_submission ns, problems p
       |where s.id = ns.id
       |  and p.id = s.problem_id
-      |returning s.public_id, s.problem_id, p.slug as problem_slug, s.language, s.source_code, p.time_limit_ms, p.space_limit_mb
+      |returning s.public_id, s.problem_id, p.slug as problem_slug, s.language, s.source_code
       |""".stripMargin
 
   def claimNextForLanguages(
@@ -67,21 +67,13 @@ object SubmissionJudgeTable:
                 problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
                 problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
                 language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
-                sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
-                timeLimitMs = parseProblemTimeLimitColumn(resultSet.getInt("time_limit_ms")),
-                spaceLimitMb = parseProblemSpaceLimitColumn(resultSet.getInt("space_limit_mb"))
+                sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse)
               )
             )
           else None
         finally resultSet.close()
       finally statement.close()
     }
-
-  private def parseProblemTimeLimitColumn(rawValue: Int): ProblemTimeLimitMs =
-    ProblemTimeLimitMs.parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in problems.time_limit_ms: $message"), identity)
-
-  private def parseProblemSpaceLimitColumn(rawValue: Int): ProblemSpaceLimitMb =
-    ProblemSpaceLimitMb.parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in problems.space_limit_mb: $message"), identity)
 
   private val updateJudgeStateSQL: String =
     """

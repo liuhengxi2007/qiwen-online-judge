@@ -4,9 +4,7 @@ import { parseProblemDataFilename, problemDataFilenameValue } from '@/objects/pr
 import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import { parseProblemId } from '@/objects/problem/ProblemId'
 import { parseProblemSlug, problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { parseProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import { parseProblemStatementText } from '@/objects/problem/ProblemStatementText'
-import { parseProblemTimeLimitMs } from '@/objects/problem/ProblemTimeLimitMs'
 import { parseProblemTitle } from '@/objects/problem/ProblemTitle'
 import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
 
@@ -125,45 +123,6 @@ describe('problem-parsers', () => {
     expect(parseProblemSearchQuery('  dp  ')).toEqual({
       ok: true,
       value: 'dp',
-    })
-  })
-
-  it('validates numeric problem limits', () => {
-    expect(parseProblemTimeLimitMs(1)).toEqual({
-      ok: true,
-      value: 1,
-    })
-    expect(parseProblemTimeLimitMs(0)).toEqual({
-      ok: false,
-      error: 'Problem time limit must be between 1 and 600000 ms.',
-    })
-    expect(parseProblemTimeLimitMs(600001)).toEqual({
-      ok: false,
-      error: 'Problem time limit must be between 1 and 600000 ms.',
-    })
-    expect(parseProblemTimeLimitMs(1.5)).toEqual({
-      ok: false,
-      error: 'Problem time limit must be an integer.',
-    })
-    expect(parseProblemSpaceLimitMb(1)).toEqual({
-      ok: true,
-      value: 1,
-    })
-    expect(parseProblemSpaceLimitMb(256)).toEqual({
-      ok: true,
-      value: 256,
-    })
-    expect(parseProblemSpaceLimitMb(65536)).toEqual({
-      ok: true,
-      value: 65536,
-    })
-    expect(parseProblemSpaceLimitMb(65537)).toEqual({
-      ok: false,
-      error: 'Problem space limit must be between 1 and 65536 MB.',
-    })
-    expect(parseProblemSpaceLimitMb(1.5)).toEqual({
-      ok: false,
-      error: 'Problem space limit must be an integer.',
     })
   })
 })

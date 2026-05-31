@@ -5,7 +5,7 @@ package domains.problem.table.problem
 import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.request.ProblemSearchQuery
-import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemStatementText, ProblemTitle}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import shared.objects.access.{ResourceAccessPolicy, ResourceId}
@@ -30,8 +30,6 @@ object ProblemTableSupport:
       title = parseColumn("problems.title", resultSet.getString("title"), ProblemTitle.parse),
       data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
       ready = resultSet.getBoolean("ready"),
-      timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
-      spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       otherUserSubmissionAccess =
@@ -55,8 +53,6 @@ object ProblemTableSupport:
       statement = parseColumn("problems.statement_text", resultSet.getString("statement_text"), ProblemStatementText.parse),
       data = parseColumn("problems.data_name", Option(resultSet.getString("data_name")), ProblemData.parse),
       ready = resultSet.getBoolean("ready"),
-      timeLimitMs = parseColumn("problems.time_limit_ms", resultSet.getInt("time_limit_ms"), ProblemTimeLimitMs.parse),
-      spaceLimitMb = parseColumn("problems.space_limit_mb", resultSet.getInt("space_limit_mb"), ProblemSpaceLimitMb.parse),
       accessPolicy =
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       otherUserSubmissionAccess =

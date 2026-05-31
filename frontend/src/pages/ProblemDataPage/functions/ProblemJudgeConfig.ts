@@ -157,8 +157,8 @@ function validateLimits(value: unknown, label: string, ctx: ValidationContext): 
     return null
   }
 
-  const timeMs = validatePositiveInteger(value.timeMs, `${label}.timeMs`, ctx)
-  const memoryMb = validatePositiveInteger(value.memoryMb, `${label}.memoryMb`, ctx)
+  const timeMs = validateIntegerRange(value.timeMs, `${label}.timeMs`, 1, 600000, ctx)
+  const memoryMb = validateIntegerRange(value.memoryMb, `${label}.memoryMb`, 1, 65536, ctx)
   return timeMs !== null && memoryMb !== null ? { timeMs, memoryMb } : null
 }
 
@@ -316,13 +316,19 @@ function validateOptionalInteger(
   }
 }
 
-function validatePositiveInteger(value: unknown, label: string, ctx: ValidationContext): number | null {
+function validateIntegerRange(
+  value: unknown,
+  label: string,
+  min: number,
+  max: number,
+  ctx: ValidationContext,
+): number | null {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     ctx.errors.push(`${label} must be an integer.`)
     return null
   }
-  if (value <= 0) {
-    ctx.errors.push(`${label} must be greater than 0.`)
+  if (value < min || value > max) {
+    ctx.errors.push(`${label} must be between ${min} and ${max}.`)
     return null
   }
   return value

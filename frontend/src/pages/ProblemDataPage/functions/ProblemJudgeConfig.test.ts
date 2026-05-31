@@ -88,6 +88,30 @@ subtasks:
     }
   })
 
+  it('rejects out-of-range limits', () => {
+    const yaml = `version: 1
+limits:
+  timeMs: 600001
+  memoryMb: 65537
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - answer: tests/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('limits.timeMs must be between 1 and 600000.')
+      expect(result.errors).toContain('limits.memoryMb must be between 1 and 65536.')
+    }
+  })
+
   it('rejects invalid checker declarations and missing checker files', () => {
     const invalidBuiltin = validateJudgeConfigYaml(judgeConfigTemplate.replace('name: exact', 'name: fuzzy'), templateFiles)
     expect(invalidBuiltin.ok).toBe(false)

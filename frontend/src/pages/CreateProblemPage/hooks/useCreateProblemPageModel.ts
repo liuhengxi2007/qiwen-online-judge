@@ -60,8 +60,6 @@ export function useCreateProblemPageModel(canCreate: boolean) {
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setStatement: (value: string) => dispatch({ type: 'set_statement', value }),
-    setTimeLimitMs: (value: number) => dispatch({ type: 'set_time_limit_ms', value }),
-    setSpaceLimitMb: (value: number) => dispatch({ type: 'set_space_limit_mb', value }),
     setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
     setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),

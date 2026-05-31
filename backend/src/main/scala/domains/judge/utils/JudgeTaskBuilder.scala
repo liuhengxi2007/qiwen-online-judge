@@ -4,7 +4,7 @@ import cats.syntax.all.*
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.submission.objects.internal.ClaimedSubmission
-import judgeprotocol.objects.{ProblemSlug, ProblemSpaceLimitMb, ProblemTimeLimitMs, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseName}
+import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseName, TestcaseTimeLimitMs}
 import judgeprotocol.objects.response.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
@@ -48,9 +48,7 @@ object JudgeTaskBuilder:
       problemId = problem.id,
       problemSlug = problem.slug,
       language = domains.submission.objects.SubmissionLanguage.Cpp17,
-      sourceCode = domains.submission.objects.SubmissionSourceCode("int main() { return 0; }"),
-      timeLimitMs = problem.timeLimitMs,
-      spaceLimitMb = problem.spaceLimitMb
+      sourceCode = domains.submission.objects.SubmissionSourceCode("int main() { return 0; }")
     )
     parseConfigBytes(bytes, claimedSubmission, manifest).flatMap { task =>
       val rawPaths =
@@ -81,7 +79,7 @@ object JudgeTaskBuilder:
       version <- intAt(root, "version").flatMap(value => Either.cond(value == 1, value, "judge.yaml version must be 1."))
       roundingScale <- optionalIntAt(root, "roundingScale").map(_.getOrElse(6))
       _ <- Either.cond(roundingScale >= 0 && roundingScale <= 18, (), "roundingScale must be between 0 and 18.")
-      rootLimits <- limitsAt(root).map(_.orElse(Some(JudgeTaskLimits(ProblemTimeLimitMs(claimedSubmission.timeLimitMs.value), ProblemSpaceLimitMb(claimedSubmission.spaceLimitMb.value)))))
+      rootLimits <- limitsAt(root)
       rootChecker <- checkerAt(root)
       rootAggregation <- aggregationAt(root)
       subtaskMaps <- listOfMapsAt(root, "subtasks")
@@ -172,8 +170,8 @@ object JudgeTaskBuilder:
       case None => Right(None)
       case Some(limits) =>
         for
-          timeMs <- intAt(limits, "timeMs").flatMap(ProblemTimeLimitMs.parse)
-          memoryMb <- intAt(limits, "memoryMb").flatMap(ProblemSpaceLimitMb.parse)
+          timeMs <- intAt(limits, "timeMs").flatMap(TestcaseTimeLimitMs.parse)
+          memoryMb <- intAt(limits, "memoryMb").flatMap(TestcaseMemoryLimitMb.parse)
         yield Some(JudgeTaskLimits(timeMs, memoryMb))
     }
 

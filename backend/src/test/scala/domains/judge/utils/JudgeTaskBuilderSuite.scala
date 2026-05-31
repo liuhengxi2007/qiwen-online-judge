@@ -1,7 +1,7 @@
 package domains.judge.utils
 
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemSpaceLimitMb, ProblemStatementText, ProblemTimeLimitMs, ProblemTitle}
+import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemStatementText, ProblemTitle}
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
@@ -20,9 +20,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     problemId = ProblemId(UUID.fromString("11111111-1111-4111-8111-111111111111")),
     problemSlug = ProblemSlug("sample-problem"),
     language = SubmissionLanguage.Cpp17,
-    sourceCode = SubmissionSourceCode("int main() {}"),
-    timeLimitMs = ProblemTimeLimitMs(1000),
-    spaceLimitMb = ProblemSpaceLimitMb(256)
+    sourceCode = SubmissionSourceCode("int main() {}")
   )
 
   private val manifest = ProblemDataManifest.fromEntries(
@@ -40,8 +38,6 @@ class JudgeTaskBuilderSuite extends FunSuite:
     statement = ProblemStatementText("Solve it."),
     data = ProblemData(None),
     ready = false,
-    timeLimitMs = ProblemTimeLimitMs(1000),
-    spaceLimitMb = ProblemSpaceLimitMb(256),
     accessPolicy = ResourceAccessPolicy(BaseAccess.OwnerOnly, Nil, Nil),
     otherUserSubmissionAccess = OtherUserSubmissionAccess.None,
     creator = UserIdentity(Username("owner"), DisplayName("Owner")),
@@ -110,7 +106,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   }
 
-  test("parseConfigBytes uses claimed submission limits when config omits limits") {
+  test("parseConfigBytes rejects missing inherited limits") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 1
@@ -127,8 +123,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
       manifest
     )
 
-    assertEquals(result.map(_.subtasks.head.testcases.head.limits.timeMs.value), Right(1000))
-    assertEquals(result.map(_.subtasks.head.testcases.head.limits.memoryMb.value), Right(256))
+    assertEquals(result.left.toOption, Some("Limits are required for testcase sample/1."))
   }
 
   test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {

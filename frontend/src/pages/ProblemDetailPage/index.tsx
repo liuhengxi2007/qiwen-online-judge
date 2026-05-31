@@ -61,8 +61,6 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
     model.problem !== null &&
     (model.title !== problemTitleValue(model.problem.title) ||
       model.statement !== problemStatementTextValue(model.problem.statement) ||
-      model.timeLimitMs !== model.problem.timeLimitMs ||
-      model.spaceLimitMb !== model.problem.spaceLimitMb ||
       model.baseAccess !== model.problem.accessPolicy.baseAccess ||
       normalizeAccessSubjectInput(model.grantedUsersInput) !==
         grantedUsersInputFromAccessPolicy(model.problem.accessPolicy) ||

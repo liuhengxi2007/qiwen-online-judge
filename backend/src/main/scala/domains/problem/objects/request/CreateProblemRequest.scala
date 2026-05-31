@@ -10,8 +10,6 @@ final case class CreateProblemRequest(
   slug: ProblemSlug,
   title: ProblemTitle,
   statement: ProblemStatementText,
-  timeLimitMs: ProblemTimeLimitMs,
-  spaceLimitMb: ProblemSpaceLimitMb,
   accessPolicy: ResourceAccessPolicy,
   otherUserSubmissionAccess: OtherUserSubmissionAccess
 )

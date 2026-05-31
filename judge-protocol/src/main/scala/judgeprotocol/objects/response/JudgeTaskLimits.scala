@@ -2,11 +2,11 @@ package judgeprotocol.objects.response
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import judgeprotocol.objects.{ProblemSpaceLimitMb, ProblemTimeLimitMs}
+import judgeprotocol.objects.{TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
 
 final case class JudgeTaskLimits(
-  timeMs: ProblemTimeLimitMs,
-  memoryMb: ProblemSpaceLimitMb
+  timeMs: TestcaseTimeLimitMs,
+  memoryMb: TestcaseMemoryLimitMb
 )
 
 object JudgeTaskLimits:

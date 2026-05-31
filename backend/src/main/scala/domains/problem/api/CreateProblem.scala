@@ -41,14 +41,10 @@ object CreateProblem extends AuthenticatedApi[CreateProblemRequest, ProblemDetai
       slug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.slug.value))
       title <- HttpApiError.fromEitherBadRequest(ProblemTitle.parse(request.title.value))
       statement <- HttpApiError.fromEitherBadRequest(ProblemStatementText.parse(request.statement.value))
-      timeLimitMs <- HttpApiError.fromEitherBadRequest(ProblemTimeLimitMs.parse(request.timeLimitMs.value))
-      spaceLimitMb <- HttpApiError.fromEitherBadRequest(ProblemSpaceLimitMb.parse(request.spaceLimitMb.value))
       validRequest = request.copy(
         slug = slug,
         title = title,
-        statement = statement,
-        timeLimitMs = timeLimitMs,
-        spaceLimitMb = spaceLimitMb
+        statement = statement
       )
       existing <- ProblemQueryTable.findBySlug(connection, validRequest.slug)
       _ <- HttpApiError.ensure(existing.isEmpty, HttpApiError.conflict(ApiMessages.problemSlugExists))

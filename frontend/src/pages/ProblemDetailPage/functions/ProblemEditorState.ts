@@ -11,8 +11,6 @@ import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 export type ProblemEditorState = {
   title: string
   statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -25,8 +23,6 @@ export type ProblemEditorAction =
   | { type: 'hydrate'; problem: ProblemDetail | null }
   | { type: 'set_title'; value: string }
   | { type: 'set_statement'; value: string }
-  | { type: 'set_time_limit_ms'; value: number }
-  | { type: 'set_space_limit_mb'; value: number }
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
@@ -37,8 +33,6 @@ export type ProblemEditorAction =
 export const initialProblemEditorState: ProblemEditorState = {
   title: '',
   statement: '',
-  timeLimitMs: 1000,
-  spaceLimitMb: 256,
   baseAccess: 'owner_only',
   grantedUsersInput: '',
   grantedGroupsInput: '',
@@ -52,8 +46,6 @@ export function hydrateProblemEditorState(problem: ProblemDetail | null): Proble
     ? {
         title: problem.title,
         statement: problem.statement,
-        timeLimitMs: problem.timeLimitMs,
-        spaceLimitMb: problem.spaceLimitMb,
         baseAccess: problem.accessPolicy.baseAccess,
         grantedUsersInput: grantedUsersInputFromAccessPolicy(problem.accessPolicy),
         grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
@@ -75,10 +67,6 @@ export function reduceProblemEditorState(
       return { ...state, title: action.value }
     case 'set_statement':
       return { ...state, statement: action.value }
-    case 'set_time_limit_ms':
-      return { ...state, timeLimitMs: action.value }
-    case 'set_space_limit_mb':
-      return { ...state, spaceLimitMb: action.value }
     case 'set_base_access':
       return { ...state, baseAccess: action.value }
     case 'set_granted_users_input':

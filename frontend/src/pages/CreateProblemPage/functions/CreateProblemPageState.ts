@@ -5,8 +5,6 @@ export type CreateProblemPageDraft = {
   slug: string
   title: string
   statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -26,8 +24,6 @@ export type CreateProblemPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_title'; value: string }
   | { type: 'set_statement'; value: string }
-  | { type: 'set_time_limit_ms'; value: number }
-  | { type: 'set_space_limit_mb'; value: number }
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
@@ -42,8 +38,6 @@ export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   slug: '',
   title: '',
   statement: '',
-  timeLimitMs: 1000,
-  spaceLimitMb: 256,
   baseAccess: 'owner_only',
   grantedUsersInput: '',
   grantedGroupsInput: '',
@@ -83,10 +77,6 @@ export function reduceCreateProblemPageState(
       return { ...state, draft: { ...state.draft, title: action.value } }
     case 'set_statement':
       return { ...state, draft: { ...state.draft, statement: action.value } }
-    case 'set_time_limit_ms':
-      return { ...state, draft: { ...state.draft, timeLimitMs: action.value } }
-    case 'set_space_limit_mb':
-      return { ...state, draft: { ...state.draft, spaceLimitMb: action.value } }
     case 'set_base_access':
       return { ...state, draft: { ...state.draft, baseAccess: action.value } }
     case 'set_granted_users_input':

@@ -1,7 +1,5 @@
 import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
-import { parseProblemSpaceLimitMb } from '@/objects/problem/ProblemSpaceLimitMb'
 import { parseProblemStatementText, problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
-import { parseProblemTimeLimitMs } from '@/objects/problem/ProblemTimeLimitMs'
 import { parseProblemTitle, problemTitleValue } from '@/objects/problem/ProblemTitle'
 import type { UpdateProblemRequest } from '@/objects/problem/request/UpdateProblemRequest'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
@@ -17,8 +15,6 @@ import {
 export type UpdateProblemDraft = {
   title: string
   statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -40,16 +36,6 @@ export function validateProblemUpdateDraft(
     return { ok: false, message: statementResult.error }
   }
 
-  const timeLimitResult = parseProblemTimeLimitMs(draft.timeLimitMs)
-  if (!timeLimitResult.ok) {
-    return { ok: false, message: timeLimitResult.error }
-  }
-
-  const spaceLimitResult = parseProblemSpaceLimitMb(draft.spaceLimitMb)
-  if (!spaceLimitResult.ok) {
-    return { ok: false, message: spaceLimitResult.error }
-  }
-
   const accessPolicyResult = buildResourceAccessPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
@@ -66,8 +52,6 @@ export function validateProblemUpdateDraft(
     request: {
       title: titleResult.value,
       statement: statementResult.value,
-      timeLimitMs: timeLimitResult.value,
-      spaceLimitMb: spaceLimitResult.value,
       accessPolicy: accessPolicyResult.value,
       otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
     },
@@ -86,8 +70,6 @@ type ProblemEditorAccessState = {
 type ProblemEditorContentState = ProblemEditorAccessState & {
   title: string
   statement: string
-  timeLimitMs: number
-  spaceLimitMb: number
 }
 
 export function buildProblemContentUpdateDraft(
@@ -97,8 +79,6 @@ export function buildProblemContentUpdateDraft(
   return {
     title: editor.title,
     statement: editor.statement,
-    timeLimitMs: editor.timeLimitMs,
-    spaceLimitMb: editor.spaceLimitMb,
     baseAccess: problem.accessPolicy.baseAccess,
     grantedUsersInput: grantedUsersInputFromAccessPolicy(problem.accessPolicy),
     grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
@@ -115,8 +95,6 @@ export function buildProblemAccessUpdateDraft(
   return {
     title: problemTitleValue(problem.title),
     statement: problemStatementTextValue(problem.statement),
-    timeLimitMs: problem.timeLimitMs,
-    spaceLimitMb: problem.spaceLimitMb,
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,

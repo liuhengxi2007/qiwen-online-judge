@@ -18,8 +18,6 @@ object ProblemTableSchema:
       |  data_name varchar(255),
       |  data_bytes bytea,
       |  ready boolean not null default false,
-      |  time_limit_ms integer not null default 1000,
-      |  space_limit_mb integer not null default 256,
       |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
       |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
       |  creator_username varchar(120) not null references auth_accounts(username),
@@ -108,7 +106,7 @@ object ProblemTableSchema:
       |end $$;
       |""".stripMargin
 
-  val addDataAndLimitColumnsSql: String =
+  val addDataColumnsSql: String =
     """
       |do $$
       |begin
@@ -145,59 +143,19 @@ object ProblemTableSchema:
       |  ) then
       |    alter table problems add column data_bytes bytea;
       |  end if;
-      |
-      |  if not exists (
-      |    select 1
-      |    from information_schema.columns
-      |    where table_schema = 'public'
-      |      and table_name = 'problems'
-      |      and column_name = 'time_limit_ms'
-      |  ) then
-      |    alter table problems add column time_limit_ms integer;
-      |  end if;
-      |
-      |  if not exists (
-      |    select 1
-      |    from information_schema.columns
-      |    where table_schema = 'public'
-      |      and table_name = 'problems'
-      |      and column_name = 'space_limit_mb'
-      |  ) then
-      |    alter table problems add column space_limit_mb integer;
-      |  end if;
-      |
-      |  update problems
-      |  set time_limit_ms = 1000
-      |  where time_limit_ms is null;
-      |
-      |  update problems
-      |  set space_limit_mb = 256
-      |  where space_limit_mb is null;
       |end $$;
       |""".stripMargin
 
-  val setTimeLimitNotNullSql: String =
+  val dropTimeLimitColumnSql: String =
     """
       |alter table problems
-      |alter column time_limit_ms set not null
+      |drop column if exists time_limit_ms
       |""".stripMargin
 
-  val setTimeLimitDefaultSql: String =
+  val dropSpaceLimitColumnSql: String =
     """
       |alter table problems
-      |alter column time_limit_ms set default 1000
-      |""".stripMargin
-
-  val setSpaceLimitNotNullSql: String =
-    """
-      |alter table problems
-      |alter column space_limit_mb set not null
-      |""".stripMargin
-
-  val setSpaceLimitDefaultSql: String =
-    """
-      |alter table problems
-      |alter column space_limit_mb set default 256
+      |drop column if exists space_limit_mb
       |""".stripMargin
 
   val setReadyNotNullSql: String =
@@ -292,7 +250,9 @@ object ProblemTableSchema:
         statement.execute(migrateCreatorUsernameColumnSql)
         statement.execute(addVisibilityColumnSql)
         statement.execute(addBaseAccessColumnSql)
-        statement.execute(addDataAndLimitColumnsSql)
+        statement.execute(addDataColumnsSql)
+        statement.execute(dropTimeLimitColumnSql)
+        statement.execute(dropSpaceLimitColumnSql)
         statement.execute(setReadyDefaultSql)
         statement.execute(setReadyNotNullSql)
         statement.execute(setBaseAccessDefaultSql)
@@ -301,10 +261,6 @@ object ProblemTableSchema:
         statement.execute(addOtherUserSubmissionAccessColumnSql)
         statement.execute(setOtherUserSubmissionAccessDefaultSql)
         statement.execute(setOtherUserSubmissionAccessNotNullSql)
-        statement.execute(setTimeLimitDefaultSql)
-        statement.execute(setTimeLimitNotNullSql)
-        statement.execute(setSpaceLimitDefaultSql)
-        statement.execute(setSpaceLimitNotNullSql)
         statement.execute(dropStatusColumnSql)
       finally statement.close()
     }

@@ -68,32 +68,6 @@ export function ProblemEditDialog({
             />
             <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="problem-time-limit">{t('problem.detail.timeLimit')}</Label>
-              <Input
-                id="problem-time-limit"
-                type="number"
-                min={1}
-                value={model.timeLimitMs}
-                onChange={(event) => {
-                  model.setTimeLimitMs(Number(event.target.value))
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="problem-space-limit">{t('problem.detail.spaceLimit')}</Label>
-              <Input
-                id="problem-space-limit"
-                type="number"
-                min={1}
-                value={model.spaceLimitMb}
-                onChange={(event) => {
-                  model.setSpaceLimitMb(Number(event.target.value))
-                }}
-              />
-            </div>
-          </div>
           <Button
             type="button"
             className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
