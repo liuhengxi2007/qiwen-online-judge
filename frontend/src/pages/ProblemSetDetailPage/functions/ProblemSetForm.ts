@@ -3,6 +3,7 @@ import { parseProblemSetTitle, problemSetTitleValue } from '@/objects/problemset
 import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { parseUsername, usernameValue } from '@/objects/user/Username'
 import {
   buildResourceAccessPolicy,
   grantedGroupsInputFromAccessPolicy,
@@ -18,6 +19,7 @@ type ProblemSetAccessEditorState = {
 type ProblemSetContentEditorState = ProblemSetAccessEditorState & {
   title: string
   description: string
+  authorUsername: string
 }
 
 export function buildProblemSetContentUpdateDraft(
@@ -27,6 +29,7 @@ export function buildProblemSetContentUpdateDraft(
   return {
     title: editor.title,
     description: editor.description,
+    authorUsername: editor.authorUsername,
     baseAccess: problemSet.accessPolicy.baseAccess,
     grantedUsersInput: grantedUsersInputFromAccessPolicy(problemSet.accessPolicy),
     grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problemSet.accessPolicy),
@@ -40,6 +43,7 @@ export function buildProblemSetAccessUpdateDraft(
   return {
     title: problemSetTitleValue(problemSet.title),
     description: problemSetDescriptionValue(problemSet.description),
+    authorUsername: problemSet.author ? usernameValue(problemSet.author.username) : '',
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,
@@ -61,6 +65,7 @@ export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditor
 export type UpdateProblemSetDraft = {
   title: string
   description: string
+  authorUsername: string
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -79,6 +84,12 @@ export function validateProblemSetUpdateDraft(
     return { ok: false, message: descriptionResult.error }
   }
 
+  const rawAuthorUsername = draft.authorUsername.trim()
+  const authorUsernameResult = rawAuthorUsername ? parseUsername(rawAuthorUsername) : null
+  if (authorUsernameResult && !authorUsernameResult.ok) {
+    return { ok: false, message: authorUsernameResult.error }
+  }
+
   const accessPolicyResult = buildResourceAccessPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
@@ -94,6 +105,7 @@ export function validateProblemSetUpdateDraft(
       title: titleResult.value,
       description: descriptionResult.value,
       accessPolicy: accessPolicyResult.value,
+      authorUsername: authorUsernameResult?.value ?? null,
     },
   }
 }

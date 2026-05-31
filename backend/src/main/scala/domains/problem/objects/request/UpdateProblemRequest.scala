@@ -1,6 +1,7 @@
 package domains.problem.objects.request
 
 import domains.problem.objects.*
+import domains.user.objects.Username
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -10,7 +11,8 @@ final case class UpdateProblemRequest(
   title: ProblemTitle,
   statement: ProblemStatementText,
   accessPolicy: ResourceAccessPolicy,
-  otherUserSubmissionAccess: OtherUserSubmissionAccess
+  otherUserSubmissionAccess: OtherUserSubmissionAccess,
+  authorUsername: Option[Username]
 )
 
 object UpdateProblemRequest:

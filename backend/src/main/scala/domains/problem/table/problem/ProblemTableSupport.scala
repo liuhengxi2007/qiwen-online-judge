@@ -10,18 +10,20 @@ import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, Probl
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import shared.objects.access.{ResourceAccessPolicy, ResourceId}
 import database.utils.LikePatternSql
-import database.utils.UserIdentitySql
+import database.utils.{UserIdentityRow, UserIdentitySql}
 
 import java.sql.{PreparedStatement, ResultSet}
 
 object ProblemTableSupport:
 
-  private def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
-    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+  private def userIdentityFromRow(row: UserIdentityRow): UserIdentity =
     UserIdentity(
       username = Username.canonical(row.username),
       displayName = DisplayName(row.displayName)
     )
+
+  private def readOptionalUserIdentity(resultSet: ResultSet, prefix: String): Option[UserIdentity] =
+    UserIdentitySql.readOptionalUserIdentityRow(resultSet, prefix).map(userIdentityFromRow)
 
   def readProblemSummaryBase(resultSet: ResultSet): ProblemSummary =
     ProblemSummary(
@@ -34,7 +36,7 @@ object ProblemTableSupport:
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       otherUserSubmissionAccess =
         parseOptionalColumn("problems.other_user_submission_access", resultSet.getString("other_user_submission_access"), decodeOtherUserSubmissionAccessColumn),
-      creator = readUserIdentity(resultSet, "creator"),
+      author = readOptionalUserIdentity(resultSet, "author"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
@@ -57,7 +59,7 @@ object ProblemTableSupport:
         ResourceAccessPolicy(parseOptionalColumn("problems.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
       otherUserSubmissionAccess =
         parseOptionalColumn("problems.other_user_submission_access", resultSet.getString("other_user_submission_access"), decodeOtherUserSubmissionAccessColumn),
-      creator = readUserIdentity(resultSet, "creator"),
+      author = readOptionalUserIdentity(resultSet, "author"),
       canManage = false,
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

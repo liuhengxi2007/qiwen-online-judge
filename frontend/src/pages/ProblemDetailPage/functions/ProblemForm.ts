@@ -4,6 +4,7 @@ import { parseProblemTitle, problemTitleValue } from '@/objects/problem/ProblemT
 import type { UpdateProblemRequest } from '@/objects/problem/request/UpdateProblemRequest'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { parseUsername, usernameValue } from '@/objects/user/Username'
 import {
   buildResourceAccessPolicy,
   grantedGroupsInputFromAccessPolicy,
@@ -15,6 +16,7 @@ import {
 export type UpdateProblemDraft = {
   title: string
   statement: string
+  authorUsername: string
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -36,6 +38,12 @@ export function validateProblemUpdateDraft(
     return { ok: false, message: statementResult.error }
   }
 
+  const rawAuthorUsername = draft.authorUsername.trim()
+  const authorUsernameResult = rawAuthorUsername ? parseUsername(rawAuthorUsername) : null
+  if (authorUsernameResult && !authorUsernameResult.ok) {
+    return { ok: false, message: authorUsernameResult.error }
+  }
+
   const accessPolicyResult = buildResourceAccessPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
@@ -54,6 +62,7 @@ export function validateProblemUpdateDraft(
       statement: statementResult.value,
       accessPolicy: accessPolicyResult.value,
       otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
+      authorUsername: authorUsernameResult?.value ?? null,
     },
   }
 }
@@ -70,6 +79,7 @@ type ProblemEditorAccessState = {
 type ProblemEditorContentState = ProblemEditorAccessState & {
   title: string
   statement: string
+  authorUsername: string
 }
 
 export function buildProblemContentUpdateDraft(
@@ -79,6 +89,7 @@ export function buildProblemContentUpdateDraft(
   return {
     title: editor.title,
     statement: editor.statement,
+    authorUsername: editor.authorUsername,
     baseAccess: problem.accessPolicy.baseAccess,
     grantedUsersInput: grantedUsersInputFromAccessPolicy(problem.accessPolicy),
     grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
@@ -95,6 +106,7 @@ export function buildProblemAccessUpdateDraft(
   return {
     title: problemTitleValue(problem.title),
     statement: problemStatementTextValue(problem.statement),
+    authorUsername: problem.author ? usernameValue(problem.author.username) : '',
     baseAccess: editor.baseAccess,
     grantedUsersInput: editor.grantedUsersInput,
     grantedGroupsInput: editor.grantedGroupsInput,

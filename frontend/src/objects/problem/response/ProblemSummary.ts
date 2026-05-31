@@ -15,5 +15,5 @@ export type ProblemSummary = AuditFields & {
   ready: boolean
   accessPolicy: ResourceAccessPolicy
   otherUserSubmissionAccess: OtherUserSubmissionAccess
-  creator: UserIdentity
+  author: UserIdentity | null
 }

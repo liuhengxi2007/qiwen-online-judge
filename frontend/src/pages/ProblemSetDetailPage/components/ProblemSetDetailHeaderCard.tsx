@@ -80,10 +80,12 @@ export function ProblemSetDetailHeaderCard({
             <p className="text-sm text-slate-500">{t('common.noDescription')}</p>
           )}
         </div>
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          <span>{t('common.createdByLabel')} </span>
-          <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problemSet.creator} />
-        </p>
+        {problemSet.author ? (
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+            <span>{t('common.authorLabel')} </span>
+            <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problemSet.author} />
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

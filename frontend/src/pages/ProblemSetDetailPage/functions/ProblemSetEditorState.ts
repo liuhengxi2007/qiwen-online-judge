@@ -1,10 +1,12 @@
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
+import { usernameValue } from '@/objects/user/Username'
 import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 export type ProblemSetEditorState = {
   title: string
   description: string
+  authorUsername: string
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -15,6 +17,7 @@ export type ProblemSetEditorAction =
   | { type: 'hydrate'; problemSet: ProblemSetDetail | null }
   | { type: 'set_title'; value: string }
   | { type: 'set_description'; value: string }
+  | { type: 'set_author_username'; value: string }
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
@@ -24,6 +27,7 @@ export type ProblemSetEditorAction =
 export const initialProblemSetEditorState: ProblemSetEditorState = {
   title: '',
   description: '',
+  authorUsername: '',
   baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
@@ -41,6 +45,7 @@ export function reduceProblemSetEditorState(
             ...state,
             title: action.problemSet.title,
             description: action.problemSet.description,
+            authorUsername: action.problemSet.author ? usernameValue(action.problemSet.author.username) : '',
             baseAccess: action.problemSet.accessPolicy.baseAccess,
             grantedUsersInput: grantedUsersInputFromAccessPolicy(action.problemSet.accessPolicy),
             grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problemSet.accessPolicy),
@@ -50,6 +55,8 @@ export function reduceProblemSetEditorState(
       return { ...state, title: action.value }
     case 'set_description':
       return { ...state, description: action.value }
+    case 'set_author_username':
+      return { ...state, authorUsername: action.value }
     case 'set_base_access':
       return { ...state, baseAccess: action.value }
     case 'set_granted_users_input':

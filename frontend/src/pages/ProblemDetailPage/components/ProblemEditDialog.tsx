@@ -57,6 +57,14 @@ export function ProblemEditDialog({
             <Input id="problem-title" value={model.title} onChange={(event) => model.setTitle(event.target.value)} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="problem-author-username">{t('problem.detail.authorUsername')}</Label>
+            <Input
+              id="problem-author-username"
+              value={model.authorUsername}
+              onChange={(event) => model.setAuthorUsername(event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="problem-statement">{t('problem.create.statement')}</Label>
             <MarkdownEditorTabs
               textareaId="problem-statement"

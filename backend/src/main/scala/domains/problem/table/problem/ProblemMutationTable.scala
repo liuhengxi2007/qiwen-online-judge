@@ -18,16 +18,16 @@ object ProblemMutationTable:
 
   private val insertSQL: String =
     s"""
-      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, base_access, other_user_submission_access, creator_username, created_at, updated_at)
+      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, base_access, other_user_submission_access, author_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, statement_text, data_name, ready, base_access, other_user_submission_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
+      |returning id, slug, title, statement_text, data_name, ready, base_access, other_user_submission_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
   def insert(
     connection: Connection,
     problemId: ProblemId,
     createdAt: Instant,
-    creatorUsername: Username,
+    authorUsername: Username,
     request: CreateProblemRequest
   ): IO[ProblemDetail] =
     IO.blocking {
@@ -41,7 +41,7 @@ object ProblemMutationTable:
         statement.setNull(6, java.sql.Types.BINARY)
         statement.setString(7, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
         statement.setString(8, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
-        statement.setString(9, creatorUsername.value)
+        statement.setString(9, authorUsername.value)
         statement.setTimestamp(10, Timestamp.from(createdAt))
         statement.setTimestamp(11, Timestamp.from(createdAt))
         val resultSet = statement.executeQuery()
@@ -69,7 +69,7 @@ object ProblemMutationTable:
   private val updateSQL: String =
     """
       |update problems
-      |set title = ?, statement_text = ?, base_access = ?, other_user_submission_access = ?, updated_at = ?
+      |set title = ?, statement_text = ?, base_access = ?, other_user_submission_access = ?, author_username = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -82,8 +82,11 @@ object ProblemMutationTable:
         statement.setString(2, request.statement.value)
         statement.setString(3, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
         statement.setString(4, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
-        statement.setTimestamp(5, Timestamp.from(updatedAt))
-        statement.setObject(6, problemId.value)
+        request.authorUsername match
+          case Some(username) => statement.setString(5, username.value)
+          case None => statement.setNull(5, java.sql.Types.VARCHAR)
+        statement.setTimestamp(6, Timestamp.from(updatedAt))
+        statement.setObject(7, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

@@ -19,7 +19,7 @@ final case class ProblemDetail(
   ready: Boolean,
   accessPolicy: ResourceAccessPolicy,
   otherUserSubmissionAccess: OtherUserSubmissionAccess,
-  creator: UserIdentity,
+  author: Option[UserIdentity],
   canManage: Boolean,
   createdAt: Instant,
   updatedAt: Instant

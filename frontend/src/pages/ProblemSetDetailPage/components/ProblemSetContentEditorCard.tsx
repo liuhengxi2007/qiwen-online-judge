@@ -10,22 +10,26 @@ import { useI18n } from '@/system/i18n/use-i18n'
 type ProblemSetContentEditorCardProps = {
   title: string
   description: string
+  authorUsername: string
   isSaving: boolean
   contentErrorMessage: string
   contentSuccessMessage: string
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
+  onAuthorUsernameChange: (value: string) => void
   onSaveContent: () => void
 }
 
 export function ProblemSetContentEditorCard({
   title,
   description,
+  authorUsername,
   isSaving,
   contentErrorMessage,
   contentSuccessMessage,
   onTitleChange,
   onDescriptionChange,
+  onAuthorUsernameChange,
   onSaveContent,
 }: ProblemSetContentEditorCardProps) {
   const { t } = useI18n()
@@ -40,6 +44,16 @@ export function ProblemSetContentEditorCard({
           value={title}
           onChange={(event) => {
             onTitleChange(event.target.value)
+          }}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="problem-set-author-username">{t('problemSet.detail.authorUsername')}</Label>
+        <Input
+          id="problem-set-author-username"
+          value={authorUsername}
+          onChange={(event) => {
+            onAuthorUsernameChange(event.target.value)
           }}
         />
       </div>

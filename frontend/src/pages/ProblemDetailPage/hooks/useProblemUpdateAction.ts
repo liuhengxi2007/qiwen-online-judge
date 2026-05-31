@@ -18,6 +18,7 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
     async (draft: {
       title: string
       statement: string
+      authorUsername: string
       baseAccess: BaseAccess
       grantedUsersInput: string
       grantedGroupsInput: string

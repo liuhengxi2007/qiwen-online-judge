@@ -23,6 +23,7 @@ import {
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
+import { usernameValue } from '@/objects/user/Username'
 
 export function ProblemDetailPage() {
   const { t } = useI18n()
@@ -61,6 +62,7 @@ function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug })
     model.problem !== null &&
     (model.title !== problemTitleValue(model.problem.title) ||
       model.statement !== problemStatementTextValue(model.problem.statement) ||
+      model.authorUsername.trim() !== (model.problem.author ? usernameValue(model.problem.author.username) : '') ||
       model.baseAccess !== model.problem.accessPolicy.baseAccess ||
       normalizeAccessSubjectInput(model.grantedUsersInput) !==
         grantedUsersInputFromAccessPolicy(model.problem.accessPolicy) ||

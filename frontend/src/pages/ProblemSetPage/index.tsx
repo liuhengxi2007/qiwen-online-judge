@@ -112,12 +112,16 @@ export function ProblemSetPage() {
                     {problemSetDescriptionValue(problemSet.description) || t('common.noDescription')}
                   </p>
                   <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-                    <span>{t('common.createdByLabel')} </span>
-                    <UserProfileLink
-                      className="inline-flex items-baseline gap-2 normal-case tracking-normal"
-                      showUsername
-                      user={problemSet.creator}
-                    />
+                    <span>{t('common.authorLabel')} </span>
+                    {problemSet.author ? (
+                      <UserProfileLink
+                        className="inline-flex items-baseline gap-2 normal-case tracking-normal"
+                        showUsername
+                        user={problemSet.author}
+                      />
+                    ) : (
+                      <span className="normal-case tracking-normal">{t('common.noAuthor')}</span>
+                    )}
                   </p>
                 </div>
               ))

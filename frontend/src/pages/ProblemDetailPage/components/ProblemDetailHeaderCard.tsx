@@ -141,10 +141,12 @@ export function ProblemDetailHeaderCard({
         <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
           <MarkdownDocument content={problemStatementTextValue(model.problem.statement)} />
         </div>
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          <span>{t('problem.createdByLabel')} </span>
-          <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={model.problem.creator} />
-        </p>
+        {model.problem.author ? (
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+            <span>{t('common.authorLabel')} </span>
+            <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={model.problem.author} />
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

@@ -14,5 +14,5 @@ export type ProblemSet = AuditFields & {
   description: ProblemSetDescription
   problems: ProblemSetProblemSummary[]
   accessPolicy: ResourceAccessPolicy
-  creator: UserIdentity
+  author: UserIdentity | null
 }

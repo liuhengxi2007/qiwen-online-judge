@@ -45,7 +45,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     ready = false,
     accessPolicy = ResourceAccessPolicy(BaseAccess.Restricted, Nil, Nil),
     otherUserSubmissionAccess = OtherUserSubmissionAccess.None,
-    creator = UserIdentity(Username("creator"), DisplayName("Creator")),
+    author = Some(UserIdentity(Username("creator"), DisplayName("Creator"))),
     canManage = true,
     createdAt = Instant.EPOCH,
     updatedAt = Instant.EPOCH

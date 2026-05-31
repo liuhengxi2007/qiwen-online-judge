@@ -17,6 +17,7 @@ export function useProblemSetUpdateAction(problemSetSlug: ProblemSetSlug) {
     async (draft: {
       title: string
       description: string
+      authorUsername: string
       baseAccess: BaseAccess
       grantedUsersInput: string
       grantedGroupsInput: string

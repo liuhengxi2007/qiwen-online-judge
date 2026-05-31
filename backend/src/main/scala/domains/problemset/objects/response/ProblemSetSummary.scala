@@ -16,7 +16,7 @@ final case class ProblemSetSummary(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   accessPolicy: ResourceAccessPolicy,
-  creator: UserIdentity,
+  author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant
 )

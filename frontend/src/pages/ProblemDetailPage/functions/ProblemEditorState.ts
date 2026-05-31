@@ -1,5 +1,6 @@
 import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
+import { usernameValue } from '@/objects/user/Username'
 import {
   grantedGroupsInputFromAccessPolicy,
   grantedManagerGroupsInputFromAccessPolicy,
@@ -11,6 +12,7 @@ import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 export type ProblemEditorState = {
   title: string
   statement: string
+  authorUsername: string
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
@@ -23,6 +25,7 @@ export type ProblemEditorAction =
   | { type: 'hydrate'; problem: ProblemDetail | null }
   | { type: 'set_title'; value: string }
   | { type: 'set_statement'; value: string }
+  | { type: 'set_author_username'; value: string }
   | { type: 'set_base_access'; value: BaseAccess }
   | { type: 'set_granted_users_input'; value: string }
   | { type: 'set_granted_groups_input'; value: string }
@@ -33,6 +36,7 @@ export type ProblemEditorAction =
 export const initialProblemEditorState: ProblemEditorState = {
   title: '',
   statement: '',
+  authorUsername: '',
   baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
@@ -46,6 +50,7 @@ export function hydrateProblemEditorState(problem: ProblemDetail | null): Proble
     ? {
         title: problem.title,
         statement: problem.statement,
+        authorUsername: problem.author ? usernameValue(problem.author.username) : '',
         baseAccess: problem.accessPolicy.baseAccess,
         grantedUsersInput: grantedUsersInputFromAccessPolicy(problem.accessPolicy),
         grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problem.accessPolicy),
@@ -67,6 +72,8 @@ export function reduceProblemEditorState(
       return { ...state, title: action.value }
     case 'set_statement':
       return { ...state, statement: action.value }
+    case 'set_author_username':
+      return { ...state, authorUsername: action.value }
     case 'set_base_access':
       return { ...state, baseAccess: action.value }
     case 'set_granted_users_input':

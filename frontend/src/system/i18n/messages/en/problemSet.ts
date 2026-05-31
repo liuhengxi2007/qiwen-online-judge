@@ -27,6 +27,7 @@ export const enProblemSetMessages: Record<string, string> = {
   'problemSet.detail.access': 'Access management',
   'problemSet.detail.editDialogTitle': 'Edit Problem Set',
   'problemSet.detail.editDialogDescription': 'Edit content, manage linked problems, and handle destructive actions in a front-layer card.',
+  'problemSet.detail.authorUsername': 'Author username',
   'problemSet.detail.saveContent': 'Save content',
   'problemSet.detail.savingContent': 'Saving content...',
   'problemSet.detail.linkProblemTitle': 'Link Problem',

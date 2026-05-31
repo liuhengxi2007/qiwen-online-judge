@@ -18,7 +18,7 @@ final case class ProblemSummary(
   ready: Boolean,
   accessPolicy: ResourceAccessPolicy,
   otherUserSubmissionAccess: OtherUserSubmissionAccess,
-  creator: UserIdentity,
+  author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant
 )

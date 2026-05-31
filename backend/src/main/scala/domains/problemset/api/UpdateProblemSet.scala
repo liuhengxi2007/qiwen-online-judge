@@ -3,6 +3,7 @@ package domains.problemset.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.auth.table.auth_account.AuthAccountTable
 import domains.problemset.utils.ProblemSetAccessPolicyValidation
 
 import domains.problemset.objects.*
@@ -48,6 +49,7 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
       problemSet <- maybeProblemSet match
         case Some(problemSet) => IO.pure(problemSet)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemSetNotFound))
+      _ <- validateAuthorUsername(connection, validRequest.authorUsername)
       _ <- ProblemSetAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
       _ <- ProblemSetTable.update(connection, problemSet.id, ProblemSetAccessPolicyValidation.sanitizePolicy(validRequest))
       updatedProblemSet <- ProblemSetTable.findBySlug(connection, problemSet.slug).flatMap {
@@ -55,3 +57,12 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
         case None => HttpApiError.raise(HttpApiError.internal("Problem set disappeared after update."))
       }
     yield ProblemSetDetail.fromProblemSet(updatedProblemSet)
+
+  private def validateAuthorUsername(connection: Connection, authorUsername: Option[domains.user.objects.Username]): IO[Unit] =
+    authorUsername match
+      case Some(username) =>
+        AuthAccountTable.findAccountByUsername(connection, username).flatMap { account =>
+          HttpApiError.ensure(account.nonEmpty, HttpApiError.badRequest(ApiMessages.userNotFound))
+        }
+      case None =>
+        IO.unit

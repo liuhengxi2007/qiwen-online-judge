@@ -27,7 +27,7 @@ export function BlogMetaVoteBar({ blog, model, problemTitleDisplayMode }: BlogMe
     <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          <span>{t('common.createdByLabel')} </span>
+          <span>{t('common.authorLabel')} </span>
           <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" user={blog.author} />
         </p>
         {blog.relatedProblems.length > 0 ? (

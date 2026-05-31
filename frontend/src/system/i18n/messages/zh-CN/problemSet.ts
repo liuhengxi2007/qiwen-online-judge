@@ -27,6 +27,7 @@ export const zhCnProblemSetMessages: Record<string, string> = {
   'problemSet.detail.access': '权限管理',
   'problemSet.detail.editDialogTitle': '编辑题单',
   'problemSet.detail.editDialogDescription': '在前层卡片中编辑内容、管理关联题目并处理删除操作。',
+  'problemSet.detail.authorUsername': '作者用户名',
   'problemSet.detail.saveContent': '保存内容',
   'problemSet.detail.savingContent': '正在保存内容...',
   'problemSet.detail.linkProblemTitle': '关联题目',

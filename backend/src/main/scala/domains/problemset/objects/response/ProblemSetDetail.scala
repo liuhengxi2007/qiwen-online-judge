@@ -17,7 +17,7 @@ final case class ProblemSetDetail(
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
   accessPolicy: ResourceAccessPolicy,
-  creator: UserIdentity,
+  author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant
 )
@@ -39,7 +39,7 @@ object ProblemSetDetail:
       description = problemSet.description,
       problems = problemSet.problems,
       accessPolicy = problemSet.accessPolicy,
-      creator = problemSet.creator,
+      author = problemSet.author,
       createdAt = problemSet.createdAt,
       updatedAt = problemSet.updatedAt
     )

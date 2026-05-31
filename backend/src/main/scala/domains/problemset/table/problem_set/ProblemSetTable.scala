@@ -37,9 +37,9 @@ object ProblemSetTable:
 
   private val listSQL: String =
     s"""
-      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectOptionalColumns("ps.author_username", "author", "au")}, ps.created_at, ps.updated_at
       |from problem_sets ps
-      |${UserIdentitySql.joinUserProfiles("ps.creator_username", "au")}
+      |${UserIdentitySql.leftJoinUserProfiles("ps.author_username", "au")}
       |where
       |  ? = true
       |  or ps.base_access = 'public'
@@ -130,9 +130,9 @@ object ProblemSetTable:
 
   private val findBySlugSQL: String =
     s"""
-      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectColumns("ps.creator_username", "creator", "au")}, ps.created_at, ps.updated_at
+      |select ps.id, ps.slug, ps.title, ps.description, ps.base_access, ${UserIdentitySql.selectOptionalColumns("ps.author_username", "author", "au")}, ps.created_at, ps.updated_at
       |from problem_sets ps
-      |${UserIdentitySql.joinUserProfiles("ps.creator_username", "au")}
+      |${UserIdentitySql.leftJoinUserProfiles("ps.author_username", "au")}
       |where ps.slug = ?
       |""".stripMargin
 
@@ -166,12 +166,12 @@ object ProblemSetTable:
 
   private val insertSQL: String =
     s"""
-      |insert into problem_sets (id, slug, title, description, base_access, creator_username, created_at, updated_at)
+      |insert into problem_sets (id, slug, title, description, base_access, author_username, created_at, updated_at)
       |values (?, ?, ?, ?, ?, ?, ?, ?)
-      |returning id, slug, title, description, base_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
+      |returning id, slug, title, description, base_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
-  def insert(connection: Connection, creatorUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
+  def insert(connection: Connection, authorUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
     IO.blocking {
       val now = Instant.now()
       val problemSetId = ProblemSetId(UUID.randomUUID())
@@ -182,7 +182,7 @@ object ProblemSetTable:
         statement.setString(3, request.title.value)
         statement.setString(4, request.description.value)
         statement.setString(5, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setString(6, creatorUsername.value)
+        statement.setString(6, authorUsername.value)
         statement.setTimestamp(7, Timestamp.from(now))
         statement.setTimestamp(8, Timestamp.from(now))
         val resultSet = statement.executeQuery()
@@ -259,7 +259,7 @@ object ProblemSetTable:
   private val updateSQL: String =
     """
       |update problem_sets
-      |set title = ?, description = ?, base_access = ?, updated_at = ?
+      |set title = ?, description = ?, base_access = ?, author_username = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -271,8 +271,11 @@ object ProblemSetTable:
         statement.setString(1, request.title.value)
         statement.setString(2, request.description.value)
         statement.setString(3, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setTimestamp(4, Timestamp.from(now))
-        statement.setObject(5, problemSetId.value)
+        request.authorUsername match
+          case Some(username) => statement.setString(4, username.value)
+          case None => statement.setNull(4, java.sql.Types.VARCHAR)
+        statement.setTimestamp(5, Timestamp.from(now))
+        statement.setObject(6, problemSetId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

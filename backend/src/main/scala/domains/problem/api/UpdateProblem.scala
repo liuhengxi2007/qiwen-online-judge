@@ -3,6 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.auth.table.auth_account.AuthAccountTable
 import domains.problem.utils.ProblemAccessPolicyValidation
 
 import domains.problem.objects.*
@@ -48,6 +49,7 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+      _ <- validateAuthorUsername(connection, validRequest.authorUsername)
       _ <- ProblemAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
       _ <- ProblemMutationTable.update(connection, problem.id, Instant.now(), validRequest)
       updatedProblem <- ProblemQueryTable.findBySlug(connection, problem.slug).flatMap {
@@ -55,3 +57,12 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
         case None => HttpApiError.raise(HttpApiError.internal("Problem disappeared after update."))
       }
     yield updatedProblem
+
+  private def validateAuthorUsername(connection: Connection, authorUsername: Option[domains.user.objects.Username]): IO[Unit] =
+    authorUsername match
+      case Some(username) =>
+        AuthAccountTable.findAccountByUsername(connection, username).flatMap { account =>
+          HttpApiError.ensure(account.nonEmpty, HttpApiError.badRequest(ApiMessages.userNotFound))
+        }
+      case None =>
+        IO.unit

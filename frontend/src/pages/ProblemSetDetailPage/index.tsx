@@ -21,6 +21,7 @@ import { PageShell } from '@/pages/components/PageShell'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
+import { usernameValue } from '@/objects/user/Username'
 
 export function ProblemSetDetailPage() {
   const { t } = useI18n()
@@ -58,6 +59,7 @@ function ProblemSetDetailPageContent({
     model.problemSet !== null &&
     (model.title !== problemSetTitleValue(model.problemSet.title) ||
       model.description !== problemSetDescriptionValue(model.problemSet.description) ||
+      model.authorUsername.trim() !== (model.problemSet.author ? usernameValue(model.problemSet.author.username) : '') ||
       model.baseAccess !== model.problemSet.accessPolicy.baseAccess ||
       normalizeAccessSubjectInput(model.grantedUsersInput) !==
         grantedUsersInputFromAccessPolicy(model.problemSet.accessPolicy) ||
@@ -109,6 +111,7 @@ function ProblemSetDetailPageContent({
         open={canManageProblems && managementPanel === 'edit'}
         title={model.title}
         description={model.description}
+        authorUsername={model.authorUsername}
         linkProblemSlug={model.linkProblemSlug}
         isSaving={model.isSaving}
         isDeleting={model.isDeleting}
@@ -122,6 +125,7 @@ function ProblemSetDetailPageContent({
         }}
         onTitleChange={model.setTitle}
         onDescriptionChange={model.setDescription}
+        onAuthorUsernameChange={model.setAuthorUsername}
         onLinkProblemSlugChange={model.setLinkProblemSlug}
         onSaveContent={() => {
           void model.saveContent()

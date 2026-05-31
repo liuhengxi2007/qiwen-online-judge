@@ -10,6 +10,7 @@ type EditProblemSetDialogProps = {
   open: boolean
   title: string
   description: string
+  authorUsername: string
   linkProblemSlug: string
   isSaving: boolean
   isDeleting: boolean
@@ -21,6 +22,7 @@ type EditProblemSetDialogProps = {
   onOpenChange: (open: boolean) => void
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
+  onAuthorUsernameChange: (value: string) => void
   onLinkProblemSlugChange: (value: string) => void
   onSaveContent: () => void
   onAttachProblem: () => void
@@ -31,6 +33,7 @@ export function EditProblemSetDialog({
   open,
   title,
   description,
+  authorUsername,
   linkProblemSlug,
   isSaving,
   isDeleting,
@@ -42,6 +45,7 @@ export function EditProblemSetDialog({
   onOpenChange,
   onTitleChange,
   onDescriptionChange,
+  onAuthorUsernameChange,
   onLinkProblemSlugChange,
   onSaveContent,
   onAttachProblem,
@@ -68,11 +72,13 @@ export function EditProblemSetDialog({
           <ProblemSetContentEditorCard
             title={title}
             description={description}
+            authorUsername={authorUsername}
             isSaving={isSaving}
             contentErrorMessage={contentErrorMessage}
             contentSuccessMessage={contentSuccessMessage}
             onTitleChange={onTitleChange}
             onDescriptionChange={onDescriptionChange}
+            onAuthorUsernameChange={onAuthorUsernameChange}
             onSaveContent={onSaveContent}
           />
           <ProblemSetLinkProblemCard

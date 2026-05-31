@@ -27,8 +27,12 @@ export function ProblemListItem({ problem, showSlugSupplement }: ProblemListItem
       </div>
       {showSlugSupplement ? <p className="mt-2 font-mono text-sm text-slate-500">{problemSlugValue(problem.slug)}</p> : null}
       <p className="mt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
-        <span>{t('problem.createdByLabel')} </span>
-        <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problem.creator} />
+        <span>{t('common.authorLabel')} </span>
+        {problem.author ? (
+          <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={problem.author} />
+        ) : (
+          <span className="normal-case tracking-normal">{t('common.noAuthor')}</span>
+        )}
       </p>
     </div>
   )

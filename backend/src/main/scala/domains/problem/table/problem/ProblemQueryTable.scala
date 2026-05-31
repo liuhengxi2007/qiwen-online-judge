@@ -82,9 +82,9 @@ object ProblemQueryTable:
 
   private val listSQL: String =
     s"""
-      |select p.id, p.slug, p.title, p.data_name, p.ready, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.data_name, p.ready, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectOptionalColumns("p.author_username", "author", "au")}, p.created_at, p.updated_at
       |from problems p
-      |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
+      |${UserIdentitySql.leftJoinUserProfiles("p.author_username", "au")}
       |where
       |  $accessPredicate
       |  and $searchPredicate
@@ -147,9 +147,9 @@ object ProblemQueryTable:
 
   private val findBySlugSQL: String =
     s"""
-      |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.ready, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectColumns("p.creator_username", "creator", "au")}, p.created_at, p.updated_at
+      |select p.id, p.slug, p.title, p.statement_text, p.data_name, p.ready, p.base_access, p.other_user_submission_access, ${UserIdentitySql.selectOptionalColumns("p.author_username", "author", "au")}, p.created_at, p.updated_at
       |from problems p
-      |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
+      |${UserIdentitySql.leftJoinUserProfiles("p.author_username", "au")}
       |where p.slug = ?
       |""".stripMargin
 

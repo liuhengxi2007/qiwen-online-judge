@@ -18,6 +18,7 @@ export function useProblemSetEditorState(problemSet: ProblemSetDetail | null) {
     ...editorState,
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),
+    setAuthorUsername: (value: string) => dispatch({ type: 'set_author_username', value }),
     setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
     setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
     setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
