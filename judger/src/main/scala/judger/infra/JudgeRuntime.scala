@@ -3,7 +3,7 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.JudgeTask
+import judgeprotocol.objects.response.{JudgeResult, JudgeSubtaskResult, JudgeTask}
 import judger.config.AppConfig
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
@@ -108,26 +108,42 @@ object JudgeRuntimeSupport:
         throw RuntimeException(s"Prepared executable is not executable: ${path.toAbsolutePath}.")
     }
 
-  def completed(verdict: SubmissionVerdict, message: String = ""): ReportJudgeResultRequest =
-    ReportJudgeResultRequest(
-      status = SubmissionStatus.Completed,
-      verdict = Some(verdict),
-      judgeMessage = Option.when(message.nonEmpty)(message),
-      timeUsedMs = None,
-      memoryUsedKb = None,
-      score = None,
-      judgeResult = None
-    )
+  def taskCompleted(task: JudgeTask, verdict: SubmissionVerdict, message: String = ""): ReportJudgeResultRequest =
+    taskResult(task, SubmissionStatus.Completed, verdict, message)
 
-  def systemError(message: String): ReportJudgeResultRequest =
+  def taskSystemError(task: JudgeTask, message: String): ReportJudgeResultRequest =
+    taskResult(task, SubmissionStatus.Failed, SubmissionVerdict.SystemError, message)
+
+  private def taskResult(
+    task: JudgeTask,
+    status: SubmissionStatus,
+    verdict: SubmissionVerdict,
+    message: String
+  ): ReportJudgeResultRequest =
+    val resultMessage = Option.when(message.trim.nonEmpty)(message)
+    val subtasks = task.subtasks.map { subtask =>
+      JudgeSubtaskResult(
+        name = subtask.name,
+        score = BigDecimal(0),
+        verdict = verdict,
+        timeUsedMs = None,
+        memoryUsedKb = None,
+        message = resultMessage,
+        testcases = Nil
+      )
+    }
     ReportJudgeResultRequest(
-      status = SubmissionStatus.Failed,
-      verdict = Some(SubmissionVerdict.SystemError),
-      judgeMessage = Some(message),
-      timeUsedMs = None,
-      memoryUsedKb = None,
-      score = None,
-      judgeResult = None
+      status = status,
+      judgeResult = Some(
+        JudgeResult(
+          score = BigDecimal(0),
+          verdict = verdict,
+          message = resultMessage,
+          timeUsedMs = None,
+          memoryUsedKb = None,
+          subtasks = subtasks
+        )
+      )
     )
 
   def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =

@@ -23,7 +23,7 @@ object Python3Runtime extends JudgeRuntime:
   ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
     resolveInterpreterPath(config).flatMap {
       case Left(message) =>
-        IO.pure(Left(systemError(message)))
+        IO.pure(Left(taskSystemError(task, message)))
       case Right(interpreterPath) =>
         val sourceFile = workingDirectory.resolve("main.py")
         val bytecodeFile = workingDirectory.resolve("main.pyc")
@@ -42,14 +42,15 @@ object Python3Runtime extends JudgeRuntime:
             if compileResult.timedOut then
               IO.pure(
                 Left(
-                  completed(
+                  taskCompleted(
+                    task,
                     SubmissionVerdict.CompileError,
                     s"Python bytecode compilation exceeded the judger resource limits (${CompileLimits.memoryLimitKb.value / 1024L} MB, ${CompileLimits.timeLimit.value} ms)."
                   )
                 )
               )
             else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(Left(completed(SubmissionVerdict.CompileError, formatCompileError(interpreterPath, compileResult))))
+              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError, formatCompileError(interpreterPath, compileResult))))
             else
               ensureBytecodeExists(bytecodeFile).as(Right(RuntimeCommand(interpreterPath, List("/box/main.pyc"), processLimit = 1)))
         yield result

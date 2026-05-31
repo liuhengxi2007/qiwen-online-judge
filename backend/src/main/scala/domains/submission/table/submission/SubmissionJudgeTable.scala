@@ -2,7 +2,7 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import domains.problem.objects.{ProblemId, ProblemSlug}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeState}
 import domains.submission.table.submission.SubmissionTableSupport.*
 
@@ -28,16 +28,11 @@ object SubmissionJudgeTable:
       |set status = ?,
       |    started_at = ?,
       |    finished_at = ?,
-      |    verdict = ?,
-      |    judge_message = ?,
-      |    time_used_ms = null,
-      |    memory_used_kb = null,
-      |    score = null,
       |    judge_result = null
       |from next_submission ns, problems p
       |where s.id = ns.id
       |  and p.id = s.problem_id
-      |returning s.public_id, s.problem_id, p.slug as problem_slug, s.language, s.source_code
+      |returning s.public_id, s.problem_id, p.slug as problem_slug, s.program_manifest::text as program_manifest
       |""".stripMargin
 
   def claimNextForLanguages(
@@ -56,8 +51,6 @@ object SubmissionJudgeTable:
         statement.setString(stateStartIndex, encodeSubmissionStatusColumn(runningState.status))
         setOptionalTimestamp(statement, stateStartIndex + 1, runningState.startedAt)
         setOptionalTimestamp(statement, stateStartIndex + 2, runningState.finishedAt)
-        setOptionalVerdict(statement, stateStartIndex + 3, runningState.verdict)
-        setOptionalJudgeMessage(statement, stateStartIndex + 4, runningState.judgeMessage)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -66,8 +59,7 @@ object SubmissionJudgeTable:
                 id = SubmissionId(resultSet.getLong("public_id")),
                 problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
                 problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
-                language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
-                sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse)
+                programManifest = readProgramManifest(resultSet, "program_manifest")
               )
             )
           else None
@@ -78,7 +70,7 @@ object SubmissionJudgeTable:
   private val updateJudgeStateSQL: String =
     """
       |update submissions
-      |set status = ?, verdict = ?, judge_message = ?, time_used_ms = ?, memory_used_kb = ?, score = ?, judge_result = ?::jsonb, started_at = ?, finished_at = ?
+      |set status = ?, judge_result = ?::jsonb, started_at = ?, finished_at = ?
       |where public_id = ?
       |""".stripMargin
 
@@ -91,15 +83,10 @@ object SubmissionJudgeTable:
       val statement = connection.prepareStatement(updateJudgeStateSQL)
       try
         statement.setString(1, encodeSubmissionStatusColumn(judgeState.status))
-        setOptionalVerdict(statement, 2, judgeState.verdict)
-        setOptionalJudgeMessage(statement, 3, judgeState.judgeMessage)
-        setOptionalLong(statement, 4, judgeState.timeUsedMs)
-        setOptionalLong(statement, 5, judgeState.memoryUsedKb)
-        setOptionalBigDecimal(statement, 6, judgeState.score)
-        setOptionalJudgeResult(statement, 7, judgeState.judgeResult)
-        setOptionalTimestamp(statement, 8, judgeState.startedAt)
-        setOptionalTimestamp(statement, 9, judgeState.finishedAt)
-        statement.setLong(10, submissionId.value)
+        setOptionalJudgeResult(statement, 2, judgeState.judgeResult)
+        setOptionalTimestamp(statement, 3, judgeState.startedAt)
+        setOptionalTimestamp(statement, 4, judgeState.finishedAt)
+        statement.setLong(5, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

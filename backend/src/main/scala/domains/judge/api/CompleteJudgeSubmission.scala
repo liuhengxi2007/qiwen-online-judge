@@ -47,11 +47,6 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
               judgeState,
               SubmissionJudgeCompletion(
                 status = SubmissionJudgeRules.fromProtocolStatus(request.status),
-                verdict = request.verdict.map(SubmissionJudgeRules.fromProtocolVerdict),
-                judgeMessage = request.judgeMessage,
-                timeUsedMs = request.timeUsedMs,
-                memoryUsedKb = request.memoryUsedKb,
-                score = request.score,
                 judgeResult = request.judgeResult
               ),
               completedAt

@@ -11,13 +11,14 @@ import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
 import domains.problem.utils.ProblemDataStorage
 import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
-import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.utils.SubmissionJudgeRules
+import domains.submission.utils.SubmissionProgramStorage
 import io.circe.syntax.*
 import judgeprotocol.objects.{JudgerId, SubmissionLanguage}
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
-import judgeprotocol.objects.response.JudgeTask
+import judgeprotocol.objects.response.{JudgeResult, JudgeTask}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -27,7 +28,8 @@ import java.time.Instant
 
 final case class ClaimJudgeTask(
   judgeConfig: JudgeConfig,
-  problemDataStorage: ProblemDataStorage
+  problemDataStorage: ProblemDataStorage,
+  submissionProgramStorage: SubmissionProgramStorage
 ) extends PublicResponseApi[ClaimJudgeTaskRequest]:
 
   override val method: Method = Method.POST
@@ -113,7 +115,14 @@ final case class ClaimJudgeTask(
           case None =>
             Left("judge.yaml is required at the problem data root.")
           case Some((_, bytes)) =>
-            JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, manifest)
+            Right(bytes)
+        }.flatMap {
+          case Left(message) => IO.pure(Left(message))
+          case Right(bytes) =>
+            submissionProgramStorage.readDefaultSource(claimedSubmission.programManifest).map {
+              case Left(message) => Left(message)
+              case Right(sourceCode) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCode, manifest)
+            }
         }
 
   private def failClaimedJudgeTask(
@@ -128,12 +137,7 @@ final case class ClaimJudgeTask(
         runningState,
         SubmissionJudgeCompletion(
           status = SubmissionStatus.Failed,
-          verdict = Some(SubmissionVerdict.SystemError),
-          judgeMessage = Some(s"${judgerId.value}: $message"),
-          timeUsedMs = None,
-          memoryUsedKb = None,
-          score = None,
-          judgeResult = None
+          judgeResult = Some(systemErrorJudgeResult(s"${judgerId.value}: $message"))
         ),
         claimedAt
       )
@@ -147,3 +151,13 @@ final case class ClaimJudgeTask(
 
   private def taskResponse(task: JudgeTask): Response[IO] =
     Response[IO](status = Status.Ok).withEntity(task.asJson)
+
+  private def systemErrorJudgeResult(message: String): JudgeResult =
+    JudgeResult(
+      score = BigDecimal(0),
+      verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
+      message = Some(message),
+      timeUsedMs = None,
+      memoryUsedKb = None,
+      subtasks = Nil
+    )

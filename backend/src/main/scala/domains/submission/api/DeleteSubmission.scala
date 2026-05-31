@@ -6,6 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.SubmissionId
 import domains.submission.table.submission.{SubmissionMutationTable, SubmissionQueryTable}
+import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
@@ -14,7 +15,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
-object DeleteSubmission extends AuthenticatedApi[SubmissionId, SuccessResponse]:
+final case class DeleteSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/submissions/:submissionId/delete")
@@ -27,14 +28,15 @@ object DeleteSubmission extends AuthenticatedApi[SubmissionId, SuccessResponse]:
 
   override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SuccessResponse] =
     for
-      maybeSubmission <- SubmissionQueryTable.findById(connection, submissionId)
-      submission <- maybeSubmission match
-        case Some(submission) => IO.pure(submission)
+      maybeRecord <- SubmissionQueryTable.findById(connection, submissionId)
+      record <- maybeRecord match
+        case Some(record) => IO.pure(record)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-      access <- EvaluateProblemAccess.plan(connection, actor, submission.problemSlug)
+      access <- EvaluateProblemAccess.plan(connection, actor, record.problemSlug)
       _ <- access.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
       _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.submissionNotFound))
       _ <- SubmissionMutationTable.deleteById(connection, submissionId)
+      _ <- submissionProgramStorage.deleteManifest(record.programManifest).handleError(_ => ())
     yield SuccessResponse(code = Some(ApiMessages.submissionDeleted.code), message = None, params = ApiMessages.submissionDeleted.params)

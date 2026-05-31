@@ -7,5 +7,6 @@ export type JudgeSubtaskResult = {
   verdict: SubmissionVerdict
   timeUsedMs: number | null
   memoryUsedKb: number | null
+  message: string | null
   testcases: JudgeTestcaseResult[]
 }

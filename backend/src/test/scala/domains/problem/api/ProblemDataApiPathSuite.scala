@@ -6,6 +6,7 @@ import database.DatabaseSession
 import domains.auth.utils.SessionStore
 import domains.problem.routes.ProblemRouter
 import domains.problem.utils.ProblemDataStorage
+import domains.submission.utils.SubmissionProgramStorage
 import munit.CatsEffectSuite
 import org.http4s.{Method, Request, Status, Uri}
 import shared.api.ApiPath
@@ -13,6 +14,7 @@ import shared.api.ApiPath
 class ProblemDataApiPathSuite extends CatsEffectSuite:
 
   private val problemDataStorage = null.asInstanceOf[ProblemDataStorage]
+  private val submissionProgramStorage = null.asInstanceOf[SubmissionProgramStorage]
 
   test("problem data APIs expose the renamed route surface") {
     val actualPaths = List(
@@ -46,7 +48,8 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
       .routes(
         null.asInstanceOf[DatabaseSession],
         null.asInstanceOf[SessionStore],
-        problemDataStorage
+        problemDataStorage,
+        submissionProgramStorage
       )
       .orNotFound
 

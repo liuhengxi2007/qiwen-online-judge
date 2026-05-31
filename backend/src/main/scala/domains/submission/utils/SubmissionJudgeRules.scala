@@ -2,7 +2,8 @@ package domains.submission.utils
 
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
-import domains.submission.objects.response.SubmissionDetail
+import domains.submission.objects.internal.SubmissionDetailRecord
+import judgeprotocol.objects.response.JudgeResult
 
 import java.time.Instant
 
@@ -14,11 +15,6 @@ object SubmissionJudgeRules:
         Right(
           state.copy(
             status = SubmissionStatus.Running,
-            verdict = None,
-            judgeMessage = None,
-            timeUsedMs = None,
-            memoryUsedKb = None,
-            score = None,
             judgeResult = None,
             startedAt = Some(startedAt),
             finishedAt = None
@@ -36,31 +32,23 @@ object SubmissionJudgeRules:
       case SubmissionStatus.Running =>
         completion.status match
           case SubmissionStatus.Completed | SubmissionStatus.Failed =>
-            Right(
+            for
+              judgeResult <- completion.judgeResult.toRight("Terminal judge updates must include judgeResult.")
+              _ <- validateStatusMatchesResult(completion.status, judgeResult)
+            yield
               state.copy(
                 status = completion.status,
-                verdict = completion.verdict,
-                judgeMessage = completion.judgeMessage,
-                timeUsedMs = completion.timeUsedMs,
-                memoryUsedKb = completion.memoryUsedKb,
-                score = completion.score,
-                judgeResult = completion.judgeResult,
+                judgeResult = Some(judgeResult),
                 finishedAt = Some(finishedAt)
               )
-            )
           case _ =>
             Left("Judging may only finish with completed or failed status.")
       case _ =>
         Left(s"Only running submissions can finish judging, but found ${statusName(state.status)}.")
 
-  def fromSubmissionDetail(submission: SubmissionDetail): SubmissionJudgeState =
+  def fromSubmissionRecord(submission: SubmissionDetailRecord): SubmissionJudgeState =
     SubmissionJudgeState(
       status = submission.status,
-      verdict = submission.verdict,
-      judgeMessage = submission.judgeMessage,
-      timeUsedMs = submission.timeUsedMs,
-      memoryUsedKb = submission.memoryUsedKb,
-      score = submission.score,
       judgeResult = submission.judgeResult,
       startedAt = submission.startedAt,
       finishedAt = submission.finishedAt
@@ -93,3 +81,22 @@ object SubmissionJudgeRules:
       case SubmissionStatus.Running => "running"
       case SubmissionStatus.Completed => "completed"
       case SubmissionStatus.Failed => "failed"
+
+  private def validateStatusMatchesResult(status: SubmissionStatus, judgeResult: JudgeResult): Either[String, Unit] =
+    val hasSystemError = containsSystemError(judgeResult)
+    status match
+      case SubmissionStatus.Completed if hasSystemError =>
+        Left("Completed judge updates must not include a system error judgeResult.")
+      case SubmissionStatus.Failed if !hasSystemError =>
+        Left("Failed judge updates must include a system error judgeResult.")
+      case SubmissionStatus.Completed | SubmissionStatus.Failed =>
+        Right(())
+      case _ =>
+        Left("Judging may only finish with completed or failed status.")
+
+  private def containsSystemError(judgeResult: JudgeResult): Boolean =
+    judgeResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+      judgeResult.subtasks.exists(subtask =>
+        subtask.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+          subtask.testcases.exists(_.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError)
+      )

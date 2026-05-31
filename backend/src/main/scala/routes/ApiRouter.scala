@@ -8,6 +8,7 @@ import domains.judge.utils.JudgeConfig
 import domains.message.utils.MessageEventHub
 import domains.notification.utils.NotificationEventHub
 import domains.problem.utils.ProblemDataStorage
+import domains.submission.utils.SubmissionProgramStorage
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*
@@ -19,6 +20,7 @@ object ApiRouter:
     sessionStore: SessionStore,
     judgeConfig: JudgeConfig,
     problemDataStorage: ProblemDataStorage,
+    submissionProgramStorage: SubmissionProgramStorage,
     messageEventHub: MessageEventHub,
     notificationEventHub: NotificationEventHub
   ): HttpApp[IO] =
@@ -26,10 +28,10 @@ object ApiRouter:
       domains.auth.routes.AuthRouter.routes(databaseSession, sessionStore) <+>
         domains.user.routes.UserRouter.routes(databaseSession, sessionStore) <+>
         domains.judger.routes.JudgerRegistryRouter.routes(databaseSession, judgeConfig, sessionStore) <+>
-        domains.judge.routes.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage) <+>
-        domains.problem.routes.ProblemRouter.routes(databaseSession, sessionStore, problemDataStorage) <+>
+        domains.judge.routes.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage, submissionProgramStorage) <+>
+        domains.problem.routes.ProblemRouter.routes(databaseSession, sessionStore, problemDataStorage, submissionProgramStorage) <+>
         domains.problemset.routes.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
-        domains.submission.routes.SubmissionRouter.routes(databaseSession, sessionStore) <+>
+        domains.submission.routes.SubmissionRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
         domains.blog.routes.BlogRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.usergroup.routes.UserGroupRouter.routes(databaseSession, sessionStore) <+>
         domains.message.routes.MessageRouter.routes(databaseSession, sessionStore, messageEventHub) <+>

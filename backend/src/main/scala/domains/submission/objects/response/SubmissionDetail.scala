@@ -21,7 +21,6 @@ final case class SubmissionDetail(
   language: SubmissionLanguage,
   status: SubmissionStatus,
   verdict: Option[SubmissionVerdict],
-  judgeMessage: Option[String],
   timeUsedMs: Option[Long],
   memoryUsedKb: Option[Long],
   score: Option[BigDecimal],

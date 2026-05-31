@@ -51,10 +51,11 @@ export const enSubmissionMessages: Record<string, string> = {
   'submission.detail.deleteFailed': 'Unable to delete this submission.',
   'submission.detail.problem': 'Problem {{slug}}',
   'submission.detail.submitter': 'Submitter',
-  'submission.detail.judgeMessage': 'Judge message',
+  'submission.detail.judgeResultMessage': 'Judge message',
   'submission.detail.judgeResult': 'Judge result',
   'submission.detail.testcases': 'Testcases',
+  'submission.detail.noTestcases': 'No testcase results were produced.',
   'submission.detail.sourceCode': 'Source code',
-  'submission.detail.sourceDescription': 'This page shows the exact source code saved in the submission record.',
+  'submission.detail.sourceDescription': 'This page shows the exact source code saved for the submission.',
   'submission.detail.problemSlug': 'Problem slug',
 }

@@ -19,7 +19,6 @@ export type SubmissionDetail = {
   language: SubmissionLanguage
   status: SubmissionStatus
   verdict: SubmissionVerdict | null
-  judgeMessage: string | null
   timeUsedMs: number | null
   memoryUsedKb: number | null
   score: number | null

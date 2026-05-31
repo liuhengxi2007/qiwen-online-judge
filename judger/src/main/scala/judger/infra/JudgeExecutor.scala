@@ -34,7 +34,7 @@ object JudgeExecutor:
       }
     }.handleError { error =>
       val message = Option(error.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(error.getClass.getName)
-      systemError(s"${error.getClass.getSimpleName}: $message")
+      taskSystemError(task, s"${error.getClass.getSimpleName}: $message")
     }
 
   private def judgeSubtasks(
@@ -49,11 +49,6 @@ object JudgeExecutor:
       val result = aggregateTask(task, subtasks)
       ReportJudgeResultRequest(
         status = if containsSystemError(result) then SubmissionStatus.Failed else SubmissionStatus.Completed,
-        verdict = Some(result.verdict),
-        judgeMessage = Some(resultMessage(result)),
-        timeUsedMs = result.timeUsedMs,
-        memoryUsedKb = result.memoryUsedKb,
-        score = Some(result.score),
         judgeResult = Some(result)
       )
     }
@@ -188,7 +183,7 @@ object JudgeExecutor:
     sourceRef: JudgeTaskFileRef
   ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
     resolveCompilerPath(config).flatMap {
-      case Left(message) => IO.pure(Left(systemError(message)))
+      case Left(message) => IO.pure(Left(taskSystemError(task, message)))
       case Right(compilerPath) =>
         val sourceName = s"checker-${math.abs(sourceRef.path.hashCode)}.cpp"
         val executableName = s"checker-${math.abs(sourceRef.path.hashCode)}"
@@ -208,8 +203,8 @@ object JudgeExecutor:
             stderrName = s".$executableName.compile.stderr"
           )
           result <-
-            if compileResult.timedOut then IO.pure(Left(systemError(s"Checker compilation timed out for ${sourceRef.path}.")))
-            else if compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(Left(systemError(s"Checker compilation failed for ${sourceRef.path}.\n${compileResult.stderr.trim}")))
+            if compileResult.timedOut then IO.pure(Left(taskSystemError(task, s"Checker compilation timed out for ${sourceRef.path}.")))
+            else if compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(Left(taskSystemError(task, s"Checker compilation failed for ${sourceRef.path}.\n${compileResult.stderr.trim}")))
             else ensureExecutableExists(workingDirectory.resolve(executableName)).as(Right(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)))
         yield result
     }
@@ -235,13 +230,18 @@ object JudgeExecutor:
   private def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
     val score = aggregateScore(subtask.aggregation.score, testcases.map(_.score), subtask.testcases.map(_.scoreRatio))
     val verdict = aggregateVerdict(score, testcases.map(result => result.score -> result.verdict))
-    JudgeSubtaskResult(subtask.name, score, verdict, aggregateUsage(subtask.aggregation.time, testcases.flatMap(_.timeUsedMs)), aggregateUsage(subtask.aggregation.memory, testcases.flatMap(_.memoryUsedKb)), testcases)
+    val message =
+      if verdict == SubmissionVerdict.Accepted then None
+      else testcases.find(_.verdict != SubmissionVerdict.Accepted).flatMap(_.message)
+    JudgeSubtaskResult(subtask.name, score, verdict, aggregateUsage(subtask.aggregation.time, testcases.flatMap(_.timeUsedMs)), aggregateUsage(subtask.aggregation.memory, testcases.flatMap(_.memoryUsedKb)), message, testcases)
 
   private def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
     val rawScore = aggregateScore(task.aggregation.score, subtasks.map(_.score), task.subtasks.map(_.scoreRatio))
     val score = roundFinalScore(rawScore, task.roundingScale)
     val verdict = aggregateVerdict(score, subtasks.map(result => result.score -> result.verdict))
-    JudgeResult(score, verdict, aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)), aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)), subtasks)
+    val resultWithoutMessage =
+      JudgeResult(score, verdict, None, aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)), aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)), subtasks)
+    resultWithoutMessage.copy(message = Some(resultMessage(resultWithoutMessage)))
 
   private def aggregateScore(kind: String, scores: List[BigDecimal], ratios: List[BigDecimal]): BigDecimal =
     kind match
@@ -269,11 +269,16 @@ object JudgeExecutor:
     score.max(BigDecimal(0)).min(BigDecimal(1))
 
   private def containsSystemError(result: JudgeResult): Boolean =
-    result.verdict == SubmissionVerdict.SystemError || result.subtasks.exists(_.testcases.exists(_.verdict == SubmissionVerdict.SystemError))
+    result.verdict == SubmissionVerdict.SystemError ||
+      result.subtasks.exists(subtask => subtask.verdict == SubmissionVerdict.SystemError || subtask.testcases.exists(_.verdict == SubmissionVerdict.SystemError))
 
   private def resultMessage(result: JudgeResult): String =
     if result.verdict == SubmissionVerdict.Accepted then "Accepted."
-    else result.subtasks.iterator.flatMap(_.testcases).find(_.verdict != SubmissionVerdict.Accepted).flatMap(_.message).getOrElse(SubmissionVerdict.render(result.verdict))
+    else
+      result.subtasks.iterator
+        .find(_.verdict != SubmissionVerdict.Accepted)
+        .flatMap(subtask => subtask.message.orElse(subtask.testcases.find(_.verdict != SubmissionVerdict.Accepted).flatMap(_.message)))
+        .getOrElse(SubmissionVerdict.render(result.verdict))
 
   private def formatRuntimeError(testcaseName: String, command: RuntimeCommand, result: ProcessResult): String =
     val exitCode = result.exitCode.getOrElse(-1)

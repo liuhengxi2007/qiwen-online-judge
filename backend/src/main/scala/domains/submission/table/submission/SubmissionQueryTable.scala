@@ -3,9 +3,11 @@ package domains.submission.table.submission
 import cats.effect.IO
 import database.utils.{LikePatternSql, UserIdentitySql}
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.problem.objects.ProblemId
 import domains.submission.objects.{SubmissionId, SubmissionVerdict}
+import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
 import domains.submission.objects.request.{SubmissionListRequest, SubmissionProblemQuery, SubmissionSort, SubmissionSortDirection, SubmissionUserQuery, SubmissionVerdictFilter}
-import domains.submission.objects.response.{SubmissionDetail, SubmissionListResponse}
+import domains.submission.objects.response.SubmissionListResponse
 import domains.submission.table.submission.SubmissionTableSupport.*
 import shared.objects.PageResponse
 
@@ -28,7 +30,7 @@ object SubmissionQueryTable:
       case SubmissionSort.Memory =>
         s"s.memory_used_kb $submittedDirection nulls last, s.submitted_at desc, s.public_id desc"
       case SubmissionSort.CodeLength =>
-        s"octet_length(s.source_code) $submittedDirection, s.submitted_at desc, s.public_id desc"
+        s"s.code_length $submittedDirection, s.submitted_at desc, s.public_id desc"
 
   private val summaryVisibilityPredicate: String =
     """
@@ -204,7 +206,7 @@ object SubmissionQueryTable:
       |       s.time_used_ms,
       |       s.memory_used_kb,
       |       s.score,
-      |       octet_length(s.source_code) as code_length,
+      |       s.code_length,
       |       s.submitted_at,
       |       s.started_at,
       |       s.finished_at
@@ -263,20 +265,43 @@ object SubmissionQueryTable:
 
   private val findByIdSQL: String =
     s"""
-      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.judge_message, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, octet_length(s.source_code) as code_length, s.source_code, s.submitted_at, s.started_at, s.finished_at
+      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, s.code_length, s.program_manifest::text as program_manifest, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
       |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where s.public_id = ?
       |""".stripMargin
 
-  def findById(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionDetail]] =
+  def findById(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionDetailRecord]] =
     IO.blocking {
       val statement = connection.prepareStatement(findByIdSQL)
       try
         statement.setLong(1, submissionId.value)
         val resultSet = statement.executeQuery()
-        try if resultSet.next() then Some(readSubmissionDetail(resultSet)) else None
+        try if resultSet.next() then Some(readSubmissionDetailRecord(resultSet)) else None
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val listProgramManifestsForProblemSQL: String =
+    """
+      |select program_manifest::text as program_manifest
+      |from submissions
+      |where problem_id = ?
+      |""".stripMargin
+
+  def listProgramManifestsForProblem(connection: Connection, problemId: ProblemId): IO[List[SubmissionProgramManifest]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listProgramManifestsForProblemSQL)
+      try
+        statement.setObject(1, problemId.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readProgramManifest(resultSet, "program_manifest"))
+            .toList
         finally resultSet.close()
       finally statement.close()
     }

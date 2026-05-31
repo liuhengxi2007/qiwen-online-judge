@@ -7,15 +7,17 @@ import domains.problem.api.EvaluateProblemAccess
 import domains.submission.utils.SubmissionAccessRules
 
 import domains.submission.objects.SubmissionId
+import domains.submission.objects.internal.SubmissionDetailRecord
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionQueryTable
+import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
+final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/submissions/:submissionId")
@@ -30,14 +32,14 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
     SubmissionQueryTable.findById(connection, submissionId).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-      case Some(submission) =>
-        EvaluateProblemAccess.plan(connection, actor, submission.problemSlug).flatMap { access =>
+      case Some(record) =>
+        EvaluateProblemAccess.plan(connection, actor, record.problemSlug).flatMap { access =>
           access.problem match
             case None =>
               HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
             case Some(problem) =>
-              if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, submission.submitter.username) then
-                IO.pure(submission.copy(canManage = access.canManage))
+              if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
+                loadSubmissionDetail(record, access.canManage)
               else
                 for
                   _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
@@ -45,6 +47,13 @@ object GetSubmission extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
                     SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
                     HttpApiError.notFound(ApiMessages.submissionNotFound)
                   )
-                yield submission.copy(canManage = access.canManage)
+                  submission <- loadSubmissionDetail(record, access.canManage)
+                yield submission
         }
+    }
+
+  private def loadSubmissionDetail(record: SubmissionDetailRecord, canManage: Boolean): IO[SubmissionDetail] =
+    submissionProgramStorage.readDefaultSource(record.programManifest).flatMap {
+      case Right(sourceCode) => IO.pure(record.toSubmissionDetail(sourceCode, canManage))
+      case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
     }

@@ -3,7 +3,7 @@ package domains.judge.utils
 import cats.syntax.all.*
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.submission.objects.internal.ClaimedSubmission
+import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
 import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseName, TestcaseTimeLimitMs}
 import judgeprotocol.objects.response.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase}
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
@@ -20,9 +20,10 @@ object JudgeTaskBuilder:
   def buildJudgeTask(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
+    sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
-    parseConfigBytes(bytes, claimedSubmission, manifest)
+    parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
@@ -32,10 +33,11 @@ object JudgeTaskBuilder:
   private[utils] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
+    sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, manifest, root)
+      buildFromYaml(claimedSubmission, sourceCode, manifest, root)
     }
 
   def validateReadyConfigBytes(
@@ -43,14 +45,18 @@ object JudgeTaskBuilder:
     problem: domains.problem.objects.response.ProblemDetail,
     manifest: ProblemDataManifest
   ): Either[String, ReadyValidation] =
+    val sourceCode = domains.submission.objects.SubmissionSourceCode("int main() { return 0; }")
     val claimedSubmission = ClaimedSubmission(
       id = domains.submission.objects.SubmissionId(0L),
       problemId = problem.id,
       problemSlug = problem.slug,
-      language = domains.submission.objects.SubmissionLanguage.Cpp17,
-      sourceCode = domains.submission.objects.SubmissionSourceCode("int main() { return 0; }")
+      programManifest = SubmissionProgramManifest.singleDefault(
+        java.util.UUID.fromString("00000000-0000-4000-8000-000000000000"),
+        domains.submission.objects.SubmissionLanguage.Cpp17,
+        sourceCode
+      )
     )
-    parseConfigBytes(bytes, claimedSubmission, manifest).flatMap { task =>
+    parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
       val rawPaths =
         task.subtasks.flatMap(_.testcases).flatMap { testcase =>
           List(testcase.input.map(_.path), Some(testcase.answer.path), testcase.checker.source.map(_.path)).flatten
@@ -72,6 +78,7 @@ object JudgeTaskBuilder:
 
   private def buildFromYaml(
     claimedSubmission: ClaimedSubmission,
+    sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest,
     root: Map[String, Any]
   ): Either[String, JudgeTask] =
@@ -88,13 +95,14 @@ object JudgeTaskBuilder:
       subtasks <- sequence(subtaskMaps.zip(subtaskRatios).zipWithIndex.map { case ((subtaskMap, subtaskRatio), subtaskIndex) =>
         buildSubtask(manifest, subtaskMap, subtaskIndex, subtaskRatio, rootLimits, rootChecker, rootAggregation)
       })
+      defaultProgram <- claimedSubmission.programManifest.defaultProgram
       taskAggregation = rootAggregation.subtasks.getOrElse(defaultAggregation)
     yield
       JudgeTask(
         submissionId = SubmissionId(claimedSubmission.id.value),
         problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
-        language = toProtocolLanguage(claimedSubmission.language),
-        sourceCode = SubmissionSourceCode(claimedSubmission.sourceCode.value),
+        language = toProtocolLanguage(defaultProgram.language),
+        sourceCode = SubmissionSourceCode(sourceCode.value),
         problemDataVersion = manifest.version,
         roundingScale = roundingScale,
         aggregation = taskAggregation,

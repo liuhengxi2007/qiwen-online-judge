@@ -7,9 +7,11 @@ import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
 
 import domains.submission.objects.SubmissionSourceCode
+import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
+import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
@@ -17,7 +19,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-object CreateSubmission extends AuthenticatedApi[CreateSubmissionRequest, SubmissionDetail]:
+final case class CreateSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[CreateSubmissionRequest, SubmissionDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/submissions")
@@ -38,13 +40,24 @@ object CreateSubmission extends AuthenticatedApi[CreateSubmissionRequest, Submis
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.problemNotFound))
-      created <- SubmissionMutationTable.insert(
-        connection = connection,
-        problemId = problem.id,
-        problemSlug = problem.slug,
-        problemTitle = problem.title,
-        submitterUsername = actor.username,
-        language = validRequest.language,
-        sourceCode = validRequest.sourceCode
+      submissionUuid <- IO.randomUUID
+      programManifest = SubmissionProgramManifest.singleDefault(submissionUuid, validRequest.language, validRequest.sourceCode)
+      _ <- submissionProgramStorage.writeSource(
+        programManifest.programs(SubmissionProgramManifest.DefaultProgramKey).sourceKey,
+        validRequest.sourceCode
       )
+      created <- SubmissionMutationTable
+        .insert(
+          connection = connection,
+          submissionUuid = submissionUuid,
+          problemId = problem.id,
+          problemSlug = problem.slug,
+          problemTitle = problem.title,
+          submitterUsername = actor.username,
+          programManifest = programManifest,
+          sourceCode = validRequest.sourceCode
+        )
+        .handleErrorWith { error =>
+          submissionProgramStorage.deleteManifest(programManifest).handleError(_ => ()).void *> IO.raiseError(error)
+        }
     yield created.copy(canManage = access.canManage)

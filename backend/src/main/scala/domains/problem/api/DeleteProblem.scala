@@ -6,6 +6,8 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.table.problem.ProblemMutationTable
+import domains.submission.utils.SubmissionProgramCleanup
+import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
@@ -15,7 +17,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
-object DeleteProblem extends AuthenticatedApi[ProblemSlug, SuccessResponse]:
+final case class DeleteProblem(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[ProblemSlug, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/delete")
@@ -38,7 +40,9 @@ object DeleteProblem extends AuthenticatedApi[ProblemSlug, SuccessResponse]:
         case Some(problem) =>
           for
             _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+            deleteSubmissionPrograms <- SubmissionProgramCleanup.prepareDeleteForProblem(connection, problem.id, submissionProgramStorage)
             _ <- ResourceAccessGrantTable.deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
             _ <- ProblemMutationTable.delete(connection, problem.id)
+            _ <- deleteSubmissionPrograms
           yield SuccessResponse(code = Some(ApiMessages.problemDeleted.code), message = None, params = ApiMessages.problemDeleted.params)
     }

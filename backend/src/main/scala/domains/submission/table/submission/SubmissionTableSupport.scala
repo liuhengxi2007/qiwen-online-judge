@@ -3,9 +3,10 @@ package domains.submission.table.submission
 
 
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.response.{SubmissionDetail, SubmissionSummary}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.response.SubmissionSummary
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
+import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -43,24 +44,22 @@ object SubmissionTableSupport:
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
     )
 
-  def readSubmissionDetail(resultSet: ResultSet): SubmissionDetail =
-    SubmissionDetail(
+  def readSubmissionDetailRecord(resultSet: ResultSet): SubmissionDetailRecord =
+    SubmissionDetailRecord(
       id = SubmissionId(resultSet.getLong("public_id")),
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
-      canManage = false,
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
       verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
-      judgeMessage = Option(resultSet.getString("judge_message")),
       timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
       memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
       score = readOptionalBigDecimal(resultSet, "score"),
       judgeResult = readOptionalJudgeResult(resultSet, "judge_result"),
       codeLength = resultSet.getInt("code_length"),
-      sourceCode = parseColumn("submissions.source_code", resultSet.getString("source_code"), SubmissionSourceCode.parse),
+      programManifest = readProgramManifest(resultSet, "program_manifest"),
       submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
       startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
@@ -98,15 +97,6 @@ object SubmissionTableSupport:
 
   def decodeSubmissionVerdictColumn(value: String): Option[SubmissionVerdict] =
     SubmissionVerdict.parse(value).toOption
-
-  def setOptionalJudgeMessage(
-    statement: PreparedStatement,
-    parameterIndex: Int,
-    judgeMessage: Option[String]
-  ): Unit =
-    judgeMessage match
-      case Some(value) => statement.setString(parameterIndex, value)
-      case None => statement.setNull(parameterIndex, java.sql.Types.LONGVARCHAR)
 
   def setOptionalLong(
     statement: PreparedStatement,
@@ -161,3 +151,7 @@ object SubmissionTableSupport:
     Option(resultSet.getString(columnName)).map { raw =>
       decode[JudgeResult](raw).fold(error => throw IllegalStateException(s"Invalid judge result JSON: ${error.getMessage}"), identity)
     }
+
+  def readProgramManifest(resultSet: ResultSet, columnName: String): SubmissionProgramManifest =
+    decode[SubmissionProgramManifest](resultSet.getString(columnName))
+      .fold(error => throw IllegalStateException(s"Invalid submission program manifest JSON: ${error.getMessage}"), identity)

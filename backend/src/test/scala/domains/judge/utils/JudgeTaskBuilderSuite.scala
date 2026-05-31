@@ -5,7 +5,7 @@ import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemD
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
-import domains.submission.objects.internal.ClaimedSubmission
+import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
 import munit.FunSuite
 import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
@@ -15,12 +15,17 @@ import java.util.UUID
 
 class JudgeTaskBuilderSuite extends FunSuite:
 
+  private val sourceCode = SubmissionSourceCode("int main() {}")
+
   private val claimedSubmission = ClaimedSubmission(
     id = SubmissionId(1),
     problemId = ProblemId(UUID.fromString("11111111-1111-4111-8111-111111111111")),
     problemSlug = ProblemSlug("sample-problem"),
-    language = SubmissionLanguage.Cpp17,
-    sourceCode = SubmissionSourceCode("int main() {}")
+    programManifest = SubmissionProgramManifest.singleDefault(
+      UUID.fromString("22222222-2222-4222-8222-222222222222"),
+      SubmissionLanguage.Cpp17,
+      sourceCode
+    )
   )
 
   private val manifest = ProblemDataManifest.fromEntries(
@@ -66,6 +71,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |        answer: sample/1.ans
         |"""),
       claimedSubmission,
+      sourceCode,
       manifest
     )
 
@@ -97,6 +103,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |      - answer: sample/1.ans
         |"""),
       claimedSubmission,
+      sourceCode,
       manifest
     )
 
@@ -120,6 +127,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |        answer: sample/1.ans
         |"""),
       claimedSubmission,
+      sourceCode,
       manifest
     )
 

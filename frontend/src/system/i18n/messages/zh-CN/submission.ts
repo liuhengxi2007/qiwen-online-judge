@@ -51,10 +51,11 @@ export const zhCnSubmissionMessages: Record<string, string> = {
   'submission.detail.deleteFailed': '无法删除这条提交。',
   'submission.detail.problem': '题目 {{slug}}',
   'submission.detail.submitter': '提交者',
-  'submission.detail.judgeMessage': '评测消息',
+  'submission.detail.judgeResultMessage': '评测消息',
   'submission.detail.judgeResult': '评测详情',
   'submission.detail.testcases': '测试点',
+  'submission.detail.noTestcases': '没有产生测试点结果。',
   'submission.detail.sourceCode': '源代码',
-  'submission.detail.sourceDescription': '这里展示提交记录中保存的完整源代码。',
+  'submission.detail.sourceDescription': '这里展示为这次提交保存的完整源代码。',
   'submission.detail.problemSlug': '题目标识',
 }

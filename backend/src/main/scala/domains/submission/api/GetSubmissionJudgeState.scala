@@ -19,4 +19,4 @@ object GetSubmissionJudgeState extends InternalOnlyApi[SubmissionId, Option[Subm
   override def plan(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionJudgeState]] =
     SubmissionQueryTable
       .findById(connection, submissionId)
-      .map(_.map(SubmissionJudgeRules.fromSubmissionDetail))
+      .map(_.map(SubmissionJudgeRules.fromSubmissionRecord))

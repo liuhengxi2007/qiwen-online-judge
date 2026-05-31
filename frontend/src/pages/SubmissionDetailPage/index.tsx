@@ -12,7 +12,7 @@ import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import { SubmissionJudgeMessageCard } from './components/SubmissionJudgeMessageCard'
+import { SubmissionJudgeResultMessageCard } from './components/SubmissionJudgeResultMessageCard'
 import { SubmissionJudgeResultCard } from './components/SubmissionJudgeResultCard'
 import { SubmissionSourceCodeCard } from './components/SubmissionSourceCodeCard'
 import { SubmissionSummaryCard } from './components/SubmissionSummaryCard'
@@ -90,8 +90,8 @@ function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissio
             <SubmissionJudgeResultCard judgeResult={submissionQuery.submission.judgeResult} />
           ) : null}
 
-          {submissionQuery.submission.judgeMessage ? (
-            <SubmissionJudgeMessageCard judgeMessage={submissionQuery.submission.judgeMessage} />
+          {submissionQuery.submission.judgeResult?.message ? (
+            <SubmissionJudgeResultMessageCard message={submissionQuery.submission.judgeResult.message} />
           ) : null}
 
           <SubmissionSourceCodeCard sourceCode={submissionQuery.submission.sourceCode} />

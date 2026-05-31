@@ -17,6 +17,7 @@ import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.submission.table.submission.SubmissionTable
+import domains.submission.utils.{LocalSubmissionProgramStorage, MinioSubmissionProgramStorage, SubmissionProgramStorage, SubmissionProgramStorageBackend, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
 import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.HttpApp
@@ -51,6 +52,19 @@ object Main extends IOApp.Simple:
       }
     }
 
+  private def submissionProgramStorageResource(config: SubmissionProgramStorageConfig): Resource[IO, SubmissionProgramStorage] =
+    Resource.eval {
+      IO.delay {
+        config.backend match
+          case SubmissionProgramStorageBackend.Local =>
+            LocalSubmissionProgramStorage(config.localRootDirectory)
+          case SubmissionProgramStorageBackend.Minio =>
+            config.minio match
+              case Some(minioConfig) => MinioSubmissionProgramStorage(minioConfig)
+              case None => throw IllegalStateException("MinIO submission program storage requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET.")
+      }
+    }
+
   private val resource: Resource[IO, Server] =
     for
       databaseSession <- DatabaseSession.resource
@@ -66,7 +80,9 @@ object Main extends IOApp.Simple:
       )
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
+      submissionProgramStorageConfig = SubmissionProgramStorageConfig.loadFromEnvironment()
       problemDataStorage <- problemDataStorageResource(problemDataStorageConfig)
+      submissionProgramStorage <- submissionProgramStorageResource(submissionProgramStorageConfig)
       _ <- Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for
@@ -77,7 +93,7 @@ object Main extends IOApp.Simple:
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemDataFileTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
-            _ <- SubmissionTable.initialize(connection)
+            _ <- SubmissionTable.initialize(connection, submissionProgramStorage)
             _ <- BlogTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)
@@ -89,7 +105,7 @@ object Main extends IOApp.Simple:
       }
       httpApp =
         CORS.policy.withAllowOriginAll(
-          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, messageEventHub, notificationEventHub)
+          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, submissionProgramStorage, messageEventHub, notificationEventHub)
         )
       server <- serverResource(httpApp)
     yield server

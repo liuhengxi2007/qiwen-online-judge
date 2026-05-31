@@ -51,12 +51,13 @@ final class JudgerService(
 
   private def logResult(task: JudgeTask, result: ReportJudgeResultRequest): IO[Unit] =
     val status = SubmissionStatus.render(result.status)
-    val verdict = result.verdict.map(SubmissionVerdict.render).getOrElse("pending")
+    val resultVerdict = result.judgeResult.map(_.verdict)
+    val verdict = resultVerdict.map(SubmissionVerdict.render).getOrElse("pending")
     val summary =
       s"[judger] Submission #${task.submissionId.value} (${SubmissionLanguage.render(task.language)}) finished with status=$status verdict=$verdict."
 
-    (result.status, result.verdict) match
+    (result.status, resultVerdict) match
       case (SubmissionStatus.Failed, _) | (_, Some(SubmissionVerdict.SystemError)) =>
-        logger.error(s"$summary ${result.judgeMessage.getOrElse("")}".trim)
+        logger.error(s"$summary ${result.judgeResult.flatMap(_.message).getOrElse("")}".trim)
       case _ =>
         IO.unit
