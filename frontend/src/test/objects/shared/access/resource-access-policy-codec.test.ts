@@ -23,8 +23,9 @@ describe('resource access policy codec', () => {
 
     expect(viewerUser?.kind === 'user' ? accessUsernameValue(viewerUser.username) : null).toBe('alice_01')
     expect(viewerGroup?.kind === 'user_group' ? accessUserGroupSlugValue(viewerGroup.slug) : null).toBe('sample-group')
+    expect(policy.baseAccess).toBe('restricted')
     expect(toResourceAccessPolicyContract(policy)).toEqual({
-      baseAccess: 'owner_only',
+      baseAccess: 'restricted',
       viewerGrants: [
         { kind: 'user', username: 'alice_01' },
         { kind: 'user_group', slug: 'sample-group' },
@@ -36,7 +37,7 @@ describe('resource access policy codec', () => {
   it('rejects invalid access subject contract values', () => {
     expect(() =>
       fromResourceAccessPolicyContract({
-        baseAccess: 'owner_only',
+        baseAccess: 'restricted',
         viewerGrants: [{ kind: 'user', username: 'ab' }],
         managerGrants: [],
       }),
@@ -44,7 +45,7 @@ describe('resource access policy codec', () => {
 
     expect(() =>
       fromResourceAccessPolicyContract({
-        baseAccess: 'owner_only',
+        baseAccess: 'restricted',
         viewerGrants: [{ kind: 'user_group', slug: 'bad group' }],
         managerGrants: [],
       }),

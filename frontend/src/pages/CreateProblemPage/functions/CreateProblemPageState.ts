@@ -38,7 +38,7 @@ export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   slug: '',
   title: '',
   statement: '',
-  baseAccess: 'owner_only',
+  baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
   managerUsersInput: '',

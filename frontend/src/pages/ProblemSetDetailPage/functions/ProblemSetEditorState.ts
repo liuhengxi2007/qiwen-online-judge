@@ -24,7 +24,7 @@ export type ProblemSetEditorAction =
 export const initialProblemSetEditorState: ProblemSetEditorState = {
   title: '',
   description: '',
-  baseAccess: 'owner_only',
+  baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
   linkProblemSlug: '',

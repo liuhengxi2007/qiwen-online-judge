@@ -11,7 +11,7 @@ export const zhCnResourceAccessMessages: Record<string, string> = {
   'resourceAccess.managerUsersHint': '这些用户可以编辑、删除并管理该资源数据。',
   'resourceAccess.badge.public': '公开',
   'resourceAccess.badge.shared': '共享',
-  'resourceAccess.badge.private': '私有',
+  'resourceAccess.badge.restricted': '受限',
   'resourceAccess.summary.visibleAll': '所有已登录用户可见。',
   'resourceAccess.summary.visibleGrantedOnly': '仅显式授权的查看者和全局管理员可见。',
   'resourceAccess.summary.sharedWith': '已共享给 {{summary}}。',

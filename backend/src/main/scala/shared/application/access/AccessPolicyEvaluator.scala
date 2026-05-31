@@ -7,11 +7,9 @@ object AccessPolicyEvaluator:
     policy: ResourceAccessPolicy,
     viewerUsername: AccessUsername,
     viewerGroupSlugs: Set[AccessUserGroupSlug],
-    isOwner: Boolean,
     hasGlobalOverride: Boolean
   ): Boolean =
-    isOwner ||
-      hasGlobalOverride ||
+    hasGlobalOverride ||
       policy.baseAccess == BaseAccess.Public ||
       policy.viewerGrants.exists {
         case AccessSubject.User(username) =>

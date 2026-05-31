@@ -15,7 +15,7 @@ object ProblemSetTableSchema:
       |  slug varchar(64) not null unique,
       |  title varchar(120) not null,
       |  description text not null,
-      |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
+      |  base_access varchar(32) not null default 'restricted' check (base_access in ('restricted', 'public')),
       |  creator_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
@@ -71,23 +71,53 @@ object ProblemSetTableSchema:
       |
       |  if exists (
       |    select 1
+      |    from pg_constraint
+      |    where conname = 'problem_sets_base_access_check'
+      |      and conrelid = 'problem_sets'::regclass
+      |  ) then
+      |    alter table problem_sets drop constraint problem_sets_base_access_check;
+      |  end if;
+      |
+      |  if exists (
+      |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'problem_sets'
       |      and column_name = 'visibility'
       |  ) then
       |    update problem_sets
-      |    set base_access = case visibility
-      |      when 'public' then 'public'
-      |      else 'owner_only'
+      |    set base_access = case
+      |      when base_access = 'public' then 'public'
+      |      when base_access = 'restricted' then 'restricted'
+      |      when visibility = 'public' then 'public'
+      |      else 'restricted'
       |    end
-      |    where base_access is null or btrim(base_access) = '';
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
       |  else
       |    update problem_sets
-      |    set base_access = 'owner_only'
-      |    where base_access is null or btrim(base_access) = '';
+      |    set base_access = 'restricted'
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'problem_sets_base_access_check'
+      |      and conrelid = 'problem_sets'::regclass
+      |  ) then
+      |    alter table problem_sets add constraint problem_sets_base_access_check check (base_access in ('restricted', 'public'));
       |  end if;
       |end $$;
+      |""".stripMargin
+
+  val dropVisibilityColumnSql: String =
+    """
+      |alter table problem_sets
+      |drop column if exists visibility
       |""".stripMargin
 
   val setBaseAccessNotNullSql: String =
@@ -99,7 +129,7 @@ object ProblemSetTableSchema:
   val setBaseAccessDefaultSql: String =
     """
       |alter table problem_sets
-      |alter column base_access set default 'owner_only'
+      |alter column base_access set default 'restricted'
       |""".stripMargin
 
   val dropStatusColumnSql: String =
@@ -115,6 +145,7 @@ object ProblemSetTableSchema:
         statement.execute(initTableSql)
         statement.execute(migrateCreatorUsernameColumnSql)
         statement.execute(addBaseAccessColumnSql)
+        statement.execute(dropVisibilityColumnSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
         statement.execute(dropStatusColumnSql)

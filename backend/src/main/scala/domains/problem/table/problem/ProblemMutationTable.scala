@@ -2,7 +2,7 @@ package domains.problem.table.problem
 
 import cats.effect.IO
 import database.table.resource_access_grant.ResourceAccessGrantTable
-import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, sanitizePolicy}
 import database.utils.UserIdentitySql
 import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.objects.{ProblemId}
@@ -18,8 +18,8 @@ object ProblemMutationTable:
 
   private val insertSQL: String =
     s"""
-      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, visibility, base_access, other_user_submission_access, creator_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |insert into problems (id, slug, title, statement_text, data_name, data_bytes, base_access, other_user_submission_access, creator_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       |returning id, slug, title, statement_text, data_name, ready, base_access, other_user_submission_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
       |""".stripMargin
 
@@ -39,12 +39,11 @@ object ProblemMutationTable:
         statement.setString(4, request.statement.value)
         statement.setNull(5, java.sql.Types.VARCHAR)
         statement.setNull(6, java.sql.Types.BINARY)
-        statement.setString(7, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(8, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setString(9, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
-        statement.setString(10, creatorUsername.value)
+        statement.setString(7, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setString(8, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
+        statement.setString(9, creatorUsername.value)
+        statement.setTimestamp(10, Timestamp.from(createdAt))
         statement.setTimestamp(11, Timestamp.from(createdAt))
-        statement.setTimestamp(12, Timestamp.from(createdAt))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemDetailBase(resultSet)
@@ -70,7 +69,7 @@ object ProblemMutationTable:
   private val updateSQL: String =
     """
       |update problems
-      |set title = ?, statement_text = ?, visibility = ?, base_access = ?, other_user_submission_access = ?, updated_at = ?
+      |set title = ?, statement_text = ?, base_access = ?, other_user_submission_access = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -81,11 +80,10 @@ object ProblemMutationTable:
       try
         statement.setString(1, request.title.value)
         statement.setString(2, request.statement.value)
-        statement.setString(3, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(4, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setString(5, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
-        statement.setTimestamp(6, Timestamp.from(updatedAt))
-        statement.setObject(7, problemId.value)
+        statement.setString(3, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setString(4, encodeOtherUserSubmissionAccessColumn(request.otherUserSubmissionAccess))
+        statement.setTimestamp(5, Timestamp.from(updatedAt))
+        statement.setObject(6, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()

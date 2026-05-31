@@ -10,7 +10,7 @@ export function resourceAccessBadgeLabel(accessPolicy: ResourceAccessPolicy, t?:
 
   return accessPolicy.viewerGrants.length > 0
     ? (t ? t('resourceAccess.badge.shared') : 'Shared')
-    : (t ? t('resourceAccess.badge.private') : 'Private')
+    : (t ? t('resourceAccess.badge.restricted') : 'Restricted')
 }
 
 export function resourceAccessSummary(accessPolicy: ResourceAccessPolicy, t?: Translate): string {

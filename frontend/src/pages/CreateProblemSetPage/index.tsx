@@ -43,7 +43,7 @@ function CreateProblemSetPageContent({ canCreate }: { canCreate: boolean }) {
     model.slug.trim().length > 0 ||
     model.title.trim().length > 0 ||
     model.description.trim().length > 0 ||
-    model.baseAccess !== 'owner_only' ||
+    model.baseAccess !== 'restricted' ||
     model.grantedUsersInput.trim().length > 0 ||
     model.grantedGroupsInput.trim().length > 0
 

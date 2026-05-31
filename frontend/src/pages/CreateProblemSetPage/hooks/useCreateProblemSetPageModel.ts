@@ -6,7 +6,7 @@ import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSet
 import { validateProblemSetDraft } from '../functions/ProblemSetForm'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
-import { createOwnerOnlyAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -41,7 +41,7 @@ const initialDraft: CreateProblemSetDraft = {
   slug: '',
   title: '',
   description: '',
-  baseAccess: 'owner_only',
+  baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
 }
@@ -121,7 +121,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     isSubmitting: state.isSubmitting,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage ? t('problemSet.message.createSuccess') : '',
-    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createOwnerOnlyAccessPolicy(),
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedAccessPolicy(),
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),

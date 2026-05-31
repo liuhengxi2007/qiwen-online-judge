@@ -11,7 +11,7 @@ export const enResourceAccessMessages: Record<string, string> = {
   'resourceAccess.managerUsersHint': 'These users can edit, delete, and manage data for the resource.',
   'resourceAccess.badge.public': 'Public',
   'resourceAccess.badge.shared': 'Shared',
-  'resourceAccess.badge.private': 'Private',
+  'resourceAccess.badge.restricted': 'Restricted',
   'resourceAccess.summary.visibleAll': 'Visible to all signed-in users.',
   'resourceAccess.summary.visibleGrantedOnly': 'Visible only to explicitly granted viewers and global managers.',
   'resourceAccess.summary.sharedWith': 'Shared with {{summary}}.',

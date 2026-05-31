@@ -12,7 +12,7 @@ import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProble
 import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.objects.response.ProblemSetSummary
 import shared.objects.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
-import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy, toLegacyVisibility}
+import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy}
 import shared.objects.PageResponse
 import domains.problemset.table.problem_set.ProblemSetTableSchema.*
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
@@ -101,7 +101,7 @@ object ProblemSetTable:
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSQL)
         try
-          bindVisibilityQuery(statement, actor, None, None)
+          bindAccessQuery(statement, actor, None, None)
           val resultSet = statement.executeQuery()
           try if resultSet.next() then resultSet.getLong("total_items") else 0L
           finally resultSet.close()
@@ -110,7 +110,7 @@ object ProblemSetTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSQL)
         try
-          bindVisibilityQuery(statement, actor, Some(pageSize), Some((page - 1) * pageSize))
+          bindAccessQuery(statement, actor, Some(pageSize), Some((page - 1) * pageSize))
           val resultSet = statement.executeQuery()
           try
             Iterator
@@ -124,8 +124,7 @@ object ProblemSetTable:
       itemsWithPolicies <- items.traverse { item =>
         for
           viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id), GrantRole.Viewer)
-          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id), GrantRole.Manager)
-        yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
+        yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, Nil))
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
@@ -160,16 +159,15 @@ object ProblemSetTable:
         for
           problems <- listProblemsForSet(connection, problemSet.id, listProblemsForSetSQL)
           viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer)
-          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Manager)
-        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, viewerGrants, managerGrants)))
+        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, viewerGrants, Nil)))
       case None =>
         IO.pure(None)
     }
 
   private val insertSQL: String =
     s"""
-      |insert into problem_sets (id, slug, title, description, visibility, base_access, creator_username, created_at, updated_at)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      |insert into problem_sets (id, slug, title, description, base_access, creator_username, created_at, updated_at)
+      |values (?, ?, ?, ?, ?, ?, ?, ?)
       |returning id, slug, title, description, base_access, ${UserIdentitySql.returningColumns("creator_username", "creator")}, created_at, updated_at
       |""".stripMargin
 
@@ -183,11 +181,10 @@ object ProblemSetTable:
         statement.setString(2, request.slug.value)
         statement.setString(3, request.title.value)
         statement.setString(4, request.description.value)
-        statement.setString(5, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(6, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setString(7, creatorUsername.value)
+        statement.setString(5, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setString(6, creatorUsername.value)
+        statement.setTimestamp(7, Timestamp.from(now))
         statement.setTimestamp(8, Timestamp.from(now))
-        statement.setTimestamp(9, Timestamp.from(now))
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then readProblemSetDetailBase(resultSet).copy(problems = Nil)
@@ -198,15 +195,6 @@ object ProblemSetTable:
       val sanitizedPolicy = sanitizePolicy(request.accessPolicy)
       ResourceAccessGrantTable
         .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
-        .flatMap(_ =>
-          ResourceAccessGrantTable.replaceForResource(
-            connection,
-            ResourceKind.ProblemSet,
-            toResourceId(problemSet.id),
-            GrantRole.Manager,
-            sanitizedPolicy.managerGrants
-          )
-        )
         .as(problemSet.copy(accessPolicy = sanitizedPolicy))
     }
 
@@ -271,7 +259,7 @@ object ProblemSetTable:
   private val updateSQL: String =
     """
       |update problem_sets
-      |set title = ?, description = ?, visibility = ?, base_access = ?, updated_at = ?
+      |set title = ?, description = ?, base_access = ?, updated_at = ?
       |where id = ?
       |""".stripMargin
 
@@ -282,16 +270,14 @@ object ProblemSetTable:
       try
         statement.setString(1, request.title.value)
         statement.setString(2, request.description.value)
-        statement.setString(3, toLegacyVisibility(request.accessPolicy.baseAccess))
-        statement.setString(4, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
-        statement.setTimestamp(5, Timestamp.from(now))
-        statement.setObject(6, problemSetId.value)
+        statement.setString(3, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setObject(5, problemSetId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
     } *>
-      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Viewer, request.accessPolicy.viewerGrants) *>
-      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Manager, request.accessPolicy.managerGrants)
+      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Viewer, request.accessPolicy.viewerGrants)
 
   private val deleteSQL: String =
     """

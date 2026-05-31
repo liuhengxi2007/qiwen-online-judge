@@ -17,14 +17,9 @@ object ResourceAccessTableSupport:
       managerGrants = policy.managerGrants.distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
     )
 
-  def toLegacyVisibility(baseAccess: BaseAccess): String =
-    baseAccess match
-      case BaseAccess.Public => "public"
-      case BaseAccess.OwnerOnly => "private"
-
   def encodeBaseAccessColumn(baseAccess: BaseAccess): String =
     baseAccess match
-      case BaseAccess.OwnerOnly => "owner_only"
+      case BaseAccess.Restricted => "restricted"
       case BaseAccess.Public => "public"
 
   def decodeBaseAccessColumn(value: String): Option[BaseAccess] =

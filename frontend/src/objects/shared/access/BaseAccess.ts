@@ -1,1 +1,1 @@
-export type BaseAccess = 'owner_only' | 'public'
+export type BaseAccess = 'restricted' | 'public'

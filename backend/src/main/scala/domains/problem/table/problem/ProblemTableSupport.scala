@@ -63,7 +63,7 @@ object ProblemTableSupport:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  private def bindVisibilityQuery(
+  private def bindAccessQuery(
     statement: PreparedStatement,
     actor: AuthenticatedUser,
     startIndex: Int
@@ -94,7 +94,7 @@ object ProblemTableSupport:
     pageSize: Option[Int],
     offset: Option[Int]
   ): Unit =
-    val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
+    val nextIndex = bindAccessQuery(statement, actor, startIndex = 1)
     val afterSearchIndex = bindSearchQuery(statement, query, startIndex = nextIndex)
     pageSize.foreach(statement.setInt(afterSearchIndex, _))
     offset.foreach(statement.setInt(afterSearchIndex + 1, _))
@@ -104,7 +104,7 @@ object ProblemTableSupport:
     actor: AuthenticatedUser,
     query: ProblemSearchQuery
   ): Unit =
-    val nextIndex = bindVisibilityQuery(statement, actor, startIndex = 1)
+    val nextIndex = bindAccessQuery(statement, actor, startIndex = 1)
     val afterSearchIndex = bindSearchQuery(statement, Some(query), startIndex = nextIndex)
     val searchPattern = LikePatternSql.fromRaw(query.value)
     statement.setString(afterSearchIndex, searchPattern.raw)
@@ -121,7 +121,7 @@ object ProblemTableSupport:
   def decodeOtherUserSubmissionAccessColumn(value: String): Option[OtherUserSubmissionAccess] =
     OtherUserSubmissionAccess.parse(value).toOption
 
-  def bindContainingProblemSetVisibilityQuery(
+  def bindContainingProblemSetAccessQuery(
     statement: PreparedStatement,
     actor: AuthenticatedUser,
     problemId: ProblemId

@@ -26,12 +26,17 @@ object ProblemSetAccessPolicyValidation:
     accessPolicy.copy(
       viewerGrants = accessPolicy.viewerGrants
         .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
-      managerGrants = accessPolicy.managerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject)))
+      managerGrants = Nil
     )
 
   def validateAccessPolicySubjects(connection: Connection, policy: ResourceAccessPolicy): IO[Unit] =
-    (policy.viewerGrants ++ policy.managerGrants).traverse_(validateAccessPolicySubject(connection, _))
+    for
+      _ <- HttpApiError.ensure(
+        policy.managerGrants.isEmpty,
+        HttpApiError.badRequest("Problem set access policies do not support manager grants.")
+      )
+      _ <- policy.viewerGrants.traverse_(validateAccessPolicySubject(connection, _))
+    yield ()
 
   def problemSlugExists(connection: Connection, rawSlug: String): IO[Boolean] =
     ProblemSlug.parse(rawSlug) match

@@ -33,7 +33,7 @@ export type ProblemEditorAction =
 export const initialProblemEditorState: ProblemEditorState = {
   title: '',
   statement: '',
-  baseAccess: 'owner_only',
+  baseAccess: 'restricted',
   grantedUsersInput: '',
   grantedGroupsInput: '',
   managerUsersInput: '',

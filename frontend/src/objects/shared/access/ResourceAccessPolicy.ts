@@ -25,9 +25,9 @@ type ResourceAccessPolicyContract = {
   managerGrants: AccessSubjectContract[]
 }
 
-export function createOwnerOnlyAccessPolicy(): ResourceAccessPolicy {
+export function createRestrictedAccessPolicy(): ResourceAccessPolicy {
   return {
-    baseAccess: 'owner_only',
+    baseAccess: 'restricted',
     viewerGrants: [],
     managerGrants: [],
   }
@@ -103,8 +103,11 @@ function requireParsed<T>(result: { ok: true; value: T } | { ok: false; error: s
 }
 
 function readBaseAccess(value: unknown): BaseAccess {
-  if (value === 'owner_only' || value === 'public') {
+  if (value === 'restricted' || value === 'public') {
     return value
+  }
+  if (value === 'owner_only') {
+    return 'restricted'
   }
 
   throw new Error('Invalid resource access base access.')

@@ -23,7 +23,6 @@ object ResourceAccessDecision:
         policy = facts.policy,
         viewerUsername = facts.actorUsername,
         viewerGroupSlugs = facts.actorGroupSlugs,
-        isOwner = false,
         hasGlobalOverride = facts.hasGlobalViewOverride
       ),
       canManage = AccessPolicyEvaluator.canManage(

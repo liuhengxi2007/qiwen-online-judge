@@ -43,7 +43,7 @@ export function ResourceAccessEditor({
         <Switch
           id="resource-public-access"
           checked={accessPolicy.baseAccess === 'public'}
-          onCheckedChange={(checked) => onBaseAccessChange(checked ? 'public' : 'owner_only')}
+          onCheckedChange={(checked) => onBaseAccessChange(checked ? 'public' : 'restricted')}
         />
       </div>
 

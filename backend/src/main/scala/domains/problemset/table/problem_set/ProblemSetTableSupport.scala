@@ -73,7 +73,7 @@ object ProblemSetTableSupport:
       finally statement.close()
     }
 
-  def bindVisibilityQuery(
+  def bindAccessQuery(
     statement: PreparedStatement,
     actor: AuthenticatedUser,
     pageSize: Option[Int],

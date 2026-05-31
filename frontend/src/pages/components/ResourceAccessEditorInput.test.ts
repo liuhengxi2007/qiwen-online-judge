@@ -5,7 +5,7 @@ import { buildResourceAccessPolicy } from './ResourceAccessEditorInput'
 describe('resource-access-editor-input', () => {
   it('builds branded access subjects from user input', () => {
     const result = buildResourceAccessPolicy(
-      'owner_only',
+      'restricted',
       'Alice_01, bob',
       'sample-group',
       'manager-1',
@@ -26,11 +26,11 @@ describe('resource-access-editor-input', () => {
   })
 
   it('rejects invalid user and group input before building policies', () => {
-    expect(buildResourceAccessPolicy('owner_only', 'ab', '')).toEqual({
+    expect(buildResourceAccessPolicy('restricted', 'ab', '')).toEqual({
       ok: false,
       message: 'Username must be between 3 and 32 characters.',
     })
-    expect(buildResourceAccessPolicy('owner_only', '', 'bad group')).toEqual({
+    expect(buildResourceAccessPolicy('restricted', '', 'bad group')).toEqual({
       ok: false,
       message: 'User group slug may contain only lowercase letters, numbers, and hyphens.',
     })

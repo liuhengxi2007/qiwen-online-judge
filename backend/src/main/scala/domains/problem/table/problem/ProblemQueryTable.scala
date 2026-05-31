@@ -17,7 +17,7 @@ import java.sql.Connection
 
 object ProblemQueryTable:
 
-  private val visibilityPredicate: String =
+  private val accessPredicate: String =
     """
       |(
       |  ? = true
@@ -86,7 +86,7 @@ object ProblemQueryTable:
       |from problems p
       |${UserIdentitySql.joinUserProfiles("p.creator_username", "au")}
       |where
-      |  $visibilityPredicate
+      |  $accessPredicate
       |  and $searchPredicate
       |order by p.updated_at desc, p.slug asc
       |limit ? offset ?
@@ -97,7 +97,7 @@ object ProblemQueryTable:
       |select count(*) as total_items
       |from problems p
       |where
-      |  $visibilityPredicate
+      |  $accessPredicate
       |  and $searchPredicate
       |""".stripMargin
 
@@ -200,7 +200,7 @@ object ProblemQueryTable:
       |select p.slug, p.title
       |from problems p
       |where
-      |  $visibilityPredicate
+      |  $accessPredicate
       |  and $searchPredicate
       |order by
       |  $suggestionOrderClause
@@ -264,7 +264,7 @@ object ProblemQueryTable:
     IO.blocking {
       val statement = connection.prepareStatement(hasVisibleContainingProblemSetSQL)
       try
-        bindContainingProblemSetVisibilityQuery(statement, actor, problemId)
+        bindContainingProblemSetAccessQuery(statement, actor, problemId)
         val resultSet = statement.executeQuery()
         try resultSet.next()
         finally resultSet.close()

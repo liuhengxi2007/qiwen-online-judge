@@ -18,7 +18,7 @@ object ProblemTableSchema:
       |  data_name varchar(255),
       |  data_bytes bytea,
       |  ready boolean not null default false,
-      |  base_access varchar(32) not null default 'owner_only' check (base_access in ('owner_only', 'public')),
+      |  base_access varchar(32) not null default 'restricted' check (base_access in ('restricted', 'public')),
       |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
       |  creator_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null,
@@ -64,46 +64,53 @@ object ProblemTableSchema:
       |
       |  if exists (
       |    select 1
-      |    from information_schema.columns
-      |    where table_schema = 'public'
-      |      and table_name = 'problems'
-      |      and column_name = 'visibility'
+      |    from pg_constraint
+      |    where conname = 'problems_base_access_check'
+      |      and conrelid = 'problems'::regclass
       |  ) then
-      |    update problems
-      |    set base_access = case visibility
-      |      when 'public' then 'public'
-      |      else 'owner_only'
-      |    end
-      |    where base_access is null or btrim(base_access) = '';
-      |  else
-      |    update problems
-      |    set base_access = 'owner_only'
-      |    where base_access is null or btrim(base_access) = '';
+      |    alter table problems drop constraint problems_base_access_check;
       |  end if;
-      |end $$;
-      |""".stripMargin
-
-  val addVisibilityColumnSql: String =
-    """
-      |do $$
-      |begin
-      |  if not exists (
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'problems'
       |      and column_name = 'visibility'
       |  ) then
-      |    alter table problems add column visibility varchar(32);
+      |    update problems
+      |    set base_access = case
+      |      when base_access = 'public' then 'public'
+      |      when base_access = 'restricted' then 'restricted'
+      |      when visibility = 'public' then 'public'
+      |      else 'restricted'
+      |    end
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
+      |  else
+      |    update problems
+      |    set base_access = 'restricted'
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
       |  end if;
       |
-      |  update problems
-      |  set visibility = case base_access
-      |    when 'public' then 'public'
-      |    else 'private'
-      |  end
-      |  where visibility is null or btrim(visibility) = '';
+      |  if not exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'problems_base_access_check'
+      |      and conrelid = 'problems'::regclass
+      |  ) then
+      |    alter table problems add constraint problems_base_access_check check (base_access in ('restricted', 'public'));
+      |  end if;
       |end $$;
+      |""".stripMargin
+
+  val dropVisibilityColumnSql: String =
+    """
+      |alter table problems
+      |drop column if exists visibility
       |""".stripMargin
 
   val addDataColumnsSql: String =
@@ -179,7 +186,7 @@ object ProblemTableSchema:
   val setBaseAccessDefaultSql: String =
     """
       |alter table problems
-      |alter column base_access set default 'owner_only'
+      |alter column base_access set default 'restricted'
       |""".stripMargin
 
   val migrateOtherUserSubmissionAccessColumnSql: String =
@@ -248,8 +255,8 @@ object ProblemTableSchema:
       try
         statement.execute(initTableSql)
         statement.execute(migrateCreatorUsernameColumnSql)
-        statement.execute(addVisibilityColumnSql)
         statement.execute(addBaseAccessColumnSql)
+        statement.execute(dropVisibilityColumnSql)
         statement.execute(addDataColumnsSql)
         statement.execute(dropTimeLimitColumnSql)
         statement.execute(dropSpaceLimitColumnSql)
