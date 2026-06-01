@@ -25,9 +25,19 @@ object ProblemSetAccessPolicyValidation:
   def sanitizePolicy(accessPolicy: ResourceAccessPolicy): ResourceAccessPolicy =
     accessPolicy.copy(
       viewerGrants = accessPolicy.viewerGrants
-        .distinctBy(subject => (AccessSubject.subjectKind(subject), AccessSubject.subjectKey(subject))),
+        .distinctBy(subject => (subjectKind(subject), subjectKey(subject))),
       managerGrants = Nil
     )
+
+  private def subjectKind(value: AccessSubject): String =
+    value match
+      case AccessSubject.User(_) => "user"
+      case AccessSubject.UserGroup(_) => "user_group"
+
+  private def subjectKey(value: AccessSubject): String =
+    value match
+      case AccessSubject.User(username) => username.value
+      case AccessSubject.UserGroup(slug) => slug.value
 
   def validateAccessPolicySubjects(connection: Connection, policy: ResourceAccessPolicy): IO[Unit] =
     for

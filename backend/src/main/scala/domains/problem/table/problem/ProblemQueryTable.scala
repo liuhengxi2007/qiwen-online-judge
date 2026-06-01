@@ -2,16 +2,15 @@ package domains.problem.table.problem
 
 import cats.effect.IO
 import cats.syntax.all.*
-import database.table.resource_access_grant.ResourceAccessGrantTable
-import database.utils.ResourceAccessTableSupport.policyFrom
 import database.utils.UserIdentitySql
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.{ProblemId, ProblemSlug}
 import domains.problem.objects.request.{ProblemListRequest, ProblemSearchQuery}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
+import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
 import domains.problem.table.problem.ProblemTableSupport.*
 import shared.objects.PageResponse
-import shared.objects.access.{GrantRole, ResourceKind}
+import shared.objects.access.GrantRole
 
 import java.sql.Connection
 
@@ -24,22 +23,20 @@ object ProblemQueryTable:
       |  or p.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    where rag.resource_kind = 'problem'
-      |      and rag.resource_id = p.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user'
-      |      and rag.subject_key = ?
+      |    from problem_access_grants pag
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'viewer'
+      |      and pag.subject_kind = 'user'
+      |      and pag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    join user_groups ug on ug.slug = rag.subject_key
+      |    from problem_access_grants pag
+      |    join user_groups ug on ug.slug = pag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rag.resource_kind = 'problem'
-      |      and rag.resource_id = p.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user_group'
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'viewer'
+      |      and pag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |  or exists (
@@ -52,22 +49,20 @@ object ProblemQueryTable:
       |        or ps.base_access = 'public'
       |        or exists (
       |          select 1
-      |          from resource_access_grants rag
-      |          where rag.resource_kind = 'problem_set'
-      |            and rag.resource_id = ps.id
-      |            and rag.grant_role = 'viewer'
-      |            and rag.subject_kind = 'user'
-      |            and rag.subject_key = ?
+      |          from problem_set_access_grants psag
+      |          where psag.problem_set_id = ps.id
+      |            and psag.grant_role = 'viewer'
+      |            and psag.subject_kind = 'user'
+      |            and psag.subject_key = ?
       |        )
       |        or exists (
       |          select 1
-      |          from resource_access_grants rag
-      |          join user_groups ug on ug.slug = rag.subject_key
+      |          from problem_set_access_grants psag
+      |          join user_groups ug on ug.slug = psag.subject_key
       |          join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |          where rag.resource_kind = 'problem_set'
-      |            and rag.resource_id = ps.id
-      |            and rag.grant_role = 'viewer'
-      |            and rag.subject_kind = 'user_group'
+      |          where psag.problem_set_id = ps.id
+      |            and psag.grant_role = 'viewer'
+      |            and psag.subject_kind = 'user_group'
       |            and ugm.username = ?
       |        )
       |      )
@@ -134,9 +129,9 @@ object ProblemQueryTable:
       }
       itemsWithPolicies <- items.traverse { item =>
         for
-          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Viewer)
-          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(item.id), GrantRole.Manager)
-        yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, managerGrants))
+          viewerGrants <- ProblemAccessGrantTable.listForProblem(connection, item.id, GrantRole.Viewer)
+          managerGrants <- ProblemAccessGrantTable.listForProblem(connection, item.id, GrantRole.Manager)
+        yield item.copy(accessPolicy = item.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = managerGrants))
       }
     yield PageResponse(
       items = itemsWithPolicies,
@@ -174,9 +169,9 @@ object ProblemQueryTable:
     }.flatMap {
       case Some(problem) =>
         for
-          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Viewer)
-          managerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Manager)
-        yield Some(problem.copy(accessPolicy = policyFrom(problem.accessPolicy.baseAccess, viewerGrants, managerGrants)))
+          viewerGrants <- ProblemAccessGrantTable.listForProblem(connection, problem.id, GrantRole.Viewer)
+          managerGrants <- ProblemAccessGrantTable.listForProblem(connection, problem.id, GrantRole.Manager)
+        yield Some(problem.copy(accessPolicy = problem.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = managerGrants)))
       case None =>
         IO.pure(None)
     }
@@ -234,22 +229,20 @@ object ProblemQueryTable:
       |    or ps.base_access = 'public'
       |    or exists (
       |      select 1
-      |      from resource_access_grants rag
-      |      where rag.resource_kind = 'problem_set'
-      |        and rag.resource_id = ps.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user'
-      |        and rag.subject_key = ?
+      |      from problem_set_access_grants psag
+      |      where psag.problem_set_id = ps.id
+      |        and psag.grant_role = 'viewer'
+      |        and psag.subject_kind = 'user'
+      |        and psag.subject_key = ?
       |    )
       |    or exists (
       |      select 1
-      |      from resource_access_grants rag
-      |      join user_groups ug on ug.slug = rag.subject_key
+      |      from problem_set_access_grants psag
+      |      join user_groups ug on ug.slug = psag.subject_key
       |      join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |      where rag.resource_kind = 'problem_set'
-      |        and rag.resource_id = ps.id
-      |        and rag.grant_role = 'viewer'
-      |        and rag.subject_kind = 'user_group'
+      |      where psag.problem_set_id = ps.id
+      |        and psag.grant_role = 'viewer'
+      |        and psag.subject_kind = 'user_group'
       |        and ugm.username = ?
       |    )
       |  )

@@ -2,19 +2,41 @@ package domains.problem.table.problem
 
 
 
-import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.request.ProblemSearchQuery
 import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemId, ProblemSlug, ProblemStatementText, ProblemTitle}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
-import shared.objects.access.{ResourceAccessPolicy, ResourceId}
+import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 import database.utils.LikePatternSql
 import database.utils.{UserIdentityRow, UserIdentitySql}
 
 import java.sql.{PreparedStatement, ResultSet}
 
 object ProblemTableSupport:
+
+  def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  def parseColumn[A](columnName: String, rawValue: Int, parse: Int => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  def parseColumn[A](columnName: String, rawValue: Option[String], parse: Option[String] => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+
+  def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
+
+  def encodeBaseAccessColumn(baseAccess: BaseAccess): String =
+    baseAccess match
+      case BaseAccess.Restricted => "restricted"
+      case BaseAccess.Public => "public"
+
+  def decodeBaseAccessColumn(value: String): Option[BaseAccess] =
+    BaseAccess.parse(value).toOption
 
   private def userIdentityFromRow(row: UserIdentityRow): UserIdentity =
     UserIdentity(
@@ -132,6 +154,3 @@ object ProblemTableSupport:
     statement.setBoolean(2, actor.siteManager || actor.problemManager)
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)
-
-  def toResourceId(problemId: ProblemId): ResourceId =
-    ResourceId(problemId.value)

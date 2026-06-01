@@ -3,18 +3,37 @@ package domains.problemset.table.problem_set
 
 
 import cats.effect.IO
-import database.utils.ResourceAccessTableSupport.{decodeBaseAccessColumn, parseColumn, parseOptionalColumn}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.objects.response.ProblemSetSummary
 import domains.user.objects.{DisplayName, UserIdentity, Username}
-import shared.objects.access.{ResourceAccessPolicy, ResourceId}
+import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 import database.utils.{UserIdentityRow, UserIdentitySql}
 
 import java.sql.{PreparedStatement, ResultSet}
 
 object ProblemSetTableSupport:
+
+  def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  def parseColumn[A](columnName: String, rawValue: Option[String], parse: Option[String] => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
+
+  def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
+
+  def encodeBaseAccessColumn(baseAccess: BaseAccess): String =
+    baseAccess match
+      case BaseAccess.Restricted => "restricted"
+      case BaseAccess.Public => "public"
+
+  def decodeBaseAccessColumn(value: String): Option[BaseAccess] =
+    BaseAccess.parse(value).toOption
 
   private def userIdentityFromRow(row: UserIdentityRow): UserIdentity =
     UserIdentity(
@@ -86,6 +105,3 @@ object ProblemSetTableSupport:
     statement.setString(3, actor.username.value)
     pageSize.foreach(statement.setInt(4, _))
     offset.foreach(statement.setInt(5, _))
-
-  def toResourceId(problemSetId: ProblemSetId): ResourceId =
-    ResourceId(problemSetId.value)

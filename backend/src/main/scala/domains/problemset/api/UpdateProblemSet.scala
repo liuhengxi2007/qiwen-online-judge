@@ -1,9 +1,8 @@
 package domains.problemset.api
 
 import cats.effect.IO
-import domains.auth.api.AuthenticatedApi
+import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.auth.table.auth_account.AuthAccountTable
 import domains.problemset.utils.ProblemSetAccessPolicyValidation
 
 import domains.problemset.objects.*
@@ -61,8 +60,8 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
   private def validateAuthorUsername(connection: Connection, authorUsername: Option[domains.user.objects.Username]): IO[Unit] =
     authorUsername match
       case Some(username) =>
-        AuthAccountTable.findAccountByUsername(connection, username).flatMap { account =>
-          HttpApiError.ensure(account.nonEmpty, HttpApiError.badRequest(ApiMessages.userNotFound))
+        ResolveAccountUsername.plan(connection, username).flatMap { user =>
+          HttpApiError.ensure(user.username.nonEmpty, HttpApiError.badRequest(ApiMessages.userNotFound))
         }
       case None =>
         IO.unit

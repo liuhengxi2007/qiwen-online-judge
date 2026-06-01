@@ -2,19 +2,18 @@ package domains.problemset.table.problem_set
 
 
 
-import database.table.resource_access_grant.ResourceAccessGrantTable
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.problem.objects.{ProblemId}
 import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProblemSetRequest}
-import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
+import domains.problemset.objects.{ProblemSet, ProblemSetId, ProblemSetSlug}
 import domains.problemset.objects.response.ProblemSetSummary
-import shared.objects.access.{GrantRole, ResourceAccessPolicy, ResourceKind}
-import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, policyFrom, sanitizePolicy}
+import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTable
+import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTableSupport.sanitizePolicy
+import shared.objects.access.GrantRole
 import shared.objects.PageResponse
-import domains.problemset.table.problem_set.ProblemSetTableSchema.*
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
 
 import java.sql.{Connection, Timestamp}
@@ -33,7 +32,10 @@ object ProblemSetTable:
     case Removed
 
   def initialize(connection: Connection): IO[Unit] =
-    ProblemSetTableSchema.initialize(connection)
+    for
+      _ <- ProblemSetTableSchema.initialize(connection)
+      _ <- ProblemSetAccessGrantTable.initialize(connection)
+    yield ()
 
   private val listSQL: String =
     s"""
@@ -45,22 +47,20 @@ object ProblemSetTable:
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    where rag.resource_kind = 'problem_set'
-      |      and rag.resource_id = ps.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user'
-      |      and rag.subject_key = ?
+      |    from problem_set_access_grants psag
+      |    where psag.problem_set_id = ps.id
+      |      and psag.grant_role = 'viewer'
+      |      and psag.subject_kind = 'user'
+      |      and psag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    join user_groups ug on ug.slug = rag.subject_key
+      |    from problem_set_access_grants psag
+      |    join user_groups ug on ug.slug = psag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rag.resource_kind = 'problem_set'
-      |      and rag.resource_id = ps.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user_group'
+      |    where psag.problem_set_id = ps.id
+      |      and psag.grant_role = 'viewer'
+      |      and psag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |order by ps.updated_at desc, ps.slug asc
@@ -76,22 +76,20 @@ object ProblemSetTable:
       |  or ps.base_access = 'public'
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    where rag.resource_kind = 'problem_set'
-      |      and rag.resource_id = ps.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user'
-      |      and rag.subject_key = ?
+      |    from problem_set_access_grants psag
+      |    where psag.problem_set_id = ps.id
+      |      and psag.grant_role = 'viewer'
+      |      and psag.subject_kind = 'user'
+      |      and psag.subject_key = ?
       |  )
       |  or exists (
       |    select 1
-      |    from resource_access_grants rag
-      |    join user_groups ug on ug.slug = rag.subject_key
+      |    from problem_set_access_grants psag
+      |    join user_groups ug on ug.slug = psag.subject_key
       |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where rag.resource_kind = 'problem_set'
-      |      and rag.resource_id = ps.id
-      |      and rag.grant_role = 'viewer'
-      |      and rag.subject_kind = 'user_group'
+      |    where psag.problem_set_id = ps.id
+      |      and psag.grant_role = 'viewer'
+      |      and psag.subject_kind = 'user_group'
       |      and ugm.username = ?
       |  )
       |""".stripMargin
@@ -123,8 +121,8 @@ object ProblemSetTable:
       }
       itemsWithPolicies <- items.traverse { item =>
         for
-          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(item.id), GrantRole.Viewer)
-        yield item.copy(accessPolicy = policyFrom(item.accessPolicy.baseAccess, viewerGrants, Nil))
+          viewerGrants <- ProblemSetAccessGrantTable.listForProblemSet(connection, item.id, GrantRole.Viewer)
+        yield item.copy(accessPolicy = item.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = Nil))
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
@@ -158,8 +156,8 @@ object ProblemSetTable:
       case Some(problemSet) =>
         for
           problems <- listProblemsForSet(connection, problemSet.id, listProblemsForSetSQL)
-          viewerGrants <- ResourceAccessGrantTable.listForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer)
-        yield Some(problemSet.copy(problems = problems, accessPolicy = policyFrom(problemSet.accessPolicy.baseAccess, viewerGrants, Nil)))
+          viewerGrants <- ProblemSetAccessGrantTable.listForProblemSet(connection, problemSet.id, GrantRole.Viewer)
+        yield Some(problemSet.copy(problems = problems, accessPolicy = problemSet.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = Nil)))
       case None =>
         IO.pure(None)
     }
@@ -193,8 +191,8 @@ object ProblemSetTable:
       finally statement.close()
     }.flatMap { problemSet =>
       val sanitizedPolicy = sanitizePolicy(request.accessPolicy)
-      ResourceAccessGrantTable
-        .replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSet.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
+      ProblemSetAccessGrantTable
+        .replaceForProblemSet(connection, problemSet.id, GrantRole.Viewer, sanitizedPolicy.viewerGrants)
         .as(problemSet.copy(accessPolicy = sanitizedPolicy))
     }
 
@@ -280,7 +278,7 @@ object ProblemSetTable:
         ()
       finally statement.close()
     } *>
-      ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.ProblemSet, toResourceId(problemSetId), GrantRole.Viewer, request.accessPolicy.viewerGrants)
+      ProblemSetAccessGrantTable.replaceForProblemSet(connection, problemSetId, GrantRole.Viewer, request.accessPolicy.viewerGrants)
 
   private val deleteSQL: String =
     """

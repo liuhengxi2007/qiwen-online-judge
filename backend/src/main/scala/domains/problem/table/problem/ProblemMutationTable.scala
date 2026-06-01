@@ -1,15 +1,15 @@
 package domains.problem.table.problem
 
 import cats.effect.IO
-import database.table.resource_access_grant.ResourceAccessGrantTable
-import database.utils.ResourceAccessTableSupport.{encodeBaseAccessColumn, missingInsertResult, sanitizePolicy}
 import database.utils.UserIdentitySql
 import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.objects.{ProblemId}
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemTableSupport.*
+import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
+import domains.problem.table.problem_access_grant.ProblemAccessGrantTableSupport.sanitizePolicy
 import domains.user.objects.Username
-import shared.objects.access.{GrantRole, ResourceKind}
+import shared.objects.access.GrantRole
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -52,13 +52,12 @@ object ProblemMutationTable:
       finally statement.close()
     }.flatMap { problem =>
       val sanitizedPolicy = sanitizePolicy(request.accessPolicy)
-      ResourceAccessGrantTable
-        .replaceForResource(connection, ResourceKind.Problem, toResourceId(problem.id), GrantRole.Viewer, sanitizedPolicy.viewerGrants)
+      ProblemAccessGrantTable
+        .replaceForProblem(connection, problem.id, GrantRole.Viewer, sanitizedPolicy.viewerGrants)
         .flatMap(_ =>
-          ResourceAccessGrantTable.replaceForResource(
+          ProblemAccessGrantTable.replaceForProblem(
             connection,
-            ResourceKind.Problem,
-            toResourceId(problem.id),
+            problem.id,
             GrantRole.Manager,
             sanitizedPolicy.managerGrants
           )
@@ -91,8 +90,8 @@ object ProblemMutationTable:
         ()
       finally statement.close()
       }
-      _ <- ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), GrantRole.Viewer, request.accessPolicy.viewerGrants)
-      _ <- ResourceAccessGrantTable.replaceForResource(connection, ResourceKind.Problem, toResourceId(problemId), GrantRole.Manager, request.accessPolicy.managerGrants)
+      _ <- ProblemAccessGrantTable.replaceForProblem(connection, problemId, GrantRole.Viewer, request.accessPolicy.viewerGrants)
+      _ <- ProblemAccessGrantTable.replaceForProblem(connection, problemId, GrantRole.Manager, request.accessPolicy.managerGrants)
     yield ()
 
   private val deleteSQL: String =

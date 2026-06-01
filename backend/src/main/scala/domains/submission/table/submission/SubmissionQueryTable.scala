@@ -43,22 +43,20 @@ object SubmissionQueryTable:
       |      p.base_access = 'public'
       |      or exists (
       |        select 1
-      |        from resource_access_grants rag
-      |        where rag.resource_kind = 'problem'
-      |          and rag.resource_id = p.id
-      |          and rag.grant_role = 'viewer'
-      |          and rag.subject_kind = 'user'
-      |          and rag.subject_key = ?
+      |        from problem_access_grants pag
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user'
+      |          and pag.subject_key = ?
       |      )
       |      or exists (
       |        select 1
-      |        from resource_access_grants rag
-      |        join user_groups ug on ug.slug = rag.subject_key
+      |        from problem_access_grants pag
+      |        join user_groups ug on ug.slug = pag.subject_key
       |        join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |        where rag.resource_kind = 'problem'
-      |          and rag.resource_id = p.id
-      |          and rag.grant_role = 'viewer'
-      |          and rag.subject_kind = 'user_group'
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user_group'
       |          and ugm.username = ?
       |      )
       |      or exists (
@@ -71,22 +69,20 @@ object SubmissionQueryTable:
       |            or ps.base_access = 'public'
       |            or exists (
       |              select 1
-      |              from resource_access_grants rag
-      |              where rag.resource_kind = 'problem_set'
-      |                and rag.resource_id = ps.id
-      |                and rag.grant_role = 'viewer'
-      |                and rag.subject_kind = 'user'
-      |                and rag.subject_key = ?
+      |              from problem_set_access_grants psag
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user'
+      |                and psag.subject_key = ?
       |            )
       |            or exists (
       |              select 1
-      |              from resource_access_grants rag
-      |              join user_groups ug on ug.slug = rag.subject_key
+      |              from problem_set_access_grants psag
+      |              join user_groups ug on ug.slug = psag.subject_key
       |              join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |              where rag.resource_kind = 'problem_set'
-      |                and rag.resource_id = ps.id
-      |                and rag.grant_role = 'viewer'
-      |                and rag.subject_kind = 'user_group'
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user_group'
       |                and ugm.username = ?
       |            )
       |          )
@@ -126,22 +122,20 @@ object SubmissionQueryTable:
       |      p.base_access = 'public'
       |      or exists (
       |        select 1
-      |        from resource_access_grants rag
-      |        where rag.resource_kind = 'problem'
-      |          and rag.resource_id = p.id
-      |          and rag.grant_role = 'viewer'
-      |          and rag.subject_kind = 'user'
-      |          and rag.subject_key = ?
+      |        from problem_access_grants pag
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user'
+      |          and pag.subject_key = ?
       |      )
       |      or exists (
       |        select 1
-      |        from resource_access_grants rag
-      |        join user_groups ug on ug.slug = rag.subject_key
+      |        from problem_access_grants pag
+      |        join user_groups ug on ug.slug = pag.subject_key
       |        join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |        where rag.resource_kind = 'problem'
-      |          and rag.resource_id = p.id
-      |          and rag.grant_role = 'viewer'
-      |          and rag.subject_kind = 'user_group'
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user_group'
       |          and ugm.username = ?
       |      )
       |      or exists (
@@ -154,22 +148,20 @@ object SubmissionQueryTable:
       |            or ps.base_access = 'public'
       |            or exists (
       |              select 1
-      |              from resource_access_grants rag
-      |              where rag.resource_kind = 'problem_set'
-      |                and rag.resource_id = ps.id
-      |                and rag.grant_role = 'viewer'
-      |                and rag.subject_kind = 'user'
-      |                and rag.subject_key = ?
+      |              from problem_set_access_grants psag
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user'
+      |                and psag.subject_key = ?
       |            )
       |            or exists (
       |              select 1
-      |              from resource_access_grants rag
-      |              join user_groups ug on ug.slug = rag.subject_key
+      |              from problem_set_access_grants psag
+      |              join user_groups ug on ug.slug = psag.subject_key
       |              join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |              where rag.resource_kind = 'problem_set'
-      |                and rag.resource_id = ps.id
-      |                and rag.grant_role = 'viewer'
-      |                and rag.subject_kind = 'user_group'
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user_group'
       |                and ugm.username = ?
       |            )
       |          )

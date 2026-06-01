@@ -1,18 +1,17 @@
 package domains.problem.api
 
 import cats.effect.IO
-import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.table.problem.ProblemMutationTable
+import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
 import domains.submission.utils.SubmissionProgramCleanup
 import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
-import shared.objects.access.{ResourceId, ResourceKind}
 import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
@@ -41,7 +40,7 @@ final case class DeleteProblem(submissionProgramStorage: SubmissionProgramStorag
           for
             _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
             deleteSubmissionPrograms <- SubmissionProgramCleanup.prepareDeleteForProblem(connection, problem.id, submissionProgramStorage)
-            _ <- ResourceAccessGrantTable.deleteAllForResource(connection, ResourceKind.Problem, ResourceId(problem.id.value))
+            _ <- ProblemAccessGrantTable.deleteAllForProblem(connection, problem.id)
             _ <- ProblemMutationTable.delete(connection, problem.id)
             _ <- deleteSubmissionPrograms
           yield SuccessResponse(code = Some(ApiMessages.problemDeleted.code), message = None, params = ApiMessages.problemDeleted.params)

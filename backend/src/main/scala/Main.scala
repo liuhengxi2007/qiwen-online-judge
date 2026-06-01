@@ -1,7 +1,6 @@
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
-import database.table.resource_access_grant.ResourceAccessGrantTable
 import domains.auth.table.auth_account.{AuthAccountTable, AuthAccountTableSupport}
 import domains.auth.table.session.SessionTable
 import domains.auth.utils.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
@@ -99,7 +98,6 @@ object Main extends IOApp.Simple:
             _ <- UserGroupTable.initialize(connection)
             _ <- MessageTable.initialize(connection)
             _ <- NotificationTable.initialize(connection)
-            _ <- ResourceAccessGrantTable.initialize(connection)
           yield ()
         }
       }
