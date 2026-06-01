@@ -50,4 +50,4 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
         case Right(sourceCode) => IO.pure(sourceCode)
         case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
       }
-    yield updatedRecord.toSubmissionDetail(sourceCode, canManage = true)
+    yield SubmissionDetail.fromRecord(updatedRecord, sourceCode, canManage = true)

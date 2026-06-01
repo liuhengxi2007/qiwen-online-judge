@@ -121,6 +121,11 @@ Current domain-owned utility allowlist:
 - `domains/submission/utils/SubmissionAccessRules.scala`
 - `domains/submission/utils/SubmissionJudgeRules.scala`
 - `domains/submission/utils/SubmissionListRequestQuery.scala`
+- `domains/submission/utils/SubmissionProgramStorage.scala`
+- `domains/submission/utils/LocalSubmissionProgramStorage.scala`
+- `domains/submission/utils/MinioSubmissionProgramStorage.scala`
+- `domains/submission/utils/SubmissionProgramStorageConfig.scala`
+- `domains/submission/utils/SubmissionProgramCleanup.scala`
 - `domains/user/utils/UserApiRules.scala`
 - `domains/usergroup/utils/UserGroupAccessRules.scala`
 - `domains/usergroup/utils/UserGroupMutationValidation.scala`

@@ -1,8 +1,7 @@
 package domains.submission.objects.internal
 
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
-import domains.submission.objects.response.SubmissionDetail
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import domains.user.objects.UserIdentity
 import judgeprotocol.objects.response.JudgeResult
 
@@ -26,25 +25,4 @@ final case class SubmissionDetailRecord(
   submittedAt: Instant,
   startedAt: Option[Instant],
   finishedAt: Option[Instant]
-):
-  def toSubmissionDetail(sourceCode: SubmissionSourceCode, canManage: Boolean = false): SubmissionDetail =
-    SubmissionDetail(
-      id = id,
-      problemId = problemId,
-      problemSlug = problemSlug,
-      problemTitle = problemTitle,
-      canManage = canManage,
-      submitter = submitter,
-      language = language,
-      status = status,
-      verdict = verdict,
-      timeUsedMs = timeUsedMs,
-      memoryUsedKb = memoryUsedKb,
-      score = score,
-      judgeResult = judgeResult,
-      codeLength = codeLength,
-      sourceCode = sourceCode,
-      submittedAt = submittedAt,
-      startedAt = startedAt,
-      finishedAt = finishedAt
-    )
+)

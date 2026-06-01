@@ -34,7 +34,7 @@ const backendMainDomainAllowedLayers = new Set(['api', 'objects', 'routes', 'tab
 const backendMainSharedAllowedLayers = new Set(['api', 'application', 'objects'])
 const backendTestScalaAllowedEntries = new Set(['domains', 'shared'])
 const backendTestDomainAllowedLayers = new Set(['api', 'objects', 'table', 'utils'])
-const backendTestSharedAllowedLayers = new Set(['api', 'objects'])
+const backendTestSharedAllowedLayers = new Set(['api', 'application', 'objects'])
 
 function normalizePath(path) {
   return path.split(sep).join('/')

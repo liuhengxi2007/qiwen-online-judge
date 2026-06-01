@@ -1,6 +1,7 @@
 package domains.submission.objects.response
 
 import domains.submission.objects.*
+import domains.submission.objects.internal.SubmissionDetailRecord
 
 import domains.user.objects.UserIdentity
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
@@ -33,6 +34,28 @@ final case class SubmissionDetail(
 )
 
 object SubmissionDetail:
+  def fromRecord(record: SubmissionDetailRecord, sourceCode: SubmissionSourceCode, canManage: Boolean = false): SubmissionDetail =
+    SubmissionDetail(
+      id = record.id,
+      problemId = record.problemId,
+      problemSlug = record.problemSlug,
+      problemTitle = record.problemTitle,
+      canManage = canManage,
+      submitter = record.submitter,
+      language = record.language,
+      status = record.status,
+      verdict = record.verdict,
+      timeUsedMs = record.timeUsedMs,
+      memoryUsedKb = record.memoryUsedKb,
+      score = record.score,
+      judgeResult = record.judgeResult,
+      codeLength = record.codeLength,
+      sourceCode = sourceCode,
+      submittedAt = record.submittedAt,
+      startedAt = record.startedAt,
+      finishedAt = record.finishedAt
+    )
+
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
     Try(Instant.parse(value)).toEither.left.map(_.getMessage)
