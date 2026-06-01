@@ -6,14 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { isSubmissionSort } from '@/objects/submission/request/SubmissionSort'
-import { isSubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
-import type {
-  ProblemSuggestion,
-  SubmissionSort,
-  SubmissionSortDirection,
-  SubmissionVerdictFilter,
-} from '../functions/SubmissionPageSupport'
+import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
+import { isSubmissionSort, type SubmissionSort } from '@/objects/submission/request/SubmissionSort'
+import type { SubmissionSortDirection } from '@/objects/submission/request/SubmissionSortDirection'
+import {
+  isSubmissionVerdictFilter,
+  type SubmissionVerdictFilter,
+} from '@/objects/submission/request/SubmissionVerdictFilter'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'

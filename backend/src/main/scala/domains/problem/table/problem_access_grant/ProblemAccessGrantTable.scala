@@ -1,8 +1,8 @@
 package domains.problem.table.problem_access_grant
 
 import cats.effect.IO
+import database.utils.AccessGrantSql.*
 import domains.problem.objects.ProblemId
-import domains.problem.table.problem_access_grant.ProblemAccessGrantTableSupport.*
 import shared.objects.access.{AccessSubject, GrantRole}
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -108,7 +108,7 @@ object ProblemAccessGrantTable:
       val statement = connection.prepareStatement(insertGrantSQL)
       try
         grants
-          .distinctBy(subject => (encodeSubjectKindColumn(subject), encodeSubjectKeyColumn(subject)))
+          .distinctBy(subject => subjectIdentity(subject))
           .foreach { subject =>
             statement.setObject(1, problemId.value)
             statement.setString(2, encodeGrantRoleColumn(grantRole))
@@ -123,4 +123,4 @@ object ProblemAccessGrantTable:
     }
 
   private def readSubject(resultSet: ResultSet): AccessSubject =
-    decodeSubjectColumns(resultSet.getString("subject_kind"), resultSet.getString("subject_key"))
+    decodeSubjectColumns(resultSet.getString("subject_kind"), resultSet.getString("subject_key"), "problem access")

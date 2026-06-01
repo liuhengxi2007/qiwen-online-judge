@@ -4,6 +4,7 @@ package domains.problemset.table.problem_set
 
 import cats.effect.IO
 import cats.syntax.all.*
+import database.utils.AccessGrantSql
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.problem.objects.{ProblemId}
@@ -11,8 +12,7 @@ import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProble
 import domains.problemset.objects.{ProblemSet, ProblemSetId, ProblemSetSlug}
 import domains.problemset.objects.response.ProblemSetSummary
 import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTable
-import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTableSupport.sanitizePolicy
-import shared.objects.access.GrantRole
+import shared.objects.access.{GrantRole, ResourceAccessPolicy}
 import shared.objects.PageResponse
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
 
@@ -348,3 +348,9 @@ object ProblemSetTable:
             RemoveProblemTableResult.Removed
       finally positionStatement.close()
     }
+
+  private def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
+    policy.copy(
+      viewerGrants = policy.viewerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject)),
+      managerGrants = Nil
+    )

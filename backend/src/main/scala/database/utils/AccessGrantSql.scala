@@ -1,14 +1,11 @@
-package domains.problem.table.problem_access_grant
+package database.utils
 
-import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, GrantRole, ResourceAccessPolicy}
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, GrantRole}
 
-object ProblemAccessGrantTableSupport:
+object AccessGrantSql:
 
-  def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
-    policy.copy(
-      viewerGrants = policy.viewerGrants.distinctBy(subject => (encodeSubjectKindColumn(subject), encodeSubjectKeyColumn(subject))),
-      managerGrants = policy.managerGrants.distinctBy(subject => (encodeSubjectKindColumn(subject), encodeSubjectKeyColumn(subject)))
-    )
+  def subjectIdentity(subject: AccessSubject): (String, String) =
+    (encodeSubjectKindColumn(subject), encodeSubjectKeyColumn(subject))
 
   def encodeGrantRoleColumn(grantRole: GrantRole): String =
     grantRole match
@@ -28,15 +25,15 @@ object ProblemAccessGrantTableSupport:
       case AccessSubject.User(username) => username.value
       case AccessSubject.UserGroup(slug) => slug.value
 
-  def decodeSubjectColumns(subjectKind: String, subjectKey: String): AccessSubject =
+  def decodeSubjectColumns(subjectKind: String, subjectKey: String, context: String): AccessSubject =
     subjectKind match
       case "user" => AccessSubject.User(AccessUsername.canonical(subjectKey))
       case "user_group" =>
         AccessUserGroupSlug
           .parse(subjectKey)
           .fold(
-            message => throw IllegalStateException(s"Invalid problem access subject slug: $message"),
+            message => throw IllegalStateException(s"Invalid $context subject slug: $message"),
             AccessSubject.UserGroup(_)
           )
       case other =>
-        throw IllegalStateException(s"Invalid problem access subject kind: $other")
+        throw IllegalStateException(s"Invalid $context subject kind: $other")

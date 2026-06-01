@@ -7,9 +7,9 @@ import {
   reduceUserGroupDetailPageMessageState,
 } from '../functions/UserGroupDetailPageState'
 import {
-  canViewerRemoveUserGroupMember,
-  resolveUserGroupDetailPermissions,
-} from '../functions/UserGroupDetailPageSupport'
+  canRemoveUserGroupMember,
+  resolveUserGroupViewerPermissions,
+} from '../functions/UserGroupPermissions'
 import { useUserGroupAddMemberAction } from './useUserGroupAddMemberAction'
 import { useUserGroupDeleteAction } from './useUserGroupDeleteAction'
 import { useUserGroupDetailQuery } from './useUserGroupDetailQuery'
@@ -34,11 +34,11 @@ export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewer
   )
 
   const permissions = useMemo(() => {
-    return resolveUserGroupDetailPermissions(detailQuery.userGroup, viewerUsername, isSiteManager)
+    return resolveUserGroupViewerPermissions(detailQuery.userGroup?.members ?? [], viewerUsername, isSiteManager)
   }, [detailQuery.userGroup, isSiteManager, viewerUsername])
 
   function canRemoveMember(_targetUsername: Username, targetRole: 'owner' | 'manager' | 'member') {
-    return canViewerRemoveUserGroupMember(detailQuery.userGroup, viewerUsername, isSiteManager, targetRole)
+    return canRemoveUserGroupMember(detailQuery.userGroup?.members ?? [], viewerUsername, isSiteManager, targetRole)
   }
 
   async function save() {

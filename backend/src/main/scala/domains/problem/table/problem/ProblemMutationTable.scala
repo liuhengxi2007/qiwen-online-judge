@@ -1,15 +1,15 @@
 package domains.problem.table.problem
 
 import cats.effect.IO
+import database.utils.AccessGrantSql
 import database.utils.UserIdentitySql
 import domains.problem.objects.request.{CreateProblemRequest, UpdateProblemRequest}
 import domains.problem.objects.{ProblemId}
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemTableSupport.*
 import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
-import domains.problem.table.problem_access_grant.ProblemAccessGrantTableSupport.sanitizePolicy
 import domains.user.objects.Username
-import shared.objects.access.GrantRole
+import shared.objects.access.{GrantRole, ResourceAccessPolicy}
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -109,3 +109,9 @@ object ProblemMutationTable:
         ()
       finally statement.close()
     }
+
+  private def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
+    policy.copy(
+      viewerGrants = policy.viewerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject)),
+      managerGrants = policy.managerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject))
+    )

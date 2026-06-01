@@ -3,22 +3,23 @@ import { useSearchParams } from 'react-router-dom'
 
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { isSubmissionSort, type SubmissionSort } from '@/objects/submission/request/SubmissionSort'
+import {
+  isSubmissionSortDirection,
+  type SubmissionSortDirection,
+} from '@/objects/submission/request/SubmissionSortDirection'
+import {
+  isSubmissionVerdictFilter,
+  type SubmissionVerdictFilter,
+} from '@/objects/submission/request/SubmissionVerdictFilter'
 import { useSubmissionListQuery } from './useSubmissionListQuery'
 import { useSubmissionSuggestions } from './useSubmissionSuggestions'
 import {
   buildSubmissionListRequest,
   defaultSortDirection,
-  readSubmissionSort,
-  readSubmissionSortDirection,
-  readSubmissionVerdictFilter,
-  shouldShowTypingSuggestions,
   submissionSortValues,
-  verdictFilterLabel,
   verdictFilterValues,
-  type SubmissionSort,
-  type SubmissionSortDirection,
-  type SubmissionVerdictFilter,
-} from '../functions/SubmissionPageSupport'
+} from '../functions/SubmissionListForm'
 import {
   createSubmissionPageState,
   submissionPageReducer,
@@ -29,6 +30,7 @@ import {
   parsePositivePage,
 } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
+import { verdictFilterLabel } from '@/pages/objects/SubmissionDisplay'
 
 export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -244,4 +246,26 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     updateVerdictFilter: (value: SubmissionVerdictFilter) =>
       updateSearchFilter('verdict', value === 'all' ? null : value),
   }
+}
+
+function readSubmissionSort(searchParams: URLSearchParams): SubmissionSort {
+  const rawSort = searchParams.get('sort')
+  return rawSort && isSubmissionSort(rawSort) ? rawSort : 'submitted'
+}
+
+function readSubmissionSortDirection(
+  searchParams: URLSearchParams,
+  activeSort: SubmissionSort,
+): SubmissionSortDirection {
+  const rawDirection = searchParams.get('direction')
+  return rawDirection && isSubmissionSortDirection(rawDirection) ? rawDirection : defaultSortDirection(activeSort)
+}
+
+function readSubmissionVerdictFilter(searchParams: URLSearchParams): SubmissionVerdictFilter {
+  const rawVerdict = searchParams.get('verdict')
+  return rawVerdict && isSubmissionVerdictFilter(rawVerdict) ? rawVerdict : 'all'
+}
+
+function shouldShowTypingSuggestions(value: string): boolean {
+  return value.trim().length > 0
 }
