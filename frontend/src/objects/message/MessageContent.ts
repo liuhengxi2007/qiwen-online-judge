@@ -23,16 +23,3 @@ export function parseMessageContent(rawContent: string): ParseResult<MessageCont
 export function messageContentValue(content: MessageContent): string {
   return content
 }
-
-export function fromMessageContentContract(value: string, label: string): MessageContent {
-  const result = parseMessageContent(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toMessageContentContract(value: MessageContent): string {
-  return messageContentValue(value)
-}

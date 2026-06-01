@@ -20,16 +20,3 @@ export function parseProblemTitle(rawTitle: string): ParseResult<ProblemTitle> {
   }
   return { ok: true, value: createProblemTitle(normalized) }
 }
-
-export function fromProblemTitleContract(value: string, label: string): ProblemTitle {
-  const result = parseProblemTitle(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toProblemTitleContract(value: ProblemTitle): string {
-  return problemTitleValue(value)
-}

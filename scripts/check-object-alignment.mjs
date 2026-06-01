@@ -6,15 +6,15 @@ const root = process.cwd()
 const allowedExceptions = new Map([
   [
     'backend-only:auth/ProblemManagerUser',
-    'Backend-only problem-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON contract.',
+    'Backend-only problem-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON payload.',
   ],
   [
     'backend-only:auth/SessionToken',
-    'Backend-only session token value is handled through cookie/cache plumbing and should not be mirrored as a frontend object contract.',
+    'Backend-only session token value is handled through cookie/cache plumbing and should not be mirrored as a frontend object payload.',
   ],
   [
     'backend-only:auth/SiteManagerUser',
-    'Backend-only site-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON contract.',
+    'Backend-only site-manager permission proof wraps the authenticated actor for server authorization and is not serialized as a frontend JSON payload.',
   ],
   [
     'frontend-only:submission/JudgeFailureReason',
@@ -37,7 +37,7 @@ const allowedExceptions = new Map([
 const usedExceptions = new Set()
 
 const scopedObjectSubdirectories = ['request', 'response']
-const backendInternalFrontendContractMirrors = new Map([
+const backendInternalFrontendPayloadMirrors = new Map([
   ['problem', new Set(['ProblemDataManifest', 'ProblemDataManifestEntry'])],
   ['submission', new Set(['ClaimedSubmission', 'SubmissionJudgeState'])],
 ])
@@ -126,19 +126,19 @@ function collectBackendObjectFiles() {
   const domainFiles = domainDirectories.flatMap((directory) =>
     collectScopedObjectFiles('backend', directory.name, join(directory.path, 'objects'), '.scala'),
   )
-  const internalContractFiles = domainDirectories.flatMap((directory) =>
-    collectBackendInternalFrontendContractFiles(directory),
+  const internalPayloadFiles = domainDirectories.flatMap((directory) =>
+    collectBackendInternalFrontendPayloadFiles(directory),
   )
 
   return indexObjectFiles([
     ...domainFiles,
-    ...internalContractFiles,
+    ...internalPayloadFiles,
     ...collectScopedObjectFiles('backend', 'shared', backendSharedObjectsRoot, '.scala'),
   ])
 }
 
-function collectBackendInternalFrontendContractFiles(directory) {
-  const mirroredNames = backendInternalFrontendContractMirrors.get(directory.name)
+function collectBackendInternalFrontendPayloadFiles(directory) {
+  const mirroredNames = backendInternalFrontendPayloadMirrors.get(directory.name)
   if (!mirroredNames) {
     return []
   }

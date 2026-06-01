@@ -21,16 +21,3 @@ export function parseSubmissionSourceCode(rawSourceCode: string): ParseResult<Su
 
   return { ok: true, value: createSubmissionSourceCode(rawSourceCode) }
 }
-
-export function fromSubmissionSourceCodeContract(value: string, label: string): SubmissionSourceCode {
-  const result = parseSubmissionSourceCode(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toSubmissionSourceCodeContract(value: SubmissionSourceCode): string {
-  return submissionSourceCodeValue(value)
-}

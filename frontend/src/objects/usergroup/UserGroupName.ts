@@ -21,16 +21,3 @@ export function parseUserGroupName(rawName: string): ParseResult<UserGroupName> 
 
   return { ok: true, value: createUserGroupName(normalized) }
 }
-
-export function fromUserGroupNameContract(value: string, label: string): UserGroupName {
-  const result = parseUserGroupName(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUserGroupNameContract(value: UserGroupName): string {
-  return userGroupNameValue(value)
-}

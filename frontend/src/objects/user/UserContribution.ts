@@ -17,12 +17,3 @@ export function parseUserContribution(rawContribution: number): ParseResult<User
 
   return { ok: true, value: createUserContribution(rawContribution) }
 }
-
-export function fromUserContributionContract(value: number, label: string): UserContribution {
-  const result = parseUserContribution(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

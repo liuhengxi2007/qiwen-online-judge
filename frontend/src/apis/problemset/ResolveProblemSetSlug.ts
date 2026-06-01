@@ -1,7 +1,6 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import type { ResolveProblemSetSlugResponse } from '@/objects/problemset/response/ResolveProblemSetSlugResponse'
-import { fromResolveProblemSetSlugResponseContract } from '@/objects/problemset/response/ResolveProblemSetSlugResponse'
 
 type ResolveProblemSetSlugBody = {
   slug: ProblemSetSlug
@@ -10,7 +9,6 @@ type ResolveProblemSetSlugBody = {
 export class ResolveProblemSetSlug implements APIMessage<ResolveProblemSetSlugResponse> {
   declare readonly responseType?: ResolveProblemSetSlugResponse
   readonly method = 'POST'
-  readonly decode = fromResolveProblemSetSlugResponseContract
   readonly apiPath = 'internal/problem-sets/resolve-slug'
   private readonly slug: ProblemSetSlug
 

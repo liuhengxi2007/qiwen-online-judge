@@ -19,12 +19,3 @@ export function parseUserGroupId(rawId: string): ParseResult<UserGroupId> {
 
   return { ok: true, value: createUserGroupId(normalized) }
 }
-
-export function fromUserGroupIdContract(value: string, label: string): UserGroupId {
-  const result = parseUserGroupId(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

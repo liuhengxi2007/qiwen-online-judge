@@ -18,19 +18,3 @@ export function parseUserGroupDescription(rawDescription: string): ParseResult<U
 
   return { ok: true, value: createUserGroupDescription(normalized) }
 }
-
-export function fromUserGroupDescriptionContract(
-  value: string,
-  label: string,
-): UserGroupDescription {
-  const result = parseUserGroupDescription(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUserGroupDescriptionContract(value: UserGroupDescription): string {
-  return userGroupDescriptionValue(value)
-}

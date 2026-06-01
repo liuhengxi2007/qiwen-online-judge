@@ -26,16 +26,3 @@ export function parseUserGroupSlug(rawSlug: string): ParseResult<UserGroupSlug> 
 
   return { ok: true, value: createUserGroupSlug(normalized) }
 }
-
-export function fromUserGroupSlugContract(value: string, label: string): UserGroupSlug {
-  const result = parseUserGroupSlug(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUserGroupSlugContract(value: UserGroupSlug): string {
-  return userGroupSlugValue(value)
-}

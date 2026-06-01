@@ -22,12 +22,3 @@ export function parseProblemId(rawId: string): ParseResult<ProblemId> {
   }
   return { ok: true, value: createProblemId(normalized) }
 }
-
-export function fromProblemIdContract(value: string, label: string): ProblemId {
-  const result = parseProblemId(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

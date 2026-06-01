@@ -1,18 +1,19 @@
 import { useEffect } from 'react'
 
 import { SubscribeMessageEvents } from '@/apis/message/SubscribeMessageEvents'
+import { parseDisplayName } from '@/objects/user/DisplayName'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
-import { fromMessageConversationIdContract } from '@/objects/message/MessageConversationId'
-import { fromMessageContentContract } from '@/objects/message/MessageContent'
+import { parseMessageConversationId } from '@/objects/message/MessageConversationId'
+import { parseMessageContent } from '@/objects/message/MessageContent'
 import type { MessageId } from '@/objects/message/MessageId'
-import { fromMessageIdContract } from '@/objects/message/MessageId'
+import { parseMessageId } from '@/objects/message/MessageId'
 import type { DirectMessage } from '@/objects/message/response/DirectMessage'
 import { useMessageInboxRefresh } from '@/pages/hooks/useMessageInboxRefresh'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { useMessageStore } from '@/pages/stores/message/UseMessageStore'
-import { fromUserIdentityContract, type UserIdentity } from '@/objects/user/UserIdentity'
+import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
-import { fromUsernameContract } from '@/objects/user/Username'
+import { parseUsername } from '@/objects/user/Username'
 
 export const messageStreamEventName = 'qiwen:message-stream-event'
 
@@ -46,16 +47,22 @@ function readString(value: unknown, field: string): string {
   return value
 }
 
+function requireParsed<T>(result: { ok: true; value: T } | { ok: false; error: string }, field: string): T {
+  if (!result.ok) {
+    throw new Error(`Invalid ${field}: ${result.error}`)
+  }
+
+  return result.value
+}
+
 function readUserIdentity(value: unknown, field: string): UserIdentity {
   if (!isRecord(value)) {
     throw new Error(`Invalid ${field}.`)
   }
 
   return {
-    ...fromUserIdentityContract({
-      username: readString(value.username, `${field} username`),
-      displayName: readString(value.displayName, `${field} display name`),
-    }),
+    username: requireParsed(parseUsername(readString(value.username, `${field} username`)), `${field} username`),
+    displayName: requireParsed(parseDisplayName(readString(value.displayName, `${field} display name`)), `${field} display name`),
   }
 }
 
@@ -65,11 +72,11 @@ function decodeDirectMessage(value: unknown): DirectMessage {
   }
 
   return {
-    id: fromMessageIdContract(readString(value.id, 'message id'), 'message id'),
-    conversationId: fromMessageConversationIdContract(readString(value.conversationId, 'conversation id'), 'conversation id'),
+    id: requireParsed(parseMessageId(readString(value.id, 'message id')), 'message id'),
+    conversationId: requireParsed(parseMessageConversationId(readString(value.conversationId, 'conversation id')), 'conversation id'),
     sender: readUserIdentity(value.sender, 'message sender'),
-    recipientUsername: fromUsernameContract(readString(value.recipientUsername, 'recipient username'), 'recipient username'),
-    content: fromMessageContentContract(readString(value.content, 'message content'), 'message content'),
+    recipientUsername: requireParsed(parseUsername(readString(value.recipientUsername, 'recipient username')), 'recipient username'),
+    content: requireParsed(parseMessageContent(readString(value.content, 'message content')), 'message content'),
     createdAt: readString(value.createdAt, 'message created at'),
     readAt: value.readAt === null ? null : readString(value.readAt, 'message read at'),
   }
@@ -81,15 +88,15 @@ function decodeConversationReadStreamPayload(value: unknown): ConversationReadSt
   }
 
   return {
-    conversationId: fromMessageConversationIdContract(
-      readString(value.conversationId, 'conversation read conversation id'),
+    conversationId: requireParsed(
+      parseMessageConversationId(readString(value.conversationId, 'conversation read conversation id')),
       'conversation read conversation id',
     ),
-    readUpToMessageId: fromMessageIdContract(
-      readString(value.readUpToMessageId, 'conversation read message id'),
+    readUpToMessageId: requireParsed(
+      parseMessageId(readString(value.readUpToMessageId, 'conversation read message id')),
       'conversation read message id',
     ),
-    readerUsername: fromUsernameContract(readString(value.readerUsername, 'conversation read reader username'), 'conversation read reader username'),
+    readerUsername: requireParsed(parseUsername(readString(value.readerUsername, 'conversation read reader username')), 'conversation read reader username'),
   }
 }
 
@@ -101,7 +108,7 @@ function decodeInboxChangedStreamPayload(value: unknown): Record<string, never> 
   return {}
 }
 
-function decodeEventPayload(type: 'message_received' | 'conversation_read' | 'inbox_changed', rawData: string): MessageStreamEventDetail | null {
+function decodeMessageStreamEvent(type: 'message_received' | 'conversation_read' | 'inbox_changed', rawData: string): MessageStreamEventDetail | null {
   try {
     const parsed = JSON.parse(rawData) as unknown
     switch (type) {
@@ -119,7 +126,7 @@ function decodeEventPayload(type: 'message_received' | 'conversation_read' | 'in
 }
 
 function handleIncomingEvent(type: 'message_received' | 'conversation_read' | 'inbox_changed', event: Event, refreshInbox: () => Promise<void>) {
-  const decoded = decodeEventPayload(type, (event as MessageEvent).data)
+  const decoded = decodeMessageStreamEvent(type, (event as MessageEvent).data)
   if (!decoded) {
     return
   }

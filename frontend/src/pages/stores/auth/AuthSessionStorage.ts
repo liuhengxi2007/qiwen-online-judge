@@ -28,7 +28,7 @@ export function readAuthSession(): SessionResponse | null {
 
   const { rawSession, migratedFromLegacyKey } = storedSession
 
-  const session = parseStoredAuthSession(rawSession)
+  const session = decodeStoredAuthSession(rawSession)
 
   if (!session) {
     clearAuthSession()
@@ -57,7 +57,7 @@ function readStoredSession(): { rawSession: string; migratedFromLegacyKey: boole
   return { rawSession, migratedFromLegacyKey: false }
 }
 
-function parseStoredAuthSession(rawSession: string): SessionResponse | null {
+function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
   try {
     const parsed = JSON.parse(rawSession) as unknown
 

@@ -21,21 +21,3 @@ export function parseProblemTitleDisplayMode(rawDisplayMode: string): ParseResul
       }
   }
 }
-
-export function fromProblemTitleDisplayModeContract(
-  value: string,
-  label: string,
-): ProblemTitleDisplayMode {
-  const result = parseProblemTitleDisplayMode(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toProblemTitleDisplayModeContract(
-  value: ProblemTitleDisplayMode,
-): ProblemTitleDisplayMode {
-  return value
-}

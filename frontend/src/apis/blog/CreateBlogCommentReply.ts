@@ -5,12 +5,10 @@ import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { blogIdValue } from '@/objects/blog/BlogId'
 import type { CreateBlogCommentRequest } from '@/objects/blog/request/CreateBlogCommentRequest'
-import { fromBlogDetailContract } from '@/objects/blog/response/BlogDetail'
 
 export class CreateBlogCommentReply implements APIWithSessionMessage<BlogDetail> {
   declare readonly responseType?: BlogDetail
   readonly method = 'POST'
-  readonly decode = fromBlogDetailContract
   readonly apiPath: string
   private readonly request: CreateBlogCommentRequest
 

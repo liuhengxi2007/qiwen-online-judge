@@ -9,21 +9,3 @@ export function parseNewUserGroupMemberRole(rawRole: string): ParseResult<NewUse
 
   return { ok: false, error: 'New members may only be added as member or manager.' }
 }
-
-export function fromNewUserGroupMemberRoleContract(
-  value: NewUserGroupMemberRole,
-  label: string,
-): NewUserGroupMemberRole {
-  const result = parseNewUserGroupMemberRole(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toNewUserGroupMemberRoleContract(
-  value: NewUserGroupMemberRole,
-): NewUserGroupMemberRole {
-  return value
-}

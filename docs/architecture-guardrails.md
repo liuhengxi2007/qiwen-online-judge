@@ -15,8 +15,8 @@ Use this file as the entry point, then continue through the linked topic documen
 
 ## Related Docs
 
-- [Backend Contract Alignment](./backend-contract-alignment.md)
-- [Contract Checks](./contract-checks.md)
+- [Backend Wire Alignment](./backend-wire-alignment.md)
+- [Wire Checks](./wire-checks.md)
 - [File Upload Capability](./file-upload-capability.md)
 - [HTTP Planner Protocol](./http-planner-protocol.md)
 - [Problem Data Operations](./problem-data-operations.md)

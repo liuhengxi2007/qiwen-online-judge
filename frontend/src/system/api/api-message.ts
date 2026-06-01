@@ -1,5 +1,4 @@
 import { requestJson } from '@/system/api/http-client'
-import type { JsonDecoder } from '@/system/api/http-client'
 
 export type APIMethod = 'GET' | 'POST'
 
@@ -7,7 +6,6 @@ export type APIMessage<Response> = {
   readonly responseType?: Response
   readonly apiPath: string
   readonly method: APIMethod
-  readonly decode: JsonDecoder<Response>
   body(): unknown | undefined
 }
 
@@ -38,14 +36,14 @@ export function apiRequest(message: APIMessage<unknown>): RequestInit {
 }
 
 export function sendAPI<Response>(message: APIMessage<Response>): Promise<Response> {
-  return requestJson(apiPath(message), message.decode, apiRequest(message))
+  return requestJson(apiPath(message), apiRequest(message))
 }
 
 export function sendMultipartAPI<Response>(
   message: APIMessage<Response>,
   body: FormData,
 ): Promise<Response> {
-  return requestJson(apiPath(message), message.decode, {
+  return requestJson(apiPath(message), {
     method: message.method,
     credentials: 'same-origin',
     body,

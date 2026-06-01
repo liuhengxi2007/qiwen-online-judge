@@ -3,12 +3,10 @@ import type { ConversationMessageFacts } from '@/objects/message/response/Conver
 import type { MarkConversationReadRequest } from '@/objects/message/request/MarkConversationReadRequest'
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
 import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
-import { fromConversationMessageFactsContract } from '@/objects/message/response/ConversationMessageFacts'
 
 export class MarkConversationRead implements APIWithSessionMessage<ConversationMessageFacts> {
   declare readonly responseType?: ConversationMessageFacts
   readonly method = 'POST'
-  readonly decode = fromConversationMessageFactsContract
   readonly apiPath: string
   private readonly request: MarkConversationReadRequest
 

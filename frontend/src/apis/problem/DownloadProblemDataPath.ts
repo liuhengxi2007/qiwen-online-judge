@@ -7,12 +7,6 @@ import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 export class DownloadProblemDataPath implements APIWithSessionMessage<Blob> {
   declare readonly responseType?: Blob
   readonly method = 'GET'
-  readonly decode = (value: unknown) => {
-    if (value instanceof Blob) {
-      return value
-    }
-    throw new Error('Invalid blob response payload.')
-  }
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug, path: ProblemDataPath) {

@@ -17,19 +17,3 @@ export function parseProblemSetDescription(rawDescription: string): ParseResult<
   }
   return { ok: true, value: createProblemSetDescription(normalized) }
 }
-
-export function fromProblemSetDescriptionContract(
-  value: string,
-  label: string,
-): ProblemSetDescription {
-  const result = parseProblemSetDescription(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toProblemSetDescriptionContract(value: ProblemSetDescription): string {
-  return problemSetDescriptionValue(value)
-}

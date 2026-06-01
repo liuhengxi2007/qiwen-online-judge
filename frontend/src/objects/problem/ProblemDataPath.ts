@@ -33,12 +33,3 @@ export function parseProblemDataPath(rawPath: string): ParseResult<ProblemDataPa
   }
   return { ok: true, value: createProblemDataPath(normalized) }
 }
-
-export function fromProblemDataPathContract(value: string, label: string): ProblemDataPath {
-  const result = parseProblemDataPath(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

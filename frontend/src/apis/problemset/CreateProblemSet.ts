@@ -1,12 +1,10 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { CreateProblemSetRequest } from '@/objects/problemset/request/CreateProblemSetRequest'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
-import { fromProblemSetSummaryContract } from '@/objects/problemset/response/ProblemSetSummary'
 
 export class CreateProblemSet implements APIWithSessionMessage<ProblemSetSummary> {
   declare readonly responseType?: ProblemSetSummary
   readonly method = 'POST'
-  readonly decode = (value: unknown) => fromProblemSetSummaryContract(value, 'problem set summary')
   readonly apiPath = 'problem-sets'
   private readonly request: CreateProblemSetRequest
 

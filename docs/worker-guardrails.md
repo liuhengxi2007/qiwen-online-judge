@@ -46,6 +46,6 @@ Avoid:
 See also:
 
 - [Backend Guardrails](./backend-guardrails.md)
-- [Backend Contract Alignment](./backend-contract-alignment.md)
-- [Contract Checks](./contract-checks.md)
+- [Backend Wire Alignment](./backend-wire-alignment.md)
+- [Wire Checks](./wire-checks.md)
 - [Resource Lifecycle Matrix](./resource-lifecycle-matrix.md)

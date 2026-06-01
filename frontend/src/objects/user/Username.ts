@@ -29,16 +29,3 @@ export function parseUsername(rawUsername: string): ParseResult<Username> {
 
   return { ok: true, value: createUsername(normalized) }
 }
-
-export function fromUsernameContract(value: string, label: string): Username {
-  const result = parseUsername(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUsernameContract(value: Username): string {
-  return usernameValue(value)
-}

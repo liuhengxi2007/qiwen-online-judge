@@ -4,12 +4,10 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { fromProblemSetDetailContract } from '@/objects/problemset/response/ProblemSetDetail'
 
 export class RemoveProblemFromProblemSet implements APIWithSessionMessage<ProblemSetDetail> {
   declare readonly responseType?: ProblemSetDetail
   readonly method = 'POST'
-  readonly decode = fromProblemSetDetailContract
   readonly apiPath: string
 
   constructor(problemSetSlug: ProblemSetSlug, problemSlug: ProblemSlug) {

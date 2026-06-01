@@ -11,9 +11,9 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/routes`
   - Top-level HTTP app/router composition that wires domain routers together
 - `src/main/scala/shared`
-  - Dependency-pure shared contracts and platform helpers used across domains
+  - Dependency-pure shared payloads and platform helpers used across domains
   - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
-  - `shared/objects/access`: shared access-control contract types only
+  - `shared/objects/access`: shared access-control payload types only
   - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
   - `shared/api`: shared API path/error helpers and small response helpers
 - `src/main/scala/database`
@@ -61,14 +61,14 @@ For `objects/response`:
   read/output shapes returned by endpoint workflows, such as summaries, details, list responses, unread counts, upload results, and session/profile views
 - define the matching Circe encoder/decoder in the companion object when the type crosses the HTTP boundary
 
-Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `objects/`. Put API contract payloads under `objects/request` and `objects/response`.
+Keep durable domain entities, value objects, enums, lifecycle types, slugs, ids, titles, and access policies directly under `objects/`. Put API payloads under `objects/request` and `objects/response`.
 Put backend-only collaboration objects that are neither persistent entities nor HTTP payloads under `objects/internal`. These types are not frontend mirrors and do not participate in object alignment; expose them across domains only through an explicit domain-boundary allowlist entry when there is a real cross-domain workflow.
 `objects/` files may define their own HTTP wire Circe encoders/decoders in companion objects. Persistence-only JSON codecs belong in `table/utils`, close to the table code that reads or writes that JSON column.
 Bare `objects/` files must not import `objects/request` or `objects/response`; dependency direction is from request/response payloads toward core object types only.
 `objects/request` and `objects/response` must not import `utils`, `routes`, or `table`.
 `objects/` must not import `utils`, `routes`, or `table`; if an object transition needs data from a response shape, put that adapter in domain-owned support code outside `objects`.
 
-Protocol modules are the exception: `judge-protocol` may keep Circe codecs next to protocol objects because those types are cross-process wire contracts rather than backend business models.
+Protocol modules are the exception: `judge-protocol` may keep Circe codecs next to protocol objects because those types are cross-process wire payloads rather than backend business models.
 
 For `table`:
 
@@ -153,9 +153,9 @@ Allowed public domain boundaries:
 
 Cross-domain application code should call the target domain's API object `plan(...)` instead of importing the target domain's `table` package. Wildcard imports such as `domains.problem.api.*` are intentionally forbidden across domains; name the API object being used.
 
-Use `InternalOnlyApi` or `InternalOnlyAuthenticatedApi` for API-object plans that need a frontend-mirrored contract but must never be callable through HTTP. These API objects are registered normally, and their HTTP handler always returns `403 Forbidden` without decoding the request or running business logic.
+Use `InternalOnlyApi` or `InternalOnlyAuthenticatedApi` for API-object plans that need a frontend-mirrored payload but must never be callable through HTTP. These API objects are registered normally, and their HTTP handler always returns `403 Forbidden` without decoding the request or running business logic.
 
-The judge worker channel is the frontend API mirroring exception. Worker-only callable API objects in `domains.judge.api` and judge-registry worker endpoints in `domains.judger.api` do not need site frontend wrappers; plan-only owner-domain helpers still keep frontend contract mirrors even though they are not runtime-callable. Site management APIs such as judger listing still need frontend mirrors.
+The judge worker channel is the frontend API mirroring exception. Worker-only callable API objects in `domains.judge.api` and judge-registry worker endpoints in `domains.judger.api` do not need site frontend wrappers; plan-only owner-domain helpers still keep frontend payload mirrors even though they are not runtime-callable. Site management APIs such as judger listing still need frontend mirrors.
 
 Current explicitly guarded collaboration boundaries:
 
@@ -202,7 +202,7 @@ Allow only:
   examples: API path/error helpers, reusable access-control primitives used by multiple resource domains
 
 Cross-domain persistence helpers belong in `database` when they are infrastructure-level and do not have a single business-domain owner.
-`shared` must not import `domains.*`; pass domain actors, facts, or values in as type parameters or shared contracts instead.
+`shared` must not import `domains.*`; pass domain actors, facts, or values in as type parameters or shared payloads instead.
 Auth-aware session execution and API-object dispatch belong to `domains/auth/api`, while `shared/api` owns only domain-free transport helpers.
 
 Do not move these into `shared`:
@@ -249,8 +249,8 @@ Do not:
 See also:
 
 - [HTTP Planner Protocol](./http-planner-protocol.md)
-- [Backend Contract Alignment](./backend-contract-alignment.md)
-- [Contract Checks](./contract-checks.md)
+- [Backend Wire Alignment](./backend-wire-alignment.md)
+- [Wire Checks](./wire-checks.md)
 
 ## Next Domain Additions
 

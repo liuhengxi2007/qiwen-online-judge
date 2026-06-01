@@ -17,12 +17,3 @@ export function parseSubmissionUserQuery(rawQuery: string): ParseResult<Submissi
   }
   return { ok: true, value: createSubmissionUserQuery(normalized) }
 }
-
-export function fromSubmissionUserQueryContract(value: string, label: string): SubmissionUserQuery {
-  const result = parseSubmissionUserQuery(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

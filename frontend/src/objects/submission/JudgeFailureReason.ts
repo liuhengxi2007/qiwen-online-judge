@@ -18,11 +18,3 @@ const supportedJudgeFailureReasons = [
 export function isJudgeFailureReason(value: string): value is JudgeFailureReason {
   return supportedJudgeFailureReasons.includes(value as JudgeFailureReason)
 }
-
-export function fromJudgeFailureReasonContract(value: unknown): JudgeFailureReason {
-  if (typeof value !== 'string' || !isJudgeFailureReason(value)) {
-    throw new Error('Invalid judge failure reason in contract payload.')
-  }
-
-  return value
-}

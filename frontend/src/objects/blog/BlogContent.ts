@@ -20,16 +20,3 @@ export function parseBlogContent(rawContent: string): ParseResult<BlogContent> {
   }
   return { ok: true, value: createBlogContent(normalized) }
 }
-
-export function fromBlogContentContract(value: string, label: string): BlogContent {
-  const result = parseBlogContent(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toBlogContentContract(value: BlogContent): string {
-  return blogContentValue(value)
-}

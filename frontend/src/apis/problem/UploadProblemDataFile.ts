@@ -4,12 +4,10 @@ import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataUploadResult } from '@/objects/problem/response/ProblemDataUploadResult'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { fromProblemDataUploadResultContract } from '@/objects/problem/response/ProblemDataUploadResult'
 
 export class UploadProblemDataFile implements APIWithSessionMessage<ProblemDataUploadResult> {
   declare readonly responseType?: ProblemDataUploadResult
   readonly method = 'POST'
-  readonly decode = fromProblemDataUploadResultContract
   readonly apiPath: string
   private readonly file: File
   private readonly path: ProblemDataFilename | ProblemDataPath

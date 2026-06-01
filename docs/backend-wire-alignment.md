@@ -1,4 +1,4 @@
-# Backend Contract Alignment
+# Backend Wire Alignment
 
 This document defines how backend HTTP-facing Scala objects stay aligned with frontend transport objects through mirrored files and alignment checks.
 
@@ -6,12 +6,12 @@ The goal is:
 
 - one shared HTTP shape across frontend and backend
 - backend-local domain object integrity
-- explicit parsing and mapping at the frontend/backend boundary
+- explicit parsing and mapping at the backend HTTP boundary
 
 The non-goal is:
 
 - making backend domain entities identical to UI state
-- forcing sensitive or internal backend types into a shared contract layer
+- forcing sensitive or internal backend types into a shared payload layer
 
 ## Rule
 
@@ -22,7 +22,7 @@ That means:
 - frontend `objects/request` and `objects/response` field shape must match backend `objects/request` and `objects/response`
 - enum string values exposed over HTTP must match exactly
 - backend domain objects may remain richer or stricter than HTTP payloads
-- frontend adapters may keep local wire DTO aliases when they parse raw JSON into branded frontend types
+- normal frontend API responses are trusted as mirrored payload types after JSON parsing
 - if a backend object is mirrored by the frontend object layer, the mirrored type name and file basename must match exactly
 - mirrored object files must stay focused on that mirrored type instead of accumulating mapping, persistence, or workflow responsibilities
 
@@ -33,7 +33,7 @@ Keep these roles separate:
 - frontend `objects/request` and `objects/response`
   frontend transport payload objects
 - frontend `objects/<domain>/<Object>.ts`
-  durable frontend object types plus same-object parse/value/contract mapping helpers
+  durable frontend object types plus parse/value helpers for forms, URLs, and local state
 - frontend `apis/<domain>/<Name>.ts`
   endpoint message classes that declare HTTP method, path, request body, and response type
 - backend `objects/request` and `objects/response`
@@ -59,7 +59,7 @@ Preferred flow:
 4. map backend result into backend output object
 5. encode response consumed by the matching frontend response object
 
-On the frontend, keep object-specific parsing, value extraction, and contract mapping in the matching object file. API endpoint files should compose typed request objects and endpoint metadata directly; do not introduce frontend API codec layers.
+On the frontend, keep object-specific parsing and value extraction in the matching object file. API endpoint files should compose typed request objects and endpoint metadata directly; do not introduce frontend API codec layers.
 
 ## What Must Align
 
@@ -86,7 +86,6 @@ When changing an HTTP-facing object:
 
 - inspect the matching frontend request/response file
 - inspect the matching backend input/output file
-- inspect the frontend adapter that parses or serializes the payload
 - run `node scripts/check-object-alignment.mjs`
 
 A change is incomplete if it updates only one side of the boundary.
@@ -96,11 +95,10 @@ A change is incomplete if it updates only one side of the boundary.
 1. Field names and field order match.
 2. JSON enum values match exactly.
 3. Optional vs nullable semantics are intentionally mapped.
-4. Frontend adapters still parse the raw shape.
-5. Backend encoders and decoders still accept/produce the same shape.
-6. Mirrored frontend and backend filenames still match exactly.
-7. Mirrored type names still match exactly.
-8. Mirrored object files have not accreted transport mapping, persistence helpers, reducers, or workflow logic.
+4. Backend encoders and decoders still accept/produce the same shape.
+5. Mirrored frontend and backend filenames still match exactly.
+6. Mirrored type names still match exactly.
+7. Mirrored object files have not accreted transport mapping, persistence helpers, reducers, or workflow logic.
 
 ## Enforcement
 
@@ -109,4 +107,4 @@ Current lightweight checks:
 - `node scripts/check-object-alignment.mjs`
 - `node scripts/check-api-alignment.mjs`
 
-These checks do not replace runtime tests or endpoint-level response decoding tests.
+These checks do not replace runtime tests for behavior-bearing boundaries such as SSE, local storage, and HTTP message envelopes.

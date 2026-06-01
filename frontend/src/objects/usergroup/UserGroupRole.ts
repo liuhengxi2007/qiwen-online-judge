@@ -9,16 +9,3 @@ export function parseUserGroupRole(rawRole: string): ParseResult<UserGroupRole> 
 
   return { ok: false, error: 'Unknown user group role.' }
 }
-
-export function fromUserGroupRoleContract(value: string, label: string): UserGroupRole {
-  const result = parseUserGroupRole(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUserGroupRoleContract(value: UserGroupRole): UserGroupRole {
-  return value
-}

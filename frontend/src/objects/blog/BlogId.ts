@@ -16,12 +16,3 @@ export function parseBlogId(rawId: number): ParseResult<BlogId> {
   }
   return { ok: true, value: createBlogId(rawId) }
 }
-
-export function fromBlogIdContract(value: number, label: string): BlogId {
-  const result = parseBlogId(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

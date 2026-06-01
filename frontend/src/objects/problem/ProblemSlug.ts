@@ -25,16 +25,3 @@ export function parseProblemSlug(rawSlug: string): ParseResult<ProblemSlug> {
   }
   return { ok: true, value: createProblemSlug(normalized) }
 }
-
-export function fromProblemSlugContract(value: string, label: string): ProblemSlug {
-  const result = parseProblemSlug(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toProblemSlugContract(value: ProblemSlug): string {
-  return problemSlugValue(value)
-}

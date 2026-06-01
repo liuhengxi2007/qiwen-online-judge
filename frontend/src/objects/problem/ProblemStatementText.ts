@@ -20,16 +20,3 @@ export function parseProblemStatementText(rawStatement: string): ParseResult<Pro
   }
   return { ok: true, value: createProblemStatementText(normalized) }
 }
-
-export function fromProblemStatementTextContract(value: string, label: string): ProblemStatementText {
-  const result = parseProblemStatementText(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toProblemStatementTextContract(value: ProblemStatementText): string {
-  return problemStatementTextValue(value)
-}

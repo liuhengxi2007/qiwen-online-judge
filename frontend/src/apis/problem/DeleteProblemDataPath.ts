@@ -4,12 +4,10 @@ import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { fromProblemDetailContract } from '@/objects/problem/response/ProblemDetail'
 
 export class DeleteProblemDataPath implements APIWithSessionMessage<ProblemDetail> {
   declare readonly responseType?: ProblemDetail
   readonly method = 'POST'
-  readonly decode = fromProblemDetailContract
   readonly apiPath: string
   private readonly request: DeleteProblemDataPathRequest
 

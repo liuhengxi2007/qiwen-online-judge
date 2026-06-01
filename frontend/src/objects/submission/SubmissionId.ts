@@ -21,12 +21,3 @@ export function parseSubmissionId(rawId: number): ParseResult<SubmissionId> {
 
   return { ok: true, value: createSubmissionId(rawId) }
 }
-
-export function fromSubmissionIdContract(value: number, label: string): SubmissionId {
-  const result = parseSubmissionId(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}

@@ -1,12 +1,10 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { NotificationListResponse } from '@/objects/notification/response/NotificationListResponse'
 import type { PageRequest } from '@/objects/shared/PageRequest'
-import { fromNotificationListResponseContract } from '@/objects/notification/response/NotificationListResponse'
 
 export class ListNotifications implements APIWithSessionMessage<NotificationListResponse> {
   declare readonly responseType?: NotificationListResponse
   readonly method = 'GET'
-  readonly decode = fromNotificationListResponseContract
   readonly apiPath: string
 
   constructor(pageRequest?: PageRequest) {

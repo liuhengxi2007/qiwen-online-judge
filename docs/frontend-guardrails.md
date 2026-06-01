@@ -7,9 +7,9 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 Top-level source folders:
 
 - `src/apis`
-  Endpoint clients and HTTP boundary codecs, grouped by domain.
+  Endpoint clients grouped by domain.
 - `src/objects`
-  Frontend business object types, request/response payload types, and codecs that belong to the same object.
+  Frontend business object types, request/response payload types, and parse/value helpers that belong to the same object.
 - `src/objects/shared`
   Shared business objects and object subdomains such as access-control primitives.
 - `src/pages`
@@ -52,7 +52,7 @@ Hard rule: route policies and navigation intent types belong in
 `src/pages/routing`, not `src/pages/objects`. `src/pages/objects` should only be
 introduced for actual shared page-layer value objects, and it must stay flat if
 used. Do not add domain subdirectories there. Put API payloads and mirrored
-domain contracts in `src/objects/shared` or `src/objects/<domain>`. Put form
+domain payloads in `src/objects/shared` or `src/objects/<domain>`. Put form
 drafts, validation, request builders, single-page state, reducers,
 URL/search-param state, and page display state under the owning page directory.
 Shared editor input parsers belong beside their shared editor component, not in
@@ -68,8 +68,8 @@ Rules:
 
 - one endpoint client per file
 - the frontend endpoint basename must match the backend `api/<Name>.scala` basename when both sides expose the endpoint
-- frontend API codec files are forbidden; same-object parsing, value extraction,
-  and contract mapping live in the matching object file
+- frontend API codec files are forbidden; endpoint files should declare method,
+  path, request body, and response type only
 - do not add compatibility barrels; import endpoint files directly
 - non-JSON helpers such as download URL builders or realtime event URL helpers live in the matched endpoint file
 - run `node scripts/check-api-alignment.mjs` when endpoint files change
@@ -82,13 +82,12 @@ Use `src/objects/<domain>` for durable frontend business concepts:
 - `request` payloads
 - `response` payloads
 - same-object parse/value helpers
-- same-object contract mappers used by API boundary codecs
 
 Use `src/objects/shared` only after there is a real shared owner. Good examples:
 
 - pagination request/response types
 - shared response payloads
-- access-control object types and same-object codecs
+- access-control object types
 
 Do not put domain-specific policies, forms, display mappers, status mappers,
 route builders, pagination UI helpers, date/time formatting, binary-size

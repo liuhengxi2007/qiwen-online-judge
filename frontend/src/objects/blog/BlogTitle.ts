@@ -20,16 +20,3 @@ export function parseBlogTitle(rawTitle: string): ParseResult<BlogTitle> {
   }
   return { ok: true, value: createBlogTitle(normalized) }
 }
-
-export function fromBlogTitleContract(value: string, label: string): BlogTitle {
-  const result = parseBlogTitle(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toBlogTitleContract(value: BlogTitle): string {
-  return blogTitleValue(value)
-}

@@ -394,7 +394,7 @@ function checkRemovedFrontendResidueImport(filePath, errors) {
 function checkForbiddenFrontendApiCodecFiles(files, errors) {
   for (const filePath of files) {
     if (frontendApiCodecPathPattern.test(filePath)) {
-      errors.push(`${filePath} is a forbidden frontend API codec file; keep contract mapping in object files and endpoint messages`)
+      errors.push(`${filePath} is a forbidden frontend API codec file; endpoint messages should declare method, path, request body, and response type only`)
     }
   }
 }
@@ -599,7 +599,7 @@ function checkBackendObjectFileShape(filePath, errors) {
   checkOneTopLevelObjectType(filePath, extractBackendTopLevelObjectTypes(read(filePath)), errors)
 }
 
-function isFrontendObjectContractFile(filePath) {
+function isFrontendObjectPayloadFile(filePath) {
   const basename = basenameWithoutExtension(filePath)
   return /^[A-Z]/.test(basename) && !basename.endsWith('.test')
 }
@@ -638,7 +638,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (filePath.startsWith(removedFrontendFeatureRoot) && /\/http\/(?:request|response)\//.test(filePath)) {
-      errors.push(`${filePath} is in removed frontend HTTP contract directory; use objects/<domain>/request or objects/<domain>/response`)
+      errors.push(`${filePath} is in removed frontend HTTP payload directory; use objects/<domain>/request or objects/<domain>/response`)
     }
 
     if (filePath.startsWith(removedFrontendSharedRoot) && /\/http\/response\//.test(filePath)) {
@@ -646,7 +646,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
-      errors.push(`${filePath} is in removed backend application contract directory; use objects/request or objects/response`)
+      errors.push(`${filePath} is in removed backend application payload directory; use objects/request or objects/response`)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/response\//.test(filePath)) {
@@ -693,7 +693,7 @@ function run() {
 
   for (const filePath of walk('frontend/src/objects', new Set(['.ts', '.tsx']))) {
     if (
-      isFrontendObjectContractFile(filePath) &&
+      isFrontendObjectPayloadFile(filePath) &&
       !/^frontend\/src\/objects\/shared\/access\//.test(filePath)
     ) {
       checkFrontendObjectFileShape(filePath, errors)

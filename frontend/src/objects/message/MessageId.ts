@@ -23,16 +23,3 @@ export function parseMessageId(rawId: string): ParseResult<MessageId> {
 export function messageIdValue(messageId: MessageId): string {
   return messageId
 }
-
-export function fromMessageIdContract(value: string, label: string): MessageId {
-  const result = parseMessageId(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toMessageIdContract(value: MessageId): string {
-  return messageIdValue(value)
-}

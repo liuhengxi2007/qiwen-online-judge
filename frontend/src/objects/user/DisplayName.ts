@@ -23,16 +23,3 @@ export function parseDisplayName(rawDisplayName: string): ParseResult<DisplayNam
 
   return { ok: true, value: createDisplayName(normalized) }
 }
-
-export function fromDisplayNameContract(value: string, label: string): DisplayName {
-  const result = parseDisplayName(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toDisplayNameContract(value: DisplayName): string {
-  return displayNameValue(value)
-}

@@ -21,16 +21,3 @@ export function parseUserDisplayMode(rawDisplayMode: string): ParseResult<UserDi
       }
   }
 }
-
-export function fromUserDisplayModeContract(value: string, label: string): UserDisplayMode {
-  const result = parseUserDisplayMode(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toUserDisplayModeContract(value: UserDisplayMode): UserDisplayMode {
-  return userDisplayModeValue(value)
-}

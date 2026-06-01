@@ -29,16 +29,3 @@ export function parseEmailAddress(rawEmailAddress: string): ParseResult<EmailAdd
 
   return { ok: true, value: createEmailAddress(normalized) }
 }
-
-export function fromEmailAddressContract(value: string, label: string): EmailAddress {
-  const result = parseEmailAddress(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
-
-export function toEmailAddressContract(value: EmailAddress): string {
-  return emailAddressValue(value)
-}

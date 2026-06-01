@@ -17,12 +17,3 @@ export function parseSubmissionProblemQuery(rawQuery: string): ParseResult<Submi
   }
   return { ok: true, value: createSubmissionProblemQuery(normalized) }
 }
-
-export function fromSubmissionProblemQueryContract(value: string, label: string): SubmissionProblemQuery {
-  const result = parseSubmissionProblemQuery(value)
-  if (!result.ok) {
-    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
-  }
-
-  return result.value
-}
