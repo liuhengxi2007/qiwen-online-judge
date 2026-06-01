@@ -1,10 +1,12 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { LoginRequest } from '@/objects/auth/request/LoginRequest'
 import type { LoginResponse } from '@/objects/auth/response/LoginResponse'
+import { fromLoginResponseContract } from '@/objects/auth/response/LoginResponse'
 
 export class Login implements APIMessage<LoginResponse> {
   declare readonly responseType?: LoginResponse
   readonly method = 'POST'
+  readonly decode = fromLoginResponseContract
   readonly apiPath = 'auth/login'
   private readonly request: LoginRequest
 

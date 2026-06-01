@@ -3,10 +3,12 @@ import type { UpdateUserGroupRequest } from '@/objects/usergroup/request/UpdateU
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
+import { fromUserGroupDetailContract } from '@/objects/usergroup/response/UserGroupDetail'
 
 export class UpdateUserGroup implements APIWithSessionMessage<UserGroupDetail> {
   declare readonly responseType?: UserGroupDetail
   readonly method = 'POST'
+  readonly decode = fromUserGroupDetailContract
   readonly apiPath: string
   private readonly request: UpdateUserGroupRequest
 

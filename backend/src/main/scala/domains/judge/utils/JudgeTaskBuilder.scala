@@ -59,7 +59,7 @@ object JudgeTaskBuilder:
     parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
       val rawPaths =
         task.subtasks.flatMap(_.testcases).flatMap { testcase =>
-          List(testcase.input.map(_.path), Some(testcase.answer.path), testcase.checker.source.map(_.path)).flatten
+          List(testcase.input.map(_.path.value), Some(testcase.answer.path.value), testcase.checker.source.map(_.path.value)).flatten
         }
       rawPaths
         .traverse(ProblemDataPath.parse)
@@ -167,7 +167,7 @@ object JudgeTaskBuilder:
             stringAt(checker, "path").flatMap(path =>
               ProblemDataPath.parse(path)
                 .left.map(message => s"Invalid checker path: $message")
-                .map(_ => Some(JudgeTaskChecker("cpp", None, Some(JudgeTaskFileRef(path, 0L, "")))))
+                .map(_ => Some(JudgeTaskChecker("cpp", None, Some(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))))
             )
           case other => Left(s"Unsupported checker type: $other.")
         }
@@ -213,18 +213,19 @@ object JudgeTaskBuilder:
     for
       path <- ProblemDataPath.parse(rawPath).left.map(message => s"$label has invalid path: $message")
       entry <- manifest.entries.find(_.path == path).toRight(s"$label does not exist: $rawPath.")
-    yield fileRef(entry)
+      ref <- fileRef(entry).left.map(message => s"$label has invalid file reference: $message")
+    yield ref
 
   private def resolveChecker(manifest: ProblemDataManifest, checker: JudgeTaskChecker): Either[String, JudgeTaskChecker] =
     checker.`type` match
       case "cpp" =>
         checker.source match
-          case Some(source) => findFile(manifest, source.path, "Checker source file").map(ref => checker.copy(source = Some(ref)))
+          case Some(source) => findFile(manifest, source.path.value, "Checker source file").map(ref => checker.copy(source = Some(ref)))
           case None => Left("C++ checker source path is required.")
       case _ => Right(checker)
 
-  private def fileRef(entry: ProblemDataManifestEntry): JudgeTaskFileRef =
-    JudgeTaskFileRef(entry.path.value, entry.sizeBytes, entry.sha256)
+  private def fileRef(entry: ProblemDataManifestEntry): Either[String, JudgeTaskFileRef] =
+    JudgeTaskFileRef.from(entry.path.value, entry.sizeBytes, entry.sha256)
 
   private def ratiosFor(items: List[Map[String, Any]]): Either[String, List[BigDecimal]] =
     val explicit = items.map(optionalDecimalAt(_, "scoreRatio"))

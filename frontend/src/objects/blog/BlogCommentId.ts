@@ -11,7 +11,7 @@ export function blogCommentIdValue(id: BlogCommentId): number {
 }
 
 export function parseBlogCommentId(rawId: number): ParseResult<BlogCommentId> {
-  if (!Number.isInteger(rawId) || rawId <= 0) {
+  if (!Number.isSafeInteger(rawId) || rawId <= 0) {
     return { ok: false, error: 'Blog comment id must be a positive integer.' }
   }
   return { ok: true, value: createBlogCommentId(rawId) }

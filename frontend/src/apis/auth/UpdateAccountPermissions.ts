@@ -3,10 +3,12 @@ import type { AuthAccountListItem } from '@/objects/auth/response/AuthAccountLis
 import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/UpdateUserPermissionsRequest'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
+import { fromAuthAccountListItemContract } from '@/objects/auth/response/AuthAccountListItem'
 
 export class UpdateAccountPermissions implements APIWithSessionMessage<AuthAccountListItem> {
   declare readonly responseType?: AuthAccountListItem
   readonly method = 'POST'
+  readonly decode = (value: unknown) => fromAuthAccountListItemContract(value, 'auth account')
   readonly apiPath: string
   private readonly request: UpdateUserPermissionsRequest
 

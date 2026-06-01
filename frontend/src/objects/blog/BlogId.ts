@@ -11,7 +11,7 @@ export function blogIdValue(id: BlogId): number {
 }
 
 export function parseBlogId(rawId: number): ParseResult<BlogId> {
-  if (!Number.isInteger(rawId) || rawId <= 0) {
+  if (!Number.isSafeInteger(rawId) || rawId <= 0) {
     return { ok: false, error: 'Blog id must be a positive integer.' }
   }
   return { ok: true, value: createBlogId(rawId) }

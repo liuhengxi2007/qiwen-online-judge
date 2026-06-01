@@ -19,6 +19,10 @@ export function isSubmissionVerdict(value: string): value is SubmissionVerdict {
   return supportedSubmissionVerdicts.includes(value as SubmissionVerdict)
 }
 
-export function fromSubmissionVerdictContract(value: SubmissionVerdict): SubmissionVerdict {
+export function fromSubmissionVerdictContract(value: unknown): SubmissionVerdict {
+  if (typeof value !== 'string' || !isSubmissionVerdict(value)) {
+    throw new Error('Invalid submission verdict in contract payload.')
+  }
+
   return value
 }

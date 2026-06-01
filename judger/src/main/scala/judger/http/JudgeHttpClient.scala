@@ -15,7 +15,10 @@ import java.time.Duration
 
 final case class LeaseExpiredException(message: String) extends RuntimeException(message)
 
-final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig):
+trait ProblemDataDownloader:
+  def downloadProblemData(problemSlug: ProblemSlug, path: String): IO[Array[Byte]]
+
+final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig) extends ProblemDataDownloader:
   def registerJudger: IO[RegisterJudgerResponse] =
     requestExpectJson[RegisterJudgerResponse](
       path = "/api/worker/judge/judgers/register",

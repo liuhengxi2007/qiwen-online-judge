@@ -6,7 +6,11 @@ export function isSubmissionLanguage(value: string): value is SubmissionLanguage
   return supportedSubmissionLanguages.includes(value as SubmissionLanguage)
 }
 
-export function fromSubmissionLanguageContract(value: SubmissionLanguage): SubmissionLanguage {
+export function fromSubmissionLanguageContract(value: unknown): SubmissionLanguage {
+  if (typeof value !== 'string' || !isSubmissionLanguage(value)) {
+    throw new Error('Invalid submission language in contract payload.')
+  }
+
   return value
 }
 

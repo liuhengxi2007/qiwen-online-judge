@@ -11,7 +11,7 @@ export function submissionIdValue(submissionId: SubmissionId): number {
 }
 
 export function parseSubmissionId(rawId: number): ParseResult<SubmissionId> {
-  if (!Number.isInteger(rawId)) {
+  if (!Number.isSafeInteger(rawId)) {
     return { ok: false, error: 'Submission id must be an integer.' }
   }
 

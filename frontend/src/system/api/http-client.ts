@@ -1,5 +1,6 @@
 import { messages, fallbackLocale, resolveLocale, translateMessage } from '@/system/i18n/messages'
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import { fromSuccessResponseContract } from '@/objects/shared/response/SuccessResponse'
 import type { ApiMessageParam } from '@/objects/shared/ApiMessageParam'
 
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
@@ -79,7 +80,7 @@ function isApiMessageParam(value: unknown): value is ApiMessageParam {
       return typeof value.value === 'string'
     case 'int':
     case 'long':
-      return typeof value.value === 'number'
+      return typeof value.value === 'number' && Number.isSafeInteger(value.value)
     case 'bool':
       return typeof value.value === 'boolean'
     default:
@@ -103,15 +104,21 @@ function toTranslationParams(params: Record<string, ApiMessageParam>): Record<st
 }
 
 export function decodeSuccessResponse(value: unknown): SuccessResponse {
-  const data = parseApiMessageResponse(value)
-  if (!data) {
+  const response = fromSuccessResponseContract(value, 'success response')
+  if (!response.code && !response.message) {
     throw new Error(translateMessage('common.error.invalidSuccessPayload'))
+  }
+
+  const data: ApiMessageResponse = {
+    code: response.code ?? undefined,
+    message: response.message ?? undefined,
+    params: response.params,
   }
 
   return {
     message: translateApiMessage(data) ?? data.message ?? translateMessage('common.success.generic'),
-    code: data.code ?? null,
-    params: data.params ?? {},
+    code: response.code,
+    params: response.params,
   }
 }
 

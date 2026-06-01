@@ -1,10 +1,12 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { ProblemListRequest } from '@/objects/problem/request/ProblemListRequest'
 import type { ProblemListResponse } from '@/objects/problem/response/ProblemListResponse'
+import { fromProblemListResponseContract } from '@/objects/problem/response/ProblemListResponse'
 
 export class ListProblems implements APIMessage<ProblemListResponse> {
   declare readonly responseType?: ProblemListResponse
   readonly method = 'GET'
+  readonly decode = fromProblemListResponseContract
   readonly apiPath: string
 
   constructor(request: ProblemListRequest) {

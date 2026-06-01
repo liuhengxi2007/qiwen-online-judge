@@ -1,9 +1,16 @@
 export type OtherUserSubmissionAccess = 'none' | 'summary' | 'detail'
 
 export function fromOtherUserSubmissionAccessContract(
-  value: OtherUserSubmissionAccess,
+  value: unknown,
 ): OtherUserSubmissionAccess {
-  return value
+  switch (value) {
+    case 'none':
+    case 'summary':
+    case 'detail':
+      return value
+    default:
+      throw new Error('Invalid other user submission access in contract payload.')
+  }
 }
 
 export function toOtherUserSubmissionAccessContract(

@@ -1,6 +1,7 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { ResolveUserGroupSlugResponse } from '@/objects/usergroup/response/ResolveUserGroupSlugResponse'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
+import { fromResolveUserGroupSlugResponseContract } from '@/objects/usergroup/response/ResolveUserGroupSlugResponse'
 
 type ResolveUserGroupSlugBody = {
   slug: UserGroupSlug
@@ -9,6 +10,7 @@ type ResolveUserGroupSlugBody = {
 export class ResolveUserGroupSlug implements APIMessage<ResolveUserGroupSlugResponse> {
   declare readonly responseType?: ResolveUserGroupSlugResponse
   readonly method = 'POST'
+  readonly decode = fromResolveUserGroupSlugResponseContract
   readonly apiPath = 'internal/user-groups/resolve-slug'
   private readonly slug: UserGroupSlug
 

@@ -21,7 +21,7 @@ export function parseUserLocale(rawLocale: string): ParseResult<UserLocale> {
   }
 }
 
-export function fromUserLocaleContract(value: UserLocale, label: string): UserLocale {
+export function fromUserLocaleContract(value: string, label: string): UserLocale {
   const result = parseUserLocale(value)
   if (!result.ok) {
     throw new Error(`Invalid ${label} in contract payload: ${result.error}`)

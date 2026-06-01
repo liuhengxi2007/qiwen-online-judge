@@ -3,10 +3,12 @@ import type { BlogListResponse } from '@/objects/blog/response/BlogListResponse'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
+import { fromBlogListResponseContract } from '@/objects/blog/response/BlogListResponse'
 
 export class ListBlogs implements APIMessage<BlogListResponse> {
   declare readonly responseType?: BlogListResponse
   readonly method = 'GET'
+  readonly decode = fromBlogListResponseContract
   readonly apiPath: string
 
   constructor(authorUsername?: Username | null, pageRequest?: PageRequest) {

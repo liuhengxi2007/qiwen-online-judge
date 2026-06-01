@@ -1,9 +1,12 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { MessageBlockEntry } from '@/objects/message/response/MessageBlockEntry'
+import { readArray } from '@/objects/shared/PageResponse'
+import { fromMessageBlockEntryContract } from '@/objects/message/response/MessageBlockEntry'
 
 export class ListMessageBlocks implements APIWithSessionMessage<MessageBlockEntry[]> {
   declare readonly responseType?: MessageBlockEntry[]
   readonly method = 'GET'
+  readonly decode = (value: unknown) => readArray(value, 'message block entries', fromMessageBlockEntryContract)
   readonly apiPath = 'messages/blocks'
 
   body(): undefined {

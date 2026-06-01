@@ -4,10 +4,12 @@ import { blogCommentIdValue } from '@/objects/blog/BlogCommentId'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { blogIdValue } from '@/objects/blog/BlogId'
+import { fromBlogDetailContract } from '@/objects/blog/response/BlogDetail'
 
 export class DeleteBlogComment implements APIWithSessionMessage<BlogDetail> {
   declare readonly responseType?: BlogDetail
   readonly method = 'POST'
+  readonly decode = fromBlogDetailContract
   readonly apiPath: string
 
   constructor(blogId: BlogId, commentId: BlogCommentId) {

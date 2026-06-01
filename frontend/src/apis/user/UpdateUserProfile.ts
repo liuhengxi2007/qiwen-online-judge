@@ -4,12 +4,14 @@ import type { UpdateManagedUserProfileRequest } from '@/objects/user/request/Upd
 import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnProfileRequest'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
+import { fromSessionResponseContract } from '@/objects/auth/response/SessionResponse'
 
 type UpdateUserProfileRequest = UpdateOwnProfileRequest | UpdateManagedUserProfileRequest
 
 export class UpdateUserProfile implements APIWithSessionMessage<SessionResponse> {
   declare readonly responseType?: SessionResponse
   readonly method = 'POST'
+  readonly decode = fromSessionResponseContract
   readonly apiPath: string
   private readonly request: UpdateUserProfileRequest
 

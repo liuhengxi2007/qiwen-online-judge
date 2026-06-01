@@ -7,6 +7,7 @@ import type { UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import { fromUserDisplayModeContract, toUserDisplayModeContract } from '@/objects/user/UserDisplayMode'
 import type { UserLocale } from '@/objects/user/UserLocale'
 import { fromUserLocaleContract, toUserLocaleContract } from '@/objects/user/UserLocale'
+import { readBoolean, readRecord, readString } from '@/objects/shared/PageResponse'
 
 export type UserPreferences = {
   displayMode: UserDisplayMode
@@ -23,17 +24,21 @@ type UserPreferencesContract = {
 }
 
 export function fromUserPreferencesContract(
-  preferences: UserPreferencesContract,
+  value: unknown,
   labelPrefix: string,
 ): UserPreferences {
+  const preferences = readRecord(value, labelPrefix) as UserPreferencesContract
   return {
-    displayMode: fromUserDisplayModeContract(preferences.displayMode, `${labelPrefix} display mode`),
-    locale: fromUserLocaleContract(preferences.locale, `${labelPrefix} locale`),
+    displayMode: fromUserDisplayModeContract(
+      readString(preferences.displayMode, `${labelPrefix} display mode`),
+      `${labelPrefix} display mode`,
+    ),
+    locale: fromUserLocaleContract(readString(preferences.locale, `${labelPrefix} locale`), `${labelPrefix} locale`),
     problemTitleDisplayMode: fromProblemTitleDisplayModeContract(
-      preferences.problemTitleDisplayMode,
+      readString(preferences.problemTitleDisplayMode, `${labelPrefix} problem title display mode`),
       `${labelPrefix} problem title display mode`,
     ),
-    autoMarkMessageRead: preferences.autoMarkMessageRead,
+    autoMarkMessageRead: readBoolean(preferences.autoMarkMessageRead, `${labelPrefix} auto mark message read`),
   }
 }
 

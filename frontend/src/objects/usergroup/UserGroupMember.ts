@@ -4,6 +4,7 @@ import type { Username } from '@/objects/user/Username'
 import { fromUsernameContract } from '@/objects/user/Username'
 import type { UserGroupRole } from '@/objects/usergroup/UserGroupRole'
 import { fromUserGroupRoleContract } from '@/objects/usergroup/UserGroupRole'
+import { readRecord, readString } from '@/objects/shared/PageResponse'
 
 export type UserGroupMember = {
   username: Username
@@ -19,11 +20,12 @@ type UserGroupMemberContract = {
   joinedAt: string
 }
 
-export function fromUserGroupMemberContract(member: UserGroupMemberContract): UserGroupMember {
+export function fromUserGroupMemberContract(value: unknown, label = 'user group member'): UserGroupMember {
+  const member = readRecord(value, label) as UserGroupMemberContract
   return {
-    username: fromUsernameContract(member.username, 'user group member username'),
-    displayName: fromDisplayNameContract(member.displayName, 'user group member display name'),
-    role: fromUserGroupRoleContract(member.role, 'user group member role'),
-    joinedAt: member.joinedAt,
+    username: fromUsernameContract(readString(member.username, `${label} username`), `${label} username`),
+    displayName: fromDisplayNameContract(readString(member.displayName, `${label} display name`), `${label} display name`),
+    role: fromUserGroupRoleContract(readString(member.role, `${label} role`), `${label} role`),
+    joinedAt: readString(member.joinedAt, `${label} joined at`),
   }
 }

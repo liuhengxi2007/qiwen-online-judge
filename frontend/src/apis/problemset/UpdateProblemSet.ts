@@ -3,10 +3,12 @@ import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetD
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
+import { fromProblemSetDetailContract } from '@/objects/problemset/response/ProblemSetDetail'
 
 export class UpdateProblemSet implements APIWithSessionMessage<ProblemSetDetail> {
   declare readonly responseType?: ProblemSetDetail
   readonly method = 'POST'
+  readonly decode = fromProblemSetDetailContract
   readonly apiPath: string
   private readonly request: UpdateProblemSetRequest
 

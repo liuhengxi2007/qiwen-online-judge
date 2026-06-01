@@ -1,10 +1,12 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { UserGroupListResponse } from '@/objects/usergroup/response/UserGroupListResponse'
+import { fromUserGroupListResponseContract } from '@/objects/usergroup/response/UserGroupListResponse'
 
 export class ListUserGroups implements APIMessage<UserGroupListResponse> {
   declare readonly responseType?: UserGroupListResponse
   readonly method = 'GET'
+  readonly decode = fromUserGroupListResponseContract
   readonly apiPath: string
 
   constructor(pageRequest?: PageRequest) {

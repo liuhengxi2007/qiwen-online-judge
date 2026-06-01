@@ -36,6 +36,10 @@ describe('submission-parsers', () => {
       ok: false,
       error: 'Submission id must be an integer.',
     })
+    expect(parseSubmissionId(Number.MAX_SAFE_INTEGER + 1)).toEqual({
+      ok: false,
+      error: 'Submission id must be an integer.',
+    })
     expect(parseSubmissionId(0)).toEqual({
       ok: false,
       error: 'Submission id is required.',

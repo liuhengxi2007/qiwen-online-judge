@@ -20,3 +20,12 @@ export function parseProblemDataFilename(rawFilename: string): ParseResult<Probl
   }
   return { ok: true, value: createProblemDataFilename(normalized) }
 }
+
+export function fromProblemDataFilenameContract(value: string, label: string): ProblemDataFilename {
+  const result = parseProblemDataFilename(value)
+  if (!result.ok) {
+    throw new Error(`Invalid ${label} in contract payload: ${result.error}`)
+  }
+
+  return result.value
+}

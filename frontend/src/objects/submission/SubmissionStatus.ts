@@ -6,7 +6,11 @@ export function isSubmissionStatus(value: string): value is SubmissionStatus {
   return supportedSubmissionStatuses.includes(value as SubmissionStatus)
 }
 
-export function fromSubmissionStatusContract(value: SubmissionStatus): SubmissionStatus {
+export function fromSubmissionStatusContract(value: unknown): SubmissionStatus {
+  if (typeof value !== 'string' || !isSubmissionStatus(value)) {
+    throw new Error('Invalid submission status in contract payload.')
+  }
+
   return value
 }
 

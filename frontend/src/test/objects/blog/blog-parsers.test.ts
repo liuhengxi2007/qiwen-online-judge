@@ -29,11 +29,19 @@ describe('blog-parsers', () => {
       ok: false,
       error: 'Blog id must be a positive integer.',
     })
+    expect(parseBlogId(Number.MAX_SAFE_INTEGER + 1)).toEqual({
+      ok: false,
+      error: 'Blog id must be a positive integer.',
+    })
   })
 
   it('validates blog comment ids with the same integer rules', () => {
     expect(parseBlogCommentId(7)).toEqual({ ok: true, value: 7 })
     expect(parseBlogCommentId(0)).toEqual({
+      ok: false,
+      error: 'Blog comment id must be a positive integer.',
+    })
+    expect(parseBlogCommentId(Number.MAX_SAFE_INTEGER + 1)).toEqual({
       ok: false,
       error: 'Blog comment id must be a positive integer.',
     })

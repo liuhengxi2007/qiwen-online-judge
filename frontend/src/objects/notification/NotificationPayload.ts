@@ -4,6 +4,7 @@ import type { BlogId } from '@/objects/blog/BlogId'
 import { fromBlogIdContract } from '@/objects/blog/BlogId'
 import type { BlogTitle } from '@/objects/blog/BlogTitle'
 import { fromBlogTitleContract } from '@/objects/blog/BlogTitle'
+import { readNullable, readRecord, readSafeInteger, readString } from '@/objects/shared/PageResponse'
 
 type BlogReplyNotificationPayload = {
   kind: 'blog_reply'
@@ -17,58 +18,29 @@ type BlogReplyNotificationPayload = {
 export type NotificationPayload = BlogReplyNotificationPayload
 
 export function fromNotificationPayloadContract(payload: unknown): NotificationPayload {
-  if (!isRecord(payload) || typeof payload.kind !== 'string') {
-    throw new Error('Invalid notification payload.')
-  }
+  const payloadRecord = readRecord(payload, 'notification payload')
+  const kind = readString(payloadRecord.kind, 'notification payload kind')
 
-  switch (payload.kind) {
+  switch (kind) {
     case 'blog_reply':
-      return fromBlogReplyNotificationPayloadContract(payload)
+      return fromBlogReplyNotificationPayloadContract(payloadRecord)
     default:
       throw new Error('Invalid notification payload kind.')
   }
 }
 
-function fromBlogReplyNotificationPayloadContract(payload: unknown): BlogReplyNotificationPayload {
-  if (!isRecord(payload)) {
-    throw new Error('Invalid notification payload.')
-  }
-
+function fromBlogReplyNotificationPayloadContract(payload: Record<string, unknown>): BlogReplyNotificationPayload {
   return {
     kind: 'blog_reply',
-    blogId: fromBlogIdContract(readNumber(payload.blogId, 'notification blog id'), 'notification blog id'),
+    blogId: fromBlogIdContract(readSafeInteger(payload.blogId, 'notification blog id'), 'notification blog id'),
     blogTitle: fromBlogTitleContract(readString(payload.blogTitle, 'notification blog title'), 'notification blog title'),
     triggerCommentId: fromBlogCommentIdContract(
-      readNumber(payload.triggerCommentId, 'notification trigger comment id'),
+      readSafeInteger(payload.triggerCommentId, 'notification trigger comment id'),
       'notification trigger comment id',
     ),
-    recipientCommentId:
-      payload.recipientCommentId === null
-        ? null
-        : fromBlogCommentIdContract(
-            readNumber(payload.recipientCommentId, 'notification recipient comment id'),
-            'notification recipient comment id',
-          ),
+    recipientCommentId: readNullable(payload.recipientCommentId, 'notification recipient comment id', (commentId, label) =>
+      fromBlogCommentIdContract(readSafeInteger(commentId, label), label),
+    ),
     contentPreview: readString(payload.contentPreview, 'notification content preview'),
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function readNumber(value: unknown, field: string): number {
-  if (typeof value !== 'number') {
-    throw new Error(`Invalid ${field}.`)
-  }
-
-  return value
-}
-
-function readString(value: unknown, field: string): string {
-  if (typeof value !== 'string') {
-    throw new Error(`Invalid ${field}.`)
-  }
-
-  return value
 }

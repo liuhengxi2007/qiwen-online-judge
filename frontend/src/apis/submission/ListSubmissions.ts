@@ -1,10 +1,12 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
+import { fromSubmissionListResponseContract } from '@/objects/submission/response/SubmissionListResponse'
 
 export class ListSubmissions implements APIWithSessionMessage<SubmissionListResponse> {
   declare readonly responseType?: SubmissionListResponse
   readonly method = 'GET'
+  readonly decode = fromSubmissionListResponseContract
   readonly apiPath: string
 
   constructor(request: SubmissionListRequest) {

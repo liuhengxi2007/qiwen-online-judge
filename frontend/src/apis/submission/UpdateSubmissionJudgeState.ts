@@ -2,6 +2,7 @@ import type { APIMessage } from '@/system/api/api-message'
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { SubmissionJudgeState } from '@/objects/submission/SubmissionJudgeState'
+import { decodeSuccessResponse } from '@/system/api/http-client'
 
 type UpdateSubmissionJudgeStateBody = {
   submissionId: SubmissionId
@@ -11,6 +12,7 @@ type UpdateSubmissionJudgeStateBody = {
 export class UpdateSubmissionJudgeState implements APIMessage<SuccessResponse> {
   declare readonly responseType?: SuccessResponse
   readonly method = 'POST'
+  readonly decode = decodeSuccessResponse
   readonly apiPath = 'internal/submissions/judge/state/update'
   private readonly submissionId: SubmissionId
   private readonly judgeState: SubmissionJudgeState

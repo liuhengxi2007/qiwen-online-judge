@@ -161,7 +161,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
   }
 
   private def entry(path: String): ProblemDataManifestEntry =
-    ProblemDataManifestEntry(ProblemDataPath(path), sizeBytes = 1L, sha256 = path)
+    ProblemDataManifestEntry(ProblemDataPath(path), sizeBytes = 1L, sha256 = "a" * 64)
 
   private def yaml(content: String): Array[Byte] =
     content.stripMargin.trim.getBytes(StandardCharsets.UTF_8)

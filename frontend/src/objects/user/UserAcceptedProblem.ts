@@ -2,6 +2,7 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { fromProblemSlugContract } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import { fromProblemTitleContract } from '@/objects/problem/ProblemTitle'
+import { readRecord, readString } from '@/objects/shared/PageResponse'
 
 export type UserAcceptedProblem = {
   slug: ProblemSlug
@@ -16,12 +17,13 @@ type UserAcceptedProblemContract = {
 }
 
 export function fromUserAcceptedProblemContract(
-  problem: UserAcceptedProblemContract,
-  index: number,
+  value: unknown,
+  label: string,
 ): UserAcceptedProblem {
+  const problem = readRecord(value, label) as UserAcceptedProblemContract
   return {
-    slug: fromProblemSlugContract(problem.slug, `user profile accepted problem slug ${index}`),
-    title: fromProblemTitleContract(problem.title, `user profile accepted problem title ${index}`),
-    acceptedAt: problem.acceptedAt,
+    slug: fromProblemSlugContract(readString(problem.slug, `${label} slug`), `${label} slug`),
+    title: fromProblemTitleContract(readString(problem.title, `${label} title`), `${label} title`),
+    acceptedAt: readString(problem.acceptedAt, `${label} accepted at`),
   }
 }

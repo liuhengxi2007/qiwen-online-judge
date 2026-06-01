@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import judgeprotocol.objects.{SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask, JudgeTaskFilePath, JudgeTaskFileRef, JudgeTaskSubtask, JudgeTaskTestcase, JudgeTestcaseResult}
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxExecutionRequest, SandboxLimits}
@@ -42,7 +42,7 @@ object JudgeExecutor:
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     command: RuntimeCommand,
-    compiledCheckers: Map[String, RuntimeCommand]
+    compiledCheckers: Map[JudgeTaskFilePath, RuntimeCommand]
   ): IO[ReportJudgeResultRequest] =
     task.subtasks.traverse(subtask => judgeSubtask(task, subtask, workingDirectory, sandbox, problemDataCache, command, compiledCheckers)).map { subtasks =>
       val result = aggregateTask(task, subtasks)
@@ -59,7 +59,7 @@ object JudgeExecutor:
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     command: RuntimeCommand,
-    compiledCheckers: Map[String, RuntimeCommand]
+    compiledCheckers: Map[JudgeTaskFilePath, RuntimeCommand]
   ): IO[JudgeSubtaskResult] =
     subtask.testcases.traverse(testcase => judgeTestcase(task, subtask.name, testcase, workingDirectory, sandbox, problemDataCache, command, compiledCheckers)).map { testcases =>
       aggregateSubtask(subtask, testcases)
@@ -73,7 +73,7 @@ object JudgeExecutor:
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     command: RuntimeCommand,
-    compiledCheckers: Map[String, RuntimeCommand]
+    compiledCheckers: Map[JudgeTaskFilePath, RuntimeCommand]
   ): IO[JudgeTestcaseResult] =
     loadTestcaseData(task, testcase, problemDataCache).flatMap {
       case Left(reason) =>
@@ -147,7 +147,7 @@ object JudgeExecutor:
     input: Array[Byte],
     contestantOutput: String,
     answerBytes: Array[Byte],
-    compiledCheckers: Map[String, RuntimeCommand]
+    compiledCheckers: Map[JudgeTaskFilePath, RuntimeCommand]
   ): IO[Either[JudgeFailureReason, CheckerScore]] =
     testcase.checker.`type` match
       case "builtin" if testcase.checker.name.contains("exact") =>
@@ -189,7 +189,7 @@ object JudgeExecutor:
     config: AppConfig,
     workingDirectory: Path,
     problemDataCache: ProblemDataCache
-  ): IO[Either[ReportJudgeResultRequest, Map[String, RuntimeCommand]]] =
+  ): IO[Either[ReportJudgeResultRequest, Map[JudgeTaskFilePath, RuntimeCommand]]] =
     val checkerSources = task.subtasks.flatMap(_.testcases).flatMap(_.checker.source).groupBy(_.path).values.map(_.head).toList
     checkerSources.traverse(source => compileChecker(task, config, workingDirectory, problemDataCache, source).map(_.map(source.path -> _))).map { compiled =>
       compiled.collectFirst { case Left(result) => Left(result) }.getOrElse(Right(compiled.collect { case Right(entry) => entry }.toMap))
@@ -205,8 +205,8 @@ object JudgeExecutor:
     resolveCompilerPath(config).flatMap {
       case Left(_) => IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(compilerPath) =>
-        val sourceName = s"checker-${math.abs(sourceRef.path.hashCode)}.cpp"
-        val executableName = s"checker-${math.abs(sourceRef.path.hashCode)}"
+        val sourceName = s"checker-${math.abs(sourceRef.path.value.hashCode)}.cpp"
+        val executableName = s"checker-${math.abs(sourceRef.path.value.hashCode)}"
         problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, sourceRef).attempt.flatMap {
           case Left(_) =>
             IO.pure(Left(taskSystemError(task, JudgeFailureReason.ProblemDataLoadFailed)))

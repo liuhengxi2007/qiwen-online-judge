@@ -4,10 +4,12 @@ import { messageConversationIdValue } from '@/objects/message/MessageConversatio
 import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
 import type { MessageId } from '@/objects/message/MessageId'
 import { messageIdValue } from '@/objects/message/MessageId'
+import { fromMessageHistoryResponseContract } from '@/objects/message/response/MessageHistoryResponse'
 
 export class GetConversationHistory implements APIWithSessionMessage<MessageHistoryResponse> {
   declare readonly responseType?: MessageHistoryResponse
   readonly method = 'GET'
+  readonly decode = fromMessageHistoryResponseContract
   readonly apiPath: string
 
   constructor(conversationId: MessageConversationId, options: { beforeMessageId?: MessageId | null; limit?: number } = {}) {
