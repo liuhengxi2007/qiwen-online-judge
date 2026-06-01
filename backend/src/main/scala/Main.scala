@@ -13,10 +13,10 @@ import domains.notification.table.notification.NotificationTable
 import domains.notification.utils.NotificationEventHub
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
-import domains.problem.utils.{LocalProblemDataStorage, MinioProblemDataStorage, ProblemDataStorage, ProblemDataStorageBackend, ProblemDataStorageConfig}
+import domains.problem.utils.{MinioProblemDataStorage, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.submission.table.submission.SubmissionTable
-import domains.submission.utils.{LocalSubmissionProgramStorage, MinioSubmissionProgramStorage, SubmissionProgramStorage, SubmissionProgramStorageBackend, SubmissionProgramStorageConfig}
+import domains.submission.utils.{MinioSubmissionProgramStorage, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
 import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.HttpApp
@@ -38,32 +38,6 @@ object Main extends IOApp.Simple:
       .withHttpApp(httpApp)
       .build
 
-  private def problemDataStorageResource(config: ProblemDataStorageConfig): Resource[IO, ProblemDataStorage] =
-    Resource.eval {
-      IO.delay {
-        config.backend match
-          case ProblemDataStorageBackend.Local =>
-            LocalProblemDataStorage(config.localRootDirectory)
-          case ProblemDataStorageBackend.Minio =>
-            config.minio match
-              case Some(minioConfig) => MinioProblemDataStorage(minioConfig)
-              case None => throw IllegalStateException("MinIO storage backend requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET.")
-      }
-    }
-
-  private def submissionProgramStorageResource(config: SubmissionProgramStorageConfig): Resource[IO, SubmissionProgramStorage] =
-    Resource.eval {
-      IO.delay {
-        config.backend match
-          case SubmissionProgramStorageBackend.Local =>
-            LocalSubmissionProgramStorage(config.localRootDirectory)
-          case SubmissionProgramStorageBackend.Minio =>
-            config.minio match
-              case Some(minioConfig) => MinioSubmissionProgramStorage(minioConfig)
-              case None => throw IllegalStateException("MinIO submission program storage requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET.")
-      }
-    }
-
   private val resource: Resource[IO, Server] =
     for
       databaseSession <- DatabaseSession.resource
@@ -80,8 +54,8 @@ object Main extends IOApp.Simple:
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       submissionProgramStorageConfig = SubmissionProgramStorageConfig.loadFromEnvironment()
-      problemDataStorage <- problemDataStorageResource(problemDataStorageConfig)
-      submissionProgramStorage <- submissionProgramStorageResource(submissionProgramStorageConfig)
+      problemDataStorage = MinioProblemDataStorage(problemDataStorageConfig.minio)
+      submissionProgramStorage = MinioSubmissionProgramStorage(submissionProgramStorageConfig.minio)
       _ <- Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for

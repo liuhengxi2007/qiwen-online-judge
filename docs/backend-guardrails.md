@@ -108,7 +108,6 @@ Current domain-owned utility allowlist:
 - `domains/auth/utils/SessionCacheConfig.scala`
 - `domains/auth/utils/SessionConfig.scala`
 - `domains/auth/utils/SessionStore.scala`
-- `domains/problem/utils/LocalProblemDataStorage.scala`
 - `domains/problem/utils/MinioProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorageConfig.scala`
@@ -122,7 +121,6 @@ Current domain-owned utility allowlist:
 - `domains/submission/utils/SubmissionJudgeRules.scala`
 - `domains/submission/utils/SubmissionListRequestQuery.scala`
 - `domains/submission/utils/SubmissionProgramStorage.scala`
-- `domains/submission/utils/LocalSubmissionProgramStorage.scala`
 - `domains/submission/utils/MinioSubmissionProgramStorage.scala`
 - `domains/submission/utils/SubmissionProgramStorageConfig.scala`
 - `domains/submission/utils/SubmissionProgramCleanup.scala`

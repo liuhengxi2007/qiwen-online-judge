@@ -1,18 +1,8 @@
 package domains.problem.utils
 
-
-
-import java.nio.file.{Path, Paths}
-
 final case class ProblemDataStorageConfig(
-  backend: ProblemDataStorageBackend,
-  localRootDirectory: Path,
-  minio: Option[MinioProblemDataStorageConfig]
+  minio: MinioProblemDataStorageConfig
 )
-
-enum ProblemDataStorageBackend:
-  case Local
-  case Minio
 
 final case class MinioProblemDataStorageConfig(
   endpoint: String,
@@ -25,34 +15,30 @@ final case class MinioProblemDataStorageConfig(
 object ProblemDataStorageConfig:
 
   def loadFromEnvironment(): ProblemDataStorageConfig =
-    val backend = sys.env.get("PROBLEM_DATA_STORAGE_BACKEND").map(_.trim.toLowerCase) match
-      case Some("minio") => ProblemDataStorageBackend.Minio
-      case _ => ProblemDataStorageBackend.Local
+    fromEnvironment(sys.env)
 
-    val localRootDirectory =
-      sys.env
-        .get("PROBLEM_DATA_LOCAL_ROOT")
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .map(Paths.get(_))
-        .getOrElse(Paths.get(sys.props.getOrElse("user.dir", "."), "problems"))
-
-    val minioConfig =
-      for
-        endpoint <- sys.env.get("MINIO_ENDPOINT").map(_.trim).filter(_.nonEmpty)
-        accessKey <- sys.env.get("MINIO_ACCESS_KEY").map(_.trim).filter(_.nonEmpty)
-        secretKey <- sys.env.get("MINIO_SECRET_KEY").map(_.trim).filter(_.nonEmpty)
-        bucket <- sys.env.get("MINIO_BUCKET").map(_.trim).filter(_.nonEmpty)
-      yield MinioProblemDataStorageConfig(
-        endpoint = endpoint,
-        accessKey = accessKey,
-        secretKey = secretKey,
-        bucket = bucket,
-        secure = sys.env.get("MINIO_SECURE").forall(_.trim.toLowerCase != "false")
-      )
-
+  def fromEnvironment(env: scala.collection.Map[String, String]): ProblemDataStorageConfig =
+    val values = requiredMinioValues(env)
     ProblemDataStorageConfig(
-      backend = backend,
-      localRootDirectory = localRootDirectory,
-      minio = minioConfig
+      minio = MinioProblemDataStorageConfig(
+        endpoint = values("MINIO_ENDPOINT"),
+        accessKey = values("MINIO_ACCESS_KEY"),
+        secretKey = values("MINIO_SECRET_KEY"),
+        bucket = values("MINIO_BUCKET"),
+        secure = env.get("MINIO_SECURE").forall(_.trim.toLowerCase != "false")
+      )
     )
+
+  private val requiredMinioEnvironmentVariables =
+    List("MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY", "MINIO_BUCKET")
+
+  private def requiredMinioValues(env: scala.collection.Map[String, String]): Map[String, String] =
+    val values = requiredMinioEnvironmentVariables.map { name =>
+      name -> env.get(name).map(_.trim).filter(_.nonEmpty)
+    }
+    val missing = values.collect { case (name, None) => name }
+    if missing.nonEmpty then
+      throw IllegalStateException(
+        s"Problem data storage requires MinIO configuration. Missing environment variable(s): ${missing.mkString(", ")}."
+      )
+    values.collect { case (name, Some(value)) => name -> value }.toMap

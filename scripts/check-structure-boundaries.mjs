@@ -84,7 +84,6 @@ const backendDomainUtilsAllowlist = new Map([
   [
     'problem',
     new Set([
-      'LocalProblemDataStorage.scala',
       'MinioProblemDataStorage.scala',
       'ProblemDataStorage.scala',
       'ProblemDataStorageConfig.scala',
@@ -102,7 +101,6 @@ const backendDomainUtilsAllowlist = new Map([
       'SubmissionJudgeRules.scala',
       'SubmissionListRequestQuery.scala',
       'SubmissionProgramStorage.scala',
-      'LocalSubmissionProgramStorage.scala',
       'MinioSubmissionProgramStorage.scala',
       'SubmissionProgramStorageConfig.scala',
       'SubmissionProgramCleanup.scala',

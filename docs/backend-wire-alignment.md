@@ -107,4 +107,4 @@ Current lightweight checks:
 - `node scripts/check-object-alignment.mjs`
 - `node scripts/check-api-alignment.mjs`
 
-These checks do not replace runtime tests for behavior-bearing boundaries such as SSE, local storage, and HTTP message envelopes.
+These checks do not replace runtime tests for behavior-bearing boundaries such as SSE, object storage, and HTTP message envelopes.

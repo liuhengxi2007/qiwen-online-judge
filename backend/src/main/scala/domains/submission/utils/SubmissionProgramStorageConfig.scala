@@ -1,16 +1,8 @@
 package domains.submission.utils
 
-import java.nio.file.{Path, Paths}
-
 final case class SubmissionProgramStorageConfig(
-  backend: SubmissionProgramStorageBackend,
-  localRootDirectory: Path,
-  minio: Option[MinioSubmissionProgramStorageConfig]
+  minio: MinioSubmissionProgramStorageConfig
 )
-
-enum SubmissionProgramStorageBackend:
-  case Local
-  case Minio
 
 final case class MinioSubmissionProgramStorageConfig(
   endpoint: String,
@@ -23,34 +15,30 @@ final case class MinioSubmissionProgramStorageConfig(
 object SubmissionProgramStorageConfig:
 
   def loadFromEnvironment(): SubmissionProgramStorageConfig =
-    val backend = sys.env.get("SUBMISSION_PROGRAM_STORAGE_BACKEND").orElse(sys.env.get("PROBLEM_DATA_STORAGE_BACKEND")).map(_.trim.toLowerCase) match
-      case Some("minio") => SubmissionProgramStorageBackend.Minio
-      case _ => SubmissionProgramStorageBackend.Local
+    fromEnvironment(sys.env)
 
-    val localRootDirectory =
-      sys.env
-        .get("SUBMISSION_PROGRAM_LOCAL_ROOT")
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .map(Paths.get(_))
-        .getOrElse(Paths.get(sys.props.getOrElse("user.dir", "."), "submission-programs"))
-
-    val minioConfig =
-      for
-        endpoint <- sys.env.get("MINIO_ENDPOINT").map(_.trim).filter(_.nonEmpty)
-        accessKey <- sys.env.get("MINIO_ACCESS_KEY").map(_.trim).filter(_.nonEmpty)
-        secretKey <- sys.env.get("MINIO_SECRET_KEY").map(_.trim).filter(_.nonEmpty)
-        bucket <- sys.env.get("MINIO_BUCKET").map(_.trim).filter(_.nonEmpty)
-      yield MinioSubmissionProgramStorageConfig(
-        endpoint = endpoint,
-        accessKey = accessKey,
-        secretKey = secretKey,
-        bucket = bucket,
-        secure = sys.env.get("MINIO_SECURE").forall(_.trim.toLowerCase != "false")
-      )
-
+  def fromEnvironment(env: scala.collection.Map[String, String]): SubmissionProgramStorageConfig =
+    val values = requiredMinioValues(env)
     SubmissionProgramStorageConfig(
-      backend = backend,
-      localRootDirectory = localRootDirectory,
-      minio = minioConfig
+      minio = MinioSubmissionProgramStorageConfig(
+        endpoint = values("MINIO_ENDPOINT"),
+        accessKey = values("MINIO_ACCESS_KEY"),
+        secretKey = values("MINIO_SECRET_KEY"),
+        bucket = values("MINIO_BUCKET"),
+        secure = env.get("MINIO_SECURE").forall(_.trim.toLowerCase != "false")
+      )
     )
+
+  private val requiredMinioEnvironmentVariables =
+    List("MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY", "MINIO_BUCKET")
+
+  private def requiredMinioValues(env: scala.collection.Map[String, String]): Map[String, String] =
+    val values = requiredMinioEnvironmentVariables.map { name =>
+      name -> env.get(name).map(_.trim).filter(_.nonEmpty)
+    }
+    val missing = values.collect { case (name, None) => name }
+    if missing.nonEmpty then
+      throw IllegalStateException(
+        s"Submission program storage requires MinIO configuration. Missing environment variable(s): ${missing.mkString(", ")}."
+      )
+    values.collect { case (name, Some(value)) => name -> value }.toMap

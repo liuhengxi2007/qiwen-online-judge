@@ -27,8 +27,8 @@ Phase 2 is a problem-data-specific backend refactor with compatibility preserved
 
 - introduce a `ProblemDataPath` model for validated relative paths
 - refactor problem data storage behind a replaceable storage port
-- keep the current HTTP JSON fields and local filesystem behavior working
-- make the local filesystem implementation path-aware so zip extraction and future tree views do not require another storage rewrite
+- keep the current HTTP JSON fields working
+- make storage path-aware so zip extraction and future tree views do not require another storage rewrite
 
 This phase does not yet require frontend or judger protocol changes.
 
@@ -106,6 +106,7 @@ Status: implemented with backend-internal downloads and basic cache files. Direc
 
 ## Notes
 
-- The local storage implementation still needs compensating cleanup because database transactions do not extend to object storage.
+- MinIO-backed storage is now mandatory for problem data and stored submission source programs.
+- Storage operations still need compensating cleanup because database transactions do not extend to object storage.
 - Zip extraction must guard against path traversal and unreasonable expansion.
 - Judge testcase discovery should eventually become prefix-based, for example `tests/`, instead of scanning every uploaded file.

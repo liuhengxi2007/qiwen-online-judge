@@ -11,7 +11,7 @@ The repository currently implements:
 - multipart zip uploads for problem data
 - tree-shaped problem-data listing for management pages
 - path-aware file download and deletion for problem data
-- local or MinIO-backed storage selection in the backend
+- mandatory MinIO-backed storage in the backend
 - `problem_data_files` metadata persistence in PostgreSQL
 - judge-task transport by file reference instead of embedded base64 payloads
 - judger-side blob cache keyed by `sha256`
@@ -20,18 +20,6 @@ The repository currently implements:
 The repository intentionally still uses backend-mediated judger downloads instead of direct MinIO access from judgers.
 
 ## Backend Configuration
-
-### Storage Backend Selection
-
-- `PROBLEM_DATA_STORAGE_BACKEND`
-  Values: `local` or `minio`
-  Default: `local`
-
-### Local Storage
-
-- `PROBLEM_DATA_LOCAL_ROOT`
-  Optional absolute or relative path used when the backend storage backend is `local`
-  Default: `<backend working directory>/problems`
 
 ### MinIO Storage
 
@@ -43,7 +31,7 @@ The repository intentionally still uses backend-mediated judger downloads instea
   Optional boolean-like flag
   Default: `true`
 
-When `PROBLEM_DATA_STORAGE_BACKEND=minio`, the endpoint, credentials, and bucket are required.
+The endpoint, credentials, and bucket are required. Backend startup fails if any required MinIO value is missing or blank. The same MinIO configuration is used for problem data and stored submission source programs.
 
 ## Judger Configuration
 
