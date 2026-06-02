@@ -117,6 +117,8 @@ Current domain-owned utility allowlist:
 - `domains/problem/utils/ProblemDataUploadPreparation.scala`
 - `domains/problemset/utils/ProblemSetAccessRules.scala`
 - `domains/problemset/utils/ProblemSetAccessPolicyValidation.scala`
+- `domains/contest/utils/ContestAccessRules.scala`
+- `domains/contest/utils/ContestAccessPolicyValidation.scala`
 - `domains/submission/utils/SubmissionAccessRules.scala`
 - `domains/submission/utils/SubmissionJudgeRules.scala`
 - `domains/submission/utils/SubmissionListRequestQuery.scala`
@@ -124,7 +126,11 @@ Current domain-owned utility allowlist:
 - `domains/submission/utils/MinioSubmissionProgramStorage.scala`
 - `domains/submission/utils/SubmissionProgramStorageConfig.scala`
 - `domains/submission/utils/SubmissionProgramCleanup.scala`
+- `domains/user/utils/MinioUserAvatarStorage.scala`
 - `domains/user/utils/UserApiRules.scala`
+- `domains/user/utils/UserAvatarStorage.scala`
+- `domains/user/utils/UserAvatarStorageConfig.scala`
+- `domains/user/utils/UserAvatarUploadValidation.scala`
 - `domains/usergroup/utils/UserGroupAccessRules.scala`
 - `domains/usergroup/utils/UserGroupMutationValidation.scala`
 - `domains/judger/utils/JudgerRegistryValidation.scala`

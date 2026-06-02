@@ -12,7 +12,8 @@ final case class AuthAccountListItem(
   displayName: DisplayName,
   email: EmailAddress,
   siteManager: Boolean,
-  problemManager: Boolean
+  problemManager: Boolean,
+  contestManager: Boolean
 )
 
 object AuthAccountListItem:
@@ -25,5 +26,6 @@ object AuthAccountListItem:
       displayName = profile.displayName,
       email = account.email,
       siteManager = account.siteManager,
-      problemManager = account.problemManager
+      problemManager = account.problemManager,
+      contestManager = account.contestManager
     )

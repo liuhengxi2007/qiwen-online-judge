@@ -2,15 +2,20 @@ import type { LoginResponse } from '@/objects/auth/response/LoginResponse'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 
 export function toAuthSession(
-  response: Pick<LoginResponse, 'displayName' | 'username' | 'email' | 'preferences' | 'siteManager' | 'problemManager'>,
+  response: Pick<
+    LoginResponse,
+    'displayName' | 'username' | 'avatarUrl' | 'email' | 'preferences' | 'siteManager' | 'problemManager' | 'contestManager'
+  >,
 ): SessionResponse {
   return {
     displayName: response.displayName,
     username: response.username,
+    avatarUrl: response.avatarUrl,
     email: response.email,
     preferences: response.preferences,
     siteManager: response.siteManager,
     problemManager: response.problemManager,
+    contestManager: response.contestManager,
   }
 }
 

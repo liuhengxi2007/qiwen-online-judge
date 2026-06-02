@@ -11,6 +11,7 @@ export const zhCnSiteManageMessages: Record<string, string> = {
   'siteManage.openSettings': '打开设置',
   'siteManage.siteManager': '站点管理员',
   'siteManage.problemManager': '题目管理员',
+  'siteManage.contestManager': '比赛管理员',
   'siteManage.userSearchLabel': '搜索用户',
   'siteManage.userSearchPlaceholder': '按用户名或显示名搜索',
   'siteManage.userSearchApply': '应用',

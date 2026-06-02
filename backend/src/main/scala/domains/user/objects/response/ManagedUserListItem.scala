@@ -12,7 +12,8 @@ final case class ManagedUserListItem(
   displayName: DisplayName,
   email: EmailAddress,
   siteManager: Boolean,
-  problemManager: Boolean
+  problemManager: Boolean,
+  contestManager: Boolean
 )
 
 object ManagedUserListItem:

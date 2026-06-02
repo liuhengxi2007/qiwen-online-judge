@@ -3,6 +3,7 @@ package domains.user.table.user_profile
 
 
 import domains.auth.objects.EmailAddress
+import domains.user.objects.internal.UserAvatarRecord
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
@@ -10,9 +11,9 @@ import database.utils.UserIdentitySql
 import domains.user.objects.UserProfileSettings
 import domains.user.objects.response.{ManagedUserListItem, UserAcceptedRanklistItem, UserContributionRanklistItem, UserSettingsResponse}
 import domains.user.objects.request.UserSearchQuery
-import domains.user.objects.{UserAcceptedProblem, UserContribution, UserDisplayMode, UserLocale}
+import domains.user.objects.{UserAcceptedProblem, UserAvatarUrl, UserContribution, UserDisplayMode, UserLocale}
 
-import java.sql.{PreparedStatement, ResultSet}
+import java.sql.{PreparedStatement, ResultSet, Timestamp}
 
 object UserProfileTableSupport:
 
@@ -43,7 +44,33 @@ object UserProfileTableSupport:
       problemTitleDisplayMode =
         decodeProblemTitleDisplayModeColumn(resultSet.getString("problem_title_display_mode"))
           .getOrElse(throw new IllegalStateException("Invalid user_profiles.problem_title_display_mode.")),
-      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read")
+      autoMarkMessageRead = resultSet.getBoolean("auto_mark_message_read"),
+      avatarUrl = readAvatarUrl(resultSet)
+    )
+
+  def readAvatarRecord(resultSet: ResultSet): Option[UserAvatarRecord] =
+    val objectKey = Option(resultSet.getString("avatar_object_key")).map(_.trim).filter(_.nonEmpty)
+    val contentType = Option(resultSet.getString("avatar_content_type")).map(_.trim).filter(_.nonEmpty)
+    val updatedAt = Option(resultSet.getTimestamp("avatar_updated_at")).map(_.toInstant)
+    (objectKey, contentType, updatedAt) match
+      case (Some(key), Some(mediaType), Some(timestamp)) =>
+        Some(
+          UserAvatarRecord(
+            username = Username.canonical(resultSet.getString("username")),
+            objectKey = key,
+            contentType = mediaType,
+            updatedAt = timestamp
+          )
+        )
+      case _ =>
+        None
+
+  def avatarUrlFor(username: Username, updatedAt: Timestamp): UserAvatarUrl =
+    UserAvatarUrl(s"/api/users/${username.value}/avatar?v=${updatedAt.toInstant.toEpochMilli}")
+
+  private def readAvatarUrl(resultSet: ResultSet): Option[UserAvatarUrl] =
+    Option(resultSet.getTimestamp("avatar_updated_at")).map(timestamp =>
+      avatarUrlFor(Username.canonical(resultSet.getString("username")), timestamp)
     )
 
   def readUserListItem(resultSet: ResultSet): ManagedUserListItem =
@@ -52,7 +79,8 @@ object UserProfileTableSupport:
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
       siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager")
+      problemManager = resultSet.getBoolean("problem_manager"),
+      contestManager = resultSet.getBoolean("contest_manager")
     )
 
   def readUserSettingsResponse(resultSet: ResultSet): UserSettingsResponse =
@@ -60,7 +88,8 @@ object UserProfileTableSupport:
       profile = readProfileSettings(resultSet),
       email = EmailAddress(resultSet.getString("email")),
       siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager")
+      problemManager = resultSet.getBoolean("problem_manager"),
+      contestManager = resultSet.getBoolean("contest_manager")
     )
 
   def readContributionRanklistItem(resultSet: ResultSet): UserContributionRanklistItem =

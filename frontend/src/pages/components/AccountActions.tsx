@@ -9,6 +9,7 @@ import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { useMessageStore } from '@/pages/stores/message/UseMessageStore'
 import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
 import { formatUserDisplayLabel } from '@/pages/objects/UserDisplayLabel'
+import { UserAvatar } from '@/pages/components/UserAvatar'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { sendAPI } from '@/system/api/api-message'
 
@@ -37,9 +38,10 @@ export function AccountActions({ showSignOutLabel = false }: AccountActionsProps
     <div className="flex flex-wrap items-center justify-end gap-2">
       <div className="inline-flex items-center rounded-xl border border-slate-300 bg-white shadow-sm">
         <Link
-          className="inline-flex items-center rounded-l-xl px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
+          className="inline-flex items-center gap-2 rounded-l-xl px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"
           to={`/user/${usernameValue(session.username)}`}
         >
+          <UserAvatar avatarUrl={session.avatarUrl} className="size-6" displayName={session.displayName} fallbackClassName="text-xs" />
           <span className="font-semibold text-slate-950">
             {formatUserDisplayLabel(session, session.preferences.displayMode)}
           </span>

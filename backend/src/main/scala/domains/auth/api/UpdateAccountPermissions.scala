@@ -44,7 +44,8 @@ object UpdateAccountPermissions extends SiteManagerApi[(Username, UpdateUserPerm
         actor,
         targetUsername,
         siteManager = request.siteManager,
-        problemManager = request.problemManager
+        problemManager = request.problemManager,
+        contestManager = request.contestManager
       )
       user <- updated match
         case Some(user) => IO.pure(user)

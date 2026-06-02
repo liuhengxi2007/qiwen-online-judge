@@ -46,6 +46,13 @@ export function UserPermissionsCard({
           </div>
           <Checkbox checked={user?.problemManager ?? false} disabled aria-label="Problem manager permission" />
         </div>
+        <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-5 py-4">
+          <div>
+            <p className="font-medium text-slate-900">{t('siteManage.contestManager')}</p>
+            <p className="text-sm text-slate-500">{t('userSettings.contestManagerDescription')}</p>
+          </div>
+          <Checkbox checked={user?.contestManager ?? false} disabled aria-label="Contest manager permission" />
+        </div>
       </CardContent>
     </Card>
   )

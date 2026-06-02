@@ -21,12 +21,14 @@ object AuthAccountTableSupport:
       email = EmailAddress(resultSet.getString("email")),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
       siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager")
+      problemManager = resultSet.getBoolean("problem_manager"),
+      contestManager = resultSet.getBoolean("contest_manager")
     )
 
   def readAuthenticatedUser(resultSet: ResultSet): AuthenticatedUser =
     AuthenticatedUser(
       username = Username.canonical(resultSet.getString("username")),
       siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager")
+      problemManager = resultSet.getBoolean("problem_manager"),
+      contestManager = resultSet.getBoolean("contest_manager")
     )

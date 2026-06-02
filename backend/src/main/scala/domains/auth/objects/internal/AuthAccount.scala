@@ -8,11 +8,13 @@ final case class AuthAccount(
   email: EmailAddress,
   passwordHash: PasswordHash,
   siteManager: Boolean,
-  problemManager: Boolean
+  problemManager: Boolean,
+  contestManager: Boolean
 ):
   def authenticatedUser: AuthenticatedUser =
     AuthenticatedUser(
       username = username,
       siteManager = siteManager,
-      problemManager = problemManager
+      problemManager = problemManager,
+      contestManager = contestManager
     )

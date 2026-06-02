@@ -8,4 +8,5 @@ export type ManagedUserListItem = {
   email: EmailAddress
   siteManager: boolean
   problemManager: boolean
+  contestManager: boolean
 }

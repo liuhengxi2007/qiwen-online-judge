@@ -8,7 +8,8 @@ final case class UserProfileSettings(
   displayMode: UserDisplayMode,
   locale: UserLocale,
   problemTitleDisplayMode: ProblemTitleDisplayMode,
-  autoMarkMessageRead: Boolean
+  autoMarkMessageRead: Boolean,
+  avatarUrl: Option[UserAvatarUrl]
 ):
   def preferences: UserPreferences =
     UserPreferences(

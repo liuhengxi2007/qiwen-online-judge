@@ -139,6 +139,7 @@ export function SiteManageUserCard({
                 <TableHead>{t('common.settings')}</TableHead>
                 <TableHead>{t('siteManage.siteManager')}</TableHead>
                 <TableHead>{t('siteManage.problemManager')}</TableHead>
+                <TableHead>{t('siteManage.contestManager')}</TableHead>
                 <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -163,6 +164,7 @@ export function SiteManageUserCard({
                           void model.savePermissions(listedUser, {
                             siteManager: checked === true,
                             problemManager: listedUser.problemManager,
+                            contestManager: listedUser.contestManager,
                           })
                         }
                       }}
@@ -178,6 +180,23 @@ export function SiteManageUserCard({
                           void model.savePermissions(listedUser, {
                             siteManager: listedUser.siteManager,
                             problemManager: checked === true,
+                            contestManager: listedUser.contestManager,
+                          })
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={listedUser.contestManager}
+                      disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
+                      aria-label="Contest manager"
+                      onCheckedChange={(checked) => {
+                        if (siteManagerSession) {
+                          void model.savePermissions(listedUser, {
+                            siteManager: listedUser.siteManager,
+                            problemManager: listedUser.problemManager,
+                            contestManager: checked === true,
                           })
                         }
                       }}

@@ -25,11 +25,12 @@ object AuthAccountTable:
   private val seedAdminEmail: EmailAddress = EmailAddress("admin@example.com")
   private val seedAdminSiteManager: Boolean = true
   private val seedAdminProblemManager: Boolean = true
+  private val seedAdminContestManager: Boolean = true
 
   private val seedAuthAdminSQL: String =
     """
-      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager)
-      |values (?, ?, ?, ?, ?)
+      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager, contest_manager)
+      |values (?, ?, ?, ?, ?, ?)
       |on conflict (username) do nothing
       |""".stripMargin
 
@@ -43,6 +44,7 @@ object AuthAccountTable:
           statement.setString(3, passwordHash.value)
           statement.setBoolean(4, seedAdminSiteManager)
           statement.setBoolean(5, seedAdminProblemManager)
+          statement.setBoolean(6, seedAdminContestManager)
           statement.executeUpdate()
         finally statement.close()
       }
@@ -57,7 +59,7 @@ object AuthAccountTable:
 
   private val findAuthAccountByUsernameSQL: String =
     """
-      |select username, email, password_hash, site_manager, problem_manager
+      |select username, email, password_hash, site_manager, problem_manager, contest_manager
       |from auth_accounts
       |where lower(username) = lower(?)
       |""".stripMargin
@@ -77,7 +79,7 @@ object AuthAccountTable:
 
   private val findAuthenticatedUserByUsernameSQL: String =
     """
-      |select username, site_manager, problem_manager
+      |select username, site_manager, problem_manager, contest_manager
       |from auth_accounts
       |where lower(username) = lower(?)
       |""".stripMargin
@@ -97,9 +99,9 @@ object AuthAccountTable:
 
   private val insertAuthAccountSQL: String =
     """
-      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager)
-      |values (?, ?, ?, ?, ?)
-      |returning username, email, password_hash, site_manager, problem_manager
+      |insert into auth_accounts (username, email, password_hash, site_manager, problem_manager, contest_manager)
+      |values (?, ?, ?, ?, ?, ?)
+      |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
   def insertAccount(
@@ -116,6 +118,7 @@ object AuthAccountTable:
         statement.setString(3, passwordHash.value)
         statement.setBoolean(4, false)
         statement.setBoolean(5, false)
+        statement.setBoolean(6, false)
 
         val resultSet = statement.executeQuery()
         try
@@ -130,7 +133,7 @@ object AuthAccountTable:
       |update auth_accounts
       |set email = ?, password_hash = ?
       |where username = ?
-      |returning username, email, password_hash, site_manager, problem_manager
+      |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
   def updateAccount(
@@ -157,9 +160,9 @@ object AuthAccountTable:
   private val updatePermissionsSQL: String =
     """
       |update auth_accounts
-      |set site_manager = ?, problem_manager = ?
+      |set site_manager = ?, problem_manager = ?, contest_manager = ?
       |where username = ?
-      |returning username, email, password_hash, site_manager, problem_manager
+      |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
   def updatePermissions(
@@ -167,7 +170,8 @@ object AuthAccountTable:
     actor: SiteManagerUser,
     username: Username,
     siteManager: Boolean,
-    problemManager: Boolean
+    problemManager: Boolean,
+    contestManager: Boolean
   ): IO[Option[AuthAccount]] =
     IO.blocking {
       val _ = actor
@@ -175,7 +179,8 @@ object AuthAccountTable:
       try
         statement.setBoolean(1, siteManager)
         statement.setBoolean(2, problemManager)
-        statement.setString(3, username.value.trim)
+        statement.setBoolean(3, contestManager)
+        statement.setString(4, username.value.trim)
 
         val resultSet = statement.executeQuery()
         try

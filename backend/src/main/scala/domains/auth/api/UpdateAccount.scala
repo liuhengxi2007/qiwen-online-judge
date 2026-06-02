@@ -117,6 +117,6 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
     yield
       val response =
         Response[IO](status = Status.Ok)
-          .withEntity(SessionResponse.fromParts(profile, account.email, account.siteManager, account.problemManager).asJson)
+          .withEntity(SessionResponse.fromParts(profile, account.email, account.siteManager, account.problemManager, account.contestManager).asJson)
       if passwordChanged && clearSessionOnPasswordChange then response.addCookie(AuthSessionCookies.clearedSessionCookie)
       else response

@@ -38,7 +38,7 @@ final case class Login(sessionStore: SessionStore) extends PublicResponseApi[Log
                 Response[IO](status = Status.Ok)
                   .withEntity(
                     LoginResponse
-                      .fromParts(profile, account.email, account.siteManager, account.problemManager, "Login successful")
+                      .fromParts(profile, account.email, account.siteManager, account.problemManager, account.contestManager, "Login successful")
                       .asJson
                   )
                   .addCookie(AuthSessionCookies.sessionCookie(sessionToken))
