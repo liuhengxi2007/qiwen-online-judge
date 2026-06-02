@@ -18,7 +18,8 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { AcceptedProblemsPanel } from './components/AcceptedProblemsPanel'
 import { ContributionPanel } from './components/ContributionPanel'
-import { OwnMessagePanel } from './components/OwnMessagePanel'
+import { ProfileAvatarUploadPanel } from './components/ProfileAvatarUploadPanel'
+import { ProfileActionsPanel } from './components/ProfileActionsPanel'
 import { ProfileOverviewPanel } from './components/ProfileOverviewPanel'
 
 const acceptedProblemsPerPage = 10
@@ -27,7 +28,7 @@ export function UserProfilePage() {
   const { t } = useI18n()
   usePageTitle(t('userProfile.pageTitle'))
   const { username: routeUsername } = useParams<{ username: string }>()
-  const { session: viewer, navigationIntent: guardNavigationIntent } = useSessionGuard()
+  const { session: viewer, setSession, navigationIntent: guardNavigationIntent } = useSessionGuard()
 
   if (guardNavigationIntent) {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
@@ -37,10 +38,18 @@ export function UserProfilePage() {
     return <Navigate replace to="/login" />
   }
 
-  return <UserProfilePageContent routeUsername={routeUsername} viewer={viewer} />
+  return <UserProfilePageContent routeUsername={routeUsername} setViewer={setSession} viewer={viewer} />
 }
 
-function UserProfilePageContent({ routeUsername, viewer }: { routeUsername?: string; viewer: SessionResponse }) {
+function UserProfilePageContent({
+  routeUsername,
+  setViewer,
+  viewer,
+}: {
+  routeUsername?: string
+  setViewer: (session: SessionResponse | null) => void
+  viewer: SessionResponse
+}) {
   const { t } = useI18n()
   const navigate = useNavigate()
   const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
@@ -106,15 +115,27 @@ function UserProfilePageContent({ routeUsername, viewer }: { routeUsername?: str
           <div className="grid gap-5 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.45fr)]">
             <div className="space-y-5">
               <ProfileOverviewPanel
-                canManageTarget={routePolicy.canManageTarget}
+                avatarUrl={displayedUser?.avatarUrl ?? null}
                 isLoadingProfile={query.isLoadingProfile}
+                profileDisplayName={displayedUser?.displayName ?? null}
+                profileName={profileName}
+              />
+
+              <ProfileActionsPanel
+                canManageTarget={routePolicy.canManageTarget}
                 isOwnProfile={isOwnProfile}
                 onOpenMessage={() => navigate(messageConversationPath(routePolicy.targetUsername))}
-                profileName={profileName}
                 targetUsername={targetUsername}
               />
 
-              {isOwnProfile ? <OwnMessagePanel targetUsername={targetUsername} /> : null}
+              {isOwnProfile && displayedUser ? (
+                <ProfileAvatarUploadPanel
+                  onProfileUpdated={query.replaceProfile}
+                  onSessionUpdated={setViewer}
+                  profile={displayedUser}
+                  targetUsername={routePolicy.targetUsername}
+                />
+              ) : null}
             </div>
 
             <div className="space-y-5">

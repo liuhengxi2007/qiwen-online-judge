@@ -11,6 +11,7 @@ export const enSiteManageMessages: Record<string, string> = {
   'siteManage.openSettings': 'Open settings',
   'siteManage.siteManager': 'Site manager',
   'siteManage.problemManager': 'Problem manager',
+  'siteManage.contestManager': 'Contest manager',
   'siteManage.userSearchLabel': 'Search users',
   'siteManage.userSearchPlaceholder': 'Search username or display name',
   'siteManage.userSearchApply': 'Apply',

@@ -109,6 +109,7 @@ const publicModelTypes = new Map([
   ])],
   ['user', new Set([
     'DisplayName',
+    'UserAvatarUrl',
     'UserDisplayMode',
     'UserIdentity',
     'UserLocale',

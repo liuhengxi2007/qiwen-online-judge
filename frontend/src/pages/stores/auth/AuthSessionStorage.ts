@@ -5,6 +5,7 @@ import { parseUserDisplayMode } from '@/objects/user/UserDisplayMode'
 import { parseUserLocale } from '@/objects/user/UserLocale'
 import { parseUsername } from '@/objects/user/Username'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
+import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 
 const authSessionStorageKey = 'auth_session'
 const legacyAuthSessionStorageKey = 'auth_user'
@@ -86,6 +87,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
     return {
       displayName: displayNameResult.value,
       username: usernameResult.value,
+      avatarUrl: typeof parsed.avatarUrl === 'string' ? (parsed.avatarUrl as UserAvatarUrl) : null,
       email: emailResult.value,
       preferences: {
         displayMode: displayModeResult.value,
@@ -95,6 +97,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
       },
       siteManager: parsed.siteManager,
       problemManager: parsed.problemManager,
+      contestManager: parsed.contestManager ?? false,
     }
   } catch {
     return null
@@ -107,6 +110,7 @@ function isStoredAuthSessionValue(
   displayName: string
   username: string
   email: string
+  avatarUrl?: string | null
   preferences: {
     displayMode: string
     locale: string
@@ -115,6 +119,7 @@ function isStoredAuthSessionValue(
   }
   siteManager: boolean
   problemManager: boolean
+  contestManager?: boolean
 } {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -133,6 +138,7 @@ function isStoredAuthSessionValue(
     typeof (record.preferences as { problemTitleDisplayMode?: unknown }).problemTitleDisplayMode === 'string' &&
     typeof (record.preferences as { autoMarkMessageRead?: unknown }).autoMarkMessageRead === 'boolean' &&
     typeof record.siteManager === 'boolean' &&
-    typeof record.problemManager === 'boolean'
+    typeof record.problemManager === 'boolean' &&
+    (record.contestManager === undefined || typeof record.contestManager === 'boolean')
   )
 }

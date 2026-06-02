@@ -18,7 +18,7 @@ object UserProfileQueryTable:
 
   private val listUsersSQL: String =
     s"""
-      |select aa.username, up.display_name, aa.email, aa.site_manager, aa.problem_manager
+      |select aa.username, up.display_name, aa.email, aa.site_manager, aa.problem_manager, aa.contest_manager
       |from auth_accounts aa
       |join user_profiles up on up.username = aa.username
       |where ${searchPredicate("aa.username", "up.display_name")}

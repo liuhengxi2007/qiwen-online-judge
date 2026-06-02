@@ -14,8 +14,19 @@ object UserProfileTableSchema:
       |  display_mode varchar(64) not null default 'display_name',
       |  locale varchar(32) not null default 'en',
       |  problem_title_display_mode varchar(64) not null default 'title',
-      |  auto_mark_message_read boolean not null default false
+      |  auto_mark_message_read boolean not null default false,
+      |  avatar_object_key text,
+      |  avatar_content_type varchar(120),
+      |  avatar_updated_at timestamptz
       |);
+      |""".stripMargin
+
+  val addAvatarColumnsSql: String =
+    """
+      |alter table user_profiles
+      |  add column if not exists avatar_object_key text,
+      |  add column if not exists avatar_content_type varchar(120),
+      |  add column if not exists avatar_updated_at timestamptz
       |""".stripMargin
 
   val backfillFromAuthAccountTableSql: String =
@@ -117,6 +128,7 @@ object UserProfileTableSchema:
       val statement = connection.createStatement()
       try
         statement.execute(initTableSql)
+        statement.execute(addAvatarColumnsSql)
         statement.execute(backfillFromAuthAccountTableSql)
         statement.execute(dropLegacyAuthAccountProfileColumnsSql)
       finally statement.close()

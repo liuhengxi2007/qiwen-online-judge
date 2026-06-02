@@ -68,6 +68,7 @@ function createSession(): SessionResponse {
   return {
     displayName: 'Alice' as DisplayName,
     username: 'alice' as Username,
+    avatarUrl: null,
     email: 'alice@example.com' as EmailAddress,
     preferences: {
       displayMode: 'display_name',
@@ -77,6 +78,7 @@ function createSession(): SessionResponse {
     },
     siteManager: false,
     problemManager: false,
+    contestManager: false,
   }
 }
 

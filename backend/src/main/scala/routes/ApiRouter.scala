@@ -9,6 +9,7 @@ import domains.message.utils.MessageEventHub
 import domains.notification.utils.NotificationEventHub
 import domains.problem.utils.ProblemDataStorage
 import domains.submission.utils.SubmissionProgramStorage
+import domains.user.utils.UserAvatarStorage
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*
@@ -21,16 +22,18 @@ object ApiRouter:
     judgeConfig: JudgeConfig,
     problemDataStorage: ProblemDataStorage,
     submissionProgramStorage: SubmissionProgramStorage,
+    userAvatarStorage: UserAvatarStorage,
     messageEventHub: MessageEventHub,
     notificationEventHub: NotificationEventHub
   ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
       domains.auth.routes.AuthRouter.routes(databaseSession, sessionStore) <+>
-        domains.user.routes.UserRouter.routes(databaseSession, sessionStore) <+>
+        domains.user.routes.UserRouter.routes(databaseSession, sessionStore, userAvatarStorage) <+>
         domains.judger.routes.JudgerRegistryRouter.routes(databaseSession, judgeConfig, sessionStore) <+>
         domains.judge.routes.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage, submissionProgramStorage) <+>
         domains.problem.routes.ProblemRouter.routes(databaseSession, sessionStore, problemDataStorage, submissionProgramStorage) <+>
         domains.problemset.routes.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
+        domains.contest.routes.ContestRouter.routes(databaseSession, sessionStore) <+>
         domains.submission.routes.SubmissionRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
         domains.blog.routes.BlogRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.usergroup.routes.UserGroupRouter.routes(databaseSession, sessionStore) <+>

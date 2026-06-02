@@ -7,6 +7,7 @@ final case class ProblemManagerUser private (authenticatedUser: AuthenticatedUse
   def username: Username = authenticatedUser.username
   def siteManager: Boolean = authenticatedUser.siteManager
   def problemManager: Boolean = authenticatedUser.problemManager
+  def contestManager: Boolean = authenticatedUser.contestManager
 
 object ProblemManagerUser:
   def from(authenticatedUser: AuthenticatedUser): Option[ProblemManagerUser] =

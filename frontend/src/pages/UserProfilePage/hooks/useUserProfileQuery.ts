@@ -88,5 +88,13 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
     isLoadingProfile: profileState.username !== targetUsername,
     profileLoadError: profileState.username === targetUsername ? profileState.profileLoadError : '',
     navigationIntent: profileState.username === targetUsername ? profileState.navigationIntent : null,
+    replaceProfile(nextProfile: UserProfileResponse) {
+      setProfileState({
+        username: targetUsername,
+        profile: nextProfile,
+        profileLoadError: '',
+        navigationIntent: null,
+      })
+    },
   }
 }

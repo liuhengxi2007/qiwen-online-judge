@@ -60,7 +60,14 @@ final case class Register(sessionStore: SessionStore) extends PublicResponseApi[
       Response[IO](status = Status.Created)
         .withEntity(
           RegisterResponse
-            .fromParts(profile, createdAccount.email, createdAccount.siteManager, createdAccount.problemManager, "Registration successful")
+            .fromParts(
+              profile,
+              createdAccount.email,
+              createdAccount.siteManager,
+              createdAccount.problemManager,
+              createdAccount.contestManager,
+              "Registration successful"
+            )
             .asJson
         )
         .addCookie(AuthSessionCookies.sessionCookie(sessionToken))

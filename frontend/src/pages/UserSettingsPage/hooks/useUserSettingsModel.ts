@@ -16,6 +16,7 @@ import {
   toForbiddenRedirect,
 } from '@/pages/routing/RoutePolicy'
 import { useI18n } from '@/system/i18n/use-i18n'
+import { toAuthSession } from '@/pages/stores/auth/AuthSession'
 import type { UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import type { UserLocale } from '@/objects/user/UserLocale'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
@@ -222,6 +223,13 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     setCurrentPassword: (value: string) => dispatch({ type: 'set_current_password', value }),
     setNewPassword: (value: string) => dispatch({ type: 'set_new_password', value }),
     setConfirmNewPassword: (value: string) => dispatch({ type: 'set_confirm_new_password', value }),
+    replaceDisplayedUser: (nextUser: SessionResponse) => {
+      query.replaceEditedUser(targetUsername, nextUser)
+      dispatch({ type: 'query_synced', user: nextUser })
+      if (isEditingOwnSettings) {
+        setViewer(toAuthSession(nextUser))
+      }
+    },
     submit,
   }
 }

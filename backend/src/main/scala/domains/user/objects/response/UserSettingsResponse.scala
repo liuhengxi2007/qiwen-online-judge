@@ -9,10 +9,12 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 final case class UserSettingsResponse(
   displayName: DisplayName,
   username: Username,
+  avatarUrl: Option[domains.user.objects.UserAvatarUrl],
   email: EmailAddress,
   preferences: UserPreferences,
   siteManager: Boolean,
-  problemManager: Boolean
+  problemManager: Boolean,
+  contestManager: Boolean
 )
 
 object UserSettingsResponse:
@@ -23,13 +25,16 @@ object UserSettingsResponse:
     profile: UserProfileSettings,
     email: EmailAddress,
     siteManager: Boolean,
-    problemManager: Boolean
+    problemManager: Boolean,
+    contestManager: Boolean
   ): UserSettingsResponse =
     UserSettingsResponse(
       displayName = profile.displayName,
       username = profile.username,
+      avatarUrl = profile.avatarUrl,
       email = email,
       preferences = profile.preferences,
       siteManager = siteManager,
-      problemManager = problemManager
+      problemManager = problemManager,
+      contestManager = contestManager
     )

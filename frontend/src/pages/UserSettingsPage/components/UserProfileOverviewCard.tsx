@@ -6,6 +6,7 @@ import { emailAddressValue } from '@/objects/auth/EmailAddress'
 import { displayNameValue } from '@/objects/user/DisplayName'
 import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
+import { UserAvatar } from '@/pages/components/UserAvatar'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UserProfileOverviewCardProps = {
@@ -56,6 +57,19 @@ export function UserProfileOverviewCard({
           </Alert>
         ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
+          {user ? (
+            <div className="rounded-2xl bg-slate-50 p-5 sm:col-span-2">
+              <div className="flex items-center gap-4">
+                <UserAvatar avatarUrl={user.avatarUrl} className="size-16" displayName={user.displayName} fallbackClassName="text-lg" />
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-500">{t('userSettings.avatarTitle')}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">
+                    {displayNameValue(user.displayName)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-2xl bg-slate-50 p-5">
             <p className="text-sm text-slate-500">{t('common.displayName')}</p>
             <p className="mt-2 text-lg font-semibold text-slate-900">

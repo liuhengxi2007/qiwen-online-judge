@@ -5,6 +5,7 @@ import domains.auth.table.auth_account.{AuthAccountTable, AuthAccountTableSuppor
 import domains.auth.table.session.SessionTable
 import domains.auth.utils.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
 import domains.blog.table.blog.BlogTable
+import domains.contest.table.contest.ContestTable
 import domains.judge.utils.JudgeConfig
 import domains.judger.table.judger.JudgerTable
 import domains.message.table.message.MessageTable
@@ -18,6 +19,7 @@ import domains.problemset.table.problem_set.ProblemSetTable
 import domains.submission.table.submission.SubmissionTable
 import domains.submission.utils.{MinioSubmissionProgramStorage, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
+import domains.user.utils.{MinioUserAvatarStorage, UserAvatarStorageConfig}
 import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
@@ -54,8 +56,10 @@ object Main extends IOApp.Simple:
       judgeConfig = JudgeConfig.loadFromEnvironment()
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       submissionProgramStorageConfig = SubmissionProgramStorageConfig.loadFromEnvironment()
+      userAvatarStorageConfig = UserAvatarStorageConfig.loadFromEnvironment()
       problemDataStorage = MinioProblemDataStorage(problemDataStorageConfig.minio)
       submissionProgramStorage = MinioSubmissionProgramStorage(submissionProgramStorageConfig.minio)
+      userAvatarStorage = MinioUserAvatarStorage(userAvatarStorageConfig.minio)
       _ <- Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for
@@ -66,6 +70,7 @@ object Main extends IOApp.Simple:
             _ <- ProblemTable.initialize(connection)
             _ <- ProblemDataFileTable.initialize(connection)
             _ <- ProblemSetTable.initialize(connection)
+            _ <- ContestTable.initialize(connection)
             _ <- SubmissionTable.initialize(connection, submissionProgramStorage)
             _ <- BlogTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
@@ -77,7 +82,7 @@ object Main extends IOApp.Simple:
       }
       httpApp =
         CORS.policy.withAllowOriginAll(
-          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, submissionProgramStorage, messageEventHub, notificationEventHub)
+          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, submissionProgramStorage, userAvatarStorage, messageEventHub, notificationEventHub)
         )
       server <- serverResource(httpApp)
     yield server

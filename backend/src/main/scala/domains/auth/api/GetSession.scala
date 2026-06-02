@@ -34,4 +34,4 @@ object GetSession extends AuthenticatedApi[Unit, SessionResponse]:
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }
-    yield SessionResponse.fromParts(profile, account.email, account.siteManager, account.problemManager)
+    yield SessionResponse.fromParts(profile, account.email, account.siteManager, account.problemManager, account.contestManager)

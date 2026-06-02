@@ -39,6 +39,7 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
         yield UserProfileResponse(
           username = targetProfile.username,
           displayName = targetProfile.displayName,
+          avatarUrl = targetProfile.avatarUrl,
           contribution = UserContribution(BigDecimal(contribution)),
           acceptedProblems = acceptedProblems
         )

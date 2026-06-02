@@ -5,7 +5,8 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class UpdateUserPermissionsRequest(
   siteManager: Boolean,
-  problemManager: Boolean
+  problemManager: Boolean,
+  contestManager: Boolean
 )
 
 object UpdateUserPermissionsRequest:

@@ -94,6 +94,7 @@ const backendDomainUtilsAllowlist = new Map([
     ]),
   ],
   ['problemset', new Set(['ProblemSetAccessPolicyValidation.scala', 'ProblemSetAccessRules.scala'])],
+  ['contest', new Set(['ContestAccessPolicyValidation.scala', 'ContestAccessRules.scala'])],
   [
     'submission',
     new Set([
@@ -106,7 +107,13 @@ const backendDomainUtilsAllowlist = new Map([
       'SubmissionProgramCleanup.scala',
     ]),
   ],
-  ['user', new Set(['UserApiRules.scala'])],
+  ['user', new Set([
+    'MinioUserAvatarStorage.scala',
+    'UserApiRules.scala',
+    'UserAvatarStorage.scala',
+    'UserAvatarStorageConfig.scala',
+    'UserAvatarUploadValidation.scala',
+  ])],
   ['usergroup', new Set(['UserGroupAccessRules.scala', 'UserGroupMutationValidation.scala'])],
   ['judger', new Set(['JudgerRegistryValidation.scala'])],
   ['message', new Set(['MessageEventHub.scala'])],

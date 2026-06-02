@@ -6,6 +6,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { MessageBlockListCard } from './components/MessageBlockListCard'
 import { UserPermissionsCard } from './components/UserPermissionsCard'
+import { UserAvatarSettingsCard } from './components/UserAvatarSettingsCard'
 import { UserProfileOverviewCard } from './components/UserProfileOverviewCard'
 import { UserSettingsAccountCard } from './components/UserSettingsAccountCard'
 import { UserSettingsPreferencesCard } from './components/UserSettingsPreferencesCard'
@@ -73,6 +74,7 @@ function UserSettingsPageContent({
     setCurrentPassword,
     setNewPassword,
     setConfirmNewPassword,
+    replaceDisplayedUser,
     submit,
   } = useUserSettingsModel({
     viewer,
@@ -129,6 +131,12 @@ function UserSettingsPageContent({
           submit={() => {
             void submit('profile')
           }}
+        />
+
+        <UserAvatarSettingsCard
+          displayedUser={displayedUser}
+          onUserUpdated={replaceDisplayedUser}
+          targetUsername={targetUsername}
         />
 
         <UserSettingsPreferencesCard

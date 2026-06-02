@@ -35,7 +35,8 @@ object AuthAccountTableSchema:
       |  email varchar(255) not null,
       |  password_hash varchar(255) not null,
       |  site_manager boolean not null default false,
-      |  problem_manager boolean not null default false
+      |  problem_manager boolean not null default false,
+      |  contest_manager boolean not null default false
       |);
       |""".stripMargin
 
@@ -200,6 +201,22 @@ object AuthAccountTableSchema:
       |end $$;
       |""".stripMargin
 
+  val addContestManagerColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'auth_accounts'
+      |      and column_name = 'contest_manager'
+      |  ) then
+      |    alter table auth_accounts add column contest_manager boolean not null default false;
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
   def initializeSchema(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()
@@ -212,6 +229,7 @@ object AuthAccountTableSchema:
         statement.execute(relaxLegacyProfileColumnsSql)
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
+        statement.execute(addContestManagerColumnSql)
         statement.executeUpdate(backfillEmailSql)
         statement.execute(setEmailNotNullSql)
         statement.execute(createCaseInsensitiveUsernameIndexSql)
