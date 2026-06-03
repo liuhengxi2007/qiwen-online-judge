@@ -23,7 +23,7 @@ export const enUserSettingsMessages: Record<string, string> = {
   'userSettings.avatarTitle': 'Avatar',
   'userSettings.avatarDescription': 'Upload a small profile image shown on your public profile.',
   'userSettings.avatarPreview': 'Current avatar',
-  'userSettings.avatarFileHelp': 'PNG, JPEG, or WebP. Maximum size: 2 MB.',
+  'userSettings.avatarFileHelp': 'PNG or JPEG. Maximum size: 2 MB.',
   'userSettings.avatarRequired': 'Choose an avatar file first.',
   'userSettings.avatarUpload': 'Upload avatar',
   'userSettings.avatarSaving': 'Saving avatar...',

@@ -27,8 +27,7 @@ object UserAvatarUploadValidation:
     contentType.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some("image/png") => Right("image/png")
       case Some("image/jpeg") => Right("image/jpeg")
-      case Some("image/webp") => Right("image/webp")
-      case Some(_) => Left("Avatar must be a PNG, JPEG, or WebP image.")
+      case Some(_) => Left("Avatar must be a PNG or JPEG image.")
       case None => Left("Avatar upload must include a supported image content type.")
 
   private def validateSize(bytes: Array[Byte]): Either[String, Unit] =
@@ -40,5 +39,4 @@ object UserAvatarUploadValidation:
     contentType match
       case "image/png" => "png"
       case "image/jpeg" => "jpg"
-      case "image/webp" => "webp"
       case _ => "bin"

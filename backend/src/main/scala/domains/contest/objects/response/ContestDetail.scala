@@ -17,6 +17,8 @@ final case class ContestDetail(
   endAt: Instant,
   problems: List[ContestProblemSummary],
   accessPolicy: ResourceAccessPolicy,
+  registrationStatus: ContestRegistrationStatus,
+  canManage: Boolean,
   author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant
@@ -26,7 +28,7 @@ object ContestDetail:
   given Encoder[ContestDetail] = deriveEncoder[ContestDetail]
   given Decoder[ContestDetail] = deriveDecoder[ContestDetail]
 
-  def fromContest(contest: Contest): ContestDetail =
+  def fromContest(contest: Contest, registrationStatus: ContestRegistrationStatus, canManage: Boolean, includeProblems: Boolean): ContestDetail =
     ContestDetail(
       id = contest.id,
       slug = contest.slug,
@@ -34,8 +36,10 @@ object ContestDetail:
       description = contest.description,
       startAt = contest.startAt,
       endAt = contest.endAt,
-      problems = contest.problems,
+      problems = if includeProblems then contest.problems else Nil,
       accessPolicy = contest.accessPolicy,
+      registrationStatus = registrationStatus,
+      canManage = canManage,
       author = contest.author,
       createdAt = contest.createdAt,
       updatedAt = contest.updatedAt

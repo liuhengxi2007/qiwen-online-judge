@@ -9,7 +9,6 @@ import domains.user.objects.response.UserSettingsResponse
 import domains.user.table.user_profile.UserProfileTable
 import domains.user.utils.{UserAvatarStorage, UserAvatarUploadValidation}
 import io.circe.Encoder
-import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.multipart.Multipart
 import org.http4s.{Method, Request, Status}
 import org.typelevel.ci.CIString

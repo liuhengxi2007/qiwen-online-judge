@@ -34,6 +34,15 @@ object AuthAccountTable:
       |on conflict (username) do nothing
       |""".stripMargin
 
+  private val ensureSeedAdminPermissionsSQL: String =
+    """
+      |update auth_accounts
+      |set site_manager = true,
+      |    problem_manager = true,
+      |    contest_manager = true
+      |where lower(username) = lower(?)
+      |""".stripMargin
+
   private def seedAdmin(connection: java.sql.Connection, passwordHash: PasswordHash): IO[Unit] =
     for
       _ <- IO.blocking {
@@ -45,6 +54,13 @@ object AuthAccountTable:
           statement.setBoolean(4, seedAdminSiteManager)
           statement.setBoolean(5, seedAdminProblemManager)
           statement.setBoolean(6, seedAdminContestManager)
+          statement.executeUpdate()
+        finally statement.close()
+      }
+      _ <- IO.blocking {
+        val statement = connection.prepareStatement(ensureSeedAdminPermissionsSQL)
+        try
+          statement.setString(1, seedAdminUsername.value)
           statement.executeUpdate()
         finally statement.close()
       }

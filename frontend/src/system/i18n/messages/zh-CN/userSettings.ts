@@ -23,7 +23,7 @@ export const zhCnUserSettingsMessages: Record<string, string> = {
   'userSettings.avatarTitle': '头像',
   'userSettings.avatarDescription': '上传一张显示在公开资料页上的小头像。',
   'userSettings.avatarPreview': '当前头像',
-  'userSettings.avatarFileHelp': '支持 PNG、JPEG 或 WebP，最大 2 MB。',
+  'userSettings.avatarFileHelp': '支持 PNG 或 JPEG，最大 2 MB。',
   'userSettings.avatarRequired': '请先选择头像文件。',
   'userSettings.avatarUpload': '上传头像',
   'userSettings.avatarSaving': '正在保存头像...',

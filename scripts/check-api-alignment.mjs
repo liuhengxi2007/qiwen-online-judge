@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { basename as pathBasename, join, relative, resolve } from 'node:path'
 
 const root = process.cwd()
 
@@ -9,6 +9,7 @@ const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
 const allowedBackendOnlyEndpoints = new Map([
   ['judger', new Set(['GetActiveJudgerSupportedLanguages', 'RecordJudgerHeartbeat', 'RegisterJudger'])],
+  ['user', new Set(['GetUserAvatar'])],
 ])
 const internalOnlyApiTraits = new Set(['InternalOnlyApi', 'InternalOnlyAuthenticatedApi'])
 
@@ -36,7 +37,7 @@ function listFilesIfDirectory(path) {
 
 function frontendEndpointNames(domain) {
   return listFilesIfDirectory(join(frontendApisRoot, domain))
-    .map((filePath) => filePath.split('/').at(-1))
+    .map((filePath) => pathBasename(filePath))
     .filter((fileName) => fileName.endsWith('.ts'))
     .map((fileName) => fileName.replace(/\.ts$/, ''))
     .sort()
@@ -45,7 +46,7 @@ function frontendEndpointNames(domain) {
 function backendEndpointDetails(domain) {
   return listFilesIfDirectory(join(backendDomainsRoot, domain, 'api'))
     .map((filePath) => {
-      const fileName = filePath.split('/').at(-1) ?? ''
+      const fileName = pathBasename(filePath)
       if (!fileName.endsWith('.scala')) {
         return null
       }

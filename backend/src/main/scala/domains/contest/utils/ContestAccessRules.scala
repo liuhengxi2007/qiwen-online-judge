@@ -13,7 +13,8 @@ object ContestAccessRules:
     actor.siteManager || actor.contestManager
 
   def canViewContest(actor: AuthenticatedUser, contest: Contest, actorGroupSlugs: Set[UserGroupSlug]): Boolean =
-    evaluateContestPermissions(actor, contest, actorGroupSlugs).canViewDirectly
+    val decision = evaluateContestPermissions(actor, contest, actorGroupSlugs)
+    decision.canViewDirectly || decision.canManage
 
   def canManageContest(actor: AuthenticatedUser, contest: Contest, actorGroupSlugs: Set[UserGroupSlug]): Boolean =
     evaluateContestPermissions(actor, contest, actorGroupSlugs).canManage

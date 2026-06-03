@@ -12,4 +12,5 @@ export const enNavMessages: Record<string, string> = {
   'nav.submissions': 'Submissions',
   'nav.ranklist': 'Ranklist',
   'nav.userGroups': 'User Groups',
+  'nav.contests': 'Contests',
 }

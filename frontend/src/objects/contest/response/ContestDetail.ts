@@ -5,6 +5,7 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestTitle } from '@/objects/contest/ContestTitle'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ContestRegistrationStatus } from '@/objects/contest/response/ContestRegistrationStatus'
 
 export type ContestDetail = {
   id: ContestId
@@ -15,6 +16,8 @@ export type ContestDetail = {
   endAt: string
   problems: ContestProblemSummary[]
   accessPolicy: ResourceAccessPolicy
+  registrationStatus: ContestRegistrationStatus
+  canManage: boolean
   author: UserIdentity | null
   createdAt: string
   updatedAt: string

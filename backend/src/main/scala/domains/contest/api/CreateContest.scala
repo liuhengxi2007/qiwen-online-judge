@@ -5,7 +5,7 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.*
 import domains.contest.objects.request.CreateContestRequest
-import domains.contest.objects.response.ContestDetail
+import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
 import domains.contest.table.contest.ContestTable
 import domains.contest.utils.{ContestAccessPolicyValidation, ContestAccessRules}
 import io.circe.Encoder
@@ -41,4 +41,4 @@ object CreateContest extends AuthenticatedApi[CreateContestRequest, ContestDetai
       _ <- HttpApiError.ensure(existing.isEmpty, HttpApiError.conflict(ApiMessages.contestSlugExists))
       _ <- ContestAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
       contest <- ContestTable.insert(connection, actor.username, ContestAccessPolicyValidation.sanitizePolicyWithAuthorManager(validRequest, actor.username))
-    yield ContestDetail.fromContest(contest)
+    yield ContestDetail.fromContest(contest, ContestRegistrationStatus.notRegistered, canManage = true, includeProblems = true)

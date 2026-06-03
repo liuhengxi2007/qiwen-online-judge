@@ -2,6 +2,7 @@ package domains.contest.table.contest
 
 import cats.effect.IO
 import domains.contest.objects.*
+import domains.contest.objects.response.{ContestRegistrant, ContestRegistrationStatus, ContestSummary}
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import database.utils.{UserIdentityRow, UserIdentitySql}
@@ -51,6 +52,33 @@ object ContestTableSupport:
         Nil,
         Nil
       ),
+      author = readOptionalUserIdentity(resultSet, "author"),
+      createdAt = resultSet.getTimestamp("created_at").toInstant,
+      updatedAt = resultSet.getTimestamp("updated_at").toInstant
+    )
+
+  def readContestRegistrant(resultSet: ResultSet): ContestRegistrant =
+    ContestRegistrant(
+      user = readOptionalUserIdentity(resultSet, "user").getOrElse(
+        throw IllegalStateException("Contest registration row is missing user identity")
+      ),
+      registeredAt = resultSet.getTimestamp("registered_at").toInstant
+    )
+
+  def readContestSummaryBase(resultSet: ResultSet): ContestSummary =
+    ContestSummary(
+      id = ContestId(resultSet.getObject("id", classOf[java.util.UUID])),
+      slug = parseColumn("contests.slug", resultSet.getString("slug"), ContestSlug.parse),
+      title = parseColumn("contests.title", resultSet.getString("title"), ContestTitle.parse),
+      description = parseColumn("contests.description", resultSet.getString("description"), ContestDescription.parse),
+      startAt = resultSet.getTimestamp("start_at").toInstant,
+      endAt = resultSet.getTimestamp("end_at").toInstant,
+      accessPolicy = ResourceAccessPolicy(
+        parseOptionalColumn("contests.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn),
+        Nil,
+        Nil
+      ),
+      registrationStatus = ContestRegistrationStatus.notRegistered,
       author = readOptionalUserIdentity(resultSet, "author"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

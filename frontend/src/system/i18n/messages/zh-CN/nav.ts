@@ -12,4 +12,5 @@ export const zhCnNavMessages: Record<string, string> = {
   'nav.submissions': '提交',
   'nav.ranklist': '排行榜',
   'nav.userGroups': '用户组',
+  'nav.contests': '比赛',
 }

@@ -5,7 +5,7 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestSlug
 import domains.contest.objects.request.AddProblemToContestRequest
-import domains.contest.objects.response.ContestDetail
+import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
 import domains.contest.table.contest.ContestTable
 import domains.contest.table.contest.ContestTable.AddProblemTableResult
 import domains.contest.utils.ContestAccessRules
@@ -60,4 +60,10 @@ object AddProblemToContest extends AuthenticatedApi[(ContestSlug, AddProblemToCo
         case Some(contest) => IO.pure(contest)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
       }
-    yield ContestDetail.fromContest(updatedContest)
+      registration <- ContestTable.findRegistration(connection, updatedContest.id, actor.username)
+    yield ContestDetail.fromContest(
+      updatedContest,
+      registration.fold(ContestRegistrationStatus.notRegistered)(ContestRegistrationStatus.registeredAt),
+      canManage = true,
+      includeProblems = true
+    )
