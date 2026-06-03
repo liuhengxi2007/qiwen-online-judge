@@ -4,7 +4,11 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { BlogPage } from '@/pages/BlogPage'
 import { BlogDetailPage } from '@/pages/BlogDetailPage'
 import { CreateBlogPage } from '@/pages/CreateBlogPage'
+import { CreateContestPage } from '@/pages/CreateContestPage'
 import { CreateProblemPage } from '@/pages/CreateProblemPage'
+import { ContestPage } from '@/pages/ContestPage'
+import { ContestDetailPage } from '@/pages/ContestDetailPage'
+import { ContestRegistrantPage } from '@/pages/ContestRegistrantPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ProblemDataPage } from '@/pages/ProblemDataPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -138,6 +142,22 @@ export const router = createBrowserRouter([
       {
         path: 'problem-sets/:slug',
         element: <AuthenticatedRoute element={<ProblemSetDetailPage />} />,
+      },
+      {
+        path: 'contests',
+        element: <AuthenticatedRoute element={<ContestPage />} />,
+      },
+      {
+        path: 'contests/new',
+        element: <AuthenticatedRoute element={<CreateContestPage />} />,
+      },
+      {
+        path: 'contests/:slug/registrants',
+        element: <AuthenticatedRoute element={<ContestRegistrantPage />} />,
+      },
+      {
+        path: 'contests/:slug',
+        element: <AuthenticatedRoute element={<ContestDetailPage />} />,
       },
       {
         path: 'notifications',

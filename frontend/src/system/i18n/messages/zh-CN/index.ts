@@ -16,6 +16,7 @@ import { zhCnResourceAccessMessages } from '@/system/i18n/messages/zh-CN/resourc
 import { zhCnApiMessages } from '@/system/i18n/messages/zh-CN/api'
 import { zhCnMessageMessages } from '@/system/i18n/messages/zh-CN/message'
 import { zhCnNotificationMessages } from '@/system/i18n/messages/zh-CN/notification'
+import { zhCnContestMessages } from '@/system/i18n/messages/zh-CN/contest'
 
 export const zhCnMessages: Record<string, string> = {
   ...zhCnCommonMessages,
@@ -36,4 +37,5 @@ export const zhCnMessages: Record<string, string> = {
   ...zhCnApiMessages,
   ...zhCnMessageMessages,
   ...zhCnNotificationMessages,
+  ...zhCnContestMessages,
 }

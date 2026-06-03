@@ -1,0 +1,356 @@
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { Rows3 } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { contestDescriptionValue } from '@/objects/contest/ContestDescription'
+import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
+import { contestSlugValue, parseContestSlug } from '@/objects/contest/ContestSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
+import { contestTitleValue } from '@/objects/contest/ContestTitle'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
+import { problemTitleValue } from '@/objects/problem/ProblemTitle'
+import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
+import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
+import { DateTimeText } from '@/pages/components/DateTimeText'
+import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
+import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
+import { PageShell } from '@/pages/components/PageShell'
+import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
+import { useProblemTitleDisplay } from '@/pages/hooks/useProblemTitleDisplay'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
+import { useI18n } from '@/system/i18n/use-i18n'
+import { useContestDetailPageModel } from './hooks/useContestDetailPageModel'
+
+export function ContestDetailPage() {
+  const { t } = useI18n()
+  usePageTitle(t('contest.detail.pageTitle'))
+  const { session: user, navigationIntent } = useSessionGuard()
+  const { slug } = useParams<{ slug: string }>()
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
+  }
+
+  if (!user) {
+    return <Navigate replace to="/login" />
+  }
+
+  const slugResult = parseContestSlug(slug ?? '')
+  if (!slugResult.ok) {
+    return <Navigate replace to="/contests" />
+  }
+
+  return <ContestDetailPageContent contestSlug={slugResult.value} />
+}
+
+function ContestDetailPageContent({
+  contestSlug,
+}: {
+  contestSlug: ContestSlug
+}) {
+  const { t } = useI18n()
+  const model = useContestDetailPageModel(contestSlug)
+
+  return (
+    <PageShell title={t('contest.detail.heading')} mainClassName="bg-[linear-gradient(180deg,#f0fdfa_0%,#ecfeff_48%,#f8fafc_100%)]">
+      {!model.isLoading && !model.contest && model.loadErrorMessage ? (
+        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {model.isLoading ? (
+        <PageLoadingCard message={t('contest.detail.loading')} />
+      ) : model.contest ? (
+        <div className="space-y-6">
+          <ContestDetailHeaderCard
+            contest={model.contest}
+            isRegistering={model.isRegistering}
+            registerErrorMessage={model.registerErrorMessage}
+            registerSuccessMessage={model.registerSuccessMessage}
+            onToggleRegistration={() => {
+              void model.toggleRegistration()
+            }}
+          />
+          {model.contest.canManage ? (
+            <ContestAttachProblemCard
+              problemSearchInput={model.problemSearchInput}
+              isLoadingProblemSuggestions={model.isLoadingProblemSuggestions}
+              problemSuggestions={model.problemSuggestions}
+              isAttachingProblem={model.isAttachingProblem}
+              errorMessage={model.attachProblemErrorMessage}
+              successMessage={model.attachProblemSuccessMessage}
+              onProblemSearchInputChange={model.setProblemSearchInput}
+              onProblemSearchFocusChange={model.setIsProblemSearchFocused}
+              onProblemSuggestionSelect={model.selectProblemSuggestion}
+              onAttachProblem={() => {
+                void model.attachProblem()
+              }}
+            />
+          ) : null}
+          {model.contest.canManage || Date.now() >= new Date(model.contest.startAt).getTime() ? (
+            <ContestProblemsCard contest={model.contest} />
+          ) : null}
+        </div>
+      ) : null}
+    </PageShell>
+  )
+}
+
+function ContestDetailHeaderCard({
+  contest,
+  isRegistering,
+  registerErrorMessage,
+  registerSuccessMessage,
+  onToggleRegistration,
+}: {
+  contest: ContestDetail
+  isRegistering: boolean
+  registerErrorMessage: string
+  registerSuccessMessage: string
+  onToggleRegistration: () => void
+}) {
+  const { t } = useI18n()
+  const now = Date.now()
+  const hasStarted = now >= new Date(contest.startAt).getTime()
+  const isRegistered = contest.registrationStatus.isRegistered
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle className="text-2xl text-slate-950">{contestTitleValue(contest.title)}</CardTitle>
+            <CardDescription className="mt-2 font-mono text-sm text-slate-500">
+              {contestSlugValue(contest.slug)}
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              disabled={isRegistering || hasStarted}
+              variant={isRegistered ? 'outline' : 'default'}
+              className={
+                isRegistered && hasStarted
+                  ? 'rounded-2xl border-emerald-200 bg-white text-emerald-700 hover:bg-white hover:text-emerald-700'
+                  : isRegistered
+                    ? 'rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800'
+                  : hasStarted
+                    ? 'rounded-2xl border-slate-200 bg-white text-slate-500 hover:bg-white hover:text-slate-500'
+                    : 'rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400'
+              }
+              onClick={() => {
+                if (!hasStarted) {
+                  onToggleRegistration()
+                }
+              }}
+            >
+              {isRegistering
+                ? t('contest.detail.registering')
+                : isRegistered && hasStarted
+                  ? t('contest.detail.registered')
+                  : isRegistered
+                    ? t('contest.detail.unregister')
+                  : hasStarted
+                    ? t('contest.detail.registrationClosed')
+                    : t('contest.detail.register')}
+            </Button>
+            <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+              <Link to={`/contests/${contestSlugValue(contest.slug)}/registrants`}>{t('contest.detail.registrants')}</Link>
+            </Button>
+            {contest.canManage ? (
+              <Badge variant="outline" className="rounded-2xl px-4 py-2">
+                {t('contest.detail.managerView')}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {registerErrorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{registerErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        {registerSuccessMessage ? (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+            <AlertDescription className="text-emerald-700">{registerSuccessMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="secondary">{resourceAccessBadgeLabel(contest.accessPolicy, t)}</Badge>
+          {hasStarted && !isRegistered ? <Badge variant="outline">{t('contest.detail.registrationClosed')}</Badge> : null}
+        </div>
+        <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+          <p>
+            <span className="font-medium text-slate-900">{t('contest.detail.startAt')} </span>
+            <DateTimeText value={contest.startAt} />
+          </p>
+          <p>
+            <span className="font-medium text-slate-900">{t('contest.detail.endAt')} </span>
+            <DateTimeText value={contest.endAt} />
+          </p>
+          {contest.registrationStatus.registeredAt ? (
+            <p>
+              <span className="font-medium text-slate-900">{t('contest.detail.registeredAt')} </span>
+              <DateTimeText value={contest.registrationStatus.registeredAt} />
+            </p>
+          ) : null}
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
+          {contestDescriptionValue(contest.description) ? (
+            <MarkdownDocument content={contestDescriptionValue(contest.description)} />
+          ) : (
+            <p className="text-sm text-slate-500">{t('common.noDescription')}</p>
+          )}
+        </div>
+        {contest.author ? (
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+            <span>{t('common.authorLabel')} </span>
+            <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={contest.author} />
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ContestAttachProblemCard({
+  problemSearchInput,
+  isLoadingProblemSuggestions,
+  problemSuggestions,
+  isAttachingProblem,
+  errorMessage,
+  successMessage,
+  onProblemSearchInputChange,
+  onProblemSearchFocusChange,
+  onProblemSuggestionSelect,
+  onAttachProblem,
+}: {
+  problemSearchInput: string
+  isLoadingProblemSuggestions: boolean
+  problemSuggestions: ProblemSuggestion[]
+  isAttachingProblem: boolean
+  errorMessage: string
+  successMessage: string
+  onProblemSearchInputChange: (value: string) => void
+  onProblemSearchFocusChange: (focused: boolean) => void
+  onProblemSuggestionSelect: (suggestion: ProblemSuggestion) => void
+  onAttachProblem: () => void
+}) {
+  const { t } = useI18n()
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+            <Rows3 className="size-5" />
+          </div>
+          <div>
+            <CardTitle className="text-xl text-slate-950">{t('contest.detail.attachProblemTitle')}</CardTitle>
+            <CardDescription>{t('contest.detail.attachProblemDescription')}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {errorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        {successMessage ? (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+            <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        <div className="space-y-2">
+          <Label htmlFor="contest-problem-search">{t('contest.detail.attachProblemInput')}</Label>
+          <Input
+            id="contest-problem-search"
+            value={problemSearchInput}
+            onChange={(event) => onProblemSearchInputChange(event.target.value)}
+            onFocus={() => onProblemSearchFocusChange(true)}
+          />
+          {problemSuggestions.length > 0 || isLoadingProblemSuggestions ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+              {isLoadingProblemSuggestions ? (
+                <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
+              ) : (
+                problemSuggestions.map((suggestion) => (
+                  <button
+                    key={problemSlugValue(suggestion.slug)}
+                    type="button"
+                    className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => onProblemSuggestionSelect(suggestion)}
+                  >
+                    <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
+                    <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
+        </div>
+        <Button
+          type="button"
+          disabled={isAttachingProblem}
+          className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400"
+          onClick={onAttachProblem}
+        >
+          {isAttachingProblem ? t('contest.detail.attachingProblem') : t('contest.detail.attachProblem')}
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ContestProblemsCard({ contest }: { contest: ContestDetail }) {
+  const { t } = useI18n()
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+            <Rows3 className="size-5" />
+          </div>
+          <div>
+            <CardTitle className="text-xl text-slate-950">{t('contest.detail.problemsTitle')}</CardTitle>
+            <CardDescription>{t('contest.detail.problemsDescription')}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {contest.problems.length === 0 ? (
+          <p className="text-sm text-slate-500">{t('contest.detail.emptyProblems')}</p>
+        ) : (
+          contest.problems.map((problem) => <ContestProblemItem key={problem.id} problem={problem} />)
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ContestProblemItem({ problem }: { problem: ContestDetail['problems'][number] }) {
+  const titleText = useProblemTitleDisplay(problem.title, problem.slug)
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{contestProblemAliasValue(problem.alias)}</Badge>
+        <Link className="text-sm font-medium text-slate-900 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
+          {titleText}
+        </Link>
+      </div>
+    </div>
+  )
+}

@@ -1,6 +1,6 @@
 import { Link, Navigate } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
-import { BookCopy, FileText, Files, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
+import { BookCopy, CalendarDays, FileText, Files, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -54,7 +54,11 @@ export function DashboardPage() {
   )
 }
 
-function DashboardActionGrid({ showSiteManage }: { showSiteManage: boolean }) {
+function DashboardActionGrid({
+  showSiteManage,
+}: {
+  showSiteManage: boolean
+}) {
   const { t } = useI18n()
   const actions: DashboardAction[] = [
     {
@@ -110,6 +114,15 @@ function DashboardActionGrid({ showSiteManage }: { showSiteManage: boolean }) {
       icon: UsersRound,
       iconClassName: 'bg-sky-100 text-sky-700',
       buttonClassName: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
+    },
+    {
+      title: t('dashboard.contests.title'),
+      description: t('dashboard.contests.description'),
+      openLabel: t('dashboard.contests.open'),
+      to: '/contests',
+      icon: CalendarDays,
+      iconClassName: 'bg-cyan-100 text-cyan-700',
+      buttonClassName: 'bg-cyan-300 text-cyan-950 hover:bg-cyan-400',
     },
   ]
 

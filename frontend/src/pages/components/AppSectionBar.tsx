@@ -69,7 +69,9 @@ export function AppSectionBar() {
     { to: '/blogs', label: t('nav.blogs'), tone: 'orange' },
     { to: '/ranklist', label: t('nav.ranklist'), tone: 'amber' },
     { to: '/user-groups', label: t('nav.userGroups'), tone: 'sky' },
+    { to: '/contests', label: t('nav.contests'), tone: 'cyan' },
   ]
+
   return (
     <div className="mb-8 rounded-[1.5rem] border border-slate-200/80 bg-slate-100/90 px-3 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

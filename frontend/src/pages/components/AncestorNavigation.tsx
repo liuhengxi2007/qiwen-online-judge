@@ -6,7 +6,17 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 type AncestorLink = {
   to: string
-  labelKey: 'dashboard' | 'blogs' | 'notifications' | 'problems' | 'problem' | 'problemSets' | 'messages' | 'submissions' | 'userGroups'
+  labelKey:
+    | 'dashboard'
+    | 'blogs'
+    | 'notifications'
+    | 'problems'
+    | 'problem'
+    | 'problemSets'
+    | 'messages'
+    | 'submissions'
+    | 'userGroups'
+    | 'contests'
 }
 
 function buildAncestorLinks(pathname: string): AncestorLink[] {
@@ -90,6 +100,33 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
 
   if (pathname === '/submissions') {
     return [{ to: '/', labelKey: 'dashboard' }]
+  }
+
+  if (pathname === '/contests') {
+    return [{ to: '/', labelKey: 'dashboard' }]
+  }
+
+  if (pathname === '/contests/new') {
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+    ]
+  }
+
+  if (/^\/contests\/[^/]+$/.test(pathname)) {
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+    ]
+  }
+
+  if (/^\/contests\/[^/]+\/registrants$/.test(pathname)) {
+    const slug = pathname.split('/')[2]
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+      { to: `/contests/${slug}`, labelKey: 'contests' },
+    ]
   }
 
   if (pathname === '/messages') {
