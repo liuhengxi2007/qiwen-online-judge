@@ -1,6 +1,8 @@
 import { useEffect, useReducer } from 'react'
 
+import { GetContestProblem } from '@/apis/contest/GetContestProblem'
 import { GetProblem } from '@/apis/problem/GetProblem'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { sendAPI } from '@/system/api/api-message'
@@ -40,13 +42,14 @@ function reduceProblemDetailQueryState(
   }
 }
 
-export function useProblemDetailQuery(problemSlug: ProblemSlug) {
+export function useProblemDetailQuery(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const [state, dispatch] = useReducer(reduceProblemDetailQueryState, initialProblemDetailQueryState)
 
   useEffect(() => {
     let cancelled = false
     dispatch({ type: 'load_started' })
-    void sendAPI(new GetProblem(problemSlug))
+    const message = contestSlug ? new GetContestProblem(contestSlug, problemSlug) : new GetProblem(problemSlug)
+    void sendAPI(message)
       .then((problem) => {
         if (cancelled) {
           return
@@ -69,7 +72,7 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug) {
     return () => {
       cancelled = true
     }
-  }, [problemSlug])
+  }, [contestSlug, problemSlug])
 
   function replaceProblem(problem: ProblemDetail) {
     dispatch({ type: 'replace', problem })

@@ -57,6 +57,11 @@ function ContestDetailPageContent({
 }) {
   const { t } = useI18n()
   const model = useContestDetailPageModel(contestSlug)
+  const canViewContestProblems = model.contest
+    ? model.contest.canManage ||
+      Date.now() > new Date(model.contest.endAt).getTime() ||
+      (Date.now() >= new Date(model.contest.startAt).getTime() && model.contest.registrationStatus.isRegistered)
+    : false
 
   return (
     <PageShell title={t('contest.detail.heading')} mainClassName="bg-[linear-gradient(180deg,#f0fdfa_0%,#ecfeff_48%,#f8fafc_100%)]">
@@ -95,7 +100,7 @@ function ContestDetailPageContent({
               }}
             />
           ) : null}
-          {model.contest.canManage || Date.now() >= new Date(model.contest.startAt).getTime() ? (
+          {canViewContestProblems ? (
             <ContestProblemsCard contest={model.contest} />
           ) : null}
         </div>
@@ -120,7 +125,9 @@ function ContestDetailHeaderCard({
   const { t } = useI18n()
   const now = Date.now()
   const hasStarted = now >= new Date(contest.startAt).getTime()
+  const hasEnded = now > new Date(contest.endAt).getTime()
   const isRegistered = contest.registrationStatus.isRegistered
+  const canViewParticipantArea = contest.canManage || isRegistered || hasEnded
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -165,6 +172,11 @@ function ContestDetailHeaderCard({
             <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
               <Link to={`/contests/${contestSlugValue(contest.slug)}/registrants`}>{t('contest.detail.registrants')}</Link>
             </Button>
+            {canViewParticipantArea ? (
+              <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+                <Link to={`/contests/${contestSlugValue(contest.slug)}/ranklist`}>{t('contest.detail.ranklist')}</Link>
+              </Button>
+            ) : null}
             {contest.canManage ? (
               <Badge variant="outline" className="rounded-2xl px-4 py-2">
                 {t('contest.detail.managerView')}
@@ -333,23 +345,31 @@ function ContestProblemsCard({ contest }: { contest: ContestDetail }) {
         {contest.problems.length === 0 ? (
           <p className="text-sm text-slate-500">{t('contest.detail.emptyProblems')}</p>
         ) : (
-          contest.problems.map((problem) => <ContestProblemItem key={problem.id} problem={problem} />)
+          contest.problems.map((problem) => <ContestProblemItem key={problem.id} contestSlug={contest.slug} problem={problem} />)
         )}
       </CardContent>
     </Card>
   )
 }
 
-function ContestProblemItem({ problem }: { problem: ContestDetail['problems'][number] }) {
+function ContestProblemItem({ contestSlug, problem }: { contestSlug: ContestSlug; problem: ContestDetail['problems'][number] }) {
+  const { t } = useI18n()
   const titleText = useProblemTitleDisplay(problem.title, problem.slug)
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{contestProblemAliasValue(problem.alias)}</Badge>
-        <Link className="text-sm font-medium text-slate-900 hover:underline" to={`/problems/${problemSlugValue(problem.slug)}`}>
-          {titleText}
-        </Link>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{contestProblemAliasValue(problem.alias)}</Badge>
+          <Link className="text-sm font-medium text-slate-900 hover:underline" to={`/contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problem.slug)}`}>
+            {titleText}
+          </Link>
+        </div>
+        <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+          <Link to={`/contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problem.slug)}/submit`}>
+            {t('problem.detail.submitCode')}
+          </Link>
+        </Button>
       </div>
     </div>
   )

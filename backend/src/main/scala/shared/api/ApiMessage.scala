@@ -38,6 +38,8 @@ object ApiMessages:
   val contestRegistrationLocked: ApiMessage = ApiMessage("api.error.contest.registration_locked")
   val contestAlreadyRegistered: ApiMessage = ApiMessage("api.error.contest.already_registered")
   val contestNotRegistered: ApiMessage = ApiMessage("api.error.contest.not_registered")
+  val contestNotRunning: ApiMessage = ApiMessage("api.error.contest.not_running")
+  val contestProblemNotFound: ApiMessage = ApiMessage("api.error.contest.problem_not_found")
   val problemAlreadyLinkedToContest: ApiMessage = ApiMessage("api.error.contest.problem_already_linked")
   val submissionNotFound: ApiMessage = ApiMessage("api.error.submission.not_found")
   val userGroupNotFound: ApiMessage = ApiMessage("api.error.user_group.not_found")

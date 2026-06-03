@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
-import domains.problem.objects.ProblemSlug
+import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 
 import domains.submission.objects.SubmissionSourceCode
 import domains.submission.objects.internal.SubmissionProgramManifest
@@ -31,6 +31,9 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
     request.as[CreateSubmissionRequest]
 
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
+    createForProblem(connection, actor, request)
+
+  def createForProblem(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     for
       problemSlug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.problemSlug.value))
       sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))
@@ -40,6 +43,21 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.problemNotFound))
+      created <- createForAccessibleProblem(connection, actor, validRequest, problem.id, problem.slug, problem.title, access.canManage)
+    yield created
+
+  def createForAccessibleProblem(
+    connection: Connection,
+    actor: AuthenticatedUser,
+    request: CreateSubmissionRequest,
+    problemId: ProblemId,
+    problemSlug: ProblemSlug,
+    problemTitle: ProblemTitle,
+    canManage: Boolean
+  ): IO[SubmissionDetail] =
+    for
+      sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))
+      validRequest = request.copy(problemSlug = problemSlug, sourceCode = sourceCode)
       submissionUuid <- IO.randomUUID
       programManifest = SubmissionProgramManifest.singleDefault(submissionUuid, validRequest.language, validRequest.sourceCode)
       _ <- submissionProgramStorage.writeSource(
@@ -50,9 +68,9 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         .insert(
           connection = connection,
           submissionUuid = submissionUuid,
-          problemId = problem.id,
-          problemSlug = problem.slug,
-          problemTitle = problem.title,
+          problemId = problemId,
+          problemSlug = problemSlug,
+          problemTitle = problemTitle,
           submitterUsername = actor.username,
           programManifest = programManifest,
           sourceCode = validRequest.sourceCode
@@ -60,4 +78,4 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         .handleErrorWith { error =>
           submissionProgramStorage.deleteManifest(programManifest).handleError(_ => ()).void *> IO.raiseError(error)
         }
-    yield created.copy(canManage = access.canManage)
+    yield created.copy(canManage = canManage)

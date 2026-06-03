@@ -18,16 +18,27 @@ object ProblemAccessRules:
     actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
-    hasVisibleContainingProblemSet: Boolean
+    hasVisibleContainingProblemSet: Boolean,
+    hasVisibleUnfinishedContestContainingProblem: Boolean,
+    hasVisibleEndedContestContainingProblem: Boolean
   ): Option[ProblemDetail] =
-    val decision = evaluateProblemPermissions(actor, problem, actorGroupSlugs, hasVisibleContainingProblemSet)
+    val decision = evaluateProblemPermissions(
+      actor,
+      problem,
+      actorGroupSlugs,
+      hasVisibleContainingProblemSet,
+      hasVisibleUnfinishedContestContainingProblem,
+      hasVisibleEndedContestContainingProblem
+    )
     if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
 
   def evaluateProblemPermissions(
     actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
-    hasVisibleContainingProblemSet: Boolean
+    hasVisibleContainingProblemSet: Boolean,
+    hasVisibleUnfinishedContestContainingProblem: Boolean,
+    hasVisibleEndedContestContainingProblem: Boolean
   ): ProblemPermissionEvaluation =
     val resourceDecision =
       ResourceAccessDecision.evaluate(
@@ -40,9 +51,13 @@ object ProblemAccessRules:
         )
       )
 
+    val canManage = resourceDecision.canManage
     ProblemPermissionEvaluation(
-      canView = resourceDecision.canViewDirectly || hasVisibleContainingProblemSet,
-      canManage = resourceDecision.canManage
+      canView =
+        canManage ||
+          (!hasVisibleUnfinishedContestContainingProblem &&
+            (resourceDecision.canViewDirectly || hasVisibleContainingProblemSet || hasVisibleEndedContestContainingProblem)),
+      canManage = canManage
     )
 
   def canManageProblem(

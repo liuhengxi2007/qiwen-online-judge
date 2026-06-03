@@ -42,8 +42,10 @@ object GetContest extends AuthenticatedApi[ContestSlug, ContestDetail]:
         HttpApiError.notFound(ApiMessages.contestNotFound)
       )
       canManage = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      includeProblems = canManage || !Instant.now().isBefore(contest.startAt)
       registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
+      now = Instant.now()
+      registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
+      includeProblems = canManage || now.isAfter(contest.endAt) || (!now.isBefore(contest.startAt) && registeredBeforeStart)
     yield ContestDetail.fromContest(
       contest,
       registration.fold(ContestRegistrationStatus.notRegistered)(ContestRegistrationStatus.registeredAt),
