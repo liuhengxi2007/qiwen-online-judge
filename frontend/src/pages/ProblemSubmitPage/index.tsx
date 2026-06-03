@@ -7,6 +7,8 @@ import { ProblemSubmitHeaderCard } from './components/ProblemSubmitHeaderCard'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { parseContestSlug } from '@/objects/contest/ContestSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { useCreateSubmissionAction } from './hooks/useCreateSubmissionAction'
@@ -26,7 +28,7 @@ export function ProblemSubmitPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.submit.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const { slug } = useParams<{ slug: string }>()
+  const { contestSlug, slug } = useParams<{ contestSlug?: string; slug: string }>()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -41,15 +43,22 @@ export function ProblemSubmitPage() {
     return <Navigate replace to="/problems" />
   }
 
-  return <ProblemSubmitPageContent problemSlug={slugResult.value} />
+  const contestSlugResult = contestSlug ? parseContestSlug(contestSlug) : null
+  if (contestSlugResult && !contestSlugResult.ok) {
+    return <Navigate replace to="/contests" />
+  }
+
+  const parsedContestSlug = contestSlugResult?.ok ? contestSlugResult.value : undefined
+
+  return <ProblemSubmitPageContent contestSlug={parsedContestSlug} problemSlug={slugResult.value} />
 }
 
-function ProblemSubmitPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
-  const detailQuery = useProblemDetailQuery(problemSlug)
+  const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const [language, setLanguage] = useState<SubmissionLanguage>('cpp17')
   const [sourceCode, setSourceCode] = useState('')
-  const createSubmissionAction = useCreateSubmissionAction(t('problem.submit.createFailed'))
+  const createSubmissionAction = useCreateSubmissionAction(t('problem.submit.createFailed'), contestSlug)
   const hasUnsavedChanges = sourceCode.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)

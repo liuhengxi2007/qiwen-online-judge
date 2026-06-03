@@ -20,3 +20,4 @@ judge-protocol/target/
 judge-protocol/project/target/
 judge-protocol/project/.sbt-boot/
 judge-protocol/project/.sbt-global/
+minio-data/

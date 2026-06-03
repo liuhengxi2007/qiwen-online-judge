@@ -4,8 +4,10 @@ import { Navigate, useParams } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
+import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { ProblemAccessDialog } from './components/ProblemAccessDialog'
 import { ProblemDetailHeaderCard } from './components/ProblemDetailHeaderCard'
@@ -29,7 +31,7 @@ export function ProblemDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.detail.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const { slug } = useParams<{ slug: string }>()
+  const { contestSlug, slug } = useParams<{ contestSlug?: string; slug: string }>()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -44,17 +46,24 @@ export function ProblemDetailPage() {
     return <Navigate replace to="/problems" />
   }
 
-  return <ProblemDetailPageContent problemSlug={slugResult.value} />
+  const contestSlugResult = contestSlug ? parseContestSlug(contestSlug) : null
+  if (contestSlugResult && !contestSlugResult.ok) {
+    return <Navigate replace to="/contests" />
+  }
+
+  const parsedContestSlug = contestSlugResult?.ok ? contestSlugResult.value : undefined
+
+  return <ProblemDetailPageContent contestSlug={parsedContestSlug} problemSlug={slugResult.value} />
 }
 
-function ProblemDetailPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+function ProblemDetailPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
   const otherUserSubmissionAccessOptions = [
     { value: 'none', label: t('problem.otherUserSubmissionAccess.none.label'), description: t('problem.otherUserSubmissionAccess.none.description') },
     { value: 'summary', label: t('problem.otherUserSubmissionAccess.summary.label'), description: t('problem.otherUserSubmissionAccess.summary.description') },
     { value: 'detail', label: t('problem.otherUserSubmissionAccess.detail.label'), description: t('problem.otherUserSubmissionAccess.detail.description') },
   ] as const
-  const model = useProblemDetailPageModel(problemSlug)
+  const model = useProblemDetailPageModel(problemSlug, contestSlug)
   const canManageProblem = model.canManage
   const [managementPanel, setManagementPanel] = useState<'edit' | 'access' | null>(null)
   const [statementTab, setStatementTab] = useState<'write' | 'preview'>('write')

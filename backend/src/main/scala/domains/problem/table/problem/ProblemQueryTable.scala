@@ -16,7 +16,7 @@ import java.sql.Connection
 
 object ProblemQueryTable:
 
-  private val accessPredicate: String =
+  private val normalAccessPredicate: String =
     """
       |(
       |  ? = true
@@ -66,6 +66,101 @@ object ProblemQueryTable:
       |            and ugm.username = ?
       |        )
       |      )
+      |  )
+      |)
+      |""".stripMargin
+
+  private val managerAccessPredicate: String =
+    """
+      |(
+      |  ? = true
+      |  or exists (
+      |    select 1
+      |    from problem_access_grants pag
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'manager'
+      |      and pag.subject_kind = 'user'
+      |      and pag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from problem_access_grants pag
+      |    join user_groups ug on ug.slug = pag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'manager'
+      |      and pag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |)
+      |""".stripMargin
+
+  private val visibleContestPredicate: String =
+    """
+      |(
+      |  ? = true
+      |  or c.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    where cag.contest_id = c.id
+      |      and cag.grant_role in ('viewer', 'manager')
+      |      and cag.subject_kind = 'user'
+      |      and cag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    join user_groups ug on ug.slug = cag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where cag.contest_id = c.id
+      |      and cag.grant_role in ('viewer', 'manager')
+      |      and cag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from contest_registrations cr
+      |    where cr.contest_id = c.id
+      |      and cr.username = ?
+      |  )
+      |)
+      |""".stripMargin
+
+  private val visibleUnfinishedContestPredicate: String =
+    s"""
+      |exists (
+      |    select 1
+      |    from contest_problems cp
+      |    join contests c on c.id = cp.contest_id
+      |    where cp.problem_id = p.id
+      |      and c.end_at >= now()
+      |      and $visibleContestPredicate
+      |)
+      |""".stripMargin
+
+  private val visibleEndedContestPredicate: String =
+    s"""
+      |exists (
+      |  select 1
+      |  from contest_problems cp
+      |  join contests c on c.id = cp.contest_id
+      |  where cp.problem_id = p.id
+      |    and c.end_at < now()
+      |    and $visibleContestPredicate
+      |)
+      |""".stripMargin
+
+  private val accessPredicate: String =
+    s"""
+      |(
+      |  $managerAccessPredicate
+      |  or (
+      |    not $visibleUnfinishedContestPredicate
+      |    and (
+      |      $normalAccessPredicate
+      |      or $visibleEndedContestPredicate
+      |    )
       |  )
       |)
       |""".stripMargin

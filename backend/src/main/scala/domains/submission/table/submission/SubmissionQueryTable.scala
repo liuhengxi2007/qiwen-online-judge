@@ -32,7 +32,7 @@ object SubmissionQueryTable:
       case SubmissionSort.CodeLength =>
         s"s.code_length $submittedDirection, s.submitted_at desc, s.public_id desc"
 
-  private val summaryVisibilityPredicate: String =
+  private val ordinarySummaryVisibilityPredicate: String =
     """
       |(
       |  ? = true
@@ -92,6 +92,105 @@ object SubmissionQueryTable:
       |)
       |""".stripMargin
 
+  private val problemManagerVisibilityPredicate: String =
+    """
+      |(
+      |  ? = true
+      |  or exists (
+      |    select 1
+      |    from problem_access_grants pag
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'manager'
+      |      and pag.subject_kind = 'user'
+      |      and pag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from problem_access_grants pag
+      |    join user_groups ug on ug.slug = pag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where pag.problem_id = p.id
+      |      and pag.grant_role = 'manager'
+      |      and pag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |)
+      |""".stripMargin
+
+  private val visibleContestPredicate: String =
+    """
+      |(
+      |  ? = true
+      |  or c.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    where cag.contest_id = c.id
+      |      and cag.grant_role in ('viewer', 'manager')
+      |      and cag.subject_kind = 'user'
+      |      and cag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    join user_groups ug on ug.slug = cag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where cag.contest_id = c.id
+      |      and cag.grant_role in ('viewer', 'manager')
+      |      and cag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from contest_registrations cr
+      |    where cr.contest_id = c.id
+      |      and cr.username = ?
+      |  )
+      |)
+      |""".stripMargin
+
+  private val visibleUnfinishedContestPredicate: String =
+    s"""
+      |exists (
+      |  select 1
+      |  from contest_problems cp
+      |  join contests c on c.id = cp.contest_id
+      |  where cp.problem_id = p.id
+      |    and c.end_at >= now()
+      |    and $visibleContestPredicate
+      |)
+      |""".stripMargin
+
+  private val ownRegisteredContestSubmissionPredicate: String =
+    """
+      |(
+      |  s.submitter_username = ?
+      |  and exists (
+      |    select 1
+      |    from contest_problems cp
+      |    join contests c on c.id = cp.contest_id
+      |    join contest_registrations cr on cr.contest_id = c.id
+      |    where cp.problem_id = p.id
+      |      and s.submitted_at >= c.start_at
+      |      and s.submitted_at <= c.end_at
+      |      and cr.username = ?
+      |      and cr.registered_at <= c.start_at
+      |  )
+      |)
+      |""".stripMargin
+
+  private val visibleEndedContestPredicate: String =
+    s"""
+      |exists (
+      |  select 1
+      |  from contest_problems cp
+      |  join contests c on c.id = cp.contest_id
+      |  where cp.problem_id = p.id
+      |    and c.end_at < now()
+      |    and $visibleContestPredicate
+      |)
+      |""".stripMargin
+
   private val usernameFilterPredicate: String =
     """
       |(? = false or lower(s.submitter_username) like lower(?) escape '\' or lower(au.display_name) like lower(?) escape '\')
@@ -111,7 +210,7 @@ object SubmissionQueryTable:
       |)
       |""".stripMargin
 
-  private val detailVisibilityPredicate: String =
+  private val ordinaryDetailVisibilityPredicate: String =
     """
       |(
       |  ? = true
@@ -166,6 +265,42 @@ object SubmissionQueryTable:
       |            )
       |          )
       |      )
+      |    )
+      |  )
+      |)
+      |""".stripMargin
+
+  private val detailVisibilityPredicate: String =
+    s"""
+      |(
+      |  $problemManagerVisibilityPredicate
+      |  or (
+      |    $visibleUnfinishedContestPredicate
+      |    and $ownRegisteredContestSubmissionPredicate
+      |  )
+      |  or (
+      |    not $visibleUnfinishedContestPredicate
+      |    and (
+      |      $ordinaryDetailVisibilityPredicate
+      |      or $visibleEndedContestPredicate
+      |    )
+      |  )
+      |)
+      |""".stripMargin
+
+  private val summaryVisibilityPredicate: String =
+    s"""
+      |(
+      |  $problemManagerVisibilityPredicate
+      |  or (
+      |    $visibleUnfinishedContestPredicate
+      |    and $ownRegisteredContestSubmissionPredicate
+      |  )
+      |  or (
+      |    not $visibleUnfinishedContestPredicate
+      |    and (
+      |      $ordinarySummaryVisibilityPredicate
+      |      or $visibleEndedContestPredicate
       |    )
       |  )
       |)
@@ -335,6 +470,29 @@ object SubmissionQueryTable:
     actor: AuthenticatedUser,
     hasGlobalViewOverride: Boolean
   ): Int =
+    val afterProblemManager = bindProblemManagerVisibility(statement, startIndex, actor)
+    val afterVisibleUnfinished = bindVisibleContest(statement, afterProblemManager, actor)
+    val afterOwnInContestSubmitter = bindString(statement, afterVisibleUnfinished, actor.username.value)
+    val afterOwnInContestRegistrant = bindString(statement, afterOwnInContestSubmitter, actor.username.value)
+    val afterVisibleUnfinishedGuard = bindVisibleContest(statement, afterOwnInContestRegistrant, actor)
+    val afterOrdinary = bindOrdinaryVisibility(statement, afterVisibleUnfinishedGuard, actor, hasGlobalViewOverride)
+    bindVisibleContest(statement, afterOrdinary, actor)
+
+  private def bindProblemManagerVisibility(
+    statement: PreparedStatement,
+    startIndex: Int,
+    actor: AuthenticatedUser
+  ): Int =
+    val afterGlobalProblemManager = bindBoolean(statement, startIndex, actor.siteManager || actor.problemManager)
+    val afterUserManagerGrant = bindString(statement, afterGlobalProblemManager, actor.username.value)
+    bindString(statement, afterUserManagerGrant, actor.username.value)
+
+  private def bindOrdinaryVisibility(
+    statement: PreparedStatement,
+    startIndex: Int,
+    actor: AuthenticatedUser,
+    hasGlobalViewOverride: Boolean
+  ): Int =
     val afterGlobalOverride = bindBoolean(statement, startIndex, hasGlobalViewOverride)
     val afterOwnUsername = bindString(statement, afterGlobalOverride, actor.username.value)
     val afterProblemViewerGrant = bindString(statement, afterOwnUsername, actor.username.value)
@@ -342,6 +500,16 @@ object SubmissionQueryTable:
     val afterProblemSetOverride = bindBoolean(statement, afterProblemGroupGrant, hasGlobalViewOverride)
     val afterProblemSetViewerGrant = bindString(statement, afterProblemSetOverride, actor.username.value)
     bindString(statement, afterProblemSetViewerGrant, actor.username.value)
+
+  private def bindVisibleContest(
+    statement: PreparedStatement,
+    startIndex: Int,
+    actor: AuthenticatedUser
+  ): Int =
+    val afterGlobalOverride = bindBoolean(statement, startIndex, actor.siteManager || actor.contestManager)
+    val afterUserGrant = bindString(statement, afterGlobalOverride, actor.username.value)
+    val afterGroupGrant = bindString(statement, afterUserGrant, actor.username.value)
+    bindString(statement, afterGroupGrant, actor.username.value)
 
   private def bindUserQuery(
     statement: PreparedStatement,

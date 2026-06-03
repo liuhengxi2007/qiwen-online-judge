@@ -10,13 +10,14 @@ import {
   buildProblemDetailAccessPolicy,
 } from '../functions/ProblemForm'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { useProblemDeleteAction } from './useProblemDeleteAction'
 import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
 import { useProblemEditorState } from './useProblemEditorState'
 import { useProblemUpdateAction } from './useProblemUpdateAction'
 
-export function useProblemDetailPageModel(problemSlug: ProblemSlug) {
-  const detailQuery = useProblemDetailQuery(problemSlug)
+export function useProblemDetailPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
+  const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const editor = useProblemEditorState(detailQuery.problem)
   const updateAction = useProblemUpdateAction(problemSlug)
   const deleteAction = useProblemDeleteAction(problemSlug)

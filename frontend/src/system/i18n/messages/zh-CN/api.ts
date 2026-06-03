@@ -27,6 +27,8 @@ export const zhCnApiMessages: Record<string, string> = {
   'api.error.contest.registration_locked': '比赛报名不能取消。',
   'api.error.contest.already_registered': '你已经报名这个比赛。',
   'api.error.contest.not_registered': '你还没有报名这个比赛。',
+  'api.error.contest.not_running': '比赛当前不在进行中。',
+  'api.error.contest.problem_not_found': '该题目不属于这个比赛。',
   'api.error.contest.problem_already_linked': '该题目已经关联到这个比赛。',
   'api.error.submission.not_found': '提交不存在。',
   'api.error.user_group.not_found': '用户组不存在。',

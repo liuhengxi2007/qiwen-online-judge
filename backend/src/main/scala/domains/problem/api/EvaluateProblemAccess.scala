@@ -6,6 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemAccessEvaluationResponse
 import domains.problem.utils.ProblemAccessRules
+import domains.contest.table.contest.ContestProblemVisibilityTable
 import domains.problem.table.problem.ProblemQueryTable
 import domains.usergroup.api.ListUserGroupSlugsForMember
 import org.http4s.Method
@@ -26,11 +27,17 @@ object EvaluateProblemAccess extends InternalOnlyAuthenticatedApi[ProblemSlug, P
         for
           actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
           hasVisibleContainingProblemSet <- ProblemQueryTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
+          hasVisibleUnfinishedContestContainingProblem <- ContestProblemVisibilityTable
+            .hasVisibleUnfinishedContestContainingProblem(connection, actor, problem.id)
+          hasVisibleEndedContestContainingProblem <- ContestProblemVisibilityTable
+            .hasVisibleEndedContestContainingProblem(connection, actor, problem.id)
           access = ProblemAccessRules.evaluateProblemPermissions(
             actor,
             problem,
             actorGroupSlugs.slugs.toSet,
-            hasVisibleContainingProblemSet
+            hasVisibleContainingProblemSet,
+            hasVisibleUnfinishedContestContainingProblem,
+            hasVisibleEndedContestContainingProblem
           )
         yield ProblemAccessEvaluationResponse(problem = Some(problem), canView = access.canView, canManage = access.canManage)
     }

@@ -27,6 +27,8 @@ export const enApiMessages: Record<string, string> = {
   'api.error.contest.registration_locked': 'Contest registration cannot be cancelled.',
   'api.error.contest.already_registered': 'You are already registered for this contest.',
   'api.error.contest.not_registered': 'You are not registered for this contest.',
+  'api.error.contest.not_running': 'Contest is not running.',
+  'api.error.contest.problem_not_found': 'Problem is not part of this contest.',
   'api.error.contest.problem_already_linked': 'Problem is already linked to this contest.',
   'api.error.submission.not_found': 'Submission not found.',
   'api.error.user_group.not_found': 'User group not found.',

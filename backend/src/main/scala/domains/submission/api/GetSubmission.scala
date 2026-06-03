@@ -3,6 +3,7 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.contest.table.contest.ContestProblemVisibilityTable
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.utils.SubmissionAccessRules
 
@@ -38,17 +39,38 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
             case None =>
               HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
             case Some(problem) =>
-              if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
-                loadSubmissionDetail(record, access.canManage)
-              else
-                for
-                  _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
-                  _ <- HttpApiError.ensure(
-                    SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
-                    HttpApiError.notFound(ApiMessages.submissionNotFound)
-                  )
-                  submission <- loadSubmissionDetail(record, access.canManage)
-                yield submission
+              for
+                hasVisibleUnfinishedContestContainingProblem <- ContestProblemVisibilityTable
+                  .hasVisibleUnfinishedContestContainingProblem(connection, actor, record.problemId)
+                hasVisibleEndedContestContainingProblem <- ContestProblemVisibilityTable
+                  .hasVisibleEndedContestContainingProblem(connection, actor, record.problemId)
+                isOwnRegisteredContestSubmission <- ContestProblemVisibilityTable
+                  .hasRegisteredContestContainingSubmission(connection, actor, record.problemId, record.submittedAt)
+                submission <-
+                  if access.canManage then
+                    loadSubmissionDetail(record, access.canManage)
+                  else if hasVisibleUnfinishedContestContainingProblem then
+                    for
+                      _ <- HttpApiError.ensure(
+                        record.submitter.username == actor.username && isOwnRegisteredContestSubmission,
+                        HttpApiError.notFound(ApiMessages.submissionNotFound)
+                      )
+                      submission <- loadSubmissionDetail(record, access.canManage)
+                    yield submission
+                  else if hasVisibleEndedContestContainingProblem then
+                    loadSubmissionDetail(record, access.canManage)
+                  else if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
+                    loadSubmissionDetail(record, access.canManage)
+                  else
+                    for
+                      _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
+                      _ <- HttpApiError.ensure(
+                        SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
+                        HttpApiError.notFound(ApiMessages.submissionNotFound)
+                      )
+                      submission <- loadSubmissionDetail(record, access.canManage)
+                    yield submission
+              yield submission
         }
     }
 

@@ -8,6 +8,7 @@ import { CreateContestPage } from '@/pages/CreateContestPage'
 import { CreateProblemPage } from '@/pages/CreateProblemPage'
 import { ContestPage } from '@/pages/ContestPage'
 import { ContestDetailPage } from '@/pages/ContestDetailPage'
+import { ContestRanklistPage } from '@/pages/ContestRanklistPage'
 import { ContestRegistrantPage } from '@/pages/ContestRegistrantPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ProblemDataPage } from '@/pages/ProblemDataPage'
@@ -154,6 +155,18 @@ export const router = createBrowserRouter([
       {
         path: 'contests/:slug/registrants',
         element: <AuthenticatedRoute element={<ContestRegistrantPage />} />,
+      },
+      {
+        path: 'contests/:slug/ranklist',
+        element: <AuthenticatedRoute element={<ContestRanklistPage />} />,
+      },
+      {
+        path: 'contests/:contestSlug/problems/:slug/submit',
+        element: <AuthenticatedRoute element={<ProblemSubmitPage />} />,
+      },
+      {
+        path: 'contests/:contestSlug/problems/:slug',
+        element: <AuthenticatedRoute element={<ProblemDetailPage />} />,
       },
       {
         path: 'contests/:slug',

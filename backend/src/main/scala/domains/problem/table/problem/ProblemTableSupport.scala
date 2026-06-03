@@ -92,10 +92,31 @@ object ProblemTableSupport:
     actor: AuthenticatedUser,
     startIndex: Int
   ): Int =
+    val afterManagerProblemAccess = bindManagerProblemAccessQuery(statement, actor, startIndex)
+    val afterVisibleUnfinishedContest = bindVisibleContestAccessQuery(statement, actor, afterManagerProblemAccess)
+    val afterNormalProblemAccess = bindNormalProblemAccessQuery(statement, actor, afterVisibleUnfinishedContest)
+    bindVisibleContestAccessQuery(statement, actor, afterNormalProblemAccess)
+
+  private def bindManagerProblemAccessQuery(
+    statement: PreparedStatement,
+    actor: AuthenticatedUser,
+    startIndex: Int
+  ): Int =
     statement.setBoolean(startIndex, actor.siteManager || actor.problemManager)
     statement.setString(startIndex + 1, actor.username.value)
     statement.setString(startIndex + 2, actor.username.value)
-    statement.setBoolean(startIndex + 3, actor.siteManager || actor.problemManager)
+    startIndex + 3
+
+  private def bindNormalProblemAccessQuery(
+    statement: PreparedStatement,
+    actor: AuthenticatedUser,
+    startIndex: Int
+  ): Int =
+    val globalProblemOverride = actor.siteManager || actor.problemManager
+    statement.setBoolean(startIndex, globalProblemOverride)
+    statement.setString(startIndex + 1, actor.username.value)
+    statement.setString(startIndex + 2, actor.username.value)
+    statement.setBoolean(startIndex + 3, globalProblemOverride)
     statement.setString(startIndex + 4, actor.username.value)
     statement.setString(startIndex + 5, actor.username.value)
     startIndex + 6
@@ -110,6 +131,21 @@ object ProblemTableSupport:
     statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
     statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3
+
+  private def bindString(statement: PreparedStatement, index: Int, value: String): Int =
+    statement.setString(index, value)
+    index + 1
+
+  private def bindVisibleContestAccessQuery(
+    statement: PreparedStatement,
+    actor: AuthenticatedUser,
+    startIndex: Int
+  ): Int =
+    statement.setBoolean(startIndex, actor.siteManager || actor.contestManager)
+    statement.setString(startIndex + 1, actor.username.value)
+    statement.setString(startIndex + 2, actor.username.value)
+    statement.setString(startIndex + 3, actor.username.value)
+    startIndex + 4
 
   def bindListQuery(
     statement: PreparedStatement,
