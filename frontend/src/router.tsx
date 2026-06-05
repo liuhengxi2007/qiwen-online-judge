@@ -8,8 +8,10 @@ import { CreateContestPage } from '@/pages/CreateContestPage'
 import { CreateProblemPage } from '@/pages/CreateProblemPage'
 import { ContestPage } from '@/pages/ContestPage'
 import { ContestDetailPage } from '@/pages/ContestDetailPage'
+import { ContestManagePage } from '@/pages/ContestManagePage'
 import { ContestRanklistPage } from '@/pages/ContestRanklistPage'
 import { ContestRegistrantPage } from '@/pages/ContestRegistrantPage'
+import { ContestSubmissionPage } from '@/pages/ContestSubmissionPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ProblemDataPage } from '@/pages/ProblemDataPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -159,6 +161,14 @@ export const router = createBrowserRouter([
       {
         path: 'contests/:slug/ranklist',
         element: <AuthenticatedRoute element={<ContestRanklistPage />} />,
+      },
+      {
+        path: 'contests/:slug/submissions',
+        element: <AuthenticatedRoute element={<ContestSubmissionPage />} />,
+      },
+      {
+        path: 'contests/:slug/manage',
+        element: <AuthenticatedRoute element={<ContestManagePage />} />,
       },
       {
         path: 'contests/:contestSlug/problems/:slug/submit',

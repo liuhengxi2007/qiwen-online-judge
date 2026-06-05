@@ -3,6 +3,7 @@ package domains.submission.table.submission
 import cats.effect.IO
 import database.utils.{LikePatternSql, UserIdentitySql}
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.contest.objects.ContestId
 import domains.problem.objects.ProblemId
 import domains.submission.objects.{SubmissionId, SubmissionVerdict}
 import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
@@ -210,6 +211,25 @@ object SubmissionQueryTable:
       |)
       |""".stripMargin
 
+  private val contestSubmissionOwnerPredicate: String =
+    """
+      |(? = true or s.submitter_username = ?)
+      |""".stripMargin
+
+  private val globalSubmissionSourcePredicate: String =
+    s"""
+      |(
+      |  s.contest_id is null
+      |  or exists (
+      |    select 1
+      |    from contests c
+      |    where c.id = s.contest_id
+      |      and c.end_at < now()
+      |      and $visibleContestPredicate
+      |  )
+      |)
+      |""".stripMargin
+
   private val ordinaryDetailVisibilityPredicate: String =
     """
       |(
@@ -311,8 +331,11 @@ object SubmissionQueryTable:
       |select count(*) as total_items
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |left join contests source_c on source_c.id = s.contest_id
       |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where
+      |  $globalSubmissionSourcePredicate
+      |  and
       |  $summaryVisibilityPredicate
       |  and $usernameFilterPredicate
       |  and $problemQueryFilterPredicate
@@ -326,6 +349,8 @@ object SubmissionQueryTable:
       |       p.slug as problem_slug,
       |       p.title as problem_title,
       |       $detailVisibilityPredicate as can_view_detail,
+      |       source_c.slug as source_contest_slug,
+      |       source_c.title as source_contest_title,
       |       ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")},
       |       s.language,
       |       s.status,
@@ -339,8 +364,11 @@ object SubmissionQueryTable:
       |       s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |left join contests source_c on source_c.id = s.contest_id
       |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where
+      |  $globalSubmissionSourcePredicate
+      |  and
       |  $summaryVisibilityPredicate
       |  and $usernameFilterPredicate
       |  and $problemQueryFilterPredicate
@@ -361,7 +389,7 @@ object SubmissionQueryTable:
       totalItems <- IO.blocking {
         val statement = connection.prepareStatement(countSQL)
         try
-          bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = false, hasGlobalViewOverride)
+          bindGlobalListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = false, hasGlobalViewOverride)
           val resultSet = statement.executeQuery()
           try if resultSet.next() then resultSet.getLong("total_items") else 0L
           finally resultSet.close()
@@ -370,7 +398,115 @@ object SubmissionQueryTable:
       items <- IO.blocking {
         val statement = connection.prepareStatement(listSQL(normalizedRequest.sort, normalizedRequest.direction))
         try
-          val nextIndex = bindListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true, hasGlobalViewOverride)
+          val nextIndex = bindGlobalListFilterStatement(statement, actor, normalizedRequest, includeDetailVisibility = true, hasGlobalViewOverride)
+          statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
+          statement.setInt(nextIndex + 1, (normalizedRequest.pageRequest.page - 1) * normalizedRequest.pageRequest.pageSize)
+          val resultSet = statement.executeQuery()
+          try
+            Iterator
+              .continually(resultSet.next())
+              .takeWhile(identity)
+              .map(_ => readSubmissionSummary(resultSet))
+              .toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield PageResponse(
+      items = items,
+      page = normalizedRequest.pageRequest.page,
+      pageSize = normalizedRequest.pageRequest.pageSize,
+      totalItems = totalItems
+    )
+
+  private val countContestSQL: String =
+    s"""
+      |select count(*) as total_items
+      |from submissions s
+      |join problems p on p.id = s.problem_id
+      |left join contests source_c on source_c.id = s.contest_id
+      |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
+      |where
+      |  s.contest_id = ?
+      |  and $contestSubmissionOwnerPredicate
+      |  and $usernameFilterPredicate
+      |  and $problemQueryFilterPredicate
+      |  and $verdictFilterPredicate
+      |""".stripMargin
+
+  private def listContestSQL(sort: SubmissionSort, direction: SubmissionSortDirection): String =
+    s"""
+      |select s.public_id,
+      |       s.problem_id,
+      |       p.slug as problem_slug,
+      |       p.title as problem_title,
+      |       $detailVisibilityPredicate as can_view_detail,
+      |       source_c.slug as source_contest_slug,
+      |       source_c.title as source_contest_title,
+      |       ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")},
+      |       s.language,
+      |       s.status,
+      |       s.verdict,
+      |       s.time_used_ms,
+      |       s.memory_used_kb,
+      |       s.score,
+      |       s.code_length,
+      |       s.submitted_at,
+      |       s.started_at,
+      |       s.finished_at
+      |from submissions s
+      |join problems p on p.id = s.problem_id
+      |left join contests source_c on source_c.id = s.contest_id
+      |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
+      |where
+      |  s.contest_id = ?
+      |  and $contestSubmissionOwnerPredicate
+      |  and $usernameFilterPredicate
+      |  and $problemQueryFilterPredicate
+      |  and $verdictFilterPredicate
+      |order by ${orderByClause(sort, direction)}
+      |limit ? offset ?
+      |""".stripMargin
+
+  def listVisibleForContest(
+    connection: Connection,
+    actor: AuthenticatedUser,
+    contestId: ContestId,
+    request: SubmissionListRequest,
+    hasGlobalViewOverride: Boolean,
+    canViewAllContestSubmissions: Boolean
+  ): IO[SubmissionListResponse] =
+    val normalizedPageRequest = request.pageRequest.normalized
+    val normalizedRequest = request.copy(pageRequest = normalizedPageRequest)
+    for
+      totalItems <- IO.blocking {
+        val statement = connection.prepareStatement(countContestSQL)
+        try
+          bindContestListFilterStatement(
+            statement,
+            actor,
+            contestId,
+            normalizedRequest,
+            includeDetailVisibility = false,
+            hasGlobalViewOverride,
+            canViewAllContestSubmissions
+          )
+          val resultSet = statement.executeQuery()
+          try if resultSet.next() then resultSet.getLong("total_items") else 0L
+          finally resultSet.close()
+        finally statement.close()
+      }
+      items <- IO.blocking {
+        val statement = connection.prepareStatement(listContestSQL(normalizedRequest.sort, normalizedRequest.direction))
+        try
+          val nextIndex = bindContestListFilterStatement(
+            statement,
+            actor,
+            contestId,
+            normalizedRequest,
+            includeDetailVisibility = true,
+            hasGlobalViewOverride,
+            canViewAllContestSubmissions
+          )
           statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
           statement.setInt(nextIndex + 1, (normalizedRequest.pageRequest.page - 1) * normalizedRequest.pageRequest.pageSize)
           val resultSet = statement.executeQuery()
@@ -392,9 +528,10 @@ object SubmissionQueryTable:
 
   private val findByIdSQL: String =
     s"""
-      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, s.code_length, s.program_manifest::text as program_manifest, s.submitted_at, s.started_at, s.finished_at
+      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, source_c.slug as source_contest_slug, source_c.title as source_contest_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, s.code_length, s.program_manifest::text as program_manifest, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
+      |left join contests source_c on source_c.id = s.contest_id
       |${UserIdentitySql.joinUserProfiles("s.submitter_username", "au")}
       |where s.public_id = ?
       |""".stripMargin
@@ -433,7 +570,7 @@ object SubmissionQueryTable:
       finally statement.close()
     }
 
-  private def bindListFilterStatement(
+  private def bindGlobalListFilterStatement(
     statement: PreparedStatement,
     actor: AuthenticatedUser,
     request: SubmissionListRequest,
@@ -444,8 +581,35 @@ object SubmissionQueryTable:
       if includeDetailVisibility then bindVisibility(statement, 1, actor, hasGlobalViewOverride)
       else 1
 
-    val afterSummaryVisibility = bindVisibility(statement, afterDetailVisibility, actor, hasGlobalViewOverride)
-    val afterUserQuery = bindUserQuery(statement, afterSummaryVisibility, request.userQuery)
+    val afterGlobalSourceVisibility = bindVisibleContest(statement, afterDetailVisibility, actor)
+    val afterSummaryVisibility = bindVisibility(statement, afterGlobalSourceVisibility, actor, hasGlobalViewOverride)
+    bindCommonListFilters(statement, afterSummaryVisibility, request)
+
+  private def bindContestListFilterStatement(
+    statement: PreparedStatement,
+    actor: AuthenticatedUser,
+    contestId: ContestId,
+    request: SubmissionListRequest,
+    includeDetailVisibility: Boolean,
+    hasGlobalViewOverride: Boolean,
+    canViewAllContestSubmissions: Boolean
+  ): Int =
+    val afterDetailVisibility =
+      if includeDetailVisibility then bindVisibility(statement, 1, actor, hasGlobalViewOverride)
+      else 1
+
+    statement.setObject(afterDetailVisibility, contestId.value)
+    val afterContestId = afterDetailVisibility + 1
+    val afterCanViewAll = bindBoolean(statement, afterContestId, canViewAllContestSubmissions)
+    val afterSubmitter = bindString(statement, afterCanViewAll, actor.username.value)
+    bindCommonListFilters(statement, afterSubmitter, request)
+
+  private def bindCommonListFilters(
+    statement: PreparedStatement,
+    startIndex: Int,
+    request: SubmissionListRequest
+  ): Int =
+    val afterUserQuery = bindUserQuery(statement, startIndex, request.userQuery)
     val afterProblemQuery = bindProblemQuery(statement, afterUserQuery, request.problemQuery)
 
     val isAllVerdict = request.verdict == SubmissionVerdictFilter.All

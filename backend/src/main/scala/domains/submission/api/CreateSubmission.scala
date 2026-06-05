@@ -3,13 +3,14 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.contest.objects.ContestId
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 
 import domains.submission.objects.SubmissionSourceCode
 import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.request.CreateSubmissionRequest
-import domains.submission.objects.response.SubmissionDetail
+import domains.submission.objects.response.{SubmissionDetail, SubmissionSource}
 import domains.submission.table.submission.SubmissionMutationTable
 import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder
@@ -43,7 +44,17 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.problemNotFound))
-      created <- createForAccessibleProblem(connection, actor, validRequest, problem.id, problem.slug, problem.title, access.canManage)
+      created <- createForAccessibleProblem(
+        connection,
+        actor,
+        validRequest,
+        problem.id,
+        contestId = None,
+        problem.slug,
+        problem.title,
+        source = SubmissionSource.FromProblemSet,
+        access.canManage
+      )
     yield created
 
   def createForAccessibleProblem(
@@ -51,8 +62,10 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
     actor: AuthenticatedUser,
     request: CreateSubmissionRequest,
     problemId: ProblemId,
+    contestId: Option[ContestId],
     problemSlug: ProblemSlug,
     problemTitle: ProblemTitle,
+    source: SubmissionSource,
     canManage: Boolean
   ): IO[SubmissionDetail] =
     for
@@ -69,8 +82,10 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
           connection = connection,
           submissionUuid = submissionUuid,
           problemId = problemId,
+          contestId = contestId,
           problemSlug = problemSlug,
           problemTitle = problemTitle,
+          source = source,
           submitterUsername = actor.username,
           programManifest = programManifest,
           sourceCode = validRequest.sourceCode

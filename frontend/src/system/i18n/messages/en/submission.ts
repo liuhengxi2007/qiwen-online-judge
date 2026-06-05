@@ -25,6 +25,8 @@ export const enSubmissionMessages: Record<string, string> = {
   'submission.list.id': 'ID',
   'submission.list.problem': 'Problem',
   'submission.list.submitter': 'Submitter',
+  'submission.list.source': 'Source',
+  'submission.list.problemSource': 'From problemset',
   'submission.list.language': 'Lang',
   'submission.list.timeUsed': 'Time',
   'submission.list.spaceUsed': 'Memory',

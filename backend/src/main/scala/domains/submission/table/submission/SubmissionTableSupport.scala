@@ -2,8 +2,10 @@ package domains.submission.table.submission
 
 
 
+import domains.contest.objects.{ContestSlug, ContestTitle}
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.objects.response.SubmissionSummary
+import domains.submission.objects.response.SubmissionSource
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
 import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
@@ -30,6 +32,7 @@ object SubmissionTableSupport:
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      source = readSubmissionSource(resultSet),
       canViewDetail = resultSet.getBoolean("can_view_detail"),
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
@@ -50,6 +53,7 @@ object SubmissionTableSupport:
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      source = readSubmissionSource(resultSet),
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
       status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
@@ -64,6 +68,15 @@ object SubmissionTableSupport:
       startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
     )
+
+  private def readSubmissionSource(resultSet: ResultSet): SubmissionSource =
+    Option(resultSet.getString("source_contest_slug")) match
+      case Some(rawSlug) =>
+        val slug = parseColumn("submissions.source_contest_slug", rawSlug, ContestSlug.parse)
+        val title = parseColumn("submissions.source_contest_title", resultSet.getString("source_contest_title"), ContestTitle.parse)
+        SubmissionSource.fromContest(slug, title)
+      case None =>
+        SubmissionSource.FromProblemSet
 
   def setOptionalVerdict(
     statement: PreparedStatement,

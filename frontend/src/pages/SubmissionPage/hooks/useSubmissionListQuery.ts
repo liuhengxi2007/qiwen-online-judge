@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 
 import { GetSubmission } from '@/apis/submission/GetSubmission'
+import { ListContestSubmissions } from '@/apis/contest/ListContestSubmissions'
 import { ListSubmissions } from '@/apis/submission/ListSubmissions'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionListRequest } from '@/objects/submission/request/SubmissionListRequest'
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
@@ -9,8 +12,9 @@ import type { SubmissionSummary } from '@/objects/submission/response/Submission
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { sendAPI } from '@/system/api/api-message'
 
-function requestKey(request: SubmissionListRequest): string {
+function requestKey(request: SubmissionListRequest, contestSlug?: ContestSlug): string {
   return JSON.stringify({
+    contestSlug: contestSlug ? contestSlugValue(contestSlug) : null,
     userQuery: request.userQuery,
     problemQuery: request.problemQuery,
     verdict: request.verdict,
@@ -23,8 +27,8 @@ function requestKey(request: SubmissionListRequest): string {
   })
 }
 
-export function useSubmissionListQuery(request: SubmissionListRequest) {
-  const key = requestKey(request)
+export function useSubmissionListQuery(request: SubmissionListRequest, contestSlug?: ContestSlug) {
+  const key = requestKey(request, contestSlug)
   const fallbackPage = request.pageRequest.page
   const fallbackPageSize = request.pageRequest.pageSize
   const [queryState, setQueryState] = useState<{
@@ -120,7 +124,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
     }
 
     const load = () => {
-      void sendAPI(new ListSubmissions(activeRequest))
+      void sendAPI(contestSlug ? new ListContestSubmissions(contestSlug, activeRequest) : new ListSubmissions(activeRequest))
         .then((loadedResponse) => {
           if (cancelled) {
             return
@@ -161,7 +165,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest) {
         window.clearInterval(intervalId)
       }
     }
-  }, [key])
+  }, [contestSlug, key])
 
   return {
     response:

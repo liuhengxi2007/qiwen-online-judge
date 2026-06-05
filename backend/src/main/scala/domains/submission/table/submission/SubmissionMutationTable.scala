@@ -2,10 +2,11 @@ package domains.submission.table.submission
 
 import cats.effect.IO
 import database.utils.UserIdentitySql
+import domains.contest.objects.ContestId
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.objects.{SubmissionId, SubmissionSourceCode, SubmissionStatus}
 import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.objects.response.SubmissionDetail
+import domains.submission.objects.response.{SubmissionDetail, SubmissionSource}
 import domains.submission.table.submission.SubmissionTableSupport.*
 import domains.user.objects.Username
 import io.circe.syntax.*
@@ -18,17 +19,19 @@ object SubmissionMutationTable:
 
   private val insertSQL: String =
     s"""
-      |insert into submissions (id, public_id, problem_id, submitter_username, program_manifest, status, judge_result, submitted_at, started_at, finished_at)
-      |values (?, nextval('submission_public_id_seq'), ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?, ?)
-      |returning public_id, language, status, verdict, time_used_ms, memory_used_kb, score, judge_result::text as judge_result, code_length, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
+      |insert into submissions (id, public_id, problem_id, contest_id, submitter_username, program_manifest, status, judge_result, submitted_at, started_at, finished_at)
+      |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?, ?)
+      |returning public_id, language, status, verdict, time_used_ms, memory_used_kb, score, judge_result::text as judge_result, code_length, null::varchar as source_contest_slug, null::varchar as source_contest_title, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
       |""".stripMargin
 
   def insert(
     connection: Connection,
     submissionUuid: UUID,
     problemId: ProblemId,
+    contestId: Option[ContestId],
     problemSlug: ProblemSlug,
     problemTitle: ProblemTitle,
+    source: SubmissionSource,
     submitterUsername: Username,
     programManifest: SubmissionProgramManifest,
     sourceCode: SubmissionSourceCode
@@ -39,13 +42,16 @@ object SubmissionMutationTable:
       try
         statement.setObject(1, submissionUuid)
         statement.setObject(2, problemId.value)
-        statement.setString(3, submitterUsername.value)
-        statement.setString(4, programManifest.asJson.noSpaces)
-        statement.setString(5, encodeSubmissionStatusColumn(SubmissionStatus.Queued))
-        statement.setNull(6, java.sql.Types.VARCHAR)
-        statement.setTimestamp(7, Timestamp.from(now))
-        statement.setNull(8, java.sql.Types.TIMESTAMP)
+        contestId match
+          case Some(value) => statement.setObject(3, value.value)
+          case None => statement.setNull(3, java.sql.Types.OTHER)
+        statement.setString(4, submitterUsername.value)
+        statement.setString(5, programManifest.asJson.noSpaces)
+        statement.setString(6, encodeSubmissionStatusColumn(SubmissionStatus.Queued))
+        statement.setNull(7, java.sql.Types.VARCHAR)
+        statement.setTimestamp(8, Timestamp.from(now))
         statement.setNull(9, java.sql.Types.TIMESTAMP)
+        statement.setNull(10, java.sql.Types.TIMESTAMP)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
@@ -54,6 +60,7 @@ object SubmissionMutationTable:
               problemId = problemId,
               problemSlug = problemSlug,
               problemTitle = problemTitle,
+              source = source,
               canManage = false,
               submitter = readUserIdentity(resultSet, "submitter"),
               language = parseColumn("submissions.language", resultSet.getString("language"), domains.submission.objects.SubmissionLanguage.parse),

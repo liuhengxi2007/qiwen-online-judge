@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { isSubmissionSort, type SubmissionSort } from '@/objects/submission/request/SubmissionSort'
 import {
   isSubmissionSortDirection,
@@ -32,7 +33,7 @@ import {
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { verdictFilterLabel } from '@/pages/objects/SubmissionDisplay'
 
-export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
+export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, contestSlug?: ContestSlug) {
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
   const problemQueryParam = searchParams.get('problem')?.trim() ?? ''
@@ -72,7 +73,7 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug) {
     activeDirection,
     currentPage,
   })
-  const submissionQuery = useSubmissionListQuery(request)
+  const submissionQuery = useSubmissionListQuery(request, contestSlug)
   const currentPageSubmissions = submissionQuery.response.items
   const totalPages = calculateTotalPages(submissionQuery.response.totalItems, submissionQuery.response.pageSize)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)

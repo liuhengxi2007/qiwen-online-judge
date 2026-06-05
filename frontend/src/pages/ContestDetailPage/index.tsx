@@ -5,17 +5,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { contestDescriptionValue } from '@/objects/contest/ContestDescription'
 import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
 import { contestSlugValue, parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { contestTitleValue } from '@/objects/contest/ContestTitle'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
-import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
@@ -84,22 +80,6 @@ function ContestDetailPageContent({
               void model.toggleRegistration()
             }}
           />
-          {model.contest.canManage ? (
-            <ContestAttachProblemCard
-              problemSearchInput={model.problemSearchInput}
-              isLoadingProblemSuggestions={model.isLoadingProblemSuggestions}
-              problemSuggestions={model.problemSuggestions}
-              isAttachingProblem={model.isAttachingProblem}
-              errorMessage={model.attachProblemErrorMessage}
-              successMessage={model.attachProblemSuccessMessage}
-              onProblemSearchInputChange={model.setProblemSearchInput}
-              onProblemSearchFocusChange={model.setIsProblemSearchFocused}
-              onProblemSuggestionSelect={model.selectProblemSuggestion}
-              onAttachProblem={() => {
-                void model.attachProblem()
-              }}
-            />
-          ) : null}
           {canViewContestProblems ? (
             <ContestProblemsCard contest={model.contest} />
           ) : null}
@@ -173,14 +153,24 @@ function ContestDetailHeaderCard({
               <Link to={`/contests/${contestSlugValue(contest.slug)}/registrants`}>{t('contest.detail.registrants')}</Link>
             </Button>
             {canViewParticipantArea ? (
-              <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
-                <Link to={`/contests/${contestSlugValue(contest.slug)}/ranklist`}>{t('contest.detail.ranklist')}</Link>
-              </Button>
+              <>
+                <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+                  <Link to={`/contests/${contestSlugValue(contest.slug)}/ranklist`}>{t('contest.detail.ranklist')}</Link>
+                </Button>
+                <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+                  <Link to={`/contests/${contestSlugValue(contest.slug)}/submissions`}>{t('contest.detail.submissions')}</Link>
+                </Button>
+              </>
             ) : null}
             {contest.canManage ? (
-              <Badge variant="outline" className="rounded-2xl px-4 py-2">
-                {t('contest.detail.managerView')}
-              </Badge>
+              <>
+                <Button asChild type="button" variant="outline" className="rounded-2xl border-slate-200 bg-white text-slate-800 hover:bg-slate-50">
+                  <Link to={`/contests/${contestSlugValue(contest.slug)}/manage`}>{t('contest.detail.manage')}</Link>
+                </Button>
+                <Badge variant="outline" className="rounded-2xl px-4 py-2">
+                  {t('contest.detail.managerView')}
+                </Badge>
+              </>
             ) : null}
           </div>
         </div>
@@ -229,97 +219,6 @@ function ContestDetailHeaderCard({
             <UserProfileLink className="inline-flex items-baseline gap-2 normal-case tracking-normal" showUsername user={contest.author} />
           </p>
         ) : null}
-      </CardContent>
-    </Card>
-  )
-}
-
-function ContestAttachProblemCard({
-  problemSearchInput,
-  isLoadingProblemSuggestions,
-  problemSuggestions,
-  isAttachingProblem,
-  errorMessage,
-  successMessage,
-  onProblemSearchInputChange,
-  onProblemSearchFocusChange,
-  onProblemSuggestionSelect,
-  onAttachProblem,
-}: {
-  problemSearchInput: string
-  isLoadingProblemSuggestions: boolean
-  problemSuggestions: ProblemSuggestion[]
-  isAttachingProblem: boolean
-  errorMessage: string
-  successMessage: string
-  onProblemSearchInputChange: (value: string) => void
-  onProblemSearchFocusChange: (focused: boolean) => void
-  onProblemSuggestionSelect: (suggestion: ProblemSuggestion) => void
-  onAttachProblem: () => void
-}) {
-  const { t } = useI18n()
-
-  return (
-    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
-            <Rows3 className="size-5" />
-          </div>
-          <div>
-            <CardTitle className="text-xl text-slate-950">{t('contest.detail.attachProblemTitle')}</CardTitle>
-            <CardDescription>{t('contest.detail.attachProblemDescription')}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-        {successMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-        <div className="space-y-2">
-          <Label htmlFor="contest-problem-search">{t('contest.detail.attachProblemInput')}</Label>
-          <Input
-            id="contest-problem-search"
-            value={problemSearchInput}
-            onChange={(event) => onProblemSearchInputChange(event.target.value)}
-            onFocus={() => onProblemSearchFocusChange(true)}
-          />
-          {problemSuggestions.length > 0 || isLoadingProblemSuggestions ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-              {isLoadingProblemSuggestions ? (
-                <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
-              ) : (
-                problemSuggestions.map((suggestion) => (
-                  <button
-                    key={problemSlugValue(suggestion.slug)}
-                    type="button"
-                    className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => onProblemSuggestionSelect(suggestion)}
-                  >
-                    <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
-                    <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          ) : null}
-        </div>
-        <Button
-          type="button"
-          disabled={isAttachingProblem}
-          className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400"
-          onClick={onAttachProblem}
-        >
-          {isAttachingProblem ? t('contest.detail.attachingProblem') : t('contest.detail.attachProblem')}
-        </Button>
       </CardContent>
     </Card>
   )
