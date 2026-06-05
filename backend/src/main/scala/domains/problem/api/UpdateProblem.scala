@@ -17,32 +17,28 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
-object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest), ProblemDetail]:
+object UpdateProblem extends AuthenticatedApi[(ProblemManagementContext, UpdateProblemRequest), ProblemDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, UpdateProblemRequest)] =
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, UpdateProblemRequest)] =
     for
-      problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+      context <- ProblemManagementContext.decode(request, pathParams)
       body <- request.as[UpdateProblemRequest]
-    yield (problemSlug, body)
+    yield (context, body)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    input: (ProblemSlug, UpdateProblemRequest)
+    input: (ProblemManagementContext, UpdateProblemRequest)
   ): IO[ProblemDetail] =
-    val (problemSlug, request) = input
+    val (context, request) = input
     for
       validRequest <- validateRequest(request)
-      access <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
-      problem <- access.problem match
-        case Some(problem) => IO.pure(problem)
-        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
+      problem <- ProblemManagementContext.requireManagedProblem(connection, actor, context)
       updatedProblem <- updateManagedProblem(connection, problem, validRequest)
     yield updatedProblem
 

@@ -5,7 +5,6 @@ import database.DatabaseSession
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import domains.auth.utils.SessionStore
 import domains.contest.api.*
-import domains.problem.utils.ProblemDataStorage
 import domains.submission.api.{CreateContestSubmission, ListContestSubmissions}
 import domains.submission.utils.SubmissionProgramStorage
 import org.http4s.HttpRoutes
@@ -16,7 +15,6 @@ object ContestRouter:
   def routes(
     databaseSession: DatabaseSession,
     sessionStore: SessionStore,
-    problemDataStorage: ProblemDataStorage,
     submissionProgramStorage: SubmissionProgramStorage
   ): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
@@ -37,17 +35,7 @@ object ContestRouter:
         GetContestProblem,
         CreateContestSubmission(submissionProgramStorage),
         EvaluateContestProblemAttachWarning,
-        ListManageableContestProblemSuggestions,
         AddProblemToContest,
-        RemoveProblemFromContest,
-        UpdateContestProblem,
-        DeleteContestProblem(submissionProgramStorage),
-        UploadContestProblemDataFile(problemDataStorage),
-        ListContestProblemDataTree,
-        DownloadContestProblemDataPath(problemDataStorage),
-        DeleteContestProblemDataPath(problemDataStorage),
-        UploadContestProblemDataArchive(problemDataStorage),
-        ClearContestProblemData(problemDataStorage),
-        SetContestProblemDataReady(problemDataStorage)
+        RemoveProblemFromContest
       )
     )

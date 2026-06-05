@@ -4,15 +4,18 @@ import type { ProblemSearchQuery } from '@/objects/problem/request/ProblemSearch
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 
-export class ListManageableContestProblemSuggestions implements APIWithSessionMessage<ProblemSuggestion[]> {
+export class ListManageableProblemSuggestions implements APIWithSessionMessage<ProblemSuggestion[]> {
   declare readonly responseType?: ProblemSuggestion[]
   readonly method = 'GET'
   readonly apiPath: string
 
-  constructor(contestSlug: ContestSlug, query: ProblemSearchQuery) {
+  constructor(query: ProblemSearchQuery, contestSlug?: ContestSlug) {
     const params = new URLSearchParams()
     params.set('q', query)
-    this.apiPath = `contests/${contestSlugValue(contestSlug)}/problem-suggestions?${params.toString()}`
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problem-suggestions/manageable?${params.toString()}`
   }
 
   body(): undefined {

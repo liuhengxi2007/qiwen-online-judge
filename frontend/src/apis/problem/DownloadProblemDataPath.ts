@@ -14,9 +14,10 @@ export class DownloadProblemDataPath implements APIWithSessionMessage<Blob> {
   constructor(problemSlug: ProblemSlug, path: ProblemDataPath, contestSlug?: ContestSlug) {
     const params = new URLSearchParams()
     params.set('path', problemDataPathValue(path))
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files/download?${params.toString()}`
-      : `problems/${problemSlugValue(problemSlug)}/data/files/download?${params.toString()}`
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/download?${params.toString()}`
   }
 
   body(): undefined {

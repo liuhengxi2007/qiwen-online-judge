@@ -235,18 +235,6 @@ object ProblemQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
-  private val listManageableSuggestionsSQL: String =
-    s"""
-      |select p.slug, p.title
-      |from problems p
-      |where
-      |  $managerAccessPredicate
-      |  and $searchPredicate
-      |order by
-      |  $suggestionOrderClause
-      |limit $suggestionLimit
-      |""".stripMargin
-
   def listSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSQL)
@@ -262,6 +250,18 @@ object ProblemQueryTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private val listManageableSuggestionsSQL: String =
+    s"""
+      |select p.slug, p.title
+      |from problems p
+      |where
+      |  $managerAccessPredicate
+      |  and $searchPredicate
+      |order by
+      |  $suggestionOrderClause
+      |limit $suggestionLimit
+      |""".stripMargin
 
   def listManageableSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {

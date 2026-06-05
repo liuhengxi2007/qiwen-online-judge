@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.utils.SessionStore
+import domains.contest.routes.ContestRouter
 import domains.problem.routes.ProblemRouter
 import domains.problem.utils.ProblemDataStorage
 import domains.submission.utils.SubmissionProgramStorage
@@ -18,8 +19,9 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
 
   test("problem data APIs expose the renamed route surface") {
     val actualPaths = List(
-      "ListProblemDataFiles" -> ListProblemDataFiles(problemDataStorage).path,
-      "UploadProblemDataFile" -> UploadProblemDataFile(problemDataStorage).path,
+        "ListProblemDataFiles" -> ListProblemDataFiles(problemDataStorage).path,
+        "ListManageableProblemSuggestions" -> ListManageableProblemSuggestions.path,
+        "UploadProblemDataFile" -> UploadProblemDataFile(problemDataStorage).path,
       "ListProblemDataTree" -> ListProblemDataTree.path,
       "DownloadProblemDataPath" -> DownloadProblemDataPath(problemDataStorage).path,
       "DeleteProblemDataPath" -> DeleteProblemDataPath(problemDataStorage).path,
@@ -32,6 +34,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
       actualPaths,
       List(
         "ListProblemDataFiles" -> ApiPath("/api/problems/:problemSlug/data/files"),
+        "ListManageableProblemSuggestions" -> ApiPath("/api/problem-suggestions/manageable"),
         "UploadProblemDataFile" -> ApiPath("/api/problems/:problemSlug/data/files"),
         "ListProblemDataTree" -> ApiPath("/api/problems/:problemSlug/data/files/tree"),
         "DownloadProblemDataPath" -> ApiPath("/api/problems/:problemSlug/data/files/download"),
@@ -66,6 +69,34 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
     )
 
     legacyRequests.traverse_ { case (method, path) =>
+      val request = Request[IO](method = method, uri = Uri.unsafeFromString(path))
+      routes.run(request).map(response => assertEquals(response.status, Status.NotFound, s"$method $path"))
+    }
+  }
+
+  test("contest router no longer matches problem-owned mutation and data routes") {
+    val routes = ContestRouter
+      .routes(
+        null.asInstanceOf[DatabaseSession],
+        null.asInstanceOf[SessionStore],
+        submissionProgramStorage
+      )
+      .orNotFound
+
+    val removedRequests = List(
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/update",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/delete-problem",
+      Method.GET -> "/api/contests/sample-contest/problem-suggestions?q=two",
+      Method.GET -> "/api/contests/sample-contest/problems/two-sum/data/files/tree",
+      Method.GET -> "/api/contests/sample-contest/problems/two-sum/data/files/download?path=main.in",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/files",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/archive-imports",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/files/delete",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/files/delete-all",
+      Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/ready-state",
+    )
+
+    removedRequests.traverse_ { case (method, path) =>
       val request = Request[IO](method = method, uri = Uri.unsafeFromString(path))
       routes.run(request).map(response => assertEquals(response.status, Status.NotFound, s"$method $path"))
     }

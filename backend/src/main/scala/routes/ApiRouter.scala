@@ -33,7 +33,7 @@ object ApiRouter:
         domains.judge.routes.JudgeRouter.routes(databaseSession, judgeConfig, problemDataStorage, submissionProgramStorage) <+>
         domains.problem.routes.ProblemRouter.routes(databaseSession, sessionStore, problemDataStorage, submissionProgramStorage) <+>
         domains.problemset.routes.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
-        domains.contest.routes.ContestRouter.routes(databaseSession, sessionStore, problemDataStorage, submissionProgramStorage) <+>
+        domains.contest.routes.ContestRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
         domains.submission.routes.SubmissionRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
         domains.blog.routes.BlogRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.usergroup.routes.UserGroupRouter.routes(databaseSession, sessionStore) <+>

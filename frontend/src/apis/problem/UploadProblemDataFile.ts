@@ -15,9 +15,11 @@ export class UploadProblemDataFile implements APIWithSessionMessage<ProblemDataU
   private readonly path: ProblemDataFilename | ProblemDataPath
 
   constructor(problemSlug: ProblemSlug, file: File, path: ProblemDataFilename | ProblemDataPath, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files`
-      : `problems/${problemSlugValue(problemSlug)}/data/files`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files${params.size > 0 ? `?${params.toString()}` : ''}`
     this.file = file
     this.path = path
   }

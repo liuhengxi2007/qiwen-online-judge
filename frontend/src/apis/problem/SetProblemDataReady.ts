@@ -16,9 +16,11 @@ export class SetProblemDataReady implements APIWithSessionMessage<ProblemDetail>
   private readonly request: SetProblemDataReadyRequest
 
   constructor(problemSlug: ProblemSlug, ready: boolean, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/ready-state`
-      : `problems/${problemSlugValue(problemSlug)}/data/ready-state`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/ready-state${params.size > 0 ? `?${params.toString()}` : ''}`
     this.request = { ready }
   }
 

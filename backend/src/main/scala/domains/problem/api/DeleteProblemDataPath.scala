@@ -21,33 +21,28 @@ import java.sql.Connection
 import java.time.Instant
 
 final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
-    extends AuthenticatedApi[(ProblemSlug, DeleteProblemDataPathRequest), ProblemDetail]:
+    extends AuthenticatedApi[(ProblemManagementContext, DeleteProblemDataPathRequest), ProblemDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/delete")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, DeleteProblemDataPathRequest)] =
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, DeleteProblemDataPathRequest)] =
     for
-      problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+      context <- ProblemManagementContext.decode(request, pathParams)
       body <- request.as[DeleteProblemDataPathRequest]
-    yield (problemSlug, body)
+    yield (context, body)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    input: (ProblemSlug, DeleteProblemDataPathRequest)
+    input: (ProblemManagementContext, DeleteProblemDataPathRequest)
   ): IO[ProblemDetail] =
-    val (problemSlug, request) = input
-    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
-      access.problem match
-        case None =>
-          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-        case Some(_) =>
-          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            deleteManagedProblemDataPath(connection, problemSlug, request)
-    }
+    val (context, request) = input
+    ProblemManagementContext
+      .requireManagedProblem(connection, actor, context)
+      .flatMap(_ => deleteManagedProblemDataPath(connection, context.problemSlug, request))
 
   def deleteManagedProblemDataPath(
     connection: Connection,

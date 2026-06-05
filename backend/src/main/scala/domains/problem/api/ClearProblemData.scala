@@ -12,36 +12,30 @@ import domains.problem.table.problem.ProblemDataStateTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 import java.time.Instant
 
 final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
-    extends AuthenticatedApi[ProblemSlug, ProblemDetail]:
+    extends AuthenticatedApi[ProblemManagementContext, ProblemDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/delete-all")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSlug] =
-    val _ = request
-    HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+  override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemManagementContext] =
+    ProblemManagementContext.decode(request, pathParams)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    problemSlug: ProblemSlug
+    context: ProblemManagementContext
   ): IO[ProblemDetail] =
-    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
-      access.problem match
-        case None =>
-          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-        case Some(_) =>
-          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            clearManagedProblemData(connection, problemSlug)
-    }
+    ProblemManagementContext
+      .requireManagedProblem(connection, actor, context)
+      .flatMap(_ => clearManagedProblemData(connection, context.problemSlug))
 
   def clearManagedProblemData(connection: Connection, problemSlug: ProblemSlug): IO[ProblemDetail] =
     ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>

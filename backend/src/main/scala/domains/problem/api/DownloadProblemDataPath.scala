@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.ProblemDataStorage
-import domains.problem.objects.{ProblemDataPath, ProblemSlug}
+import domains.problem.objects.ProblemDataPath
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
@@ -13,34 +13,28 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
-    extends AuthenticatedResponseApi[(ProblemSlug, ProblemDataPath)]:
+    extends AuthenticatedResponseApi[(ProblemManagementContext, ProblemDataPath)]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/files/download")
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, ProblemDataPath)] =
-    HttpApiError.fromEitherBadRequest(
-      for
-        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
-        rawPath <- request.uri.query.params.get("path").toRight("Missing query parameter: path.")
-        path <- ProblemDataPath.parse(rawPath)
-      yield (problemSlug, path)
-    )
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, ProblemDataPath)] =
+    for
+      context <- ProblemManagementContext.decode(request, pathParams)
+      path <- HttpApiError.fromEitherBadRequest(
+        request.uri.query.params.get("path").toRight("Missing query parameter: path.").flatMap(ProblemDataPath.parse)
+      )
+    yield (context, path)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    input: (ProblemSlug, ProblemDataPath)
+    input: (ProblemManagementContext, ProblemDataPath)
   ): IO[Response[IO]] =
-    val (problemSlug, path) = input
-    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
-      access.problem match
-        case None =>
-          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-        case Some(problem) =>
-          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            downloadManagedProblemDataPath(problem, path)
-    }
+    val (context, path) = input
+    ProblemManagementContext
+      .requireManagedProblem(connection, actor, context)
+      .flatMap(problem => downloadManagedProblemDataPath(problem, path))
 
   def downloadManagedProblemDataPath(problem: domains.problem.objects.response.ProblemDetail, path: ProblemDataPath): IO[Response[IO]] =
     problemDataStorage.readPath(problem.slug, path).flatMap {

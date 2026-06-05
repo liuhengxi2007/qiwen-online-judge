@@ -6,6 +6,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.problem.api.ListProblems
 import domains.problem.api.ListProblemSuggestions
+import domains.problem.api.ListManageableProblemSuggestions
 import domains.problem.api.CreateProblem
 import domains.problem.api.GetProblem
 import domains.problem.api.ListProblemDataFiles
@@ -43,6 +44,7 @@ object ProblemRouter:
       apiObjectContext,
       List(
         ListProblemSuggestions,
+        ListManageableProblemSuggestions,
         ListProblems,
         CreateProblem,
         GetProblem,

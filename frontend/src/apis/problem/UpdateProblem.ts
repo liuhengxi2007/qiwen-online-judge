@@ -13,9 +13,11 @@ export class UpdateProblem implements APIWithSessionMessage<ProblemDetail> {
   private readonly request: UpdateProblemRequest
 
   constructor(problemSlug: ProblemSlug, request: UpdateProblemRequest, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/update`
-      : `problems/${problemSlugValue(problemSlug)}`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}${params.size > 0 ? `?${params.toString()}` : ''}`
     this.request = request
   }
 

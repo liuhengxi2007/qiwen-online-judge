@@ -11,9 +11,11 @@ export class DeleteProblem implements APIWithSessionMessage<SuccessResponse> {
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/delete-problem`
-      : `problems/${problemSlugValue(problemSlug)}/delete`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/delete${params.size > 0 ? `?${params.toString()}` : ''}`
   }
 
   body(): undefined {

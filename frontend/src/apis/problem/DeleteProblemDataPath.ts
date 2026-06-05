@@ -14,9 +14,11 @@ export class DeleteProblemDataPath implements APIWithSessionMessage<ProblemDetai
   private readonly request: DeleteProblemDataPathRequest
 
   constructor(problemSlug: ProblemSlug, path: ProblemDataPath, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files/delete`
-      : `problems/${problemSlugValue(problemSlug)}/data/files/delete`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/delete${params.size > 0 ? `?${params.toString()}` : ''}`
     this.request = { path }
   }
 

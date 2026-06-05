@@ -11,9 +11,11 @@ export class ClearProblemData implements APIWithSessionMessage<ProblemDetail> {
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files/delete-all`
-      : `problems/${problemSlugValue(problemSlug)}/data/files/delete-all`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/delete-all${params.size > 0 ? `?${params.toString()}` : ''}`
   }
 
   body(): undefined {

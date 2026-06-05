@@ -15,22 +15,22 @@ import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.multipart.{Multipart, Part}
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 import java.time.Instant
 
 final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage)
-    extends AuthenticatedApi[(ProblemSlug, Option[ProblemDataPath], Array[Byte]), ProblemDataUploadResult]:
+    extends AuthenticatedApi[(ProblemManagementContext, Option[ProblemDataPath], Array[Byte]), ProblemDataUploadResult]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/archive-imports")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDataUploadResult] = summon[Encoder[ProblemDataUploadResult]]
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, Option[ProblemDataPath], Array[Byte])] =
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, Option[ProblemDataPath], Array[Byte])] =
     for
-      problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+      context <- ProblemManagementContext.decode(request, pathParams)
       multipart <- request.as[Multipart[IO]]
       file <- extractNamedBinaryPart(multipart, "file").flatMap {
         case Some(value) => IO.pure(value)
@@ -42,14 +42,14 @@ final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage
         HttpApiError.badRequest("Multipart archive upload requires a .zip file.")
       )
       targetDirectory <- extractOptionalPathField(multipart, "targetDir")
-    yield (problemSlug, targetDirectory, bytes)
+    yield (context, targetDirectory, bytes)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    input: (ProblemSlug, Option[ProblemDataPath], Array[Byte])
+    input: (ProblemManagementContext, Option[ProblemDataPath], Array[Byte])
   ): IO[ProblemDataUploadResult] =
-    val (problemSlug, targetDirectory, bytes) = input
+    val (context, targetDirectory, bytes) = input
     ProblemDataUploadPreparation.prepareArchive(bytes, targetDirectory) match
       case Left(message) =>
         HttpApiError.raise(HttpApiError.badRequest(message))
@@ -58,14 +58,9 @@ final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage
           case Left(message) =>
             HttpApiError.raise(HttpApiError.badRequest(message))
           case Right(summaryFilename) =>
-            EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
-              access.problem match
-                case None =>
-                  HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-                case Some(_) =>
-                  HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-                    uploadManagedProblemDataArchive(connection, problemSlug, targetDirectory, bytes)
-            }
+            ProblemManagementContext
+              .requireManagedProblem(connection, actor, context)
+              .flatMap(_ => uploadManagedProblemDataArchive(connection, context.problemSlug, targetDirectory, bytes))
 
   def uploadManagedProblemDataArchive(
     connection: Connection,

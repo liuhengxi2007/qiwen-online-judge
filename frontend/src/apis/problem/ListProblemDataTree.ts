@@ -11,9 +11,11 @@ export class ListProblemDataTree implements APIWithSessionMessage<ProblemDataTre
   readonly apiPath: string
 
   constructor(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
-    this.apiPath = contestSlug
-      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files/tree`
-      : `problems/${problemSlugValue(problemSlug)}/data/files/tree`
+    const params = new URLSearchParams()
+    if (contestSlug) {
+      params.set('contestSlug', contestSlugValue(contestSlug))
+    }
+    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/tree${params.size > 0 ? `?${params.toString()}` : ''}`
   }
 
   body(): undefined {

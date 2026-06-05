@@ -76,6 +76,10 @@ function installApiMock(shouldWarn: boolean) {
       return Promise.resolve(contestDetail())
     }
 
+    if (message.method === 'GET' && message.apiPath === 'problem-suggestions/manageable?q=two&contestSlug=sample-contest') {
+      return Promise.resolve([{ slug: problemSlug, title: 'Two Sum' }])
+    }
+
     if (message.method === 'GET' && message.apiPath === 'contests/sample-contest/problems/two-sum/attach-warning') {
       return Promise.resolve({ shouldWarn })
     }
@@ -130,6 +134,26 @@ describe('useContestManagePageModel problem attach warning', () => {
       }),
     )
     expect(rendered.result.current.isAttachWarningOpen).toBe(false)
+  })
+
+  it('loads attach suggestions through the problem-owned manageable suggestions API', async () => {
+    installApiMock(false)
+    const rendered = await loadedModel()
+
+    act(() => {
+      rendered.result.current.setIsProblemSearchFocused(true)
+      rendered.result.current.setProblemSearchInput('two')
+    })
+
+    await waitFor(() => {
+      expect(apiClient.sendAPI).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'GET',
+          apiPath: 'problem-suggestions/manageable?q=two&contestSlug=sample-contest',
+        }),
+      )
+    })
+    expect(rendered.result.current.problemSuggestions).toEqual([{ slug: problemSlug, title: 'Two Sum' }])
   })
 
   it('opens confirmation and skips attach when cancelled', async () => {

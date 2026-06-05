@@ -58,6 +58,7 @@ const publicWiringBoundaries = new Set([
 
 const publicModelTypes = new Map([
   ['auth', new Set([
+    'AuthPermissionFlags',
     'AuthenticatedUser',
     'EmailAddress',
     'PasswordHash',

@@ -17,7 +17,7 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveDecoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 import java.time.Instant
@@ -25,7 +25,7 @@ import java.time.Instant
 final case class SetProblemReadyRequest(ready: Boolean)
 
 final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
-    extends AuthenticatedApi[(ProblemSlug, SetProblemReadyRequest), ProblemDetail]:
+    extends AuthenticatedApi[(ProblemManagementContext, SetProblemReadyRequest), ProblemDetail]:
 
   private given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
 
@@ -34,26 +34,21 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
-  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSlug, SetProblemReadyRequest)] =
+  override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, SetProblemReadyRequest)] =
     for
-      problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
+      context <- ProblemManagementContext.decode(request, pathParams)
       body <- request.as[SetProblemReadyRequest]
-    yield (problemSlug, body)
+    yield (context, body)
 
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
-    input: (ProblemSlug, SetProblemReadyRequest)
+    input: (ProblemManagementContext, SetProblemReadyRequest)
   ): IO[ProblemDetail] =
-    val (problemSlug, request) = input
-    EvaluateProblemAccess.plan(connection, actor, problemSlug).flatMap { access =>
-      access.problem match
-        case None =>
-          HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-        case Some(_) =>
-          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            setManagedProblemDataReady(connection, problemSlug, request.ready)
-    }
+    val (context, request) = input
+    ProblemManagementContext
+      .requireManagedProblem(connection, actor, context)
+      .flatMap(_ => setManagedProblemDataReady(connection, context.problemSlug, request.ready))
 
   def setManagedProblemDataReady(connection: Connection, problemSlug: ProblemSlug, ready: Boolean): IO[ProblemDetail] =
     ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
