@@ -3,7 +3,7 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.contest.api.{EvaluateContestAccess, EvaluateContestProblemVisibility}
+import domains.contest.api.EvaluateContestAccess
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.utils.SubmissionAccessRules
 
@@ -60,25 +60,10 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
                     HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
                   case None =>
                     IO.unit
-                contestVisibility <- EvaluateContestProblemVisibility.plan(
-                  connection,
-                  actor,
-                  EvaluateContestProblemVisibility.Input(record.problemId, submittedAt = Some(record.submittedAt))
-                )
                 submission <-
                   if access.canManage then
                     loadSubmissionDetail(record, access.canManage)
                   else if sourceContestAccess.nonEmpty then
-                    loadSubmissionDetail(record, access.canManage)
-                  else if contestVisibility.hasVisibleUnfinishedContestContainingProblem then
-                    for
-                      _ <- HttpApiError.ensure(
-                        record.submitter.username == actor.username && contestVisibility.hasRegisteredContestContainingSubmission,
-                        HttpApiError.notFound(ApiMessages.submissionNotFound)
-                      )
-                      submission <- loadSubmissionDetail(record, access.canManage)
-                    yield submission
-                  else if contestVisibility.hasVisibleEndedContestContainingProblem then
                     loadSubmissionDetail(record, access.canManage)
                   else if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
                     loadSubmissionDetail(record, access.canManage)

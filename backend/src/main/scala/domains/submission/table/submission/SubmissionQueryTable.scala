@@ -150,48 +150,6 @@ object SubmissionQueryTable:
       |)
       |""".stripMargin
 
-  private val visibleUnfinishedContestPredicate: String =
-    s"""
-      |exists (
-      |  select 1
-      |  from contest_problems cp
-      |  join contests c on c.id = cp.contest_id
-      |  where cp.problem_id = p.id
-      |    and c.end_at >= now()
-      |    and $visibleContestPredicate
-      |)
-      |""".stripMargin
-
-  private val ownRegisteredContestSubmissionPredicate: String =
-    """
-      |(
-      |  s.submitter_username = ?
-      |  and exists (
-      |    select 1
-      |    from contest_problems cp
-      |    join contests c on c.id = cp.contest_id
-      |    join contest_registrations cr on cr.contest_id = c.id
-      |    where cp.problem_id = p.id
-      |      and s.submitted_at >= c.start_at
-      |      and s.submitted_at <= c.end_at
-      |      and cr.username = ?
-      |      and cr.registered_at <= c.start_at
-      |  )
-      |)
-      |""".stripMargin
-
-  private val visibleEndedContestPredicate: String =
-    s"""
-      |exists (
-      |  select 1
-      |  from contest_problems cp
-      |  join contests c on c.id = cp.contest_id
-      |  where cp.problem_id = p.id
-      |    and c.end_at < now()
-      |    and $visibleContestPredicate
-      |)
-      |""".stripMargin
-
   private val usernameFilterPredicate: String =
     """
       |(? = false or lower(s.submitter_username) like lower(?) escape '\' or lower(au.display_name) like lower(?) escape '\')
@@ -222,6 +180,17 @@ object SubmissionQueryTable:
       |      and c.end_at < now()
       |      and $visibleContestPredicate
       |  )
+      |)
+      |""".stripMargin
+
+  private val visibleEndedSourceContestPredicate: String =
+    s"""
+      |exists (
+      |  select 1
+      |  from contests c
+      |  where c.id = s.contest_id
+      |    and c.end_at < now()
+      |    and $visibleContestPredicate
       |)
       |""".stripMargin
 
@@ -290,15 +259,12 @@ object SubmissionQueryTable:
       |(
       |  $problemManagerVisibilityPredicate
       |  or (
-      |    $visibleUnfinishedContestPredicate
-      |    and $ownRegisteredContestSubmissionPredicate
+      |    s.contest_id is null
+      |    and $ordinaryDetailVisibilityPredicate
       |  )
       |  or (
-      |    not $visibleUnfinishedContestPredicate
-      |    and (
-      |      $ordinaryDetailVisibilityPredicate
-      |      or $visibleEndedContestPredicate
-      |    )
+      |    s.contest_id is not null
+      |    and $visibleEndedSourceContestPredicate
       |  )
       |)
       |""".stripMargin
@@ -308,15 +274,12 @@ object SubmissionQueryTable:
       |(
       |  $problemManagerVisibilityPredicate
       |  or (
-      |    $visibleUnfinishedContestPredicate
-      |    and $ownRegisteredContestSubmissionPredicate
+      |    s.contest_id is null
+      |    and $ordinarySummaryVisibilityPredicate
       |  )
       |  or (
-      |    not $visibleUnfinishedContestPredicate
-      |    and (
-      |      $ordinarySummaryVisibilityPredicate
-      |      or $visibleEndedContestPredicate
-      |    )
+      |    s.contest_id is not null
+      |    and $visibleEndedSourceContestPredicate
       |  )
       |)
       |""".stripMargin
@@ -439,7 +402,7 @@ object SubmissionQueryTable:
       |       s.problem_id,
       |       p.slug as problem_slug,
       |       p.title as problem_title,
-      |       $detailVisibilityPredicate as can_view_detail,
+      |       $contestSubmissionOwnerPredicate as can_view_detail,
       |       source_c.slug as source_contest_slug,
       |       source_c.title as source_contest_title,
       |       ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")},
@@ -472,7 +435,6 @@ object SubmissionQueryTable:
     actor: AuthenticatedUser,
     contestId: ContestId,
     request: SubmissionListRequest,
-    hasGlobalViewOverride: Boolean,
     canViewAllContestSubmissions: Boolean
   ): IO[SubmissionListResponse] =
     val normalizedPageRequest = request.pageRequest.normalized
@@ -487,7 +449,6 @@ object SubmissionQueryTable:
             contestId,
             normalizedRequest,
             includeDetailVisibility = false,
-            hasGlobalViewOverride,
             canViewAllContestSubmissions
           )
           val resultSet = statement.executeQuery()
@@ -504,7 +465,6 @@ object SubmissionQueryTable:
             contestId,
             normalizedRequest,
             includeDetailVisibility = true,
-            hasGlobalViewOverride,
             canViewAllContestSubmissions
           )
           statement.setInt(nextIndex, normalizedRequest.pageRequest.pageSize)
@@ -591,17 +551,15 @@ object SubmissionQueryTable:
     contestId: ContestId,
     request: SubmissionListRequest,
     includeDetailVisibility: Boolean,
-    hasGlobalViewOverride: Boolean,
     canViewAllContestSubmissions: Boolean
   ): Int =
     val afterDetailVisibility =
-      if includeDetailVisibility then bindVisibility(statement, 1, actor, hasGlobalViewOverride)
+      if includeDetailVisibility then bindContestSubmissionOwner(statement, 1, actor, canViewAllContestSubmissions)
       else 1
 
     statement.setObject(afterDetailVisibility, contestId.value)
     val afterContestId = afterDetailVisibility + 1
-    val afterCanViewAll = bindBoolean(statement, afterContestId, canViewAllContestSubmissions)
-    val afterSubmitter = bindString(statement, afterCanViewAll, actor.username.value)
+    val afterSubmitter = bindContestSubmissionOwner(statement, afterContestId, actor, canViewAllContestSubmissions)
     bindCommonListFilters(statement, afterSubmitter, request)
 
   private def bindCommonListFilters(
@@ -635,12 +593,17 @@ object SubmissionQueryTable:
     hasGlobalViewOverride: Boolean
   ): Int =
     val afterProblemManager = bindProblemManagerVisibility(statement, startIndex, actor)
-    val afterVisibleUnfinished = bindVisibleContest(statement, afterProblemManager, actor)
-    val afterOwnInContestSubmitter = bindString(statement, afterVisibleUnfinished, actor.username.value)
-    val afterOwnInContestRegistrant = bindString(statement, afterOwnInContestSubmitter, actor.username.value)
-    val afterVisibleUnfinishedGuard = bindVisibleContest(statement, afterOwnInContestRegistrant, actor)
-    val afterOrdinary = bindOrdinaryVisibility(statement, afterVisibleUnfinishedGuard, actor, hasGlobalViewOverride)
+    val afterOrdinary = bindOrdinaryVisibility(statement, afterProblemManager, actor, hasGlobalViewOverride)
     bindVisibleContest(statement, afterOrdinary, actor)
+
+  private def bindContestSubmissionOwner(
+    statement: PreparedStatement,
+    startIndex: Int,
+    actor: AuthenticatedUser,
+    canViewAllContestSubmissions: Boolean
+  ): Int =
+    val afterCanViewAll = bindBoolean(statement, startIndex, canViewAllContestSubmissions)
+    bindString(statement, afterCanViewAll, actor.username.value)
 
   private def bindProblemManagerVisibility(
     statement: PreparedStatement,

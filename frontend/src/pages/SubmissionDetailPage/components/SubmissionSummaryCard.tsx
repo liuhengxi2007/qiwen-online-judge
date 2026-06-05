@@ -33,6 +33,13 @@ type SubmissionSummaryCardProps = {
   submission: SubmissionDetail
 }
 
+function submissionProblemPath(submission: SubmissionDetail): string {
+  const problemPath = `/problems/${problemSlugValue(submission.problemSlug)}`
+  return submission.source.contestSlug
+    ? `/contests/${contestSlugValue(submission.source.contestSlug)}/problems/${problemSlugValue(submission.problemSlug)}`
+    : problemPath
+}
+
 export function SubmissionSummaryCard({
   deleteCurrentSubmission,
   isDeleting,
@@ -104,7 +111,7 @@ export function SubmissionSummaryCard({
           <p className="mt-1">
             <Link
               className="font-medium text-slate-900 hover:underline"
-              to={`/problems/${problemSlugValue(submission.problemSlug)}`}
+              to={submissionProblemPath(submission)}
             >
               {formatProblemTitleDisplay(
                 submission.problemTitle,

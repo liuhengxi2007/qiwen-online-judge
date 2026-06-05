@@ -37,6 +37,13 @@ function submissionOverviewStatus(submission: SubmissionSummary): string {
   return submissionJudgeStateLabel(submission.status, submission.verdict)
 }
 
+function submissionProblemPath(submission: SubmissionSummary): string {
+  const problemPath = `/problems/${problemSlugValue(submission.problemSlug)}`
+  return submission.source.contestSlug
+    ? `/contests/${contestSlugValue(submission.source.contestSlug)}/problems/${problemSlugValue(submission.problemSlug)}`
+    : problemPath
+}
+
 export function SubmissionSummaryList({
   submissions,
   viewer,
@@ -93,7 +100,7 @@ export function SubmissionSummaryList({
                     <dd className="mt-1 font-medium text-slate-900">
                       <Link
                         className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                        to={`/problems/${problemSlugValue(submission.problemSlug)}`}
+                        to={submissionProblemPath(submission)}
                       >
                         {formatProblemTitleDisplay(submission.problemTitle, submission.problemSlug, problemTitleDisplayMode)}
                       </Link>

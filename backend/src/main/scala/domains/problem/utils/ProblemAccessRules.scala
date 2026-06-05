@@ -18,17 +18,13 @@ object ProblemAccessRules:
     actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
-    hasVisibleContainingProblemSet: Boolean,
-    hasVisibleUnfinishedContestContainingProblem: Boolean,
-    hasVisibleEndedContestContainingProblem: Boolean
+    hasVisibleContainingProblemSet: Boolean
   ): Option[ProblemDetail] =
     val decision = evaluateProblemPermissions(
       actor,
       problem,
       actorGroupSlugs,
-      hasVisibleContainingProblemSet,
-      hasVisibleUnfinishedContestContainingProblem,
-      hasVisibleEndedContestContainingProblem
+      hasVisibleContainingProblemSet
     )
     if decision.canView then Some(problem.copy(canManage = decision.canManage)) else None
 
@@ -36,9 +32,7 @@ object ProblemAccessRules:
     actor: AuthenticatedUser,
     problem: ProblemDetail,
     actorGroupSlugs: Set[UserGroupSlug],
-    hasVisibleContainingProblemSet: Boolean,
-    hasVisibleUnfinishedContestContainingProblem: Boolean,
-    hasVisibleEndedContestContainingProblem: Boolean
+    hasVisibleContainingProblemSet: Boolean
   ): ProblemPermissionEvaluation =
     val resourceDecision =
       ResourceAccessDecision.evaluate(
@@ -55,8 +49,8 @@ object ProblemAccessRules:
     ProblemPermissionEvaluation(
       canView =
         canManage ||
-          (!hasVisibleUnfinishedContestContainingProblem &&
-            (resourceDecision.canViewDirectly || hasVisibleContainingProblemSet || hasVisibleEndedContestContainingProblem)),
+          resourceDecision.canViewDirectly ||
+          hasVisibleContainingProblemSet,
       canManage = canManage
     )
 

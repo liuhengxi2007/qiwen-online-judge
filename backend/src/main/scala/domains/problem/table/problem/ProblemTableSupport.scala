@@ -93,9 +93,7 @@ object ProblemTableSupport:
     startIndex: Int
   ): Int =
     val afterManagerProblemAccess = bindManagerProblemAccessQuery(statement, actor, startIndex)
-    val afterVisibleUnfinishedContest = bindVisibleContestAccessQuery(statement, actor, afterManagerProblemAccess)
-    val afterNormalProblemAccess = bindNormalProblemAccessQuery(statement, actor, afterVisibleUnfinishedContest)
-    bindVisibleContestAccessQuery(statement, actor, afterNormalProblemAccess)
+    bindNormalProblemAccessQuery(statement, actor, afterManagerProblemAccess)
 
   private def bindManagerProblemAccessQuery(
     statement: PreparedStatement,
@@ -131,21 +129,6 @@ object ProblemTableSupport:
     statement.setString(startIndex + 1, likeQuery.map(_.containsPattern).getOrElse(""))
     statement.setString(startIndex + 2, likeQuery.map(_.containsPattern).getOrElse(""))
     startIndex + 3
-
-  private def bindString(statement: PreparedStatement, index: Int, value: String): Int =
-    statement.setString(index, value)
-    index + 1
-
-  private def bindVisibleContestAccessQuery(
-    statement: PreparedStatement,
-    actor: AuthenticatedUser,
-    startIndex: Int
-  ): Int =
-    statement.setBoolean(startIndex, actor.siteManager || actor.contestManager)
-    statement.setString(startIndex + 1, actor.username.value)
-    statement.setString(startIndex + 2, actor.username.value)
-    statement.setString(startIndex + 3, actor.username.value)
-    startIndex + 4
 
   def bindListQuery(
     statement: PreparedStatement,

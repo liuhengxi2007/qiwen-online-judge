@@ -3,7 +3,6 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.InternalOnlyAuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.contest.api.EvaluateContestProblemVisibility
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemAccessEvaluationResponse
 import domains.problem.utils.ProblemAccessRules
@@ -27,18 +26,11 @@ object EvaluateProblemAccess extends InternalOnlyAuthenticatedApi[ProblemSlug, P
         for
           actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
           hasVisibleContainingProblemSet <- ProblemQueryTable.hasVisibleContainingProblemSet(connection, actor, problem.id)
-          contestVisibility <- EvaluateContestProblemVisibility.plan(
-            connection,
-            actor,
-            EvaluateContestProblemVisibility.Input(problem.id, submittedAt = None)
-          )
           access = ProblemAccessRules.evaluateProblemPermissions(
             actor,
             problem,
             actorGroupSlugs.slugs.toSet,
-            hasVisibleContainingProblemSet,
-            contestVisibility.hasVisibleUnfinishedContestContainingProblem,
-            contestVisibility.hasVisibleEndedContestContainingProblem
+            hasVisibleContainingProblemSet
           )
         yield ProblemAccessEvaluationResponse(problem = Some(problem), canView = access.canView, canManage = access.canManage)
     }

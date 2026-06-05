@@ -8,7 +8,7 @@ import domains.contest.objects.ContestSlug
 import domains.submission.objects.request.SubmissionListRequest
 import domains.submission.objects.response.SubmissionListResponse
 import domains.submission.table.submission.SubmissionQueryTable
-import domains.submission.utils.{SubmissionAccessRules, SubmissionListRequestQuery}
+import domains.submission.utils.SubmissionListRequestQuery
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -47,7 +47,6 @@ object ListContestSubmissions extends AuthenticatedApi[(ContestSlug, SubmissionL
         actor,
         contestAccess.contestId,
         request,
-        SubmissionAccessRules.hasGlobalViewOverride(actor),
         canViewAllContestSubmissions = contestAccess.canManageContest || contestAccess.contestEnded
       )
     yield submissions

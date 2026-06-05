@@ -17,6 +17,7 @@ import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSugges
 import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
 import { PageShell } from '@/pages/components/PageShell'
+import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -201,6 +202,17 @@ function ContestManageProblemCard({
           onSuggestionSelect={model.selectProblemSuggestion}
           onAttach={() => {
             void model.attachProblem()
+          }}
+        />
+        <ConfirmActionDialog
+          open={model.isAttachWarningOpen}
+          onOpenChange={model.closeAttachProblemWarning}
+          title={t('contest.manage.attachWarningTitle')}
+          description={t('contest.manage.attachWarningDescription')}
+          confirmLabel={t('contest.manage.attachWarningConfirm')}
+          cancelLabel={t('contest.manage.attachWarningCancel')}
+          onConfirm={() => {
+            void model.confirmAttachProblemWarning()
           }}
         />
 

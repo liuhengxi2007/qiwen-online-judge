@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from 'react'
 
 import { AddProblemToContest } from '@/apis/contest/AddProblemToContest'
+import { EvaluateContestProblemAttachWarning } from '@/apis/contest/EvaluateContestProblemAttachWarning'
 import { GetContest } from '@/apis/contest/GetContest'
 import { RemoveProblemFromContest } from '@/apis/contest/RemoveProblemFromContest'
 import { UpdateContest } from '@/apis/contest/UpdateContest'
@@ -9,6 +10,7 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
@@ -26,6 +28,7 @@ type ContestManagePageState = {
   isLoading: boolean
   isSaving: boolean
   isAttachingProblem: boolean
+  attachWarningProblemSlug: ProblemSlug | null
   removingProblemSlug: string
   loadErrorMessage: string
   saveErrorMessage: string
@@ -51,6 +54,8 @@ type ContestManagePageAction =
   | { type: 'save_succeeded'; contest: ContestDetail; message: string }
   | { type: 'save_failed'; message: string }
   | { type: 'attach_problem_started' }
+  | { type: 'attach_problem_warning_opened'; problemSlug: ProblemSlug }
+  | { type: 'attach_problem_warning_closed' }
   | { type: 'attach_problem_succeeded'; contest: ContestDetail; message: string }
   | { type: 'attach_problem_failed'; message: string }
   | { type: 'remove_problem_started'; problemSlug: string }
@@ -63,6 +68,7 @@ const initialState: ContestManagePageState = {
   isLoading: true,
   isSaving: false,
   isAttachingProblem: false,
+  attachWarningProblemSlug: null,
   removingProblemSlug: '',
   loadErrorMessage: '',
   saveErrorMessage: '',
@@ -105,10 +111,14 @@ function reducer(state: ContestManagePageState, action: ContestManagePageAction)
       return { ...state, isSaving: false, saveErrorMessage: action.message, saveSuccessMessage: '' }
     case 'attach_problem_started':
       return { ...state, isAttachingProblem: true, problemErrorMessage: '', problemSuccessMessage: '' }
+    case 'attach_problem_warning_opened':
+      return { ...state, isAttachingProblem: false, attachWarningProblemSlug: action.problemSlug, problemErrorMessage: '', problemSuccessMessage: '' }
+    case 'attach_problem_warning_closed':
+      return { ...state, attachWarningProblemSlug: null }
     case 'attach_problem_succeeded':
-      return { ...state, contest: action.contest, isAttachingProblem: false, problemErrorMessage: '', problemSuccessMessage: action.message }
+      return { ...state, contest: action.contest, isAttachingProblem: false, attachWarningProblemSlug: null, problemErrorMessage: '', problemSuccessMessage: action.message }
     case 'attach_problem_failed':
-      return { ...state, isAttachingProblem: false, problemErrorMessage: action.message, problemSuccessMessage: '' }
+      return { ...state, isAttachingProblem: false, attachWarningProblemSlug: null, problemErrorMessage: action.message, problemSuccessMessage: '' }
     case 'remove_problem_started':
       return { ...state, removingProblemSlug: action.problemSlug, problemErrorMessage: '', problemSuccessMessage: '' }
     case 'remove_problem_succeeded':
@@ -225,6 +235,19 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     }
   }, [contestSlug, state.draft, t])
 
+  const attachProblemBySlug = useCallback(async (problemSlug: ProblemSlug) => {
+    dispatch({ type: 'attach_problem_started' })
+    try {
+      const contest = await sendAPI(new AddProblemToContest(contestSlug, { problemSlug }))
+      dispatch({ type: 'attach_problem_succeeded', contest, message: t('contest.manage.attachProblemSuccess') })
+      setProblemSearchInput('')
+      setProblemSuggestions([])
+    } catch (error) {
+      const message = error instanceof HttpClientError ? error.message : t('contest.manage.attachProblemFailed')
+      dispatch({ type: 'attach_problem_failed', message })
+    }
+  }, [contestSlug, t])
+
   const attachProblem = useCallback(async () => {
     const parsedSlug = parseProblemSlug(problemSearchInput)
     if (!parsedSlug.ok) {
@@ -234,15 +257,33 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
 
     dispatch({ type: 'attach_problem_started' })
     try {
-      const contest = await sendAPI(new AddProblemToContest(contestSlug, { problemSlug: parsedSlug.value }))
-      dispatch({ type: 'attach_problem_succeeded', contest, message: t('contest.manage.attachProblemSuccess') })
-      setProblemSearchInput('')
-      setProblemSuggestions([])
+      const warning = await sendAPI(new EvaluateContestProblemAttachWarning(contestSlug, parsedSlug.value))
+      if (warning.shouldWarn) {
+        dispatch({ type: 'attach_problem_warning_opened', problemSlug: parsedSlug.value })
+      } else {
+        await attachProblemBySlug(parsedSlug.value)
+      }
     } catch (error) {
       const message = error instanceof HttpClientError ? error.message : t('contest.manage.attachProblemFailed')
       dispatch({ type: 'attach_problem_failed', message })
     }
-  }, [contestSlug, problemSearchInput, t])
+  }, [attachProblemBySlug, contestSlug, problemSearchInput, t])
+
+  const closeAttachProblemWarning = useCallback((open: boolean) => {
+    if (!open) {
+      dispatch({ type: 'attach_problem_warning_closed' })
+    }
+  }, [])
+
+  const confirmAttachProblemWarning = useCallback(async () => {
+    const problemSlug = state.attachWarningProblemSlug
+    if (!problemSlug) {
+      return
+    }
+
+    dispatch({ type: 'attach_problem_warning_closed' })
+    await attachProblemBySlug(problemSlug)
+  }, [attachProblemBySlug, state.attachWarningProblemSlug])
 
   const removeProblem = useCallback(async (rawProblemSlug: string) => {
     const parsedSlug = parseProblemSlug(rawProblemSlug)
@@ -275,6 +316,7 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     isLoadingProblemSuggestions,
     problemSuggestions: isProblemSearchFocused ? problemSuggestions : [],
     accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedAccessPolicy(),
+    isAttachWarningOpen: state.attachWarningProblemSlug !== null,
     setDescriptionTab,
     setProblemSearchInput: updateProblemSearchInput,
     setIsProblemSearchFocused: updateProblemSearchFocus,
@@ -289,6 +331,8 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     setGrantedManagerGroupsInput: (value: string) => dispatch({ type: 'set_granted_manager_groups_input', value }),
     selectProblemSuggestion,
     attachProblem,
+    closeAttachProblemWarning,
+    confirmAttachProblemWarning,
     removeProblem,
     save,
   }
