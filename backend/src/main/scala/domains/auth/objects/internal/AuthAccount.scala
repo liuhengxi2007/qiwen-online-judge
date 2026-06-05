@@ -1,6 +1,6 @@
 package domains.auth.objects.internal
 
-import domains.auth.objects.{EmailAddress, PasswordHash}
+import domains.auth.objects.{AuthPermissionFlags, EmailAddress, PasswordHash}
 import domains.user.objects.Username
 
 final case class AuthAccount(
@@ -12,9 +12,10 @@ final case class AuthAccount(
   contestManager: Boolean
 ):
   def authenticatedUser: AuthenticatedUser =
+    val permissions = AuthPermissionFlags.normalize(siteManager, problemManager, contestManager)
     AuthenticatedUser(
       username = username,
-      siteManager = siteManager,
-      problemManager = problemManager,
-      contestManager = contestManager
+      siteManager = permissions.siteManager,
+      problemManager = permissions.problemManager,
+      contestManager = permissions.contestManager
     )

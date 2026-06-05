@@ -610,7 +610,7 @@ object SubmissionQueryTable:
     startIndex: Int,
     actor: AuthenticatedUser
   ): Int =
-    val afterGlobalProblemManager = bindBoolean(statement, startIndex, actor.siteManager || actor.problemManager)
+    val afterGlobalProblemManager = bindBoolean(statement, startIndex, actor.problemManager)
     val afterUserManagerGrant = bindString(statement, afterGlobalProblemManager, actor.username.value)
     bindString(statement, afterUserManagerGrant, actor.username.value)
 
@@ -633,7 +633,7 @@ object SubmissionQueryTable:
     startIndex: Int,
     actor: AuthenticatedUser
   ): Int =
-    val afterGlobalOverride = bindBoolean(statement, startIndex, actor.siteManager || actor.contestManager)
+    val afterGlobalOverride = bindBoolean(statement, startIndex, actor.contestManager)
     val afterUserGrant = bindString(statement, afterGlobalOverride, actor.username.value)
     val afterGroupGrant = bindString(statement, afterUserGrant, actor.username.value)
     bindString(statement, afterGroupGrant, actor.username.value)

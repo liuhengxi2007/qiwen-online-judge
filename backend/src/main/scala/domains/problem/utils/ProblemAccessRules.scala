@@ -72,10 +72,10 @@ object ProblemAccessRules:
       .canManage
 
   def hasGlobalViewOverride(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager
 
   def hasGlobalManageOverride(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager
 
   private def toAccessUsername(username: Username): AccessUsername =
     AccessUsername(username.value)

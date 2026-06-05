@@ -46,4 +46,4 @@ object LinkBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessR
     }
 
   private def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager

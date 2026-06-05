@@ -1,6 +1,6 @@
 package domains.auth.objects.response
 
-import domains.auth.objects.EmailAddress
+import domains.auth.objects.{AuthPermissionFlags, EmailAddress}
 import domains.user.objects.UserProfileSettings
 
 import domains.user.objects.{DisplayName, UserAvatarUrl, UserPreferences, Username}
@@ -31,14 +31,15 @@ object LoginResponse:
     contestManager: Boolean,
     message: String
   ): LoginResponse =
+    val permissions = AuthPermissionFlags.normalize(siteManager, problemManager, contestManager)
     LoginResponse(
       displayName = profile.displayName,
       username = profile.username,
       avatarUrl = profile.avatarUrl,
       email = email,
       preferences = profile.preferences,
-      siteManager = siteManager,
-      problemManager = problemManager,
-      contestManager = contestManager,
+      siteManager = permissions.siteManager,
+      problemManager = permissions.problemManager,
+      contestManager = permissions.contestManager,
       message = message
     )

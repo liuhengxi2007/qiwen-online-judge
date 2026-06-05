@@ -49,7 +49,7 @@ export function ContestPage() {
     return <Navigate replace to="/login" />
   }
 
-  const canCreate = user.siteManager || user.contestManager
+  const canCreate = user.contestManager
   const onPageChange = (page: number) => {
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.set('page', String(page))

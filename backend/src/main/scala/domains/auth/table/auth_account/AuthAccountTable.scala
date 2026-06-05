@@ -3,7 +3,7 @@ package domains.auth.table.auth_account
 
 
 import cats.effect.IO
-import domains.auth.objects.{EmailAddress, PasswordHash, SiteManagerUser}
+import domains.auth.objects.{AuthPermissionFlags, EmailAddress, PasswordHash, SiteManagerUser}
 import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
 import domains.user.objects.Username
 import domains.auth.table.auth_account.AuthAccountTableSchema.*
@@ -191,11 +191,12 @@ object AuthAccountTable:
   ): IO[Option[AuthAccount]] =
     IO.blocking {
       val _ = actor
+      val permissions = AuthPermissionFlags.normalize(siteManager, problemManager, contestManager)
       val statement = connection.prepareStatement(updatePermissionsSQL)
       try
-        statement.setBoolean(1, siteManager)
-        statement.setBoolean(2, problemManager)
-        statement.setBoolean(3, contestManager)
+        statement.setBoolean(1, permissions.siteManager)
+        statement.setBoolean(2, permissions.problemManager)
+        statement.setBoolean(3, permissions.contestManager)
         statement.setString(4, username.value.trim)
 
         val resultSet = statement.executeQuery()

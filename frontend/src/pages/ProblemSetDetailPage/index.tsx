@@ -42,7 +42,7 @@ export function ProblemSetDetailPage() {
     return <Navigate replace to="/problem-sets" />
   }
 
-  return <ProblemSetDetailPageContent canManageProblems={user.siteManager || user.problemManager} problemSetSlug={slugResult.value} />
+  return <ProblemSetDetailPageContent canManageProblems={user.problemManager} problemSetSlug={slugResult.value} />
 }
 
 function ProblemSetDetailPageContent({

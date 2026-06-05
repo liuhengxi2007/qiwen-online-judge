@@ -100,7 +100,7 @@ object ProblemTableSupport:
     actor: AuthenticatedUser,
     startIndex: Int
   ): Int =
-    statement.setBoolean(startIndex, actor.siteManager || actor.problemManager)
+    statement.setBoolean(startIndex, actor.problemManager)
     statement.setString(startIndex + 1, actor.username.value)
     statement.setString(startIndex + 2, actor.username.value)
     startIndex + 3
@@ -110,7 +110,7 @@ object ProblemTableSupport:
     actor: AuthenticatedUser,
     startIndex: Int
   ): Int =
-    val globalProblemOverride = actor.siteManager || actor.problemManager
+    val globalProblemOverride = actor.problemManager
     statement.setBoolean(startIndex, globalProblemOverride)
     statement.setString(startIndex + 1, actor.username.value)
     statement.setString(startIndex + 2, actor.username.value)
@@ -170,6 +170,6 @@ object ProblemTableSupport:
     problemId: ProblemId
   ): Unit =
     statement.setObject(1, problemId.value)
-    statement.setBoolean(2, actor.siteManager || actor.problemManager)
+    statement.setBoolean(2, actor.problemManager)
     statement.setString(3, actor.username.value)
     statement.setString(4, actor.username.value)

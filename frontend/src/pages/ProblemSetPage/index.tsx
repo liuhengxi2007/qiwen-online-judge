@@ -46,7 +46,7 @@ export function ProblemSetPage() {
     return <Navigate replace to="/login" />
   }
 
-  const canCreate = user.siteManager || user.problemManager
+  const canCreate = user.problemManager
   const onPageChange = (page: number) => {
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.set('page', String(page))

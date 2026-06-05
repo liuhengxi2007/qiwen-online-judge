@@ -38,4 +38,4 @@ object ListPendingProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogL
       BlogProblemLinkQueryTable.listPendingByProblem(connection, input.problemSlug, actor.username, normalizedPageRequest)
 
   private def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager

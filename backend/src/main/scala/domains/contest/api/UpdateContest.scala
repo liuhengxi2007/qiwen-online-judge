@@ -8,7 +8,6 @@ import domains.contest.objects.request.UpdateContestRequest
 import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
 import domains.contest.table.contest.ContestTable
 import domains.contest.utils.{ContestAccessPolicyValidation, ContestAccessRules}
-import domains.user.objects.Username
 import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -50,8 +49,7 @@ object UpdateContest extends AuthenticatedApi[(ContestSlug, UpdateContestRequest
       description <- HttpApiError.fromEitherBadRequest(ContestDescription.parse(request.description.value))
       sanitizedInput = request.copy(title = title, description = description)
       _ <- HttpApiError.ensure(sanitizedInput.endAt.isAfter(sanitizedInput.startAt), HttpApiError.badRequest("Contest end time must be after start time."))
-      authorUsername = contest.author.map(author => Username(author.username.value))
-      sanitizedRequest = ContestAccessPolicyValidation.sanitizePolicyWithAuthorManager(sanitizedInput, authorUsername)
+      sanitizedRequest = ContestAccessPolicyValidation.sanitizePolicy(sanitizedInput)
       _ <- ContestAccessPolicyValidation.validateAccessPolicySubjects(connection, sanitizedRequest.accessPolicy)
       updatedContest <- ContestTable.update(connection, contest, sanitizedRequest)
       registration <- ContestTable.findRegistration(connection, updatedContest.id, actor.username)

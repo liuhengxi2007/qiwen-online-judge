@@ -8,7 +8,7 @@ import domains.user.objects.Username
 import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
 import shared.api.HttpApiError
-import shared.objects.access.{AccessSubject, AccessUsername, ResourceAccessPolicy}
+import shared.objects.access.{AccessSubject, ResourceAccessPolicy}
 
 import java.sql.Connection
 
@@ -17,15 +17,8 @@ object ContestAccessPolicyValidation:
   def sanitizePolicy(request: CreateContestRequest): CreateContestRequest =
     request.copy(accessPolicy = sanitizePolicy(request.accessPolicy))
 
-  def sanitizePolicyWithAuthorManager(request: CreateContestRequest, authorUsername: Username): CreateContestRequest =
-    val authorManager = AccessSubject.User(AccessUsername(authorUsername.value))
-    val policy = request.accessPolicy.copy(managerGrants = authorManager :: request.accessPolicy.managerGrants)
-    request.copy(accessPolicy = sanitizePolicy(policy))
-
-  def sanitizePolicyWithAuthorManager(request: UpdateContestRequest, authorUsername: Option[Username]): UpdateContestRequest =
-    val authorManagerGrant = authorUsername.map(username => AccessSubject.User(AccessUsername(username.value))).toList
-    val policy = request.accessPolicy.copy(managerGrants = authorManagerGrant ::: request.accessPolicy.managerGrants)
-    request.copy(accessPolicy = sanitizePolicy(policy))
+  def sanitizePolicy(request: UpdateContestRequest): UpdateContestRequest =
+    request.copy(accessPolicy = sanitizePolicy(request.accessPolicy))
 
   def sanitizePolicy(accessPolicy: ResourceAccessPolicy): ResourceAccessPolicy =
     accessPolicy.copy(

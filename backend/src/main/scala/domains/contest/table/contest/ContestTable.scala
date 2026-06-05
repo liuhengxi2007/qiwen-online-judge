@@ -133,7 +133,7 @@ object ContestTable:
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
   private def bindAccessQuery(statement: PreparedStatement, actor: AuthenticatedUser, limit: Option[Int], offset: Option[Int]): Unit =
-    val isGlobalContestManager = actor.siteManager || actor.contestManager
+    val isGlobalContestManager = actor.contestManager
     statement.setBoolean(1, isGlobalContestManager)
     statement.setString(2, actor.username.value)
     statement.setString(3, actor.username.value)

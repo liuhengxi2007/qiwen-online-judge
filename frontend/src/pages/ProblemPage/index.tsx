@@ -34,7 +34,7 @@ export function ProblemPage() {
     return <Navigate replace to="/login" />
   }
 
-  return <ProblemPageContent canCreate={user.siteManager || user.problemManager} />
+  return <ProblemPageContent canCreate={user.problemManager} />
 }
 
 function ProblemPageContent({ canCreate }: { canCreate: boolean }) {

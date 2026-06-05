@@ -217,6 +217,32 @@ object AuthAccountTableSchema:
       |end $$;
       |""".stripMargin
 
+  val backfillSiteManagerPermissionFlagsSql: String =
+    """
+      |update auth_accounts
+      |set problem_manager = true,
+      |    contest_manager = true
+      |where site_manager = true
+      |  and (problem_manager = false or contest_manager = false)
+      |""".stripMargin
+
+  val addSiteManagerPermissionFlagsConstraintSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'auth_accounts_site_manager_permission_flags'
+      |      and conrelid = 'auth_accounts'::regclass
+      |  ) then
+      |    alter table auth_accounts
+      |    add constraint auth_accounts_site_manager_permission_flags
+      |    check (not site_manager or (problem_manager and contest_manager));
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
   def initializeSchema(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()
@@ -230,6 +256,8 @@ object AuthAccountTableSchema:
         statement.execute(addSiteManagerColumnSql)
         statement.execute(addProblemManagerColumnSql)
         statement.execute(addContestManagerColumnSql)
+        statement.executeUpdate(backfillSiteManagerPermissionFlagsSql)
+        statement.execute(addSiteManagerPermissionFlagsConstraintSql)
         statement.executeUpdate(backfillEmailSql)
         statement.execute(setEmailNotNullSql)
         statement.execute(createCaseInsensitiveUsernameIndexSql)

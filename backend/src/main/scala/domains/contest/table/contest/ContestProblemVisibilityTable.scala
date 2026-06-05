@@ -13,7 +13,7 @@ object ContestProblemVisibilityTable:
       |with contest_managers as (
       |  select aa.username
       |  from auth_accounts aa
-      |  where aa.site_manager = true or aa.contest_manager = true
+      |  where aa.contest_manager = true
       |
       |  union
       |

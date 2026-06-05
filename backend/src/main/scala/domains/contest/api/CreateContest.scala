@@ -40,5 +40,5 @@ object CreateContest extends AuthenticatedApi[CreateContestRequest, ContestDetai
       existing <- ContestTable.findBySlug(connection, validRequest.slug)
       _ <- HttpApiError.ensure(existing.isEmpty, HttpApiError.conflict(ApiMessages.contestSlugExists))
       _ <- ContestAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-      contest <- ContestTable.insert(connection, actor.username, ContestAccessPolicyValidation.sanitizePolicyWithAuthorManager(validRequest, actor.username))
+      contest <- ContestTable.insert(connection, actor.username, ContestAccessPolicyValidation.sanitizePolicy(validRequest))
     yield ContestDetail.fromContest(contest, ContestRegistrationStatus.notRegistered, canManage = true, includeProblems = true)

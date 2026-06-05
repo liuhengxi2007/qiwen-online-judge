@@ -10,7 +10,7 @@ import shared.objects.access.{AccessUserGroupSlug, AccessUsername}
 object ContestAccessRules:
 
   def canCreateContests(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.contestManager
+    actor.contestManager
 
   def canViewContest(actor: AuthenticatedUser, contest: Contest, actorGroupSlugs: Set[UserGroupSlug]): Boolean =
     val decision = evaluateContestPermissions(actor, contest, actorGroupSlugs)
@@ -35,7 +35,7 @@ object ContestAccessRules:
     )
 
   private def hasGlobalOverride(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.contestManager
+    actor.contestManager
 
   private def toAccessUsername(username: Username): AccessUsername =
     AccessUsername(username.value)

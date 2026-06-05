@@ -1,4 +1,5 @@
 import { parseEmailAddress } from '@/objects/auth/EmailAddress'
+import { normalizeAuthPermissionFlags } from '@/objects/auth/AuthPermissionFlags'
 import { parseProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
 import { parseDisplayName } from '@/objects/user/DisplayName'
 import { parseUserDisplayMode } from '@/objects/user/UserDisplayMode'
@@ -11,7 +12,7 @@ const authSessionStorageKey = 'auth_session'
 const legacyAuthSessionStorageKey = 'auth_user'
 
 export function persistAuthSession(session: SessionResponse): void {
-  window.localStorage.setItem(authSessionStorageKey, JSON.stringify(session))
+  window.localStorage.setItem(authSessionStorageKey, JSON.stringify(normalizeAuthPermissionFlags(session)))
   window.localStorage.removeItem(legacyAuthSessionStorageKey)
 }
 
@@ -84,7 +85,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
       return null
     }
 
-    return {
+    return normalizeAuthPermissionFlags({
       displayName: displayNameResult.value,
       username: usernameResult.value,
       avatarUrl: typeof parsed.avatarUrl === 'string' ? (parsed.avatarUrl as UserAvatarUrl) : null,
@@ -98,7 +99,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
       siteManager: parsed.siteManager,
       problemManager: parsed.problemManager,
       contestManager: parsed.contestManager ?? false,
-    }
+    })
   } catch {
     return null
   }

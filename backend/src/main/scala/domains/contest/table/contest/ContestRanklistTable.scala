@@ -37,7 +37,7 @@ object ContestRanklistTable:
       |    select 1
       |    from auth_accounts aa
       |    where aa.username = cr.username
-      |      and (aa.site_manager = true or aa.contest_manager = true)
+      |      and aa.contest_manager = true
       |  )
       |  and not exists (
       |    select 1
@@ -98,7 +98,7 @@ object ContestRanklistTable:
       |      select 1
       |      from auth_accounts aa
       |      where aa.username = cr.username
-      |        and (aa.site_manager = true or aa.contest_manager = true)
+      |        and aa.contest_manager = true
       |    )
       |    and not exists (
       |      select 1

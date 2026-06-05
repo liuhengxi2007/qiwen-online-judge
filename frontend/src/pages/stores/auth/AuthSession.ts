@@ -1,5 +1,6 @@
 import type { LoginResponse } from '@/objects/auth/response/LoginResponse'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
+import { normalizeAuthPermissionFlags } from '@/objects/auth/AuthPermissionFlags'
 
 export function toAuthSession(
   response: Pick<
@@ -7,7 +8,7 @@ export function toAuthSession(
     'displayName' | 'username' | 'avatarUrl' | 'email' | 'preferences' | 'siteManager' | 'problemManager' | 'contestManager'
   >,
 ): SessionResponse {
-  return {
+  return normalizeAuthPermissionFlags({
     displayName: response.displayName,
     username: response.username,
     avatarUrl: response.avatarUrl,
@@ -16,7 +17,7 @@ export function toAuthSession(
     siteManager: response.siteManager,
     problemManager: response.problemManager,
     contestManager: response.contestManager,
-  }
+  })
 }
 
 export function asSiteManagerSession(session: SessionResponse): (SessionResponse & { siteManager: true }) | null {

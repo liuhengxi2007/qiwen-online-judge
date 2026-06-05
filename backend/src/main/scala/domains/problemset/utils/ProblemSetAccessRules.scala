@@ -27,10 +27,10 @@ object ProblemSetAccessRules:
       .canViewDirectly
 
   def hasGlobalViewOverride(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager
 
   def canManageProblemSets(actor: AuthenticatedUser): Boolean =
-    actor.siteManager || actor.problemManager
+    actor.problemManager
 
   private def toAccessUsername(username: Username): AccessUsername =
     AccessUsername(username.value)

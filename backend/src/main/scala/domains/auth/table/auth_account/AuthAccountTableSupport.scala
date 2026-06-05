@@ -2,7 +2,7 @@ package domains.auth.table.auth_account
 
 
 
-import domains.auth.objects.{EmailAddress, PasswordHash, PlaintextPassword}
+import domains.auth.objects.{AuthPermissionFlags, EmailAddress, PasswordHash, PlaintextPassword}
 import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
 import domains.user.objects.Username
 
@@ -16,19 +16,31 @@ object AuthAccountTableSupport:
     throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
   def readAuthAccount(resultSet: ResultSet): AuthAccount =
+    val permissions =
+      AuthPermissionFlags.normalize(
+        resultSet.getBoolean("site_manager"),
+        resultSet.getBoolean("problem_manager"),
+        resultSet.getBoolean("contest_manager")
+      )
     AuthAccount(
       username = Username.canonical(resultSet.getString("username")),
       email = EmailAddress(resultSet.getString("email")),
       passwordHash = PasswordHash(resultSet.getString("password_hash")),
-      siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager"),
-      contestManager = resultSet.getBoolean("contest_manager")
+      siteManager = permissions.siteManager,
+      problemManager = permissions.problemManager,
+      contestManager = permissions.contestManager
     )
 
   def readAuthenticatedUser(resultSet: ResultSet): AuthenticatedUser =
+    val permissions =
+      AuthPermissionFlags.normalize(
+        resultSet.getBoolean("site_manager"),
+        resultSet.getBoolean("problem_manager"),
+        resultSet.getBoolean("contest_manager")
+      )
     AuthenticatedUser(
       username = Username.canonical(resultSet.getString("username")),
-      siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager"),
-      contestManager = resultSet.getBoolean("contest_manager")
+      siteManager = permissions.siteManager,
+      problemManager = permissions.problemManager,
+      contestManager = permissions.contestManager
     )

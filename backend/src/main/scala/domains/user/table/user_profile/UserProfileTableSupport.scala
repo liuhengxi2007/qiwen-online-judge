@@ -2,7 +2,7 @@ package domains.user.table.user_profile
 
 
 
-import domains.auth.objects.EmailAddress
+import domains.auth.objects.{AuthPermissionFlags, EmailAddress}
 import domains.user.objects.internal.UserAvatarRecord
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
@@ -74,13 +74,19 @@ object UserProfileTableSupport:
     )
 
   def readUserListItem(resultSet: ResultSet): ManagedUserListItem =
+    val permissions =
+      AuthPermissionFlags.normalize(
+        resultSet.getBoolean("site_manager"),
+        resultSet.getBoolean("problem_manager"),
+        resultSet.getBoolean("contest_manager")
+      )
     ManagedUserListItem(
       username = Username.canonical(resultSet.getString("username")),
       displayName = DisplayName(resultSet.getString("display_name")),
       email = EmailAddress(resultSet.getString("email")),
-      siteManager = resultSet.getBoolean("site_manager"),
-      problemManager = resultSet.getBoolean("problem_manager"),
-      contestManager = resultSet.getBoolean("contest_manager")
+      siteManager = permissions.siteManager,
+      problemManager = permissions.problemManager,
+      contestManager = permissions.contestManager
     )
 
   def readUserSettingsResponse(resultSet: ResultSet): UserSettingsResponse =

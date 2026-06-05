@@ -18,6 +18,7 @@ import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { buildPageNumbers } from '@/pages/objects/Pagination'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
+import { buildPermissionUpdate, displayedPermissionFlags } from '../functions/SiteManagePermissions'
 
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
 
@@ -144,91 +145,86 @@ export function SiteManageUserCard({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {model.users.map((listedUser) => (
-                <TableRow key={usernameValue(listedUser.username)}>
-                  <TableCell className="text-stone-700">{usernameValue(listedUser.username)}</TableCell>
-                  <TableCell className="font-medium text-stone-900">{displayNameValue(listedUser.displayName)}</TableCell>
-                  <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
-                  <TableCell>
-                    <Button asChild variant="outline" size="sm" className="rounded-full border-stone-300 bg-white">
-                      <Link to={`/user/${usernameValue(listedUser.username)}/settings`}>{t('siteManage.openSettings')}</Link>
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={listedUser.siteManager}
-                      disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
-                      aria-label="Site manager"
-                      onCheckedChange={(checked) => {
-                        if (siteManagerSession) {
-                          void model.savePermissions(listedUser, {
-                            siteManager: checked === true,
-                            problemManager: listedUser.problemManager,
-                            contestManager: listedUser.contestManager,
-                          })
+              {model.users.map((listedUser) => {
+                const permissions = displayedPermissionFlags(listedUser)
+                const permissionsDisabled =
+                  model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)
+                const inheritedPermissionsDisabled = permissionsDisabled || permissions.siteManager
+
+                return (
+                  <TableRow key={usernameValue(listedUser.username)}>
+                    <TableCell className="text-stone-700">{usernameValue(listedUser.username)}</TableCell>
+                    <TableCell className="font-medium text-stone-900">{displayNameValue(listedUser.displayName)}</TableCell>
+                    <TableCell>{emailAddressValue(listedUser.email)}</TableCell>
+                    <TableCell>
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-stone-300 bg-white">
+                        <Link to={`/user/${usernameValue(listedUser.username)}/settings`}>{t('siteManage.openSettings')}</Link>
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={permissions.siteManager}
+                        disabled={permissionsDisabled}
+                        aria-label="Site manager"
+                        onCheckedChange={(checked) => {
+                          if (siteManagerSession) {
+                            void model.savePermissions(listedUser, buildPermissionUpdate(listedUser, 'siteManager', checked))
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={permissions.problemManager}
+                        disabled={inheritedPermissionsDisabled}
+                        aria-label="Problem manager"
+                        onCheckedChange={(checked) => {
+                          if (siteManagerSession) {
+                            void model.savePermissions(listedUser, buildPermissionUpdate(listedUser, 'problemManager', checked))
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={permissions.contestManager}
+                        disabled={inheritedPermissionsDisabled}
+                        aria-label="Contest manager"
+                        onCheckedChange={(checked) => {
+                          if (siteManagerSession) {
+                            void model.savePermissions(listedUser, buildPermissionUpdate(listedUser, 'contestManager', checked))
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ConfirmActionDialog
+                        title={t('siteManage.deleteUserTitle')}
+                        description={t('siteManage.deleteUserDescription', { username: displayNameValue(listedUser.displayName) })}
+                        confirmLabel={t('siteManage.deleteUserAction')}
+                        destructive
+                        onConfirm={() => {
+                          void model.deleteUser(listedUser)
+                        }}
+                        trigger={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                            aria-label={`Delete ${displayNameValue(listedUser.displayName)}`}
+                            disabled={permissionsDisabled}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
                         }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={listedUser.problemManager}
-                      disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
-                      aria-label="Problem manager"
-                      onCheckedChange={(checked) => {
-                        if (siteManagerSession) {
-                          void model.savePermissions(listedUser, {
-                            siteManager: listedUser.siteManager,
-                            problemManager: checked === true,
-                            contestManager: listedUser.contestManager,
-                          })
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={listedUser.contestManager}
-                      disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
-                      aria-label="Contest manager"
-                      onCheckedChange={(checked) => {
-                        if (siteManagerSession) {
-                          void model.savePermissions(listedUser, {
-                            siteManager: listedUser.siteManager,
-                            problemManager: listedUser.problemManager,
-                            contestManager: checked === true,
-                          })
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ConfirmActionDialog
-                      title={t('siteManage.deleteUserTitle')}
-                      description={t('siteManage.deleteUserDescription', { username: displayNameValue(listedUser.displayName) })}
-                      confirmLabel={t('siteManage.deleteUserAction')}
-                      destructive
-                      onConfirm={() => {
-                        void model.deleteUser(listedUser)
-                      }}
-                      trigger={
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                          aria-label={`Delete ${displayNameValue(listedUser.displayName)}`}
-                          disabled={model.updatingUsername !== null || model.deletingUsername !== null || isProtectedAdmin(listedUser)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
-            </Table>
+          </Table>
         )}
         {!model.isLoadingUsers && model.users.length > 0 && totalPages > 1 ? (
           <PaginationControls

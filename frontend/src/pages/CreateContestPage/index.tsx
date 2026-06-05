@@ -30,7 +30,7 @@ export function CreateContestPage() {
     return <Navigate replace to="/login" />
   }
 
-  return <CreateContestPageContent canCreate={user.siteManager || user.contestManager} />
+  return <CreateContestPageContent canCreate={user.contestManager} />
 }
 
 function CreateContestPageContent({ canCreate }: { canCreate: boolean }) {

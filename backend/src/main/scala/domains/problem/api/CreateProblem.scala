@@ -35,7 +35,7 @@ object CreateProblem extends AuthenticatedApi[CreateProblemRequest, ProblemDetai
   ): IO[ProblemDetail] =
     for
       _ <- HttpApiError.ensure(
-        actor.siteManager || actor.problemManager,
+        actor.problemManager,
         HttpApiError.forbidden(ApiMessages.problemManagerRequired)
       )
       slug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.slug.value))

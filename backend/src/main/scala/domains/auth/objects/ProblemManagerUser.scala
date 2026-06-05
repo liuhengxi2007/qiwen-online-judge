@@ -11,4 +11,16 @@ final case class ProblemManagerUser private (authenticatedUser: AuthenticatedUse
 
 object ProblemManagerUser:
   def from(authenticatedUser: AuthenticatedUser): Option[ProblemManagerUser] =
-    Option.when(authenticatedUser.problemManager)(ProblemManagerUser(authenticatedUser))
+    val permissions =
+      AuthPermissionFlags.normalize(
+        authenticatedUser.siteManager,
+        authenticatedUser.problemManager,
+        authenticatedUser.contestManager
+      )
+    val normalizedUser =
+      authenticatedUser.copy(
+        siteManager = permissions.siteManager,
+        problemManager = permissions.problemManager,
+        contestManager = permissions.contestManager
+      )
+    Option.when(permissions.problemManager)(ProblemManagerUser(normalizedUser))

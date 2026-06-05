@@ -100,7 +100,7 @@ object ProblemSetTableSupport:
     pageSize: Option[Int],
     offset: Option[Int]
   ): Unit =
-    statement.setBoolean(1, actor.siteManager || actor.problemManager)
+    statement.setBoolean(1, actor.problemManager)
     statement.setString(2, actor.username.value)
     statement.setString(3, actor.username.value)
     pageSize.foreach(statement.setInt(4, _))
