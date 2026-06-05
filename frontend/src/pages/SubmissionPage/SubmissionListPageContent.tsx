@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
@@ -12,13 +13,15 @@ import { useSubmissionPageModel } from './hooks/useSubmissionPageModel'
 
 type SubmissionListPageContentProps = {
   fixedProblemSlugFilter?: ProblemSlug
+  contestSlug?: ContestSlug
+  titleKey?: string
 }
 
-export function SubmissionListPageContent({ fixedProblemSlugFilter }: SubmissionListPageContentProps = {}) {
+export function SubmissionListPageContent({ fixedProblemSlugFilter, contestSlug, titleKey = 'submission.heading' }: SubmissionListPageContentProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('submission.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const model = useSubmissionPageModel(fixedProblemSlugFilter)
+  const model = useSubmissionPageModel(fixedProblemSlugFilter, contestSlug)
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -29,7 +32,7 @@ export function SubmissionListPageContent({ fixedProblemSlugFilter }: Submission
   }
 
   return (
-    <PageShell title={t('submission.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
+    <PageShell title={t(titleKey)} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
       {model.submissionQuery.errorMessage ? (
         <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
           <AlertDescription className="text-rose-700">{model.submissionQuery.errorMessage}</AlertDescription>

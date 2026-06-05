@@ -1,0 +1,293 @@
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { Settings2 } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
+import { contestSlugValue, parseContestSlug } from '@/objects/contest/ContestSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
+import { problemTitleValue } from '@/objects/problem/ProblemTitle'
+import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
+import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
+import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
+import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
+import { PageShell } from '@/pages/components/PageShell'
+import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
+import { usePageTitle } from '@/pages/hooks/usePageTitle'
+import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { useI18n } from '@/system/i18n/use-i18n'
+import { useContestManagePageModel } from './hooks/useContestManagePageModel'
+
+export function ContestManagePage() {
+  const { t } = useI18n()
+  usePageTitle(t('contest.manage.pageTitle'))
+  const { session: user, navigationIntent } = useSessionGuard()
+  const { slug } = useParams<{ slug: string }>()
+
+  if (navigationIntent) {
+    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
+  }
+
+  if (!user) {
+    return <Navigate replace to="/login" />
+  }
+
+  const slugResult = parseContestSlug(slug ?? '')
+  if (!slugResult.ok) {
+    return <Navigate replace to="/contests" />
+  }
+
+  return <ContestManagePageContent contestSlug={slugResult.value} />
+}
+
+function ContestManagePageContent({ contestSlug }: { contestSlug: ContestSlug }) {
+  const { t } = useI18n()
+  const model = useContestManagePageModel(contestSlug)
+
+  return (
+    <PageShell title={t('contest.manage.heading')} mainClassName="bg-[linear-gradient(180deg,#f0fdfa_0%,#ecfeff_48%,#f8fafc_100%)]">
+      {model.isLoading ? (
+        <PageLoadingCard message={t('contest.manage.loading')} />
+      ) : model.loadErrorMessage ? (
+        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+          <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
+        </Alert>
+      ) : model.contest && model.draft ? (
+        model.contest.canManage ? (
+          <div className="space-y-6">
+            <ContestManageFormCard model={model} />
+            <ContestManageProblemCard model={model} contest={model.contest} />
+          </div>
+        ) : (
+          <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
+            <AlertDescription className="text-amber-900">{t('contest.manage.permissionRequired')}</AlertDescription>
+          </Alert>
+        )
+      ) : null}
+    </PageShell>
+  )
+}
+
+function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestManagePageModel> }) {
+  const { t } = useI18n()
+  const draft = model.draft
+  if (!draft) {
+    return null
+  }
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
+            <Settings2 className="size-5" />
+          </div>
+          <CardTitle className="text-xl text-slate-950">{t('contest.manage.basicInfo')}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="contest-title">{t('contest.create.titleLabel')}</Label>
+          <Input id="contest-title" value={draft.title} onChange={(event) => model.setTitle(event.target.value)} />
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="contest-start-at">{t('contest.create.startAt')}</Label>
+            <Input id="contest-start-at" type="datetime-local" value={draft.startAt} onChange={(event) => model.setStartAt(event.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="contest-end-at">{t('contest.create.endAt')}</Label>
+            <Input id="contest-end-at" type="datetime-local" value={draft.endAt} onChange={(event) => model.setEndAt(event.target.value)} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contest-description">{t('contest.create.descriptionLabel')}</Label>
+          <MarkdownEditorTabs
+            textareaId="contest-description"
+            value={draft.description}
+            tab={model.descriptionTab}
+            onTabChange={model.setDescriptionTab}
+            onValueChange={model.setDescription}
+            textareaClassName="min-h-48 !font-mono"
+          />
+        </div>
+
+        <ResourceAccessEditor
+          accessPolicy={model.accessPolicy}
+          grantedUsersInput={draft.grantedUsersInput}
+          grantedGroupsInput={draft.grantedGroupsInput}
+          grantedManagerUsersInput={draft.grantedManagerUsersInput}
+          grantedManagerGroupsInput={draft.grantedManagerGroupsInput}
+          onBaseAccessChange={model.setBaseAccess}
+          onGrantedUsersInputChange={model.setGrantedUsersInput}
+          onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+          onGrantedManagerUsersInputChange={model.setGrantedManagerUsersInput}
+          onGrantedManagerGroupsInputChange={model.setGrantedManagerGroupsInput}
+        />
+
+        {model.saveErrorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{model.saveErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        {model.saveSuccessMessage ? (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+            <AlertDescription className="text-emerald-700">{model.saveSuccessMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            disabled={model.isSaving}
+            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+            onClick={() => {
+              void model.save()
+            }}
+          >
+            {model.isSaving ? t('contest.manage.saving') : t('contest.manage.save')}
+          </Button>
+          {model.contest ? (
+            <Button asChild type="button" variant="outline" className="rounded-2xl">
+              <Link to={`/contests/${contestSlugValue(model.contest.slug)}`}>{t('contest.manage.backToContest')}</Link>
+            </Button>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ContestManageProblemCard({
+  model,
+  contest,
+}: {
+  model: ReturnType<typeof useContestManagePageModel>
+  contest: ContestDetail
+}) {
+  const { t } = useI18n()
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <CardTitle className="text-xl text-slate-950">{t('contest.manage.problems')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {model.problemErrorMessage ? (
+          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
+            <AlertDescription className="text-rose-700">{model.problemErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+        {model.problemSuccessMessage ? (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
+            <AlertDescription className="text-emerald-700">{model.problemSuccessMessage}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <ProblemAttachInput
+          input={model.problemSearchInput}
+          isLoading={model.isLoadingProblemSuggestions}
+          suggestions={model.problemSuggestions}
+          isAttaching={model.isAttachingProblem}
+          onInputChange={model.setProblemSearchInput}
+          onFocusChange={model.setIsProblemSearchFocused}
+          onSuggestionSelect={model.selectProblemSuggestion}
+          onAttach={() => {
+            void model.attachProblem()
+          }}
+        />
+
+        <div className="space-y-3">
+          {contest.problems.length === 0 ? (
+            <p className="text-sm text-slate-500">{t('contest.detail.emptyProblems')}</p>
+          ) : (
+            contest.problems.map((problem) => (
+              <div key={problem.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{contestProblemAliasValue(problem.alias)}</Badge>
+                  <span className="text-sm font-medium text-slate-900">{problemTitleValue(problem.title)}</span>
+                  <span className="text-sm text-slate-500">{problemSlugValue(problem.slug)}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={model.removingProblemSlug === problemSlugValue(problem.slug)}
+                  className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+                  onClick={() => {
+                    void model.removeProblem(problemSlugValue(problem.slug))
+                  }}
+                >
+                  {model.removingProblemSlug === problemSlugValue(problem.slug) ? t('contest.manage.removingProblem') : t('contest.manage.removeProblem')}
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ProblemAttachInput({
+  input,
+  isLoading,
+  suggestions,
+  isAttaching,
+  onInputChange,
+  onFocusChange,
+  onSuggestionSelect,
+  onAttach,
+}: {
+  input: string
+  isLoading: boolean
+  suggestions: ProblemSuggestion[]
+  isAttaching: boolean
+  onInputChange: (value: string) => void
+  onFocusChange: (focused: boolean) => void
+  onSuggestionSelect: (suggestion: ProblemSuggestion) => void
+  onAttach: () => void
+}) {
+  const { t } = useI18n()
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="contest-problem-search">{t('contest.detail.attachProblemInput')}</Label>
+      <Input
+        id="contest-problem-search"
+        value={input}
+        onChange={(event) => onInputChange(event.target.value)}
+        onFocus={() => onFocusChange(true)}
+      />
+      {suggestions.length > 0 || isLoading ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+          {isLoading ? (
+            <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
+          ) : (
+            suggestions.map((suggestion) => (
+              <button
+                key={problemSlugValue(suggestion.slug)}
+                type="button"
+                className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => onSuggestionSelect(suggestion)}
+              >
+                <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
+                <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
+              </button>
+            ))
+          )}
+        </div>
+      ) : null}
+      <Button type="button" disabled={isAttaching} className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400" onClick={onAttach}>
+        {isAttaching ? t('contest.detail.attachingProblem') : t('contest.detail.attachProblem')}
+      </Button>
+    </div>
+  )
+}

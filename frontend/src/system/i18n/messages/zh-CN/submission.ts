@@ -25,6 +25,8 @@ export const zhCnSubmissionMessages: Record<string, string> = {
   'submission.list.id': '编号',
   'submission.list.problem': '题目',
   'submission.list.submitter': '提交者',
+  'submission.list.source': '来源',
+  'submission.list.problemSource': '从题库提交',
   'submission.list.language': '语言',
   'submission.list.timeUsed': '使用时间',
   'submission.list.spaceUsed': '空间',

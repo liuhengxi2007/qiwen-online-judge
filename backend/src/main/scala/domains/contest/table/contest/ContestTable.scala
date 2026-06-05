@@ -5,7 +5,7 @@ import cats.syntax.all.*
 import database.utils.{AccessGrantSql, UserIdentitySql}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.*
-import domains.contest.objects.request.CreateContestRequest
+import domains.contest.objects.request.{CreateContestRequest, UpdateContestRequest}
 import domains.contest.objects.response.{ContestRegistrant, ContestRegistrationStatus, ContestSummary}
 import domains.contest.table.contest.ContestTableSupport.*
 import domains.contest.table.contest_access_grant.ContestAccessGrantTable
@@ -218,6 +218,46 @@ object ContestTable:
       yield contest.copy(accessPolicy = sanitizedPolicy)
     }
 
+  private val updateSQL: String =
+    s"""
+      |update contests
+      |set title = ?,
+      |    description = ?,
+      |    start_at = ?,
+      |    end_at = ?,
+      |    base_access = ?,
+      |    updated_at = ?
+      |where id = ?
+      |returning id, slug, title, description, start_at, end_at, base_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
+      |""".stripMargin
+
+  def update(connection: Connection, contest: Contest, request: UpdateContestRequest): IO[Contest] =
+    IO.blocking {
+      val now = Instant.now()
+      val statement = connection.prepareStatement(updateSQL)
+      try
+        statement.setString(1, request.title.value)
+        statement.setString(2, request.description.value)
+        statement.setTimestamp(3, Timestamp.from(request.startAt))
+        statement.setTimestamp(4, Timestamp.from(request.endAt))
+        statement.setString(5, encodeBaseAccessColumn(request.accessPolicy.baseAccess))
+        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setObject(7, contest.id.value)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then readContestBase(resultSet)
+          else missingInsertResult("contest")
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap { updatedContest =>
+      val sanitizedPolicy = sanitizePolicy(request.accessPolicy)
+      for
+        _ <- ContestAccessGrantTable.replaceForContest(connection, updatedContest.id, GrantRole.Viewer, sanitizedPolicy.viewerGrants)
+        _ <- ContestAccessGrantTable.replaceForContest(connection, updatedContest.id, GrantRole.Manager, sanitizedPolicy.managerGrants)
+        problems <- listProblemsForContest(connection, updatedContest.id, listProblemsForContestSQL)
+      yield updatedContest.copy(problems = problems, accessPolicy = sanitizedPolicy)
+    }
+
   private val relationExistsSQL: String =
     """
       |select 1
@@ -274,6 +314,22 @@ object ContestTable:
           finally nextPositionStatement.close()
         }
     yield result
+
+  private val deleteRelationSQL: String =
+    """
+      |delete from contest_problems
+      |where contest_id = ? and problem_id = ?
+      |""".stripMargin
+
+  def removeProblem(connection: Connection, contestId: ContestId, problemId: ProblemId): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteRelationSQL)
+      try
+        statement.setObject(1, contestId.value)
+        statement.setObject(2, problemId.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }
 
   private val findRegistrationSQL: String =
     """

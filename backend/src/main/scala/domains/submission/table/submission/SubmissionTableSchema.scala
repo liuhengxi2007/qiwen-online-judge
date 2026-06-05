@@ -23,6 +23,7 @@ object SubmissionTableSchema:
       |  id uuid primary key,
       |  public_id bigint not null default nextval('submission_public_id_seq'),
       |  problem_id uuid not null references problems(id) on delete cascade,
+      |  contest_id uuid references contests(id) on delete set null,
       |  submitter_username varchar(120) not null references auth_accounts(username),
       |  program_manifest jsonb not null,
       |  language varchar(32) generated always as ((program_manifest #>> array['programs', program_manifest ->> 'defaultProgramKey', 'language'])) stored,
@@ -43,6 +44,13 @@ object SubmissionTableSchema:
     """
       |do $$
       |begin
+      |  if not exists (
+      |    select 1 from information_schema.columns
+      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'contest_id'
+      |  ) then
+      |    alter table submissions add column contest_id uuid references contests(id) on delete set null;
+      |  end if;
+      |
       |  if not exists (
       |    select 1 from information_schema.columns
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'status'
@@ -74,6 +82,31 @@ object SubmissionTableSchema:
       |  set status = 'queued'
       |  where status is null or btrim(status) = '';
       |end $$;
+      |""".stripMargin
+
+  val backfillContestSubmissionSourceSql: String =
+    """
+      |with contest_submission_sources as (
+      |  select
+      |    s.id as submission_id,
+      |    (array_agg(c.id order by c.start_at desc, c.id))[1] as contest_id,
+      |    count(*) as contest_count
+      |  from submissions s
+      |  join contest_problems cp on cp.problem_id = s.problem_id
+      |  join contests c on c.id = cp.contest_id
+      |  join contest_registrations cr on cr.contest_id = c.id and cr.username = s.submitter_username
+      |  where s.contest_id is null
+      |    and s.submitted_at >= c.start_at
+      |    and s.submitted_at <= c.end_at
+      |    and cr.registered_at <= c.start_at
+      |  group by s.id
+      |)
+      |update submissions s
+      |set contest_id = contest_submission_sources.contest_id
+      |from contest_submission_sources
+      |where s.id = contest_submission_sources.submission_id
+      |  and s.contest_id is null
+      |  and contest_submission_sources.contest_count = 1
       |""".stripMargin
 
   val ensureLegacyJudgeScalarColumnsSql: String =
@@ -370,6 +403,8 @@ object SubmissionTableSchema:
       |  on submissions (memory_used_kb);
       |create index if not exists submissions_code_length_idx
       |  on submissions (code_length);
+      |create index if not exists submissions_contest_id_submitted_at_idx
+      |  on submissions (contest_id, submitted_at desc, public_id desc);
       |create index if not exists submissions_queued_language_idx
       |  on submissions (language, submitted_at asc, public_id asc)
       |  where status = 'queued';
@@ -399,6 +434,7 @@ object SubmissionTableSchema:
           createPublicIdSequenceSql,
           initTableSql,
           addLifecycleColumnsSql,
+          backfillContestSubmissionSourceSql,
           ensureLegacyJudgeScalarColumnsSql,
           addProgramManifestColumnSql,
           addPublicIdColumnSql,

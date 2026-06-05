@@ -9,7 +9,8 @@ final case class ContestRanklistItem(
   rank: ContestRank,
   user: UserIdentity,
   totalScore: ContestScore,
-  penaltyMillis: ContestPenaltyMillis
+  penaltyMillis: ContestPenaltyMillis,
+  problemResults: List[ContestRanklistProblemResult]
 )
 
 object ContestRanklistItem:

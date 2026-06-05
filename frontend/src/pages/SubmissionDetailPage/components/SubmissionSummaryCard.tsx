@@ -4,6 +4,8 @@ import { Files, RotateCcw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
+import { contestTitleValue } from '@/objects/contest/ContestTitle'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
@@ -96,7 +98,7 @@ export function SubmissionSummaryCard({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">
+      <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-9">
         <div>
           <p className="text-slate-500">{t('submission.list.problem')}</p>
           <p className="mt-1">
@@ -117,6 +119,18 @@ export function SubmissionSummaryCard({
           <div className="mt-1">
             <UserProfileLink user={submission.submitter} />
           </div>
+        </div>
+        <div>
+          <p className="text-slate-500">{t('submission.list.source')}</p>
+          <p className="mt-1 font-medium text-slate-900">
+            {submission.source.contestSlug && submission.source.contestTitle ? (
+              <Link className="hover:underline" to={`/contests/${contestSlugValue(submission.source.contestSlug)}`}>
+                {contestTitleValue(submission.source.contestTitle)}
+              </Link>
+            ) : (
+              t('submission.list.problemSource')
+            )}
+          </p>
         </div>
         <div>
           <p className="text-slate-500">{t('common.languageLabel')}</p>

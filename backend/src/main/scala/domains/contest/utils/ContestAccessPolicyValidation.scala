@@ -3,7 +3,7 @@ package domains.contest.utils
 import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.ResolveAccountUsername
-import domains.contest.objects.request.CreateContestRequest
+import domains.contest.objects.request.{CreateContestRequest, UpdateContestRequest}
 import domains.user.objects.Username
 import domains.usergroup.api.ResolveUserGroupSlug
 import domains.usergroup.objects.UserGroupSlug
@@ -20,6 +20,11 @@ object ContestAccessPolicyValidation:
   def sanitizePolicyWithAuthorManager(request: CreateContestRequest, authorUsername: Username): CreateContestRequest =
     val authorManager = AccessSubject.User(AccessUsername(authorUsername.value))
     val policy = request.accessPolicy.copy(managerGrants = authorManager :: request.accessPolicy.managerGrants)
+    request.copy(accessPolicy = sanitizePolicy(policy))
+
+  def sanitizePolicyWithAuthorManager(request: UpdateContestRequest, authorUsername: Option[Username]): UpdateContestRequest =
+    val authorManagerGrant = authorUsername.map(username => AccessSubject.User(AccessUsername(username.value))).toList
+    val policy = request.accessPolicy.copy(managerGrants = authorManagerGrant ::: request.accessPolicy.managerGrants)
     request.copy(accessPolicy = sanitizePolicy(policy))
 
   def sanitizePolicy(accessPolicy: ResourceAccessPolicy): ResourceAccessPolicy =

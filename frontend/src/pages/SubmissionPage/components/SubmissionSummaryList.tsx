@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 
 import { Card, CardContent } from '@/components/ui/card'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
+import { contestTitleValue } from '@/objects/contest/ContestTitle'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
@@ -67,7 +69,7 @@ export function SubmissionSummaryList({
               className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
             >
               <CardContent className="py-3.5">
-                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,6fr)_minmax(0,6fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,6fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
+                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
                   <div>
                     <dt className="text-slate-500">{t('submission.list.id')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
@@ -105,6 +107,21 @@ export function SubmissionSummaryList({
                         linkClassName="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
                         user={submission.submitter}
                       />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">{t('submission.list.source')}</dt>
+                    <dd className="mt-1 font-medium text-slate-900">
+                      {submission.source.contestSlug && submission.source.contestTitle ? (
+                        <Link
+                          className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
+                          to={`/contests/${contestSlugValue(submission.source.contestSlug)}`}
+                        >
+                          {contestTitleValue(submission.source.contestTitle)}
+                        </Link>
+                      ) : (
+                        <span className="block min-h-[1.625rem] w-full py-1">{t('submission.list.problemSource')}</span>
+                      )}
                     </dd>
                   </div>
                   <div>

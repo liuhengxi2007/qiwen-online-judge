@@ -1,15 +1,20 @@
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import type { CSSProperties } from 'react'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
 import { contestPenaltyMillisValue } from '@/objects/contest/ContestPenaltyMillis'
 import { contestRankValue } from '@/objects/contest/ContestRank'
 import { contestScoreValue } from '@/objects/contest/ContestScore'
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestRanklistItem } from '@/objects/contest/response/ContestRanklistItem'
+import type { ContestRanklistProblemResult } from '@/objects/contest/response/ContestRanklistProblemResult'
+import { problemTitleValue } from '@/objects/problem/ProblemTitle'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import { PageShell } from '@/pages/components/PageShell'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
@@ -124,30 +129,66 @@ function ContestRanklistPageContent({
 
 function ContestRanklistTable({ items }: { items: ContestRanklistItem[] }) {
   const { t } = useI18n()
+  const problemColumns = items[0]?.problemResults.map((result) => result.problem) ?? []
+  const maxTotalScore = Math.max(problemColumns.length * 100, 1)
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{t('contest.ranklist.rank')}</TableHead>
-          <TableHead>{t('contest.ranklist.user')}</TableHead>
-          <TableHead>{t('contest.ranklist.score')}</TableHead>
-          <TableHead>{t('contest.ranklist.penalty')}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item) => (
-          <TableRow key={item.user.username}>
-            <TableCell className="font-mono text-slate-600">#{contestRankValue(item.rank)}</TableCell>
-            <TableCell>
-              <UserProfileLink className="inline-flex items-center gap-2" showUsername user={item.user} />
-            </TableCell>
-            <TableCell className="font-semibold text-slate-950">{formatContestScore(item.totalScore)}</TableCell>
-            <TableCell className="font-mono text-slate-600">{formatPenaltyMillis(item.penaltyMillis)}</TableCell>
+    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-slate-50/80">
+            <TableHead className="whitespace-nowrap">{t('contest.ranklist.rank')}</TableHead>
+            <TableHead className="whitespace-nowrap">{t('contest.ranklist.user')}</TableHead>
+            <TableHead className="whitespace-nowrap">{t('contest.ranklist.score')}</TableHead>
+            <TableHead className="whitespace-nowrap">{t('contest.ranklist.penalty')}</TableHead>
+            {problemColumns.map((problem) => (
+              <TableHead key={problem.id} className="min-w-28 text-center" title={problemTitleValue(problem.title)}>
+                {contestProblemAliasValue(problem.alias)}
+              </TableHead>
+            ))}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.user.username}>
+              <TableCell className="font-mono text-slate-600">#{contestRankValue(item.rank)}</TableCell>
+              <TableCell className="min-w-40">
+                <UserProfileLink className="inline-flex items-center gap-2" showUsername user={item.user} />
+              </TableCell>
+              <TableCell className="font-semibold" style={scoreColorStyle(contestScoreValue(item.totalScore), maxTotalScore)}>
+                {formatContestScore(item.totalScore)}
+              </TableCell>
+              <TableCell className="font-mono text-slate-600">{formatPenaltyMillis(item.penaltyMillis)}</TableCell>
+              {item.problemResults.map((result) => (
+                <TableCell key={result.problem.id} className="min-w-28 text-center">
+                  <ContestProblemResultCell result={result} />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
+function ContestProblemResultCell({ result }: { result: ContestRanklistProblemResult }) {
+  if (result.score === null || result.submissionId === null) {
+    return <span className="text-slate-300">-</span>
+  }
+
+  const score = contestScoreValue(result.score)
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <Link
+        className="rounded-full px-3 py-1 text-sm font-bold transition hover:scale-[1.03] hover:shadow-sm"
+        style={scorePillStyle(score)}
+        to={`/submissions/${submissionIdValue(result.submissionId)}`}
+      >
+        {formatContestScore(result.score)}
+      </Link>
+      {result.penaltyMillis ? <span className="font-mono text-[11px] text-slate-500">{formatPenaltyMillis(result.penaltyMillis)}</span> : null}
+    </div>
   )
 }
 
@@ -161,4 +202,34 @@ function formatPenaltyMillis(penaltyMillis: ContestRanklistItem['penaltyMillis']
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
   return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':')
+}
+
+function scoreColorStyle(score: number, maxScore: number): CSSProperties {
+  const ratio = clampScoreRatio(score / maxScore)
+  return {
+    color: scoreHueColor(ratio),
+  }
+}
+
+function scorePillStyle(score: number): CSSProperties {
+  const ratio = clampScoreRatio(score / 100)
+  return {
+    backgroundColor: `hsla(${scoreHue(ratio)}, 82%, 92%, 0.9)`,
+    color: scoreHueColor(ratio),
+  }
+}
+
+function scoreHueColor(ratio: number): string {
+  return `hsl(${scoreHue(ratio)}, 72%, 34%)`
+}
+
+function scoreHue(ratio: number): number {
+  return Math.round(142 * ratio)
+}
+
+function clampScoreRatio(ratio: number): number {
+  if (!Number.isFinite(ratio)) {
+    return 0
+  }
+  return Math.min(1, Math.max(0, ratio))
 }

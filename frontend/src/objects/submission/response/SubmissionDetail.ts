@@ -8,12 +8,14 @@ import type { SubmissionSourceCode } from '@/objects/submission/SubmissionSource
 import type { SubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
+import type { SubmissionSource } from './SubmissionSource'
 
 export type SubmissionDetail = {
   id: SubmissionId
   problemId: ProblemId
   problemSlug: ProblemSlug
   problemTitle: ProblemTitle
+  source: SubmissionSource
   canManage: boolean
   submitter: UserIdentity
   language: SubmissionLanguage
