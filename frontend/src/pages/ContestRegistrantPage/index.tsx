@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
-import { DateTimeText } from '@/pages/components/DateTimeText'
 import { PageShell } from '@/pages/components/PageShell'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
@@ -101,9 +100,8 @@ function ContestRegistrantPageContent({
             <p className="text-sm text-slate-500">{t('contest.registrants.empty')}</p>
           ) : (
             model.registrants.map((registrant) => (
-              <div key={registrant.user.username} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div key={registrant.user.username} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <UserProfileLink className="inline-flex items-center gap-2" showUsername user={registrant.user} />
-                <DateTimeText className="text-sm text-slate-500" value={registrant.registeredAt} />
               </div>
             ))
           )}

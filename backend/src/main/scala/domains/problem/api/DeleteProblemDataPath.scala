@@ -46,31 +46,38 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(_) =>
           HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
-              for
-                entries <- ProblemDataFileTable.listForProblem(connection, problem.id)
-                pathsToDelete = entries.map(_.path).filter(entryPath => entryPath == request.path || entryPath.value.startsWith(s"${request.path.value}/"))
-                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-                deletedProblem <-
-                  if pathsToDelete.isEmpty then
-                    HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
-                  else
-                    pathsToDelete
-                      .traverse_(pathToDelete => problemDataStorage.deletePath(problem.slug, pathToDelete).void)
-                      .flatMap(_ => pathsToDelete.traverse_(pathToDelete => ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete)))
-                      .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
-                      .flatMap(entries =>
-                        ProblemDataStateTable.updateData(
-                          connection,
-                          problem.id,
-                          Instant.now(),
-                          ProblemDataApiHelpers.summaryFilenameForEntries(entries)
-                        )
-                      )
-                      .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data deletion."))
-                      .handleErrorWith { error =>
-                        problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                      }
-              yield deletedProblem
-            }
+            deleteManagedProblemDataPath(connection, problemSlug, request)
+    }
+
+  def deleteManagedProblemDataPath(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    request: DeleteProblemDataPathRequest
+  ): IO[ProblemDetail] =
+    ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+      for
+        entries <- ProblemDataFileTable.listForProblem(connection, problem.id)
+        pathsToDelete = entries.map(_.path).filter(entryPath => entryPath == request.path || entryPath.value.startsWith(s"${request.path.value}/"))
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        deletedProblem <-
+          if pathsToDelete.isEmpty then
+            HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+          else
+            pathsToDelete
+              .traverse_(pathToDelete => problemDataStorage.deletePath(problem.slug, pathToDelete).void)
+              .flatMap(_ => pathsToDelete.traverse_(pathToDelete => ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete)))
+              .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
+              .flatMap(entries =>
+                ProblemDataStateTable.updateData(
+                  connection,
+                  problem.id,
+                  Instant.now(),
+                  ProblemDataApiHelpers.summaryFilenameForEntries(entries)
+                )
+              )
+              .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data deletion."))
+              .handleErrorWith { error =>
+                problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+              }
+      yield deletedProblem
     }

@@ -3,7 +3,6 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.contest.api.EvaluateContestAccess
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.utils.SubmissionAccessRules
 
@@ -39,44 +38,19 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
             case None =>
               HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
             case Some(problem) =>
-              for
-                sourceContestAccess <- record.source.contestSlug match
-                  case Some(contestSlug) =>
-                    EvaluateContestAccess.plan(connection, actor, EvaluateContestAccess.Input(contestSlug, Some(record.problemId)))
-                  case None =>
-                    IO.pure(None)
-                _ <- sourceContestAccess match
-                  case Some(contestAccess) =>
-                    val canViewContestSubmissionDetail =
-                      contestAccess.containsProblem &&
-                        (contestAccess.canManageContest ||
-                          (contestAccess.contestEnded && contestAccess.canViewContest) ||
-                          (!contestAccess.contestEnded && record.submitter.username == actor.username && contestAccess.registeredBeforeStart))
-                    HttpApiError.ensure(
-                      canViewContestSubmissionDetail,
-                      HttpApiError.notFound(ApiMessages.submissionNotFound)
-                    )
-                  case None if record.source.contestSlug.nonEmpty =>
-                    HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-                  case None =>
-                    IO.unit
-                submission <-
-                  if access.canManage then
-                    loadSubmissionDetail(record, access.canManage)
-                  else if sourceContestAccess.nonEmpty then
-                    loadSubmissionDetail(record, access.canManage)
-                  else if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
-                    loadSubmissionDetail(record, access.canManage)
-                  else
-                    for
-                      _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
-                      _ <- HttpApiError.ensure(
-                        SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
-                        HttpApiError.notFound(ApiMessages.submissionNotFound)
-                      )
-                      submission <- loadSubmissionDetail(record, access.canManage)
-                    yield submission
-              yield submission
+              if access.canManage then
+                loadSubmissionDetail(record, access.canManage)
+              else if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
+                loadSubmissionDetail(record, access.canManage)
+              else
+                for
+                  _ <- HttpApiError.ensure(access.canView, HttpApiError.notFound(ApiMessages.submissionNotFound))
+                  _ <- HttpApiError.ensure(
+                    SubmissionAccessRules.canViewDetailOfOthers(problem.otherUserSubmissionAccess),
+                    HttpApiError.notFound(ApiMessages.submissionNotFound)
+                  )
+                  submission <- loadSubmissionDetail(record, access.canManage)
+                yield submission
         }
     }
 

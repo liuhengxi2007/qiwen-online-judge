@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useNavigate } from 'react-router-dom'
 import type { useProblemDetailPageModel } from '../hooks/useProblemDetailPageModel'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -116,7 +117,7 @@ export function ProblemEditDialog({
                 onConfirm={() => {
                   void model.deleteCurrentProblem().then((deleted) => {
                     if (deleted) {
-                      void navigate('/problems')
+                      void navigate(model.contestSlug ? `/contests/${contestSlugValue(model.contestSlug)}/manage` : '/problems')
                     }
                   })
                 }}

@@ -7,6 +7,7 @@ import { ListProblemDataTree } from '@/apis/problem/ListProblemDataTree'
 import { SetProblemDataReady } from '@/apis/problem/SetProblemDataReady'
 import { UploadProblemDataArchive } from '@/apis/problem/UploadProblemDataArchive'
 import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { parseProblemDataFilename, problemDataFilenameValue } from '@/objects/problem/ProblemDataFilename'
 import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
@@ -24,9 +25,9 @@ type UploadResult = { ok: true } | { ok: false; message: string }
 type DeleteResult = { ok: true } | { ok: false; message: string }
 type ReadyResult = { ok: true } | { ok: false; message: string }
 
-export function useProblemDataPageModel(problemSlug: ProblemSlug) {
+export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
-  const detailQuery = useProblemDetailQuery(problemSlug)
+  const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const problem = detailQuery.problem
   const replaceProblem = detailQuery.replaceProblem
   const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
@@ -53,7 +54,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
   const loadFiles = useCallback(async () => {
     dispatch({ type: 'load_started' })
     try {
-      const tree = await sendAPI(new ListProblemDataTree(problemSlug))
+      const tree = await sendAPI(new ListProblemDataTree(problemSlug, contestSlug))
       dispatch({ type: 'load_succeeded', tree: tree.items })
       return { ok: true as const }
     } catch (error) {
@@ -61,7 +62,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'load_failed', message })
       return { ok: false as const, message }
     }
-  }, [problemSlug, t])
+  }, [contestSlug, problemSlug, t])
 
   useEffect(() => {
     void loadFiles()
@@ -86,11 +87,11 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       const isZipArchive = state.selectedFile.name.toLowerCase().endsWith('.zip')
       const updatedProblem = await (() => {
         if (isZipArchive) {
-          const api = new UploadProblemDataArchive(problemSlug, state.selectedFile)
+          const api = new UploadProblemDataArchive(problemSlug, state.selectedFile, contestSlug)
           return sendMultipartAPI(api, api.formData())
         }
 
-        const api = new UploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value)
+        const api = new UploadProblemDataFile(problemSlug, state.selectedFile, filenameResult.value, contestSlug)
         return sendMultipartAPI(api, api.formData())
       })()
 
@@ -108,14 +109,14 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'upload_failed', message })
       return { ok: false, message }
     }
-  }, [loadFiles, problemSlug, replaceProblem, state.selectedFile])
+  }, [contestSlug, loadFiles, problemSlug, replaceProblem, state.selectedFile])
 
   const deleteDataPath = useCallback(
     async (path: ProblemDataPath): Promise<DeleteResult> => {
       dispatch({ type: 'delete_started', path })
 
       try {
-        const updatedProblem = await sendAPI(new DeleteProblemDataPath(problemSlug, path))
+        const updatedProblem = await sendAPI(new DeleteProblemDataPath(problemSlug, path, contestSlug))
         replaceProblem(updatedProblem)
         dispatch({
           type: 'delete_succeeded',
@@ -129,14 +130,14 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
         return { ok: false, message }
       }
     },
-    [loadFiles, problemSlug, replaceProblem],
+    [contestSlug, loadFiles, problemSlug, replaceProblem],
   )
 
   const clearAllDataFiles = useCallback(async (): Promise<DeleteResult> => {
     dispatch({ type: 'clear_started' })
 
     try {
-      const updatedProblem = await sendAPI(new ClearProblemData(problemSlug))
+      const updatedProblem = await sendAPI(new ClearProblemData(problemSlug, contestSlug))
       replaceProblem(updatedProblem)
       dispatch({ type: 'clear_succeeded', message: 'Cleared all data files successfully.' })
       await loadFiles()
@@ -146,12 +147,12 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'clear_failed', message })
       return { ok: false, message }
     }
-  }, [loadFiles, problemSlug, replaceProblem])
+  }, [contestSlug, loadFiles, problemSlug, replaceProblem])
 
   const setReady = useCallback(async (ready: boolean): Promise<ReadyResult> => {
     dispatch({ type: 'ready_save_started' })
     try {
-      const updatedProblem = await sendAPI(new SetProblemDataReady(problemSlug, ready))
+      const updatedProblem = await sendAPI(new SetProblemDataReady(problemSlug, ready, contestSlug))
       replaceProblem(updatedProblem)
       dispatch({
         type: 'ready_save_succeeded',
@@ -164,7 +165,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
       dispatch({ type: 'ready_save_failed', message })
       return { ok: false, message }
     }
-  }, [loadFiles, problemSlug, replaceProblem, t])
+  }, [contestSlug, loadFiles, problemSlug, replaceProblem, t])
 
   return {
     problem,
@@ -189,7 +190,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug) {
     loadFiles,
     uploadSelectedFile,
     deleteDataPath,
-    downloadDataPathUrl: (path: ProblemDataPath) => new DownloadProblemDataPath(problemSlug, path).downloadUrl(),
+    downloadDataPathUrl: (path: ProblemDataPath) => new DownloadProblemDataPath(problemSlug, path, contestSlug).downloadUrl(),
     clearAllDataFiles,
     setReady,
   }

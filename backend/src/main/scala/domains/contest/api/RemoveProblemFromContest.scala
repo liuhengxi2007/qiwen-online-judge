@@ -56,10 +56,10 @@ object RemoveProblemFromContest extends AuthenticatedApi[(ContestSlug, ProblemSl
         case Some(contest) => IO.pure(contest)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
       }
-      registration <- ContestTable.findRegistration(connection, updatedContest.id, actor.username)
+      isRegistered <- ContestTable.isRegistered(connection, updatedContest.id, actor.username)
     yield ContestDetail.fromContest(
       updatedContest,
-      registration.fold(ContestRegistrationStatus.notRegistered)(ContestRegistrationStatus.registeredAt),
+      if isRegistered then ContestRegistrationStatus.registered else ContestRegistrationStatus.notRegistered,
       canManage = true,
       includeProblems = true
     )

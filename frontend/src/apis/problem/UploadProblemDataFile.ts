@@ -1,4 +1,6 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import type { ProblemDataFilename } from '@/objects/problem/ProblemDataFilename'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataUploadResult } from '@/objects/problem/response/ProblemDataUploadResult'
@@ -12,8 +14,10 @@ export class UploadProblemDataFile implements APIWithSessionMessage<ProblemDataU
   private readonly file: File
   private readonly path: ProblemDataFilename | ProblemDataPath
 
-  constructor(problemSlug: ProblemSlug, file: File, path: ProblemDataFilename | ProblemDataPath) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files`
+  constructor(problemSlug: ProblemSlug, file: File, path: ProblemDataFilename | ProblemDataPath, contestSlug?: ContestSlug) {
+    this.apiPath = contestSlug
+      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files`
+      : `problems/${problemSlugValue(problemSlug)}/data/files`
     this.file = file
     this.path = path
   }

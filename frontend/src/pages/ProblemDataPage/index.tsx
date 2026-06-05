@@ -6,6 +6,8 @@ import { ProblemDataHeaderCard } from './components/ProblemDataHeaderCard'
 import { ProblemDataUploadCard } from './components/ProblemDataUploadCard'
 import { ProblemJudgeConfigEditorCard } from './components/ProblemJudgeConfigEditorCard'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { contestSlugValue, parseContestSlug } from '@/objects/contest/ContestSlug'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { parseProblemSlug, problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { useProblemDataPageModel } from './hooks/useProblemDataPageModel'
@@ -18,7 +20,7 @@ export function ProblemDataPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.data.pageTitle'))
   const { session: user, navigationIntent } = useSessionGuard()
-  const { slug } = useParams<{ slug: string }>()
+  const { contestSlug, slug } = useParams<{ contestSlug?: string; slug: string }>()
 
   if (navigationIntent) {
     return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
@@ -33,15 +35,27 @@ export function ProblemDataPage() {
     return <Navigate replace to="/problems" />
   }
 
-  return <ProblemDataPageContent problemSlug={slugResult.value} />
+  const contestSlugResult = contestSlug ? parseContestSlug(contestSlug) : null
+  if (contestSlugResult && !contestSlugResult.ok) {
+    return <Navigate replace to="/contests" />
+  }
+
+  return <ProblemDataPageContent contestSlug={contestSlugResult?.ok ? contestSlugResult.value : undefined} problemSlug={slugResult.value} />
 }
 
-function ProblemDataPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
+function ProblemDataPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
-  const model = useProblemDataPageModel(problemSlug)
+  const model = useProblemDataPageModel(problemSlug, contestSlug)
 
   if (!model.isProblemLoading && model.problem && !model.problem.canManage) {
-    return <Navigate replace to={`/problems/${problemSlugValue(problemSlug)}`} />
+    return (
+      <Navigate
+        replace
+        to={contestSlug
+          ? `/contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}`
+          : `/problems/${problemSlugValue(problemSlug)}`}
+      />
+    )
   }
 
   return (
@@ -52,7 +66,7 @@ function ProblemDataPageContent({ problemSlug }: { problemSlug: ProblemSlug }) {
         <div className="space-y-6">
           <ProblemDataHeaderCard model={model} />
           <ProblemDataUploadCard model={model} />
-          <ProblemJudgeConfigEditorCard model={model} problemSlug={problemSlug} />
+          <ProblemJudgeConfigEditorCard contestSlug={contestSlug} model={model} problemSlug={problemSlug} />
           <ProblemDataFilesCard model={model} />
         </div>
       ) : (

@@ -19,8 +19,8 @@ import { useProblemUpdateAction } from './useProblemUpdateAction'
 export function useProblemDetailPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const editor = useProblemEditorState(detailQuery.problem)
-  const updateAction = useProblemUpdateAction(problemSlug)
-  const deleteAction = useProblemDeleteAction(problemSlug)
+  const updateAction = useProblemUpdateAction(problemSlug, contestSlug)
+  const deleteAction = useProblemDeleteAction(problemSlug, contestSlug)
   const [contentMessageState, dispatchContentMessage] = useReducer(reduceSectionMessageState, emptySectionMessageState)
   const [accessMessageState, dispatchAccessMessage] = useReducer(reduceSectionMessageState, emptySectionMessageState)
 
@@ -69,6 +69,7 @@ export function useProblemDetailPageModel(problemSlug: ProblemSlug, contestSlug?
 
   return {
     problem: detailQuery.problem,
+    contestSlug,
     loadErrorMessage: detailQuery.errorMessage,
     isLoading: detailQuery.isLoading,
     isSaving: updateAction.isSaving,

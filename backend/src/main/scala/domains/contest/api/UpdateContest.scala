@@ -52,10 +52,10 @@ object UpdateContest extends AuthenticatedApi[(ContestSlug, UpdateContestRequest
       sanitizedRequest = ContestAccessPolicyValidation.sanitizePolicy(sanitizedInput)
       _ <- ContestAccessPolicyValidation.validateAccessPolicySubjects(connection, sanitizedRequest.accessPolicy)
       updatedContest <- ContestTable.update(connection, contest, sanitizedRequest)
-      registration <- ContestTable.findRegistration(connection, updatedContest.id, actor.username)
+      isRegistered <- ContestTable.isRegistered(connection, updatedContest.id, actor.username)
     yield ContestDetail.fromContest(
       updatedContest,
-      registration.fold(ContestRegistrationStatus.notRegistered)(ContestRegistrationStatus.registeredAt),
+      if isRegistered then ContestRegistrationStatus.registered else ContestRegistrationStatus.notRegistered,
       canManage = true,
       includeProblems = true
     )

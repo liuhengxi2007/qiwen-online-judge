@@ -39,14 +39,12 @@ object ListContestSubmissions extends AuthenticatedApi[(ContestSlug, SubmissionL
       contestAccess <- maybeContestAccess match
         case Some(contestAccess) => IO.pure(contestAccess)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
-      _ <- HttpApiError.ensure(contestAccess.canViewContest, HttpApiError.notFound(ApiMessages.contestNotFound))
-      canViewContestSubmissions = contestAccess.canManageContest || contestAccess.contestEnded || contestAccess.registeredBeforeStart
-      _ <- HttpApiError.ensure(canViewContestSubmissions, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
+      _ <- HttpApiError.ensure(contestAccess.canViewContestDetail, HttpApiError.notFound(ApiMessages.contestNotFound))
       submissions <- SubmissionQueryTable.listVisibleForContest(
         connection,
         actor,
         contestAccess.contestId,
         request,
-        canViewAllContestSubmissions = contestAccess.canManageContest || contestAccess.contestEnded
+        canViewAllContestSubmissions = contestAccess.canManageContest
       )
     yield submissions

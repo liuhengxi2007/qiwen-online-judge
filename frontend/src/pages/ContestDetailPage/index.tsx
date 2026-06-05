@@ -17,7 +17,6 @@ import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
 import { PageShell } from '@/pages/components/PageShell'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
-import { useNow } from '@/pages/hooks/useNow'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useProblemTitleDisplay } from '@/pages/hooks/useProblemTitleDisplay'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -54,12 +53,6 @@ function ContestDetailPageContent({
 }) {
   const { t } = useI18n()
   const model = useContestDetailPageModel(contestSlug)
-  const now = useNow()
-  const canViewContestProblems = model.contest
-    ? model.contest.canManage ||
-      now > new Date(model.contest.endAt).getTime() ||
-      (now >= new Date(model.contest.startAt).getTime() && model.contest.registrationStatus.isRegistered)
-    : false
 
   return (
     <PageShell title={t('contest.detail.heading')} mainClassName="bg-[linear-gradient(180deg,#f0fdfa_0%,#ecfeff_48%,#f8fafc_100%)]">
@@ -75,17 +68,8 @@ function ContestDetailPageContent({
         <div className="space-y-6">
           <ContestDetailHeaderCard
             contest={model.contest}
-            isRegistering={model.isRegistering}
-            registerErrorMessage={model.registerErrorMessage}
-            registerSuccessMessage={model.registerSuccessMessage}
-            now={now}
-            onToggleRegistration={() => {
-              void model.toggleRegistration()
-            }}
           />
-          {canViewContestProblems ? (
-            <ContestProblemsCard contest={model.contest} />
-          ) : null}
+          <ContestProblemsCard contest={model.contest} />
         </div>
       ) : null}
     </PageShell>
@@ -94,24 +78,10 @@ function ContestDetailPageContent({
 
 function ContestDetailHeaderCard({
   contest,
-  isRegistering,
-  registerErrorMessage,
-  registerSuccessMessage,
-  now,
-  onToggleRegistration,
 }: {
   contest: ContestDetail
-  isRegistering: boolean
-  registerErrorMessage: string
-  registerSuccessMessage: string
-  now: number
-  onToggleRegistration: () => void
 }) {
   const { t } = useI18n()
-  const hasStarted = now >= new Date(contest.startAt).getTime()
-  const hasEnded = now > new Date(contest.endAt).getTime()
-  const isRegistered = contest.registrationStatus.isRegistered
-  const canViewParticipantArea = contest.canManage || isRegistered || hasEnded
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -124,48 +94,15 @@ function ContestDetailHeaderCard({
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              disabled={isRegistering || hasStarted}
-              variant={isRegistered ? 'outline' : 'default'}
-              className={
-                isRegistered && hasStarted
-                  ? 'rounded-2xl border-emerald-200 bg-white text-emerald-700 hover:bg-white hover:text-emerald-700'
-                  : isRegistered
-                    ? 'rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800'
-                  : hasStarted
-                    ? 'rounded-2xl border-slate-200 bg-white text-slate-500 hover:bg-white hover:text-slate-500'
-                    : 'rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400'
-              }
-              onClick={() => {
-                if (!hasStarted) {
-                  onToggleRegistration()
-                }
-              }}
-            >
-              {isRegistering
-                ? t('contest.detail.registering')
-                : isRegistered && hasStarted
-                  ? t('contest.detail.registered')
-                  : isRegistered
-                    ? t('contest.detail.unregister')
-                  : hasStarted
-                    ? t('contest.detail.registrationClosed')
-                    : t('contest.detail.register')}
-            </Button>
             <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
               <Link to={`/contests/${contestSlugValue(contest.slug)}/registrants`}>{t('contest.detail.registrants')}</Link>
             </Button>
-            {canViewParticipantArea ? (
-              <>
-                <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
-                  <Link to={`/contests/${contestSlugValue(contest.slug)}/ranklist`}>{t('contest.detail.ranklist')}</Link>
-                </Button>
-                <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
-                  <Link to={`/contests/${contestSlugValue(contest.slug)}/submissions`}>{t('contest.detail.submissions')}</Link>
-                </Button>
-              </>
-            ) : null}
+            <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+              <Link to={`/contests/${contestSlugValue(contest.slug)}/ranklist`}>{t('contest.detail.ranklist')}</Link>
+            </Button>
+            <Button asChild type="button" variant="outline" className="rounded-2xl border-cyan-200 bg-white text-cyan-800 hover:bg-cyan-50">
+              <Link to={`/contests/${contestSlugValue(contest.slug)}/submissions`}>{t('contest.detail.submissions')}</Link>
+            </Button>
             {contest.canManage ? (
               <>
                 <Button asChild type="button" variant="outline" className="rounded-2xl border-slate-200 bg-white text-slate-800 hover:bg-slate-50">
@@ -180,19 +117,8 @@ function ContestDetailHeaderCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {registerErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{registerErrorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-        {registerSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{registerSuccessMessage}</AlertDescription>
-          </Alert>
-        ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="secondary">{resourceAccessBadgeLabel(contest.accessPolicy, t)}</Badge>
-          {hasStarted && !isRegistered ? <Badge variant="outline">{t('contest.detail.registrationClosed')}</Badge> : null}
         </div>
         <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
           <p>
@@ -203,12 +129,6 @@ function ContestDetailHeaderCard({
             <span className="font-medium text-slate-900">{t('contest.detail.endAt')} </span>
             <DateTimeText value={contest.endAt} />
           </p>
-          {contest.registrationStatus.registeredAt ? (
-            <p>
-              <span className="font-medium text-slate-900">{t('contest.detail.registeredAt')} </span>
-              <DateTimeText value={contest.registrationStatus.registeredAt} />
-            </p>
-          ) : null}
         </div>
         <div className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
           {contestDescriptionValue(contest.description) ? (

@@ -63,27 +63,43 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
                   HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
                 case Some(_) =>
                   HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-                    ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
-                      for
-                        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-                        uploadResult <- ProblemDataApiHelpers
-                          .writePreparedFiles(problemDataStorage, problem.slug, List(preparedFile))
-                          .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
-                          .flatMap(_ =>
-                            ProblemDataFileTable.upsertForProblem(
-                              connection,
-                              problem.id,
-                              ProblemDataApiHelpers.toManifestEntries(List(preparedFile)),
-                              Instant.now()
-                            )
-                          )
-                          .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data update."))
-                          .map(problem => ProblemDataUploadResult(problem, uploadedFileCount = 1))
-                          .handleErrorWith { error =>
-                            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                          }
-                      yield uploadResult
-                    }
+                    uploadManagedProblemDataFile(connection, problemSlug, path, bytes)
+            }
+
+  def uploadManagedProblemDataFile(
+    connection: Connection,
+    problemSlug: ProblemSlug,
+    path: ProblemDataPath,
+    bytes: Array[Byte]
+  ): IO[ProblemDataUploadResult] =
+    ProblemDataUploadPreparation.prepareSingleFile(path, bytes) match
+      case Left(message) =>
+        HttpApiError.raise(HttpApiError.badRequest(message))
+      case Right(preparedFile) =>
+        ProblemDataApiHelpers.summaryFilenameFor(List(preparedFile)) match
+          case Left(message) =>
+            HttpApiError.raise(HttpApiError.badRequest(message))
+          case Right(summaryFilename) =>
+            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+              for
+                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+                uploadResult <- ProblemDataApiHelpers
+                  .writePreparedFiles(problemDataStorage, problem.slug, List(preparedFile))
+                  .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
+                  .flatMap(_ =>
+                    ProblemDataFileTable.upsertForProblem(
+                      connection,
+                      problem.id,
+                      ProblemDataApiHelpers.toManifestEntries(List(preparedFile)),
+                      Instant.now()
+                    )
+                  )
+                  .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data update."))
+                  .map(problem => ProblemDataUploadResult(problem, uploadedFileCount = 1))
+                  .handleErrorWith { error =>
+                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                  }
+              yield uploadResult
             }
 
   private def extractNamedBinaryPart(

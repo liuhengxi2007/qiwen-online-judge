@@ -49,7 +49,7 @@ object EvaluateContestProblemAttachWarning extends AuthenticatedApi[(ContestSlug
       )
       problemAccess <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
       problem <- problemAccess.problem match
-        case Some(problem) if problemAccess.canView => IO.pure(problem)
+        case Some(problem) if problemAccess.canManage => IO.pure(problem)
         case _ => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       shouldWarn <- ContestProblemVisibilityTable.hasOutsideContestManagerAudience(connection, contest.id, problem.id)
     yield ContestProblemAttachWarningResponse(shouldWarn = shouldWarn)

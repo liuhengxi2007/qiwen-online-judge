@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Settings2 } from 'lucide-react'
+import { Database, PencilLine, Settings2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -227,17 +227,31 @@ function ContestManageProblemCard({
                   <span className="text-sm font-medium text-slate-900">{problemTitleValue(problem.title)}</span>
                   <span className="text-sm text-slate-500">{problemSlugValue(problem.slug)}</span>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={model.removingProblemSlug === problemSlugValue(problem.slug)}
-                  className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
-                  onClick={() => {
-                    void model.removeProblem(problemSlugValue(problem.slug))
-                  }}
-                >
-                  {model.removingProblemSlug === problemSlugValue(problem.slug) ? t('contest.manage.removingProblem') : t('contest.manage.removeProblem')}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild type="button" variant="outline" className="rounded-2xl border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50">
+                    <Link to={`/contests/${contestSlugValue(contest.slug)}/problems/${problemSlugValue(problem.slug)}`}>
+                      <PencilLine className="size-4" />
+                      {t('problem.detail.edit')}
+                    </Link>
+                  </Button>
+                  <Button asChild type="button" variant="outline" className="rounded-2xl border-slate-200 bg-white text-slate-800 hover:bg-slate-50">
+                    <Link to={`/contests/${contestSlugValue(contest.slug)}/problems/${problemSlugValue(problem.slug)}/data`}>
+                      <Database className="size-4" />
+                      {t('problem.detail.manageData')}
+                    </Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={model.removingProblemSlug === problemSlugValue(problem.slug)}
+                    className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+                    onClick={() => {
+                      void model.removeProblem(problemSlugValue(problem.slug))
+                    }}
+                  >
+                    {model.removingProblemSlug === problemSlugValue(problem.slug) ? t('contest.manage.removingProblem') : t('contest.manage.removeProblem')}
+                  </Button>
+                </div>
               </div>
             ))
           )}

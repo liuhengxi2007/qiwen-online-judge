@@ -35,8 +35,9 @@ object ListProblemDataTree extends AuthenticatedApi[ProblemSlug, ProblemDataTree
         case None =>
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(problem) =>
-          for
-            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-            manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
-          yield ProblemDataApiHelpers.buildTreeResponse(manifest.entries)
+          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
+            listManagedProblemDataTree(connection, problem)
     }
+
+  def listManagedProblemDataTree(connection: Connection, problem: domains.problem.objects.response.ProblemDetail): IO[ProblemDataTreeResponse] =
+    ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug).map(manifest => ProblemDataApiHelpers.buildTreeResponse(manifest.entries))

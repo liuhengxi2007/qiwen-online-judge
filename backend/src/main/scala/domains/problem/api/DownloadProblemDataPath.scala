@@ -38,15 +38,16 @@ final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
         case None =>
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(problem) =>
-          for
-            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-            response <- problemDataStorage.readPath(problem.slug, path).flatMap {
-              case None =>
-                HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
-              case Some((storedPath, bytes)) =>
-                IO.pure(binaryResponse(storedPath.fileName, bytes))
-            }
-          yield response
+          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
+            downloadManagedProblemDataPath(problem, path)
+    }
+
+  def downloadManagedProblemDataPath(problem: domains.problem.objects.response.ProblemDetail, path: ProblemDataPath): IO[Response[IO]] =
+    problemDataStorage.readPath(problem.slug, path).flatMap {
+      case None =>
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+      case Some((storedPath, bytes)) =>
+        IO.pure(binaryResponse(storedPath.fileName, bytes))
     }
 
   private def binaryResponse(filename: String, bytes: Array[Byte]): Response[IO] =

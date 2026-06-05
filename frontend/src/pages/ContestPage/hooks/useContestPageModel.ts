@@ -93,12 +93,12 @@ export function useContestPageModel(pageRequest: PageRequest) {
   const toggleRegistration = async (contest: ContestSummary) => {
     dispatch({ type: 'registration_started', slug: contest.slug })
     try {
-      const updatedContest = contest.registrationStatus.isRegistered
+      const registrationStatus = contest.registrationStatus.isRegistered
         ? await sendAPI(new UnregisterContest(contest.slug))
         : await sendAPI(new RegisterContest(contest.slug))
       dispatch({
         type: 'registration_succeeded',
-        contest: { ...contest, registrationStatus: updatedContest.registrationStatus },
+        contest: { ...contest, registrationStatus },
         message: contest.registrationStatus.isRegistered ? t('contest.list.unregisterSuccess') : t('contest.list.registerSuccess'),
       })
     } catch (error) {

@@ -7,6 +7,7 @@ import {
   judgeConfigTemplate,
   validateJudgeConfigYaml,
 } from '../functions/ProblemJudgeConfig'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from './useProblemDataPageModel'
@@ -22,7 +23,7 @@ if (!judgePath.ok) {
 }
 const judgeDataPath = judgePath.value
 
-export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, problemSlug: ProblemSlug) {
+export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
   const [content, setContentValue] = useState(judgeConfigTemplate)
   const [lastSavedContent, setLastSavedContent] = useState<string | null>(null)
@@ -39,7 +40,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     setErrorMessage('')
     setStatusMessage('')
     try {
-      const api = new DownloadProblemDataPath(problemSlug, judgeDataPath)
+      const api = new DownloadProblemDataPath(problemSlug, judgeDataPath, contestSlug)
       const response = await fetch(api.downloadUrl(), {
         credentials: 'same-origin',
       })
@@ -72,7 +73,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     } finally {
       setIsLoading(false)
     }
-  }, [problemSlug, t])
+  }, [contestSlug, problemSlug, t])
 
   useEffect(() => {
     void loadConfig()
@@ -88,6 +89,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
         problemSlug,
         new File([content], judgeConfigPath, { type: 'text/plain' }),
         judgeDataPath,
+        contestSlug,
       )
       const result = await sendMultipartAPI(api, api.formData())
       model.replaceProblem(result.problem)
@@ -99,7 +101,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     } finally {
       setIsSaving(false)
     }
-  }, [content, model, problemSlug, t])
+  }, [contestSlug, content, model, problemSlug, t])
 
   const resetTemplate = useCallback(() => {
     setContentValue(judgeConfigTemplate)

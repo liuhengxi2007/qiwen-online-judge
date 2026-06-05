@@ -61,8 +61,7 @@ object ContestTableSupport:
     ContestRegistrant(
       user = readOptionalUserIdentity(resultSet, "user").getOrElse(
         throw IllegalStateException("Contest registration row is missing user identity")
-      ),
-      registeredAt = resultSet.getTimestamp("registered_at").toInstant
+      )
     )
 
   def readContestSummaryBase(resultSet: ResultSet): ContestSummary =

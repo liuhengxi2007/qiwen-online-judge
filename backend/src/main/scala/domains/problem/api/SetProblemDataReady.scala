@@ -52,10 +52,13 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(_) =>
           HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
-              if request.ready then markProblemReady(connection, problem)
-              else markProblemNotReady(connection, problem)
-            }
+            setManagedProblemDataReady(connection, problemSlug, request.ready)
+    }
+
+  def setManagedProblemDataReady(connection: Connection, problemSlug: ProblemSlug, ready: Boolean): IO[ProblemDetail] =
+    ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+      if ready then markProblemReady(connection, problem)
+      else markProblemNotReady(connection, problem)
     }
 
   private def markProblemNotReady(connection: Connection, problem: ProblemDetail): IO[ProblemDetail] =

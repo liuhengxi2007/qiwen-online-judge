@@ -1,4 +1,6 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import type { DeleteProblemDataPathRequest } from '@/objects/problem/request/DeleteProblemDataPathRequest'
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
@@ -11,8 +13,10 @@ export class DeleteProblemDataPath implements APIWithSessionMessage<ProblemDetai
   readonly apiPath: string
   private readonly request: DeleteProblemDataPathRequest
 
-  constructor(problemSlug: ProblemSlug, path: ProblemDataPath) {
-    this.apiPath = `problems/${problemSlugValue(problemSlug)}/data/files/delete`
+  constructor(problemSlug: ProblemSlug, path: ProblemDataPath, contestSlug?: ContestSlug) {
+    this.apiPath = contestSlug
+      ? `contests/${contestSlugValue(contestSlug)}/problems/${problemSlugValue(problemSlug)}/data/files/delete`
+      : `problems/${problemSlugValue(problemSlug)}/data/files/delete`
     this.request = { path }
   }
 

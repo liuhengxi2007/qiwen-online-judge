@@ -35,8 +35,6 @@ final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorage)
         case None =>
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(problem) =>
-          for
-            _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-            files <- problemDataStorage.listFiles(problem.slug)
-          yield ProblemDataFileListResponse(files)
+          HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
+            problemDataStorage.listFiles(problem.slug).map(ProblemDataFileListResponse(_))
     }

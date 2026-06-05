@@ -235,11 +235,39 @@ object ProblemQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
+  private val listManageableSuggestionsSQL: String =
+    s"""
+      |select p.slug, p.title
+      |from problems p
+      |where
+      |  $managerAccessPredicate
+      |  and $searchPredicate
+      |order by
+      |  $suggestionOrderClause
+      |limit $suggestionLimit
+      |""".stripMargin
+
   def listSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSQL)
       try
         bindSuggestionQuery(statement, actor, query)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readProblemSuggestion(resultSet))
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def listManageableSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(listManageableSuggestionsSQL)
+      try
+        bindManageableSuggestionQuery(statement, actor, query)
         val resultSet = statement.executeQuery()
         try
           Iterator

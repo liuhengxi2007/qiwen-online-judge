@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/pages/objects/ProblemTitleDisplay'
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { problemStatementTextValue } from '@/objects/problem/ProblemStatementText'
 import type { useProblemDetailPageModel } from '../hooks/useProblemDetailPageModel'
@@ -37,6 +38,10 @@ export function ProblemDetailHeaderCard({
   }
 
   const titleText = formatProblemTitleDisplay(model.problem.title, model.problem.slug, problemTitleDisplayMode)
+  const problemSlugText = problemSlugValue(model.problem.slug)
+  const contestProblemBasePath = model.contestSlug
+    ? `/contests/${contestSlugValue(model.contestSlug)}/problems/${problemSlugText}`
+    : `/problems/${problemSlugText}`
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -62,7 +67,7 @@ export function ProblemDetailHeaderCard({
               variant="outline"
               className="rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
             >
-              <Link to={`/problems/${problemSlugValue(model.problem.slug)}/submit`}>
+              <Link to={`${contestProblemBasePath}/submit`}>
                 <Send className="size-4" />
                 {t('problem.detail.submitCode')}
               </Link>
@@ -94,7 +99,7 @@ export function ProblemDetailHeaderCard({
                   variant="outline"
                   className="rounded-2xl border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
                 >
-                  <Link to={`/problems/${problemSlugValue(model.problem.slug)}/data`}>
+              <Link to={`${contestProblemBasePath}/data`}>
                     <Database className="size-4" />
                     {t('problem.detail.manageData')}
                   </Link>

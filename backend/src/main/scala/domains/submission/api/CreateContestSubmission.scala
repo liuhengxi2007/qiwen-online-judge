@@ -52,30 +52,27 @@ final case class CreateContestSubmission(submissionProgramStorage: SubmissionPro
         contestAccess.canViewContest,
         HttpApiError.notFound(ApiMessages.contestNotFound)
       )
-      _ <- HttpApiError.ensure(contestAccess.contestStarted, HttpApiError.badRequest(ApiMessages.contestNotRunning))
-      submission <-
-        if contestAccess.contestEnded then
-          CreateSubmission(submissionProgramStorage).createForProblem(connection, actor, validRequest)
-        else
-          for
-            _ <- HttpApiError.ensure(
-              contestAccess.registeredBeforeStart,
-              HttpApiError.forbidden(ApiMessages.contestNotRegistered)
-            )
-            _ <- HttpApiError.ensure(
-              contestAccess.containsProblem,
-              HttpApiError.notFound(ApiMessages.contestProblemNotFound)
-            )
-            submission <- CreateSubmission(submissionProgramStorage).createForAccessibleProblem(
-              connection = connection,
-              actor = actor,
-              request = validRequest,
-              problemId = problem.id,
-              contestId = Some(contestAccess.contestId),
-              problemSlug = problem.slug,
-              problemTitle = problem.title,
-              source = SubmissionSource.fromContest(contestAccess.contestSlug, contestAccess.contestTitle),
-              canManage = false
-            )
-          yield submission
+      _ <- HttpApiError.ensure(
+        contestAccess.contestStarted && !contestAccess.contestEnded,
+        HttpApiError.badRequest(ApiMessages.contestNotRunning)
+      )
+      _ <- HttpApiError.ensure(
+        contestAccess.containsProblem,
+        HttpApiError.notFound(ApiMessages.contestProblemNotFound)
+      )
+      _ <- HttpApiError.ensure(
+        contestAccess.canSubmitContestProblem,
+        HttpApiError.forbidden(ApiMessages.contestNotRegistered)
+      )
+      submission <- CreateSubmission(submissionProgramStorage).createForAccessibleProblem(
+        connection = connection,
+        actor = actor,
+        request = validRequest,
+        problemId = problem.id,
+        contestId = Some(contestAccess.contestId),
+        problemSlug = problem.slug,
+        problemTitle = problem.title,
+        source = SubmissionSource.fromContest(contestAccess.contestSlug, contestAccess.contestTitle),
+        canManage = false
+      )
     yield submission

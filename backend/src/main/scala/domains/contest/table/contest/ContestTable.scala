@@ -124,10 +124,10 @@ object ContestTable:
         for
           viewerGrants <- ContestAccessGrantTable.listForContest(connection, item.id, GrantRole.Viewer)
           managerGrants <- ContestAccessGrantTable.listForContest(connection, item.id, GrantRole.Manager)
-          registration <- findRegistration(connection, item.id, actor.username)
+          isRegistered <- isRegistered(connection, item.id, actor.username)
         yield item.copy(
           accessPolicy = item.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = managerGrants),
-          registrationStatus = registration.fold(ContestRegistrationStatus.notRegistered)(ContestRegistrationStatus.registeredAt)
+          registrationStatus = if isRegistered then ContestRegistrationStatus.registered else ContestRegistrationStatus.notRegistered
         )
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
@@ -334,21 +334,21 @@ object ContestTable:
       finally statement.close()
     }
 
-  private val findRegistrationSQL: String =
+  private val registrationExistsSQL: String =
     """
-      |select registered_at
+      |select 1
       |from contest_registrations
       |where contest_id = ? and username = ?
       |""".stripMargin
 
-  def findRegistration(connection: Connection, contestId: ContestId, username: Username): IO[Option[Instant]] =
+  def isRegistered(connection: Connection, contestId: ContestId, username: Username): IO[Boolean] =
     IO.blocking {
-      val statement = connection.prepareStatement(findRegistrationSQL)
+      val statement = connection.prepareStatement(registrationExistsSQL)
       try
         statement.setObject(1, contestId.value)
         statement.setString(2, username.value)
         val resultSet = statement.executeQuery()
-        try if resultSet.next() then Some(resultSet.getTimestamp("registered_at").toInstant) else None
+        try resultSet.next()
         finally resultSet.close()
       finally statement.close()
     }
@@ -361,11 +361,11 @@ object ContestTable:
 
   def register(connection: Connection, contestId: ContestId, username: Username): IO[RegisterTableResult] =
     for
-      existing <- findRegistration(connection, contestId, username)
-      result <- existing match
-        case Some(_) =>
+      exists <- isRegistered(connection, contestId, username)
+      result <-
+        if exists then
           IO.pure(RegisterTableResult.AlreadyRegistered)
-        case None =>
+        else
           IO.blocking {
             val statement = connection.prepareStatement(insertRegistrationSQL)
             try

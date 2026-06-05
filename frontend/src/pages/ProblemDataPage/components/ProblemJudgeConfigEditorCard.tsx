@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useProblemJudgeConfigEditorModel } from '../hooks/useProblemJudgeConfigEditorModel'
 import { judgeConfigPath } from '../functions/ProblemJudgeConfig'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from '../hooks/useProblemDataPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -14,13 +15,14 @@ import { useI18n } from '@/system/i18n/use-i18n'
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 type ProblemJudgeConfigEditorCardProps = {
+  contestSlug?: ContestSlug
   model: ProblemDataPageModel
   problemSlug: ProblemSlug
 }
 
-export function ProblemJudgeConfigEditorCard({ model, problemSlug }: ProblemJudgeConfigEditorCardProps) {
+export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }: ProblemJudgeConfigEditorCardProps) {
   const { t } = useI18n()
-  const editor = useProblemJudgeConfigEditorModel(model, problemSlug)
+  const editor = useProblemJudgeConfigEditorModel(model, problemSlug, contestSlug)
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

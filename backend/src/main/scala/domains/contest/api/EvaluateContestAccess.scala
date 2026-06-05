@@ -27,10 +27,14 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
     contestTitle: ContestTitle,
     contestStarted: Boolean,
     contestEnded: Boolean,
-    registeredBeforeStart: Boolean,
+    isRegistered: Boolean,
     containsProblem: Boolean,
     canViewContest: Boolean,
-    canManageContest: Boolean
+    canViewContestDetail: Boolean,
+    canManageContest: Boolean,
+    canViewLinkedContestProblem: Boolean,
+    canManageLinkedContestProblem: Boolean,
+    canSubmitContestProblem: Boolean
   )
 
   override val method: Method = Method.POST
@@ -43,10 +47,19 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
       case Some(contest) =>
         for
           actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
-          registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
+          isRegistered <- ContestTable.isRegistered(connection, contest.id, actor.username)
           now = Instant.now()
           actorGroupSlugSet = actorGroupSlugs.slugs.toSet
-          containsProblem = input.problemId.forall(problemId => contest.problems.exists(_.id.value == problemId.value))
+          containsProblem = input.problemId.exists(problemId => contest.problems.exists(_.id.value == problemId.value))
+          canViewContest = ContestAccessRules.canViewContest(actor, contest, actorGroupSlugSet)
+          canViewContestDetail = ContestAccessRules.canViewContestDetail(actor, contest, actorGroupSlugSet, isRegistered, now)
+          canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugSet)
+          canViewLinkedContestProblem =
+            ContestAccessRules.canViewLinkedContestProblem(actor, contest, actorGroupSlugSet, isRegistered, containsProblem, now)
+          canManageLinkedContestProblem =
+            ContestAccessRules.canManageLinkedContestProblem(actor, contest, actorGroupSlugSet, containsProblem)
+          canSubmitContestProblem =
+            ContestAccessRules.canSubmitContestProblem(contest, isRegistered, containsProblem, now)
         yield Some(
           Result(
             contestId = contest.id,
@@ -54,10 +67,14 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
             contestTitle = contest.title,
             contestStarted = !now.isBefore(contest.startAt),
             contestEnded = now.isAfter(contest.endAt),
-            registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt)),
+            isRegistered = isRegistered,
             containsProblem = containsProblem,
-            canViewContest = ContestAccessRules.canViewContest(actor, contest, actorGroupSlugSet),
-            canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugSet)
+            canViewContest = canViewContest,
+            canViewContestDetail = canViewContestDetail,
+            canManageContest = canManageContest,
+            canViewLinkedContestProblem = canViewLinkedContestProblem,
+            canManageLinkedContestProblem = canManageLinkedContestProblem,
+            canSubmitContestProblem = canSubmitContestProblem
           )
         )
     }

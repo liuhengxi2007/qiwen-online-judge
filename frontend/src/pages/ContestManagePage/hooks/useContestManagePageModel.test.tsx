@@ -47,7 +47,6 @@ function contestDetail(overrides: Partial<ContestDetail> = {}): ContestDetail {
     },
     registrationStatus: {
       isRegistered: false,
-      registeredAt: null,
     },
     canManage: true,
     author: null,

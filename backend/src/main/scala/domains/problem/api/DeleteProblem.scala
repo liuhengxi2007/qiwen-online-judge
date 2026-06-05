@@ -39,9 +39,14 @@ final case class DeleteProblem(submissionProgramStorage: SubmissionProgramStorag
         case Some(problem) =>
           for
             _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-            deleteSubmissionPrograms <- SubmissionProgramCleanup.prepareDeleteForProblem(connection, problem.id, submissionProgramStorage)
-            _ <- ProblemAccessGrantTable.deleteAllForProblem(connection, problem.id)
-            _ <- ProblemMutationTable.delete(connection, problem.id)
-            _ <- deleteSubmissionPrograms
-          yield SuccessResponse(code = Some(ApiMessages.problemDeleted.code), message = None, params = ApiMessages.problemDeleted.params)
+            response <- deleteManagedProblem(connection, problem)
+          yield response
     }
+
+  def deleteManagedProblem(connection: Connection, problem: domains.problem.objects.response.ProblemDetail): IO[SuccessResponse] =
+    for
+      deleteSubmissionPrograms <- SubmissionProgramCleanup.prepareDeleteForProblem(connection, problem.id, submissionProgramStorage)
+      _ <- ProblemAccessGrantTable.deleteAllForProblem(connection, problem.id)
+      _ <- ProblemMutationTable.delete(connection, problem.id)
+      _ <- deleteSubmissionPrograms
+    yield SuccessResponse(code = Some(ApiMessages.problemDeleted.code), message = None, params = ApiMessages.problemDeleted.params)

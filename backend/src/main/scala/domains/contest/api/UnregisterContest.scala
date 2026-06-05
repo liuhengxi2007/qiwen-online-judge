@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestSlug
-import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
+import domains.contest.objects.response.ContestRegistrationStatus
 import domains.contest.table.contest.ContestTable
 import domains.contest.table.contest.ContestTable.UnregisterTableResult
 import domains.contest.utils.ContestAccessRules
@@ -16,12 +16,12 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
-object UnregisterContest extends AuthenticatedApi[ContestSlug, ContestDetail]:
+object UnregisterContest extends AuthenticatedApi[ContestSlug, ContestRegistrationStatus]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/contests/:contestSlug/unregister")
   override val successStatus: Status = Status.Ok
-  override protected val outputEncoder: Encoder[ContestDetail] = summon[Encoder[ContestDetail]]
+  override protected val outputEncoder: Encoder[ContestRegistrationStatus] = summon[Encoder[ContestRegistrationStatus]]
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[ContestSlug] =
     val _ = request
@@ -31,7 +31,7 @@ object UnregisterContest extends AuthenticatedApi[ContestSlug, ContestDetail]:
     connection: Connection,
     actor: AuthenticatedUser,
     slug: ContestSlug
-  ): IO[ContestDetail] =
+  ): IO[ContestRegistrationStatus] =
     for
       maybeContest <- ContestTable.findBySlug(connection, slug)
       contest <- maybeContest match
@@ -42,8 +42,6 @@ object UnregisterContest extends AuthenticatedApi[ContestSlug, ContestDetail]:
         ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet),
         HttpApiError.notFound(ApiMessages.contestNotFound)
       )
-      canManage = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      includeProblems = canManage || !Instant.now().isBefore(contest.startAt)
       _ <- HttpApiError.ensure(
         Instant.now().isBefore(contest.startAt),
         HttpApiError.badRequest(ApiMessages.contestRegistrationLocked)
@@ -53,4 +51,4 @@ object UnregisterContest extends AuthenticatedApi[ContestSlug, ContestDetail]:
         case UnregisterTableResult.NotRegistered =>
           HttpApiError.raise(HttpApiError.conflict(ApiMessages.contestNotRegistered))
       }
-    yield ContestDetail.fromContest(contest, ContestRegistrationStatus.notRegistered, canManage, includeProblems)
+    yield ContestRegistrationStatus.notRegistered

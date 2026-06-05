@@ -175,6 +175,10 @@ export const router = createBrowserRouter([
         element: <AuthenticatedRoute element={<ProblemSubmitPage />} />,
       },
       {
+        path: 'contests/:contestSlug/problems/:slug/data',
+        element: <AuthenticatedRoute element={<ProblemDataPage />} />,
+      },
+      {
         path: 'contests/:contestSlug/problems/:slug',
         element: <AuthenticatedRoute element={<ProblemDetailPage />} />,
       },

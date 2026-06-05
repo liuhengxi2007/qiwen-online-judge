@@ -40,17 +40,20 @@ final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
           HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         case Some(_) =>
           HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound)) *>
-            ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
-              for
-                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-                clearedProblem <- problemDataStorage
-                  .deleteAllFiles(problem.slug)
-                  .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
-                  .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
-                  .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after clearing data."))
-                  .handleErrorWith { error =>
-                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
-                  }
-              yield clearedProblem
-            }
+            clearManagedProblemData(connection, problemSlug)
+    }
+
+  def clearManagedProblemData(connection: Connection, problemSlug: ProblemSlug): IO[ProblemDetail] =
+    ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
+      for
+        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        clearedProblem <- problemDataStorage
+          .deleteAllFiles(problem.slug)
+          .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
+          .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
+          .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after clearing data."))
+          .handleErrorWith { error =>
+            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+          }
+      yield clearedProblem
     }

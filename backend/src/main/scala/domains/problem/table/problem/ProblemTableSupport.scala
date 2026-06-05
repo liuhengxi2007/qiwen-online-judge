@@ -155,6 +155,19 @@ object ProblemTableSupport:
     statement.setString(afterSearchIndex + 2, searchPattern.prefixPattern)
     statement.setString(afterSearchIndex + 3, searchPattern.containsPattern)
 
+  def bindManageableSuggestionQuery(
+    statement: PreparedStatement,
+    actor: AuthenticatedUser,
+    query: ProblemSearchQuery
+  ): Unit =
+    val nextIndex = bindManagerProblemAccessQuery(statement, actor, startIndex = 1)
+    val afterSearchIndex = bindSearchQuery(statement, Some(query), startIndex = nextIndex)
+    val searchPattern = LikePatternSql.fromRaw(query.value)
+    statement.setString(afterSearchIndex, searchPattern.raw)
+    statement.setString(afterSearchIndex + 1, searchPattern.prefixPattern)
+    statement.setString(afterSearchIndex + 2, searchPattern.prefixPattern)
+    statement.setString(afterSearchIndex + 3, searchPattern.containsPattern)
+
   def encodeOtherUserSubmissionAccessColumn(value: OtherUserSubmissionAccess): String =
     value match
       case OtherUserSubmissionAccess.None => "none"

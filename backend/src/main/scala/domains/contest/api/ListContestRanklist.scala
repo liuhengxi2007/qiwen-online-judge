@@ -43,21 +43,18 @@ object ListContestRanklist extends AuthenticatedApi[(ContestSlug, PageRequest), 
         case Some(contest) => IO.pure(contest)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
       actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
+      isRegistered <- ContestTable.isRegistered(connection, contest.id, actor.username)
+      now = Instant.now()
       _ <- HttpApiError.ensure(
-        ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet),
+        ContestAccessRules.canViewContestDetail(actor, contest, actorGroupSlugs.slugs.toSet, isRegistered, now),
         HttpApiError.notFound(ApiMessages.contestNotFound)
       )
       canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
-      now = Instant.now()
-      registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
-      canViewRanklist = canManageContest || now.isAfter(contest.endAt) || registeredBeforeStart
-      _ <- HttpApiError.ensure(canViewRanklist, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
       ranklist <- ContestRanklistTable.listForContest(
         connection = connection,
         contestId = contest.id,
         viewerUsername = actor.username,
-        canViewAllSubmissionDetails = canManageContest || now.isAfter(contest.endAt),
+        canViewAllSubmissionDetails = canManageContest,
         page = normalizedPageRequest.page,
         pageSize = normalizedPageRequest.pageSize
       )

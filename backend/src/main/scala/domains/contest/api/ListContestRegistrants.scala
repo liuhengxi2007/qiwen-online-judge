@@ -15,6 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
+import java.time.Instant
 
 object ListContestRegistrants extends AuthenticatedApi[(ContestSlug, PageRequest), PageResponse[ContestRegistrant]]:
 
@@ -42,8 +43,10 @@ object ListContestRegistrants extends AuthenticatedApi[(ContestSlug, PageRequest
         case Some(contest) => IO.pure(contest)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
       actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
+      isRegistered <- ContestTable.isRegistered(connection, contest.id, actor.username)
+      now = Instant.now()
       _ <- HttpApiError.ensure(
-        ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet),
+        ContestAccessRules.canViewContestDetail(actor, contest, actorGroupSlugs.slugs.toSet, isRegistered, now),
         HttpApiError.notFound(ApiMessages.contestNotFound)
       )
       registrants <- ContestTable.listRegistrants(connection, contest.id, normalizedPageRequest.page, normalizedPageRequest.pageSize)

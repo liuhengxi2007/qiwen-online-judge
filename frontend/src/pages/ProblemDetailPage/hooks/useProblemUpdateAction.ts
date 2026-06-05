@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { UpdateProblem } from '@/apis/problem/UpdateProblem'
 import { HttpClientError } from '@/system/api/http-client'
 import { validateProblemUpdateDraft } from '../functions/ProblemForm'
+import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
@@ -10,7 +11,7 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { sendAPI } from '@/system/api/api-message'
 
-export function useProblemUpdateAction(problemSlug: ProblemSlug) {
+export function useProblemUpdateAction(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const [isSaving, setIsSaving] = useState(false)
   const { t } = useI18n()
 
@@ -33,7 +34,7 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
 
       setIsSaving(true)
       try {
-        const updatedProblem = await sendAPI(new UpdateProblem(problemSlug, validation.request))
+        const updatedProblem = await sendAPI(new UpdateProblem(problemSlug, validation.request, contestSlug))
         return { ok: true, problem: updatedProblem, message: t('problem.message.updateSuccess') }
       } catch (error) {
         const message = error instanceof HttpClientError ? error.message : t('problem.message.updateFailed')
@@ -42,7 +43,7 @@ export function useProblemUpdateAction(problemSlug: ProblemSlug) {
         setIsSaving(false)
       }
     },
-    [problemSlug, t],
+    [contestSlug, problemSlug, t],
   )
 
   return { isSaving, save }

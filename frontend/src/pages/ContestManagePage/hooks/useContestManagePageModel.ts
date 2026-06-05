@@ -3,9 +3,9 @@ import { useCallback, useEffect, useReducer, useState } from 'react'
 import { AddProblemToContest } from '@/apis/contest/AddProblemToContest'
 import { EvaluateContestProblemAttachWarning } from '@/apis/contest/EvaluateContestProblemAttachWarning'
 import { GetContest } from '@/apis/contest/GetContest'
+import { ListManageableContestProblemSuggestions } from '@/apis/contest/ListManageableContestProblemSuggestions'
 import { RemoveProblemFromContest } from '@/apis/contest/RemoveProblemFromContest'
 import { UpdateContest } from '@/apis/contest/UpdateContest'
-import { ListProblemSuggestions } from '@/apis/problem/ListProblemSuggestions'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
@@ -170,7 +170,7 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
       }
 
       setIsLoadingProblemSuggestions(true)
-      void sendAPI(new ListProblemSuggestions(parsedQuery.value))
+      void sendAPI(new ListManageableContestProblemSuggestions(contestSlug, parsedQuery.value))
         .then((suggestions) => {
           if (!cancelled) {
             setProblemSuggestions(suggestions)

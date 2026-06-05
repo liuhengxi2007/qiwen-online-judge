@@ -37,20 +37,29 @@ object UpdateProblem extends AuthenticatedApi[(ProblemSlug, UpdateProblemRequest
   ): IO[ProblemDetail] =
     val (problemSlug, request) = input
     for
-      title <- HttpApiError.fromEitherBadRequest(ProblemTitle.parse(request.title.value))
-      statement <- HttpApiError.fromEitherBadRequest(ProblemStatementText.parse(request.statement.value))
-      validRequest = request.copy(
-        title = title,
-        statement = statement
-      )
+      validRequest <- validateRequest(request)
       access <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
       problem <- access.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.problemNotFound))
-      _ <- validateAuthorUsername(connection, validRequest.authorUsername)
-      _ <- ProblemAccessPolicyValidation.validateAccessPolicySubjects(connection, validRequest.accessPolicy)
-      _ <- ProblemMutationTable.update(connection, problem.id, Instant.now(), validRequest)
+      updatedProblem <- updateManagedProblem(connection, problem, validRequest)
+    yield updatedProblem
+
+  def validateRequest(request: UpdateProblemRequest): IO[UpdateProblemRequest] =
+    for
+      title <- HttpApiError.fromEitherBadRequest(ProblemTitle.parse(request.title.value))
+      statement <- HttpApiError.fromEitherBadRequest(ProblemStatementText.parse(request.statement.value))
+    yield request.copy(
+      title = title,
+      statement = statement
+    )
+
+  def updateManagedProblem(connection: Connection, problem: ProblemDetail, request: UpdateProblemRequest): IO[ProblemDetail] =
+    for
+      _ <- validateAuthorUsername(connection, request.authorUsername)
+      _ <- ProblemAccessPolicyValidation.validateAccessPolicySubjects(connection, request.accessPolicy)
+      _ <- ProblemMutationTable.update(connection, problem.id, Instant.now(), request)
       updatedProblem <- ProblemQueryTable.findBySlug(connection, problem.slug).flatMap {
         case Some(problem) => IO.pure(problem.copy(canManage = true))
         case None => HttpApiError.raise(HttpApiError.internal("Problem disappeared after update."))

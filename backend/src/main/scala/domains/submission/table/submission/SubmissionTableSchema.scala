@@ -98,7 +98,6 @@ object SubmissionTableSchema:
       |  where s.contest_id is null
       |    and s.submitted_at >= c.start_at
       |    and s.submitted_at <= c.end_at
-      |    and cr.registered_at <= c.start_at
       |  group by s.id
       |)
       |update submissions s
