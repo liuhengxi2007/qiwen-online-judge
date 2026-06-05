@@ -149,7 +149,6 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
 
   useEffect(() => {
     if (!isProblemSearchFocused) {
-      setProblemSuggestions([])
       return
     }
 
@@ -157,7 +156,6 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     const timeoutId = window.setTimeout(() => {
       const parsedQuery = parseProblemSearchQuery(problemSearchInput)
       if (!parsedQuery.ok) {
-        setProblemSuggestions([])
         return
       }
 
@@ -182,6 +180,19 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
       window.clearTimeout(timeoutId)
     }
   }, [isProblemSearchFocused, problemSearchInput])
+
+  const updateProblemSearchInput = useCallback((value: string) => {
+    setProblemSearchInput(value)
+    setIsLoadingProblemSuggestions(false)
+    setProblemSuggestions([])
+  }, [])
+
+  const updateProblemSearchFocus = useCallback((focused: boolean) => {
+    setIsProblemSearchFocused(focused)
+    if (!focused) {
+      setIsLoadingProblemSuggestions(false)
+    }
+  }, [])
 
   const accessPolicyResult = state.draft
     ? buildResourceAccessPolicy(
@@ -265,8 +276,8 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     problemSuggestions: isProblemSearchFocused ? problemSuggestions : [],
     accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedAccessPolicy(),
     setDescriptionTab,
-    setProblemSearchInput,
-    setIsProblemSearchFocused,
+    setProblemSearchInput: updateProblemSearchInput,
+    setIsProblemSearchFocused: updateProblemSearchFocus,
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),
     setStartAt: (value: string) => dispatch({ type: 'set_start_at', value }),

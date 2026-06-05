@@ -152,15 +152,6 @@ object ContestTable:
       |where c.slug = ?
       |""".stripMargin
 
-  private val listProblemsForContestSQL: String =
-    """
-      |select p.id, p.slug, p.title, cp.position, cp.alias
-      |from contest_problems cp
-      |join problems p on p.id = cp.problem_id
-      |where cp.contest_id = ?
-      |order by cp.position asc, p.slug asc
-      |""".stripMargin
-
   def findBySlug(connection: Connection, slug: ContestSlug): IO[Option[Contest]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSQL)
@@ -173,7 +164,7 @@ object ContestTable:
     }.flatMap {
       case Some(contest) =>
         for
-          problems <- listProblemsForContest(connection, contest.id, listProblemsForContestSQL)
+          problems <- listProblemsForContest(connection, contest.id)
           viewerGrants <- ContestAccessGrantTable.listForContest(connection, contest.id, GrantRole.Viewer)
           managerGrants <- ContestAccessGrantTable.listForContest(connection, contest.id, GrantRole.Manager)
         yield Some(contest.copy(problems = problems, accessPolicy = contest.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = managerGrants)))
@@ -254,9 +245,21 @@ object ContestTable:
       for
         _ <- ContestAccessGrantTable.replaceForContest(connection, updatedContest.id, GrantRole.Viewer, sanitizedPolicy.viewerGrants)
         _ <- ContestAccessGrantTable.replaceForContest(connection, updatedContest.id, GrantRole.Manager, sanitizedPolicy.managerGrants)
-        problems <- listProblemsForContest(connection, updatedContest.id, listProblemsForContestSQL)
+        problems <- listProblemsForContest(connection, updatedContest.id)
       yield updatedContest.copy(problems = problems, accessPolicy = sanitizedPolicy)
     }
+
+  private val listProblemsForContestSQL: String =
+    """
+      |select p.id, p.slug, p.title, cp.position, cp.alias
+      |from contest_problems cp
+      |join problems p on p.id = cp.problem_id
+      |where cp.contest_id = ?
+      |order by cp.position asc, p.slug asc
+      |""".stripMargin
+
+  private def listProblemsForContest(connection: Connection, contestId: ContestId): IO[List[ContestProblemSummary]] =
+    ContestTableSupport.listProblemsForContest(connection, contestId, listProblemsForContestSQL)
 
   private val relationExistsSQL: String =
     """

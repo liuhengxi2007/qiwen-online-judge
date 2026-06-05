@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
-import { SubmissionListPageContent } from '@/pages/SubmissionPage/SubmissionListPageContent'
+import { SubmissionListPageContent } from '@/pages/components/submission/SubmissionListPageContent'
 
 export function ContestSubmissionPage() {
   const { slug } = useParams<{ slug: string }>()

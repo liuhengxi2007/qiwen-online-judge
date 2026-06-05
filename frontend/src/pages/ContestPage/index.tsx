@@ -12,6 +12,7 @@ import { DateTimeText } from '@/pages/components/DateTimeText'
 import { PageShell } from '@/pages/components/PageShell'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { useNow } from '@/pages/hooks/useNow'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -29,6 +30,7 @@ export function ContestPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const model = useContestPageModel({ page: currentPage, pageSize: contestsPerPage })
+  const now = useNow()
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
@@ -108,7 +110,7 @@ export function ContestPage() {
               </div>
             ) : (
               model.contests.map((contest) => {
-                const hasStarted = Date.now() >= new Date(contest.startAt).getTime()
+                const hasStarted = now >= new Date(contest.startAt).getTime()
                 const isRegistered = contest.registrationStatus.isRegistered
                 const isUpdating = model.activeRegistrationSlug === contest.slug
                 const isLocked = hasStarted

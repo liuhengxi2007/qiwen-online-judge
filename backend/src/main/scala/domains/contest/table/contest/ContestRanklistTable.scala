@@ -15,6 +15,61 @@ import java.util.UUID
 
 object ContestRanklistTable:
 
+  def listForContest(
+    connection: Connection,
+    contestId: ContestId,
+    viewerUsername: Username,
+    canViewAllSubmissionDetails: Boolean,
+    page: Int,
+    pageSize: Int
+  ): IO[PageResponse[ContestRanklistItem]] =
+    for
+      totalItems <- countRows(connection, contestId)
+      items <- readRows(connection, contestId, viewerUsername, canViewAllSubmissionDetails, page, pageSize)
+    yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
+
+  private val countRowsSql: String =
+    """
+      |select count(*) as total_items
+      |from contest_registrations cr
+      |where cr.contest_id = ?
+      |  and not exists (
+      |    select 1
+      |    from auth_accounts aa
+      |    where aa.username = cr.username
+      |      and (aa.site_manager = true or aa.contest_manager = true)
+      |  )
+      |  and not exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    where cag.contest_id = cr.contest_id
+      |      and cag.grant_role = 'manager'
+      |      and cag.subject_kind = 'user'
+      |      and cag.subject_key = cr.username
+      |  )
+      |  and not exists (
+      |    select 1
+      |    from contest_access_grants cag
+      |    join user_groups ug on ug.slug = cag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where cag.contest_id = cr.contest_id
+      |      and cag.grant_role = 'manager'
+      |      and cag.subject_kind = 'user_group'
+      |      and ugm.username = cr.username
+      |  )
+      |""".stripMargin
+
+  private def countRows(connection: Connection, contestId: ContestId): IO[Long] =
+    IO.blocking {
+      val statement = connection.prepareStatement(countRowsSql)
+      try
+        statement.setObject(1, contestId.value)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then resultSet.getLong("total_items") else 0L
+        finally resultSet.close()
+      finally statement.close()
+    }
+
   private val rankedRowsSql: String =
     s"""
       |with per_problem_best as (
@@ -97,55 +152,14 @@ object ContestRanklistTable:
       |limit ? offset ?
       |""".stripMargin
 
-  private val countRowsSql: String =
-    """
-      |select count(*) as total_items
-      |from contest_registrations cr
-      |where cr.contest_id = ?
-      |  and not exists (
-      |    select 1
-      |    from auth_accounts aa
-      |    where aa.username = cr.username
-      |      and (aa.site_manager = true or aa.contest_manager = true)
-      |  )
-      |  and not exists (
-      |    select 1
-      |    from contest_access_grants cag
-      |    where cag.contest_id = cr.contest_id
-      |      and cag.grant_role = 'manager'
-      |      and cag.subject_kind = 'user'
-      |      and cag.subject_key = cr.username
-      |  )
-      |  and not exists (
-      |    select 1
-      |    from contest_access_grants cag
-      |    join user_groups ug on ug.slug = cag.subject_key
-      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
-      |    where cag.contest_id = cr.contest_id
-      |      and cag.grant_role = 'manager'
-      |      and cag.subject_kind = 'user_group'
-      |      and ugm.username = cr.username
-      |  )
-      |""".stripMargin
-
-  def listForContest(connection: Connection, contestId: ContestId, page: Int, pageSize: Int): IO[PageResponse[ContestRanklistItem]] =
-    for
-      totalItems <- countRows(connection, contestId)
-      items <- readRows(connection, contestId, page, pageSize)
-    yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
-
-  private def countRows(connection: Connection, contestId: ContestId): IO[Long] =
-    IO.blocking {
-      val statement = connection.prepareStatement(countRowsSql)
-      try
-        statement.setObject(1, contestId.value)
-        val resultSet = statement.executeQuery()
-        try if resultSet.next() then resultSet.getLong("total_items") else 0L
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private def readRows(connection: Connection, contestId: ContestId, page: Int, pageSize: Int): IO[List[ContestRanklistItem]] =
+  private def readRows(
+    connection: Connection,
+    contestId: ContestId,
+    viewerUsername: Username,
+    canViewAllSubmissionDetails: Boolean,
+    page: Int,
+    pageSize: Int
+  ): IO[List[ContestRanklistItem]] =
     for
       rows <- IO.blocking {
         val statement = connection.prepareStatement(rankedRowsSql)
@@ -164,7 +178,8 @@ object ContestRanklistTable:
         finally statement.close()
       }
       items <- rows.traverse { item =>
-        readProblemResults(connection, contestId, item.user.username).map(problemResults => item.copy(problemResults = problemResults))
+        readProblemResults(connection, contestId, item.user.username, viewerUsername, canViewAllSubmissionDetails)
+          .map(problemResults => item.copy(problemResults = problemResults))
       }
     yield items
 
@@ -202,7 +217,13 @@ object ContestRanklistTable:
       |order by cp.position asc, cp.alias asc
       |""".stripMargin
 
-  private def readProblemResults(connection: Connection, contestId: ContestId, username: Username): IO[List[ContestRanklistProblemResult]] =
+  private def readProblemResults(
+    connection: Connection,
+    contestId: ContestId,
+    username: Username,
+    viewerUsername: Username,
+    canViewAllSubmissionDetails: Boolean
+  ): IO[List[ContestRanklistProblemResult]] =
     IO.blocking {
       val statement = connection.prepareStatement(problemResultsSql)
       try
@@ -213,7 +234,7 @@ object ContestRanklistTable:
           Iterator
             .continually(resultSet.next())
             .takeWhile(identity)
-            .map(_ => readProblemResult(resultSet))
+            .map(_ => readProblemResult(resultSet, canViewAllSubmissionDetails || username == viewerUsername))
             .toList
         finally resultSet.close()
       finally statement.close()
@@ -228,7 +249,7 @@ object ContestRanklistTable:
       problemResults = List.empty
     )
 
-  private def readProblemResult(resultSet: ResultSet): ContestRanklistProblemResult =
+  private def readProblemResult(resultSet: ResultSet, canViewDetail: Boolean): ContestRanklistProblemResult =
     val publicId = resultSet.getLong("public_id")
     val submissionId =
       if resultSet.wasNull() then None
@@ -248,7 +269,8 @@ object ContestRanklistTable:
       score = Option(resultSet.getBigDecimal("score")).map(value => ContestScore(BigDecimal(value))),
       penaltyMillis = penaltyMillis,
       submittedAt = Option(resultSet.getTimestamp("submitted_at")).map(_.toInstant),
-      submissionId = submissionId
+      submissionId = submissionId,
+      canViewDetail = submissionId.nonEmpty && canViewDetail
     )
 
   private def readUserIdentity(resultSet: ResultSet): UserIdentity =

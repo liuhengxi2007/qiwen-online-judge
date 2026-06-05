@@ -9,4 +9,5 @@ export type ContestRanklistProblemResult = {
   penaltyMillis: ContestPenaltyMillis | null
   submittedAt: string | null
   submissionId: SubmissionId | null
+  canViewDetail: boolean
 }

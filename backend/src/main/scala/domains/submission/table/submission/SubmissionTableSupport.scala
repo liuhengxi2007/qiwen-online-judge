@@ -5,8 +5,7 @@ package domains.submission.table.submission
 import domains.contest.objects.{ContestSlug, ContestTitle}
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.objects.response.SubmissionSummary
-import domains.submission.objects.response.SubmissionSource
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSource, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
 import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
 import domains.user.objects.{DisplayName, UserIdentity, Username}

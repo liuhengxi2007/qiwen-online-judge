@@ -211,11 +211,6 @@ object SubmissionQueryTable:
       |)
       |""".stripMargin
 
-  private val contestSubmissionOwnerPredicate: String =
-    """
-      |(? = true or s.submitter_username = ?)
-      |""".stripMargin
-
   private val globalSubmissionSourcePredicate: String =
     s"""
       |(
@@ -417,6 +412,11 @@ object SubmissionQueryTable:
       pageSize = normalizedRequest.pageRequest.pageSize,
       totalItems = totalItems
     )
+
+  private val contestSubmissionOwnerPredicate: String =
+    """
+      |(? = true or s.submitter_username = ?)
+      |""".stripMargin
 
   private val countContestSQL: String =
     s"""

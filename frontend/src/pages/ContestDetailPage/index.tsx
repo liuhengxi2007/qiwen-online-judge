@@ -17,6 +17,7 @@ import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
 import { PageShell } from '@/pages/components/PageShell'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
+import { useNow } from '@/pages/hooks/useNow'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useProblemTitleDisplay } from '@/pages/hooks/useProblemTitleDisplay'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -53,10 +54,11 @@ function ContestDetailPageContent({
 }) {
   const { t } = useI18n()
   const model = useContestDetailPageModel(contestSlug)
+  const now = useNow()
   const canViewContestProblems = model.contest
     ? model.contest.canManage ||
-      Date.now() > new Date(model.contest.endAt).getTime() ||
-      (Date.now() >= new Date(model.contest.startAt).getTime() && model.contest.registrationStatus.isRegistered)
+      now > new Date(model.contest.endAt).getTime() ||
+      (now >= new Date(model.contest.startAt).getTime() && model.contest.registrationStatus.isRegistered)
     : false
 
   return (
@@ -76,6 +78,7 @@ function ContestDetailPageContent({
             isRegistering={model.isRegistering}
             registerErrorMessage={model.registerErrorMessage}
             registerSuccessMessage={model.registerSuccessMessage}
+            now={now}
             onToggleRegistration={() => {
               void model.toggleRegistration()
             }}
@@ -94,16 +97,17 @@ function ContestDetailHeaderCard({
   isRegistering,
   registerErrorMessage,
   registerSuccessMessage,
+  now,
   onToggleRegistration,
 }: {
   contest: ContestDetail
   isRegistering: boolean
   registerErrorMessage: string
   registerSuccessMessage: string
+  now: number
   onToggleRegistration: () => void
 }) {
   const { t } = useI18n()
-  const now = Date.now()
   const hasStarted = now >= new Date(contest.startAt).getTime()
   const hasEnded = now > new Date(contest.endAt).getTime()
   const isRegistered = contest.registrationStatus.isRegistered

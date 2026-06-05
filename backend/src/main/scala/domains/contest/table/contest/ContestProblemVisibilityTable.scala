@@ -78,113 +78,6 @@ object ContestProblemVisibilityTable:
       |limit 1
       |""".stripMargin
 
-  private val hasVisibleUnfinishedContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and c.end_at >= now()
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasVisibleEndedContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and c.end_at < now()
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasVisibleStartedContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and c.start_at <= now()
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasManageableContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and $manageableContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasActiveContestContainingSubmissionSQL: String =
-    """
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and ? >= c.start_at
-      |  and ? <= c.end_at
-      |limit 1
-      |""".stripMargin
-
-  private val hasVisibleActiveContestContainingSubmissionSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and ? >= c.start_at
-      |  and ? <= c.end_at
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasRegisteredContestContainingSubmissionSQL: String =
-    """
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |join contest_registrations cr on cr.contest_id = c.id
-      |where cp.problem_id = ?
-      |  and ? >= c.start_at
-      |  and ? <= c.end_at
-      |  and cr.username = ?
-      |  and cr.registered_at <= c.start_at
-      |limit 1
-      |""".stripMargin
-
-  private val hasVisibleActiveContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |where cp.problem_id = ?
-      |  and c.start_at <= now()
-      |  and c.end_at >= now()
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
-  private val hasEligibleVisibleActiveContestContainingProblemSQL: String =
-    s"""
-      |select 1
-      |from contest_problems cp
-      |join contests c on c.id = cp.contest_id
-      |join contest_registrations cr on cr.contest_id = c.id
-      |where cp.problem_id = ?
-      |  and c.start_at <= now()
-      |  and c.end_at >= now()
-      |  and cr.username = ?
-      |  and cr.registered_at <= c.start_at
-      |  and $visibleContestPredicate
-      |limit 1
-      |""".stripMargin
-
   def hasVisibleUnfinishedContestHidingProblem(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -199,12 +92,34 @@ object ContestProblemVisibilityTable:
   ): IO[Boolean] =
     hasVisibleUnfinishedContestHidingProblem(connection, actor, problemId)
 
+  private val hasVisibleUnfinishedContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and c.end_at >= now()
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
+
   def hasVisibleUnfinishedContestContainingProblem(
     connection: Connection,
     actor: AuthenticatedUser,
     problemId: ProblemId
   ): IO[Boolean] =
     existsByProblem(connection, actor, problemId, hasVisibleUnfinishedContestContainingProblemSQL, includeManagePredicate = false)
+
+  private val hasVisibleEndedContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and c.end_at < now()
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
 
   def hasVisibleEndedContestContainingProblem(
     connection: Connection,
@@ -213,12 +128,33 @@ object ContestProblemVisibilityTable:
   ): IO[Boolean] =
     existsByProblem(connection, actor, problemId, hasVisibleEndedContestContainingProblemSQL, includeManagePredicate = false)
 
+  private val hasVisibleStartedContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and c.start_at <= now()
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
+
   def hasVisibleStartedContestContainingProblem(
     connection: Connection,
     actor: AuthenticatedUser,
     problemId: ProblemId
   ): IO[Boolean] =
     existsByProblem(connection, actor, problemId, hasVisibleStartedContestContainingProblemSQL, includeManagePredicate = false)
+
+  private val hasManageableContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and $manageableContestPredicate
+      |limit 1
+      |""".stripMargin
 
   def hasManageableContestContainingProblem(
     connection: Connection,
@@ -236,6 +172,17 @@ object ContestProblemVisibilityTable:
       finally statement.close()
     }
 
+  private val hasActiveContestContainingSubmissionSQL: String =
+    """
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and ? >= c.start_at
+      |  and ? <= c.end_at
+      |limit 1
+      |""".stripMargin
+
   def hasActiveContestContainingSubmission(
     connection: Connection,
     problemId: ProblemId,
@@ -251,6 +198,18 @@ object ContestProblemVisibilityTable:
         finally resultSet.close()
       finally statement.close()
     }
+
+  private val hasVisibleActiveContestContainingSubmissionSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and ? >= c.start_at
+      |  and ? <= c.end_at
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
 
   def hasVisibleActiveContestContainingSubmission(
     connection: Connection,
@@ -270,6 +229,20 @@ object ContestProblemVisibilityTable:
       finally statement.close()
     }
 
+  private val hasRegisteredContestContainingSubmissionSQL: String =
+    """
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |join contest_registrations cr on cr.contest_id = c.id
+      |where cp.problem_id = ?
+      |  and ? >= c.start_at
+      |  and ? <= c.end_at
+      |  and cr.username = ?
+      |  and cr.registered_at <= c.start_at
+      |limit 1
+      |""".stripMargin
+
   def hasRegisteredContestContainingSubmission(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -288,12 +261,39 @@ object ContestProblemVisibilityTable:
       finally statement.close()
     }
 
+  private val hasVisibleActiveContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |where cp.problem_id = ?
+      |  and c.start_at <= now()
+      |  and c.end_at >= now()
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
+
   def hasVisibleActiveContestContainingProblem(
     connection: Connection,
     actor: AuthenticatedUser,
     problemId: ProblemId
   ): IO[Boolean] =
     existsByProblem(connection, actor, problemId, hasVisibleActiveContestContainingProblemSQL, includeManagePredicate = false)
+
+  private val hasEligibleVisibleActiveContestContainingProblemSQL: String =
+    s"""
+      |select 1
+      |from contest_problems cp
+      |join contests c on c.id = cp.contest_id
+      |join contest_registrations cr on cr.contest_id = c.id
+      |where cp.problem_id = ?
+      |  and c.start_at <= now()
+      |  and c.end_at >= now()
+      |  and cr.username = ?
+      |  and cr.registered_at <= c.start_at
+      |  and $visibleContestPredicate
+      |limit 1
+      |""".stripMargin
 
   def hasEligibleVisibleActiveContestContainingProblem(
     connection: Connection,

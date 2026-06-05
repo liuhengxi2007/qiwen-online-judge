@@ -7,8 +7,8 @@ import domains.contest.objects.ContestSlug
 import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
 import domains.contest.table.contest.ContestTable
 import domains.contest.utils.ContestAccessRules
+import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
-import domains.problem.table.problem.ProblemQueryTable
 import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
@@ -46,10 +46,10 @@ object RemoveProblemFromContest extends AuthenticatedApi[(ContestSlug, ProblemSl
         ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet),
         HttpApiError.forbidden(ApiMessages.contestManagerRequired)
       )
-      problem <- ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      problemAccess <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
+      problem <- problemAccess.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      }
       removed <- ContestTable.removeProblem(connection, contest.id, problem.id)
       _ <- HttpApiError.ensure(removed, HttpApiError.notFound(ApiMessages.contestProblemNotFound))
       updatedContest <- ContestTable.findBySlug(connection, contest.slug).flatMap {

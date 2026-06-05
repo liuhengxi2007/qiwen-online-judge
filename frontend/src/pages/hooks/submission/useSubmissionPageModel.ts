@@ -20,11 +20,11 @@ import {
   defaultSortDirection,
   submissionSortValues,
   verdictFilterValues,
-} from '../functions/SubmissionListForm'
+} from '@/pages/objects/SubmissionListForm'
 import {
   createSubmissionPageState,
   submissionPageReducer,
-} from '../functions/SubmissionPageState'
+} from '@/pages/objects/SubmissionPageState'
 import {
   buildPageNumbers,
   calculateTotalPages,

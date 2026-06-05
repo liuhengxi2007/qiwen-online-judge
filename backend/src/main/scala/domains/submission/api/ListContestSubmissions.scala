@@ -1,22 +1,19 @@
-package domains.contest.api
+package domains.submission.api
 
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.contest.api.EvaluateContestAccess
 import domains.contest.objects.ContestSlug
-import domains.contest.table.contest.ContestTable
-import domains.contest.utils.ContestAccessRules
 import domains.submission.objects.request.SubmissionListRequest
 import domains.submission.objects.response.SubmissionListResponse
 import domains.submission.table.submission.SubmissionQueryTable
 import domains.submission.utils.{SubmissionAccessRules, SubmissionListRequestQuery}
-import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
-import java.time.Instant
 
 object ListContestSubmissions extends AuthenticatedApi[(ContestSlug, SubmissionListRequest), SubmissionListResponse]:
 
@@ -38,25 +35,19 @@ object ListContestSubmissions extends AuthenticatedApi[(ContestSlug, SubmissionL
   ): IO[SubmissionListResponse] =
     val (contestSlug, request) = input
     for
-      maybeContest <- ContestTable.findBySlug(connection, contestSlug)
-      contest <- maybeContest match
-        case Some(contest) => IO.pure(contest)
+      maybeContestAccess <- EvaluateContestAccess.plan(connection, actor, EvaluateContestAccess.Input(contestSlug, problemId = None))
+      contestAccess <- maybeContestAccess match
+        case Some(contestAccess) => IO.pure(contestAccess)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
-      actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
-      canViewContest = ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      _ <- HttpApiError.ensure(canViewContest, HttpApiError.notFound(ApiMessages.contestNotFound))
-      registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
-      now = Instant.now()
-      registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
-      canViewContestSubmissions = canManageContest || now.isAfter(contest.endAt) || registeredBeforeStart
+      _ <- HttpApiError.ensure(contestAccess.canViewContest, HttpApiError.notFound(ApiMessages.contestNotFound))
+      canViewContestSubmissions = contestAccess.canManageContest || contestAccess.contestEnded || contestAccess.registeredBeforeStart
       _ <- HttpApiError.ensure(canViewContestSubmissions, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
       submissions <- SubmissionQueryTable.listVisibleForContest(
         connection,
         actor,
-        contest.id,
+        contestAccess.contestId,
         request,
         SubmissionAccessRules.hasGlobalViewOverride(actor),
-        canViewAllContestSubmissions = canManageContest
+        canViewAllContestSubmissions = contestAccess.canManageContest || contestAccess.contestEnded
       )
     yield submissions

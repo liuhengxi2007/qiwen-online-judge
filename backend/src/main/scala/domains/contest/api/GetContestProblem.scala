@@ -4,20 +4,14 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestSlug
-import domains.contest.table.contest.ContestTable
-import domains.contest.utils.ContestAccessRules
+import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDetail
-import domains.problem.table.problem.ProblemQueryTable
-import domains.problem.utils.ProblemAccessRules
-import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
-import java.time.Instant
-
 object GetContestProblem extends AuthenticatedApi[(ContestSlug, ProblemSlug), ProblemDetail]:
 
   override val method: Method = Method.GET
@@ -38,29 +32,23 @@ object GetContestProblem extends AuthenticatedApi[(ContestSlug, ProblemSlug), Pr
     input: (ContestSlug, ProblemSlug)
   ): IO[ProblemDetail] =
     val (contestSlug, problemSlug) = input
-    val now = Instant.now()
     for
-      maybeContest <- ContestTable.findBySlug(connection, contestSlug)
-      contest <- maybeContest match
-        case Some(contest) => IO.pure(contest)
-        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
-      actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
-      _ <- HttpApiError.ensure(
-        ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet),
-        HttpApiError.notFound(ApiMessages.contestNotFound)
-      )
-      canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-      registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
-      registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
-      canOpenContestProblem = canManageContest || now.isAfter(contest.endAt) || (!now.isBefore(contest.startAt) && registeredBeforeStart)
-      _ <- HttpApiError.ensure(canOpenContestProblem, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
-      problem <- ProblemQueryTable.findBySlug(connection, problemSlug).flatMap {
+      problemAccess <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
+      problem <- problemAccess.problem match
         case Some(problem) => IO.pure(problem)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
-      }
+      maybeContestAccess <- EvaluateContestAccess.plan(connection, actor, EvaluateContestAccess.Input(contestSlug, Some(problem.id)))
+      contestAccess <- maybeContestAccess match
+        case Some(contestAccess) => IO.pure(contestAccess)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))
+      _ <- HttpApiError.ensure(contestAccess.canViewContest, HttpApiError.notFound(ApiMessages.contestNotFound))
+      canOpenContestProblem =
+        contestAccess.canManageContest ||
+          contestAccess.contestEnded ||
+          (contestAccess.contestStarted && contestAccess.registeredBeforeStart)
+      _ <- HttpApiError.ensure(canOpenContestProblem, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
       _ <- HttpApiError.ensure(
-        contest.problems.exists(contestProblem => contestProblem.id.value == problem.id.value),
+        contestAccess.containsProblem,
         HttpApiError.notFound(ApiMessages.problemNotFound)
       )
-      canManageProblem = ProblemAccessRules.canManageProblem(actor, problem, actorGroupSlugs.slugs.toSet)
-    yield problem.copy(canManage = canManageProblem)
+    yield problem.copy(canManage = problemAccess.canManage)

@@ -1,8 +1,7 @@
 package domains.submission.objects.internal
 
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
-import domains.submission.objects.response.SubmissionSource
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSource, SubmissionStatus, SubmissionVerdict}
 import domains.user.objects.UserIdentity
 import judgeprotocol.objects.response.JudgeResult
 

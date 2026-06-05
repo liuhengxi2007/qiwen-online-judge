@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { CreateContestSubmission } from '@/apis/contest/CreateContestSubmission'
+import { CreateContestSubmission } from '@/apis/submission/CreateContestSubmission'
 import { CreateSubmission } from '@/apis/submission/CreateSubmission'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'

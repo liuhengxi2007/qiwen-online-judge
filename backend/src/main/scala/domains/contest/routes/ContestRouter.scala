@@ -4,7 +4,8 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import domains.auth.utils.SessionStore
-import domains.contest.api.{AddProblemToContest, CreateContest, CreateContestSubmission, GetContest, GetContestProblem, ListContestRanklist, ListContestRegistrants, ListContestSubmissions, ListContests, RegisterContest, RemoveProblemFromContest, UnregisterContest, UpdateContest}
+import domains.contest.api.{AddProblemToContest, CreateContest, GetContest, GetContestProblem, ListContestRanklist, ListContestRegistrants, ListContests, RegisterContest, RemoveProblemFromContest, UnregisterContest, UpdateContest}
+import domains.submission.api.{CreateContestSubmission, ListContestSubmissions}
 import domains.submission.utils.SubmissionProgramStorage
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl

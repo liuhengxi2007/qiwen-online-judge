@@ -3,11 +3,8 @@ package domains.submission.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.contest.table.contest.ContestTable
-import domains.contest.table.contest.ContestProblemVisibilityTable
-import domains.contest.utils.ContestAccessRules
+import domains.contest.api.{EvaluateContestAccess, EvaluateContestProblemVisibility}
 import domains.problem.api.EvaluateProblemAccess
-import domains.usergroup.api.ListUserGroupSlugsForMember
 import domains.submission.utils.SubmissionAccessRules
 
 import domains.submission.objects.SubmissionId
@@ -20,7 +17,6 @@ import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
-import java.time.Instant
 
 final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
@@ -44,53 +40,45 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
               HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
             case Some(problem) =>
               for
-                actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
                 sourceContestAccess <- record.source.contestSlug match
                   case Some(contestSlug) =>
-                    ContestTable.findBySlug(connection, contestSlug).flatMap {
-                      case Some(contest) =>
-                        val canViewContest = ContestAccessRules.canViewContest(actor, contest, actorGroupSlugs.slugs.toSet)
-                        val canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugs.slugs.toSet)
-                        val contestEnded = Instant.now().isAfter(contest.endAt)
-                        for
-                          registration <- ContestTable.findRegistration(connection, contest.id, actor.username)
-                          isRegisteredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
-                        yield Some((canViewContest, canManageContest, contestEnded, isRegisteredBeforeStart))
-                      case None =>
-                        IO.pure(None)
-                    }
+                    EvaluateContestAccess.plan(connection, actor, EvaluateContestAccess.Input(contestSlug, Some(record.problemId)))
                   case None =>
                     IO.pure(None)
                 _ <- sourceContestAccess match
-                  case Some((canViewContest, canManageContest, _, isRegisteredBeforeStart)) =>
+                  case Some(contestAccess) =>
+                    val canViewContestSubmissionDetail =
+                      contestAccess.containsProblem &&
+                        (contestAccess.canManageContest ||
+                          (contestAccess.contestEnded && contestAccess.canViewContest) ||
+                          (!contestAccess.contestEnded && record.submitter.username == actor.username && contestAccess.registeredBeforeStart))
                     HttpApiError.ensure(
-                      canManageContest || (canViewContest && isRegisteredBeforeStart && record.submitter.username == actor.username),
+                      canViewContestSubmissionDetail,
                       HttpApiError.notFound(ApiMessages.submissionNotFound)
                     )
                   case None if record.source.contestSlug.nonEmpty =>
                     HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
                   case None =>
                     IO.unit
-                hasVisibleUnfinishedContestContainingProblem <- ContestProblemVisibilityTable
-                  .hasVisibleUnfinishedContestContainingProblem(connection, actor, record.problemId)
-                hasVisibleEndedContestContainingProblem <- ContestProblemVisibilityTable
-                  .hasVisibleEndedContestContainingProblem(connection, actor, record.problemId)
-                isOwnRegisteredContestSubmission <- ContestProblemVisibilityTable
-                  .hasRegisteredContestContainingSubmission(connection, actor, record.problemId, record.submittedAt)
+                contestVisibility <- EvaluateContestProblemVisibility.plan(
+                  connection,
+                  actor,
+                  EvaluateContestProblemVisibility.Input(record.problemId, submittedAt = Some(record.submittedAt))
+                )
                 submission <-
                   if access.canManage then
                     loadSubmissionDetail(record, access.canManage)
-                  else if sourceContestAccess.exists { case (_, canManageContest, _, _) => canManageContest } then
+                  else if sourceContestAccess.nonEmpty then
                     loadSubmissionDetail(record, access.canManage)
-                  else if hasVisibleUnfinishedContestContainingProblem then
+                  else if contestVisibility.hasVisibleUnfinishedContestContainingProblem then
                     for
                       _ <- HttpApiError.ensure(
-                        record.submitter.username == actor.username && isOwnRegisteredContestSubmission,
+                        record.submitter.username == actor.username && contestVisibility.hasRegisteredContestContainingSubmission,
                         HttpApiError.notFound(ApiMessages.submissionNotFound)
                       )
                       submission <- loadSubmissionDetail(record, access.canManage)
                     yield submission
-                  else if hasVisibleEndedContestContainingProblem then
+                  else if contestVisibility.hasVisibleEndedContestContainingProblem then
                     loadSubmissionDetail(record, access.canManage)
                   else if SubmissionAccessRules.canViewOwnOrWithGlobalOverride(actor, record.submitter.username) then
                     loadSubmissionDetail(record, access.canManage)

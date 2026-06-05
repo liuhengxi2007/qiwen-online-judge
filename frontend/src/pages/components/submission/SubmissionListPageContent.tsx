@@ -7,9 +7,9 @@ import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { SubmissionFilterCard } from './components/SubmissionFilterCard'
-import { SubmissionSummaryList } from './components/SubmissionSummaryList'
-import { useSubmissionPageModel } from './hooks/useSubmissionPageModel'
+import { useSubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+import { SubmissionFilterCard } from './SubmissionFilterCard'
+import { SubmissionSummaryList } from './SubmissionSummaryList'
 
 type SubmissionListPageContentProps = {
   fixedProblemSlugFilter?: ProblemSlug

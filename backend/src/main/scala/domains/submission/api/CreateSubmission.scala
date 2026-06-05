@@ -7,10 +7,10 @@ import domains.contest.objects.ContestId
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 
-import domains.submission.objects.SubmissionSourceCode
+import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.request.CreateSubmissionRequest
-import domains.submission.objects.response.{SubmissionDetail, SubmissionSource}
+import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
 import domains.submission.utils.SubmissionProgramStorage
 import io.circe.Encoder

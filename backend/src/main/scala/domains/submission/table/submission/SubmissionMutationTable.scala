@@ -4,9 +4,9 @@ import cats.effect.IO
 import database.utils.UserIdentitySql
 import domains.contest.objects.ContestId
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.{SubmissionId, SubmissionSourceCode, SubmissionStatus}
+import domains.submission.objects.{SubmissionId, SubmissionSource, SubmissionSourceCode, SubmissionStatus}
 import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.objects.response.{SubmissionDetail, SubmissionSource}
+import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionTableSupport.*
 import domains.user.objects.Username
 import io.circe.syntax.*

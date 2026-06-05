@@ -53,5 +53,12 @@ object ListContestRanklist extends AuthenticatedApi[(ContestSlug, PageRequest), 
       registeredBeforeStart = registration.exists(registeredAt => !registeredAt.isAfter(contest.startAt))
       canViewRanklist = canManageContest || now.isAfter(contest.endAt) || registeredBeforeStart
       _ <- HttpApiError.ensure(canViewRanklist, HttpApiError.forbidden(ApiMessages.contestNotRegistered))
-      ranklist <- ContestRanklistTable.listForContest(connection, contest.id, normalizedPageRequest.page, normalizedPageRequest.pageSize)
+      ranklist <- ContestRanklistTable.listForContest(
+        connection = connection,
+        contestId = contest.id,
+        viewerUsername = actor.username,
+        canViewAllSubmissionDetails = canManageContest || now.isAfter(contest.endAt),
+        page = normalizedPageRequest.page,
+        pageSize = normalizedPageRequest.pageSize
+      )
     yield ranklist

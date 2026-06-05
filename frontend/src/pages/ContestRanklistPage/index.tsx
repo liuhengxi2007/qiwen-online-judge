@@ -178,15 +178,22 @@ function ContestProblemResultCell({ result }: { result: ContestRanklistProblemRe
   }
 
   const score = contestScoreValue(result.score)
+  const scoreContent = formatContestScore(result.score)
   return (
     <div className="flex flex-col items-center gap-1">
-      <Link
-        className="rounded-full px-3 py-1 text-sm font-bold transition hover:scale-[1.03] hover:shadow-sm"
-        style={scorePillStyle(score)}
-        to={`/submissions/${submissionIdValue(result.submissionId)}`}
-      >
-        {formatContestScore(result.score)}
-      </Link>
+      {result.canViewDetail ? (
+        <Link
+          className="rounded-full px-3 py-1 text-sm font-bold transition hover:scale-[1.03] hover:shadow-sm"
+          style={scorePillStyle(score)}
+          to={`/submissions/${submissionIdValue(result.submissionId)}`}
+        >
+          {scoreContent}
+        </Link>
+      ) : (
+        <span className="rounded-full px-3 py-1 text-sm font-bold" style={scorePillStyle(score)}>
+          {scoreContent}
+        </span>
+      )}
       {result.penaltyMillis ? <span className="font-mono text-[11px] text-slate-500">{formatPenaltyMillis(result.penaltyMillis)}</span> : null}
     </div>
   )

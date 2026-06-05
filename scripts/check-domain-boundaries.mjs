@@ -72,6 +72,11 @@ const publicModelTypes = new Map([
     'BlogId',
     'BlogTitle',
   ])],
+  ['contest', new Set([
+    'ContestId',
+    'ContestSlug',
+    'ContestTitle',
+  ])],
   ['message', new Set([
     'MessageConversationId',
     'MessageId',

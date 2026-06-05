@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { GetSubmission } from '@/apis/submission/GetSubmission'
-import { ListContestSubmissions } from '@/apis/contest/ListContestSubmissions'
+import { ListContestSubmissions } from '@/apis/submission/ListContestSubmissions'
 import { ListSubmissions } from '@/apis/submission/ListSubmissions'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { contestSlugValue } from '@/objects/contest/ContestSlug'

@@ -1,4 +1,4 @@
-package domains.submission.objects.response
+package domains.submission.objects
 
 import domains.contest.objects.{ContestSlug, ContestTitle}
 import io.circe.{Decoder, Encoder}

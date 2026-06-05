@@ -12,7 +12,8 @@ final case class ContestRanklistProblemResult(
   score: Option[ContestScore],
   penaltyMillis: Option[ContestPenaltyMillis],
   submittedAt: Option[Instant],
-  submissionId: Option[SubmissionId]
+  submissionId: Option[SubmissionId],
+  canViewDetail: Boolean
 )
 
 object ContestRanklistProblemResult:
