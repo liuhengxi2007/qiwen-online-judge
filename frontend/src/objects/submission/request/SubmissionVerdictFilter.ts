@@ -6,6 +6,7 @@ const supportedSubmissionVerdictFilters = [
   'all',
   'pending',
   'accepted',
+  'accepted_by_protocol',
   'wrong_answer',
   'compile_error',
   'runtime_error',

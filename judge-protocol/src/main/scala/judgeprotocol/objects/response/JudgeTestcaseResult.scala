@@ -5,7 +5,8 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import judgeprotocol.objects.SubmissionVerdict
 
 final case class JudgeTestcaseResult(
-  name: String,
+  index: Int,
+  label: Option[String],
   score: BigDecimal,
   verdict: SubmissionVerdict,
   message: Option[String],

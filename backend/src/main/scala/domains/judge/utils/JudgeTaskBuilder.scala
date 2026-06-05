@@ -4,8 +4,8 @@ import cats.syntax.all.*
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
-import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseName, TestcaseTimeLimitMs}
-import judgeprotocol.objects.response.{JudgeTask, JudgeTaskAggregation, JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskSubtask, JudgeTaskTestcase}
+import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
+import judgeprotocol.objects.response.*
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
 import scala.jdk.CollectionConverters.*
@@ -17,13 +17,20 @@ object JudgeTaskBuilder:
     retainedPaths: Set[ProblemDataPath]
   )
 
+  final case class BuildError(
+    message: String,
+    reason: JudgeFailureReason
+  )
+
+  private val RolePattern = "^[A-Za-z0-9_-]+$".r
+
   def buildJudgeTask(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
-    sourceCode: domains.submission.objects.SubmissionSourceCode,
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest
-  ): Either[String, JudgeTask] =
-    parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest)
+  ): Either[BuildError, JudgeTask] =
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
@@ -36,8 +43,24 @@ object JudgeTaskBuilder:
     sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
+    parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest)
+
+  private[utils] def parseConfigBytes(
+    bytes: Array[Byte],
+    claimedSubmission: ClaimedSubmission,
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
+    manifest: ProblemDataManifest
+  ): Either[String, JudgeTask] =
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest).left.map(_.message)
+
+  private def parseConfigBytesDetailed(
+    bytes: Array[Byte],
+    claimedSubmission: ClaimedSubmission,
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
+    manifest: ProblemDataManifest
+  ): Either[BuildError, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, sourceCode, manifest, root)
+      buildFromYaml(claimedSubmission, sourceCodes, manifest, root)
     }
 
   def validateReadyConfigBytes(
@@ -58,15 +81,25 @@ object JudgeTaskBuilder:
     )
     parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
       val rawPaths =
-        task.subtasks.flatMap(_.testcases).flatMap { testcase =>
-          List(testcase.input.map(_.path.value), Some(testcase.answer.path.value), testcase.checker.source.map(_.path.value)).flatten
+        task.subtasks.flatMap { subtask =>
+          val modePaths = subtask.mode.interactor.map(_.path.value).toList
+          val testcasePaths = subtask.testcases.flatMap { testcase =>
+            List(
+              Some(testcase.input.path.value),
+              testcase.answer.map(_.path.value),
+              testcase.checker.source.map(_.path.value),
+              Some(testcase.validator.source.path.value),
+              testcase.strategyProvider.map(_.source.path.value)
+            ).flatten
+          }
+          modePaths ++ testcasePaths
         }
       rawPaths
         .traverse(ProblemDataPath.parse)
         .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml")))
     }
 
-  private def parseYaml(bytes: Array[Byte]): Either[String, Map[String, Any]] =
+  private def parseYaml(bytes: Array[Byte]): Either[BuildError, Map[String, Any]] =
     Try {
         val settings = LoadSettings.builder().setLabel("judge.yaml").build()
         val loaded = Load(settings).loadFromString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
@@ -74,40 +107,68 @@ object JudgeTaskBuilder:
       }
       .toEither
       .left
-      .map(error => s"Invalid judge.yaml: ${error.getMessage}")
+      .map(error => BuildError(s"Invalid judge.yaml: ${error.getMessage}", JudgeFailureReason.JudgeTaskBuildFailed))
 
   private def buildFromYaml(
     claimedSubmission: ClaimedSubmission,
-    sourceCode: domains.submission.objects.SubmissionSourceCode,
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest,
     root: Map[String, Any]
-  ): Either[String, JudgeTask] =
+  ): Either[BuildError, JudgeTask] =
     for
-      version <- intAt(root, "version").flatMap(value => Either.cond(value == 1, value, "judge.yaml version must be 1."))
-      roundingScale <- optionalIntAt(root, "roundingScale").map(_.getOrElse(6))
-      _ <- Either.cond(roundingScale >= 0 && roundingScale <= 18, (), "roundingScale must be between 0 and 18.")
-      rootLimits <- limitsAt(root)
-      rootChecker <- checkerAt(root)
-      rootAggregation <- aggregationAt(root)
-      subtaskMaps <- listOfMapsAt(root, "subtasks")
-      _ <- Either.cond(subtaskMaps.nonEmpty, (), "judge.yaml must define at least one subtask.")
-      subtaskRatios <- ratiosFor(subtaskMaps)
-      subtasks <- sequence(subtaskMaps.zip(subtaskRatios).zipWithIndex.map { case ((subtaskMap, subtaskRatio), subtaskIndex) =>
-        buildSubtask(manifest, subtaskMap, subtaskIndex, subtaskRatio, rootLimits, rootChecker, rootAggregation)
+      version <- optionalIntAt(root, "version").toBuildError.flatMap {
+        case Some(2) => Right(2)
+        case _ => Left(buildError("judge.yaml version must be 2."))
+      }
+      _ = version
+      roundingScale <- optionalIntAt(root, "roundingScale").toBuildError.map(_.getOrElse(6))
+      _ <- Either.cond(roundingScale >= 0 && roundingScale <= 18, (), buildError("roundingScale must be between 0 and 18."))
+      rootLimits <- limitsAt(root).toBuildError
+      rootChecker <- checkerAt(root).toBuildError
+      rootValidator <- toolAt(root, "validator").toBuildError
+      rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
+      rootStrategyProvider <- toolAt(root, "strategyProvider").toBuildError
+      rootAggregation <- aggregationAt(root).toBuildError
+      subtaskMaps <- listOfMapsAt(root, "subtasks").toBuildError
+      _ <- Either.cond(subtaskMaps.nonEmpty, (), buildError("judge.yaml must define at least one subtask."))
+      subtaskRatios <- ratiosFor(subtaskMaps).toBuildError
+      subtasks <- sequenceBuild(subtaskMaps.zip(subtaskRatios).zipWithIndex.map { case ((subtaskMap, subtaskRatio), subtaskIndex) =>
+        buildSubtask(
+          manifest = manifest,
+          raw = subtaskMap,
+          index = subtaskIndex + 1,
+          scoreRatio = subtaskRatio,
+          parentLimits = rootLimits,
+          parentChecker = rootChecker,
+          parentValidator = rootValidator,
+          parentMode = rootMode,
+          parentStrategyProvider = rootStrategyProvider,
+          parentAggregation = rootAggregation
+        )
       })
-      defaultProgram <- claimedSubmission.programManifest.defaultProgram
+      programs <- buildPrograms(claimedSubmission, sourceCodes)
       taskAggregation = rootAggregation.subtasks.getOrElse(defaultAggregation)
     yield
       JudgeTask(
         submissionId = SubmissionId(claimedSubmission.id.value),
         problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
-        language = toProtocolLanguage(defaultProgram.language),
-        sourceCode = SubmissionSourceCode(sourceCode.value),
+        programs = programs,
         problemDataVersion = manifest.version,
         roundingScale = roundingScale,
         aggregation = taskAggregation,
         subtasks = subtasks
       )
+
+  private def buildPrograms(
+    claimedSubmission: ClaimedSubmission,
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode]
+  ): Either[BuildError, Map[String, JudgeTaskProgram]] =
+    sequenceBuild(claimedSubmission.programManifest.programs.toList.map { case (role, program) =>
+      sourceCodes
+        .get(role)
+        .toRight(buildError(s"Source code for submission role $role was not found."))
+        .map(sourceCode => role -> JudgeTaskProgram(toProtocolLanguage(program.language), SubmissionSourceCode(sourceCode.value)))
+    }).map(_.toMap)
 
   private def buildSubtask(
     manifest: ProblemDataManifest,
@@ -116,20 +177,45 @@ object JudgeTaskBuilder:
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
+    parentValidator: Option[JudgeTaskTool],
+    parentMode: JudgeTaskMode,
+    parentStrategyProvider: Option[JudgeTaskTool],
     parentAggregation: AggregationConfig
-  ): Either[String, JudgeTaskSubtask] =
+  ): Either[BuildError, JudgeTaskSubtask] =
     for
-      name <- optionalStringAt(raw, "name").map(_.getOrElse(s"subtask-${index + 1}"))
-      limits <- limitsAt(raw).map(_.orElse(parentLimits))
-      checker <- checkerAt(raw).map(_.orElse(parentChecker))
-      aggregation <- aggregationAt(raw).map(parentAggregation.merge)
-      testcaseMaps <- listOfMapsAt(raw, "testcases")
-      _ <- Either.cond(testcaseMaps.nonEmpty, (), s"Subtask $name must define at least one testcase.")
-      testcaseRatios <- ratiosFor(testcaseMaps)
-      testcases <- sequence(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
-        buildTestcase(manifest, testcaseMap, testcaseIndex, testcaseRatio, limits, checker, name)
+      _ <- rejectLegacyName(raw, s"subtask #$index")
+      label <- optionalStringAt(raw, "label").toBuildError
+      limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits))
+      checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker))
+      validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator))
+      mode <- modeAt(raw, manifest).toBuildError.map(_.getOrElse(parentMode))
+      strategyProvider <- toolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
+      aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
+      testcaseMaps <- listOfMapsAt(raw, "testcases").toBuildError
+      _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"Subtask #$index must define at least one testcase."))
+      testcaseRatios <- ratiosFor(testcaseMaps).toBuildError
+      testcases <- sequenceBuild(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
+        buildTestcase(
+          manifest = manifest,
+          raw = testcaseMap,
+          index = testcaseIndex + 1,
+          scoreRatio = testcaseRatio,
+          parentLimits = limits,
+          parentChecker = checker,
+          parentValidator = validator,
+          parentStrategyProvider = strategyProvider,
+          subtaskIndex = index
+        )
       })
-    yield JudgeTaskSubtask(name = name, scoreRatio = scoreRatio, aggregation = aggregation.testcases.getOrElse(defaultAggregation), testcases = testcases)
+    yield
+      JudgeTaskSubtask(
+        index = index,
+        label = label,
+        scoreRatio = scoreRatio,
+        mode = mode,
+        aggregation = aggregation.testcases.getOrElse(defaultAggregation),
+        testcases = testcases
+      )
 
   private def buildTestcase(
     manifest: ProblemDataManifest,
@@ -138,20 +224,69 @@ object JudgeTaskBuilder:
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
-    subtaskName: String
-  ): Either[String, JudgeTaskTestcase] =
+    parentValidator: Option[JudgeTaskTool],
+    parentStrategyProvider: Option[JudgeTaskTool],
+    subtaskIndex: Int
+  ): Either[BuildError, JudgeTaskTestcase] =
+    val label = s"subtask #$subtaskIndex testcase #$index"
     for
-      name <- optionalStringAt(raw, "name").map(_.getOrElse(s"${index + 1}"))
-      limits <- limitsAt(raw).map(_.orElse(parentLimits)).flatMap(_.toRight(s"Limits are required for testcase $subtaskName/$name."))
-      checker <- checkerAt(raw).map(_.orElse(parentChecker)).flatMap(_.toRight(s"Checker is required for testcase $subtaskName/$name."))
-      resolvedChecker <- resolveChecker(manifest, checker)
-      inputPath <- optionalStringAt(raw, "input")
-      answerPath <- optionalStringAt(raw, "answer").flatMap(_.toRight(s"Answer file is required for testcase $subtaskName/$name."))
-      inputRef <- inputPath match
-        case None => Right(None)
-        case Some(path) => findFile(manifest, path, s"Input file for testcase $subtaskName/$name").map(Some(_))
-      answerRef <- findFile(manifest, answerPath, s"Answer file for testcase $subtaskName/$name")
-    yield JudgeTaskTestcase(TestcaseName(name), scoreRatio, limits, resolvedChecker, inputRef, answerRef)
+      _ <- rejectLegacyName(raw, label)
+      _ <- Either.cond(!raw.contains("mode"), (), buildError(s"mode cannot be declared on $label."))
+      testcaseLabel <- optionalStringAt(raw, "label").toBuildError
+      limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits)).flatMap(_.toRight(buildError(s"Limits are required for $label.")))
+      checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker)).flatMap(_.toRight(buildError(s"Checker is required for $label.")))
+      validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator)).flatMap(_.toRight(buildError(s"Validator is required for $label.")))
+      strategyProvider <- toolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
+      resolvedChecker <- resolveChecker(manifest, checker).toBuildError
+      resolvedValidator <- resolveTool(manifest, validator, "Validator source file").toBuildError
+      resolvedStrategyProvider <- strategyProvider.traverse(resolveTool(manifest, _, "Strategy provider source file")).toBuildError
+      inputPath <- stringAt(raw, "input").toBuildError
+      answerPath <- optionalStringAt(raw, "answer").toBuildError
+      inputRef <- findFile(manifest, inputPath, s"Input file for $label").toBuildError
+      answerRef <- answerPath.traverse(path => findFile(manifest, path, s"Answer file for $label")).toBuildError
+      _ <- Either.cond(
+        resolvedChecker.`type` != "builtin" || !resolvedChecker.name.contains("exact") || answerRef.nonEmpty,
+        (),
+        buildError(s"Answer file is required for $label when using builtin exact checker.")
+      )
+    yield
+      JudgeTaskTestcase(
+        index = index,
+        label = testcaseLabel,
+        scoreRatio = scoreRatio,
+        limits = limits,
+        checker = resolvedChecker,
+        validator = resolvedValidator,
+        input = inputRef,
+        answer = answerRef,
+        strategyProvider = resolvedStrategyProvider
+      )
+
+  private def modeAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Option[JudgeTaskMode]] =
+    raw.get("mode") match
+      case None => Right(None)
+      case Some(value: String) if value.trim == "traditional" =>
+        Right(Some(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
+      case Some(value: String) if value.trim == "interactive" =>
+        Left("mode must be an object when interactive mode is selected.")
+      case Some(mode: Map[?, ?]) =>
+        val modeMap = mode.asInstanceOf[Map[String, Any]]
+        stringAt(modeMap, "type").flatMap {
+          case "traditional" =>
+            optionalStringAt(modeMap, "role").flatMap(_.getOrElse(SubmissionProgramManifest.DefaultProgramKey).validateRole).map(role =>
+              Some(JudgeTaskMode.traditional(role))
+            )
+          case "interactive" =>
+            for
+              rawRoles <- listOfStringsAt(modeMap, "roles")
+              roles <- rawRoles.traverse(_.validateRole)
+              _ <- Either.cond(roles.nonEmpty, (), "interactive mode must declare at least one role.")
+              interactor <- requiredToolFrom(modeMap.get("interactor"), "mode.interactor")
+              resolvedInteractor <- resolveTool(manifest, interactor, "Interactor source file")
+            yield Some(JudgeTaskMode.interactive(roles, resolvedInteractor.source))
+          case other => Left(s"Unsupported judge mode: $other.")
+        }
+      case Some(_) => Left("mode must be a string or an object.")
 
   private def checkerAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskChecker]] =
     optionalMapAt(raw, "checker").flatMap {
@@ -161,17 +296,42 @@ object JudgeTaskBuilder:
           case "builtin" =>
             stringAt(checker, "name").flatMap {
               case "exact" => Right(Some(JudgeTaskChecker("builtin", Some("exact"), None)))
+              case "echo" => Right(Some(JudgeTaskChecker("builtin", Some("echo"), None)))
               case other => Left(s"Unsupported builtin checker: $other.")
             }
-          case "cpp" =>
+          case "cpp17" | "cpp" =>
             stringAt(checker, "path").flatMap(path =>
               ProblemDataPath.parse(path)
                 .left.map(message => s"Invalid checker path: $message")
-                .map(_ => Some(JudgeTaskChecker("cpp", None, Some(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))))
+                .map(_ => Some(JudgeTaskChecker("cpp17", None, Some(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))))
             )
           case other => Left(s"Unsupported checker type: $other.")
         }
     }
+
+  private def toolAt(raw: Map[String, Any], key: String): Either[String, Option[JudgeTaskTool]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value) => toolFrom(value, key).map(Some(_))
+
+  private def requiredToolFrom(value: Option[Any], label: String): Either[String, JudgeTaskTool] =
+    value match
+      case Some(currentValue) => toolFrom(currentValue, label)
+      case None => Left(s"$label is required.")
+
+  private def toolFrom(value: Any, label: String): Either[String, JudgeTaskTool] =
+    value match
+      case path: String =>
+        toolFromPath(path, label)
+      case map: Map[?, ?] =>
+        stringAt(map.asInstanceOf[Map[String, Any]], "path").flatMap(toolFromPath(_, label))
+      case _ =>
+        Left(s"$label must be a path string or an object with a path.")
+
+  private def toolFromPath(path: String, label: String): Either[String, JudgeTaskTool] =
+    ProblemDataPath.parse(path)
+      .left.map(message => s"Invalid $label path: $message")
+      .map(_ => JudgeTaskTool(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))
 
   private def limitsAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskLimits]] =
     optionalMapAt(raw, "limits").flatMap {
@@ -218,11 +378,14 @@ object JudgeTaskBuilder:
 
   private def resolveChecker(manifest: ProblemDataManifest, checker: JudgeTaskChecker): Either[String, JudgeTaskChecker] =
     checker.`type` match
-      case "cpp" =>
+      case "cpp17" | "cpp" =>
         checker.source match
-          case Some(source) => findFile(manifest, source.path.value, "Checker source file").map(ref => checker.copy(source = Some(ref)))
-          case None => Left("C++ checker source path is required.")
+          case Some(source) => findFile(manifest, source.path.value, "Checker source file").map(ref => checker.copy(`type` = "cpp17", source = Some(ref)))
+          case None => Left("C++17 checker source path is required.")
       case _ => Right(checker)
+
+  private def resolveTool(manifest: ProblemDataManifest, tool: JudgeTaskTool, label: String): Either[String, JudgeTaskTool] =
+    findFile(manifest, tool.source.path.value, label).map(ref => tool.copy(source = ref))
 
   private def fileRef(entry: ProblemDataManifestEntry): Either[String, JudgeTaskFileRef] =
     JudgeTaskFileRef.from(entry.path.value, entry.sizeBytes, entry.sha256)
@@ -237,6 +400,9 @@ object JudgeTaskBuilder:
         val fallback = if missingCount == 0 then BigDecimal(0) else (BigDecimal(1) - explicitSum) / BigDecimal(missingCount)
         Right(ratios.map(_.getOrElse(fallback)))
     }
+
+  private def rejectLegacyName(raw: Map[String, Any], label: String): Either[BuildError, Unit] =
+    Either.cond(!raw.contains("name"), (), buildError(s"$label must use label instead of name."))
 
   private def toScalaMap(value: Any): Map[String, Any] =
     value match
@@ -262,6 +428,17 @@ object JudgeTaskBuilder:
         sequence(items.zipWithIndex.map {
           case (map: Map[?, ?], _) => Right(map.asInstanceOf[Map[String, Any]])
           case (_, index) => Left(s"$key[$index] must be an object.")
+        })
+      case Some(_) => Left(s"$key must be a list.")
+      case None => Left(s"$key is required.")
+
+  private def listOfStringsAt(raw: Map[String, Any], key: String): Either[String, List[String]] =
+    raw.get(key) match
+      case Some(items: List[?]) =>
+        sequence(items.zipWithIndex.map {
+          case (value: String, _) if value.trim.nonEmpty => Right(value.trim)
+          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (_, index) => Left(s"$key[$index] must be a string.")
         })
       case Some(_) => Left(s"$key must be a list.")
       case None => Left(s"$key is required.")
@@ -302,6 +479,20 @@ object JudgeTaskBuilder:
 
   private def sequence[A](items: List[Either[String, A]]): Either[String, List[A]] =
     items.foldRight(Right(Nil): Either[String, List[A]])((item, acc) => item.flatMap(value => acc.map(value :: _)))
+
+  private def sequenceBuild[A](items: List[Either[BuildError, A]]): Either[BuildError, List[A]] =
+    items.foldRight(Right(Nil): Either[BuildError, List[A]])((item, acc) => item.flatMap(value => acc.map(value :: _)))
+
+  private def buildError(message: String): BuildError =
+    BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed)
+
+  extension [A](either: Either[String, A])
+    private def toBuildError: Either[BuildError, A] =
+      either.left.map(buildError)
+
+  extension (role: String)
+    private def validateRole: Either[String, String] =
+      Either.cond(RolePattern.findFirstIn(role).contains(role), role, s"Role must contain only ASCII letters, digits, '_' or '-': $role.")
 
   extension [A](option: Option[Either[String, A]])
     private def sequence: Either[String, Option[A]] =

@@ -3,7 +3,8 @@ import type { JudgeTestcaseResult } from '@/objects/submission/JudgeTestcaseResu
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 
 export type JudgeSubtaskResult = {
-  name: string
+  index: number
+  label: string | null
   score: number
   verdict: SubmissionVerdict
   timeUsedMs: number | null

@@ -31,6 +31,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
   private val manifest = ProblemDataManifest.fromEntries(
     claimedSubmission.problemSlug,
     List(
+      entry("validators/validator.cpp"),
       entry("sample/1.in"),
       entry("sample/1.ans")
     )
@@ -54,10 +55,12 @@ class JudgeTaskBuilderSuite extends FunSuite:
   test("parseConfigBytes accepts enum aggregation names") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
-        |version: 1
+        |version: 2
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
         |checker:
         |  type: builtin
         |  name: exact
@@ -65,7 +68,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |  testcases: sum_max_max
         |  subtasks: sum_max_max
         |subtasks:
-        |  - name: sample
+        |  - label: sample
         |    testcases:
         |      - input: sample/1.in
         |        answer: sample/1.ans
@@ -80,19 +83,25 @@ class JudgeTaskBuilderSuite extends FunSuite:
       assertEquals(task.aggregation.score, "sum")
       assertEquals(task.aggregation.time, "max")
       assertEquals(task.aggregation.memory, "max")
+      assertEquals(task.subtasks.head.index, 1)
+      assertEquals(task.subtasks.head.label, Some("sample"))
       assertEquals(task.subtasks.head.aggregation.score, "sum")
       assertEquals(task.subtasks.head.aggregation.time, "max")
       assertEquals(task.subtasks.head.aggregation.memory, "max")
+      assertEquals(task.subtasks.head.testcases.head.index, 1)
+      assertEquals(task.subtasks.head.testcases.head.label, None)
     }
   }
 
   test("parseConfigBytes rejects old comma aggregation values") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
-        |version: 1
+        |version: 2
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
         |checker:
         |  type: builtin
         |  name: exact
@@ -100,7 +109,8 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |  testcases: sum,max,max
         |subtasks:
         |  - testcases:
-        |      - answer: sample/1.ans
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
         |"""),
       claimedSubmission,
       sourceCode,
@@ -116,12 +126,14 @@ class JudgeTaskBuilderSuite extends FunSuite:
   test("parseConfigBytes rejects missing inherited limits") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
-        |version: 1
+        |version: 2
+        |validator:
+        |  path: validators/validator.cpp
         |checker:
         |  type: builtin
         |  name: exact
         |subtasks:
-        |  - name: sample
+        |  - label: sample
         |    testcases:
         |      - input: sample/1.in
         |        answer: sample/1.ans
@@ -131,21 +143,23 @@ class JudgeTaskBuilderSuite extends FunSuite:
       manifest
     )
 
-    assertEquals(result.left.toOption, Some("Limits are required for testcase sample/1."))
+    assertEquals(result.left.toOption, Some("Limits are required for subtask #1 testcase #1."))
   }
 
   test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
-        |version: 1
+        |version: 2
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
         |checker:
         |  type: builtin
         |  name: exact
         |subtasks:
-        |  - name: sample
+        |  - label: sample
         |    testcases:
         |      - input: sample/1.in
         |        answer: sample/1.ans
@@ -156,7 +170,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
 
     assertEquals(
       result.map(_.retainedPaths),
-      Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
+      Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("validators/validator.cpp"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
     )
   }
 

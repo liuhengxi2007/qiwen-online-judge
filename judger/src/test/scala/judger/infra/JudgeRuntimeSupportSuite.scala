@@ -1,7 +1,7 @@
 package judger.infra
 
 import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, SubmissionVerdict}
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask, JudgeTaskAggregation, JudgeTaskSubtask}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask, JudgeTaskAggregation, JudgeTaskMode, JudgeTaskProgram, JudgeTaskSubtask}
 import munit.FunSuite
 
 class JudgeRuntimeSupportSuite extends FunSuite:
@@ -30,15 +30,16 @@ class JudgeRuntimeSupportSuite extends FunSuite:
     JudgeTask(
       submissionId = SubmissionId(1),
       problemSlug = ProblemSlug("two-sum"),
-      language = SubmissionLanguage.Cpp17,
-      sourceCode = SubmissionSourceCode("int main() { return 0; }"),
+      programs = Map("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() { return 0; }"))),
       problemDataVersion = "v1",
       roundingScale = 2,
       aggregation = JudgeTaskAggregation("sum", "max", "max"),
       subtasks = List(
         JudgeTaskSubtask(
-          name = "sample",
+          index = 1,
+          label = Some("sample"),
           scoreRatio = BigDecimal(1),
+          mode = JudgeTaskMode.traditional("main"),
           aggregation = JudgeTaskAggregation("sum", "max", "max"),
           testcases = Nil
         )

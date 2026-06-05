@@ -46,8 +46,8 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
       updatedRecord <- SubmissionQueryTable.findById(connection, submissionId).map(
         _.getOrElse(throw new IllegalStateException("Submission disappeared after rejudge."))
       )
-      sourceCode <- submissionProgramStorage.readDefaultSource(updatedRecord.programManifest).flatMap {
-        case Right(sourceCode) => IO.pure(sourceCode)
+      sourceCodes <- submissionProgramStorage.readSources(updatedRecord.programManifest).flatMap {
+        case Right(sourceCodes) => IO.pure(sourceCodes)
         case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
       }
-    yield SubmissionDetail.fromRecord(updatedRecord, sourceCode, canManage = true)
+    yield SubmissionDetail.fromRecord(updatedRecord, sourceCodes, canManage = true)

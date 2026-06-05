@@ -1,7 +1,7 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
 import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask}
 import judger.config.AppConfig
@@ -16,10 +16,17 @@ trait JudgeRuntime:
   def language: SubmissionLanguage
 
   def prepare(
-    task: JudgeTask,
+    role: String,
+    sourceCode: SubmissionSourceCode,
     config: AppConfig,
     workingDirectory: Path
-  ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]]
+  ): IO[Either[ProgramPrepareFailure, RuntimeCommand]]
+
+sealed trait ProgramPrepareFailure
+
+object ProgramPrepareFailure:
+  case object CompileError extends ProgramPrepareFailure
+  final case class SystemError(reason: JudgeFailureReason) extends ProgramPrepareFailure
 
 object JudgeRuntimeSupport:
   def withWorkingDirectory[A](workRoot: Path, prefix: String)(use: Path => IO[A]): IO[A] =
@@ -122,7 +129,8 @@ object JudgeRuntimeSupport:
   ): ReportJudgeResultRequest =
     val subtasks = task.subtasks.map { subtask =>
       JudgeSubtaskResult(
-        name = subtask.name,
+        index = subtask.index,
+        label = subtask.label,
         score = BigDecimal(0),
         verdict = verdict,
         timeUsedMs = None,

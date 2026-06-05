@@ -25,6 +25,7 @@ const judgeDataPath = judgePath.value
 
 export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
+  const problemDataScope = useMemo(() => ({ problemSlug, contestSlug }), [contestSlug, problemSlug])
   const [content, setContentValue] = useState(judgeConfigTemplate)
   const [lastSavedContent, setLastSavedContent] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -40,7 +41,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     setErrorMessage('')
     setStatusMessage('')
     try {
-      const api = new DownloadProblemDataPath(problemSlug, judgeDataPath, contestSlug)
+      const api = new DownloadProblemDataPath(problemDataScope.problemSlug, judgeDataPath, problemDataScope.contestSlug)
       const response = await fetch(api.downloadUrl(), {
         credentials: 'same-origin',
       })
@@ -73,7 +74,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     } finally {
       setIsLoading(false)
     }
-  }, [contestSlug, problemSlug, t])
+  }, [problemDataScope, t])
 
   useEffect(() => {
     void loadConfig()
@@ -86,10 +87,10 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     setIsSaving(true)
     try {
       const api = new UploadProblemDataFile(
-        problemSlug,
+        problemDataScope.problemSlug,
         new File([content], judgeConfigPath, { type: 'text/plain' }),
         judgeDataPath,
-        contestSlug,
+        problemDataScope.contestSlug,
       )
       const result = await sendMultipartAPI(api, api.formData())
       model.replaceProblem(result.problem)
@@ -101,7 +102,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     } finally {
       setIsSaving(false)
     }
-  }, [contestSlug, content, model, problemSlug, t])
+  }, [content, model, problemDataScope, t])
 
   const resetTemplate = useCallback(() => {
     setContentValue(judgeConfigTemplate)

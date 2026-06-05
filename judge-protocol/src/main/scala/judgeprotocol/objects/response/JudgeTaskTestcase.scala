@@ -2,15 +2,17 @@ package judgeprotocol.objects.response
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import judgeprotocol.objects.TestcaseName
 
 final case class JudgeTaskTestcase(
-  name: TestcaseName,
+  index: Int,
+  label: Option[String],
   scoreRatio: BigDecimal,
   limits: JudgeTaskLimits,
   checker: JudgeTaskChecker,
-  input: Option[JudgeTaskFileRef],
-  answer: JudgeTaskFileRef
+  validator: JudgeTaskTool,
+  input: JudgeTaskFileRef,
+  answer: Option[JudgeTaskFileRef],
+  strategyProvider: Option[JudgeTaskTool]
 )
 
 object JudgeTaskTestcase:

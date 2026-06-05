@@ -1,9 +1,8 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{SubmissionLanguage, SubmissionVerdict}
-import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode}
+import judgeprotocol.objects.response.JudgeFailureReason
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 import judger.objects.{RuntimeCommand, SandboxLimits}
@@ -17,35 +16,39 @@ object Cpp17Runtime extends JudgeRuntime:
   override val language: SubmissionLanguage = SubmissionLanguage.Cpp17
 
   override def prepare(
-    task: JudgeTask,
+    role: String,
+    sourceCode: SubmissionSourceCode,
     config: AppConfig,
     workingDirectory: Path
-  ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
+  ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
     resolveCompilerPath(config).flatMap {
       case Left(_) =>
-        IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
+        IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(compilerPath) =>
-        val sourceFile = workingDirectory.resolve("main.cpp")
+        val safeRole = IsolateSandbox.sanitizeFilename(role)
+        val sourceName = s"main-$safeRole.cpp"
+        val executableName = s"main-$safeRole"
+        val sourceFile = workingDirectory.resolve(sourceName)
         for
-          _ <- IO.blocking(Files.writeString(sourceFile, task.sourceCode.value, StandardCharsets.UTF_8))
+          _ <- IO.blocking(Files.writeString(sourceFile, sourceCode.value, StandardCharsets.UTF_8))
           compileResult <- runHostProcess(
             command = compilerPath,
-            args = List("main.cpp", "-o", "main", "-O2", "-std=c++17"),
+            args = List(sourceName, "-o", executableName, "-O2", "-std=c++17"),
             cwd = workingDirectory,
             stdin = None,
             limits = CompileLimits,
-            stdoutName = ".compile.stdout",
-            stderrName = ".compile.stderr"
+            stdoutName = s".$executableName.compile.stdout",
+            stderrName = s".$executableName.compile.stderr"
           )
           result <-
             if compileResult.timedOut then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+              IO.pure(Left(ProgramPrepareFailure.CompileError))
             else if compileResult.exitCode.contains(127) then
-              IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
+              IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))
             else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+              IO.pure(Left(ProgramPrepareFailure.CompileError))
             else
-              ensureExecutableExists(workingDirectory.resolve("main")).as(Right(RuntimeCommand("/box/main", Nil, processLimit = 1)))
+              ensureExecutableExists(workingDirectory.resolve(executableName)).as(Right(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)))
         yield result
     }
 

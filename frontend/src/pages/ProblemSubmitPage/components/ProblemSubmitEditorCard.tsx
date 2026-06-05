@@ -1,8 +1,9 @@
-import { Send } from 'lucide-react'
+import { Plus, Send, Trash2 } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -16,14 +17,21 @@ import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage
 import { isSubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+export type SubmitProgramDraft = {
+  id: string
+  role: string
+  language: SubmissionLanguage
+  sourceCode: string
+}
+
 type ProblemSubmitEditorCardProps = {
   errorMessage: string
   isSubmitting: boolean
-  language: SubmissionLanguage
-  onLanguageChange: (language: SubmissionLanguage) => void
-  onSourceCodeChange: (value: string) => void
+  onAddProgram: () => void
+  onProgramChange: (id: string, update: Partial<Omit<SubmitProgramDraft, 'id'>>) => void
+  onRemoveProgram: (id: string) => void
   onSubmit: () => void
-  sourceCode: string
+  programs: SubmitProgramDraft[]
   statusMessage: string
   supportedLanguages: Array<{ value: SubmissionLanguage; label: string }>
 }
@@ -31,11 +39,11 @@ type ProblemSubmitEditorCardProps = {
 export function ProblemSubmitEditorCard({
   errorMessage,
   isSubmitting,
-  language,
-  onLanguageChange,
-  onSourceCodeChange,
+  onAddProgram,
+  onProgramChange,
+  onRemoveProgram,
   onSubmit,
-  sourceCode,
+  programs,
   statusMessage,
   supportedLanguages,
 }: ProblemSubmitEditorCardProps) {
@@ -48,39 +56,70 @@ export function ProblemSubmitEditorCard({
         <CardDescription>{t('problem.submit.editorDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="problem-submit-language">{t('common.languageLabel')}</Label>
-          <Select
-            value={language}
-            onValueChange={(nextLanguage) => {
-              if (isSubmissionLanguage(nextLanguage)) {
-                onLanguageChange(nextLanguage)
-              }
-            }}
-          >
-            <SelectTrigger id="problem-submit-language" className="h-11 rounded-2xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {supportedLanguages.map((supportedLanguage) => (
-                <SelectItem key={supportedLanguage.value} value={supportedLanguage.value}>
-                  {supportedLanguage.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="space-y-4">
+          {programs.map((program) => (
+            <div key={program.id} className="space-y-4 rounded-lg border border-slate-200 p-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(10rem,1fr)_minmax(12rem,1fr)_auto] md:items-end">
+                <div className="space-y-2">
+                  <Label htmlFor={`problem-submit-role-${program.id}`}>Role</Label>
+                  <Input
+                    id={`problem-submit-role-${program.id}`}
+                    value={program.role}
+                    className="h-11 rounded-2xl"
+                    onChange={(event) => {
+                      onProgramChange(program.id, { role: event.target.value })
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`problem-submit-language-${program.id}`}>{t('common.languageLabel')}</Label>
+                  <Select
+                    value={program.language}
+                    onValueChange={(nextLanguage) => {
+                      if (isSubmissionLanguage(nextLanguage)) {
+                        onProgramChange(program.id, { language: nextLanguage })
+                      }
+                    }}
+                  >
+                    <SelectTrigger id={`problem-submit-language-${program.id}`} className="h-11 rounded-2xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLanguages.map((supportedLanguage) => (
+                        <SelectItem key={supportedLanguage.value} value={supportedLanguage.value}>
+                          {supportedLanguage.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting || programs.length === 1}
+                  className="h-11 rounded-2xl border-slate-300 bg-white"
+                  onClick={() => {
+                    onRemoveProgram(program.id)
+                  }}
+                >
+                  <Trash2 className="size-4" />
+                  Remove
+                </Button>
+              </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="problem-submit-source">{t('problem.submit.sourceCode')}</Label>
-          <Textarea
-            id="problem-submit-source"
-            value={sourceCode}
-            className="min-h-[26rem] rounded-3xl !font-mono text-sm"
-            onChange={(event) => {
-              onSourceCodeChange(event.target.value)
-            }}
-          />
+              <div className="space-y-2">
+                <Label htmlFor={`problem-submit-source-${program.id}`}>{t('problem.submit.sourceCode')}</Label>
+                <Textarea
+                  id={`problem-submit-source-${program.id}`}
+                  value={program.sourceCode}
+                  className="min-h-[22rem] rounded-3xl !font-mono text-sm"
+                  onChange={(event) => {
+                    onProgramChange(program.id, { sourceCode: event.target.value })
+                  }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         {errorMessage ? (
@@ -96,6 +135,16 @@ export function ProblemSubmitEditorCard({
         ) : null}
 
         <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            className="rounded-2xl border-slate-300 bg-white"
+            onClick={onAddProgram}
+          >
+            <Plus className="size-4" />
+            Add role
+          </Button>
           <Button
             type="button"
             disabled={isSubmitting}

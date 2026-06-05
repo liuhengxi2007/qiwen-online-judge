@@ -72,6 +72,9 @@ object SubmissionMutationTable:
               judgeResult = readOptionalJudgeResult(resultSet, "judge_result"),
               codeLength = resultSet.getInt("code_length"),
               sourceCode = sourceCode,
+              programs = programManifest.programs.map { case (role, program) =>
+                role -> SubmissionDetail.Program(program.language, if role == programManifest.defaultProgramKey then sourceCode else SubmissionSourceCode(""))
+              },
               submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
               startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
               finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)

@@ -498,6 +498,7 @@ object SubmissionQueryTable:
     val isPendingVerdict = request.verdict == SubmissionVerdictFilter.Pending
     val specificVerdict = request.verdict match
       case SubmissionVerdictFilter.Accepted => Some(SubmissionVerdict.Accepted)
+      case SubmissionVerdictFilter.AcceptedByProtocol => Some(SubmissionVerdict.AcceptedByProtocol)
       case SubmissionVerdictFilter.WrongAnswer => Some(SubmissionVerdict.WrongAnswer)
       case SubmissionVerdictFilter.CompileError => Some(SubmissionVerdict.CompileError)
       case SubmissionVerdictFilter.RuntimeError => Some(SubmissionVerdict.RuntimeError)

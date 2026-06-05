@@ -38,11 +38,15 @@ final class JudgerService(
 
   private def handleTask(task: JudgeTask): IO[Unit] =
     val resultIo =
-      task.language match
-        case SubmissionLanguage.Cpp17 =>
-          JudgeExecutor.judge(task, config, problemDataCache, Cpp17Runtime)
-        case SubmissionLanguage.Python3 =>
-          JudgeExecutor.judge(task, config, problemDataCache, Python3Runtime)
+      JudgeExecutor.judge(
+        task,
+        config,
+        problemDataCache,
+        Map(
+          SubmissionLanguage.Cpp17 -> Cpp17Runtime,
+          SubmissionLanguage.Python3 -> Python3Runtime
+        )
+      )
 
     resultIo.flatMap { result =>
       httpClient.reportResult(task.submissionId, result) *>
@@ -54,7 +58,7 @@ final class JudgerService(
     val resultVerdict = result.judgeResult.map(_.verdict)
     val verdict = resultVerdict.map(SubmissionVerdict.render).getOrElse("pending")
     val summary =
-      s"[judger] Submission #${task.submissionId.value} (${SubmissionLanguage.render(task.language)}) finished with status=$status verdict=$verdict."
+      s"[judger] Submission #${task.submissionId.value} finished with status=$status verdict=$verdict."
 
     (result.status, resultVerdict) match
       case (SubmissionStatus.Failed, _) | (_, Some(SubmissionVerdict.SystemError)) =>

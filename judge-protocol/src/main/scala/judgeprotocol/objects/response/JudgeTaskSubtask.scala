@@ -4,8 +4,10 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class JudgeTaskSubtask(
-  name: String,
+  index: Int,
+  label: Option[String],
   scoreRatio: BigDecimal,
+  mode: JudgeTaskMode,
   aggregation: JudgeTaskAggregation,
   testcases: List[JudgeTaskTestcase]
 )

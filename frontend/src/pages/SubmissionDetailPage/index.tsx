@@ -89,7 +89,7 @@ function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissio
             <SubmissionJudgeResultCard judgeResult={submissionQuery.submission.judgeResult} />
           ) : null}
 
-          <SubmissionSourceCodeCard sourceCode={submissionQuery.submission.sourceCode} />
+          <SubmissionSourceCodeCard programs={submissionQuery.submission.programs} sourceCode={submissionQuery.submission.sourceCode} />
         </div>
       ) : null}
     </PageShell>

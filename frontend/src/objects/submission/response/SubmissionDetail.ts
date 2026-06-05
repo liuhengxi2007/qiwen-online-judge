@@ -10,6 +10,11 @@ import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
 import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 
+type SubmissionDetailProgram = {
+  language: SubmissionLanguage
+  sourceCode: SubmissionSourceCode
+}
+
 export type SubmissionDetail = {
   id: SubmissionId
   problemId: ProblemId
@@ -27,6 +32,7 @@ export type SubmissionDetail = {
   judgeResult: JudgeResult | null
   codeLength: number
   sourceCode: SubmissionSourceCode
+  programs: Record<string, SubmissionDetailProgram>
   submittedAt: string
   startedAt: string | null
   finishedAt: string | null

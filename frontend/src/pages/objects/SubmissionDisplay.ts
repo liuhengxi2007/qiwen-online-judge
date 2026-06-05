@@ -63,6 +63,8 @@ export function submissionVerdictLabel(verdict: SubmissionVerdict | null): strin
       return 'Pending'
     case 'accepted':
       return 'Accepted'
+    case 'accepted_by_protocol':
+      return 'Accepted by Protocol'
     case 'wrong_answer':
       return 'Wrong Answer'
     case 'compile_error':

@@ -1,6 +1,7 @@
 package domains.submission.api
 
 import cats.effect.IO
+import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestId
@@ -37,8 +38,8 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
   def createForProblem(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     for
       problemSlug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.problemSlug.value))
-      sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))
-      validRequest = request.copy(problemSlug = problemSlug, sourceCode = sourceCode)
+      programs <- validatePrograms(request.programs)
+      validRequest = request.copy(problemSlug = problemSlug, programs = programs)
       access <- EvaluateProblemAccess.plan(connection, actor, validRequest.problemSlug)
       problem <- access.problem match
         case Some(problem) => IO.pure(problem)
@@ -69,14 +70,15 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
     canManage: Boolean
   ): IO[SubmissionDetail] =
     for
-      sourceCode <- HttpApiError.fromEitherBadRequest(SubmissionSourceCode.parse(request.sourceCode.value))
-      validRequest = request.copy(problemSlug = problemSlug, sourceCode = sourceCode)
+      programs <- validatePrograms(request.programs)
+      validRequest = request.copy(problemSlug = problemSlug, programs = programs)
       submissionUuid <- IO.randomUUID
-      programManifest = SubmissionProgramManifest.singleDefault(submissionUuid, validRequest.language, validRequest.sourceCode)
-      _ <- submissionProgramStorage.writeSource(
-        programManifest.programs(SubmissionProgramManifest.DefaultProgramKey).sourceKey,
-        validRequest.sourceCode
-      )
+      manifestInput = validRequest.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
+      programManifest <- HttpApiError.fromEitherBadRequest(SubmissionProgramManifest.fromPrograms(submissionUuid, manifestInput))
+      _ <- programManifest.programs.toList.traverse_ { case (role, program) =>
+        submissionProgramStorage.writeSource(program.sourceKey, validRequest.programs(role).sourceCode)
+      }
+      defaultSourceCode = validRequest.programs(programManifest.defaultProgramKey).sourceCode
       created <- SubmissionMutationTable
         .insert(
           connection = connection,
@@ -88,9 +90,26 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
           source = source,
           submitterUsername = actor.username,
           programManifest = programManifest,
-          sourceCode = validRequest.sourceCode
+          sourceCode = defaultSourceCode
         )
         .handleErrorWith { error =>
           submissionProgramStorage.deleteManifest(programManifest).handleError(_ => ()).void *> IO.raiseError(error)
         }
-    yield created.copy(canManage = canManage)
+      responsePrograms = programManifest.programs.map { case (role, program) =>
+        role -> SubmissionDetail.Program(program.language, validRequest.programs(role).sourceCode)
+      }
+    yield created.copy(canManage = canManage, programs = responsePrograms)
+
+  private def validatePrograms(
+    programs: Map[String, CreateSubmissionRequest.Program]
+  ): IO[Map[String, CreateSubmissionRequest.Program]] =
+    val normalized = programs.toList.map { case (role, program) => role.trim -> program }
+    val parsed = normalized.traverse { case (role, program) =>
+      SubmissionSourceCode.parse(program.sourceCode.value).map(sourceCode => role -> program.copy(sourceCode = sourceCode))
+    }.map(_.toMap)
+    HttpApiError.fromEitherBadRequest(parsed.flatMap { validPrograms =>
+      val manifestInput = validPrograms.map { case (role, program) => role -> (program.language -> program.sourceCode) }
+      SubmissionProgramManifest
+        .fromPrograms(java.util.UUID.fromString("00000000-0000-4000-8000-000000000000"), manifestInput)
+        .map(_ => validPrograms)
+    })

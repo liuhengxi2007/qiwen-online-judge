@@ -8,10 +8,18 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class CreateSubmissionRequest(
   problemSlug: ProblemSlug,
-  language: SubmissionLanguage,
-  sourceCode: SubmissionSourceCode
+  programs: Map[String, CreateSubmissionRequest.Program]
 )
 
 object CreateSubmissionRequest:
+  final case class Program(
+    language: SubmissionLanguage,
+    sourceCode: SubmissionSourceCode
+  )
+
+  object Program:
+    given Encoder[Program] = deriveEncoder[Program]
+    given Decoder[Program] = deriveDecoder[Program]
+
   given Encoder[CreateSubmissionRequest] = deriveEncoder[CreateSubmissionRequest]
   given Decoder[CreateSubmissionRequest] = deriveDecoder[CreateSubmissionRequest]

@@ -29,13 +29,27 @@ final case class SubmissionDetail(
   judgeResult: Option[JudgeResult],
   codeLength: Int,
   sourceCode: SubmissionSourceCode,
+  programs: Map[String, SubmissionDetail.Program],
   submittedAt: Instant,
   startedAt: Option[Instant],
   finishedAt: Option[Instant]
 )
 
 object SubmissionDetail:
-  def fromRecord(record: SubmissionDetailRecord, sourceCode: SubmissionSourceCode, canManage: Boolean = false): SubmissionDetail =
+  final case class Program(
+    language: SubmissionLanguage,
+    sourceCode: SubmissionSourceCode
+  )
+
+  object Program:
+    given Encoder[Program] = deriveEncoder[Program]
+    given Decoder[Program] = deriveDecoder[Program]
+
+  def fromRecord(record: SubmissionDetailRecord, sourceCode: SubmissionSourceCode, canManage: Boolean): SubmissionDetail =
+    fromRecord(record, Map(record.programManifest.defaultProgramKey -> sourceCode), canManage)
+
+  def fromRecord(record: SubmissionDetailRecord, sourceCodes: Map[String, SubmissionSourceCode], canManage: Boolean = false): SubmissionDetail =
+    val defaultSourceCode = sourceCodes.getOrElse(record.programManifest.defaultProgramKey, SubmissionSourceCode(""))
     SubmissionDetail(
       id = record.id,
       problemId = record.problemId,
@@ -52,7 +66,10 @@ object SubmissionDetail:
       score = record.score,
       judgeResult = record.judgeResult,
       codeLength = record.codeLength,
-      sourceCode = sourceCode,
+      sourceCode = defaultSourceCode,
+      programs = record.programManifest.programs.map { case (role, program) =>
+        role -> Program(program.language, sourceCodes.getOrElse(role, SubmissionSourceCode("")))
+      },
       submittedAt = record.submittedAt,
       startedAt = record.startedAt,
       finishedAt = record.finishedAt

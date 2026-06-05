@@ -21,6 +21,16 @@ trait SubmissionProgramStorage:
           case None => Left(s"Submission source object was not found: ${program.sourceKey}.")
         }
 
+  final def readSources(manifest: SubmissionProgramManifest): IO[Either[String, Map[String, SubmissionSourceCode]]] =
+    manifest.programs.toList
+      .traverse { case (role, program) =>
+        readSource(program.sourceKey).map {
+          case Some(sourceCode) => Right(role -> sourceCode)
+          case None => Left(s"Submission source object was not found: ${program.sourceKey}.")
+        }
+      }
+      .map(_.sequence.map(_.toMap))
+
   final def deleteManifest(manifest: SubmissionProgramManifest): IO[Unit] =
     manifest.programs.values.toList.traverse_(program => deleteSource(program.sourceKey).void)
 

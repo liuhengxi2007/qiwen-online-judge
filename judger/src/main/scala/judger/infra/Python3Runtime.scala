@@ -1,9 +1,8 @@
 package judger.infra
 
 import cats.effect.IO
-import judgeprotocol.objects.{SubmissionLanguage, SubmissionVerdict}
-import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode}
+import judgeprotocol.objects.response.JudgeFailureReason
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 import judger.objects.{RuntimeCommand, SandboxLimits}
@@ -17,36 +16,40 @@ object Python3Runtime extends JudgeRuntime:
   override val language: SubmissionLanguage = SubmissionLanguage.Python3
 
   override def prepare(
-    task: JudgeTask,
+    role: String,
+    sourceCode: SubmissionSourceCode,
     config: AppConfig,
     workingDirectory: Path
-  ): IO[Either[ReportJudgeResultRequest, RuntimeCommand]] =
+  ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
     resolveInterpreterPath(config).flatMap {
       case Left(_) =>
-        IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
+        IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))
       case Right(interpreterPath) =>
-        val sourceFile = workingDirectory.resolve("main.py")
-        val bytecodeFile = workingDirectory.resolve("main.pyc")
+        val safeRole = IsolateSandbox.sanitizeFilename(role)
+        val sourceName = s"main-$safeRole.py"
+        val bytecodeName = s"main-$safeRole.pyc"
+        val sourceFile = workingDirectory.resolve(sourceName)
+        val bytecodeFile = workingDirectory.resolve(bytecodeName)
         for
-          _ <- IO.blocking(Files.writeString(sourceFile, task.sourceCode.value, StandardCharsets.UTF_8))
+          _ <- IO.blocking(Files.writeString(sourceFile, sourceCode.value, StandardCharsets.UTF_8))
           compileResult <- runHostProcess(
             command = interpreterPath,
-            args = List("-c", "import py_compile; py_compile.compile('main.py', cfile='main.pyc', doraise=True)"),
+            args = List("-c", s"import py_compile; py_compile.compile('$sourceName', cfile='$bytecodeName', doraise=True)"),
             cwd = workingDirectory,
             stdin = None,
             limits = CompileLimits,
-            stdoutName = ".pycompile.stdout",
-            stderrName = ".pycompile.stderr"
+            stdoutName = s".$bytecodeName.compile.stdout",
+            stderrName = s".$bytecodeName.compile.stderr"
           )
           result <-
             if compileResult.timedOut then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+              IO.pure(Left(ProgramPrepareFailure.CompileError))
             else if compileResult.exitCode.contains(127) then
-              IO.pure(Left(taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)))
+              IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))
             else if compileResult.exitCode.getOrElse(-1) != 0 then
-              IO.pure(Left(taskCompleted(task, SubmissionVerdict.CompileError)))
+              IO.pure(Left(ProgramPrepareFailure.CompileError))
             else
-              ensureBytecodeExists(bytecodeFile).as(Right(RuntimeCommand(interpreterPath, List("/box/main.pyc"), processLimit = 1)))
+              ensureBytecodeExists(bytecodeFile).as(Right(RuntimeCommand(interpreterPath, List(s"/box/$bytecodeName"), processLimit = 1)))
         yield result
     }
 

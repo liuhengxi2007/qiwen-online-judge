@@ -1,5 +1,6 @@
 export type SubmissionVerdict =
   | 'accepted'
+  | 'accepted_by_protocol'
   | 'wrong_answer'
   | 'compile_error'
   | 'runtime_error'
@@ -8,6 +9,7 @@ export type SubmissionVerdict =
 
 const supportedSubmissionVerdicts = [
   'accepted',
+  'accepted_by_protocol',
   'wrong_answer',
   'compile_error',
   'runtime_error',

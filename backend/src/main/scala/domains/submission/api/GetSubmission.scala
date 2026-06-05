@@ -55,7 +55,7 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
     }
 
   private def loadSubmissionDetail(record: SubmissionDetailRecord, canManage: Boolean): IO[SubmissionDetail] =
-    submissionProgramStorage.readDefaultSource(record.programManifest).flatMap {
-      case Right(sourceCode) => IO.pure(SubmissionDetail.fromRecord(record, sourceCode, canManage))
+    submissionProgramStorage.readSources(record.programManifest).flatMap {
+      case Right(sourceCodes) => IO.pure(SubmissionDetail.fromRecord(record, sourceCodes, canManage))
       case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
     }

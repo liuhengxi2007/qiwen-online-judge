@@ -101,6 +101,7 @@ object SubmissionTableSupport:
   def encodeSubmissionVerdictColumn(value: SubmissionVerdict): String =
     value match
       case SubmissionVerdict.Accepted => "accepted"
+      case SubmissionVerdict.AcceptedByProtocol => "accepted_by_protocol"
       case SubmissionVerdict.WrongAnswer => "wrong_answer"
       case SubmissionVerdict.CompileError => "compile_error"
       case SubmissionVerdict.RuntimeError => "runtime_error"

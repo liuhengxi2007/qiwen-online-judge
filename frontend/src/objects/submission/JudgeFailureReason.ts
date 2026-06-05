@@ -1,16 +1,24 @@
 export type JudgeFailureReason =
   | 'judge_task_build_failed'
   | 'judger_runtime_failed'
+  | 'validator_compile_failed'
+  | 'testcase_data_invalid'
   | 'checker_compile_failed'
   | 'checker_runtime_failed'
+  | 'interactor_compile_failed'
+  | 'interactor_runtime_failed'
   | 'problem_data_load_failed'
   | 'system_error'
 
 const supportedJudgeFailureReasons = [
   'judge_task_build_failed',
   'judger_runtime_failed',
+  'validator_compile_failed',
+  'testcase_data_invalid',
   'checker_compile_failed',
   'checker_runtime_failed',
+  'interactor_compile_failed',
+  'interactor_runtime_failed',
   'problem_data_load_failed',
   'system_error',
 ] as const satisfies readonly JudgeFailureReason[]

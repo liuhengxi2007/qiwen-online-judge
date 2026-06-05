@@ -5,12 +5,19 @@ import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemData
 
 export const judgeConfigPath = 'judge.yaml' as const
 
-export const judgeConfigTemplate = `version: 1
+export const judgeConfigTemplate = `version: 2
 roundingScale: 6
+
+mode:
+  type: traditional
+  role: main
 
 limits:
   timeMs: 1000
   memoryMb: 256
+
+validator:
+  path: validators/validator.cpp
 
 checker:
   type: builtin
@@ -21,22 +28,23 @@ aggregation:
   subtasks: sum_max_max
 
 subtasks:
-  - name: sample
+  - label: sample
     scoreRatio: 0.2
     testcases:
-      - name: sample-1
+      - label: sample-1
         input: sample/1.in
         answer: sample/1.ans
 
-  - name: main
+  - label: main
     scoreRatio: 0.8
     testcases:
-      - name: "1"
+      - label: "1"
         input: tests/1.in
         answer: tests/1.ans
 `
 
 const aggregations = new Set(['min_max_max', 'min_sum_max', 'sum_max_max', 'sum_sum_max'])
+const rolePattern = /^[A-Za-z0-9_-]+$/
 
 export type JudgeConfigValidationResult =
   | { ok: true; warnings: string[] }
@@ -52,9 +60,18 @@ type LimitsConfig = {
   memoryMb: number
 }
 
+type ToolConfig = {
+  path: string
+}
+
 type CheckerConfig =
   | { type: 'builtin'; name: 'exact' }
-  | { type: 'cpp'; path: string }
+  | { type: 'builtin'; name: 'echo' }
+  | { type: 'cpp17'; path: string }
+
+type ModeConfig =
+  | { type: 'traditional'; role: string }
+  | { type: 'interactive'; roles: string[]; interactor: ToolConfig }
 
 type AggregationConfig = {
   testcases?: string
@@ -86,11 +103,14 @@ export function validateJudgeConfigYaml(
     return toResult(ctx)
   }
 
-  requireExactNumber(root.version, 'version', 1, ctx)
+  requireExactNumber(root.version, 'version', 2, ctx)
   validateOptionalInteger(root.roundingScale, 'roundingScale', 0, 18, ctx)
 
   const rootLimits = validateLimits(root.limits, 'limits', ctx)
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
+  const rootValidator = validateTool(root.validator, 'validator', ctx)
+  const rootMode = validateMode(root.mode, 'mode', ctx) ?? { type: 'traditional' as const, role: 'main' }
+  validateTool(root.strategyProvider, 'strategyProvider', ctx)
   const rootAggregation = validateAggregation(root.aggregation, 'aggregation', ctx)
   const subtasks = validateList(root.subtasks, 'subtasks', ctx)
   if (subtasks && subtasks.length === 0) {
@@ -105,26 +125,40 @@ export function validateJudgeConfigYaml(
         return
       }
 
-      const label = stringOrFallback(subtask.name, `subtasks[${index}]`)
-      const limits = validateLimits(subtask.limits, `${label}.limits`, ctx) ?? rootLimits
-      const checker = validateChecker(subtask.checker, `${label}.checker`, ctx) ?? rootChecker
-      const aggregation = mergeAggregation(rootAggregation, validateAggregation(subtask.aggregation, `${label}.aggregation`, ctx))
-      const testcases = validateList(subtask.testcases, `${label}.testcases`, ctx)
+      rejectLegacyName(subtask, `subtasks[${index}]`, ctx)
+      const subtaskLabel = stringOrFallback(subtask.label, `subtask #${index + 1}`)
+      validateOptionalLabel(subtask.label, `subtasks[${index}].label`, ctx)
+      const limits = validateLimits(subtask.limits, `${subtaskLabel}.limits`, ctx) ?? rootLimits
+      const checker = validateChecker(subtask.checker, `${subtaskLabel}.checker`, ctx) ?? rootChecker
+      const validator = validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx) ?? rootValidator
+      const mode = validateMode(subtask.mode, `${subtaskLabel}.mode`, ctx) ?? rootMode
+      validateTool(subtask.strategyProvider, `${subtaskLabel}.strategyProvider`, ctx)
+      const aggregation = mergeAggregation(rootAggregation, validateAggregation(subtask.aggregation, `${subtaskLabel}.aggregation`, ctx))
+      const testcases = validateList(subtask.testcases, `${subtaskLabel}.testcases`, ctx)
 
       if (testcases && testcases.length === 0) {
-        ctx.errors.push(`${label}.testcases must contain at least one item.`)
+        ctx.errors.push(`${subtaskLabel}.testcases must contain at least one item.`)
       }
       if (testcases) {
-        validateSiblingRatios(testcases, `${label}.testcases`, ctx)
+        validateSiblingRatios(testcases, `${subtaskLabel}.testcases`, ctx)
         testcases.forEach((testcase, testcaseIndex) => {
           if (!isRecord(testcase)) {
-            ctx.errors.push(`${label}.testcases[${testcaseIndex}] must be an object.`)
+            ctx.errors.push(`${subtaskLabel}.testcases[${testcaseIndex}] must be an object.`)
             return
           }
 
-          const testcaseLabel = `${label}/${stringOrFallback(testcase.name, `testcase-${testcaseIndex + 1}`)}`
+          const testcaseLabel = `${subtaskLabel}/#${testcaseIndex + 1}`
+          rejectLegacyName(testcase, testcaseLabel, ctx)
+          validateOptionalLabel(testcase.label, `${testcaseLabel}.label`, ctx)
+          if (testcase.mode !== undefined) {
+            ctx.errors.push(`${testcaseLabel}.mode cannot be declared on a testcase.`)
+          }
           const testcaseLimits = validateLimits(testcase.limits, `${testcaseLabel}.limits`, ctx) ?? limits
           const testcaseChecker = validateChecker(testcase.checker, `${testcaseLabel}.checker`, ctx) ?? checker
+          const testcaseValidator = validateTool(testcase.validator, `${testcaseLabel}.validator`, ctx) ?? validator
+          if (testcase.strategyProvider !== undefined) {
+            validateTool(testcase.strategyProvider, `${testcaseLabel}.strategyProvider`, ctx)
+          }
           validateAggregation(testcase.aggregation, `${testcaseLabel}.aggregation`, ctx)
 
           if (!testcaseLimits) {
@@ -133,13 +167,21 @@ export function validateJudgeConfigYaml(
           if (!testcaseChecker) {
             ctx.errors.push(`Checker is required for testcase ${testcaseLabel}.`)
           }
+          if (!testcaseValidator) {
+            ctx.errors.push(`Validator is required for testcase ${testcaseLabel}.`)
+          }
           if (!aggregation.testcases) {
-            ctx.errors.push(`Testcase aggregation is required for subtask ${label}.`)
+            ctx.errors.push(`Testcase aggregation is required for subtask ${subtaskLabel}.`)
+          }
+          if (mode.type === 'interactive' && mode.roles.length === 0) {
+            ctx.errors.push(`${subtaskLabel}.mode.roles must contain at least one role.`)
           }
 
-          validateOptionalFileRef(testcase.input, `${testcaseLabel}.input`, ctx)
-          validateRequiredFileRef(testcase.answer, `${testcaseLabel}.answer`, ctx)
-          validateCheckerFileRef(testcaseChecker, `${testcaseLabel}.checker`, ctx)
+          validateRequiredFileRef(testcase.input, `${testcaseLabel}.input`, ctx)
+          validateOptionalFileRef(testcase.answer, `${testcaseLabel}.answer`, ctx)
+          if (testcaseChecker?.type === 'builtin' && testcaseChecker.name === 'exact' && testcase.answer === undefined) {
+            ctx.errors.push(`${testcaseLabel}.answer is required for builtin exact checker.`)
+          }
         })
       }
     })
@@ -172,28 +214,98 @@ function validateChecker(value: unknown, label: string, ctx: ValidationContext):
   }
 
   if (value.type === 'builtin') {
-    if (value.name === 'exact') {
-      return { type: 'builtin', name: 'exact' }
+    if (value.name === 'exact' || value.name === 'echo') {
+      return { type: 'builtin', name: value.name }
     }
-    ctx.errors.push(`${label}.name must be exact for builtin checker.`)
+    ctx.errors.push(`${label}.name must be exact or echo for builtin checker.`)
     return null
   }
 
-  if (value.type === 'cpp') {
-    if (typeof value.path !== 'string' || value.path.trim() === '') {
-      ctx.errors.push(`${label}.path is required for C++ checker.`)
-      return null
-    }
-    const parsedPath = parseProblemDataPath(value.path)
-    if (!parsedPath.ok) {
-      ctx.errors.push(`${label}.path is invalid: ${parsedPath.error}`)
-      return null
-    }
-    return { type: 'cpp', path: problemDataPathValue(parsedPath.value) }
+  if (value.type === 'cpp17' || value.type === 'cpp') {
+    const path = validatePathValue(value.path, `${label}.path`, ctx)
+    return path ? { type: 'cpp17', path } : null
   }
 
-  ctx.errors.push(`${label}.type must be builtin or cpp.`)
+  ctx.errors.push(`${label}.type must be builtin or cpp17.`)
   return null
+}
+
+function validateTool(value: unknown, label: string, ctx: ValidationContext): ToolConfig | null {
+  if (value === undefined) {
+    return null
+  }
+  if (typeof value === 'string') {
+    const path = validatePathValue(value, label, ctx)
+    return path ? { path } : null
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be a path string or an object with a path.`)
+    return null
+  }
+  const path = validatePathValue(value.path, `${label}.path`, ctx)
+  return path ? { path } : null
+}
+
+function validateMode(value: unknown, label: string, ctx: ValidationContext): ModeConfig | null {
+  if (value === undefined) {
+    return null
+  }
+  if (typeof value === 'string') {
+    if (value === 'traditional') {
+      return { type: 'traditional', role: 'main' }
+    }
+    ctx.errors.push(`${label} must be an object for interactive mode.`)
+    return null
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be a string or an object.`)
+    return null
+  }
+
+  if (value.type === 'traditional') {
+    const role = validateRole(typeof value.role === 'string' ? value.role : 'main', `${label}.role`, ctx)
+    return role ? { type: 'traditional', role } : null
+  }
+
+  if (value.type === 'interactive') {
+    const roles = validateRoleList(value.roles, `${label}.roles`, ctx)
+    const interactor = validateTool(value.interactor, `${label}.interactor`, ctx)
+    if (!interactor) {
+      ctx.errors.push(`${label}.interactor is required.`)
+    }
+    return roles && interactor ? { type: 'interactive', roles, interactor } : null
+  }
+
+  ctx.errors.push(`${label}.type must be traditional or interactive.`)
+  return null
+}
+
+function validateRoleList(value: unknown, label: string, ctx: ValidationContext): string[] | null {
+  if (!Array.isArray(value)) {
+    ctx.errors.push(`${label} is required and must be a list.`)
+    return null
+  }
+  const roles = value.flatMap((item, index) => {
+    if (typeof item !== 'string') {
+      ctx.errors.push(`${label}[${index}] must be a string.`)
+      return []
+    }
+    const role = validateRole(item, `${label}[${index}]`, ctx)
+    return role ? [role] : []
+  })
+  if (roles.length === 0) {
+    ctx.errors.push(`${label} must contain at least one role.`)
+  }
+  return roles
+}
+
+function validateRole(value: string, label: string, ctx: ValidationContext): string | null {
+  const role = value.trim()
+  if (!role || !rolePattern.test(role)) {
+    ctx.errors.push(`${label} must contain only ASCII letters, digits, "_" or "-".`)
+    return null
+  }
+  return role
 }
 
 function validateAggregation(value: unknown, label: string, ctx: ValidationContext): AggregationConfig {
@@ -271,23 +383,41 @@ function validateOptionalFileRef(value: unknown, label: string, ctx: ValidationC
   validateExistingFile(value, label, ctx)
 }
 
-function validateCheckerFileRef(checker: CheckerConfig | null | undefined, label: string, ctx: ValidationContext): void {
-  if (checker?.type !== 'cpp') {
-    return
+function validatePathValue(value: unknown, label: string, ctx: ValidationContext): string | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    ctx.errors.push(`${label} is required.`)
+    return null
   }
-  validateExistingFile(checker.path, `${label}.path`, ctx)
+  return validateExistingFile(value, label, ctx)
 }
 
-function validateExistingFile(rawPath: string, label: string, ctx: ValidationContext): void {
+function validateExistingFile(rawPath: string, label: string, ctx: ValidationContext): string | null {
   const parsedPath = parseProblemDataPath(rawPath)
   if (!parsedPath.ok) {
     ctx.errors.push(`${label} is invalid: ${parsedPath.error}`)
-    return
+    return null
   }
 
   const path = problemDataPathValue(parsedPath.value)
   if (!ctx.filePaths.has(path)) {
     ctx.errors.push(`${label} does not exist: ${path}.`)
+    return null
+  }
+  return path
+}
+
+function rejectLegacyName(value: Record<string, unknown>, label: string, ctx: ValidationContext): void {
+  if (value.name !== undefined) {
+    ctx.errors.push(`${label}.name is not supported in judge.yaml v2; use label instead.`)
+  }
+}
+
+function validateOptionalLabel(value: unknown, label: string, ctx: ValidationContext): void {
+  if (value === undefined) {
+    return
+  }
+  if (typeof value !== 'string' || value.trim() === '') {
+    ctx.errors.push(`${label} must be a nonempty string when present.`)
   }
 }
 

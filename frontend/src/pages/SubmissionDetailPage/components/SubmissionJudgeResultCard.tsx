@@ -34,10 +34,10 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
         <JudgeReasonLine label={t('submission.detail.reason')} reason={judgeResult.reason} />
 
         {judgeResult.subtasks.map((subtask) => (
-          <div key={subtask.name} className="rounded-lg border border-slate-200">
+          <div key={subtask.index} className="rounded-lg border border-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div>
-                <p className="font-medium text-slate-950">{subtask.name}</p>
+                <p className="font-medium text-slate-950">{resultNodeTitle(subtask.index, subtask.label)}</p>
                 <p className="text-sm text-slate-500">
                   {submissionVerdictLabel(subtask.verdict)} · {formatOptionalScore(subtask.score)}
                 </p>
@@ -63,8 +63,8 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
                   </thead>
                   <tbody>
                     {subtask.testcases.map((testcase) => (
-                      <tr key={testcase.name} className="border-t border-slate-100">
-                        <td className="px-4 py-2 font-medium text-slate-900">{testcase.name}</td>
+                      <tr key={testcase.index} className="border-t border-slate-100">
+                        <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle(testcase.index, testcase.label)}</td>
                         <td className="px-4 py-2 text-slate-700">
                           {submissionVerdictLabel(testcase.verdict)}
                         </td>
@@ -88,6 +88,10 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
       </CardContent>
     </Card>
   )
+}
+
+function resultNodeTitle(index: number, label: string | null): string {
+  return label ? `#${index} ${label}` : `#${index}`
 }
 
 function ResultMetric({ label, value }: { label: string; value: string }) {

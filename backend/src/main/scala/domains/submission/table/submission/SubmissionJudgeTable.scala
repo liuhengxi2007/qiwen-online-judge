@@ -18,7 +18,11 @@ object SubmissionJudgeTable:
       |  from submissions s
       |  join problems p on p.id = s.problem_id
       |  where s.status = 'queued'
-      |    and s.language in ($placeholders)
+      |    and exists (
+      |      select 1
+      |      from jsonb_each(s.program_manifest -> 'programs') as program(role, data)
+      |      where program.data ->> 'language' in ($placeholders)
+      |    )
       |    and p.ready = true
       |  order by s.submitted_at asc, s.public_id asc
       |  for update skip locked

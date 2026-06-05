@@ -80,7 +80,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       SubmissionVerdict.Accepted,
       subtasks = List(
         JudgeSubtaskResult(
-          name = "sample",
+          index = 1,
+          label = Some("sample"),
           score = BigDecimal(1),
           verdict = SubmissionVerdict.Accepted,
           timeUsedMs = None,
@@ -88,7 +89,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
           reason = None,
           testcases = List(
             JudgeTestcaseResult(
-              name = "1",
+              index = 1,
+              label = Some("1"),
               score = BigDecimal(1),
               verdict = SubmissionVerdict.Accepted,
               message = Some("checker report"),
@@ -110,7 +112,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("testcase 1 reason is only allowed with system_error verdict."))
+    assertEquals(result.left.toOption, Some("testcase #1 reason is only allowed with system_error verdict."))
   }
 
   test("completeJudging rejects nested system error without reason") {
@@ -120,7 +122,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       reason = Some(JudgeFailureReason.CheckerRuntimeFailed),
       subtasks = List(
         JudgeSubtaskResult(
-          name = "sample",
+          index = 1,
+          label = Some("sample"),
           score = BigDecimal(0),
           verdict = SubmissionVerdict.SystemError,
           timeUsedMs = None,
@@ -140,7 +143,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("subtask sample system_error verdict must include reason."))
+    assertEquals(result.left.toOption, Some("subtask #1 system_error verdict must include reason."))
   }
 
   test("completeJudging rejects failed status without system error result") {
@@ -206,7 +209,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         |  "memoryUsedKb": 256,
         |  "subtasks": [
         |    {
-        |      "name": "sample",
+        |      "index": 1,
+        |      "label": "sample",
         |      "score": 0,
         |      "verdict": "wrong_answer",
         |      "timeUsedMs": 12,
@@ -214,7 +218,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         |      "message": "Wrong answer on sample.",
         |      "testcases": [
         |        {
-        |          "name": "1",
+        |          "index": 1,
+        |          "label": "1",
         |          "score": 0,
         |          "verdict": "wrong_answer",
         |          "message": "checker report",

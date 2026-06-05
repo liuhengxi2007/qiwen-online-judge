@@ -65,6 +65,7 @@ object SubmissionJudgeRules:
   def fromProtocolVerdict(verdict: judgeprotocol.objects.SubmissionVerdict): SubmissionVerdict =
     verdict match
       case judgeprotocol.objects.SubmissionVerdict.Accepted => SubmissionVerdict.Accepted
+      case judgeprotocol.objects.SubmissionVerdict.AcceptedByProtocol => SubmissionVerdict.AcceptedByProtocol
       case judgeprotocol.objects.SubmissionVerdict.WrongAnswer => SubmissionVerdict.WrongAnswer
       case judgeprotocol.objects.SubmissionVerdict.CompileError => SubmissionVerdict.CompileError
       case judgeprotocol.objects.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
@@ -103,10 +104,10 @@ object SubmissionJudgeRules:
       .flatMap(_ =>
         judgeResult.subtasks
           .map(subtask =>
-            validateNodeReason(s"subtask ${subtask.name}", subtask.verdict, subtask.reason)
+            validateNodeReason(s"subtask #${subtask.index}", subtask.verdict, subtask.reason)
               .flatMap(_ =>
                 subtask.testcases
-                  .map(testcase => validateNodeReason(s"testcase ${testcase.name}", testcase.verdict, testcase.reason))
+                  .map(testcase => validateNodeReason(s"testcase #${testcase.index}", testcase.verdict, testcase.reason))
                   .collectFirst { case Left(message) => Left(message) }
                   .getOrElse(Right(()))
               )

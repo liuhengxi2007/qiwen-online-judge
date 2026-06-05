@@ -72,10 +72,10 @@ final case class ClaimJudgeTask(
               IO.pure(Response[IO](status = Status.NoContent))
             case Some(claimedSubmission) =>
               buildJudgeTask(connection, claimedSubmission).flatMap {
-                case Left(message) =>
-                  failClaimedJudgeTask(connection, claimedSubmission, claimedAt).flatMap {
+                case Left(error) =>
+                  failClaimedJudgeTask(connection, claimedSubmission, claimedAt, error.reason).flatMap {
                     case Left(lifecycleMessage) => HttpApiError.raise(HttpApiError.badRequest(lifecycleMessage))
-                    case Right(_) => HttpApiError.raise(HttpApiError.badRequest(message))
+                    case Right(_) => HttpApiError.raise(HttpApiError.badRequest(error.message))
                   }
                 case Right(task) =>
                   IO.pure(taskResponse(task))
@@ -85,10 +85,10 @@ final case class ClaimJudgeTask(
   private def buildJudgeTask(
     connection: Connection,
     claimedSubmission: ClaimedSubmission
-  ): IO[Either[String, JudgeTask]] =
+  ): IO[Either[JudgeTaskBuilder.BuildError, JudgeTask]] =
     judgeTaskManifest(connection, claimedSubmission).flatMap {
       case None =>
-        IO.pure(Left("Problem not found for claimed submission."))
+        IO.pure(Left(JudgeTaskBuilder.BuildError("Problem not found for claimed submission.", JudgeFailureReason.JudgeTaskBuildFailed)))
       case Some(manifest) =>
         loadConfig(claimedSubmission, manifest)
     }
@@ -105,36 +105,37 @@ final case class ClaimJudgeTask(
   private def loadConfig(
     claimedSubmission: ClaimedSubmission,
     manifest: ProblemDataManifest
-  ): IO[Either[String, JudgeTask]] =
+  ): IO[Either[JudgeTaskBuilder.BuildError, JudgeTask]] =
     ProblemDataPath.parse("judge.yaml") match
       case Left(message) =>
-        IO.pure(Left(message))
+        IO.pure(Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed)))
       case Right(configPath) =>
         problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
           case None =>
-            Left("judge.yaml is required at the problem data root.")
+            Left(JudgeTaskBuilder.BuildError("judge.yaml is required at the problem data root.", JudgeFailureReason.JudgeTaskBuildFailed))
           case Some((_, bytes)) =>
             Right(bytes)
         }.flatMap {
           case Left(message) => IO.pure(Left(message))
           case Right(bytes) =>
-            submissionProgramStorage.readDefaultSource(claimedSubmission.programManifest).map {
-              case Left(message) => Left(message)
-              case Right(sourceCode) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCode, manifest)
+            submissionProgramStorage.readSources(claimedSubmission.programManifest).map {
+              case Left(message) => Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed))
+              case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest)
             }
         }
 
   private def failClaimedJudgeTask(
     connection: Connection,
     claimedSubmission: ClaimedSubmission,
-    claimedAt: Instant
+    claimedAt: Instant,
+    reason: JudgeFailureReason
   ): IO[Either[String, Unit]] =
     SubmissionJudgeRules.beginJudging(SubmissionJudgeState.queued, claimedAt).flatMap { runningState =>
       SubmissionJudgeRules.completeJudging(
         runningState,
         SubmissionJudgeCompletion(
           status = SubmissionStatus.Failed,
-          judgeResult = Some(systemErrorJudgeResult)
+          judgeResult = Some(systemErrorJudgeResult(reason))
         ),
         claimedAt
       )
@@ -149,11 +150,11 @@ final case class ClaimJudgeTask(
   private def taskResponse(task: JudgeTask): Response[IO] =
     Response[IO](status = Status.Ok).withEntity(task.asJson)
 
-  private def systemErrorJudgeResult: JudgeResult =
+  private def systemErrorJudgeResult(reason: JudgeFailureReason): JudgeResult =
     JudgeResult(
       score = BigDecimal(0),
       verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
-      reason = Some(JudgeFailureReason.JudgeTaskBuildFailed),
+      reason = Some(reason),
       timeUsedMs = None,
       memoryUsedKb = None,
       subtasks = Nil
