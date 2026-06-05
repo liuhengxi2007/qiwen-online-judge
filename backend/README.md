@@ -56,7 +56,7 @@ Defaults:
 
 - `DB_HOST=127.0.0.1`
 - `DB_PORT=5432`
-- `DB_NAME` defaults to the repository directory name with `-` replaced by `_`
+- `DB_NAME=qiwen_online_judge`
 - `DB_USER=db`
 - `DB_PASSWORD=root`
 

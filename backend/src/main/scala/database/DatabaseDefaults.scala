@@ -1,4 +1,4 @@
 package database
 
 object DatabaseDefaults:
-  val DefaultDatabaseName: String = "backend_sample"
+  val DefaultDatabaseName: String = "qiwen_online_judge"

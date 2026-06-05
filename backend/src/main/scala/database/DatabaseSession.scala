@@ -44,7 +44,7 @@ object DatabaseSession:
       hikariConfig.setPassword(config.password)
       hikariConfig.setMaximumPoolSize(config.maxPoolSize)
       hikariConfig.setConnectionTimeout(config.connectionTimeoutMs)
-      hikariConfig.setPoolName("backend-sample-pool")
+      hikariConfig.setPoolName("qiwen-online-judge-backend-pool")
       new HikariDataSource(hikariConfig)
     }.flatTap(_ =>
       logger.info(

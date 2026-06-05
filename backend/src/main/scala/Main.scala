@@ -89,6 +89,6 @@ object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     for
-      _ <- logger.info("Starting backend-sample on http://0.0.0.0:8080")
+      _ <- logger.info("Starting qiwen-online-judge backend on http://0.0.0.0:8080")
       _ <- resource.useForever
     yield ()

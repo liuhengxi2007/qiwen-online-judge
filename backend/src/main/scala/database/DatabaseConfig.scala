@@ -1,7 +1,5 @@
 package database
 
-import java.nio.file.Paths
-
 final case class DatabaseConfig(
   host: String,
   port: Int,
@@ -17,10 +15,6 @@ object DatabaseConfig:
   private def defaultDatabaseName: String =
     sys.env
       .get("DB_NAME")
-      .orElse {
-        Option(Paths.get(sys.props.getOrElse("user.dir", ".")).getFileName)
-          .map(_.toString.replace('-', '_'))
-      }
       .getOrElse(DatabaseDefaults.DefaultDatabaseName)
 
   extension (config: DatabaseConfig)
