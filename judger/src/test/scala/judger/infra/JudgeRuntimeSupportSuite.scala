@@ -40,6 +40,7 @@ class JudgeRuntimeSupportSuite extends FunSuite:
           label = Some("sample"),
           scoreRatio = BigDecimal(1),
           mode = JudgeTaskMode.traditional("main"),
+          validator = None,
           aggregation = JudgeTaskAggregation("sum", "max", "max"),
           testcases = Nil
         )

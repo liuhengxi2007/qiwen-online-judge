@@ -16,9 +16,6 @@ limits:
   timeMs: 1000
   memoryMb: 256
 
-validator:
-  path: validators/validator.cpp
-
 checker:
   type: builtin
   name: exact
@@ -114,7 +111,7 @@ export function validateJudgeConfigYaml(
 
   const rootLimits = validateLimits(root.limits, 'limits', ctx)
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
-  const rootValidator = validateTool(root.validator, 'validator', ctx)
+  validateTool(root.validator, 'validator', ctx)
   const rootMode = validateMode(root.mode, 'mode', ctx) ?? { type: 'traditional' as const, role: 'main' }
   validateLimitedTool(root.strategyProvider, 'strategyProvider', ctx)
   const rootAggregation = validateAggregation(root.aggregation, 'aggregation', ctx)
@@ -131,12 +128,12 @@ export function validateJudgeConfigYaml(
         return
       }
 
-      rejectLegacyName(subtask, `subtasks[${index}]`, ctx)
-      const subtaskLabel = stringOrFallback(subtask.label, `subtask #${index + 1}`)
+      const subtaskLabel = judgeNodeLabel('subtask', index + 1, subtask.label)
+      rejectLegacyName(subtask, subtaskLabel, ctx)
       validateOptionalLabel(subtask.label, `subtasks[${index}].label`, ctx)
       const limits = validateLimits(subtask.limits, `${subtaskLabel}.limits`, ctx) ?? rootLimits
       const checker = validateChecker(subtask.checker, `${subtaskLabel}.checker`, ctx) ?? rootChecker
-      const validator = validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx) ?? rootValidator
+      validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx)
       const mode = validateMode(subtask.mode, `${subtaskLabel}.mode`, ctx) ?? rootMode
       validateLimitedTool(subtask.strategyProvider, `${subtaskLabel}.strategyProvider`, ctx)
       const aggregation = mergeAggregation(rootAggregation, validateAggregation(subtask.aggregation, `${subtaskLabel}.aggregation`, ctx))
@@ -153,31 +150,30 @@ export function validateJudgeConfigYaml(
             return
           }
 
-          const testcaseLabel = `${subtaskLabel}/#${testcaseIndex + 1}`
+          const testcaseLabel = `${subtaskLabel} ${judgeNodeLabel('testcase', testcaseIndex + 1, testcase.label)}`
           rejectLegacyName(testcase, testcaseLabel, ctx)
           validateOptionalLabel(testcase.label, `${testcaseLabel}.label`, ctx)
           if (testcase.mode !== undefined) {
             ctx.errors.push(`${testcaseLabel}.mode cannot be declared on a testcase.`)
           }
+          if (testcase.validator !== undefined) {
+            ctx.errors.push(`${testcaseLabel}.validator cannot be declared on a testcase.`)
+          }
           const testcaseLimits = validateLimits(testcase.limits, `${testcaseLabel}.limits`, ctx) ?? limits
           const testcaseChecker = validateChecker(testcase.checker, `${testcaseLabel}.checker`, ctx) ?? checker
-          const testcaseValidator = validateTool(testcase.validator, `${testcaseLabel}.validator`, ctx) ?? validator
           if (testcase.strategyProvider !== undefined) {
             validateLimitedTool(testcase.strategyProvider, `${testcaseLabel}.strategyProvider`, ctx)
           }
           validateAggregation(testcase.aggregation, `${testcaseLabel}.aggregation`, ctx)
 
           if (!testcaseLimits) {
-            ctx.errors.push(`Limits are required for testcase ${testcaseLabel}.`)
+            ctx.errors.push(`Limits are required for ${testcaseLabel}.`)
           }
           if (!testcaseChecker) {
-            ctx.errors.push(`Checker is required for testcase ${testcaseLabel}.`)
-          }
-          if (!testcaseValidator) {
-            ctx.errors.push(`Validator is required for testcase ${testcaseLabel}.`)
+            ctx.errors.push(`Checker is required for ${testcaseLabel}.`)
           }
           if (!aggregation.testcases) {
-            ctx.errors.push(`Testcase aggregation is required for subtask ${subtaskLabel}.`)
+            ctx.errors.push(`Testcase aggregation is required for ${subtaskLabel}.`)
           }
           if (mode.type === 'interactive' && mode.roles.length === 0) {
             ctx.errors.push(`${subtaskLabel}.mode.roles must contain at least one role.`)
@@ -503,8 +499,8 @@ function validateList(value: unknown, label: string, ctx: ValidationContext): un
   return value
 }
 
-function stringOrFallback(value: unknown, fallback: string): string {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+function judgeNodeLabel(kind: 'subtask' | 'testcase', index: number, label: unknown): string {
+  return typeof label === 'string' && label.trim() ? `${kind} ${index} (${label.trim()})` : `${kind} ${index}`
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

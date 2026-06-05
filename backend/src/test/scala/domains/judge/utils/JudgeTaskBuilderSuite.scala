@@ -87,11 +87,40 @@ class JudgeTaskBuilderSuite extends FunSuite:
       assertEquals(task.aggregation.memory, "max")
       assertEquals(task.subtasks.head.index, 1)
       assertEquals(task.subtasks.head.label, Some("sample"))
+      assertEquals(task.subtasks.head.validator.map(_.source.path.value), Some("validators/validator.cpp"))
       assertEquals(task.subtasks.head.aggregation.score, "sum")
       assertEquals(task.subtasks.head.aggregation.time, "max")
       assertEquals(task.subtasks.head.aggregation.memory, "max")
       assertEquals(task.subtasks.head.testcases.head.index, 1)
       assertEquals(task.subtasks.head.testcases.head.label, None)
+    }
+  }
+
+  test("parseConfigBytes accepts missing validator") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      assertEquals(task.subtasks.head.validator, None)
     }
   }
 
@@ -145,7 +174,32 @@ class JudgeTaskBuilderSuite extends FunSuite:
       manifest
     )
 
-    assertEquals(result.left.toOption, Some("Limits are required for subtask #1 testcase #1."))
+    assertEquals(result.left.toOption, Some("Limits are required for subtask 1 (sample) testcase 1."))
+  }
+
+  test("parseConfigBytes rejects testcase-level validator") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |        validator:
+        |          path: validators/validator.cpp
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("validator cannot be declared on subtask 1 testcase 1."))
   }
 
   test("validateReadyConfigBytes returns judge.yaml and referenced file paths") {

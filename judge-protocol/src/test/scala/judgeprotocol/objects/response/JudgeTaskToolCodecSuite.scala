@@ -37,9 +37,9 @@ class JudgeTaskToolCodecSuite extends FunSuite:
     assertEquals(decoded.map(_.interactor.map(_.source.path.value)), Right(Some("tools/interactor.cpp")))
   }
 
-  test("allows tools without limits for legacy testcase validators") {
+  test("allows tools without limits") {
     val decoded = decode[JudgeTaskTool](
-      s"""{"source":{"path":"validators/validator.cpp","sizeBytes":42,"sha256":"$sha256"}}"""
+      s"""{"source":{"path":"tools/tool.cpp","sizeBytes":42,"sha256":"$sha256"}}"""
     )
 
     assertEquals(decoded.map(_.limits), Right(None))

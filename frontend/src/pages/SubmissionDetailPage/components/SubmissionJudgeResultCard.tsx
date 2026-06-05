@@ -37,7 +37,7 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
           <div key={subtask.index} className="rounded-lg border border-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div>
-                <p className="font-medium text-slate-950">{resultNodeTitle(subtask.index, subtask.label)}</p>
+                <p className="font-medium text-slate-950">{resultNodeTitle('subtask', subtask.index, subtask.label)}</p>
                 <p className="text-sm text-slate-500">
                   {submissionVerdictLabel(subtask.verdict)} · {formatOptionalScore(subtask.score)}
                 </p>
@@ -64,7 +64,7 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
                   <tbody>
                     {subtask.testcases.map((testcase) => (
                       <tr key={testcase.index} className="border-t border-slate-100">
-                        <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle(testcase.index, testcase.label)}</td>
+                        <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle('testcase', testcase.index, testcase.label)}</td>
                         <td className="px-4 py-2 text-slate-700">
                           {submissionVerdictLabel(testcase.verdict)}
                         </td>
@@ -90,8 +90,8 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
   )
 }
 
-function resultNodeTitle(index: number, label: string | null): string {
-  return label ? `#${index} ${label}` : `#${index}`
+function resultNodeTitle(kind: 'subtask' | 'testcase', index: number, label: string | null): string {
+  return label ? `${kind} ${index} (${label})` : `${kind} ${index}`
 }
 
 function ResultMetric({ label, value }: { label: string; value: string }) {

@@ -82,17 +82,17 @@ object JudgeTaskBuilder:
     parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
       val rawPaths =
         task.subtasks.flatMap { subtask =>
-          val modePaths = subtask.mode.interactor.map(_.source.path.value).toList
+          val subtaskPaths =
+            subtask.validator.map(_.source.path.value).toList ++ subtask.mode.interactor.map(_.source.path.value).toList
           val testcasePaths = subtask.testcases.flatMap { testcase =>
             List(
               Some(testcase.input.path.value),
               testcase.answer.map(_.path.value),
               testcase.checker.source.map(_.path.value),
-              Some(testcase.validator.source.path.value),
               testcase.strategyProvider.map(_.source.path.value)
             ).flatten
           }
-          modePaths ++ testcasePaths
+          subtaskPaths ++ testcasePaths
         }
       rawPaths
         .traverse(ProblemDataPath.parse)
@@ -183,16 +183,18 @@ object JudgeTaskBuilder:
     parentAggregation: AggregationConfig
   ): Either[BuildError, JudgeTaskSubtask] =
     for
-      _ <- rejectLegacyName(raw, s"subtask #$index")
       label <- optionalStringAt(raw, "label").toBuildError
+      subtaskLabel = judgeNodeLabel("subtask", index, label)
+      _ <- rejectLegacyName(raw, subtaskLabel)
       limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits))
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker))
       validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator))
+      resolvedValidator <- validator.traverse(resolveTool(manifest, _, "Validator source file")).toBuildError
       mode <- modeAt(raw, manifest).toBuildError.map(_.getOrElse(parentMode))
       strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
       testcaseMaps <- listOfMapsAt(raw, "testcases").toBuildError
-      _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"Subtask #$index must define at least one testcase."))
+      _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"$subtaskLabel must define at least one testcase."))
       testcaseRatios <- ratiosFor(testcaseMaps).toBuildError
       testcases <- sequenceBuild(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
         buildTestcase(
@@ -202,9 +204,9 @@ object JudgeTaskBuilder:
           scoreRatio = testcaseRatio,
           parentLimits = limits,
           parentChecker = checker,
-          parentValidator = validator,
           parentStrategyProvider = strategyProvider,
-          subtaskIndex = index
+          subtaskIndex = index,
+          subtaskLabel = label
         )
       })
     yield
@@ -213,6 +215,7 @@ object JudgeTaskBuilder:
         label = label,
         scoreRatio = scoreRatio,
         mode = mode,
+        validator = resolvedValidator,
         aggregation = aggregation.testcases.getOrElse(defaultAggregation),
         testcases = testcases
       )
@@ -224,21 +227,20 @@ object JudgeTaskBuilder:
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
-    parentValidator: Option[JudgeTaskTool],
     parentStrategyProvider: Option[JudgeTaskTool],
-    subtaskIndex: Int
+    subtaskIndex: Int,
+    subtaskLabel: Option[String]
   ): Either[BuildError, JudgeTaskTestcase] =
-    val label = s"subtask #$subtaskIndex testcase #$index"
     for
+      testcaseLabel <- optionalStringAt(raw, "label").toBuildError
+      label = s"${judgeNodeLabel("subtask", subtaskIndex, subtaskLabel)} ${judgeNodeLabel("testcase", index, testcaseLabel)}"
       _ <- rejectLegacyName(raw, label)
       _ <- Either.cond(!raw.contains("mode"), (), buildError(s"mode cannot be declared on $label."))
-      testcaseLabel <- optionalStringAt(raw, "label").toBuildError
+      _ <- Either.cond(!raw.contains("validator"), (), buildError(s"validator cannot be declared on $label."))
       limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits)).flatMap(_.toRight(buildError(s"Limits are required for $label.")))
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker)).flatMap(_.toRight(buildError(s"Checker is required for $label.")))
-      validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator)).flatMap(_.toRight(buildError(s"Validator is required for $label.")))
       strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       resolvedChecker <- resolveChecker(manifest, checker).toBuildError
-      resolvedValidator <- resolveTool(manifest, validator, "Validator source file").toBuildError
       resolvedStrategyProvider <- strategyProvider.traverse(resolveTool(manifest, _, "Strategy provider source file")).toBuildError
       inputPath <- stringAt(raw, "input").toBuildError
       answerPath <- optionalStringAt(raw, "answer").toBuildError
@@ -256,7 +258,6 @@ object JudgeTaskBuilder:
         scoreRatio = scoreRatio,
         limits = limits,
         checker = resolvedChecker,
-        validator = resolvedValidator,
         input = inputRef,
         answer = answerRef,
         strategyProvider = resolvedStrategyProvider
@@ -437,6 +438,11 @@ object JudgeTaskBuilder:
 
   private def rejectLegacyName(raw: Map[String, Any], label: String): Either[BuildError, Unit] =
     Either.cond(!raw.contains("name"), (), buildError(s"$label must use label instead of name."))
+
+  private def judgeNodeLabel(kind: String, index: Int, label: Option[String]): String =
+    label match
+      case Some(value) => s"$kind $index ($value)"
+      case None => s"$kind $index"
 
   private def toScalaMap(value: Any): Map[String, Any] =
     value match

@@ -62,9 +62,34 @@ subtasks:
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.errors).toContain('Limits are required for testcase subtask #1/#1.')
-      expect(result.errors).toContain('Checker is required for testcase subtask #1/#1.')
-      expect(result.errors).toContain('Validator is required for testcase subtask #1/#1.')
+      expect(result.errors).toContain('Limits are required for subtask 1 testcase 1.')
+      expect(result.errors).toContain('Checker is required for subtask 1 testcase 1.')
+    }
+  })
+
+  it('rejects testcase-level validator declarations', () => {
+    const yaml = `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+        validator:
+          path: validators/validator.cpp
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('subtask 1 testcase 1.validator cannot be declared on a testcase.')
     }
   })
 
@@ -89,8 +114,8 @@ subtasks:
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.errors).toContain('subtask #1/#1.input is required.')
-      expect(result.errors).toContain('subtask #1/#1.answer is required for builtin exact checker.')
+      expect(result.errors).toContain('subtask 1 testcase 1 (1).input is required.')
+      expect(result.errors).toContain('subtask 1 testcase 1 (1).answer is required for builtin exact checker.')
     }
   })
 
@@ -218,7 +243,7 @@ subtasks:
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.errors).toContain('subtasks explicit scoreRatio values must not sum above 1.')
-      expect(result.errors).toContain('main/#1.answer does not exist: tests/missing.ans.')
+      expect(result.errors).toContain('subtask 2 (main) testcase 1 (1).answer does not exist: tests/missing.ans.')
     }
 
     const invalidRatio = validateJudgeConfigYaml(judgeConfigTemplate.replace('scoreRatio: 0.8', 'scoreRatio: 1.1'), templateFiles)

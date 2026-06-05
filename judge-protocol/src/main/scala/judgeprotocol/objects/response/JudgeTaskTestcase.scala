@@ -9,7 +9,6 @@ final case class JudgeTaskTestcase(
   scoreRatio: BigDecimal,
   limits: JudgeTaskLimits,
   checker: JudgeTaskChecker,
-  validator: JudgeTaskTool,
   input: JudgeTaskFileRef,
   answer: Option[JudgeTaskFileRef],
   strategyProvider: Option[JudgeTaskTool]

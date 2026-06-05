@@ -23,7 +23,6 @@ describe('submission-parsers', () => {
     expect(isSubmissionVerdict('accepted_by_protocol')).toBe(true)
     expect(isSubmissionVerdict('pending')).toBe(false)
     expect(isJudgeFailureReason('checker_runtime_failed')).toBe(true)
-    expect(isJudgeFailureReason('testcase_data_invalid')).toBe(true)
     expect(isJudgeFailureReason('wrong_answer')).toBe(false)
     expect(isSubmissionVerdictFilter('pending')).toBe(true)
     expect(isSubmissionVerdictFilter('accepted_by_protocol')).toBe(true)

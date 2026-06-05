@@ -104,10 +104,10 @@ object SubmissionJudgeRules:
       .flatMap(_ =>
         judgeResult.subtasks
           .map(subtask =>
-            validateNodeReason(s"subtask #${subtask.index}", subtask.verdict, subtask.reason)
+            validateNodeReason(judgeNodeLabel("subtask", subtask.index, subtask.label), subtask.verdict, subtask.reason)
               .flatMap(_ =>
                 subtask.testcases
-                  .map(testcase => validateNodeReason(s"testcase #${testcase.index}", testcase.verdict, testcase.reason))
+                  .map(testcase => validateNodeReason(judgeNodeLabel("testcase", testcase.index, testcase.label), testcase.verdict, testcase.reason))
                   .collectFirst { case Left(message) => Left(message) }
                   .getOrElse(Right(()))
               )
@@ -127,6 +127,11 @@ object SubmissionJudgeRules:
       Left(s"$label system_error verdict must include reason.")
     else
       Right(())
+
+  private def judgeNodeLabel(kind: String, index: Int, label: Option[String]): String =
+    label match
+      case Some(value) => s"$kind $index ($value)"
+      case None => s"$kind $index"
 
   private def containsSystemError(judgeResult: JudgeResult): Boolean =
     judgeResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||

@@ -22,7 +22,6 @@ object JudgeExecutor:
 
   private final case class PreparedTools(
     checkers: Map[JudgeTaskFilePath, RuntimeCommand],
-    validators: Map[JudgeTaskFilePath, RuntimeCommand],
     interactors: Map[JudgeTaskFilePath, RuntimeCommand],
     strategyProviders: Map[JudgeTaskFilePath, RuntimeCommand],
     failedStrategyProviders: Set[JudgeTaskFilePath]
@@ -100,29 +99,24 @@ object JudgeExecutor:
     problemDataCache: ProblemDataCache
   ): IO[Either[ReportJudgeResultRequest, PreparedTools]] =
     val checkerSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.checker.source))
-    val validatorSources = uniqueRefs(task.subtasks.flatMap(_.testcases).map(_.validator.source))
     val interactorSources = uniqueRefs(task.subtasks.flatMap(_.mode.interactor.map(_.source)))
     val strategyProviderSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.strategyProvider.map(_.source)))
 
     for
       checkers <- compileRequiredTools(task, config, workingDirectory, problemDataCache, checkerSources, JudgeFailureReason.CheckerCompileFailed)
-      validators <- checkers match
-        case Left(result) => IO.pure(Left(result))
-        case Right(_) => compileRequiredTools(task, config, workingDirectory, problemDataCache, validatorSources, JudgeFailureReason.ValidatorCompileFailed)
-      interactors <- validators match
+      interactors <- checkers match
         case Left(result) => IO.pure(Left(result))
         case Right(_) => compileRequiredTools(task, config, workingDirectory, problemDataCache, interactorSources, JudgeFailureReason.InteractorCompileFailed)
       strategyProviders <- interactors match
         case Left(result) => IO.pure(Left(result))
         case Right(_) => compileStrategyProviders(task, config, workingDirectory, problemDataCache, strategyProviderSources)
     yield
-      (checkers, validators, interactors, strategyProviders) match
-        case (Right(checkerCommands), Right(validatorCommands), Right(interactorCommands), Right((strategyCommands, failedStrategies))) =>
-          Right(PreparedTools(checkerCommands, validatorCommands, interactorCommands, strategyCommands, failedStrategies))
-        case (Left(result), _, _, _) => Left(result)
-        case (_, Left(result), _, _) => Left(result)
-        case (_, _, Left(result), _) => Left(result)
-        case (_, _, _, Left(result)) => Left(result)
+      (checkers, interactors, strategyProviders) match
+        case (Right(checkerCommands), Right(interactorCommands), Right((strategyCommands, failedStrategies))) =>
+          Right(PreparedTools(checkerCommands, interactorCommands, strategyCommands, failedStrategies))
+        case (Left(result), _, _) => Left(result)
+        case (_, Left(result), _) => Left(result)
+        case (_, _, Left(result)) => Left(result)
 
   private def compileRequiredTools(
     task: JudgeTask,
@@ -273,21 +267,17 @@ object JudgeExecutor:
       case Left(reason) =>
         IO.pure(testcaseSystemError(testcase, reason))
       case Right((input, answerBytes)) =>
-        validateInput(testcase, input, workingDirectory, sandbox, tools).flatMap {
-          case Left(reason) => IO.pure(testcaseSystemError(testcase, reason))
-          case Right(_) =>
-            sandbox.run(
-              SandboxExecutionRequest(
-                phase = s"run-${subtask.index}-${testcase.index}",
-                command = command.command,
-                args = command.args,
-                stdin = Some(input),
-                limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-                processLimit = command.processLimit
-              ),
-              workingDirectory
-            ).flatMap(runResult => scoreParticipantRun(task, testcase, workingDirectory, sandbox, input, runResult, answerBytes, tools))
-        }
+        sandbox.run(
+          SandboxExecutionRequest(
+            phase = s"run-${subtask.index}-${testcase.index}",
+            command = command.command,
+            args = command.args,
+            stdin = Some(input),
+            limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
+            processLimit = command.processLimit
+          ),
+          workingDirectory
+        ).flatMap(runResult => scoreParticipantRun(task, testcase, workingDirectory, sandbox, input, runResult, answerBytes, tools))
     }
 
   private def judgeInteractiveTestcase(
@@ -307,45 +297,41 @@ object JudgeExecutor:
       case Left(reason) =>
         IO.pure(testcaseSystemError(testcase, reason))
       case Right((input, answerBytes)) =>
-        validateInput(testcase, input, workingDirectory, sandbox, tools).flatMap {
-          case Left(reason) => IO.pure(testcaseSystemError(testcase, reason))
-          case Right(_) =>
-            strategyProviderRuntime(testcase, tools) match
-              case Left(_) =>
-                IO.pure(testcaseAcceptedByProtocol(testcase))
-              case Right(strategyProvider) =>
-                runInteractiveProcesses(config, subtask, testcase, input, workingDirectory, sandbox, roleCommands, interactor, interactorCommand, strategyProvider)
-                  .flatMap {
-                    case Left(reason) =>
-                      IO.pure(testcaseSystemError(testcase, reason))
-                    case Right(runResult) if interactiveToolAcceptedByProtocol(interactor, strategyProvider, runResult) =>
-                      IO.pure(testcaseAcceptedByProtocol(testcase))
-                    case Right(runResult) if runResult.status.contains("accepted_by_protocol") =>
-                      IO.pure(testcaseAcceptedByProtocol(testcase))
-                    case Right(runResult) if strategyFailed(strategyProvider, runResult.strategyProvider) =>
-                      IO.pure(testcaseAcceptedByProtocol(testcase))
-                    case Right(runResult) if runResult.interactor.exitCode.getOrElse(-1) != 0 =>
-                      IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorRuntimeFailed))
-                    case Right(runResult) =>
-                      participantFailure(runResult.participants) match
-                        case Some((verdict, participantResult)) =>
-                          IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, participantResult))
-                        case None =>
-                          scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.output, answerBytes, tools.checkers).map {
-                            case Right(checkerScore) =>
-                              testcaseResult(
-                                testcase,
-                                checkerScore.score,
-                                if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
-                                checkerScore.message,
-                                None,
-                                runResult.interactor.copy(stdout = runResult.output)
-                              )
-                            case Left(reason) =>
-                              testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
-                          }
-                }
-        }
+        strategyProviderRuntime(testcase, tools) match
+          case Left(_) =>
+            IO.pure(testcaseAcceptedByProtocol(testcase))
+          case Right(strategyProvider) =>
+            runInteractiveProcesses(config, subtask, testcase, input, workingDirectory, sandbox, roleCommands, interactor, interactorCommand, strategyProvider)
+              .flatMap {
+                case Left(reason) =>
+                  IO.pure(testcaseSystemError(testcase, reason))
+                case Right(runResult) if interactiveToolAcceptedByProtocol(interactor, strategyProvider, runResult) =>
+                  IO.pure(testcaseAcceptedByProtocol(testcase))
+                case Right(runResult) if runResult.status.contains("accepted_by_protocol") =>
+                  IO.pure(testcaseAcceptedByProtocol(testcase))
+                case Right(runResult) if strategyFailed(strategyProvider, runResult.strategyProvider) =>
+                  IO.pure(testcaseAcceptedByProtocol(testcase))
+                case Right(runResult) if runResult.interactor.exitCode.getOrElse(-1) != 0 =>
+                  IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorRuntimeFailed))
+                case Right(runResult) =>
+                  participantFailure(runResult.participants) match
+                    case Some((verdict, participantResult)) =>
+                      IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, participantResult))
+                    case None =>
+                      scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.output, answerBytes, tools.checkers).map {
+                        case Right(checkerScore) =>
+                          testcaseResult(
+                            testcase,
+                            checkerScore.score,
+                            if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
+                            checkerScore.message,
+                            None,
+                            runResult.interactor.copy(stdout = runResult.output)
+                          )
+                        case Left(reason) =>
+                          testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
+                      }
+              }
     }
 
   private def scoreParticipantRun(
@@ -376,31 +362,6 @@ object JudgeExecutor:
         case Left(reason) =>
           testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult)
       }
-
-  private def validateInput(
-    testcase: JudgeTaskTestcase,
-    input: Array[Byte],
-    workingDirectory: Path,
-    sandbox: IsolateSandbox,
-    tools: PreparedTools
-  ): IO[Either[JudgeFailureReason, Unit]] =
-    tools.validators.get(testcase.validator.source.path) match
-      case None => IO.pure(Left(JudgeFailureReason.ValidatorCompileFailed))
-      case Some(command) =>
-        sandbox.run(
-          SandboxExecutionRequest(
-            phase = s"validator-${testcase.index}",
-            command = command.command,
-            args = command.args,
-            stdin = Some(input),
-            limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-            processLimit = command.processLimit
-          ),
-          workingDirectory
-        ).map { result =>
-          if result.timedOut || result.exitCode.getOrElse(-1) != 0 then Left(JudgeFailureReason.TestcaseDataInvalid)
-          else Right(())
-        }
 
   private def strategyProviderRuntime(
     testcase: JudgeTaskTestcase,

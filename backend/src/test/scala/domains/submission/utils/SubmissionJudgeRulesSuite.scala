@@ -112,7 +112,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("testcase #1 reason is only allowed with system_error verdict."))
+    assertEquals(result.left.toOption, Some("testcase 1 (1) reason is only allowed with system_error verdict."))
   }
 
   test("completeJudging rejects nested system error without reason") {
@@ -143,7 +143,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("subtask #1 system_error verdict must include reason."))
+    assertEquals(result.left.toOption, Some("subtask 1 (sample) system_error verdict must include reason."))
   }
 
   test("completeJudging rejects failed status without system error result") {
