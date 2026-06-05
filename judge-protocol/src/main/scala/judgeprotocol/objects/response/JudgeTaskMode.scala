@@ -7,14 +7,14 @@ final case class JudgeTaskMode(
   `type`: String,
   role: Option[String],
   roles: List[String],
-  interactor: Option[JudgeTaskFileRef]
+  interactor: Option[JudgeTaskTool]
 )
 
 object JudgeTaskMode:
   def traditional(role: String): JudgeTaskMode =
     JudgeTaskMode("traditional", Some(role), Nil, None)
 
-  def interactive(roles: List[String], interactor: JudgeTaskFileRef): JudgeTaskMode =
+  def interactive(roles: List[String], interactor: JudgeTaskTool): JudgeTaskMode =
     JudgeTaskMode("interactive", None, roles, Some(interactor))
 
   given Encoder[JudgeTaskMode] = deriveEncoder[JudgeTaskMode]

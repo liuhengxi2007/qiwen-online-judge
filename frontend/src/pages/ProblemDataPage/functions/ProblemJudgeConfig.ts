@@ -60,8 +60,14 @@ type LimitsConfig = {
   memoryMb: number
 }
 
+type ToolLimitsConfig = {
+  realTimeMs: number
+  memoryMb: number
+}
+
 type ToolConfig = {
   path: string
+  limits?: ToolLimitsConfig
 }
 
 type CheckerConfig =
@@ -110,7 +116,7 @@ export function validateJudgeConfigYaml(
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
   const rootValidator = validateTool(root.validator, 'validator', ctx)
   const rootMode = validateMode(root.mode, 'mode', ctx) ?? { type: 'traditional' as const, role: 'main' }
-  validateTool(root.strategyProvider, 'strategyProvider', ctx)
+  validateLimitedTool(root.strategyProvider, 'strategyProvider', ctx)
   const rootAggregation = validateAggregation(root.aggregation, 'aggregation', ctx)
   const subtasks = validateList(root.subtasks, 'subtasks', ctx)
   if (subtasks && subtasks.length === 0) {
@@ -132,7 +138,7 @@ export function validateJudgeConfigYaml(
       const checker = validateChecker(subtask.checker, `${subtaskLabel}.checker`, ctx) ?? rootChecker
       const validator = validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx) ?? rootValidator
       const mode = validateMode(subtask.mode, `${subtaskLabel}.mode`, ctx) ?? rootMode
-      validateTool(subtask.strategyProvider, `${subtaskLabel}.strategyProvider`, ctx)
+      validateLimitedTool(subtask.strategyProvider, `${subtaskLabel}.strategyProvider`, ctx)
       const aggregation = mergeAggregation(rootAggregation, validateAggregation(subtask.aggregation, `${subtaskLabel}.aggregation`, ctx))
       const testcases = validateList(subtask.testcases, `${subtaskLabel}.testcases`, ctx)
 
@@ -157,7 +163,7 @@ export function validateJudgeConfigYaml(
           const testcaseChecker = validateChecker(testcase.checker, `${testcaseLabel}.checker`, ctx) ?? checker
           const testcaseValidator = validateTool(testcase.validator, `${testcaseLabel}.validator`, ctx) ?? validator
           if (testcase.strategyProvider !== undefined) {
-            validateTool(testcase.strategyProvider, `${testcaseLabel}.strategyProvider`, ctx)
+            validateLimitedTool(testcase.strategyProvider, `${testcaseLabel}.strategyProvider`, ctx)
           }
           validateAggregation(testcase.aggregation, `${testcaseLabel}.aggregation`, ctx)
 
@@ -246,6 +252,31 @@ function validateTool(value: unknown, label: string, ctx: ValidationContext): To
   return path ? { path } : null
 }
 
+function validateLimitedTool(value: unknown, label: string, ctx: ValidationContext): ToolConfig | null {
+  if (value === undefined) {
+    return null
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be an object with path and limits.`)
+    return null
+  }
+
+  const path = validatePathValue(value.path, `${label}.path`, ctx)
+  const limits = validateToolLimits(value.limits, `${label}.limits`, ctx)
+  return path && limits ? { path, limits } : null
+}
+
+function validateToolLimits(value: unknown, label: string, ctx: ValidationContext): ToolLimitsConfig | null {
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} is required and must be an object.`)
+    return null
+  }
+
+  const realTimeMs = validateIntegerRange(value.realTimeMs, `${label}.realTimeMs`, 1, 600000, ctx)
+  const memoryMb = validateIntegerRange(value.memoryMb, `${label}.memoryMb`, 1, 65536, ctx)
+  return realTimeMs !== null && memoryMb !== null ? { realTimeMs, memoryMb } : null
+}
+
 function validateMode(value: unknown, label: string, ctx: ValidationContext): ModeConfig | null {
   if (value === undefined) {
     return null
@@ -269,8 +300,8 @@ function validateMode(value: unknown, label: string, ctx: ValidationContext): Mo
 
   if (value.type === 'interactive') {
     const roles = validateRoleList(value.roles, `${label}.roles`, ctx)
-    const interactor = validateTool(value.interactor, `${label}.interactor`, ctx)
-    if (!interactor) {
+    const interactor = validateLimitedTool(value.interactor, `${label}.interactor`, ctx)
+    if (value.interactor === undefined) {
       ctx.errors.push(`${label}.interactor is required.`)
     }
     return roles && interactor ? { type: 'interactive', roles, interactor } : null

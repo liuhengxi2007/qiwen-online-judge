@@ -19,17 +19,20 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
     IO.blocking {
       val safePhase = IsolateSandbox.sanitizeFilename(request.phase)
       val metaPath = hostWorkingDirectory.resolve(s"$safePhase.meta")
-      val stdinPath = hostWorkingDirectory.resolve(s"$safePhase.stdin")
-      val stdoutPath = hostWorkingDirectory.resolve(s"$safePhase.stdout")
+      val defaultStdinPath = hostWorkingDirectory.resolve(s"$safePhase.stdin")
+      val stdoutFile = request.stdoutFile.getOrElse(s"$safePhase.stdout")
+      val stdoutPath = hostWorkingDirectory.resolve(stdoutFile)
       val stderrPath = hostWorkingDirectory.resolve(s"$safePhase.stderr")
       Files.deleteIfExists(metaPath)
-      Files.deleteIfExists(stdinPath)
-      Files.deleteIfExists(stdoutPath)
+      if request.stdinFile.isEmpty then Files.deleteIfExists(defaultStdinPath)
+      if request.stdoutFile.isEmpty then Files.deleteIfExists(stdoutPath)
       Files.deleteIfExists(stderrPath)
-      request.stdin.foreach(bytes => Files.write(stdinPath, bytes))
+      request.stdin.foreach(bytes => Files.write(defaultStdinPath, bytes))
       val stdinArgs =
-        if request.stdin.nonEmpty then List(s"--stdin=${stdinPath.getFileName}")
-        else Nil
+        request.stdinFile
+          .orElse(Option.when(request.stdin.nonEmpty)(defaultStdinPath.getFileName.toString))
+          .map(path => List(s"--stdin=$path"))
+          .getOrElse(Nil)
 
       val isolateArgs =
         List(
@@ -37,7 +40,7 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
           s"--box-id=${state.boxId}",
           s"--dir=/box=${hostWorkingDirectory.toAbsolutePath}:rw",
           s"--meta=${metaPath.toAbsolutePath}",
-          s"--stdout=${stdoutPath.getFileName}",
+          s"--stdout=$stdoutFile",
           s"--stderr=${stderrPath.getFileName}",
           "--chdir=/box",
           s"--time=${IsolateSandbox.secondsCeil(request.limits.timeLimit.value)}",
@@ -63,7 +66,7 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
       val launcherStdout = IsolateSandbox.readStream(process.getInputStream)
       val launcherStderr = IsolateSandbox.readStream(process.getErrorStream)
       val meta = IsolateSandbox.readMeta(metaPath)
-      val stdout = IsolateSandbox.readOptionalFile(stdoutPath)
+      val stdout = if request.captureStdout then IsolateSandbox.readOptionalFile(stdoutPath) else ""
       val stderr = IsolateSandbox.nonEmptyOrFallback(IsolateSandbox.readOptionalFile(stderrPath), launcherStderr, launcherStdout)
 
       ProcessResult(
@@ -77,20 +80,21 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
         stderr = stderr,
         timedOut = !completed || meta.get("status").contains("TO"),
         timeUsedMs = IsolateSandbox.timeUsedMs(meta),
+        wallTimeUsedMs = IsolateSandbox.wallTimeUsedMs(meta),
         memoryUsedKb = IsolateSandbox.memoryUsedKb(meta)
       )
     }
 
+  private[judger] def runInBox(boxOffset: Int, request: SandboxExecutionRequest, hostWorkingDirectory: Path): IO[ProcessResult] =
+    val boxId = IsolateSandbox.boxIdAt(state.boxId, boxOffset)
+    IsolateSandbox
+      .initialize(config, boxId, state.useCgroups)
+      .bracket(tempState => new IsolateSandbox(tempState, config).run(request, hostWorkingDirectory))(tempState =>
+        IsolateSandbox.cleanup(config, tempState)
+      )
+
   private[judger] def cleanup(): IO[Unit] =
-    IO.blocking {
-      val process = new ProcessBuilder(
-        (List(config.isolateBin, s"--box-id=${state.boxId}") ++
-          (if state.useCgroups then List("--cg") else Nil) ++
-          List("--cleanup"))*
-      ).start()
-      process.waitFor(10, TimeUnit.SECONDS)
-      ()
-    }.void.handleError(_ => ())
+    IsolateSandbox.cleanup(config, state)
 
 object IsolateSandbox:
   def resource[A](config: AppConfig)(use: IsolateSandbox => IO[A]): IO[A] =
@@ -100,17 +104,20 @@ object IsolateSandbox:
     IO.blocking {
       val state =
         if config.preferIsolateCgroups then
-          initializeAttempt(config, useCgroups = true).getOrElse(initializeUnsafe(config, useCgroups = false))
-        else initializeUnsafe(config, useCgroups = false)
+          initializeAttempt(config, config.isolateBoxId, useCgroups = true).getOrElse(initializeUnsafe(config, config.isolateBoxId, useCgroups = false))
+        else initializeUnsafe(config, config.isolateBoxId, useCgroups = false)
       new IsolateSandbox(state, config)
     }
 
-  private def initializeAttempt(config: AppConfig, useCgroups: Boolean): Option[SandboxState] =
-    scala.util.Try(initializeUnsafe(config, useCgroups)).toOption
+  private def initialize(config: AppConfig, boxId: Int, useCgroups: Boolean): IO[SandboxState] =
+    IO.blocking(initializeUnsafe(config, boxId, useCgroups))
 
-  private def initializeUnsafe(config: AppConfig, useCgroups: Boolean): SandboxState =
+  private def initializeAttempt(config: AppConfig, boxId: Int, useCgroups: Boolean): Option[SandboxState] =
+    scala.util.Try(initializeUnsafe(config, boxId, useCgroups)).toOption
+
+  private def initializeUnsafe(config: AppConfig, boxId: Int, useCgroups: Boolean): SandboxState =
     val process = new ProcessBuilder(
-      (List(config.isolateBin, s"--box-id=${config.isolateBoxId}") ++
+      (List(config.isolateBin, s"--box-id=$boxId") ++
         (if useCgroups then List("--cg") else Nil) ++
         List("--init"))*
     ).start()
@@ -123,10 +130,21 @@ object IsolateSandbox:
     stdout.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse {
       throw IllegalStateException("isolate --init returned no sandbox path.")
     }
-    SandboxState(boxId = config.isolateBoxId, useCgroups = useCgroups)
+    SandboxState(boxId = boxId, useCgroups = useCgroups)
+
+  private def cleanup(config: AppConfig, state: SandboxState): IO[Unit] =
+    IO.blocking {
+      val process = new ProcessBuilder(
+        (List(config.isolateBin, s"--box-id=${state.boxId}") ++
+          (if state.useCgroups then List("--cg") else Nil) ++
+          List("--cleanup"))*
+      ).start()
+      process.waitFor(10, TimeUnit.SECONDS)
+      ()
+    }.void.handleError(_ => ())
 
   private[judger] def readOptionalFile(path: Path): String =
-    if Files.exists(path) then Files.readString(path, StandardCharsets.UTF_8) else ""
+    if Files.exists(path) && Files.isRegularFile(path) then Files.readString(path, StandardCharsets.UTF_8) else ""
 
   private[judger] def readMeta(path: Path): Map[String, String] =
     if !Files.exists(path) then Map.empty
@@ -149,6 +167,12 @@ object IsolateSandbox:
       .flatMap(value => scala.util.Try(BigDecimal(value)).toOption)
       .map(seconds => math.max(0L, (seconds * BigDecimal(1000)).setScale(0, BigDecimal.RoundingMode.HALF_UP).toLong))
 
+  private[judger] def wallTimeUsedMs(meta: Map[String, String]): Option[Long] =
+    meta
+      .get("time-wall")
+      .flatMap(value => scala.util.Try(BigDecimal(value)).toOption)
+      .map(seconds => math.max(0L, (seconds * BigDecimal(1000)).setScale(0, BigDecimal.RoundingMode.HALF_UP).toLong))
+
   private[judger] def memoryUsedKb(meta: Map[String, String]): Option[Long] =
     meta.get("max-rss").flatMap(_.toLongOption).map(value => math.max(0L, value))
 
@@ -165,6 +189,9 @@ object IsolateSandbox:
 
   private[judger] def secondsCeil(milliseconds: Long): Long =
     math.max(1L, (milliseconds + 999L) / 1000L)
+
+  private[judger] def boxIdAt(baseBoxId: Int, offset: Int): Int =
+    Math.floorMod(baseBoxId + offset, 1000)
 
   private[judger] def nonEmptyOrFallback(primary: String, secondary: String, fallback: String): String =
     val first = primary.trim

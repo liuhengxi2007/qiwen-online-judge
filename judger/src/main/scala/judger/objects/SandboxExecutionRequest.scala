@@ -6,5 +6,8 @@ final case class SandboxExecutionRequest(
   args: List[String],
   stdin: Option[Array[Byte]],
   limits: SandboxLimits,
-  processLimit: Int
+  processLimit: Int,
+  stdinFile: Option[String] = None,
+  stdoutFile: Option[String] = None,
+  captureStdout: Boolean = true
 )

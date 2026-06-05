@@ -4,7 +4,8 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 final case class JudgeTaskTool(
-  source: JudgeTaskFileRef
+  source: JudgeTaskFileRef,
+  limits: Option[JudgeTaskToolLimits]
 )
 
 object JudgeTaskTool:

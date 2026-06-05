@@ -11,6 +11,7 @@ import judger.objects.{ProcessResult, RuntimeCommand, SandboxExecutionRequest, S
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
+import java.nio.file.attribute.PosixFilePermissions
 import scala.util.Try
 
 object JudgeExecutor:
@@ -32,6 +33,19 @@ object JudgeExecutor:
     case CompileFailed
     case SystemFailed(reason: JudgeFailureReason)
 
+  private final case class StrategyProviderRuntime(
+    tool: JudgeTaskTool,
+    command: RuntimeCommand
+  )
+
+  private final case class InteractiveRunResult(
+    interactor: ProcessResult,
+    participants: Map[String, ProcessResult],
+    strategyProvider: Option[ProcessResult],
+    output: String,
+    status: Option[String]
+  )
+
   def judge(
     task: JudgeTask,
     config: AppConfig,
@@ -45,7 +59,7 @@ object JudgeExecutor:
           case Right(programs) =>
             prepareTools(task, config, workingDirectory, problemDataCache).flatMap {
               case Left(result) => IO.pure(result)
-              case Right(tools) => judgeSubtasks(task, workingDirectory, sandbox, problemDataCache, programs, tools)
+              case Right(tools) => judgeSubtasks(task, config, workingDirectory, sandbox, problemDataCache, programs, tools)
             }
         }
       }
@@ -87,7 +101,7 @@ object JudgeExecutor:
   ): IO[Either[ReportJudgeResultRequest, PreparedTools]] =
     val checkerSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.checker.source))
     val validatorSources = uniqueRefs(task.subtasks.flatMap(_.testcases).map(_.validator.source))
-    val interactorSources = uniqueRefs(task.subtasks.flatMap(_.mode.interactor))
+    val interactorSources = uniqueRefs(task.subtasks.flatMap(_.mode.interactor.map(_.source)))
     val strategyProviderSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.strategyProvider.map(_.source)))
 
     for
@@ -192,13 +206,14 @@ object JudgeExecutor:
 
   private def judgeSubtasks(
     task: JudgeTask,
+    config: AppConfig,
     workingDirectory: Path,
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     programs: PreparedPrograms,
     tools: PreparedTools
   ): IO[ReportJudgeResultRequest] =
-    task.subtasks.traverse(subtask => judgeSubtask(task, subtask, workingDirectory, sandbox, problemDataCache, programs, tools)).map { subtasks =>
+    task.subtasks.traverse(subtask => judgeSubtask(task, config, subtask, workingDirectory, sandbox, problemDataCache, programs, tools)).map { subtasks =>
       val result = aggregateTask(task, subtasks)
       ReportJudgeResultRequest(
         status = if containsSystemError(result) then SubmissionStatus.Failed else SubmissionStatus.Completed,
@@ -208,6 +223,7 @@ object JudgeExecutor:
 
   private def judgeSubtask(
     task: JudgeTask,
+    config: AppConfig,
     subtask: JudgeTaskSubtask,
     workingDirectory: Path,
     sandbox: IsolateSandbox,
@@ -229,12 +245,12 @@ object JudgeExecutor:
         missingRole match
           case Some(_) => IO.pure(subtaskCompileError(subtask))
           case None =>
-            subtask.mode.interactor.flatMap(ref => tools.interactors.get(ref.path)) match
+            subtask.mode.interactor.flatMap(interactor => tools.interactors.get(interactor.source.path).map(interactor -> _)) match
               case None => IO.pure(subtaskSystemError(subtask, JudgeFailureReason.InteractorCompileFailed))
-              case Some(interactorCommand) =>
+              case Some((interactor, interactorCommand)) =>
                 val roleCommands = subtask.mode.roles.flatMap(role => programCommand(task, programs, role).map(role -> _)).toMap
                 subtask.testcases.traverse { testcase =>
-                  judgeInteractiveTestcase(task, subtask, testcase, workingDirectory, sandbox, problemDataCache, roleCommands, interactorCommand, tools)
+                  judgeInteractiveTestcase(task, config, subtask, testcase, workingDirectory, sandbox, problemDataCache, roleCommands, interactor, interactorCommand, tools)
                 }.map(testcases => aggregateSubtask(subtask, testcases))
       case _ =>
         IO.pure(subtaskSystemError(subtask, JudgeFailureReason.SystemError))
@@ -276,12 +292,14 @@ object JudgeExecutor:
 
   private def judgeInteractiveTestcase(
     task: JudgeTask,
+    config: AppConfig,
     subtask: JudgeTaskSubtask,
     testcase: JudgeTaskTestcase,
     workingDirectory: Path,
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     roleCommands: Map[String, RuntimeCommand],
+    interactor: JudgeTaskTool,
     interactorCommand: RuntimeCommand,
     tools: PreparedTools
   ): IO[JudgeTestcaseResult] =
@@ -292,30 +310,41 @@ object JudgeExecutor:
         validateInput(testcase, input, workingDirectory, sandbox, tools).flatMap {
           case Left(reason) => IO.pure(testcaseSystemError(testcase, reason))
           case Right(_) =>
-            runStrategyProvider(testcase, input, workingDirectory, sandbox, tools).flatMap {
+            strategyProviderRuntime(testcase, tools) match
               case Left(_) =>
                 IO.pure(testcaseAcceptedByProtocol(testcase))
-              case Right(strategyOutput) =>
-                runInteractor(subtask, testcase, input, strategyOutput, workingDirectory, sandbox, roleCommands, interactorCommand).flatMap {
-                  case Left(reason) =>
-                    IO.pure(testcaseSystemError(testcase, reason))
-                  case Right(runResult) =>
-                    val output = runResult.stdout
-                    scoreWithChecker(task, testcase, workingDirectory, sandbox, input, output, answerBytes, tools.checkers).map {
-                      case Right(checkerScore) =>
-                        testcaseResult(
-                          testcase,
-                          checkerScore.score,
-                          if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
-                          checkerScore.message,
-                          None,
-                          runResult
-                        )
-                      case Left(reason) =>
-                        testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult)
-                    }
+              case Right(strategyProvider) =>
+                runInteractiveProcesses(config, subtask, testcase, input, workingDirectory, sandbox, roleCommands, interactor, interactorCommand, strategyProvider)
+                  .flatMap {
+                    case Left(reason) =>
+                      IO.pure(testcaseSystemError(testcase, reason))
+                    case Right(runResult) if interactiveToolAcceptedByProtocol(interactor, strategyProvider, runResult) =>
+                      IO.pure(testcaseAcceptedByProtocol(testcase))
+                    case Right(runResult) if runResult.status.contains("accepted_by_protocol") =>
+                      IO.pure(testcaseAcceptedByProtocol(testcase))
+                    case Right(runResult) if strategyFailed(strategyProvider, runResult.strategyProvider) =>
+                      IO.pure(testcaseAcceptedByProtocol(testcase))
+                    case Right(runResult) if runResult.interactor.exitCode.getOrElse(-1) != 0 =>
+                      IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorRuntimeFailed))
+                    case Right(runResult) =>
+                      participantFailure(runResult.participants) match
+                        case Some((verdict, participantResult)) =>
+                          IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, participantResult))
+                        case None =>
+                          scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.output, answerBytes, tools.checkers).map {
+                            case Right(checkerScore) =>
+                              testcaseResult(
+                                testcase,
+                                checkerScore.score,
+                                if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
+                                checkerScore.message,
+                                None,
+                                runResult.interactor.copy(stdout = runResult.output)
+                              )
+                            case Left(reason) =>
+                              testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
+                          }
                 }
-            }
         }
     }
 
@@ -373,79 +402,295 @@ object JudgeExecutor:
           else Right(())
         }
 
-  private def runStrategyProvider(
+  private def strategyProviderRuntime(
     testcase: JudgeTaskTestcase,
-    input: Array[Byte],
-    workingDirectory: Path,
-    sandbox: IsolateSandbox,
     tools: PreparedTools
-  ): IO[Either[Unit, Option[String]]] =
+  ): Either[Unit, Option[StrategyProviderRuntime]] =
     testcase.strategyProvider match
-      case None => IO.pure(Right(None))
+      case None => Right(None)
+      case Some(provider) if provider.limits.isEmpty =>
+        Left(())
       case Some(provider) if tools.failedStrategyProviders.contains(provider.source.path) =>
-        IO.pure(Left(()))
+        Left(())
       case Some(provider) =>
         tools.strategyProviders.get(provider.source.path) match
-          case None => IO.pure(Left(()))
-          case Some(command) =>
-            sandbox.run(
-              SandboxExecutionRequest(
-                phase = s"strategy-${testcase.index}",
-                command = command.command,
-                args = command.args,
-                stdin = Some(input),
-                limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-                processLimit = command.processLimit
-              ),
-              workingDirectory
-            ).map { result =>
-              if result.timedOut || result.exitCode.getOrElse(-1) != 0 then Left(())
-              else Right(Some(result.stdout))
-            }
+          case None => Left(())
+          case Some(command) => Right(Some(StrategyProviderRuntime(provider, command)))
 
-  private def runInteractor(
+  private def runInteractiveProcesses(
+    config: AppConfig,
     subtask: JudgeTaskSubtask,
     testcase: JudgeTaskTestcase,
     input: Array[Byte],
-    strategyOutput: Option[String],
     workingDirectory: Path,
     sandbox: IsolateSandbox,
     roleCommands: Map[String, RuntimeCommand],
-    interactorCommand: RuntimeCommand
-  ): IO[Either[JudgeFailureReason, ProcessResult]] =
-    val safeName = s"${subtask.index}-${testcase.index}"
-    val inputPath = workingDirectory.resolve(s"interactive-$safeName.in")
-    val outputPath = workingDirectory.resolve(s"interactive-$safeName.out")
-    val strategyPath = workingDirectory.resolve(s"interactive-$safeName.strategy")
-    val roleArgs = roleCommands.toList.sortBy(_._1).flatMap { case (role, command) => List(role, command.command) }
-    val strategyArgs = strategyOutput match
-      case Some(output) => List(strategyPath.getFileName.toString)
-      case None => List("/dev/null")
-    for
-      _ <- IO.blocking {
-        Files.write(inputPath, input)
-        Files.deleteIfExists(outputPath)
-        strategyOutput match
-          case Some(output) => Files.writeString(strategyPath, output, StandardCharsets.UTF_8)
-          case None => Files.deleteIfExists(strategyPath)
+    interactor: JudgeTaskTool,
+    interactorCommand: RuntimeCommand,
+    strategyProvider: Option[StrategyProviderRuntime]
+  ): IO[Either[JudgeFailureReason, InteractiveRunResult]] =
+    interactor.limits match
+      case None => IO.pure(Left(JudgeFailureReason.SystemError))
+      case Some(interactorLimits) =>
+        val safeName = s"${subtask.index}-${testcase.index}"
+        val interactiveDir = workingDirectory.resolve(s"interactive-$safeName")
+        val inputPath = interactiveDir.resolve("input")
+        val outputPath = interactiveDir.resolve("output")
+        val statusPath = interactiveDir.resolve("status")
+        val roleFifos =
+          subtask.mode.roles.flatMap { role =>
+            roleCommands.get(role).map { command =>
+              val safeRole = sanitizeInteractiveName(role)
+              (role, command, interactiveDir.resolve(s"to-participant-$safeRole"), interactiveDir.resolve(s"from-participant-$safeRole"))
+            }
+          }
+        val strategyFifos = strategyProvider.map(_ => interactiveDir.resolve("to-strategy") -> interactiveDir.resolve("from-strategy"))
+        val fifoPaths = roleFifos.flatMap { case (_, _, toParticipant, fromParticipant) => List(toParticipant, fromParticipant) } ++
+          strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) => List(toStrategy, fromStrategy) }
+        val participantLimits =
+          SandboxLimits.runtimeWithWall(
+            timeLimitMs = testcase.limits.timeMs.value.toLong,
+            wallTimeLimitMs = interactiveParticipantWallTimeMs(testcase, interactor, strategyProvider),
+            memoryLimitMb = testcase.limits.memoryMb.value
+          )
+        val interactorArgs =
+          interactorCommand.args ++
+            List(relativeSandboxPath(workingDirectory, inputPath), relativeSandboxPath(workingDirectory, outputPath), relativeSandboxPath(workingDirectory, statusPath)) ++
+            roleFifos.flatMap { case (role, _, toParticipant, fromParticipant) =>
+              List(role, relativeSandboxPath(workingDirectory, toParticipant), relativeSandboxPath(workingDirectory, fromParticipant))
+            } ++
+            strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) =>
+              List("strategy", relativeSandboxPath(workingDirectory, toStrategy), relativeSandboxPath(workingDirectory, fromStrategy))
+            }
+
+        val run =
+          for
+            sigpipeLauncher <- ensureSigpipeIgnoreLauncher(config, workingDirectory)
+            fifoRedirectLauncher <- ensureFifoRedirectLauncher(config, workingDirectory)
+            _ <- prepareInteractiveWorkspace(interactiveDir, inputPath, outputPath, statusPath, fifoPaths, input)
+            participantFibers <- roleFifos.zipWithIndex.traverse { case ((role, command, toParticipant, fromParticipant), index) =>
+              sandbox
+                .runInBox(
+                  index + 1,
+                  SandboxExecutionRequest(
+                    phase = s"participant-$safeName-$role",
+                    command = fifoRedirectLauncher.command,
+                    args = fifoRedirectLauncher.args ++ List(
+                      relativeSandboxPath(workingDirectory, toParticipant),
+                      relativeSandboxPath(workingDirectory, fromParticipant),
+                      command.command
+                    ) ++ command.args,
+                    stdin = None,
+                    limits = participantLimits,
+                    processLimit = command.processLimit,
+                    captureStdout = false
+                  ),
+                  workingDirectory
+                )
+                .map(role -> _)
+                .start
+            }
+            strategyFiber <- strategyProvider.traverse { provider =>
+              val (toStrategy, fromStrategy) = strategyFifos.get
+              val limits = provider.tool.limits.get
+              sandbox
+                .runInBox(
+                  roleFifos.size + 1,
+                  SandboxExecutionRequest(
+                    phase = s"strategy-$safeName",
+                    command = fifoRedirectLauncher.command,
+                    args = fifoRedirectLauncher.args ++ List(
+                      relativeSandboxPath(workingDirectory, toStrategy),
+                      relativeSandboxPath(workingDirectory, fromStrategy),
+                      provider.command.command
+                    ) ++ provider.command.args,
+                    stdin = None,
+                    limits = SandboxLimits.realTime(limits.realTimeMs.value.toLong, limits.memoryMb.value),
+                    processLimit = provider.command.processLimit,
+                    captureStdout = false
+                  ),
+                  workingDirectory
+                )
+                .start
+            }
+            interactorResult <- sandbox.runInBox(
+              roleFifos.size + strategyProvider.fold(0)(_ => 1) + 1,
+              SandboxExecutionRequest(
+                phase = s"interactor-$safeName",
+                command = sigpipeLauncher.command,
+                args = sigpipeLauncher.args ++ List(interactorCommand.command) ++ interactorArgs,
+                stdin = None,
+                limits = SandboxLimits.realTime(interactorLimits.realTimeMs.value.toLong, interactorLimits.memoryMb.value),
+                processLimit = interactorCommand.processLimit
+              ),
+              workingDirectory
+            )
+            participantResults <- participantFibers.traverse(joinFiber)
+            strategyResult <- strategyFiber.traverse(joinFiber)
+            outputAndStatus <- IO.blocking {
+              val output =
+                if Files.exists(outputPath) && Files.isRegularFile(outputPath) then Files.readString(outputPath, StandardCharsets.UTF_8)
+                else interactorResult.stdout
+              val status =
+                if Files.exists(statusPath) && Files.isRegularFile(statusPath) then
+                  Option(Files.readString(statusPath, StandardCharsets.UTF_8).trim).filter(_.nonEmpty)
+                else None
+              output -> status
+            }
+          yield
+            val (output, status) = outputAndStatus
+            Right(
+              InteractiveRunResult(
+                interactor = interactorResult,
+                participants = participantResults.toMap,
+                strategyProvider = strategyResult,
+                output = output,
+                status = status
+              )
+            )
+
+        run.handleError(_ => Left(JudgeFailureReason.JudgerRuntimeFailed))
+
+  private def prepareInteractiveWorkspace(
+    interactiveDir: Path,
+    inputPath: Path,
+    outputPath: Path,
+    statusPath: Path,
+    fifoPaths: List[Path],
+    input: Array[Byte]
+  ): IO[Unit] =
+    IO.blocking {
+      Files.createDirectories(interactiveDir)
+      setWorldAccessible(interactiveDir)
+      Files.write(inputPath, input)
+      setWorldReadable(inputPath)
+      Files.deleteIfExists(outputPath)
+      Files.deleteIfExists(statusPath)
+      fifoPaths.foreach(createFifo)
+    }
+
+  private def createFifo(path: Path): Unit =
+    Files.deleteIfExists(path)
+    val process = new ProcessBuilder("mkfifo", path.toString).start()
+    val exitCode = process.waitFor()
+    if exitCode != 0 then
+      val detail = nonEmptyOrFallback(IsolateSandbox.readStream(process.getErrorStream), IsolateSandbox.readStream(process.getInputStream), "mkfifo failed")
+      throw RuntimeException(detail)
+    setWorldFifo(path)
+
+  private def setWorldAccessible(path: Path): Unit =
+    Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxrwxrwx")))
+    ()
+
+  private def setWorldReadable(path: Path): Unit =
+    Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-rw-rw-")))
+    ()
+
+  private def setWorldFifo(path: Path): Unit =
+    Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-rw-rw-")))
+    ()
+
+  private def ensureSigpipeIgnoreLauncher(config: AppConfig, workingDirectory: Path): IO[RuntimeCommand] =
+    ensureCompiledLauncher(
+      config = config,
+      workingDirectory = workingDirectory,
+      sourceName = "sigpipe-ignore.cpp",
+      executableName = "sigpipe-ignore",
+      source = SigpipeIgnoreLauncherSource
+    )
+
+  private def ensureFifoRedirectLauncher(config: AppConfig, workingDirectory: Path): IO[RuntimeCommand] =
+    ensureCompiledLauncher(
+      config = config,
+      workingDirectory = workingDirectory,
+      sourceName = "fifo-redirect.cpp",
+      executableName = "fifo-redirect",
+      source = FifoRedirectLauncherSource
+    )
+
+  private def ensureCompiledLauncher(
+    config: AppConfig,
+    workingDirectory: Path,
+    sourceName: String,
+    executableName: String,
+    source: String
+  ): IO[RuntimeCommand] =
+    val executablePath = workingDirectory.resolve(executableName)
+    if Files.exists(executablePath) && Files.isExecutable(executablePath) then
+      IO.pure(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
+    else
+      resolveCompilerPath(config).flatMap {
+        case Left(message) => IO.raiseError(RuntimeException(message))
+        case Right(compilerPath) =>
+          for
+            _ <- IO.blocking(Files.writeString(workingDirectory.resolve(sourceName), source, StandardCharsets.UTF_8))
+            compileResult <- runHostProcess(
+              command = compilerPath,
+              args = List(sourceName, "-o", executableName, "-O2"),
+              cwd = workingDirectory,
+              stdin = None,
+              limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
+              stdoutName = s".$executableName.compile.stdout",
+              stderrName = s".$executableName.compile.stderr"
+            )
+            _ <-
+              if compileResult.timedOut || compileResult.exitCode.getOrElse(-1) != 0 then
+                IO.raiseError(RuntimeException(s"Failed to compile $executableName launcher."))
+              else ensureExecutableExists(executablePath)
+          yield RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)
       }
-      result <- sandbox.run(
-        SandboxExecutionRequest(
-          phase = s"interactor-$safeName",
-          command = interactorCommand.command,
-          args = interactorCommand.args ++ List(inputPath.getFileName.toString, outputPath.getFileName.toString) ++ strategyArgs ++ roleArgs,
-          stdin = None,
-          limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-          processLimit = math.max(2, interactorCommand.processLimit + roleCommands.size + 1)
-        ),
-        workingDirectory
-      )
-      output <- IO.blocking {
-        if Files.exists(outputPath) then Files.readString(outputPath, StandardCharsets.UTF_8) else result.stdout
-      }
-    yield
-      if result.timedOut || result.exitCode.getOrElse(-1) != 0 then Left(JudgeFailureReason.InteractorRuntimeFailed)
-      else Right(result.copy(stdout = output))
+
+  private def interactiveParticipantWallTimeMs(
+    testcase: JudgeTaskTestcase,
+    interactor: JudgeTaskTool,
+    strategyProvider: Option[StrategyProviderRuntime]
+  ): Long =
+    testcase.limits.timeMs.value.toLong +
+      interactor.limits.map(_.realTimeMs.value.toLong).getOrElse(0L) +
+      strategyProvider.flatMap(_.tool.limits).map(_.realTimeMs.value.toLong).getOrElse(0L) +
+      5000L
+
+  private def interactiveToolAcceptedByProtocol(
+    interactor: JudgeTaskTool,
+    strategyProvider: Option[StrategyProviderRuntime],
+    runResult: InteractiveRunResult
+  ): Boolean =
+    toolRealTimeExceeded(interactor, runResult.interactor) ||
+      strategyProvider.exists(provider => runResult.strategyProvider.exists(result => toolRealTimeExceeded(provider.tool, result)))
+
+  private def toolRealTimeExceeded(tool: JudgeTaskTool, result: ProcessResult): Boolean =
+    tool.limits.exists(limits =>
+      result.timedOut || result.wallTimeUsedMs.exists(_ > limits.realTimeMs.value.toLong)
+    )
+
+  private def strategyFailed(strategyProvider: Option[StrategyProviderRuntime], result: Option[ProcessResult]): Boolean =
+    strategyProvider.exists(_ =>
+      result match
+        case None => true
+        case Some(current) => current.exitCode.getOrElse(-1) != 0
+    )
+
+  private def participantFailure(participants: Map[String, ProcessResult]): Option[(SubmissionVerdict, ProcessResult)] =
+    participants.toList.sortBy(_._1).collectFirst {
+      case (_, result) if result.timedOut => SubmissionVerdict.TimeLimitExceeded -> result
+      case (_, result) if result.exitCode.getOrElse(-1) != 0 => SubmissionVerdict.RuntimeError -> result
+    }
+
+  private def relativeSandboxPath(workingDirectory: Path, path: Path): String =
+    workingDirectory.relativize(path).toString
+
+  private def sanitizeInteractiveName(value: String): String =
+    value.map {
+      case current if current.isLetterOrDigit || current == '-' || current == '_' => current
+      case _ => '_'
+    }
+
+  private def joinFiber[A](fiber: cats.effect.FiberIO[A]): IO[A] =
+    fiber.join.flatMap {
+      case cats.effect.Outcome.Succeeded(result) => result
+      case cats.effect.Outcome.Errored(error) => IO.raiseError(error)
+      case cats.effect.Outcome.Canceled() => IO.canceled *> IO.never[A]
+    }
 
   private def testcaseResult(
     testcase: JudgeTaskTestcase,
@@ -699,5 +944,92 @@ object JudgeExecutor:
       |inline void quitp(double score, const char* format = "", ...) {
       |  cout << max(0.0, min(1.0, score));
       |  exit(0);
+      |}
+      |""".stripMargin
+
+  private val SigpipeIgnoreLauncherSource: String =
+    """#include <signal.h>
+      |#include <stdio.h>
+      |#include <unistd.h>
+      |
+      |int main(int argc, char** argv) {
+      |  if (argc < 2) {
+      |    return 127;
+      |  }
+      |  if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+      |    return 127;
+      |  }
+      |  execvp(argv[1], argv + 1);
+      |  perror("execvp");
+      |  return 127;
+      |}
+      |""".stripMargin
+
+  private val FifoRedirectLauncherSource: String =
+    """#include <errno.h>
+      |#include <fcntl.h>
+      |#include <stdio.h>
+      |#include <unistd.h>
+      |
+      |static int open_stdout_fifo(const char* path) {
+      |  for (;;) {
+      |    int fd = open(path, O_WRONLY | O_NONBLOCK);
+      |    if (fd >= 0) {
+      |      return fd;
+      |    }
+      |    if (errno != ENXIO && errno != EINTR) {
+      |      perror("open stdout fifo");
+      |      return -1;
+      |    }
+      |    usleep(1000);
+      |  }
+      |}
+      |
+      |static void clear_nonblock(int fd) {
+      |  int flags = fcntl(fd, F_GETFL, 0);
+      |  if (flags >= 0) {
+      |    fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+      |  }
+      |}
+      |
+      |int main(int argc, char** argv) {
+      |  if (argc < 4) {
+      |    return 127;
+      |  }
+      |
+      |  int stdin_fd = open(argv[1], O_RDONLY | O_NONBLOCK);
+      |  if (stdin_fd < 0) {
+      |    perror("open stdin fifo");
+      |    return 127;
+      |  }
+      |
+      |  int stdout_fd = open_stdout_fifo(argv[2]);
+      |  if (stdout_fd < 0) {
+      |    close(stdin_fd);
+      |    return 127;
+      |  }
+      |
+      |  clear_nonblock(stdin_fd);
+      |  clear_nonblock(stdout_fd);
+      |
+      |  if (dup2(stdin_fd, STDIN_FILENO) < 0) {
+      |    perror("dup2 stdin");
+      |    return 127;
+      |  }
+      |  if (dup2(stdout_fd, STDOUT_FILENO) < 0) {
+      |    perror("dup2 stdout");
+      |    return 127;
+      |  }
+      |
+      |  if (stdin_fd != STDIN_FILENO) {
+      |    close(stdin_fd);
+      |  }
+      |  if (stdout_fd != STDOUT_FILENO) {
+      |    close(stdout_fd);
+      |  }
+      |
+      |  execvp(argv[3], argv + 3);
+      |  perror("execvp");
+      |  return 127;
       |}
       |""".stripMargin

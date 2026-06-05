@@ -101,6 +101,7 @@ object JudgeRuntimeSupport:
         stderr = readOptionalFile(stderrPath),
         timedOut = !completed,
         timeUsedMs = None,
+        wallTimeUsedMs = None,
         memoryUsedKb = None
       )
     }

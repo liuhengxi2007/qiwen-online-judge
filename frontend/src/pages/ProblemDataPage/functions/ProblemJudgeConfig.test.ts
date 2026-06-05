@@ -18,6 +18,8 @@ function file(path: string): ProblemDataTreeNode {
 const templateFiles = [
   file('judge.yaml'),
   file('validators/validator.cpp'),
+  file('tools/interactor.cpp'),
+  file('tools/strategy.cpp'),
   file('sample/1.in'),
   file('sample/1.ans'),
   file('tests/1.in'),
@@ -116,6 +118,73 @@ subtasks:
     if (!result.ok) {
       expect(result.errors).toContain('limits.timeMs must be between 1 and 600000.')
       expect(result.errors).toContain('limits.memoryMb must be between 1 and 65536.')
+    }
+  })
+
+  it('accepts interactive tools with real-time limits', () => {
+    const yaml = `version: 2
+mode:
+  type: interactive
+  roles: [main]
+  interactor:
+    path: tools/interactor.cpp
+    limits:
+      realTimeMs: 1000
+      memoryMb: 256
+strategyProvider:
+  path: tools/strategy.cpp
+  limits:
+    realTimeMs: 1000
+    memoryMb: 256
+limits:
+  timeMs: 1000
+  memoryMb: 256
+validator:
+  path: validators/validator.cpp
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects interactive tool declarations without limits', () => {
+    const yaml = `version: 2
+mode:
+  type: interactive
+  roles: [main]
+  interactor:
+    path: tools/interactor.cpp
+strategyProvider: tools/strategy.cpp
+limits:
+  timeMs: 1000
+  memoryMb: 256
+validator:
+  path: validators/validator.cpp
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('mode.interactor.limits is required and must be an object.')
+      expect(result.errors).toContain('strategyProvider must be an object with path and limits.')
     }
   })
 

@@ -32,6 +32,8 @@ class JudgeTaskBuilderSuite extends FunSuite:
     claimedSubmission.problemSlug,
     List(
       entry("validators/validator.cpp"),
+      entry("tools/interactor.cpp"),
+      entry("tools/strategy.cpp"),
       entry("sample/1.in"),
       entry("sample/1.ans")
     )
@@ -172,6 +174,110 @@ class JudgeTaskBuilderSuite extends FunSuite:
       result.map(_.retainedPaths),
       Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("validators/validator.cpp"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
     )
+  }
+
+  test("parseConfigBytes accepts limited interactor and inherited strategy provider") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: interactive
+        |  roles: [main]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |    limits:
+        |      realTimeMs: 1000
+        |      memoryMb: 256
+        |strategyProvider:
+        |  path: tools/strategy.cpp
+        |  limits:
+        |    realTimeMs: 2000
+        |    memoryMb: 512
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      val interactor = task.subtasks.head.mode.interactor.get
+      val provider = task.subtasks.head.testcases.head.strategyProvider.get
+
+      assertEquals(interactor.source.path.value, "tools/interactor.cpp")
+      assertEquals(interactor.limits.map(_.realTimeMs.value), Some(1000))
+      assertEquals(provider.source.path.value, "tools/strategy.cpp")
+      assertEquals(provider.limits.map(_.realTimeMs.value), Some(2000))
+      assertEquals(provider.limits.map(_.memoryMb.value), Some(512))
+    }
+  }
+
+  test("parseConfigBytes rejects interactive interactor without limits") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: interactive
+        |  roles: [main]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("mode.interactor.limits is required."))
+  }
+
+  test("parseConfigBytes rejects strategy provider without limits") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |strategyProvider: tools/strategy.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("strategyProvider must be an object with path and limits."))
   }
 
   private def entry(path: String): ProblemDataManifestEntry =

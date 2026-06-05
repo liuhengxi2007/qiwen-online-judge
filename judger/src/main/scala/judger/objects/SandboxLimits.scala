@@ -16,8 +16,22 @@ final case class SandboxLimits(
 object SandboxLimits:
   def runtime(timeLimitMs: Long, memoryLimitMb: Int): SandboxLimits =
     val normalizedTimeLimit = math.max(1L, timeLimitMs)
+    runtimeWithWall(
+      timeLimitMs = normalizedTimeLimit,
+      wallTimeLimitMs = math.max(1L, (normalizedTimeLimit * 3 + 1) / 2 + 500L),
+      memoryLimitMb = memoryLimitMb
+    )
+
+  def runtimeWithWall(timeLimitMs: Long, wallTimeLimitMs: Long, memoryLimitMb: Int): SandboxLimits =
     SandboxLimits(
-      timeLimit = TimeLimitMs(normalizedTimeLimit),
-      wallTimeLimit = WallTimeLimitMs(math.max(1L, (normalizedTimeLimit * 3 + 1) / 2 + 500L)),
+      timeLimit = TimeLimitMs(math.max(1L, timeLimitMs)),
+      wallTimeLimit = WallTimeLimitMs(math.max(1L, wallTimeLimitMs)),
       memoryLimit = MemoryLimitMb(math.max(memoryLimitMb, 16))
+    )
+
+  def realTime(realTimeMs: Long, memoryLimitMb: Int): SandboxLimits =
+    runtimeWithWall(
+      timeLimitMs = realTimeMs,
+      wallTimeLimitMs = realTimeMs,
+      memoryLimitMb = memoryLimitMb
     )

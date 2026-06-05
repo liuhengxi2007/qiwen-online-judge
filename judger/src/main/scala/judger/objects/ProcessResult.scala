@@ -8,5 +8,6 @@ final case class ProcessResult(
   stderr: String,
   timedOut: Boolean,
   timeUsedMs: Option[Long],
+  wallTimeUsedMs: Option[Long],
   memoryUsedKb: Option[Long]
 )

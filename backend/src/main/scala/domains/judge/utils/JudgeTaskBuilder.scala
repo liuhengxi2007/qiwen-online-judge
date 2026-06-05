@@ -82,7 +82,7 @@ object JudgeTaskBuilder:
     parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
       val rawPaths =
         task.subtasks.flatMap { subtask =>
-          val modePaths = subtask.mode.interactor.map(_.path.value).toList
+          val modePaths = subtask.mode.interactor.map(_.source.path.value).toList
           val testcasePaths = subtask.testcases.flatMap { testcase =>
             List(
               Some(testcase.input.path.value),
@@ -127,7 +127,7 @@ object JudgeTaskBuilder:
       rootChecker <- checkerAt(root).toBuildError
       rootValidator <- toolAt(root, "validator").toBuildError
       rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
-      rootStrategyProvider <- toolAt(root, "strategyProvider").toBuildError
+      rootStrategyProvider <- limitedToolAt(root, "strategyProvider").toBuildError
       rootAggregation <- aggregationAt(root).toBuildError
       subtaskMaps <- listOfMapsAt(root, "subtasks").toBuildError
       _ <- Either.cond(subtaskMaps.nonEmpty, (), buildError("judge.yaml must define at least one subtask."))
@@ -189,7 +189,7 @@ object JudgeTaskBuilder:
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker))
       validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator))
       mode <- modeAt(raw, manifest).toBuildError.map(_.getOrElse(parentMode))
-      strategyProvider <- toolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
+      strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
       testcaseMaps <- listOfMapsAt(raw, "testcases").toBuildError
       _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"Subtask #$index must define at least one testcase."))
@@ -236,7 +236,7 @@ object JudgeTaskBuilder:
       limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits)).flatMap(_.toRight(buildError(s"Limits are required for $label.")))
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker)).flatMap(_.toRight(buildError(s"Checker is required for $label.")))
       validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator)).flatMap(_.toRight(buildError(s"Validator is required for $label.")))
-      strategyProvider <- toolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
+      strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       resolvedChecker <- resolveChecker(manifest, checker).toBuildError
       resolvedValidator <- resolveTool(manifest, validator, "Validator source file").toBuildError
       resolvedStrategyProvider <- strategyProvider.traverse(resolveTool(manifest, _, "Strategy provider source file")).toBuildError
@@ -281,9 +281,9 @@ object JudgeTaskBuilder:
               rawRoles <- listOfStringsAt(modeMap, "roles")
               roles <- rawRoles.traverse(_.validateRole)
               _ <- Either.cond(roles.nonEmpty, (), "interactive mode must declare at least one role.")
-              interactor <- requiredToolFrom(modeMap.get("interactor"), "mode.interactor")
+              interactor <- requiredLimitedToolFrom(modeMap.get("interactor"), "mode.interactor")
               resolvedInteractor <- resolveTool(manifest, interactor, "Interactor source file")
-            yield Some(JudgeTaskMode.interactive(roles, resolvedInteractor.source))
+            yield Some(JudgeTaskMode.interactive(roles, resolvedInteractor))
           case other => Left(s"Unsupported judge mode: $other.")
         }
       case Some(_) => Left("mode must be a string or an object.")
@@ -314,9 +314,14 @@ object JudgeTaskBuilder:
       case None => Right(None)
       case Some(value) => toolFrom(value, key).map(Some(_))
 
-  private def requiredToolFrom(value: Option[Any], label: String): Either[String, JudgeTaskTool] =
+  private def limitedToolAt(raw: Map[String, Any], key: String): Either[String, Option[JudgeTaskTool]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value) => limitedToolFrom(value, key).map(Some(_))
+
+  private def requiredLimitedToolFrom(value: Option[Any], label: String): Either[String, JudgeTaskTool] =
     value match
-      case Some(currentValue) => toolFrom(currentValue, label)
+      case Some(currentValue) => limitedToolFrom(currentValue, label)
       case None => Left(s"$label is required.")
 
   private def toolFrom(value: Any, label: String): Either[String, JudgeTaskTool] =
@@ -324,14 +329,29 @@ object JudgeTaskBuilder:
       case path: String =>
         toolFromPath(path, label)
       case map: Map[?, ?] =>
-        stringAt(map.asInstanceOf[Map[String, Any]], "path").flatMap(toolFromPath(_, label))
+        toolFromObject(map.asInstanceOf[Map[String, Any]], label, requireLimits = false)
       case _ =>
         Left(s"$label must be a path string or an object with a path.")
+
+  private def limitedToolFrom(value: Any, label: String): Either[String, JudgeTaskTool] =
+    value match
+      case map: Map[?, ?] =>
+        toolFromObject(map.asInstanceOf[Map[String, Any]], label, requireLimits = true)
+      case _ =>
+        Left(s"$label must be an object with path and limits.")
+
+  private def toolFromObject(raw: Map[String, Any], label: String, requireLimits: Boolean): Either[String, JudgeTaskTool] =
+    for
+      path <- stringAt(raw, "path")
+      tool <- toolFromPath(path, label)
+      limits <- toolLimitsAt(raw, label)
+      _ <- Either.cond(!requireLimits || limits.nonEmpty, (), s"$label.limits is required.")
+    yield tool.copy(limits = limits)
 
   private def toolFromPath(path: String, label: String): Either[String, JudgeTaskTool] =
     ProblemDataPath.parse(path)
       .left.map(message => s"Invalid $label path: $message")
-      .map(_ => JudgeTaskTool(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))
+      .map(_ => JudgeTaskTool(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64), None))
 
   private def limitsAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskLimits]] =
     optionalMapAt(raw, "limits").flatMap {
@@ -341,6 +361,20 @@ object JudgeTaskBuilder:
           timeMs <- intAt(limits, "timeMs").flatMap(TestcaseTimeLimitMs.parse)
           memoryMb <- intAt(limits, "memoryMb").flatMap(TestcaseMemoryLimitMb.parse)
         yield Some(JudgeTaskLimits(timeMs, memoryMb))
+    }
+
+  private def toolLimitsAt(raw: Map[String, Any], label: String): Either[String, Option[JudgeTaskToolLimits]] =
+    optionalMapAt(raw, "limits").left.map(message => s"$label.$message").flatMap {
+      case None => Right(None)
+      case Some(limits) =>
+        for
+          realTimeMs <- intAt(limits, "realTimeMs")
+            .left.map(message => s"$label.limits.$message")
+            .flatMap(TestcaseTimeLimitMs.parse)
+          memoryMb <- intAt(limits, "memoryMb")
+            .left.map(message => s"$label.limits.$message")
+            .flatMap(TestcaseMemoryLimitMb.parse)
+        yield Some(JudgeTaskToolLimits(realTimeMs, memoryMb))
     }
 
   private final case class AggregationConfig(testcases: Option[JudgeTaskAggregation], subtasks: Option[JudgeTaskAggregation]):
