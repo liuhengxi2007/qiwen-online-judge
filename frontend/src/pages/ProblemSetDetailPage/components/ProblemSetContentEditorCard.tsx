@@ -65,7 +65,7 @@ export function ProblemSetContentEditorCard({
           tab={descriptionTab}
           onTabChange={setDescriptionTab}
           onValueChange={onDescriptionChange}
-          textareaClassName="min-h-48 !font-mono"
+          textareaClassName="min-h-48 font-mono"
         />
         <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
       </div>

@@ -73,7 +73,7 @@ export function ProblemEditDialog({
               tab={statementTab}
               onTabChange={setStatementTab}
               onValueChange={model.setStatement}
-              textareaClassName="min-h-64 !font-mono"
+              textareaClassName="min-h-64 font-mono"
             />
             <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
           </div>

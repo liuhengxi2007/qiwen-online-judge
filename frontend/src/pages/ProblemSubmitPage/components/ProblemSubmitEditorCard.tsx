@@ -112,7 +112,7 @@ export function ProblemSubmitEditorCard({
                 <Textarea
                   id={`problem-submit-source-${program.id}`}
                   value={program.sourceCode}
-                  className="min-h-[22rem] rounded-3xl !font-mono text-sm"
+                  className="min-h-[22rem] rounded-3xl font-mono text-sm"
                   onChange={(event) => {
                     onProgramChange(program.id, { sourceCode: event.target.value })
                   }}

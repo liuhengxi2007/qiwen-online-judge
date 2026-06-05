@@ -116,7 +116,7 @@ function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestM
             tab={model.descriptionTab}
             onTabChange={model.setDescriptionTab}
             onValueChange={model.setDescription}
-            textareaClassName="min-h-48 !font-mono"
+            textareaClassName="min-h-48 font-mono"
           />
         </div>
 
