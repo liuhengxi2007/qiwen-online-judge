@@ -110,15 +110,6 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     setErrorMessage('')
   }, [t])
 
-  const validateCurrentContent = useCallback(() => {
-    setErrorMessage('')
-    setStatusMessage(
-      validation.ok
-        ? t('problem.data.judgeConfig.valid')
-        : t('problem.data.judgeConfig.invalid'),
-    )
-  }, [t, validation.ok])
-
   const setContent = useCallback((value: string) => {
     setContentValue(value)
     setErrorMessage('')
@@ -136,7 +127,6 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
     loadConfig,
     saveConfig,
     resetTemplate,
-    validateCurrentContent,
     setContent,
   }
 }

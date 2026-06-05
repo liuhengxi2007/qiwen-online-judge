@@ -1,4 +1,4 @@
-import { CheckCircle2, FileCode2, PauseCircle, RefreshCw, RotateCcw, Save, Wand2 } from 'lucide-react'
+import { CheckCircle2, FileCode2, PauseCircle, RefreshCw, RotateCcw, Save } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -60,16 +60,6 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
             </Button>
             <Button
               type="button"
-              variant="outline"
-              disabled={editor.isLoading || editor.isSaving}
-              className="rounded-2xl border-slate-300 bg-white"
-              onClick={editor.validateCurrentContent}
-            >
-              <Wand2 className="size-4" />
-              {t('problem.data.judgeConfig.validate')}
-            </Button>
-            <Button
-              type="button"
               disabled={editor.isSaving || editor.isLoading || !editor.isDirty}
               className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
@@ -120,7 +110,7 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
             spellCheck={false}
             value={editor.content}
             disabled={editor.isLoading}
-            className="min-h-[28rem] resize-y rounded-2xl bg-slate-950 font-mono text-sm leading-6 text-slate-50 shadow-inner selection:bg-emerald-300 selection:text-slate-950"
+            className="min-h-[28rem] resize-y rounded-2xl border-slate-300 bg-white font-mono text-sm leading-6 text-slate-950 shadow-inner selection:bg-emerald-200 selection:text-slate-950 focus-visible:ring-emerald-500"
             onChange={(event) => {
               editor.setContent(event.target.value)
             }}
