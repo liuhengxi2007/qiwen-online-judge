@@ -13,6 +13,7 @@ import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemDataStateTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.submission.objects.SubmissionResultDisplayMode
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveDecoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -77,7 +78,7 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
             .validateReadyConfigBytes(bytes, problem, manifest)
             .fold(
               message => HttpApiError.raise(HttpApiError.badRequest(message)),
-              validation => retainReadyFiles(connection, problem, manifest.entries, validation.retainedPaths)
+              validation => retainReadyFiles(connection, problem, manifest.entries, validation.retainedPaths, validation.resultDisplayMode)
             )
     yield result
 
@@ -85,7 +86,8 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
     connection: Connection,
     problem: ProblemDetail,
     entries: List[ProblemDataManifestEntry],
-    retainedPaths: Set[ProblemDataPath]
+    retainedPaths: Set[ProblemDataPath],
+    resultDisplayMode: SubmissionResultDisplayMode
   ): IO[ProblemDetail] =
     val retainedEntries = entries.filter(entry => retainedPaths.contains(entry.path))
     val redundantPaths = entries.map(_.path).filterNot(retainedPaths.contains)
@@ -100,7 +102,8 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
             problem.id,
             Instant.now(),
             ProblemDataApiHelpers.summaryFilenameForEntries(retainedEntries),
-            ready = true
+            ready = true,
+            resultDisplayMode = resultDisplayMode
           )
         )
         .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after ready update."))

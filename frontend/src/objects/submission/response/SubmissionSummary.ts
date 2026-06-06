@@ -7,12 +7,14 @@ import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage
 import type { SubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
+import type { SubmissionResultDisplayMode } from '@/objects/submission/SubmissionResultDisplayMode'
 
 export type SubmissionSummary = {
   id: SubmissionId
   problemId: ProblemId
   problemSlug: ProblemSlug
   problemTitle: ProblemTitle
+  resultDisplayMode: SubmissionResultDisplayMode
   source: SubmissionSource
   canViewDetail: boolean
   submitter: UserIdentity

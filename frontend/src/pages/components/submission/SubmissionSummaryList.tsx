@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import { Card, CardContent } from '@/components/ui/card'
-import { contestSlugValue } from '@/objects/contest/ContestSlug'
-import { contestTitleValue } from '@/objects/contest/ContestTitle'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
-import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import type { SubmissionSummary } from '@/objects/submission/response/SubmissionSummary'
@@ -12,9 +9,9 @@ import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
-  formatOptionalScore,
-  submissionJudgeStateLabel,
   submissionLanguageLabel,
+  submissionProblemPath,
+  submissionResultLabel,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { usernameValue } from '@/objects/user/Username'
@@ -31,17 +28,6 @@ type SubmissionSummaryListProps = {
   totalPages: number
   pageNumbers: number[]
   onPageChange: (page: number) => void
-}
-
-function submissionOverviewStatus(submission: SubmissionSummary): string {
-  return submissionJudgeStateLabel(submission.status, submission.verdict)
-}
-
-function submissionProblemPath(submission: SubmissionSummary): string {
-  const problemPath = `/problems/${problemSlugValue(submission.problemSlug)}`
-  return submission.source.contestSlug
-    ? `/contests/${contestSlugValue(submission.source.contestSlug)}/problems/${problemSlugValue(submission.problemSlug)}`
-    : problemPath
 }
 
 export function SubmissionSummaryList({
@@ -76,7 +62,7 @@ export function SubmissionSummaryList({
               className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
             >
               <CardContent className="py-3.5">
-                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
+                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
                   <div>
                     <dt className="text-slate-500">{t('submission.list.id')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
@@ -100,7 +86,7 @@ export function SubmissionSummaryList({
                     <dd className="mt-1 font-medium text-slate-900">
                       <Link
                         className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                        to={submissionProblemPath(submission)}
+                        to={submissionProblemPath(submission.source, submission.problemSlug)}
                       >
                         {formatProblemTitleDisplay(submission.problemTitle, submission.problemSlug, problemTitleDisplayMode)}
                       </Link>
@@ -117,30 +103,22 @@ export function SubmissionSummaryList({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-slate-500">{t('submission.list.source')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {submission.source.contestSlug && submission.source.contestTitle ? (
-                        <Link
-                          className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                          to={`/contests/${contestSlugValue(submission.source.contestSlug)}`}
-                        >
-                          {contestTitleValue(submission.source.contestTitle)}
-                        </Link>
-                      ) : (
-                        <span className="block min-h-[1.625rem] w-full py-1">{t('submission.list.problemSource')}</span>
-                      )}
-                    </dd>
-                  </div>
-                  <div>
                     <dt className="text-slate-500">{t('submission.list.language')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
                       <span className="block min-h-[1.625rem] w-full py-1">{submissionLanguageLabel(submission.language)}</span>
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-slate-500">{t('common.verdict')}</dt>
+                    <dt className="text-slate-500">{t('submission.list.result')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{submissionOverviewStatus(submission)}</span>
+                      <span className="block min-h-[1.625rem] w-full py-1">
+                        {submissionResultLabel(
+                          submission.resultDisplayMode,
+                          submission.status,
+                          submission.verdict,
+                          submission.score,
+                        )}
+                      </span>
                     </dd>
                   </div>
                   <div>
@@ -159,12 +137,6 @@ export function SubmissionSummaryList({
                     <dt className="text-slate-500">{t('submission.list.spaceUsed')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
                       <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalMemoryKb(submission.memoryUsedKb)}</span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.score')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalScore(submission.score)}</span>
                     </dd>
                   </div>
                   <div>

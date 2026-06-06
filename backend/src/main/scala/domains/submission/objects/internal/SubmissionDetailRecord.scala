@@ -1,7 +1,7 @@
 package domains.submission.objects.internal
 
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSource, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSource, SubmissionStatus, SubmissionVerdict}
 import domains.user.objects.UserIdentity
 import judgeprotocol.objects.response.JudgeResult
 
@@ -12,6 +12,7 @@ final case class SubmissionDetailRecord(
   problemId: ProblemId,
   problemSlug: ProblemSlug,
   problemTitle: ProblemTitle,
+  resultDisplayMode: SubmissionResultDisplayMode,
   source: SubmissionSource,
   submitter: UserIdentity,
   language: SubmissionLanguage,

@@ -1,4 +1,9 @@
+import { contestSlugValue } from '@/objects/contest/ContestSlug'
+import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
+import type { SubmissionResultDisplayMode } from '@/objects/submission/SubmissionResultDisplayMode'
+import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 import type { SubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
@@ -93,6 +98,27 @@ export function submissionJudgeStateLabel(
     case 'completed':
     case 'failed':
       return submissionStatusLabel(status)
+  }
+}
+
+export function submissionProblemPath(source: SubmissionSource, problemSlug: ProblemSlug): string {
+  const problemPath = `/problems/${problemSlugValue(problemSlug)}`
+  return source.contestSlug
+    ? `/contests/${contestSlugValue(source.contestSlug)}/problems/${problemSlugValue(problemSlug)}`
+    : problemPath
+}
+
+export function submissionResultLabel(
+  mode: SubmissionResultDisplayMode,
+  status: SubmissionStatus,
+  verdict: SubmissionVerdict | null,
+  score: number | null,
+): string {
+  switch (mode) {
+    case 'verdict':
+      return submissionJudgeStateLabel(status, verdict)
+    case 'score':
+      return formatOptionalScore(score)
   }
 }
 

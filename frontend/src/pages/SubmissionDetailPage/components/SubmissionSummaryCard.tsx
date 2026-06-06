@@ -4,12 +4,9 @@ import { Files, RotateCcw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
-import { contestSlugValue } from '@/objects/contest/ContestSlug'
-import { contestTitleValue } from '@/objects/contest/ContestTitle'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
-import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisplayMode'
 import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
@@ -17,9 +14,9 @@ import {
   formatCodeLength,
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
-  formatOptionalScore,
-  submissionJudgeStateLabel,
   submissionLanguageLabel,
+  submissionProblemPath,
+  submissionResultLabel,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -31,13 +28,6 @@ type SubmissionSummaryCardProps = {
   problemTitleDisplayMode: ProblemTitleDisplayMode
   rejudge: () => Promise<void>
   submission: SubmissionDetail
-}
-
-function submissionProblemPath(submission: SubmissionDetail): string {
-  const problemPath = `/problems/${problemSlugValue(submission.problemSlug)}`
-  return submission.source.contestSlug
-    ? `/contests/${contestSlugValue(submission.source.contestSlug)}/problems/${problemSlugValue(submission.problemSlug)}`
-    : problemPath
 }
 
 export function SubmissionSummaryCard({
@@ -105,13 +95,13 @@ export function SubmissionSummaryCard({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-9">
+      <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-8">
         <div>
           <p className="text-slate-500">{t('submission.list.problem')}</p>
           <p className="mt-1">
             <Link
               className="font-medium text-slate-900 hover:underline"
-              to={submissionProblemPath(submission)}
+              to={submissionProblemPath(submission.source, submission.problemSlug)}
             >
               {formatProblemTitleDisplay(
                 submission.problemTitle,
@@ -128,27 +118,20 @@ export function SubmissionSummaryCard({
           </div>
         </div>
         <div>
-          <p className="text-slate-500">{t('submission.list.source')}</p>
-          <p className="mt-1 font-medium text-slate-900">
-            {submission.source.contestSlug && submission.source.contestTitle ? (
-              <Link className="hover:underline" to={`/contests/${contestSlugValue(submission.source.contestSlug)}`}>
-                {contestTitleValue(submission.source.contestTitle)}
-              </Link>
-            ) : (
-              t('submission.list.problemSource')
-            )}
-          </p>
-        </div>
-        <div>
           <p className="text-slate-500">{t('common.languageLabel')}</p>
           <p className="mt-1 font-medium text-slate-900">
             {submissionLanguageLabel(submission.language)}
           </p>
         </div>
         <div>
-          <p className="text-slate-500">{t('common.verdict')}</p>
+          <p className="text-slate-500">{t('submission.list.result')}</p>
           <p className="mt-1 font-medium text-slate-900">
-            {submissionJudgeStateLabel(submission.status, submission.verdict)}
+            {submissionResultLabel(
+              submission.resultDisplayMode,
+              submission.status,
+              submission.verdict,
+              submission.score,
+            )}
           </p>
         </div>
         <div>
@@ -165,12 +148,6 @@ export function SubmissionSummaryCard({
           <p className="text-slate-500">{t('submission.list.spaceUsed')}</p>
           <p className="mt-1 font-medium text-slate-900">
             {formatOptionalMemoryKb(submission.memoryUsedKb)}
-          </p>
-        </div>
-        <div>
-          <p className="text-slate-500">{t('submission.list.score')}</p>
-          <p className="mt-1 font-medium text-slate-900">
-            {formatOptionalScore(submission.score)}
           </p>
         </div>
         <div>

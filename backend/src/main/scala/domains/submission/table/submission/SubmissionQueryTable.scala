@@ -233,6 +233,7 @@ object SubmissionQueryTable:
       |       s.problem_id,
       |       p.slug as problem_slug,
       |       p.title as problem_title,
+      |       p.result_display_mode,
       |       $detailVisibilityPredicate as can_view_detail,
       |       source_c.slug as source_contest_slug,
       |       source_c.title as source_contest_title,
@@ -327,6 +328,7 @@ object SubmissionQueryTable:
       |       s.problem_id,
       |       p.slug as problem_slug,
       |       p.title as problem_title,
+      |       p.result_display_mode,
       |       $contestSubmissionOwnerPredicate as can_view_detail,
       |       source_c.slug as source_contest_slug,
       |       source_c.title as source_contest_title,
@@ -413,7 +415,7 @@ object SubmissionQueryTable:
 
   private val findByIdSQL: String =
     s"""
-      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, source_c.slug as source_contest_slug, source_c.title as source_contest_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, s.code_length, s.program_manifest::text as program_manifest, s.submitted_at, s.started_at, s.finished_at
+      |select s.public_id, s.problem_id, p.slug as problem_slug, p.title as problem_title, p.result_display_mode, source_c.slug as source_contest_slug, source_c.title as source_contest_title, ${UserIdentitySql.selectColumns("s.submitter_username", "submitter", "au")}, s.language, s.status, s.verdict, s.time_used_ms, s.memory_used_kb, s.score, s.judge_result::text as judge_result, s.code_length, s.program_manifest::text as program_manifest, s.submitted_at, s.started_at, s.finished_at
       |from submissions s
       |join problems p on p.id = s.problem_id
       |left join contests source_c on source_c.id = s.contest_id

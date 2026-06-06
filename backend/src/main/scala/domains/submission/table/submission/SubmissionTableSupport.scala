@@ -5,7 +5,7 @@ package domains.submission.table.submission
 import domains.contest.objects.{ContestSlug, ContestTitle}
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.objects.response.SubmissionSummary
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSource, SubmissionStatus, SubmissionVerdict}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSource, SubmissionStatus, SubmissionVerdict}
 import database.utils.UserIdentitySql
 import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
@@ -31,6 +31,11 @@ object SubmissionTableSupport:
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      resultDisplayMode = parseColumn(
+        "problems.result_display_mode",
+        resultSet.getString("result_display_mode"),
+        SubmissionResultDisplayMode.parse
+      ),
       source = readSubmissionSource(resultSet),
       canViewDetail = resultSet.getBoolean("can_view_detail"),
       submitter = readUserIdentity(resultSet, "submitter"),
@@ -52,6 +57,11 @@ object SubmissionTableSupport:
       problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
       problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
       problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      resultDisplayMode = parseColumn(
+        "problems.result_display_mode",
+        resultSet.getString("result_display_mode"),
+        SubmissionResultDisplayMode.parse
+      ),
       source = readSubmissionSource(resultSet),
       submitter = readUserIdentity(resultSet, "submitter"),
       language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),

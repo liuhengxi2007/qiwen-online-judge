@@ -5,7 +5,7 @@ import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestId
-import domains.problem.api.EvaluateProblemAccess
+import domains.problem.api.{EvaluateProblemAccess, GetProblemSubmissionResultDisplayMode}
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
@@ -73,6 +73,10 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
       programs <- validatePrograms(request.programs)
       validRequest = request.copy(problemSlug = problemSlug, programs = programs)
       submissionUuid <- IO.randomUUID
+      resultDisplayMode <- GetProblemSubmissionResultDisplayMode.plan(connection, problemId).flatMap {
+        case Some(value) => IO.pure(value)
+        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+      }
       manifestInput = validRequest.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
       programManifest <- HttpApiError.fromEitherBadRequest(SubmissionProgramManifest.fromPrograms(submissionUuid, manifestInput))
       _ <- programManifest.programs.toList.traverse_ { case (role, program) =>
@@ -87,6 +91,7 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
           contestId = contestId,
           problemSlug = problemSlug,
           problemTitle = problemTitle,
+          resultDisplayMode = resultDisplayMode,
           source = source,
           submitterUsername = actor.username,
           programManifest = programManifest,

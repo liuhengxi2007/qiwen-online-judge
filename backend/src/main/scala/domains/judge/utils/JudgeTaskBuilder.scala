@@ -3,6 +3,7 @@ package domains.judge.utils
 import cats.syntax.all.*
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
+import domains.submission.objects.SubmissionResultDisplayMode
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
 import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
 import judgeprotocol.objects.response.*
@@ -14,7 +15,8 @@ import scala.util.Try
 object JudgeTaskBuilder:
 
   final case class ReadyValidation(
-    retainedPaths: Set[ProblemDataPath]
+    retainedPaths: Set[ProblemDataPath],
+    resultDisplayMode: SubmissionResultDisplayMode
   )
 
   final case class BuildError(
@@ -96,8 +98,18 @@ object JudgeTaskBuilder:
         }
       rawPaths
         .traverse(ProblemDataPath.parse)
-        .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml")))
+        .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml"), resultDisplayModeFor(task)))
     }
+
+  private[utils] def resultDisplayModeFor(task: JudgeTask): SubmissionResultDisplayMode =
+    task.subtasks match
+      case singleSubtask :: Nil
+          if singleSubtask.aggregation.score == "min" &&
+            (singleSubtask.aggregation.time == "max" || singleSubtask.aggregation.time == "sum") &&
+            singleSubtask.aggregation.memory == "max" =>
+        SubmissionResultDisplayMode.Verdict
+      case _ =>
+        SubmissionResultDisplayMode.Score
 
   private def parseYaml(bytes: Array[Byte]): Either[BuildError, Map[String, Any]] =
     Try {

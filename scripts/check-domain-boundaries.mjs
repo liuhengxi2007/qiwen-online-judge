@@ -111,6 +111,7 @@ const publicModelTypes = new Map([
     'ClaimedSubmission',
     'SubmissionId',
     'SubmissionLanguage',
+    'SubmissionResultDisplayMode',
     'SubmissionSourceCode',
   ])],
   ['user', new Set([

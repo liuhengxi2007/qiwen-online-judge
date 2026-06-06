@@ -4,7 +4,7 @@ import cats.effect.IO
 import database.utils.UserIdentitySql
 import domains.contest.objects.ContestId
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
-import domains.submission.objects.{SubmissionId, SubmissionSource, SubmissionSourceCode, SubmissionStatus}
+import domains.submission.objects.{SubmissionId, SubmissionResultDisplayMode, SubmissionSource, SubmissionSourceCode, SubmissionStatus}
 import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionTableSupport.*
@@ -31,6 +31,7 @@ object SubmissionMutationTable:
     contestId: Option[ContestId],
     problemSlug: ProblemSlug,
     problemTitle: ProblemTitle,
+    resultDisplayMode: SubmissionResultDisplayMode,
     source: SubmissionSource,
     submitterUsername: Username,
     programManifest: SubmissionProgramManifest,
@@ -60,6 +61,7 @@ object SubmissionMutationTable:
               problemId = problemId,
               problemSlug = problemSlug,
               problemTitle = problemTitle,
+              resultDisplayMode = resultDisplayMode,
               source = source,
               canManage = false,
               submitter = readUserIdentity(resultSet, "submitter"),

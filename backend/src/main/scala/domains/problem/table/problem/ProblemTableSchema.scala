@@ -18,6 +18,7 @@ object ProblemTableSchema:
       |  data_name varchar(255),
       |  data_bytes bytea,
       |  ready boolean not null default false,
+      |  result_display_mode varchar(32) not null default 'score' check (result_display_mode in ('verdict', 'score')),
       |  base_access varchar(32) not null default 'restricted' check (base_access in ('restricted', 'public')),
       |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
       |  author_username varchar(120) references auth_accounts(username) on delete set null,
@@ -252,6 +253,58 @@ object ProblemTableSchema:
       |alter column ready set default false
       |""".stripMargin
 
+  val addResultDisplayModeColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'result_display_mode'
+      |  ) then
+      |    alter table problems add column result_display_mode varchar(32);
+      |  end if;
+      |
+      |  if exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'problems_result_display_mode_check'
+      |      and conrelid = 'problems'::regclass
+      |  ) then
+      |    alter table problems drop constraint problems_result_display_mode_check;
+      |  end if;
+      |
+      |  update problems
+      |  set result_display_mode = 'score'
+      |  where result_display_mode is null
+      |    or btrim(result_display_mode) = ''
+      |    or result_display_mode not in ('verdict', 'score');
+      |
+      |  if not exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'problems_result_display_mode_check'
+      |      and conrelid = 'problems'::regclass
+      |  ) then
+      |    alter table problems add constraint problems_result_display_mode_check check (result_display_mode in ('verdict', 'score'));
+      |  end if;
+      |end $$;
+      |""".stripMargin
+
+  val setResultDisplayModeDefaultSql: String =
+    """
+      |alter table problems
+      |alter column result_display_mode set default 'score'
+      |""".stripMargin
+
+  val setResultDisplayModeNotNullSql: String =
+    """
+      |alter table problems
+      |alter column result_display_mode set not null
+      |""".stripMargin
+
   val setBaseAccessNotNullSql: String =
     """
       |alter table problems
@@ -337,6 +390,9 @@ object ProblemTableSchema:
         statement.execute(dropSpaceLimitColumnSql)
         statement.execute(setReadyDefaultSql)
         statement.execute(setReadyNotNullSql)
+        statement.execute(addResultDisplayModeColumnSql)
+        statement.execute(setResultDisplayModeDefaultSql)
+        statement.execute(setResultDisplayModeNotNullSql)
         statement.execute(setBaseAccessDefaultSql)
         statement.execute(setBaseAccessNotNullSql)
         statement.execute(migrateOtherUserSubmissionAccessColumnSql)

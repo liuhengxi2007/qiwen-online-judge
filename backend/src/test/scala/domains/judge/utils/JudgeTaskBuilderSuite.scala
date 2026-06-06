@@ -4,7 +4,7 @@ import domains.problem.objects.response.ProblemDetail
 import domains.problem.objects.{OtherUserSubmissionAccess, ProblemData, ProblemDataPath, ProblemId, ProblemSlug, ProblemStatementText, ProblemTitle}
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import domains.user.objects.{DisplayName, UserIdentity, Username}
-import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionSourceCode}
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSourceCode}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
 import munit.FunSuite
 import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
@@ -228,6 +228,77 @@ class JudgeTaskBuilderSuite extends FunSuite:
       result.map(_.retainedPaths),
       Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("validators/validator.cpp"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
     )
+  }
+
+  test("validateReadyConfigBytes derives verdict display for a single min testcase-aggregated subtask") {
+    val result = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: min_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+
+    assertEquals(result.map(_.resultDisplayMode), Right(SubmissionResultDisplayMode.Verdict))
+  }
+
+  test("validateReadyConfigBytes derives score display for multi-subtask and sum testcase aggregation") {
+    val multiSubtask = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: min_sum_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+    val sumAggregation = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+
+    assertEquals(multiSubtask.map(_.resultDisplayMode), Right(SubmissionResultDisplayMode.Score))
+    assertEquals(sumAggregation.map(_.resultDisplayMode), Right(SubmissionResultDisplayMode.Score))
   }
 
   test("parseConfigBytes accepts limited interactor and inherited strategy provider") {

@@ -9,6 +9,7 @@ import domains.problem.objects.request.{ProblemListRequest, ProblemSearchQuery}
 import domains.problem.objects.response.{ProblemDetail, ProblemSuggestion, ProblemSummary}
 import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
 import domains.problem.table.problem.ProblemTableSupport.*
+import domains.submission.objects.SubmissionResultDisplayMode
 import shared.objects.PageResponse
 import shared.objects.access.GrantRole
 
@@ -183,6 +184,27 @@ object ProblemQueryTable:
 
   def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     findBySlugUsing(connection, slug, findBySlugSQL)
+
+  private val findResultDisplayModeByIdSQL: String =
+    """
+      |select result_display_mode
+      |from problems
+      |where id = ?
+      |""".stripMargin
+
+  def findResultDisplayModeById(connection: Connection, problemId: ProblemId): IO[Option[SubmissionResultDisplayMode]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(findResultDisplayModeByIdSQL)
+      try
+        statement.setObject(1, problemId.value)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then
+            Some(parseColumn("problems.result_display_mode", resultSet.getString("result_display_mode"), SubmissionResultDisplayMode.parse))
+          else None
+        finally resultSet.close()
+      finally statement.close()
+    }
 
   private val findBySlugForUpdateSQL: String =
     findBySlugSQL + "\nfor update of p"

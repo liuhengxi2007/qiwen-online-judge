@@ -63,6 +63,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest, contestSl
         ...summary,
         status: detail.status,
         verdict: detail.verdict,
+        resultDisplayMode: detail.resultDisplayMode,
         timeUsedMs: detail.timeUsedMs,
         memoryUsedKb: detail.memoryUsedKb,
         score: detail.score,
