@@ -45,6 +45,38 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     )
   }
 
+  test("strategy provider read wait at provider budget is protocol-side success") {
+    val wallOnly = wallTimeout(timeUsedMs = 25)
+
+    assertEquals(
+      JudgeExecutor.interactiveWallOnlyVerdict(
+        participants = Map.empty,
+        participantCpuLimitMs = 1000,
+        processes = List(wallOnly -> 1000L),
+        fallback = wallOnly,
+        strategyProviderReadWaitMs = Some(500L),
+        strategyProviderIdleLimitMs = Some(500L)
+      ).map(_._1),
+      Some(SubmissionVerdict.AcceptedByProtocol)
+    )
+  }
+
+  test("strategy provider read wait below provider budget remains idleness limit exceeded") {
+    val wallOnly = wallTimeout(timeUsedMs = 25)
+
+    assertEquals(
+      JudgeExecutor.interactiveWallOnlyVerdict(
+        participants = Map.empty,
+        participantCpuLimitMs = 1000,
+        processes = List(wallOnly -> 1000L),
+        fallback = wallOnly,
+        strategyProviderReadWaitMs = Some(499L),
+        strategyProviderIdleLimitMs = Some(500L)
+      ).map(_._1),
+      Some(SubmissionVerdict.IdlenessLimitExceeded)
+    )
+  }
+
   test("wall-only timeout reports participant runtime error first") {
     val wallOnly = wallTimeout(timeUsedMs = 25)
     val runtimeError = okResult(exitCode = Some(1))
@@ -54,7 +86,9 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
         participants = Map("main" -> runtimeError),
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L, runtimeError -> 1000L),
-        fallback = wallOnly
+        fallback = wallOnly,
+        strategyProviderReadWaitMs = Some(1000L),
+        strategyProviderIdleLimitMs = Some(500L)
       ).map(_._1),
       Some(SubmissionVerdict.RuntimeError)
     )
@@ -83,6 +117,35 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
   test("sandbox CPU time does not fall back to wall time") {
     assertEquals(IsolateSandbox.timeUsedMs(Map("time-wall" -> "4.2")), None)
     assertEquals(IsolateSandbox.wallTimeUsedMs(Map("time-wall" -> "4.2")), Some(4200L))
+  }
+
+  test("strategy provider read monitor parser sums complete pairs") {
+    val log =
+      """begin 1 100
+        |end 1 180 4
+        |begin 2 250
+        |end 2 300 0
+        |""".stripMargin
+
+    assertEquals(JudgeExecutor.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(1000L)), 130L)
+  }
+
+  test("strategy provider read monitor parser closes pending begin with interactor wall time") {
+    val log =
+      """begin 1 100
+        |end 1 150 4
+        |begin 2 200
+        |""".stripMargin
+
+    assertEquals(JudgeExecutor.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(500L)), 450L)
+  }
+
+  test("strategy provider read monitor parser ignores empty or uncaptured logs") {
+    assertEquals(JudgeExecutor.strategyProviderReadWaitMs("", interactorWallTimeUsedMs = Some(1000L)), 0L)
+    assertEquals(
+      JudgeExecutor.strategyProviderReadWaitMs("begin 1 100\n", interactorWallTimeUsedMs = None),
+      0L
+    )
   }
 
   private def testcaseWithLimits(timeMs: Int): JudgeTaskTestcase =
