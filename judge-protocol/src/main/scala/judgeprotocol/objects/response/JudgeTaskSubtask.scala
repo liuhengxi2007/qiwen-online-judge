@@ -9,6 +9,7 @@ final case class JudgeTaskSubtask(
   scoreRatio: BigDecimal,
   mode: JudgeTaskMode,
   validator: Option[JudgeTaskTool],
+  standard: Option[JudgeTaskStandard],
   aggregation: JudgeTaskAggregation,
   testcases: List[JudgeTaskTestcase]
 )

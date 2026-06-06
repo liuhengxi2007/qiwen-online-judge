@@ -1,6 +1,10 @@
 import type { CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { SubmissionId } from '@/objects/submission/SubmissionId'
+import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
@@ -15,9 +19,10 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmissionJudgeResultCardProps = {
   judgeResult: JudgeResult
+  submissionId: SubmissionId
 }
 
-export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResultCardProps) {
+export function SubmissionJudgeResultCard({ judgeResult, submissionId }: SubmissionJudgeResultCardProps) {
   const { t } = useI18n()
 
   return (
@@ -48,61 +53,70 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
         </div>
         <JudgeReasonLine label={t('submission.detail.reason')} reason={judgeResult.reason} />
 
-        {judgeResult.subtasks.map((subtask) => (
-          <div key={subtask.index} className="rounded-lg border border-slate-200">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-              <div>
-                <p className="font-medium text-slate-950">{resultNodeTitle('subtask', subtask.index, subtask.label)}</p>
-                <p className="text-sm text-slate-500">
-                  <span style={submissionVerdictTextStyle(subtask.verdict)}>
-                    {submissionVerdictLabel(subtask.verdict)}
-                  </span>{' '}
-                  · <span style={scoreTextStyleForRatio(subtask.score)}>{formatOptionalScore(subtask.score)}</span>
-                </p>
-                <JudgeReasonLine label={t('submission.detail.reason')} reason={subtask.reason} />
+        {judgeResult.subtasks.map((subtask) => {
+          const canHackSubtask = subtask.lowestScore > 0
+
+          return (
+            <div key={subtask.index} className="rounded-lg border border-slate-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                <div>
+                  <p className="font-medium text-slate-950">{resultNodeTitle('subtask', subtask.index, subtask.label)}</p>
+                  <p className="text-sm text-slate-500">
+                    <span style={submissionVerdictTextStyle(subtask.verdict)}>
+                      {submissionVerdictLabel(subtask.verdict)}
+                    </span>{' '}
+                    · <span style={scoreTextStyleForRatio(subtask.score)}>{formatOptionalScore(subtask.score)}</span>
+                  </p>
+                  <JudgeReasonLine label={t('submission.detail.reason')} reason={subtask.reason} />
+                </div>
+                <div className="text-sm text-slate-500">
+                  {formatOptionalDurationMs(subtask.timeUsedMs)} · {formatOptionalMemoryKb(subtask.memoryUsedKb)}
+                </div>
+                {canHackSubtask ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to={`/submissions/${submissionIdValue(submissionId)}/hack/${subtask.index}`}>{t('hack.action')}</Link>
+                  </Button>
+                ) : null}
               </div>
-              <div className="text-sm text-slate-500">
-                {formatOptionalDurationMs(subtask.timeUsedMs)} · {formatOptionalMemoryKb(subtask.memoryUsedKb)}
-              </div>
-            </div>
-            {subtask.testcases.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[840px] text-left text-sm">
-                  <thead className="bg-slate-50 text-slate-500">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">{t('submission.detail.testcases')}</th>
-                      <th className="px-4 py-2 font-medium">{t('common.verdict')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.list.score')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.list.timeUsed')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.list.spaceUsed')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.detail.testcaseDetail')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subtask.testcases.map((testcase) => (
-                      <tr key={testcase.index} className="border-t border-slate-100">
-                        <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle('testcase', testcase.index, testcase.label)}</td>
-                        <td className="px-4 py-2 text-slate-700" style={submissionVerdictTextStyle(testcase.verdict)}>
-                          {submissionVerdictLabel(testcase.verdict)}
-                        </td>
-                        <td className="px-4 py-2 text-slate-700" style={scoreTextStyleForRatio(testcase.score)}>
-                          {formatOptionalScore(testcase.score)}
-                        </td>
-                        <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
-                        <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
-                        <td className="max-w-[320px] whitespace-pre-wrap px-4 py-2 text-slate-700">
-                          {formatTestcaseDetail(testcase.reason, testcase.message)}
-                        </td>
+              {subtask.testcases.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[840px] text-left text-sm">
+                    <thead className="bg-slate-50 text-slate-500">
+                      <tr>
+                        <th className="px-4 py-2 font-medium">{t('submission.detail.testcases')}</th>
+                        <th className="px-4 py-2 font-medium">{t('common.verdict')}</th>
+                        <th className="px-4 py-2 font-medium">{t('submission.list.score')}</th>
+                        <th className="px-4 py-2 font-medium">{t('submission.list.timeUsed')}</th>
+                        <th className="px-4 py-2 font-medium">{t('submission.list.spaceUsed')}</th>
+                        <th className="px-4 py-2 font-medium">{t('submission.detail.testcaseDetail')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="px-4 py-3 text-sm text-slate-500">{t('submission.detail.noTestcases')}</p>
-            )}
-          </div>
-        ))}
+                    </thead>
+                    <tbody>
+                      {subtask.testcases.map((testcase) => (
+                        <tr key={testcase.index} className="border-t border-slate-100">
+                          <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle('testcase', testcase.index, testcase.label)}</td>
+                          <td className="px-4 py-2 text-slate-700" style={submissionVerdictTextStyle(testcase.verdict)}>
+                            {submissionVerdictLabel(testcase.verdict)}
+                          </td>
+                          <td className="px-4 py-2 text-slate-700" style={scoreTextStyleForRatio(testcase.score)}>
+                            {formatOptionalScore(testcase.score)}
+                          </td>
+                          <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
+                          <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
+                          <td className="max-w-[320px] whitespace-pre-wrap px-4 py-2 text-slate-700">
+                            {formatTestcaseDetail(testcase.reason, testcase.message)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="px-4 py-3 text-sm text-slate-500">{t('submission.detail.noTestcases')}</p>
+              )}
+            </div>
+          )
+        })}
       </CardContent>
     </Card>
   )

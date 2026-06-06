@@ -1,7 +1,7 @@
 package judger.infra
 
 import judgeprotocol.objects.{SubmissionVerdict, TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
-import judgeprotocol.objects.response.{JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskTestcase, JudgeTaskTool, JudgeTaskToolLimits}
+import judgeprotocol.objects.response.{JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskTestcase, JudgeTaskTool, JudgeTaskToolLimits, JudgeTestcaseType}
 import judger.objects.ProcessResult
 import munit.FunSuite
 
@@ -152,6 +152,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     JudgeTaskTestcase(
       index = 1,
       label = None,
+      testcaseType = JudgeTestcaseType.Main,
       scoreRatio = BigDecimal(1),
       limits = JudgeTaskLimits(TestcaseTimeLimitMs(timeMs), TestcaseMemoryLimitMb(256)),
       checker = JudgeTaskChecker("builtin", Some("exact"), None),

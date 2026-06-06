@@ -4,6 +4,7 @@ import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 export type JudgeTestcaseResult = {
   index: number
   label: string | null
+  testcaseType: 'main' | 'sample' | 'hack'
   score: number
   verdict: SubmissionVerdict
   message: string | null

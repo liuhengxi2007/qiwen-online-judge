@@ -23,6 +23,8 @@ object SubmissionRouter:
         RejudgeSubmission(submissionProgramStorage),
         ClaimNextJudgeSubmission,
         GetSubmissionJudgeState,
-        UpdateSubmissionJudgeState
+        UpdateSubmissionJudgeState,
+        QueueHackRejudgeForProblem,
+        RequeueStaleHackRevisionSubmission
       )
     )

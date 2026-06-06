@@ -4,8 +4,8 @@ import cats.effect.IO
 import io.circe.parser.decode
 import io.circe.syntax.*
 import judgeprotocol.objects.{JudgerId, ProblemSlug, SubmissionId}
-import judgeprotocol.objects.request.{ClaimJudgeTaskRequest, JudgerHeartbeatRequest, RegisterJudgerRequest, ReportJudgeResultRequest}
-import judgeprotocol.objects.response.{JudgeTask, RegisterJudgerResponse}
+import judgeprotocol.objects.request.{ClaimJudgeTaskRequest, JudgerHeartbeatRequest, RegisterJudgerRequest, ReportHackResultRequest, ReportJudgeResultRequest}
+import judgeprotocol.objects.response.{JudgeWorkerTask, RegisterJudgerResponse}
 import judger.config.AppConfig
 
 import java.net.{URI, URLEncoder}
@@ -40,7 +40,7 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig) extends P
       body = Some(JudgerHeartbeatRequest().asJson.noSpaces)
     ).flatMap(handleHeartbeatResponse(judgerId, _))
 
-  def claimTask(judgerId: JudgerId): IO[Option[JudgeTask]] =
+  def claimTask(judgerId: JudgerId): IO[Option[JudgeWorkerTask]] =
     requestRaw(
       path = "/api/worker/judge/claim",
       method = "POST",
@@ -50,12 +50,19 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig) extends P
       else if !response.isSuccess then
         requestFailed("Claim failed", response)
       else
-        IO.fromEither(decode[JudgeTask](response.body).left.map(error => RuntimeException(error.getMessage))).map(Some(_))
+        IO.fromEither(decode[JudgeWorkerTask](response.body).left.map(error => RuntimeException(error.getMessage))).map(Some(_))
     }
 
   def reportResult(submissionId: SubmissionId, result: ReportJudgeResultRequest): IO[Unit] =
     requestExpectSuccess(
       path = s"/api/worker/judge/submissions/${submissionId.value}/complete",
+      method = "POST",
+      body = Some(result.asJson.noSpaces)
+    ).void
+
+  def reportHackResult(hackId: Long, result: ReportHackResultRequest): IO[Unit] =
+    requestExpectSuccess(
+      path = s"/api/worker/judge/hacks/$hackId/complete",
       method = "POST",
       body = Some(result.asJson.noSpaces)
     ).void

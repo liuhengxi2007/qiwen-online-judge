@@ -17,6 +17,7 @@ import { enApiMessages } from '@/system/i18n/messages/en/api'
 import { enMessageMessages } from '@/system/i18n/messages/en/message'
 import { enNotificationMessages } from '@/system/i18n/messages/en/notification'
 import { enContestMessages } from '@/system/i18n/messages/en/contest'
+import { enHackMessages } from '@/system/i18n/messages/en/hack'
 
 export const enMessages: Record<string, string> = {
   ...enCommonMessages,
@@ -38,4 +39,5 @@ export const enMessages: Record<string, string> = {
   ...enMessageMessages,
   ...enNotificationMessages,
   ...enContestMessages,
+  ...enHackMessages,
 }

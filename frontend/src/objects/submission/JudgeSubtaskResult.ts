@@ -6,9 +6,11 @@ export type JudgeSubtaskResult = {
   index: number
   label: string | null
   score: number
+  lowestScore: number
   verdict: SubmissionVerdict
   timeUsedMs: number | null
   memoryUsedKb: number | null
   reason: JudgeFailureReason | null
   testcases: JudgeTestcaseResult[]
+  baseResult: JudgeSubtaskResult | null
 }

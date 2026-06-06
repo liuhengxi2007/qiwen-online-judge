@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.PublicApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
-import domains.submission.api.{GetSubmissionJudgeState, UpdateSubmissionJudgeState}
+import domains.submission.api.{GetSubmissionJudgeState, RequeueStaleHackRevisionSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeCompletion
 import domains.submission.utils.SubmissionJudgeRules
@@ -54,6 +54,7 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
             case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
             case Right(completedState) => IO.pure(completedState)
           _ <- UpdateSubmissionJudgeState.plan(connection, UpdateSubmissionJudgeState.input(submissionId, completedState))
+          _ <- RequeueStaleHackRevisionSubmission.plan(connection, submissionId)
         yield SuccessResponse(code = Some(ApiMessages.judgeResultRecorded.code), message = None, params = ApiMessages.judgeResultRecorded.params)
       case _ =>
         HttpApiError.raise(HttpApiError.badRequest("Judge results may only set status to completed or failed."))

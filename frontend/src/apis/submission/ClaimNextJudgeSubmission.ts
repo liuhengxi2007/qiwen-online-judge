@@ -6,6 +6,7 @@ import type { SubmissionJudgeState } from '@/objects/submission/SubmissionJudgeS
 type ClaimNextJudgeSubmissionBody = {
   languages: SubmissionLanguage[]
   runningState: SubmissionJudgeState
+  minPriority: number
 }
 
 export class ClaimNextJudgeSubmission implements APIMessage<ClaimedSubmission | null> {
@@ -14,13 +15,15 @@ export class ClaimNextJudgeSubmission implements APIMessage<ClaimedSubmission | 
   readonly apiPath = 'internal/submissions/judge/claim-next'
   private readonly languages: SubmissionLanguage[]
   private readonly runningState: SubmissionJudgeState
+  private readonly minPriority: number
 
-  constructor(languages: SubmissionLanguage[], runningState: SubmissionJudgeState) {
+  constructor(languages: SubmissionLanguage[], runningState: SubmissionJudgeState, minPriority: number) {
     this.languages = languages
     this.runningState = runningState
+    this.minPriority = minPriority
   }
 
   body(): ClaimNextJudgeSubmissionBody {
-    return { languages: this.languages, runningState: this.runningState }
+    return { languages: this.languages, runningState: this.runningState, minPriority: this.minPriority }
   }
 }

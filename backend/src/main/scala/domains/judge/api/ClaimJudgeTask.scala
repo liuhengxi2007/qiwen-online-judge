@@ -6,6 +6,7 @@ import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTaskBuilder
 import domains.judge.utils.JudgeTokenAuth
 import domains.judger.api.GetActiveJudgerSupportedLanguages
+import domains.hack.api.{ClaimNextHackAttempt, ClaimedHackAttempt, ListProblemHackTestcasesForJudge}
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
@@ -18,7 +19,7 @@ import domains.submission.utils.SubmissionProgramStorage
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeTask}
+import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeResult, JudgeTask, JudgeWorkerTask}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -62,25 +63,76 @@ final case class ClaimJudgeTask(
       case Left(message) =>
         HttpApiError.raise(HttpApiError.badRequest(message))
       case Right(runningState) =>
-        ClaimNextJudgeSubmission
-          .plan(
-            connection,
-            ClaimNextJudgeSubmission.input(supportedLanguages.flatMap(SubmissionJudgeRules.toSubmissionLanguage), runningState)
-          )
-          .flatMap {
-            case None =>
-              IO.pure(Response[IO](status = Status.NoContent))
-            case Some(claimedSubmission) =>
-              buildJudgeTask(connection, claimedSubmission).flatMap {
-                case Left(error) =>
-                  failClaimedJudgeTask(connection, claimedSubmission, claimedAt, error.reason).flatMap {
-                    case Left(lifecycleMessage) => HttpApiError.raise(HttpApiError.badRequest(lifecycleMessage))
-                    case Right(_) => HttpApiError.raise(HttpApiError.badRequest(error.message))
-                  }
-                case Right(task) =>
-                  IO.pure(taskResponse(task))
+        val domainLanguages = supportedLanguages.flatMap(SubmissionJudgeRules.toSubmissionLanguage)
+        claimJudgeSubmissionTask(connection, domainLanguages, runningState, claimedAt, minPriority = 0).flatMap {
+          case Some(response) => IO.pure(response)
+          case None =>
+            claimHackTask(connection, domainLanguages).flatMap {
+              case Some(response) => IO.pure(response)
+              case None =>
+                claimJudgeSubmissionTask(connection, domainLanguages, runningState, claimedAt, minPriority = Int.MinValue).map {
+                  case Some(response) => response
+                  case None => Response[IO](status = Status.NoContent)
+                }
+            }
+        }
+
+  private def claimJudgeSubmissionTask(
+    connection: Connection,
+    supportedLanguages: List[domains.submission.objects.SubmissionLanguage],
+    runningState: SubmissionJudgeState,
+    claimedAt: Instant,
+    minPriority: Int
+  ): IO[Option[Response[IO]]] =
+    ClaimNextJudgeSubmission
+      .plan(
+        connection,
+        ClaimNextJudgeSubmission.input(supportedLanguages, runningState, minPriority)
+      )
+      .flatMap {
+        case None =>
+          IO.pure(None)
+        case Some(claimedSubmission) =>
+          buildJudgeTask(connection, claimedSubmission).flatMap {
+            case Left(error) =>
+              failClaimedJudgeTask(connection, claimedSubmission, claimedAt, error.reason).flatMap {
+                case Left(lifecycleMessage) => HttpApiError.raise(HttpApiError.badRequest(lifecycleMessage))
+                case Right(_) => HttpApiError.raise(HttpApiError.badRequest(error.message))
               }
+            case Right(task) =>
+              IO.pure(Some(taskResponse(JudgeWorkerTask.judge(task))))
           }
+      }
+
+  private def claimHackTask(
+    connection: Connection,
+    supportedLanguages: List[domains.submission.objects.SubmissionLanguage]
+  ): IO[Option[Response[IO]]] =
+    for
+      claimedAt <- IO.realTimeInstant
+      maybeClaimedHack <- ClaimNextHackAttempt.plan(connection, ClaimNextHackAttempt.input(supportedLanguages, claimedAt))
+      response <- maybeClaimedHack match
+        case None => IO.pure(None)
+        case Some(claimedHack) =>
+          buildHackTask(connection, claimedHack).flatMap {
+            case Left(error) =>
+              val request = judgeprotocol.objects.request.ReportHackResultRequest(
+                status = "failed",
+                answer = None,
+                oldScore = claimedHack.oldResult.subtasks.find(_.index == claimedHack.subtaskIndex).map(_.lowestScore).getOrElse(BigDecimal(0)),
+                newScore = None,
+                newResult = None,
+                validatorMessage = None,
+                standardMessage = None,
+                targetMessage = Some(error.message)
+              )
+              domains.hack.api.RecordHackAttemptResult
+                .plan(connection, domains.hack.api.RecordHackAttemptResult.input(claimedHack.hackId, request))
+                .as(None)
+            case Right(task) =>
+              IO.pure(Some(taskResponse(JudgeWorkerTask.hack(task))))
+          }
+    yield response
 
   private def buildJudgeTask(
     connection: Connection,
@@ -90,7 +142,29 @@ final case class ClaimJudgeTask(
       case None =>
         IO.pure(Left(JudgeTaskBuilder.BuildError("Problem not found for claimed submission.", JudgeFailureReason.JudgeTaskBuildFailed)))
       case Some(manifest) =>
-        loadConfig(claimedSubmission, manifest)
+        loadGeneratedHackTestcases(connection, claimedSubmission).flatMap(hackTestcases => loadConfig(claimedSubmission, manifest, hackTestcases))
+    }
+
+  private def buildHackTask(
+    connection: Connection,
+    claimedHack: ClaimedHackAttempt
+  ): IO[Either[JudgeTaskBuilder.BuildError, HackTask]] =
+    judgeTaskManifest(connection, claimedHack.targetSubmission).flatMap {
+      case None =>
+        IO.pure(Left(JudgeTaskBuilder.BuildError("Problem not found for claimed hack attempt.", JudgeFailureReason.JudgeTaskBuildFailed)))
+      case Some(manifest) =>
+        loadGeneratedHackTestcases(connection, claimedHack.targetSubmission)
+          .flatMap(hackTestcases => loadConfig(claimedHack.targetSubmission, manifest, hackTestcases))
+          .map(_.map(task =>
+            HackTask(
+              hackId = claimedHack.hackId.value,
+              targetTask = task,
+              subtaskIndex = claimedHack.subtaskIndex,
+              input = claimedHack.input,
+              strategyProviderSource = claimedHack.strategyProviderSource,
+              oldResult = claimedHack.oldResult
+            )
+          ))
     }
 
   private def judgeTaskManifest(
@@ -104,7 +178,8 @@ final case class ClaimJudgeTask(
 
   private def loadConfig(
     claimedSubmission: ClaimedSubmission,
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    hackTestcases: List[JudgeTaskBuilder.GeneratedHackTestcase]
   ): IO[Either[JudgeTaskBuilder.BuildError, JudgeTask]] =
     ProblemDataPath.parse("judge.yaml") match
       case Left(message) =>
@@ -120,9 +195,24 @@ final case class ClaimJudgeTask(
           case Right(bytes) =>
             submissionProgramStorage.readSources(claimedSubmission.programManifest).map {
               case Left(message) => Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed))
-              case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest)
+              case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases)
             }
         }
+
+  private def loadGeneratedHackTestcases(
+    connection: Connection,
+    claimedSubmission: ClaimedSubmission
+  ): IO[List[JudgeTaskBuilder.GeneratedHackTestcase]] =
+    ListProblemHackTestcasesForJudge.plan(connection, claimedSubmission.problemId).map {
+      _.map(testcase =>
+        JudgeTaskBuilder.GeneratedHackTestcase(
+          subtaskIndex = testcase.subtaskIndex,
+          label = Some(s"hack #${testcase.hackId.value}"),
+          input = testcase.inputRef,
+          answer = testcase.answerRef
+        )
+      )
+    }
 
   private def failClaimedJudgeTask(
     connection: Connection,
@@ -147,15 +237,17 @@ final case class ClaimJudgeTask(
           .plan(connection, UpdateSubmissionJudgeState.input(claimedSubmission.id, failedState))
           .as(Right(()))
 
-  private def taskResponse(task: JudgeTask): Response[IO] =
+  private def taskResponse(task: JudgeWorkerTask): Response[IO] =
     Response[IO](status = Status.Ok).withEntity(task.asJson)
 
   private def systemErrorJudgeResult(reason: JudgeFailureReason): JudgeResult =
     JudgeResult(
       score = BigDecimal(0),
+      lowestScore = BigDecimal(0),
       verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
       reason = Some(reason),
       timeUsedMs = None,
       memoryUsedKb = None,
-      subtasks = Nil
+      subtasks = Nil,
+      baseResult = None
     )

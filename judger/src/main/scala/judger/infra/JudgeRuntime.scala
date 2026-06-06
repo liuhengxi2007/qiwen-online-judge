@@ -133,11 +133,13 @@ object JudgeRuntimeSupport:
         index = subtask.index,
         label = subtask.label,
         score = BigDecimal(0),
+        lowestScore = BigDecimal(0),
         verdict = verdict,
         timeUsedMs = None,
         memoryUsedKb = None,
         reason = reason,
-        testcases = Nil
+        testcases = Nil,
+        baseResult = None
       )
     }
     ReportJudgeResultRequest(
@@ -145,11 +147,13 @@ object JudgeRuntimeSupport:
       judgeResult = Some(
         JudgeResult(
           score = BigDecimal(0),
+          lowestScore = BigDecimal(0),
           verdict = verdict,
           reason = reason,
           timeUsedMs = None,
           memoryUsedKb = None,
-          subtasks = subtasks
+          subtasks = subtasks,
+          baseResult = None
         )
       )
     )

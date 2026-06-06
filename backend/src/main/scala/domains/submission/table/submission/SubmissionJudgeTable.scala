@@ -10,6 +10,10 @@ import java.sql.Connection
 
 object SubmissionJudgeTable:
 
+  val HighPriority: Int = 100
+  val OrdinaryPriority: Int = 0
+  val LowPriority: Int = -100
+
   private def claimNextForLanguagesSQL(languageCount: Int): String =
     val placeholders = List.fill(languageCount)("?").mkString(", ")
     s"""
@@ -18,13 +22,14 @@ object SubmissionJudgeTable:
       |  from submissions s
       |  join problems p on p.id = s.problem_id
       |  where s.status = 'queued'
+      |    and s.judge_priority >= ?
       |    and exists (
       |      select 1
       |      from jsonb_each(s.program_manifest -> 'programs') as program(role, data)
       |      where program.data ->> 'language' in ($placeholders)
       |    )
       |    and p.ready = true
-      |  order by s.submitted_at asc, s.public_id asc
+      |  order by s.judge_priority desc, s.submitted_at asc, s.public_id asc
       |  for update skip locked
       |  limit 1
       |)
@@ -32,6 +37,7 @@ object SubmissionJudgeTable:
       |set status = ?,
       |    started_at = ?,
       |    finished_at = ?,
+      |    hack_revision = p.hack_revision,
       |    judge_result = null
       |from next_submission ns, problems p
       |where s.id = ns.id
@@ -42,7 +48,8 @@ object SubmissionJudgeTable:
   def claimNextForLanguages(
     connection: Connection,
     languages: List[SubmissionLanguage],
-    runningState: SubmissionJudgeState
+    runningState: SubmissionJudgeState,
+    minPriority: Int
   ): IO[Option[ClaimedSubmission]] =
     if languages.isEmpty then IO.pure(None)
     else IO.blocking {
@@ -51,7 +58,8 @@ object SubmissionJudgeTable:
         languages.zipWithIndex.foreach { case (language, index) =>
           statement.setString(index + 1, encodeSubmissionLanguageColumn(language))
         }
-        val stateStartIndex = languages.size + 1
+        statement.setInt(languages.size + 1, minPriority)
+        val stateStartIndex = languages.size + 2
         statement.setString(stateStartIndex, encodeSubmissionStatusColumn(runningState.status))
         setOptionalTimestamp(statement, stateStartIndex + 1, runningState.startedAt)
         setOptionalTimestamp(statement, stateStartIndex + 2, runningState.finishedAt)
@@ -68,6 +76,76 @@ object SubmissionJudgeTable:
             )
           else None
         finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val queueManualRejudgeSQL: String =
+    """
+      |update submissions
+      |set status = 'queued',
+      |    judge_result = null,
+      |    started_at = null,
+      |    finished_at = null,
+      |    judge_priority = ?
+      |where public_id = ?
+      |""".stripMargin
+
+  def queueManualRejudge(connection: Connection, submissionId: SubmissionId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(queueManualRejudgeSQL)
+      try
+        statement.setInt(1, HighPriority)
+        statement.setLong(2, submissionId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  private val queueHackRejudgeForProblemSQL: String =
+    """
+      |update submissions
+      |set status = 'queued',
+      |    judge_result = null,
+      |    started_at = null,
+      |    finished_at = null,
+      |    judge_priority = ?
+      |where problem_id = ?
+      |  and status in ('completed', 'failed')
+      |""".stripMargin
+
+  def queueHackRejudgeForProblem(connection: Connection, problemId: ProblemId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(queueHackRejudgeForProblemSQL)
+      try
+        statement.setInt(1, LowPriority)
+        statement.setObject(2, problemId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
+  private val requeueIfHackRevisionStaleSQL: String =
+    """
+      |update submissions s
+      |set status = 'queued',
+      |    judge_result = null,
+      |    started_at = null,
+      |    finished_at = null,
+      |    judge_priority = ?
+      |from problems p
+      |where s.public_id = ?
+      |  and p.id = s.problem_id
+      |  and s.status in ('completed', 'failed')
+      |  and s.hack_revision < p.hack_revision
+      |""".stripMargin
+
+  def requeueIfHackRevisionStale(connection: Connection, submissionId: SubmissionId): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(requeueIfHackRevisionStaleSQL)
+      try
+        statement.setInt(1, LowPriority)
+        statement.setLong(2, submissionId.value)
+        statement.executeUpdate() > 0
       finally statement.close()
     }
 

@@ -12,7 +12,8 @@ import java.sql.Connection
 
 final case class ClaimNextJudgeSubmissionInput(
   languages: List[SubmissionLanguage],
-  runningState: SubmissionJudgeState
+  runningState: SubmissionJudgeState,
+  minPriority: Int
 )
 
 object ClaimNextJudgeSubmission extends InternalOnlyApi[ClaimNextJudgeSubmissionInput, Option[ClaimedSubmission]]:
@@ -20,8 +21,8 @@ object ClaimNextJudgeSubmission extends InternalOnlyApi[ClaimNextJudgeSubmission
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/submissions/judge/claim-next")
 
-  def input(languages: List[SubmissionLanguage], runningState: SubmissionJudgeState): ClaimNextJudgeSubmissionInput =
-    ClaimNextJudgeSubmissionInput(languages = languages, runningState = runningState)
+  def input(languages: List[SubmissionLanguage], runningState: SubmissionJudgeState, minPriority: Int): ClaimNextJudgeSubmissionInput =
+    ClaimNextJudgeSubmissionInput(languages = languages, runningState = runningState, minPriority = minPriority)
 
   override def plan(connection: Connection, input: ClaimNextJudgeSubmissionInput): IO[Option[ClaimedSubmission]] =
-    SubmissionJudgeTable.claimNextForLanguages(connection, input.languages, input.runningState)
+    SubmissionJudgeTable.claimNextForLanguages(connection, input.languages, input.runningState, input.minPriority)

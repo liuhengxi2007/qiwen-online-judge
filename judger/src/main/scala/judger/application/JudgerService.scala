@@ -3,8 +3,8 @@ package judger.application
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
-import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTask}
+import judgeprotocol.objects.request.{ReportHackResultRequest, ReportJudgeResultRequest}
+import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeTask, JudgeWorkerTask}
 import judger.config.AppConfig
 import judger.http.JudgeHttpClient
 import judger.infra.{Cpp17Runtime, JudgeExecutor, ProblemDataCache, Python3Runtime}
@@ -36,22 +36,40 @@ final class JudgerService(
         handleTask(task)
     }
 
-  private def handleTask(task: JudgeTask): IO[Unit] =
-    val resultIo =
-      JudgeExecutor.judge(
-        task,
-        config,
-        problemDataCache,
-        Map(
-          SubmissionLanguage.Cpp17 -> Cpp17Runtime,
-          SubmissionLanguage.Python3 -> Python3Runtime
-        )
-      )
+  private def handleTask(task: JudgeWorkerTask): IO[Unit] =
+    task.kind match
+      case "judge" =>
+        task.judge match
+          case Some(judgeTask) => handleJudgeTask(judgeTask)
+          case None => logger.error("[judger] Claimed judge task payload was missing judge data.")
+      case "hack" =>
+        task.hack match
+          case Some(hackTask) => handleHackTask(hackTask)
+          case None => logger.error("[judger] Claimed hack task payload was missing hack data.")
+      case other =>
+        logger.error(s"[judger] Claimed unsupported task kind: $other.")
 
-    resultIo.flatMap { result =>
-      httpClient.reportResult(task.submissionId, result) *>
-        logResult(task, result)
-    }
+  private def runtimes =
+    Map(
+      SubmissionLanguage.Cpp17 -> Cpp17Runtime,
+      SubmissionLanguage.Python3 -> Python3Runtime
+    )
+
+  private def handleJudgeTask(task: JudgeTask): IO[Unit] =
+    JudgeExecutor
+      .judge(task, config, problemDataCache, runtimes)
+      .flatMap { result =>
+        httpClient.reportResult(task.submissionId, result) *>
+          logResult(task, result)
+      }
+
+  private def handleHackTask(task: HackTask): IO[Unit] =
+    JudgeExecutor
+      .hack(task, config, problemDataCache, runtimes)
+      .flatMap { result =>
+        httpClient.reportHackResult(task.hackId, result) *>
+          logHackResult(task, result)
+      }
 
   private def logResult(task: JudgeTask, result: ReportJudgeResultRequest): IO[Unit] =
     val status = SubmissionStatus.render(result.status)
@@ -65,3 +83,10 @@ final class JudgerService(
         logger.error(s"$summary ${result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("")}".trim)
       case _ =>
         IO.unit
+
+  private def logHackResult(task: HackTask, result: ReportHackResultRequest): IO[Unit] =
+    val summary =
+      s"[judger] Hack #${task.hackId} finished with status=${result.status} oldScore=${result.oldScore} newScore=${result.newScore.map(_.toString).getOrElse("n/a")}."
+    result.status match
+      case "failed" => logger.error(summary)
+      case _ => IO.unit

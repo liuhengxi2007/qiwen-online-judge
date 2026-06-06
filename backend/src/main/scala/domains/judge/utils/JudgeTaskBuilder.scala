@@ -19,6 +19,13 @@ object JudgeTaskBuilder:
     resultDisplayMode: SubmissionResultDisplayMode
   )
 
+  final case class GeneratedHackTestcase(
+    subtaskIndex: Int,
+    label: Option[String],
+    input: JudgeTaskFileRef,
+    answer: JudgeTaskFileRef
+  )
+
   final case class BuildError(
     message: String,
     reason: JudgeFailureReason
@@ -26,13 +33,16 @@ object JudgeTaskBuilder:
 
   private val RolePattern = "^[A-Za-z0-9_-]+$".r
 
+  private final case class StandardConfig(language: SubmissionLanguage, path: String)
+
   def buildJudgeTask(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    hackTestcases: List[GeneratedHackTestcase] = Nil
   ): Either[BuildError, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
@@ -45,24 +55,26 @@ object JudgeTaskBuilder:
     sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
-    parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest)
+    parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, Nil)
 
   private[utils] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    hackTestcases: List[GeneratedHackTestcase] = Nil
   ): Either[String, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest).left.map(_.message)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases).left.map(_.message)
 
   private def parseConfigBytesDetailed(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    hackTestcases: List[GeneratedHackTestcase]
   ): Either[BuildError, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, sourceCodes, manifest, root)
+      buildFromYaml(claimedSubmission, sourceCodes, manifest, root, hackTestcases)
     }
 
   def validateReadyConfigBytes(
@@ -85,7 +97,9 @@ object JudgeTaskBuilder:
       val rawPaths =
         task.subtasks.flatMap { subtask =>
           val subtaskPaths =
-            subtask.validator.map(_.source.path.value).toList ++ subtask.mode.interactor.map(_.source.path.value).toList
+            subtask.validator.map(_.source.path.value).toList ++
+              subtask.standard.map(_.source.path.value).toList ++
+              subtask.mode.interactor.map(_.source.path.value).toList
           val testcasePaths = subtask.testcases.flatMap { testcase =>
             List(
               Some(testcase.input.path.value),
@@ -125,7 +139,8 @@ object JudgeTaskBuilder:
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest,
-    root: Map[String, Any]
+    root: Map[String, Any],
+    hackTestcases: List[GeneratedHackTestcase]
   ): Either[BuildError, JudgeTask] =
     for
       version <- optionalIntAt(root, "version").toBuildError.flatMap {
@@ -138,6 +153,7 @@ object JudgeTaskBuilder:
       rootLimits <- limitsAt(root).toBuildError
       rootChecker <- checkerAt(root).toBuildError
       rootValidator <- toolAt(root, "validator").toBuildError
+      rootStandard <- standardAt(root).toBuildError
       rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
       rootStrategyProvider <- limitedToolAt(root, "strategyProvider").toBuildError
       rootAggregation <- aggregationAt(root).toBuildError
@@ -153,9 +169,11 @@ object JudgeTaskBuilder:
           parentLimits = rootLimits,
           parentChecker = rootChecker,
           parentValidator = rootValidator,
+          parentStandard = rootStandard,
           parentMode = rootMode,
           parentStrategyProvider = rootStrategyProvider,
-          parentAggregation = rootAggregation
+          parentAggregation = rootAggregation,
+          hackTestcases = hackTestcases.filter(_.subtaskIndex == subtaskIndex + 1)
         )
       })
       programs <- buildPrograms(claimedSubmission, sourceCodes)
@@ -190,9 +208,11 @@ object JudgeTaskBuilder:
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
     parentValidator: Option[JudgeTaskTool],
+    parentStandard: Option[StandardConfig],
     parentMode: JudgeTaskMode,
     parentStrategyProvider: Option[JudgeTaskTool],
-    parentAggregation: AggregationConfig
+    parentAggregation: AggregationConfig,
+    hackTestcases: List[GeneratedHackTestcase]
   ): Either[BuildError, JudgeTaskSubtask] =
     for
       label <- optionalStringAt(raw, "label").toBuildError
@@ -202,13 +222,15 @@ object JudgeTaskBuilder:
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker))
       validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator))
       resolvedValidator <- validator.traverse(resolveTool(manifest, _, "Validator source file")).toBuildError
+      standard <- standardAt(raw).toBuildError.map(_.orElse(parentStandard))
+      resolvedStandard <- standard.traverse(resolveStandard(manifest, _)).toBuildError
       mode <- modeAt(raw, manifest).toBuildError.map(_.getOrElse(parentMode))
       strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
       testcaseMaps <- listOfMapsAt(raw, "testcases").toBuildError
       _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"$subtaskLabel must define at least one testcase."))
       testcaseRatios <- ratiosFor(testcaseMaps).toBuildError
-      testcases <- sequenceBuild(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
+      configuredTestcases <- sequenceBuild(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
         buildTestcase(
           manifest = manifest,
           raw = testcaseMap,
@@ -221,6 +243,20 @@ object JudgeTaskBuilder:
           subtaskLabel = label
         )
       })
+      generatedHackTestcases = hackTestcases.zipWithIndex.map { case (testcase, offset) =>
+        JudgeTaskTestcase(
+          index = configuredTestcases.size + offset + 1,
+          label = testcase.label,
+          testcaseType = JudgeTestcaseType.Hack,
+          scoreRatio = BigDecimal(1),
+          limits = configuredTestcases.head.limits,
+          checker = configuredTestcases.head.checker,
+          input = testcase.input,
+          answer = Some(testcase.answer),
+          strategyProvider = configuredTestcases.head.strategyProvider
+        )
+      }
+      testcases = configuredTestcases ++ generatedHackTestcases
     yield
       JudgeTaskSubtask(
         index = index,
@@ -228,6 +264,7 @@ object JudgeTaskBuilder:
         scoreRatio = scoreRatio,
         mode = mode,
         validator = resolvedValidator,
+        standard = resolvedStandard,
         aggregation = aggregation.testcases.getOrElse(defaultAggregation),
         testcases = testcases
       )
@@ -245,6 +282,7 @@ object JudgeTaskBuilder:
   ): Either[BuildError, JudgeTaskTestcase] =
     for
       testcaseLabel <- optionalStringAt(raw, "label").toBuildError
+      testcaseType <- testcaseTypeAt(raw).toBuildError
       label = s"${judgeNodeLabel("subtask", subtaskIndex, subtaskLabel)} ${judgeNodeLabel("testcase", index, testcaseLabel)}"
       _ <- rejectLegacyName(raw, label)
       _ <- Either.cond(!raw.contains("mode"), (), buildError(s"mode cannot be declared on $label."))
@@ -267,6 +305,7 @@ object JudgeTaskBuilder:
       JudgeTaskTestcase(
         index = index,
         label = testcaseLabel,
+        testcaseType = testcaseType,
         scoreRatio = scoreRatio,
         limits = limits,
         checker = resolvedChecker,
@@ -274,6 +313,29 @@ object JudgeTaskBuilder:
         answer = answerRef,
         strategyProvider = resolvedStrategyProvider
       )
+
+  private def testcaseTypeAt(raw: Map[String, Any]): Either[String, JudgeTestcaseType] =
+    optionalStringAt(raw, "type").flatMap {
+      case None => Right(JudgeTestcaseType.Main)
+      case Some(value) => JudgeTestcaseType.parse(value)
+    }
+
+  private def standardAt(raw: Map[String, Any]): Either[String, Option[StandardConfig]] =
+    optionalMapAt(raw, "standard").flatMap {
+      case None => Right(None)
+      case Some(standard) =>
+        for
+          language <- stringAt(standard, "language").flatMap(parseStandardLanguage)
+          path <- stringAt(standard, "path")
+          _ <- ProblemDataPath.parse(path).left.map(message => s"Invalid standard path: $message")
+        yield Some(StandardConfig(language, path))
+    }
+
+  private def parseStandardLanguage(raw: String): Either[String, SubmissionLanguage] =
+    raw.trim match
+      case "cpp17" => Right(SubmissionLanguage.Cpp17)
+      case "python3" => Right(SubmissionLanguage.Python3)
+      case other => Left(s"Unsupported standard language: $other.")
 
   private def modeAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Option[JudgeTaskMode]] =
     raw.get("mode") match
@@ -433,6 +495,9 @@ object JudgeTaskBuilder:
 
   private def resolveTool(manifest: ProblemDataManifest, tool: JudgeTaskTool, label: String): Either[String, JudgeTaskTool] =
     findFile(manifest, tool.source.path.value, label).map(ref => tool.copy(source = ref))
+
+  private def resolveStandard(manifest: ProblemDataManifest, standard: StandardConfig): Either[String, JudgeTaskStandard] =
+    findFile(manifest, standard.path, "Standard source file").map(ref => JudgeTaskStandard(standard.language, ref))
 
   private def fileRef(entry: ProblemDataManifestEntry): Either[String, JudgeTaskFileRef] =
     JudgeTaskFileRef.from(entry.path.value, entry.sizeBytes, entry.sha256)

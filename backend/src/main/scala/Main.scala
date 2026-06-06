@@ -6,6 +6,7 @@ import domains.auth.table.session.SessionTable
 import domains.auth.utils.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
 import domains.blog.table.blog.BlogTable
 import domains.contest.table.contest.ContestTable
+import domains.hack.table.hack.HackTable
 import domains.judge.utils.JudgeConfig
 import domains.judger.table.judger.JudgerTable
 import domains.message.table.message.MessageTable
@@ -72,6 +73,7 @@ object Main extends IOApp.Simple:
             _ <- ProblemSetTable.initialize(connection)
             _ <- ContestTable.initialize(connection)
             _ <- SubmissionTable.initialize(connection, submissionProgramStorage)
+            _ <- HackTable.initialize(connection)
             _ <- BlogTable.initialize(connection)
             _ <- JudgerTable.initialize(connection)
             _ <- UserGroupTable.initialize(connection)

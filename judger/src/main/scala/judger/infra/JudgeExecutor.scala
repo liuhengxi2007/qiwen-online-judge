@@ -2,8 +2,8 @@ package judger.infra
 
 import cats.effect.IO
 import cats.syntax.all.*
-import judgeprotocol.objects.{SubmissionLanguage, SubmissionStatus, SubmissionVerdict}
-import judgeprotocol.objects.request.ReportJudgeResultRequest
+import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
+import judgeprotocol.objects.request.{ReportHackResultRequest, ReportJudgeResultRequest}
 import judgeprotocol.objects.response.*
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
@@ -21,6 +21,7 @@ object JudgeExecutor:
   )
 
   private final case class PreparedTools(
+    validators: Map[JudgeTaskFilePath, RuntimeCommand],
     checkers: Map[JudgeTaskFilePath, RuntimeCommand],
     interactors: Map[JudgeTaskFilePath, RuntimeCommand],
     strategyProviders: Map[JudgeTaskFilePath, RuntimeCommand],
@@ -54,6 +55,12 @@ object JudgeExecutor:
     idleLimitMs: Long
   )
 
+  private final case class ScoreAggregation(
+    score: BigDecimal,
+    lowestScore: BigDecimal,
+    verdictChildren: List[(BigDecimal, SubmissionVerdict)]
+  )
+
   def judge(
     task: JudgeTask,
     config: AppConfig,
@@ -74,6 +81,90 @@ object JudgeExecutor:
     }.handleError { _ =>
       taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)
     }
+
+  def hack(
+    task: HackTask,
+    config: AppConfig,
+    problemDataCache: ProblemDataCache,
+    runtimes: Map[SubmissionLanguage, JudgeRuntime]
+  ): IO[ReportHackResultRequest] =
+    withWorkingDirectory(config.workRoot, "qiwen-hack-") { workingDirectory =>
+      IsolateSandbox.resource(config) { sandbox =>
+        preparePrograms(task.targetTask, config, workingDirectory, runtimes).flatMap {
+          case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("Target prepare failed.")))
+          case Right(programs) =>
+            prepareTools(task.targetTask, config, workingDirectory, problemDataCache).flatMap {
+              case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("Tool prepare failed.")))
+              case Right(tools) => executeHack(task, config, workingDirectory, sandbox, problemDataCache, runtimes, programs, tools)
+            }
+        }
+      }
+    }.handleError { error =>
+      hackFailed(task, Option(error.getMessage).getOrElse("Hack execution failed."))
+    }
+
+  private def executeHack(
+    hackTask: HackTask,
+    config: AppConfig,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache,
+    runtimes: Map[SubmissionLanguage, JudgeRuntime],
+    programs: PreparedPrograms,
+    tools: PreparedTools
+  ): IO[ReportHackResultRequest] =
+    val task = hackTask.targetTask
+    task.subtasks.find(_.index == hackTask.subtaskIndex) match
+      case None =>
+        IO.pure(hackFailed(hackTask, "Target subtask was not found."))
+      case Some(subtask) =>
+        val input = hackTask.input.getBytes(StandardCharsets.UTF_8)
+        val oldLowestScore = targetSubtaskLowestScore(hackTask)
+        subtask.validator match
+          case None => IO.pure(hackFailed(hackTask, "Target subtask has no validator."))
+          case Some(validator) =>
+            runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
+              case Some(message) =>
+                IO.pure(
+                  ReportHackResultRequest(
+                    status = "invalid",
+                    answer = None,
+                    oldScore = oldLowestScore,
+                    newScore = None,
+                    newResult = None,
+                    validatorMessage = Some(message),
+                    standardMessage = None,
+                    targetMessage = None
+                  )
+                )
+              case None =>
+                runStandard(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes).flatMap {
+                  case Left(message) => IO.pure(hackFailed(hackTask, message, standardMessage = Some(message)))
+                  case Right(answer) =>
+                    runTargetOnHack(hackTask, subtask, input, answer, config, workingDirectory, sandbox, problemDataCache, programs, tools).map { testcaseResult =>
+                      val oldSubtask = hackTask.oldResult.subtasks.find(_.index == subtask.index)
+                      val existingTestcases = oldSubtask.map(_.testcases).getOrElse(Nil)
+                      val newSubtask = aggregateSubtask(subtask, existingTestcases :+ testcaseResult)
+                      val newSubtasks =
+                        if hackTask.oldResult.subtasks.exists(_.index == subtask.index) then
+                          hackTask.oldResult.subtasks.map(current => if current.index == subtask.index then newSubtask else current)
+                        else hackTask.oldResult.subtasks :+ newSubtask
+                      val newResult = aggregateTask(task, newSubtasks)
+                      val targetMessage = Some(s"${SubmissionVerdict.render(testcaseResult.verdict)} score=${testcaseResult.score}")
+                      val status = if newSubtask.lowestScore < oldLowestScore then "success" else "no_effect"
+                      ReportHackResultRequest(
+                        status = status,
+                        answer = Some(new String(answer, StandardCharsets.UTF_8)),
+                        oldScore = oldLowestScore,
+                        newScore = Some(newSubtask.lowestScore),
+                        newResult = Some(newResult),
+                        validatorMessage = Some("accepted"),
+                        standardMessage = Some("accepted"),
+                        targetMessage = targetMessage
+                      )
+                    }
+                }
+            }
 
   private def preparePrograms(
     task: JudgeTask,
@@ -101,18 +192,228 @@ object JudgeExecutor:
         }
       }
 
+  private def runValidator(
+    hackTask: HackTask,
+    subtask: JudgeTaskSubtask,
+    input: Array[Byte],
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    validator: JudgeTaskTool,
+    tools: PreparedTools
+  ): IO[Option[String]] =
+    tools.validators.get(validator.source.path) match
+      case None => IO.pure(Some("Validator could not be prepared."))
+      case Some(command) =>
+        val limits = validator.limits
+          .map(limits => SandboxLimits.runtime(limits.timeMs.value.toLong, limits.memoryMb.value))
+          .getOrElse(SandboxLimits.runtime(timeLimitMs = 5000L, memoryLimitMb = 512))
+        sandbox
+          .run(
+            SandboxExecutionRequest(
+              phase = s"hack-validator-${hackTask.hackId}-${subtask.index}",
+              command = command.command,
+              args = command.args,
+              stdin = Some(input),
+              limits = limits,
+              processLimit = command.processLimit
+            ),
+            workingDirectory
+          )
+          .map { result =>
+            if !result.timedOut && result.exitCode.contains(0) then None
+            else Some(renderDetail("Validator rejected the hack input.", result))
+          }
+
+  private def runStandard(
+    hackTask: HackTask,
+    subtask: JudgeTaskSubtask,
+    input: Array[Byte],
+    config: AppConfig,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache,
+    runtimes: Map[SubmissionLanguage, JudgeRuntime]
+  ): IO[Either[String, Array[Byte]]] =
+    (subtask.standard, templateHackTestcase(subtask)) match
+      case (None, _) => IO.pure(Left("Target subtask has no standard solution."))
+      case (_, None) => IO.pure(Left("Target subtask has no testcase template."))
+      case (Some(standard), Some(template)) =>
+        runtimes.get(standard.language) match
+          case None => IO.pure(Left("Standard language is not supported by this judger."))
+          case Some(runtime) =>
+            problemDataCache.loadBytes(hackTask.targetTask.problemSlug, hackTask.targetTask.problemDataVersion, standard.source).attempt.flatMap {
+              case Left(error) => IO.pure(Left(s"Standard source could not be loaded: ${Option(error.getMessage).getOrElse(error.getClass.getName)}"))
+              case Right(sourceBytes) =>
+                val sourceCode = SubmissionSourceCode(new String(sourceBytes, StandardCharsets.UTF_8))
+                runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, config, workingDirectory).flatMap {
+                  case Left(ProgramPrepareFailure.CompileError) => IO.pure(Left("Standard solution failed to compile."))
+                  case Left(ProgramPrepareFailure.SystemError(reason)) => IO.pure(Left(s"Standard solution failed to prepare: ${JudgeFailureReason.render(reason)}."))
+                  case Right(command) =>
+                    sandbox
+                      .run(
+                        SandboxExecutionRequest(
+                          phase = s"hack-standard-${hackTask.hackId}-${subtask.index}",
+                          command = command.command,
+                          args = command.args,
+                          stdin = Some(input),
+                          limits = SandboxLimits.runtime(template.limits.timeMs.value.toLong, template.limits.memoryMb.value),
+                          processLimit = command.processLimit
+                        ),
+                        workingDirectory
+                      )
+                      .map { result =>
+                        if result.timedOut then Left(renderDetail("Standard solution timed out.", result))
+                        else if result.exitCode.getOrElse(-1) != 0 then Left(renderDetail("Standard solution failed at runtime.", result))
+                        else Right(result.stdout.getBytes(StandardCharsets.UTF_8))
+                      }
+                }
+            }
+
+  private def runTargetOnHack(
+    hackTask: HackTask,
+    subtask: JudgeTaskSubtask,
+    input: Array[Byte],
+    answer: Array[Byte],
+    config: AppConfig,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache,
+    programs: PreparedPrograms,
+    tools: PreparedTools
+  ): IO[JudgeTestcaseResult] =
+    templateHackTestcase(subtask) match
+      case None => IO.pure(JudgeTestcaseResult(1, Some("hack"), JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(JudgeFailureReason.SystemError), None, None))
+      case Some(testcase) =>
+        subtask.mode.`type` match
+          case "traditional" =>
+            val role = subtask.mode.role.getOrElse("main")
+            programCommand(hackTask.targetTask, programs, role) match
+              case None => IO.pure(testcaseCompileError(testcase))
+              case Some(command) =>
+                runTraditionalTestcaseData(hackTask.targetTask, subtask, testcase, workingDirectory, sandbox, input, Some(answer), command, tools)
+          case "interactive" =>
+            runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answer, workingDirectory, sandbox, programs, tools)
+          case _ =>
+            IO.pure(testcaseSystemError(testcase, JudgeFailureReason.SystemError))
+
+  private def runInteractiveHackTestcase(
+    hackTask: HackTask,
+    config: AppConfig,
+    subtask: JudgeTaskSubtask,
+    testcase: JudgeTaskTestcase,
+    input: Array[Byte],
+    answer: Array[Byte],
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    programs: PreparedPrograms,
+    tools: PreparedTools
+  ): IO[JudgeTestcaseResult] =
+    val missingRole = subtask.mode.roles.find(role => programCommand(hackTask.targetTask, programs, role).isEmpty)
+    missingRole match
+      case Some(_) => IO.pure(testcaseCompileError(testcase))
+      case None =>
+        subtask.mode.interactor.flatMap(interactor => tools.interactors.get(interactor.source.path).map(interactor -> _)) match
+          case None => IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorCompileFailed))
+          case Some((interactor, interactorCommand)) =>
+            prepareHackStrategyProvider(hackTask, testcase, config, workingDirectory).flatMap {
+              case Left(_) => IO.pure(testcaseAcceptedByProtocol(testcase))
+              case Right(strategyProvider) =>
+                val roleCommands = subtask.mode.roles.flatMap(role => programCommand(hackTask.targetTask, programs, role).map(role -> _)).toMap
+                runInteractiveProcesses(config, subtask, testcase, input, workingDirectory, sandbox, roleCommands, interactor, interactorCommand, strategyProvider)
+                  .flatMap {
+                    case Left(reason) =>
+                      IO.pure(testcaseSystemError(testcase, reason))
+                    case Right(runResult) if interactiveToolCpuLimitExceeded(interactor, strategyProvider.map(_.tool), runResult.interactor, runResult.strategyProvider) =>
+                      IO.pure(testcaseAcceptedByProtocol(testcase))
+                    case Right(runResult) =>
+                      val timeoutProcesses = interactiveProcessesForTimeout(testcase, interactor, strategyProvider, runResult)
+                      if interactiveWallOnlyTimeout(timeoutProcesses) then
+                        readStrategyProviderWaitMs(runResult.strategyProviderReadMonitor, runResult.interactor).map { readWaitMs =>
+                          interactiveWallOnlyVerdict(
+                            participants = runResult.participants,
+                            participantCpuLimitMs = testcase.limits.timeMs.value.toLong,
+                            processes = timeoutProcesses,
+                            fallback = runResult.interactor,
+                            strategyProviderReadWaitMs = readWaitMs,
+                            strategyProviderIdleLimitMs = runResult.strategyProviderReadMonitor.map(_.idleLimitMs)
+                          ) match
+                            case Some((SubmissionVerdict.AcceptedByProtocol, _)) =>
+                              testcaseAcceptedByProtocol(testcase)
+                            case Some((verdict, processResult)) =>
+                              testcaseResult(testcase, BigDecimal(0), verdict, None, None, processResult)
+                            case None =>
+                              testcaseSystemError(testcase, JudgeFailureReason.SystemError)
+                        }
+                      else
+                        scoreInteractiveRun(hackTask.targetTask, testcase, workingDirectory, sandbox, input, Some(answer), tools, strategyProvider, runResult)
+                  }
+            }
+
+  private def prepareHackStrategyProvider(
+    hackTask: HackTask,
+    testcase: JudgeTaskTestcase,
+    config: AppConfig,
+    workingDirectory: Path
+  ): IO[Either[Unit, Option[StrategyProviderRuntime]]] =
+    testcase.strategyProvider match
+      case None => IO.pure(Right(None))
+      case Some(provider) if provider.limits.isEmpty => IO.pure(Left(()))
+      case Some(provider) =>
+        hackTask.strategyProviderSource match
+          case None => IO.pure(Left(()))
+          case Some(source) =>
+            compileCppToolBytes(
+              task = hackTask.targetTask,
+              config = config,
+              workingDirectory = workingDirectory,
+              sourceNameHint = s"hack-strategy-${hackTask.hackId}",
+              sourceBytes = source.getBytes(StandardCharsets.UTF_8)
+            ).map {
+              case ToolCompileOutcome.Success(command) => Right(Some(StrategyProviderRuntime(provider, command)))
+              case _ => Left(())
+            }
+
+  private def templateHackTestcase(subtask: JudgeTaskSubtask): Option[JudgeTaskTestcase] =
+    subtask.testcases.find(_.testcaseType != JudgeTestcaseType.Hack).orElse(subtask.testcases.headOption).map { template =>
+      val nextIndex = subtask.testcases.map(_.index).maxOption.getOrElse(0) + 1
+      template.copy(index = nextIndex, label = Some("hack"), testcaseType = JudgeTestcaseType.Hack, scoreRatio = BigDecimal(1), answer = None)
+    }
+
+  private def hackFailed(
+    task: HackTask,
+    targetMessage: String,
+    standardMessage: Option[String] = None
+  ): ReportHackResultRequest =
+    ReportHackResultRequest(
+      status = "failed",
+      answer = None,
+      oldScore = targetSubtaskLowestScore(task),
+      newScore = None,
+      newResult = None,
+      validatorMessage = None,
+      standardMessage = standardMessage,
+      targetMessage = Some(targetMessage)
+    )
+
+  private def targetSubtaskLowestScore(task: HackTask): BigDecimal =
+    task.oldResult.subtasks.find(_.index == task.subtaskIndex).map(_.lowestScore).getOrElse(BigDecimal(0))
+
   private def prepareTools(
     task: JudgeTask,
     config: AppConfig,
     workingDirectory: Path,
     problemDataCache: ProblemDataCache
   ): IO[Either[ReportJudgeResultRequest, PreparedTools]] =
+    val validatorSources = uniqueRefs(task.subtasks.flatMap(_.validator.map(_.source)))
     val checkerSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.checker.source))
     val interactorSources = uniqueRefs(task.subtasks.flatMap(_.mode.interactor.map(_.source)))
     val strategyProviderSources = uniqueRefs(task.subtasks.flatMap(_.testcases).flatMap(_.strategyProvider.map(_.source)))
 
     for
-      checkers <- compileRequiredTools(task, config, workingDirectory, problemDataCache, checkerSources, JudgeFailureReason.CheckerCompileFailed)
+      validators <- compileRequiredTools(task, config, workingDirectory, problemDataCache, validatorSources, JudgeFailureReason.CheckerCompileFailed)
+      checkers <- validators match
+        case Left(result) => IO.pure(Left(result))
+        case Right(_) => compileRequiredTools(task, config, workingDirectory, problemDataCache, checkerSources, JudgeFailureReason.CheckerCompileFailed)
       interactors <- checkers match
         case Left(result) => IO.pure(Left(result))
         case Right(_) => compileRequiredTools(task, config, workingDirectory, problemDataCache, interactorSources, JudgeFailureReason.InteractorCompileFailed)
@@ -120,12 +421,13 @@ object JudgeExecutor:
         case Left(result) => IO.pure(Left(result))
         case Right(_) => compileStrategyProviders(task, config, workingDirectory, problemDataCache, strategyProviderSources)
     yield
-      (checkers, interactors, strategyProviders) match
-        case (Right(checkerCommands), Right(interactorCommands), Right((strategyCommands, failedStrategies))) =>
-          Right(PreparedTools(checkerCommands, interactorCommands, strategyCommands, failedStrategies))
-        case (Left(result), _, _) => Left(result)
-        case (_, Left(result), _) => Left(result)
-        case (_, _, Left(result)) => Left(result)
+      (validators, checkers, interactors, strategyProviders) match
+        case (Right(validatorCommands), Right(checkerCommands), Right(interactorCommands), Right((strategyCommands, failedStrategies))) =>
+          Right(PreparedTools(validatorCommands, checkerCommands, interactorCommands, strategyCommands, failedStrategies))
+        case (Left(result), _, _, _) => Left(result)
+        case (_, Left(result), _, _) => Left(result)
+        case (_, _, Left(result), _) => Left(result)
+        case (_, _, _, Left(result)) => Left(result)
 
   private def compileRequiredTools(
     task: JudgeTask,
@@ -173,38 +475,49 @@ object JudgeExecutor:
     problemDataCache: ProblemDataCache,
     sourceRef: JudgeTaskFileRef
   ): IO[ToolCompileOutcome] =
+    problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, sourceRef).attempt.flatMap {
+      case Left(_) =>
+        IO.pure(ToolCompileOutcome.SystemFailed(JudgeFailureReason.ProblemDataLoadFailed))
+      case Right(sourceBytes) =>
+        compileCppToolBytes(task, config, workingDirectory, sourceRef.path.value, sourceBytes)
+    }
+
+  private def compileCppToolBytes(
+    task: JudgeTask,
+    config: AppConfig,
+    workingDirectory: Path,
+    sourceNameHint: String,
+    sourceBytes: Array[Byte]
+  ): IO[ToolCompileOutcome] =
+    val _ = task
     resolveCompilerPath(config).flatMap {
       case Left(_) => IO.pure(ToolCompileOutcome.CompileFailed)
       case Right(compilerPath) =>
-        val sourceName = s"tool-${math.abs(sourceRef.path.value.hashCode)}.cpp"
-        val executableName = s"tool-${math.abs(sourceRef.path.value.hashCode)}"
-        problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, sourceRef).attempt.flatMap {
-          case Left(_) =>
-            IO.pure(ToolCompileOutcome.SystemFailed(JudgeFailureReason.ProblemDataLoadFailed))
-          case Right(sourceBytes) =>
-            for
-              _ <- IO.blocking {
-                Files.write(workingDirectory.resolve(sourceName), sourceBytes)
-                Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
+        val safeHash = math.abs(sourceNameHint.hashCode)
+        val sourceName = s"tool-$safeHash.cpp"
+        val executableName = s"tool-$safeHash"
+        for
+          _ <- IO.blocking {
+            Files.write(workingDirectory.resolve(sourceName), sourceBytes)
+            Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
+          }
+          compileResult <- runHostProcess(
+            command = compilerPath,
+            args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
+            cwd = workingDirectory,
+            stdin = None,
+            limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
+            stdoutName = s".$executableName.compile.stdout",
+            stderrName = s".$executableName.compile.stderr"
+          )
+          result <-
+            if compileResult.timedOut || compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(ToolCompileOutcome.CompileFailed)
+            else
+              ensureExecutableExists(workingDirectory.resolve(executableName)).attempt.map {
+                case Right(_) => ToolCompileOutcome.Success(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
+                case Left(_) => ToolCompileOutcome.CompileFailed
               }
-              compileResult <- runHostProcess(
-                command = compilerPath,
-                args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
-                cwd = workingDirectory,
-                stdin = None,
-                limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
-                stdoutName = s".$executableName.compile.stdout",
-                stderrName = s".$executableName.compile.stderr"
-              )
-              result <-
-                if compileResult.timedOut || compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(ToolCompileOutcome.CompileFailed)
-                else
-                  ensureExecutableExists(workingDirectory.resolve(executableName)).attempt.map {
-                    case Right(_) => ToolCompileOutcome.Success(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
-                    case Left(_) => ToolCompileOutcome.CompileFailed
-                  }
-            yield result
-        }
+        yield result
     }
 
   private def judgeSubtasks(
@@ -276,18 +589,31 @@ object JudgeExecutor:
       case Left(reason) =>
         IO.pure(testcaseSystemError(testcase, reason))
       case Right((input, answerBytes)) =>
-        sandbox.run(
-          SandboxExecutionRequest(
-            phase = s"run-${subtask.index}-${testcase.index}",
-            command = command.command,
-            args = command.args,
-            stdin = Some(input),
-            limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
-            processLimit = command.processLimit
-          ),
-          workingDirectory
-        ).flatMap(runResult => scoreParticipantRun(task, testcase, workingDirectory, sandbox, input, runResult, answerBytes, tools))
+        runTraditionalTestcaseData(task, subtask, testcase, workingDirectory, sandbox, input, answerBytes, command, tools)
     }
+
+  private def runTraditionalTestcaseData(
+    task: JudgeTask,
+    subtask: JudgeTaskSubtask,
+    testcase: JudgeTaskTestcase,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    input: Array[Byte],
+    answerBytes: Option[Array[Byte]],
+    command: RuntimeCommand,
+    tools: PreparedTools
+  ): IO[JudgeTestcaseResult] =
+    sandbox.run(
+      SandboxExecutionRequest(
+        phase = s"run-${subtask.index}-${testcase.index}",
+        command = command.command,
+        args = command.args,
+        stdin = Some(input),
+        limits = SandboxLimits.runtime(testcase.limits.timeMs.value.toLong, testcase.limits.memoryMb.value),
+        processLimit = command.processLimit
+      ),
+      workingDirectory
+    ).flatMap(runResult => scoreParticipantRun(task, testcase, workingDirectory, sandbox, input, runResult, answerBytes, tools))
 
   private def judgeInteractiveTestcase(
     task: JudgeTask,
@@ -874,27 +1200,29 @@ object JudgeExecutor:
     reason: Option[JudgeFailureReason],
     runResult: ProcessResult
   ): JudgeTestcaseResult =
-    JudgeTestcaseResult(testcase.index, testcase.label, clampScore(score), verdict, message, reason, runResult.timeUsedMs, runResult.memoryUsedKb)
+    JudgeTestcaseResult(testcase.index, testcase.label, testcase.testcaseType, clampScore(score), verdict, message, reason, runResult.timeUsedMs, runResult.memoryUsedKb)
 
   private def testcaseSystemError(testcase: JudgeTaskTestcase, reason: JudgeFailureReason): JudgeTestcaseResult =
-    JudgeTestcaseResult(testcase.index, testcase.label, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), None, None)
+    JudgeTestcaseResult(testcase.index, testcase.label, testcase.testcaseType, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), None, None)
 
   private def testcaseCompileError(testcase: JudgeTaskTestcase): JudgeTestcaseResult =
-    JudgeTestcaseResult(testcase.index, testcase.label, BigDecimal(0), SubmissionVerdict.CompileError, None, None, None, None)
+    JudgeTestcaseResult(testcase.index, testcase.label, testcase.testcaseType, BigDecimal(0), SubmissionVerdict.CompileError, None, None, None, None)
 
   private def testcaseAcceptedByProtocol(testcase: JudgeTaskTestcase): JudgeTestcaseResult =
-    JudgeTestcaseResult(testcase.index, testcase.label, BigDecimal(1), SubmissionVerdict.AcceptedByProtocol, None, None, Some(0L), Some(0L))
+    JudgeTestcaseResult(testcase.index, testcase.label, testcase.testcaseType, BigDecimal(1), SubmissionVerdict.AcceptedByProtocol, None, None, Some(0L), Some(0L))
 
   private def subtaskCompileError(subtask: JudgeTaskSubtask): JudgeSubtaskResult =
     JudgeSubtaskResult(
       index = subtask.index,
       label = subtask.label,
       score = BigDecimal(0),
+      lowestScore = BigDecimal(0),
       verdict = SubmissionVerdict.CompileError,
       timeUsedMs = None,
       memoryUsedKb = None,
       reason = None,
-      testcases = subtask.testcases.map(testcaseCompileError)
+      testcases = subtask.testcases.map(testcaseCompileError),
+      baseResult = None
     )
 
   private def subtaskSystemError(subtask: JudgeTaskSubtask, reason: JudgeFailureReason): JudgeSubtaskResult =
@@ -902,11 +1230,13 @@ object JudgeExecutor:
       index = subtask.index,
       label = subtask.label,
       score = BigDecimal(0),
+      lowestScore = BigDecimal(0),
       verdict = SubmissionVerdict.SystemError,
       timeUsedMs = None,
       memoryUsedKb = None,
       reason = Some(reason),
-      testcases = subtask.testcases.map(testcase => testcaseSystemError(testcase, reason))
+      testcases = subtask.testcases.map(testcase => testcaseSystemError(testcase, reason)),
+      baseResult = None
     )
 
   private def loadTestcaseData(
@@ -1005,9 +1335,19 @@ object JudgeExecutor:
         else Left(JudgeFailureReason.CheckerRuntimeFailed)
       }
 
-  private def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
-    val score = aggregateScore(subtask.aggregation.score, testcases.map(_.score), subtask.testcases.map(_.scoreRatio))
-    val verdict = aggregateVerdict(score, testcases.map(result => result.score -> result.verdict))
+  private[infra] def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
+    val result = aggregateSubtaskWithoutBase(subtask, testcases)
+    val baseResult =
+      Option.when(testcases.exists(_.testcaseType == JudgeTestcaseType.Hack)) {
+        aggregateSubtaskWithoutBase(subtask, testcases.filterNot(_.testcaseType == JudgeTestcaseType.Hack))
+      }
+    result.copy(baseResult = baseResult)
+
+  private def aggregateSubtaskWithoutBase(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
+    val scoreAggregation = aggregateTestcaseScores(subtask, testcases)
+    val score = scoreAggregation.score
+    val lowestScore = scoreAggregation.lowestScore
+    val verdict = aggregateVerdict(score, scoreAggregation.verdictChildren)
     val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
       testcases.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
     )
@@ -1015,21 +1355,89 @@ object JudgeExecutor:
       subtask.index,
       subtask.label,
       score,
+      lowestScore,
       verdict,
       aggregateUsage(subtask.aggregation.time, testcases.flatMap(_.timeUsedMs)),
       aggregateUsage(subtask.aggregation.memory, testcases.flatMap(_.memoryUsedKb)),
       reason,
-      testcases
+      testcases,
+      baseResult = None
     )
 
-  private def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
-    val rawScore = aggregateScore(task.aggregation.score, subtasks.map(_.score), task.subtasks.map(_.scoreRatio))
+  private[infra] def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
+    val result = aggregateTaskWithoutBase(task, subtasks)
+    val baseResult =
+      Option.when(subtasks.exists(_.baseResult.nonEmpty)) {
+        aggregateTaskWithoutBase(task, subtasks.map(subtask => subtask.baseResult.getOrElse(subtask.copy(baseResult = None))))
+      }
+    result.copy(baseResult = baseResult)
+
+  private def aggregateTaskWithoutBase(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
+    val scoreAggregation = aggregateSubtaskScores(task, subtasks)
+    val rawScore = scoreAggregation.score
     val score = roundFinalScore(rawScore, task.roundingScale)
-    val verdict = aggregateVerdict(score, subtasks.map(result => result.score -> result.verdict))
+    val lowestScore = roundFinalScore(scoreAggregation.lowestScore, task.roundingScale)
+    val verdict = aggregateVerdict(score, scoreAggregation.verdictChildren)
     val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
       subtasks.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
     )
-    JudgeResult(score, verdict, reason, aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)), aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)), subtasks)
+    JudgeResult(
+      score,
+      lowestScore,
+      verdict,
+      reason,
+      aggregateUsage(task.aggregation.time, subtasks.flatMap(_.timeUsedMs)),
+      aggregateUsage(task.aggregation.memory, subtasks.flatMap(_.memoryUsedKb)),
+      subtasks,
+      baseResult = None
+    )
+
+  private def aggregateTestcaseScores(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): ScoreAggregation =
+    val (hackTestcases, baseTestcases) = testcases.partition(_.testcaseType == JudgeTestcaseType.Hack)
+    val allLowestScore = lowestScore(testcases.map(result => result.score -> result.verdict))
+    if subtask.aggregation.score == "sum" && hackTestcases.nonEmpty then
+      val baseCandidate =
+        Option.when(baseTestcases.nonEmpty) {
+          val baseScore = aggregateScore("sum", baseTestcases.map(_.score), testcaseScoreRatios(subtask, baseTestcases))
+          val baseVerdict = aggregateVerdict(baseScore, baseTestcases.map(result => result.score -> result.verdict))
+          baseScore -> baseVerdict
+        }
+      val scoreChildren = baseCandidate.toList ++ hackTestcases.map(result => result.score -> result.verdict)
+      ScoreAggregation(lowestScore(scoreChildren), allLowestScore, scoreChildren)
+    else
+      val score = aggregateScore(subtask.aggregation.score, testcases.map(_.score), testcaseScoreRatios(subtask, testcases))
+      ScoreAggregation(score, allLowestScore, testcases.map(result => result.score -> result.verdict))
+
+  private def aggregateSubtaskScores(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): ScoreAggregation =
+    val hackTestcaseChildren =
+      subtasks.flatMap(_.testcases.collect {
+        case testcase if testcase.testcaseType == JudgeTestcaseType.Hack => testcase.score -> testcase.verdict
+      })
+    if task.aggregation.score == "sum" && hackTestcaseChildren.nonEmpty then
+      val baseSubtasks = subtasks.map(subtask => subtask.baseResult.getOrElse(subtask.copy(baseResult = None)))
+      val baseCandidate =
+        Option.when(baseSubtasks.exists(_.testcases.nonEmpty)) {
+          val baseScore = aggregateScore("sum", baseSubtasks.map(_.score), task.subtasks.map(_.scoreRatio))
+          val baseVerdict = aggregateVerdict(roundFinalScore(baseScore, task.roundingScale), baseSubtasks.map(result => result.score -> result.verdict))
+          baseScore -> baseVerdict
+        }
+      val baseLowestScore =
+        Option.when(baseSubtasks.exists(_.testcases.nonEmpty)) {
+          aggregateScore("sum", baseSubtasks.map(_.lowestScore), task.subtasks.map(_.scoreRatio))
+        }
+      val scoreChildren = baseCandidate.toList ++ hackTestcaseChildren
+      val lowestScoreChildren = baseLowestScore.toList.map(score => score -> SubmissionVerdict.Accepted) ++ hackTestcaseChildren
+      ScoreAggregation(lowestScore(scoreChildren), lowestScore(lowestScoreChildren), scoreChildren)
+    else
+      val score = aggregateScore(task.aggregation.score, subtasks.map(_.score), task.subtasks.map(_.scoreRatio))
+      val lowest = aggregateScore(task.aggregation.score, subtasks.map(_.lowestScore), task.subtasks.map(_.scoreRatio))
+      ScoreAggregation(score, lowest, subtasks.map(result => result.score -> result.verdict))
+
+  private def testcaseScoreRatios(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): List[BigDecimal] =
+    testcases.map(result => subtask.testcases.find(_.index == result.index).map(_.scoreRatio).getOrElse(BigDecimal(1)))
+
+  private def lowestScore(children: List[(BigDecimal, SubmissionVerdict)]): BigDecimal =
+    children.map(_._1).minOption.getOrElse(BigDecimal(0))
 
   private def aggregateScore(kind: String, scores: List[BigDecimal], ratios: List[BigDecimal]): BigDecimal =
     kind match

@@ -18,6 +18,7 @@ object ProblemTableSchema:
       |  data_name varchar(255),
       |  data_bytes bytea,
       |  ready boolean not null default false,
+      |  hack_revision bigint not null default 0,
       |  result_display_mode varchar(32) not null default 'score' check (result_display_mode in ('verdict', 'score')),
       |  base_access varchar(32) not null default 'restricted' check (base_access in ('restricted', 'public')),
       |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
@@ -253,6 +254,38 @@ object ProblemTableSchema:
       |alter column ready set default false
       |""".stripMargin
 
+  val addHackRevisionColumnSql: String =
+    """
+      |do $$
+      |begin
+      |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'hack_revision'
+      |  ) then
+      |    alter table problems add column hack_revision bigint;
+      |  end if;
+      |
+      |  update problems
+      |  set hack_revision = 0
+      |  where hack_revision is null;
+      |end $$;
+      |""".stripMargin
+
+  val setHackRevisionDefaultSql: String =
+    """
+      |alter table problems
+      |alter column hack_revision set default 0
+      |""".stripMargin
+
+  val setHackRevisionNotNullSql: String =
+    """
+      |alter table problems
+      |alter column hack_revision set not null
+      |""".stripMargin
+
   val addResultDisplayModeColumnSql: String =
     """
       |do $$
@@ -386,10 +419,13 @@ object ProblemTableSchema:
         statement.execute(addBaseAccessColumnSql)
         statement.execute(dropVisibilityColumnSql)
         statement.execute(addDataColumnsSql)
+        statement.execute(addHackRevisionColumnSql)
         statement.execute(dropTimeLimitColumnSql)
         statement.execute(dropSpaceLimitColumnSql)
         statement.execute(setReadyDefaultSql)
         statement.execute(setReadyNotNullSql)
+        statement.execute(setHackRevisionDefaultSql)
+        statement.execute(setHackRevisionNotNullSql)
         statement.execute(addResultDisplayModeColumnSql)
         statement.execute(setResultDisplayModeDefaultSql)
         statement.execute(setResultDisplayModeNotNullSql)

@@ -6,7 +6,6 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 
 import domains.submission.objects.{SubmissionId, SubmissionStatus}
-import domains.submission.objects.internal.SubmissionJudgeState
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
 import domains.submission.utils.SubmissionProgramStorage
@@ -42,7 +41,7 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
         record.status != SubmissionStatus.Queued && record.status != SubmissionStatus.Running,
         HttpApiError.badRequest("Only completed or failed submissions can be rejudged.")
       )
-      _ <- SubmissionJudgeTable.updateJudgeState(connection, submissionId, SubmissionJudgeState.queued)
+      _ <- SubmissionJudgeTable.queueManualRejudge(connection, submissionId)
       updatedRecord <- SubmissionQueryTable.findById(connection, submissionId).map(
         _.getOrElse(throw new IllegalStateException("Submission disappeared after rejudge."))
       )

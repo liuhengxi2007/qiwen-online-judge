@@ -4,6 +4,7 @@ import cats.effect.IO
 import domains.auth.api.PublicResponseApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
+import domains.hack.api.ReadHackProblemData
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.Stream
@@ -34,19 +35,24 @@ final case class DownloadJudgeProblemData(
     yield (problemSlug, path)
 
   override def plan(connection: Connection, input: (ProblemSlug, ProblemDataPath)): IO[Response[IO]] =
-    val _ = connection
     val (problemSlug, path) = input
-    problemDataStorage.readPath(problemSlug, path).flatMap {
+    ReadHackProblemData.plan(connection, ReadHackProblemData.input(problemSlug, path.value)).flatMap {
+      case Some((filename, bytes)) =>
+        IO.pure(bytesResponse(filename, bytes))
       case None =>
-        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
-      case Some((storedPath, bytes)) =>
-        IO.pure(
-          Response[IO](status = Status.Ok)
-            .putHeaders(
-              Header.Raw(CIString("Content-Type"), "application/octet-stream"),
-              Header.Raw(CIString("Content-Disposition"), s"""attachment; filename="${storedPath.fileName}""""),
-              Header.Raw(CIString("Content-Length"), bytes.length.toString)
-            )
-            .withBodyStream(Stream.emits(bytes).covary[IO])
-        )
+        problemDataStorage.readPath(problemSlug, path).flatMap {
+          case None =>
+            HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+          case Some((storedPath, bytes)) =>
+            IO.pure(bytesResponse(storedPath.fileName, bytes))
+        }
     }
+
+  private def bytesResponse(filename: String, bytes: Array[Byte]): Response[IO] =
+    Response[IO](status = Status.Ok)
+      .putHeaders(
+        Header.Raw(CIString("Content-Type"), "application/octet-stream"),
+        Header.Raw(CIString("Content-Disposition"), s"""attachment; filename="$filename""""),
+        Header.Raw(CIString("Content-Length"), bytes.length.toString)
+      )
+      .withBodyStream(Stream.emits(bytes).covary[IO])

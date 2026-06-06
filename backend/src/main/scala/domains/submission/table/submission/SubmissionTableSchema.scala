@@ -28,6 +28,8 @@ object SubmissionTableSchema:
       |  program_manifest jsonb not null,
       |  language varchar(32) generated always as ((program_manifest #>> array['programs', program_manifest ->> 'defaultProgramKey', 'language'])) stored,
       |  status varchar(32) not null default 'queued',
+      |  judge_priority integer not null default 0,
+      |  hack_revision bigint not null default 0,
       |  judge_result jsonb,
       |  verdict varchar(64) generated always as (judge_result ->> 'verdict') stored,
       |  time_used_ms bigint generated always as ((judge_result ->> 'timeUsedMs')::bigint) stored,
@@ -66,6 +68,20 @@ object SubmissionTableSchema:
       |
       |  if not exists (
       |    select 1 from information_schema.columns
+      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'judge_priority'
+      |  ) then
+      |    alter table submissions add column judge_priority integer;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1 from information_schema.columns
+      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'hack_revision'
+      |  ) then
+      |    alter table submissions add column hack_revision bigint;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1 from information_schema.columns
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'started_at'
       |  ) then
       |    alter table submissions add column started_at timestamp;
@@ -81,6 +97,14 @@ object SubmissionTableSchema:
       |  update submissions
       |  set status = 'queued'
       |  where status is null or btrim(status) = '';
+      |
+      |  update submissions
+      |  set judge_priority = 0
+      |  where judge_priority is null;
+      |
+      |  update submissions
+      |  set hack_revision = 0
+      |  where hack_revision is null;
       |end $$;
       |""".stripMargin
 
@@ -364,10 +388,34 @@ object SubmissionTableSchema:
       |alter column status set default 'queued'
       |""".stripMargin
 
+  val setJudgePriorityDefaultSql: String =
+    """
+      |alter table submissions
+      |alter column judge_priority set default 0
+      |""".stripMargin
+
+  val setHackRevisionDefaultSql: String =
+    """
+      |alter table submissions
+      |alter column hack_revision set default 0
+      |""".stripMargin
+
   val setStatusNotNullSql: String =
     """
       |alter table submissions
       |alter column status set not null
+      |""".stripMargin
+
+  val setJudgePriorityNotNullSql: String =
+    """
+      |alter table submissions
+      |alter column judge_priority set not null
+      |""".stripMargin
+
+  val setHackRevisionNotNullSql: String =
+    """
+      |alter table submissions
+      |alter column hack_revision set not null
       |""".stripMargin
 
   val setPublicIdNotNullSql: String =
@@ -405,7 +453,7 @@ object SubmissionTableSchema:
       |create index if not exists submissions_contest_id_submitted_at_idx
       |  on submissions (contest_id, submitted_at desc, public_id desc);
       |create index if not exists submissions_queued_language_idx
-      |  on submissions (language, submitted_at asc, public_id asc)
+      |  on submissions (language, judge_priority desc, submitted_at asc, public_id asc)
       |  where status = 'queued';
       |""".stripMargin
 
@@ -454,6 +502,10 @@ object SubmissionTableSchema:
           dropJudgeMessageColumnSql,
           setStatusDefaultSql,
           setStatusNotNullSql,
+          setJudgePriorityDefaultSql,
+          setJudgePriorityNotNullSql,
+          setHackRevisionDefaultSql,
+          setHackRevisionNotNullSql,
           setPublicIdDefaultSql,
           setPublicIdNotNullSql,
           addPublicIdUniqueConstraintSql,

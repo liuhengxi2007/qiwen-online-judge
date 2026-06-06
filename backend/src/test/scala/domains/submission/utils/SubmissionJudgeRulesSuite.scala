@@ -4,7 +4,7 @@ import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 import io.circe.parser.decode
 import judgeprotocol.objects.SubmissionVerdict
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTestcaseResult}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTestcaseResult, JudgeTestcaseType}
 import munit.FunSuite
 
 import java.time.Instant
@@ -83,6 +83,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
           index = 1,
           label = Some("sample"),
           score = BigDecimal(1),
+          lowestScore = BigDecimal(1),
           verdict = SubmissionVerdict.Accepted,
           timeUsedMs = None,
           memoryUsedKb = None,
@@ -91,6 +92,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
             JudgeTestcaseResult(
               index = 1,
               label = Some("1"),
+              testcaseType = JudgeTestcaseType.Main,
               score = BigDecimal(1),
               verdict = SubmissionVerdict.Accepted,
               message = Some("checker report"),
@@ -98,7 +100,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
               timeUsedMs = None,
               memoryUsedKb = None
             )
-          )
+          ),
+          baseResult = None
         )
       )
     )
@@ -125,11 +128,13 @@ class SubmissionJudgeRulesSuite extends FunSuite:
           index = 1,
           label = Some("sample"),
           score = BigDecimal(0),
+          lowestScore = BigDecimal(0),
           verdict = SubmissionVerdict.SystemError,
           timeUsedMs = None,
           memoryUsedKb = None,
           reason = None,
-          testcases = Nil
+          testcases = Nil,
+          baseResult = None
         )
       )
     )
@@ -247,11 +252,14 @@ class SubmissionJudgeRulesSuite extends FunSuite:
     reason: Option[JudgeFailureReason] = None,
     subtasks: List[JudgeSubtaskResult] = Nil
   ): JudgeResult =
+    val score = if verdict == SubmissionVerdict.Accepted then BigDecimal(1) else BigDecimal(0)
     JudgeResult(
-      score = if verdict == SubmissionVerdict.Accepted then BigDecimal(1) else BigDecimal(0),
+      score = score,
+      lowestScore = subtasks.map(_.lowestScore).minOption.getOrElse(score),
       verdict = verdict,
       reason = reason,
       timeUsedMs = None,
       memoryUsedKb = None,
-      subtasks = subtasks
+      subtasks = subtasks,
+      baseResult = None
     )

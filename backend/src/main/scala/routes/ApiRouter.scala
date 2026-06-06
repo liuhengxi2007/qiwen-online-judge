@@ -35,6 +35,7 @@ object ApiRouter:
         domains.problemset.routes.ProblemSetRouter.routes(databaseSession, sessionStore) <+>
         domains.contest.routes.ContestRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
         domains.submission.routes.SubmissionRouter.routes(databaseSession, sessionStore, submissionProgramStorage) <+>
+        domains.hack.routes.HackRouter.routes(databaseSession, sessionStore, submissionProgramStorage, problemDataStorage) <+>
         domains.blog.routes.BlogRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.usergroup.routes.UserGroupRouter.routes(databaseSession, sessionStore) <+>
         domains.message.routes.MessageRouter.routes(databaseSession, sessionStore, messageEventHub) <+>

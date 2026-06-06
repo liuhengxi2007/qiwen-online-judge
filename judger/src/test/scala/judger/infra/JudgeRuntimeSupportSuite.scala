@@ -41,6 +41,7 @@ class JudgeRuntimeSupportSuite extends FunSuite:
           scoreRatio = BigDecimal(1),
           mode = JudgeTaskMode.traditional("main"),
           validator = None,
+          standard = None,
           aggregation = JudgeTaskAggregation("sum", "max", "max"),
           testcases = Nil
         )

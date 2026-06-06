@@ -27,8 +27,11 @@ import { ProblemSetDetailPage } from '@/pages/ProblemSetDetailPage'
 import { ProblemSetPage } from '@/pages/ProblemSetPage'
 import { ProblemBlogPage } from '@/pages/ProblemBlogPage'
 import { ForbiddenPage } from '@/pages/ForbiddenPage'
+import { HackPage } from '@/pages/HackPage'
+import { HackDetailPage } from '@/pages/HackDetailPage'
 import { SiteManagePage } from '@/pages/SiteManagePage'
 import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage'
+import { SubmissionHackPage } from '@/pages/SubmissionHackPage'
 import { ProblemSubmissionPage } from '@/pages/ProblemSubmissionPage'
 import { SubmissionPage } from '@/pages/SubmissionPage'
 import { UserProfilePage } from '@/pages/UserProfilePage'
@@ -205,6 +208,18 @@ export const router = createBrowserRouter([
       {
         path: 'submissions/:submissionId',
         element: <AuthenticatedRoute element={<SubmissionDetailPage />} />,
+      },
+      {
+        path: 'submissions/:submissionId/hack/:subtaskIndex',
+        element: <AuthenticatedRoute element={<SubmissionHackPage />} />,
+      },
+      {
+        path: 'hacks',
+        element: <AuthenticatedRoute element={<HackPage />} />,
+      },
+      {
+        path: 'hacks/:hackId',
+        element: <AuthenticatedRoute element={<HackDetailPage />} />,
       },
       {
         path: 'ranklist',
