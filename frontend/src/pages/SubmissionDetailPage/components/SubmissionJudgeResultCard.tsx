@@ -5,6 +5,7 @@ import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
+  formatTestcaseDetail,
   submissionVerdictTextStyle,
   submissionVerdictLabel,
 } from '@/pages/objects/SubmissionDisplay'
@@ -66,7 +67,7 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
             </div>
             {subtask.testcases.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[960px] text-left text-sm">
+                <table className="w-full min-w-[840px] text-left text-sm">
                   <thead className="bg-slate-50 text-slate-500">
                     <tr>
                       <th className="px-4 py-2 font-medium">{t('submission.detail.testcases')}</th>
@@ -74,8 +75,7 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
                       <th className="px-4 py-2 font-medium">{t('submission.list.score')}</th>
                       <th className="px-4 py-2 font-medium">{t('submission.list.timeUsed')}</th>
                       <th className="px-4 py-2 font-medium">{t('submission.list.spaceUsed')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.detail.reason')}</th>
-                      <th className="px-4 py-2 font-medium">{t('submission.detail.checkerReport')}</th>
+                      <th className="px-4 py-2 font-medium">{t('submission.detail.testcaseDetail')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -90,9 +90,8 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
                         </td>
                         <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
                         <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
-                        <td className="px-4 py-2 font-mono text-xs text-slate-600">{testcase.reason ?? '--'}</td>
                         <td className="max-w-[320px] whitespace-pre-wrap px-4 py-2 text-slate-700">
-                          {testcase.message ?? '--'}
+                          {formatTestcaseDetail(testcase.reason, testcase.message)}
                         </td>
                       </tr>
                     ))}

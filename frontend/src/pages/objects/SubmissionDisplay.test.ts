@@ -10,6 +10,7 @@ import {
   scoreTextStyleForRatio,
 } from './ScoreDisplay'
 import {
+  formatTestcaseDetail,
   submissionProblemPath,
   submissionJudgeStateLabel,
   submissionLanguageLabel,
@@ -75,6 +76,18 @@ describe('submission-display', () => {
     expect(submissionResultTextStyle('score', 'wrong_answer', 0.5)).toEqual({
       color: 'hsl(58, 72%, 34%)',
     })
+  })
+
+  it('formats testcase details with reason priority and message truncation', () => {
+    const boundaryMessage = 'x'.repeat(125)
+    const longMessage = 'x'.repeat(126)
+
+    expect(formatTestcaseDetail('checker_runtime_failed', null)).toBe('checker_runtime_failed')
+    expect(formatTestcaseDetail(null, 'expected 1 but found 2')).toBe('expected 1 but found 2')
+    expect(formatTestcaseDetail(null, boundaryMessage)).toBe(boundaryMessage)
+    expect(formatTestcaseDetail(null, longMessage)).toBe(`${'x'.repeat(125)}...`)
+    expect(formatTestcaseDetail(null, null)).toBe('--')
+    expect(formatTestcaseDetail('system_error', 'hidden checker detail')).toBe('system_error')
   })
 
   it('builds source-aware problem paths', () => {

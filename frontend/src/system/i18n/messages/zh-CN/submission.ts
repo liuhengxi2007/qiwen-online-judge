@@ -56,7 +56,7 @@ export const zhCnSubmissionMessages: Record<string, string> = {
   'submission.detail.submitter': '提交者',
   'submission.detail.judgeResult': '评测详情',
   'submission.detail.reason': '原因',
-  'submission.detail.checkerReport': 'Checker 报告',
+  'submission.detail.testcaseDetail': '说明',
   'submission.detail.testcases': '测试点',
   'submission.detail.noTestcases': '没有产生测试点结果。',
   'submission.detail.sourceCode': '源代码',

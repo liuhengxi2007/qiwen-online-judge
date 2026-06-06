@@ -13,6 +13,8 @@ import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 
+const testcaseDetailMessageLimit = 125
+
 export function formatOptionalDurationMs(value: number | null): string {
   if (value === null) {
     return '--'
@@ -156,6 +158,19 @@ export function submissionResultTextStyle(
     case 'score':
       return scoreTextStyleForRatio(score ?? Number.NaN)
   }
+}
+
+export function formatTestcaseDetail(reason: string | null, message: string | null): string {
+  if (reason !== null) {
+    return reason
+  }
+  if (message === null) {
+    return '--'
+  }
+  if (message.length <= testcaseDetailMessageLimit) {
+    return message
+  }
+  return `${message.slice(0, testcaseDetailMessageLimit)}...`
 }
 
 export function verdictFilterLabel(verdict: SubmissionVerdictFilter, allVerdictsLabel: string): string {
