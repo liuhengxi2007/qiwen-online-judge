@@ -12,6 +12,7 @@ import {
   submissionLanguageLabel,
   submissionProblemPath,
   submissionResultLabel,
+  submissionResultTextStyle,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { usernameValue } from '@/objects/user/Username'
@@ -111,7 +112,14 @@ export function SubmissionSummaryList({
                   <div>
                     <dt className="text-slate-500">{t('submission.list.result')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">
+                      <span
+                        className="block min-h-[1.625rem] w-full py-1"
+                        style={submissionResultTextStyle(
+                          submission.resultDisplayMode,
+                          submission.verdict,
+                          submission.score,
+                        )}
+                      >
                         {submissionResultLabel(
                           submission.resultDisplayMode,
                           submission.status,

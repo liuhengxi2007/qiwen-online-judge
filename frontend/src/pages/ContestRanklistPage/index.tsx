@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
 
@@ -22,6 +21,7 @@ import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCo
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { scorePillStyleForRatio, scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useContestRanklistPageModel } from './hooks/useContestRanklistPageModel'
 
@@ -130,7 +130,6 @@ function ContestRanklistPageContent({
 function ContestRanklistTable({ items }: { items: ContestRanklistItem[] }) {
   const { t } = useI18n()
   const problemColumns = items[0]?.problemResults.map((result) => result.problem) ?? []
-  const maxTotalScore = Math.max(problemColumns.length * 100, 1)
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
@@ -155,7 +154,10 @@ function ContestRanklistTable({ items }: { items: ContestRanklistItem[] }) {
               <TableCell className="min-w-40">
                 <UserProfileLink className="inline-flex items-center gap-2" showUsername user={item.user} />
               </TableCell>
-              <TableCell className="font-semibold" style={scoreColorStyle(contestScoreValue(item.totalScore), maxTotalScore)}>
+              <TableCell
+                className="font-semibold"
+                style={scoreTextStyleForRatio(contestScoreValue(item.totalScore) / problemColumns.length)}
+              >
                 {formatContestScore(item.totalScore)}
               </TableCell>
               <TableCell className="font-mono text-slate-600">{formatPenaltyMillis(item.penaltyMillis)}</TableCell>
@@ -184,13 +186,13 @@ function ContestProblemResultCell({ result }: { result: ContestRanklistProblemRe
       {result.canViewDetail ? (
         <Link
           className="rounded-full px-3 py-1 text-sm font-bold transition hover:scale-[1.03] hover:shadow-sm"
-          style={scorePillStyle(score)}
+          style={scorePillStyleForRatio(score)}
           to={`/submissions/${submissionIdValue(result.submissionId)}`}
         >
           {scoreContent}
         </Link>
       ) : (
-        <span className="rounded-full px-3 py-1 text-sm font-bold" style={scorePillStyle(score)}>
+        <span className="rounded-full px-3 py-1 text-sm font-bold" style={scorePillStyleForRatio(score)}>
           {scoreContent}
         </span>
       )}
@@ -209,34 +211,4 @@ function formatPenaltyMillis(penaltyMillis: ContestRanklistItem['penaltyMillis']
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
   return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':')
-}
-
-function scoreColorStyle(score: number, maxScore: number): CSSProperties {
-  const ratio = clampScoreRatio(score / maxScore)
-  return {
-    color: scoreHueColor(ratio),
-  }
-}
-
-function scorePillStyle(score: number): CSSProperties {
-  const ratio = clampScoreRatio(score / 100)
-  return {
-    backgroundColor: `hsla(${scoreHue(ratio)}, 82%, 92%, 0.9)`,
-    color: scoreHueColor(ratio),
-  }
-}
-
-function scoreHueColor(ratio: number): string {
-  return `hsl(${scoreHue(ratio)}, 72%, 34%)`
-}
-
-function scoreHue(ratio: number): number {
-  return Math.round(142 * ratio)
-}
-
-function clampScoreRatio(ratio: number): number {
-  if (!Number.isFinite(ratio)) {
-    return 0
-  }
-  return Math.min(1, Math.max(0, ratio))
 }

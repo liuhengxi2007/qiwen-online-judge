@@ -1,11 +1,15 @@
+import type { CSSProperties } from 'react'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   formatOptionalDurationMs,
   formatOptionalMemoryKb,
   formatOptionalScore,
+  submissionVerdictTextStyle,
+  submissionVerdictLabel,
 } from '@/pages/objects/SubmissionDisplay'
-import { submissionVerdictLabel } from '@/pages/objects/SubmissionDisplay'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
+import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmissionJudgeResultCardProps = {
@@ -20,14 +24,24 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
       <CardHeader>
         <CardTitle className="text-xl text-slate-950">{t('submission.detail.judgeResult')}</CardTitle>
         <CardDescription>
-          {submissionVerdictLabel(judgeResult.verdict)}{' '}
-          · {formatOptionalScore(judgeResult.score)}
+          <span style={submissionVerdictTextStyle(judgeResult.verdict)}>
+            {submissionVerdictLabel(judgeResult.verdict)}
+          </span>{' '}
+          · <span style={scoreTextStyleForRatio(judgeResult.score)}>{formatOptionalScore(judgeResult.score)}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 text-sm sm:grid-cols-4">
-          <ResultMetric label={t('common.verdict')} value={submissionVerdictLabel(judgeResult.verdict)} />
-          <ResultMetric label={t('submission.list.score')} value={formatOptionalScore(judgeResult.score)} />
+          <ResultMetric
+            label={t('common.verdict')}
+            value={submissionVerdictLabel(judgeResult.verdict)}
+            valueStyle={submissionVerdictTextStyle(judgeResult.verdict)}
+          />
+          <ResultMetric
+            label={t('submission.list.score')}
+            value={formatOptionalScore(judgeResult.score)}
+            valueStyle={scoreTextStyleForRatio(judgeResult.score)}
+          />
           <ResultMetric label={t('submission.list.timeUsed')} value={formatOptionalDurationMs(judgeResult.timeUsedMs)} />
           <ResultMetric label={t('submission.list.spaceUsed')} value={formatOptionalMemoryKb(judgeResult.memoryUsedKb)} />
         </div>
@@ -39,7 +53,10 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
               <div>
                 <p className="font-medium text-slate-950">{resultNodeTitle('subtask', subtask.index, subtask.label)}</p>
                 <p className="text-sm text-slate-500">
-                  {submissionVerdictLabel(subtask.verdict)} · {formatOptionalScore(subtask.score)}
+                  <span style={submissionVerdictTextStyle(subtask.verdict)}>
+                    {submissionVerdictLabel(subtask.verdict)}
+                  </span>{' '}
+                  · <span style={scoreTextStyleForRatio(subtask.score)}>{formatOptionalScore(subtask.score)}</span>
                 </p>
                 <JudgeReasonLine label={t('submission.detail.reason')} reason={subtask.reason} />
               </div>
@@ -65,10 +82,12 @@ export function SubmissionJudgeResultCard({ judgeResult }: SubmissionJudgeResult
                     {subtask.testcases.map((testcase) => (
                       <tr key={testcase.index} className="border-t border-slate-100">
                         <td className="px-4 py-2 font-medium text-slate-900">{resultNodeTitle('testcase', testcase.index, testcase.label)}</td>
-                        <td className="px-4 py-2 text-slate-700">
+                        <td className="px-4 py-2 text-slate-700" style={submissionVerdictTextStyle(testcase.verdict)}>
                           {submissionVerdictLabel(testcase.verdict)}
                         </td>
-                        <td className="px-4 py-2 text-slate-700">{formatOptionalScore(testcase.score)}</td>
+                        <td className="px-4 py-2 text-slate-700" style={scoreTextStyleForRatio(testcase.score)}>
+                          {formatOptionalScore(testcase.score)}
+                        </td>
                         <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
                         <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
                         <td className="px-4 py-2 font-mono text-xs text-slate-600">{testcase.reason ?? '--'}</td>
@@ -94,11 +113,19 @@ function resultNodeTitle(kind: 'subtask' | 'testcase', index: number, label: str
   return label ? `${kind} ${index} (${label})` : `${kind} ${index}`
 }
 
-function ResultMetric({ label, value }: { label: string; value: string }) {
+function ResultMetric({
+  label,
+  value,
+  valueStyle,
+}: {
+  label: string
+  value: string
+  valueStyle?: CSSProperties
+}) {
   return (
     <div className="rounded-md border border-slate-200 px-3 py-2">
       <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>
-      <p className="mt-1 font-medium text-slate-950">{value}</p>
+      <p className="mt-1 font-medium text-slate-950" style={valueStyle}>{value}</p>
     </div>
   )
 }

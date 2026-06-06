@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
@@ -7,6 +9,7 @@ import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 import type { SubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
+import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 
@@ -83,6 +86,26 @@ export function submissionVerdictLabel(verdict: SubmissionVerdict | null): strin
   }
 }
 
+export function submissionVerdictTextStyle(verdict: SubmissionVerdict | null): CSSProperties {
+  switch (verdict) {
+    case null:
+      return { color: '#94A3B8' }
+    case 'accepted':
+    case 'accepted_by_protocol':
+      return { color: '#1B7837' }
+    case 'wrong_answer':
+      return { color: '#B2182B' }
+    case 'compile_error':
+      return { color: '#64748B' }
+    case 'time_limit_exceeded':
+      return { color: '#B99024' }
+    case 'runtime_error':
+      return { color: '#7B3294' }
+    case 'system_error':
+      return { color: '#2166AC' }
+  }
+}
+
 export function submissionJudgeStateLabel(
   status: SubmissionStatus,
   verdict: SubmissionVerdict | null,
@@ -119,6 +142,19 @@ export function submissionResultLabel(
       return submissionJudgeStateLabel(status, verdict)
     case 'score':
       return formatOptionalScore(score)
+  }
+}
+
+export function submissionResultTextStyle(
+  mode: SubmissionResultDisplayMode,
+  verdict: SubmissionVerdict | null,
+  score: number | null,
+): CSSProperties {
+  switch (mode) {
+    case 'verdict':
+      return submissionVerdictTextStyle(verdict)
+    case 'score':
+      return scoreTextStyleForRatio(score ?? Number.NaN)
   }
 }
 

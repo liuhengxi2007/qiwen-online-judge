@@ -17,6 +17,7 @@ import {
   submissionLanguageLabel,
   submissionProblemPath,
   submissionResultLabel,
+  submissionResultTextStyle,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -125,7 +126,14 @@ export function SubmissionSummaryCard({
         </div>
         <div>
           <p className="text-slate-500">{t('submission.list.result')}</p>
-          <p className="mt-1 font-medium text-slate-900">
+          <p
+            className="mt-1 font-medium text-slate-900"
+            style={submissionResultTextStyle(
+              submission.resultDisplayMode,
+              submission.verdict,
+              submission.score,
+            )}
+          >
             {submissionResultLabel(
               submission.resultDisplayMode,
               submission.status,
