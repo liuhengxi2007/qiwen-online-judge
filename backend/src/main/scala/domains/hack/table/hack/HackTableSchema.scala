@@ -84,8 +84,8 @@ object HackTableSchema:
         List(
           createPublicIdSequenceSql,
           initAttemptTableSql,
-          initProblemHackTestcaseTableSql,
           addPublicIdUniqueConstraintSql,
+          initProblemHackTestcaseTableSql,
           createIndexesSql
         ).foreach(statement.execute)
       finally statement.close()
