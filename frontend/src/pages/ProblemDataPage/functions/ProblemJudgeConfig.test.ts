@@ -268,22 +268,108 @@ subtasks:
   })
 
   it('rejects invalid file references and bad score ratios', () => {
-    const yaml = judgeConfigTemplate
-      .replace('answer: tests/1.ans', 'answer: tests/missing.ans')
-      .replace('scoreRatio: 0.8', 'scoreRatio: 0.9')
+    const yaml = judgeConfigTemplate.replace('answer: tests/1.ans', 'answer: tests/missing.ans')
 
     const result = validateJudgeConfigYaml(yaml, templateFiles)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.errors).toContain('subtasks explicit scoreRatio values must not sum above 1.')
-      expect(result.errors).toContain('subtask 2 (main) testcase 1 (1).answer does not exist: tests/missing.ans.')
+      expect(result.errors).toContain('subtask 1 (main) testcase 2 (1).answer does not exist: tests/missing.ans.')
     }
 
-    const invalidRatio = validateJudgeConfigYaml(judgeConfigTemplate.replace('scoreRatio: 0.8', 'scoreRatio: 1.1'), templateFiles)
+    const invalidRatio = validateJudgeConfigYaml(
+      judgeConfigTemplate.replace('  - label: main\n', '  - label: main\n    scoreRatio: 1.1\n'),
+      templateFiles,
+    )
     expect(invalidRatio.ok).toBe(false)
     if (!invalidRatio.ok) {
-      expect(invalidRatio.errors).toContain('subtasks[1].scoreRatio must be between 0 and 1.')
+      expect(invalidRatio.errors).toContain('subtasks[0].scoreRatio must be between 0 and 1.')
+    }
+
+    const invalidSum = validateJudgeConfigYaml(
+      `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - scoreRatio: 0.7
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+  - scoreRatio: 0.4
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+    expect(invalidSum.ok).toBe(false)
+    if (!invalidSum.ok) {
+      expect(invalidSum.errors).toContain('subtasks explicit scoreRatio values must not sum above 1.')
+    }
+  })
+
+  it('rejects scoreRatio on sample and hack testcases', () => {
+    const yaml = `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - type: sample
+        scoreRatio: 0
+        input: sample/1.in
+        answer: sample/1.ans
+      - type: hack
+        scoreRatio: 0
+        input: sample/1.in
+        answer: sample/1.ans
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('subtask 1 testcase 1.scoreRatio cannot be declared when type is sample.')
+      expect(result.errors).toContain('subtask 1 testcase 2.scoreRatio cannot be declared when type is hack.')
+    }
+  })
+
+  it('rejects subtasks without a main testcase', () => {
+    const yaml = `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - label: sample
+    testcases:
+      - type: sample
+        input: sample/1.in
+        answer: sample/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('subtask 1 (sample) must define at least one main testcase.')
     }
   })
 })

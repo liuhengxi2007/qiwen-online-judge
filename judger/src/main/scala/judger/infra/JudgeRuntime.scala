@@ -3,7 +3,7 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeSubtaskResult, JudgeTask}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultSummary, JudgeSubtaskResult, JudgeTask}
 import judger.config.AppConfig
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
@@ -128,14 +128,13 @@ object JudgeRuntimeSupport:
     verdict: SubmissionVerdict,
     reason: Option[JudgeFailureReason]
   ): ReportJudgeResultRequest =
+    val summary = resultSummary(verdict, reason)
     val subtasks = task.subtasks.map { subtask =>
       JudgeSubtaskResult(
         index = subtask.index,
         label = subtask.label,
-        baseResult = JudgeResultMetrics.failed,
-        worstResult = JudgeResultMetrics.failed,
-        verdict = verdict,
-        reason = reason,
+        baseResult = summary,
+        worstResult = summary,
         testcases = Nil
       )
     }
@@ -143,14 +142,19 @@ object JudgeRuntimeSupport:
       status = status,
       judgeResult = Some(
         JudgeResult(
-          baseResult = JudgeResultMetrics.failed,
-          worstResult = JudgeResultMetrics.failed,
-          verdict = verdict,
-          reason = reason,
+          baseResult = summary,
+          worstResult = summary,
           subtasks = subtasks
         )
       )
     )
+
+  private def resultSummary(verdict: SubmissionVerdict, reason: Option[JudgeFailureReason]): JudgeResultSummary =
+    verdict match
+      case SubmissionVerdict.SystemError =>
+        JudgeResultSummary.failed(reason.getOrElse(JudgeFailureReason.SystemError))
+      case other =>
+        JudgeResultSummary.nonSystem(BigDecimal(0), other, None, None)
 
   def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =
     val isolateDetail =

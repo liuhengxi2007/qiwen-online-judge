@@ -229,13 +229,25 @@ object JudgeTaskBuilder:
       aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
       testcaseMaps <- listOfMapsAt(raw, "testcases").toBuildError
       _ <- Either.cond(testcaseMaps.nonEmpty, (), buildError(s"$subtaskLabel must define at least one testcase."))
-      testcaseRatios <- ratiosFor(testcaseMaps).toBuildError
-      configuredTestcases <- sequenceBuild(testcaseMaps.zip(testcaseRatios).zipWithIndex.map { case ((testcaseMap, testcaseRatio), testcaseIndex) =>
+      testcaseTypes <- sequence(testcaseMaps.map(testcaseTypeAt)).toBuildError
+      testcaseLabels <- sequenceBuild(testcaseMaps.zipWithIndex.map { case (testcaseMap, testcaseIndex) =>
+        optionalStringAt(testcaseMap, "label").toBuildError.map(label => testcaseIndex -> label)
+      }).map(_.toMap)
+      _ <- sequenceBuild(testcaseMaps.zip(testcaseTypes).zipWithIndex.map { case ((testcaseMap, testcaseType), testcaseIndex) =>
+        rejectNonMainTestcaseScoreRatio(testcaseMap, testcaseType, s"$subtaskLabel ${judgeNodeLabel("testcase", testcaseIndex + 1, testcaseLabels.getOrElse(testcaseIndex, None))}")
+      })
+      mainTestcaseMaps = testcaseMaps.zip(testcaseTypes).collect { case (testcaseMap, JudgeTestcaseType.Main) => testcaseMap }
+      _ <- Either.cond(mainTestcaseMaps.nonEmpty, (), buildError(s"$subtaskLabel must define at least one main testcase."))
+      mainTestcaseRatios <- ratiosFor(mainTestcaseMaps).toBuildError
+      mainRatioByIndex = testcaseMaps.zip(testcaseTypes).zipWithIndex.collect {
+        case ((_, JudgeTestcaseType.Main), testcaseIndex) => testcaseIndex
+      }.zip(mainTestcaseRatios).toMap
+      configuredTestcases <- sequenceBuild(testcaseMaps.zip(testcaseTypes).zipWithIndex.map { case ((testcaseMap, testcaseType), testcaseIndex) =>
         buildTestcase(
           manifest = manifest,
           raw = testcaseMap,
           index = testcaseIndex + 1,
-          scoreRatio = testcaseRatio,
+          scoreRatio = if testcaseType == JudgeTestcaseType.Main then mainRatioByIndex(testcaseIndex) else BigDecimal(0),
           parentLimits = limits,
           parentChecker = checker,
           parentStrategyProvider = strategyProvider,
@@ -243,17 +255,18 @@ object JudgeTaskBuilder:
           subtaskLabel = label
         )
       })
+      firstMainTestcase = configuredTestcases.find(_.testcaseType == JudgeTestcaseType.Main).getOrElse(configuredTestcases.head)
       generatedHackTestcases = hackTestcases.zipWithIndex.map { case (testcase, offset) =>
         JudgeTaskTestcase(
           index = configuredTestcases.size + offset + 1,
           label = testcase.label,
           testcaseType = JudgeTestcaseType.Hack,
-          scoreRatio = BigDecimal(1),
-          limits = configuredTestcases.head.limits,
-          checker = configuredTestcases.head.checker,
+          scoreRatio = BigDecimal(0),
+          limits = firstMainTestcase.limits,
+          checker = firstMainTestcase.checker,
           input = testcase.input,
           answer = Some(testcase.answer),
-          strategyProvider = configuredTestcases.head.strategyProvider
+          strategyProvider = firstMainTestcase.strategyProvider
         )
       }
       testcases = configuredTestcases ++ generatedHackTestcases
@@ -319,6 +332,17 @@ object JudgeTaskBuilder:
       case None => Right(JudgeTestcaseType.Main)
       case Some(value) => JudgeTestcaseType.parse(value)
     }
+
+  private def rejectNonMainTestcaseScoreRatio(
+    raw: Map[String, Any],
+    testcaseType: JudgeTestcaseType,
+    label: String
+  ): Either[BuildError, Unit] =
+    Either.cond(
+      testcaseType == JudgeTestcaseType.Main || !raw.contains("scoreRatio"),
+      (),
+      buildError(s"scoreRatio cannot be declared on $label when type is ${JudgeTestcaseType.render(testcaseType)}.")
+    )
 
   private def standardAt(raw: Map[String, Any]): Either[String, Option[StandardConfig]] =
     optionalMapAt(raw, "standard").flatMap {

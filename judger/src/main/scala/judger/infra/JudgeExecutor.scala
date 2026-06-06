@@ -64,7 +64,7 @@ object JudgeExecutor:
 
   private final case class ScoreAggregation(
     scores: ResultTrees[BigDecimal],
-    verdictChildren: List[(BigDecimal, SubmissionVerdict)]
+    verdictChildren: ResultTrees[List[(BigDecimal, SubmissionVerdict)]]
   )
 
   def judge(
@@ -97,10 +97,10 @@ object JudgeExecutor:
     withWorkingDirectory(config.workRoot, "qiwen-hack-") { workingDirectory =>
       IsolateSandbox.resource(config) { sandbox =>
         preparePrograms(task.targetTask, config, workingDirectory, runtimes).flatMap {
-          case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("Target prepare failed.")))
+          case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.baseResult.reason).map(JudgeFailureReason.render).getOrElse("Target prepare failed.")))
           case Right(programs) =>
             prepareTools(task.targetTask, config, workingDirectory, problemDataCache).flatMap {
-              case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.reason).map(JudgeFailureReason.render).getOrElse("Tool prepare failed.")))
+              case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.baseResult.reason).map(JudgeFailureReason.render).getOrElse("Tool prepare failed.")))
               case Right(tools) => executeHack(task, config, workingDirectory, sandbox, problemDataCache, runtimes, programs, tools)
             }
         }
@@ -1227,24 +1227,22 @@ object JudgeExecutor:
     JudgeTestcaseResult(testcase.index, testcase.label, testcase.testcaseType, BigDecimal(1), SubmissionVerdict.AcceptedByProtocol, None, None, Some(0L), Some(0L))
 
   private def subtaskCompileError(subtask: JudgeTaskSubtask): JudgeSubtaskResult =
+    val summary = JudgeResultSummary.nonSystem(BigDecimal(0), SubmissionVerdict.CompileError, None, None)
     JudgeSubtaskResult(
       index = subtask.index,
       label = subtask.label,
-      baseResult = JudgeResultMetrics.failed,
-      worstResult = JudgeResultMetrics.failed,
-      verdict = SubmissionVerdict.CompileError,
-      reason = None,
+      baseResult = summary,
+      worstResult = summary,
       testcases = subtask.testcases.map(testcaseCompileError)
     )
 
   private def subtaskSystemError(subtask: JudgeTaskSubtask, reason: JudgeFailureReason): JudgeSubtaskResult =
+    val summary = JudgeResultSummary.failed(reason)
     JudgeSubtaskResult(
       index = subtask.index,
       label = subtask.label,
-      baseResult = JudgeResultMetrics.failed,
-      worstResult = JudgeResultMetrics.failed,
-      verdict = SubmissionVerdict.SystemError,
-      reason = Some(reason),
+      baseResult = summary,
+      worstResult = summary,
       testcases = subtask.testcases.map(testcase => testcaseSystemError(testcase, reason))
     )
 
@@ -1345,18 +1343,28 @@ object JudgeExecutor:
       }
 
   private[infra] def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
+    val baseTestcases = mainTestcases(testcases)
     val scoreAggregation = aggregateTestcaseScores(subtask, testcases)
-    val verdict = aggregateVerdict(scoreAggregation.scores.base, scoreAggregation.verdictChildren)
-    val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
-      testcases.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
-    )
     val metrics = scoreAggregation.scores
-      .zip(ResultTrees(base = testcases, worst = worstTestcasesFor(testcases)))
-      .map { case (score, metricTestcases) =>
-        JudgeResultMetrics(
-          score,
-          aggregateUsage(subtask.aggregation.time, metricTestcases.flatMap(_.timeUsedMs)),
-          aggregateUsage(subtask.aggregation.memory, metricTestcases.flatMap(_.memoryUsedKb))
+      .zip(scoreAggregation.verdictChildren)
+      .zip(
+        ResultTrees(
+          base = UsageSummary(
+            aggregateUsage(subtask.aggregation.time, baseTestcases.flatMap(_.timeUsedMs)),
+            aggregateUsage(subtask.aggregation.memory, baseTestcases.flatMap(_.memoryUsedKb))
+          ),
+          worst = worstSubtaskUsage(subtask, testcases)
+        )
+      )
+      .zip(ResultTrees(base = baseTestcases, worst = testcases))
+      .map { case (((score, verdictChildren), usage), summaryTestcases) =>
+        val verdict = aggregateVerdict(score, verdictChildren)
+        resultSummary(
+          score = score,
+          verdict = verdict,
+          reason = reasonForTestcases(verdict, summaryTestcases),
+          timeUsedMs = usage.timeUsedMs,
+          memoryUsedKb = usage.memoryUsedKb
         )
       }
     JudgeSubtaskResult(
@@ -1364,93 +1372,95 @@ object JudgeExecutor:
       subtask.label,
       metrics.base,
       metrics.worst,
-      verdict,
-      reason,
       testcases
     )
 
   private[infra] def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
     val scoreAggregation = aggregateSubtaskScores(task, subtasks)
     val scores = scoreAggregation.scores.map(score => roundFinalScore(score, task.roundingScale))
-    val verdict = aggregateVerdict(scores.base, scoreAggregation.verdictChildren)
-    val reason = Option.when(verdict == SubmissionVerdict.SystemError)(
-      subtasks.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
-    )
     val metrics = scores
+      .zip(scoreAggregation.verdictChildren)
       .zip(ResultTrees(base = subtasks.map(_.baseResult), worst = subtasks.map(_.worstResult)))
-      .map { case (score, childMetrics) =>
-        JudgeResultMetrics(
-          score,
-          aggregateUsage(task.aggregation.time, childMetrics.flatMap(_.timeUsedMs)),
-          aggregateUsage(task.aggregation.memory, childMetrics.flatMap(_.memoryUsedKb))
+      .map { case ((score, verdictChildren), childSummaries) =>
+        val verdict = aggregateVerdict(score, verdictChildren)
+        resultSummary(
+          score = score,
+          verdict = verdict,
+          reason = reasonForSummaries(verdict, childSummaries),
+          timeUsedMs = aggregateUsage(task.aggregation.time, childSummaries.flatMap(_.timeUsedMs)),
+          memoryUsedKb = aggregateUsage(task.aggregation.memory, childSummaries.flatMap(_.memoryUsedKb))
         )
       }
     JudgeResult(
       metrics.base,
       metrics.worst,
-      verdict,
-      reason,
       subtasks
     )
 
   private def aggregateTestcaseScores(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): ScoreAggregation =
-    val (hackTestcases, baseTestcases) = testcases.partition(_.testcaseType == JudgeTestcaseType.Hack)
+    val baseTestcases = mainTestcases(testcases)
     val worstCaseScore = worstScore(testcases.map(result => result.score -> result.verdict))
-    if subtask.aggregation.score == "sum" && hackTestcases.nonEmpty then
-      val baseCandidate =
-        Option.when(baseTestcases.nonEmpty) {
-          val baseScore = aggregateScore("sum", baseTestcases.map(_.score), testcaseScoreRatios(subtask, baseTestcases))
-          val baseVerdict = aggregateVerdict(baseScore, baseTestcases.map(result => result.score -> result.verdict))
-          baseScore -> baseVerdict
-        }
-      val scoreChildren = baseCandidate.toList ++ hackTestcases.map(result => result.score -> result.verdict)
-      ScoreAggregation(ResultTrees(base = worstScore(scoreChildren), worst = worstCaseScore), scoreChildren)
-    else
-      val score = aggregateScore(subtask.aggregation.score, testcases.map(_.score), testcaseScoreRatios(subtask, testcases))
-      ScoreAggregation(ResultTrees(base = score, worst = worstCaseScore), testcases.map(result => result.score -> result.verdict))
+    val baseScore = aggregateScore(subtask.aggregation.score, baseTestcases.map(_.score), testcaseScoreRatios(subtask, baseTestcases))
+    ScoreAggregation(
+      ResultTrees(base = baseScore, worst = worstCaseScore),
+      ResultTrees(
+        base = baseTestcases.map(result => result.score -> result.verdict),
+        worst = testcases.map(result => result.score -> result.verdict)
+      )
+    )
 
   private def aggregateSubtaskScores(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): ScoreAggregation =
-    val hackTestcaseChildren =
-      subtasks.flatMap(_.testcases.collect {
-        case testcase if testcase.testcaseType == JudgeTestcaseType.Hack => testcase.score -> testcase.verdict
-    })
-    if task.aggregation.score == "sum" && hackTestcaseChildren.nonEmpty then
-      val baseSubtasks = subtasks.map(subtask => baseSubtaskResult(task, subtask))
-      val baseCandidate =
-        Option.when(baseSubtasks.exists(_.testcases.nonEmpty)) {
-          val baseScore = aggregateScore("sum", baseSubtasks.map(_.baseResult.score), task.subtasks.map(_.scoreRatio))
-          val baseVerdict =
-            aggregateVerdict(roundFinalScore(baseScore, task.roundingScale), baseSubtasks.map(result => result.baseResult.score -> result.verdict))
-          baseScore -> baseVerdict
-        }
-      val baseWorstScore =
-        Option.when(baseSubtasks.exists(_.testcases.nonEmpty)) {
-          aggregateScore("sum", baseSubtasks.map(_.worstResult.score), task.subtasks.map(_.scoreRatio))
-        }
-      val scoreChildren = baseCandidate.toList ++ hackTestcaseChildren
-      val worstScoreChildren = baseWorstScore.toList.map(score => score -> SubmissionVerdict.Accepted) ++ hackTestcaseChildren
-      ScoreAggregation(ResultTrees(base = worstScore(scoreChildren), worst = worstScore(worstScoreChildren)), scoreChildren)
-    else
-      val score = aggregateScore(task.aggregation.score, subtasks.map(_.baseResult.score), task.subtasks.map(_.scoreRatio))
-      val worstScoreValue = aggregateScore(task.aggregation.score, subtasks.map(_.worstResult.score), task.subtasks.map(_.scoreRatio))
-      ScoreAggregation(ResultTrees(base = score, worst = worstScoreValue), subtasks.map(result => result.baseResult.score -> result.verdict))
-
-  private def baseSubtaskResult(task: JudgeTask, result: JudgeSubtaskResult): JudgeSubtaskResult =
-    if result.testcases.exists(_.testcaseType == JudgeTestcaseType.Hack) then
-      task.subtasks
-        .find(_.index == result.index)
-        .map(subtask => aggregateSubtask(subtask, result.testcases.filterNot(_.testcaseType == JudgeTestcaseType.Hack)))
-        .getOrElse(result)
-    else
-      result
+    val baseScore = aggregateScore(task.aggregation.score, subtasks.map(_.baseResult.score), task.subtasks.map(_.scoreRatio))
+    val worstScoreValue = aggregateScore(task.aggregation.score, subtasks.map(_.worstResult.score), task.subtasks.map(_.scoreRatio))
+    ScoreAggregation(
+      ResultTrees(base = baseScore, worst = worstScoreValue),
+      ResultTrees(
+        base = subtasks.map(result => result.baseResult.score -> result.baseResult.verdict),
+        worst = subtasks.map(result => result.worstResult.score -> result.worstResult.verdict)
+      )
+    )
 
   private def testcaseScoreRatios(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): List[BigDecimal] =
     testcases.map(result => subtask.testcases.find(_.index == result.index).map(_.scoreRatio).getOrElse(BigDecimal(1)))
 
-  private def worstTestcasesFor(testcases: List[JudgeTestcaseResult]): List[JudgeTestcaseResult] =
-    testcases.map(_.score).minOption match
-      case Some(score) => testcases.filter(_.score == score)
-      case None => Nil
+  private def mainTestcases(testcases: List[JudgeTestcaseResult]): List[JudgeTestcaseResult] =
+    testcases.filter(_.testcaseType == JudgeTestcaseType.Main)
+
+  private final case class UsageSummary(timeUsedMs: Option[Long], memoryUsedKb: Option[Long])
+
+  private def worstSubtaskUsage(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): UsageSummary =
+    val timeUsedMs =
+      testcases.flatMap(_.timeUsedMs).maxOption.map { maxTime =>
+        if subtask.aggregation.time == "sum" then maxTime * mainTestcases(testcases).size
+        else maxTime
+      }
+    UsageSummary(
+      timeUsedMs = timeUsedMs,
+      memoryUsedKb = testcases.flatMap(_.memoryUsedKb).maxOption
+    )
+
+  private def resultSummary(
+    score: BigDecimal,
+    verdict: SubmissionVerdict,
+    reason: Option[JudgeFailureReason],
+    timeUsedMs: Option[Long],
+    memoryUsedKb: Option[Long]
+  ): JudgeResultSummary =
+    val normalizedVerdict = JudgeResultSummary.normalizeNodeVerdict(verdict)
+    if normalizedVerdict == SubmissionVerdict.SystemError then
+      JudgeResultSummary.systemError(score, reason.getOrElse(JudgeFailureReason.SystemError), timeUsedMs, memoryUsedKb)
+    else
+      JudgeResultSummary.nonSystem(score, normalizedVerdict, timeUsedMs, memoryUsedKb)
+
+  private def reasonForTestcases(verdict: SubmissionVerdict, testcases: List[JudgeTestcaseResult]): Option[JudgeFailureReason] =
+    Option.when(verdict == SubmissionVerdict.SystemError)(
+      testcases.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
+    )
+
+  private def reasonForSummaries(verdict: SubmissionVerdict, summaries: List[JudgeResultSummary]): Option[JudgeFailureReason] =
+    Option.when(verdict == SubmissionVerdict.SystemError)(
+      summaries.find(_.verdict == SubmissionVerdict.SystemError).flatMap(_.reason).getOrElse(JudgeFailureReason.SystemError)
+    )
 
   private def worstScore(children: List[(BigDecimal, SubmissionVerdict)]): BigDecimal =
     children.map(_._1).minOption.getOrElse(BigDecimal(0))
@@ -1482,8 +1492,13 @@ object JudgeExecutor:
     score.max(BigDecimal(0)).min(BigDecimal(1))
 
   private def containsSystemError(result: JudgeResult): Boolean =
-    result.verdict == SubmissionVerdict.SystemError ||
-      result.subtasks.exists(subtask => subtask.verdict == SubmissionVerdict.SystemError || subtask.testcases.exists(_.verdict == SubmissionVerdict.SystemError))
+    result.baseResult.verdict == SubmissionVerdict.SystemError ||
+      result.worstResult.verdict == SubmissionVerdict.SystemError ||
+      result.subtasks.exists(subtask =>
+        subtask.baseResult.verdict == SubmissionVerdict.SystemError ||
+          subtask.worstResult.verdict == SubmissionVerdict.SystemError ||
+          subtask.testcases.exists(_.verdict == SubmissionVerdict.SystemError)
+      )
 
   private def normalizeOutput(value: String): String =
     value.replace("\r\n", "\n").replace('\r', '\n').stripTrailing()

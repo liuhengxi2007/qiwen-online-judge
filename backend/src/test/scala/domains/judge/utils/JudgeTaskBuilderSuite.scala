@@ -6,6 +6,7 @@ import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifes
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSourceCode}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
+import judgeprotocol.objects.response.JudgeTestcaseType
 import munit.FunSuite
 import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
@@ -299,6 +300,118 @@ class JudgeTaskBuilderSuite extends FunSuite:
 
     assertEquals(multiSubtask.map(_.resultDisplayMode), Right(SubmissionResultDisplayMode.Score))
     assertEquals(sumAggregation.map(_.resultDisplayMode), Right(SubmissionResultDisplayMode.Score))
+  }
+
+  test("parseConfigBytes rejects scoreRatio on sample and hack testcases") {
+    val sampleResult = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - type: sample
+        |        scoreRatio: 0
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+    val hackResult = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - type: hack
+        |        scoreRatio: 0
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(sampleResult.left.toOption, Some("scoreRatio cannot be declared on subtask 1 testcase 1 when type is sample."))
+    assertEquals(hackResult.left.toOption, Some("scoreRatio cannot be declared on subtask 1 testcase 1 when type is hack."))
+  }
+
+  test("parseConfigBytes rejects subtasks without a main testcase") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - label: sample
+        |    testcases:
+        |      - type: sample
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("subtask 1 (sample) must define at least one main testcase."))
+  }
+
+  test("parseConfigBytes distributes missing testcase weights only across main testcases") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - type: sample
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.map(_.subtasks.head.testcases.map(_.testcaseType)), Right(List(JudgeTestcaseType.Sample, JudgeTestcaseType.Main, JudgeTestcaseType.Main)))
+    assertEquals(result.map(_.subtasks.head.testcases.map(_.scoreRatio)), Right(List(BigDecimal(0), BigDecimal("0.5"), BigDecimal("0.5"))))
   }
 
   test("parseConfigBytes accepts limited interactor and inherited strategy provider") {

@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import {
@@ -14,7 +14,7 @@ import {
   submissionVerdictLabel,
 } from '@/pages/objects/SubmissionDisplay'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
-import type { JudgeResultMetrics } from '@/objects/submission/JudgeResultMetrics'
+import type { JudgeResultSummary } from '@/objects/submission/JudgeResultSummary'
 import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -30,59 +30,57 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <CardHeader>
         <CardTitle className="text-xl text-slate-950">{t('submission.detail.judgeResult')}</CardTitle>
-        <CardDescription>
-          <span style={submissionVerdictTextStyle(judgeResult.verdict)}>
-            {submissionVerdictLabel(judgeResult.verdict)}
-          </span>{' '}
-          · <span style={scoreTextStyleForRatio(judgeResult.baseResult.score)}>{formatOptionalScore(judgeResult.baseResult.score)}</span>
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 text-sm lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <ResultMetric
-            label={t('common.verdict')}
-            value={submissionVerdictLabel(judgeResult.verdict)}
-            valueStyle={submissionVerdictTextStyle(judgeResult.verdict)}
-          />
-          <ResultMetricsGroup
+        <div className="grid gap-3 text-sm lg:grid-cols-2">
+          <ResultSummaryGroup
             label={t('submission.detail.baseResult')}
-            metrics={judgeResult.baseResult}
+            summary={judgeResult.baseResult}
+            verdictLabel={t('common.verdict')}
             scoreLabel={t('submission.list.score')}
             timeLabel={t('submission.list.timeUsed')}
             memoryLabel={t('submission.list.spaceUsed')}
+            reasonLabel={t('submission.detail.reason')}
           />
-          <ResultMetricsGroup
+          <ResultSummaryGroup
             label={t('submission.detail.worstResult')}
-            metrics={judgeResult.worstResult}
+            summary={judgeResult.worstResult}
+            verdictLabel={t('common.verdict')}
             scoreLabel={t('submission.list.score')}
             timeLabel={t('submission.list.timeUsed')}
             memoryLabel={t('submission.list.spaceUsed')}
+            reasonLabel={t('submission.detail.reason')}
           />
         </div>
-        <JudgeReasonLine label={t('submission.detail.reason')} reason={judgeResult.reason} />
 
         {judgeResult.subtasks.map((subtask) => {
           const canHackSubtask = subtask.worstResult.score > 0
 
           return (
             <div key={subtask.index} className="rounded-lg border border-slate-200">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                <div>
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                <div className="min-w-[min(100%,28rem)] flex-1">
                   <p className="font-medium text-slate-950">{resultNodeTitle('subtask', subtask.index, subtask.label)}</p>
-                  <p className="text-sm text-slate-500">
-                    <span style={submissionVerdictTextStyle(subtask.verdict)}>
-                      {submissionVerdictLabel(subtask.verdict)}
-                    </span>{' '}
-                    · {t('submission.detail.baseResult')}{' '}
-                    <span style={scoreTextStyleForRatio(subtask.baseResult.score)}>{formatOptionalScore(subtask.baseResult.score)}</span>
-                    {' / '}
-                    {t('submission.detail.worstResult')}{' '}
-                    <span style={scoreTextStyleForRatio(subtask.worstResult.score)}>{formatOptionalScore(subtask.worstResult.score)}</span>
-                  </p>
-                  <JudgeReasonLine label={t('submission.detail.reason')} reason={subtask.reason} />
-                </div>
-                <div className="text-sm text-slate-500">
-                  {formatOptionalDurationMs(subtask.baseResult.timeUsedMs)} · {formatOptionalMemoryKb(subtask.baseResult.memoryUsedKb)}
+                  <div className="mt-3 grid gap-3 text-sm lg:grid-cols-2">
+                    <ResultSummaryGroup
+                      label={t('submission.detail.baseResult')}
+                      summary={subtask.baseResult}
+                      verdictLabel={t('common.verdict')}
+                      scoreLabel={t('submission.list.score')}
+                      timeLabel={t('submission.list.timeUsed')}
+                      memoryLabel={t('submission.list.spaceUsed')}
+                      reasonLabel={t('submission.detail.reason')}
+                    />
+                    <ResultSummaryGroup
+                      label={t('submission.detail.worstResult')}
+                      summary={subtask.worstResult}
+                      verdictLabel={t('common.verdict')}
+                      scoreLabel={t('submission.list.score')}
+                      timeLabel={t('submission.list.timeUsed')}
+                      memoryLabel={t('submission.list.spaceUsed')}
+                      reasonLabel={t('submission.detail.reason')}
+                    />
+                  </div>
                 </div>
                 {canHackSubtask ? (
                   <Button asChild size="sm" variant="outline">
@@ -134,27 +132,37 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
   )
 }
 
-function ResultMetricsGroup({
+function ResultSummaryGroup({
   label,
-  metrics,
+  summary,
+  verdictLabel,
   scoreLabel,
   timeLabel,
   memoryLabel,
+  reasonLabel,
 }: {
   label: string
-  metrics: JudgeResultMetrics
+  summary: JudgeResultSummary
+  verdictLabel: string
   scoreLabel: string
   timeLabel: string
   memoryLabel: string
+  reasonLabel: string
 }) {
   return (
     <div className="rounded-md border border-slate-200 px-3 py-2">
       <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-        <MetricValue label={scoreLabel} value={formatOptionalScore(metrics.score)} valueStyle={scoreTextStyleForRatio(metrics.score)} />
-        <MetricValue label={timeLabel} value={formatOptionalDurationMs(metrics.timeUsedMs)} />
-        <MetricValue label={memoryLabel} value={formatOptionalMemoryKb(metrics.memoryUsedKb)} />
+      <div className="mt-2 grid gap-2 sm:grid-cols-4">
+        <MetricValue
+          label={verdictLabel}
+          value={submissionVerdictLabel(summary.verdict)}
+          valueStyle={submissionVerdictTextStyle(summary.verdict)}
+        />
+        <MetricValue label={scoreLabel} value={formatOptionalScore(summary.score)} valueStyle={scoreTextStyleForRatio(summary.score)} />
+        <MetricValue label={timeLabel} value={formatOptionalDurationMs(summary.timeUsedMs)} />
+        <MetricValue label={memoryLabel} value={formatOptionalMemoryKb(summary.memoryUsedKb)} />
       </div>
+      <JudgeReasonLine label={reasonLabel} reason={summary.reason} />
     </div>
   )
 }
@@ -178,23 +186,6 @@ function MetricValue({
 
 function resultNodeTitle(kind: 'subtask' | 'testcase', index: number, label: string | null): string {
   return label ? `${kind} ${index} (${label})` : `${kind} ${index}`
-}
-
-function ResultMetric({
-  label,
-  value,
-  valueStyle,
-}: {
-  label: string
-  value: string
-  valueStyle?: CSSProperties
-}) {
-  return (
-    <div className="rounded-md border border-slate-200 px-3 py-2">
-      <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>
-      <p className="mt-1 font-medium text-slate-950" style={valueStyle}>{value}</p>
-    </div>
-  )
 }
 
 function JudgeReasonLine({ label, reason }: { label: string; reason: string | null }) {

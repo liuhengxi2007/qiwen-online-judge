@@ -6,40 +6,70 @@ import munit.FunSuite
 
 class JudgeExecutorAggregationSuite extends FunSuite:
 
-  test("sum subtask keeps base result score and tracks testcase minimum as worst result score") {
+  test("subtask base result aggregates only main testcases and worst includes sample and hack") {
     val targetSubtask = subtask(
       index = 1,
       scoreRatio = BigDecimal(1),
-      testcases = (1 to 5).toList.map(index => testcase(index, JudgeTestcaseType.Main, BigDecimal("0.2")))
+      testcases = List(
+        testcase(1, JudgeTestcaseType.Sample, BigDecimal(0)),
+        testcase(2, JudgeTestcaseType.Main, BigDecimal("0.5")),
+        testcase(3, JudgeTestcaseType.Main, BigDecimal("0.5")),
+        testcase(4, JudgeTestcaseType.Hack, BigDecimal(0))
+      )
     )
-    val baseTestcases =
-      (1 to 4).toList.map(index => testcaseResult(index, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted)) :+
-        testcaseResult(5, JudgeTestcaseType.Main, BigDecimal(0), SubmissionVerdict.WrongAnswer)
-
-    val baseResult = JudgeExecutor.aggregateSubtask(targetSubtask, baseTestcases)
-    assertEquals(baseResult.baseResult.score, BigDecimal("0.8"))
-    assertEquals(baseResult.worstResult.score, BigDecimal(0))
-
-    val passingHackResult = JudgeExecutor.aggregateSubtask(
+    val result = JudgeExecutor.aggregateSubtask(
       targetSubtask,
-      baseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(1), SubmissionVerdict.Accepted)
+      List(
+        testcaseResult(1, JudgeTestcaseType.Sample, BigDecimal(0), SubmissionVerdict.WrongAnswer, timeUsedMs = Some(100), memoryUsedKb = Some(500)),
+        testcaseResult(2, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(20), memoryUsedKb = Some(200)),
+        testcaseResult(3, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(30), memoryUsedKb = Some(300)),
+        testcaseResult(4, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer, timeUsedMs = Some(120), memoryUsedKb = Some(700))
+      )
     )
-    assertEquals(passingHackResult.baseResult.score, BigDecimal("0.8"))
-    assertEquals(passingHackResult.worstResult.score, BigDecimal(0))
 
-    val failingHackResult = JudgeExecutor.aggregateSubtask(
-      targetSubtask,
-      baseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
-    )
-    assertEquals(failingHackResult.baseResult.score, BigDecimal(0))
-    assertEquals(failingHackResult.worstResult.score, BigDecimal(0))
+    assertEquals(result.baseResult.score, BigDecimal(1))
+    assertEquals(result.baseResult.verdict, SubmissionVerdict.Accepted)
+    assertEquals(result.baseResult.timeUsedMs, Some(30L))
+    assertEquals(result.baseResult.memoryUsedKb, Some(300L))
+    assertEquals(result.worstResult.score, BigDecimal(0))
+    assertEquals(result.worstResult.verdict, SubmissionVerdict.WrongAnswer)
+    assertEquals(result.worstResult.timeUsedMs, Some(120L))
+    assertEquals(result.worstResult.memoryUsedKb, Some(700L))
   }
 
-  test("sum task aggregates subtask worst scores with task score aggregation") {
+  test("sum subtask worst time uses max testcase time times main testcase count") {
+    val targetSubtask = subtask(
+      index = 1,
+      scoreRatio = BigDecimal(1),
+      aggregation = JudgeTaskAggregation("sum", "sum", "max"),
+      testcases = List(
+        testcase(1, JudgeTestcaseType.Sample, BigDecimal(0)),
+        testcase(2, JudgeTestcaseType.Main, BigDecimal("0.5")),
+        testcase(3, JudgeTestcaseType.Main, BigDecimal("0.5"))
+      )
+    )
+
+    val result = JudgeExecutor.aggregateSubtask(
+      targetSubtask,
+      List(
+        testcaseResult(1, JudgeTestcaseType.Sample, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(100)),
+        testcaseResult(2, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(20)),
+        testcaseResult(3, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(30))
+      )
+    )
+
+    assertEquals(result.baseResult.timeUsedMs, Some(50L))
+    assertEquals(result.worstResult.timeUsedMs, Some(200L))
+  }
+
+  test("sum task aggregates subtask worst scores with normal task aggregation") {
     val firstSubtask = subtask(
       index = 1,
       scoreRatio = BigDecimal("0.5"),
-      testcases = (1 to 5).toList.map(index => testcase(index, JudgeTestcaseType.Main, BigDecimal("0.2")))
+      testcases = List(
+        testcase(1, JudgeTestcaseType.Main, BigDecimal(1)),
+        testcase(2, JudgeTestcaseType.Hack, BigDecimal(0))
+      )
     )
     val secondSubtask = subtask(
       index = 2,
@@ -47,29 +77,43 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       testcases = List(testcase(1, JudgeTestcaseType.Main, BigDecimal(1)))
     )
     val targetTask = task(firstSubtask, secondSubtask)
-    val firstBaseTestcases =
-      (1 to 4).toList.map(index => testcaseResult(index, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted)) :+
-        testcaseResult(5, JudgeTestcaseType.Main, BigDecimal(0), SubmissionVerdict.WrongAnswer)
+    val firstResult = JudgeExecutor.aggregateSubtask(
+      firstSubtask,
+      List(
+        testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted),
+        testcaseResult(2, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
+      )
+    )
     val secondResult = JudgeExecutor.aggregateSubtask(
       secondSubtask,
       List(testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted))
     )
 
-    val firstPassingHack = JudgeExecutor.aggregateSubtask(
-      firstSubtask,
-      firstBaseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(1), SubmissionVerdict.Accepted)
-    )
-    val passingTask = JudgeExecutor.aggregateTask(targetTask, List(firstPassingHack, secondResult))
-    assertEquals(passingTask.baseResult.score, BigDecimal("0.9"))
-    assertEquals(passingTask.worstResult.score, BigDecimal("0.5"))
+    val taskResult = JudgeExecutor.aggregateTask(targetTask, List(firstResult, secondResult))
 
-    val firstFailingHack = JudgeExecutor.aggregateSubtask(
-      firstSubtask,
-      firstBaseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
+    assertEquals(taskResult.baseResult.score, BigDecimal(1))
+    assertEquals(taskResult.baseResult.verdict, SubmissionVerdict.Accepted)
+    assertEquals(taskResult.worstResult.score, BigDecimal("0.5"))
+    assertEquals(taskResult.worstResult.verdict, SubmissionVerdict.WrongAnswer)
+  }
+
+  test("subtask and task summaries normalize accepted by protocol to accepted") {
+    val targetSubtask = subtask(
+      index = 1,
+      scoreRatio = BigDecimal(1),
+      testcases = List(testcase(1, JudgeTestcaseType.Main, BigDecimal(1)))
     )
-    val failingTask = JudgeExecutor.aggregateTask(targetTask, List(firstFailingHack, secondResult))
-    assertEquals(failingTask.baseResult.score, BigDecimal(0))
-    assertEquals(failingTask.worstResult.score, BigDecimal(0))
+    val subtaskResult = JudgeExecutor.aggregateSubtask(
+      targetSubtask,
+      List(testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.AcceptedByProtocol))
+    )
+    val taskResult = JudgeExecutor.aggregateTask(task(targetSubtask), List(subtaskResult))
+
+    assertEquals(subtaskResult.testcases.head.verdict, SubmissionVerdict.AcceptedByProtocol)
+    assertEquals(subtaskResult.baseResult.verdict, SubmissionVerdict.Accepted)
+    assertEquals(subtaskResult.worstResult.verdict, SubmissionVerdict.Accepted)
+    assertEquals(taskResult.baseResult.verdict, SubmissionVerdict.Accepted)
+    assertEquals(taskResult.worstResult.verdict, SubmissionVerdict.Accepted)
   }
 
   private def task(subtasks: JudgeTaskSubtask*): JudgeTask =
@@ -83,7 +127,12 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       subtasks = subtasks.toList
     )
 
-  private def subtask(index: Int, scoreRatio: BigDecimal, testcases: List[JudgeTaskTestcase]): JudgeTaskSubtask =
+  private def subtask(
+    index: Int,
+    scoreRatio: BigDecimal,
+    testcases: List[JudgeTaskTestcase],
+    aggregation: JudgeTaskAggregation = JudgeTaskAggregation("sum", "max", "max")
+  ): JudgeTaskSubtask =
     JudgeTaskSubtask(
       index = index,
       label = None,
@@ -91,7 +140,7 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       mode = JudgeTaskMode.traditional("main"),
       validator = None,
       standard = None,
-      aggregation = JudgeTaskAggregation("sum", "max", "max"),
+      aggregation = aggregation,
       testcases = testcases
     )
 
@@ -112,7 +161,9 @@ class JudgeExecutorAggregationSuite extends FunSuite:
     index: Int,
     testcaseType: JudgeTestcaseType,
     score: BigDecimal,
-    verdict: SubmissionVerdict
+    verdict: SubmissionVerdict,
+    timeUsedMs: Option[Long] = None,
+    memoryUsedKb: Option[Long] = None
   ): JudgeTestcaseResult =
     JudgeTestcaseResult(
       index = index,
@@ -122,6 +173,6 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       verdict = verdict,
       message = None,
       reason = None,
-      timeUsedMs = None,
-      memoryUsedKb = None
+      timeUsedMs = timeUsedMs,
+      memoryUsedKb = memoryUsedKb
     )

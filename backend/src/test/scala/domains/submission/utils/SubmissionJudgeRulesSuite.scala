@@ -3,8 +3,9 @@ package domains.submission.utils
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 import io.circe.parser.decode
+import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionVerdict
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeSubtaskResult, JudgeTestcaseResult, JudgeTestcaseType}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultSummary, JudgeSubtaskResult, JudgeTestcaseResult, JudgeTestcaseType}
 import munit.FunSuite
 
 import java.time.Instant
@@ -56,7 +57,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("judgeResult reason is only allowed with system_error verdict."))
+    assertEquals(result.left.toOption, Some("judgeResult baseResult reason is only allowed with system_error verdict."))
   }
 
   test("completeJudging rejects system error without reason") {
@@ -71,7 +72,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("judgeResult system_error verdict must include reason."))
+    assertEquals(result.left.toOption, Some("judgeResult baseResult system_error verdict must include reason."))
   }
 
   test("completeJudging rejects nested reason on non-system verdict") {
@@ -82,10 +83,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         JudgeSubtaskResult(
           index = 1,
           label = Some("sample"),
-          baseResult = JudgeResultMetrics(BigDecimal(1), None, None),
-          worstResult = JudgeResultMetrics(BigDecimal(1), None, None),
-          verdict = SubmissionVerdict.Accepted,
-          reason = None,
+          baseResult = summary(SubmissionVerdict.Accepted),
+          worstResult = summary(SubmissionVerdict.Accepted),
           testcases = List(
             JudgeTestcaseResult(
               index = 1,
@@ -124,10 +123,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         JudgeSubtaskResult(
           index = 1,
           label = Some("sample"),
-          baseResult = JudgeResultMetrics.failed,
-          worstResult = JudgeResultMetrics.failed,
-          verdict = SubmissionVerdict.SystemError,
-          reason = None,
+          baseResult = summary(SubmissionVerdict.SystemError, reason = Some(JudgeFailureReason.CheckerRuntimeFailed)),
+          worstResult = summary(SubmissionVerdict.SystemError, reason = None),
           testcases = Nil
         )
       )
@@ -142,7 +139,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
       finishedAt
     )
 
-    assertEquals(result.left.toOption, Some("subtask 1 (sample) system_error verdict must include reason."))
+    assertEquals(result.left.toOption, Some("subtask 1 (sample) worstResult system_error verdict must include reason."))
   }
 
   test("completeJudging rejects failed status without system error result") {
@@ -198,7 +195,28 @@ class SubmissionJudgeRulesSuite extends FunSuite:
     )
   }
 
-  test("JudgeResult decoder ignores extra summary message fields") {
+  test("JudgeResult encoder omits node-level verdict and reason") {
+    val encoded = judgeResult(
+      SubmissionVerdict.Accepted,
+      subtasks = List(
+        JudgeSubtaskResult(
+          index = 1,
+          label = Some("main"),
+          baseResult = summary(SubmissionVerdict.Accepted),
+          worstResult = summary(SubmissionVerdict.Accepted),
+          testcases = Nil
+        )
+      )
+    ).asJson
+
+    assertEquals(encoded.hcursor.downField("verdict").focus, None)
+    assertEquals(encoded.hcursor.downField("reason").focus, None)
+    assertEquals(encoded.hcursor.downField("subtasks").downN(0).downField("verdict").focus, None)
+    assertEquals(encoded.hcursor.downField("subtasks").downN(0).downField("reason").focus, None)
+    assertEquals(encoded.hcursor.downField("baseResult").downField("verdict").as[SubmissionVerdict], Right(SubmissionVerdict.Accepted))
+  }
+
+  test("JudgeResult decoder backfills legacy node verdict and reason into summaries") {
     val raw =
       """{
         |  "baseResult": {
@@ -246,12 +264,11 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val decoded = decode[JudgeResult](raw)
 
-    assertEquals(decoded.map(_.baseResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
-    assertEquals(decoded.map(_.worstResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
-    assertEquals(decoded.map(_.subtasks.head.baseResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
-    assertEquals(decoded.map(_.subtasks.head.worstResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
-    assertEquals(decoded.map(_.reason), Right(None))
-    assertEquals(decoded.map(_.subtasks.head.reason), Right(None))
+    val expectedSummary = JudgeResultSummary(BigDecimal(0), SubmissionVerdict.WrongAnswer, None, Some(12L), Some(256L))
+    assertEquals(decoded.map(_.baseResult), Right(expectedSummary))
+    assertEquals(decoded.map(_.worstResult), Right(expectedSummary))
+    assertEquals(decoded.map(_.subtasks.head.baseResult), Right(expectedSummary))
+    assertEquals(decoded.map(_.subtasks.head.worstResult), Right(expectedSummary))
     assertEquals(decoded.map(_.subtasks.head.testcases.head.reason), Right(None))
     assertEquals(decoded.map(_.subtasks.head.testcases.head.message), Right(Some("checker report")))
   }
@@ -266,9 +283,14 @@ class SubmissionJudgeRulesSuite extends FunSuite:
   ): JudgeResult =
     val score = if verdict == SubmissionVerdict.Accepted then BigDecimal(1) else BigDecimal(0)
     JudgeResult(
-      baseResult = JudgeResultMetrics(score, None, None),
-      worstResult = JudgeResultMetrics(subtasks.map(_.worstResult.score).minOption.getOrElse(score), None, None),
-      verdict = verdict,
-      reason = reason,
+      baseResult = summary(verdict, reason, score),
+      worstResult = summary(verdict, reason, subtasks.map(_.worstResult.score).minOption.getOrElse(score)),
       subtasks = subtasks
     )
+
+  private def summary(
+    verdict: SubmissionVerdict,
+    reason: Option[JudgeFailureReason] = None,
+    score: BigDecimal = BigDecimal(1)
+  ): JudgeResultSummary =
+    JudgeResultSummary(score, verdict, reason, None, None)

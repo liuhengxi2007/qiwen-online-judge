@@ -11,9 +11,9 @@ class JudgeRuntimeSupportSuite extends FunSuite:
     val judgeResult = result.judgeResult.get
 
     assertEquals(result.status, judgeprotocol.objects.SubmissionStatus.Completed)
-    assertEquals(judgeResult.verdict, SubmissionVerdict.CompileError)
-    assertEquals(judgeResult.reason, None)
-    assertEquals(judgeResult.subtasks.map(_.reason), List(None))
+    assertEquals(judgeResult.baseResult.verdict, SubmissionVerdict.CompileError)
+    assertEquals(judgeResult.baseResult.reason, None)
+    assertEquals(judgeResult.subtasks.map(_.baseResult.reason), List(None))
   }
 
   test("taskSystemError emits system_error with reason") {
@@ -21,9 +21,9 @@ class JudgeRuntimeSupportSuite extends FunSuite:
     val judgeResult = result.judgeResult.get
 
     assertEquals(result.status, judgeprotocol.objects.SubmissionStatus.Failed)
-    assertEquals(judgeResult.verdict, SubmissionVerdict.SystemError)
-    assertEquals(judgeResult.reason, Some(JudgeFailureReason.JudgerRuntimeFailed))
-    assertEquals(judgeResult.subtasks.map(_.reason), List(Some(JudgeFailureReason.JudgerRuntimeFailed)))
+    assertEquals(judgeResult.baseResult.verdict, SubmissionVerdict.SystemError)
+    assertEquals(judgeResult.baseResult.reason, Some(JudgeFailureReason.JudgerRuntimeFailed))
+    assertEquals(judgeResult.subtasks.map(_.baseResult.reason), List(Some(JudgeFailureReason.JudgerRuntimeFailed)))
   }
 
   private val task: JudgeTask =

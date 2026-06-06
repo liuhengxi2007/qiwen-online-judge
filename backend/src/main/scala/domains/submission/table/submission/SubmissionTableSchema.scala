@@ -32,7 +32,7 @@ object SubmissionTableSchema:
       |  judge_queued_at timestamp not null default current_timestamp,
       |  hack_revision bigint not null default 0,
       |  judge_result jsonb,
-      |  verdict varchar(64) generated always as (judge_result ->> 'verdict') stored,
+      |  verdict varchar(64) generated always as (judge_result #>> '{baseResult,verdict}') stored,
       |  time_used_ms bigint generated always as ((judge_result #>> '{baseResult,timeUsedMs}')::bigint) stored,
       |  memory_used_kb bigint generated always as ((judge_result #>> '{baseResult,memoryUsedKb}')::bigint) stored,
       |  score numeric generated always as ((judge_result #>> '{baseResult,score}')::numeric) stored,
@@ -204,20 +204,42 @@ object SubmissionTableSchema:
       |  jsonb_build_object(
       |    'baseResult', jsonb_strip_nulls(jsonb_build_object(
       |      'score', coalesce(score, 0),
+      |      'verdict', verdict,
       |      'timeUsedMs', time_used_ms,
       |      'memoryUsedKb', memory_used_kb
       |    )),
       |    'worstResult', jsonb_strip_nulls(jsonb_build_object(
       |      'score', coalesce(score, 0),
+      |      'verdict', verdict,
       |      'timeUsedMs', time_used_ms,
       |      'memoryUsedKb', memory_used_kb
       |    )),
-      |    'verdict', verdict,
       |    'subtasks', '[]'::jsonb
       |  )
       |)
       |where judge_result is null
       |  and verdict is not null
+      |""".stripMargin
+
+  val backfillJudgeResultSummaryVerdictsSql: String =
+    """
+      |update submissions
+      |set judge_result = jsonb_set(
+      |  jsonb_set(
+      |    judge_result,
+      |    '{baseResult,verdict}',
+      |    to_jsonb(judge_result ->> 'verdict'),
+      |    true
+      |  ),
+      |  '{worstResult,verdict}',
+      |  to_jsonb(judge_result ->> 'verdict'),
+      |  true
+      |)
+      |where judge_result ? 'verdict'
+      |  and (
+      |    judge_result #>> '{baseResult,verdict}' is null
+      |    or judge_result #>> '{worstResult,verdict}' is null
+      |  )
       |""".stripMargin
 
   val replaceLanguageWithGeneratedSql: String =
@@ -250,7 +272,10 @@ object SubmissionTableSchema:
       |begin
       |  if exists (
       |    select 1 from information_schema.columns
-      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'verdict' and is_generated <> 'ALWAYS'
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'verdict'
+      |      and (is_generated <> 'ALWAYS' or generation_expression not like '%baseResult%')
       |  ) then
       |    alter table submissions drop column verdict;
       |  end if;
@@ -259,7 +284,7 @@ object SubmissionTableSchema:
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'verdict'
       |  ) then
       |    alter table submissions add column verdict varchar(64)
-      |      generated always as (judge_result ->> 'verdict') stored;
+      |      generated always as (judge_result #>> '{baseResult,verdict}') stored;
       |  end if;
       |
       |  if exists (
@@ -535,6 +560,7 @@ object SubmissionTableSchema:
         List(
           setProgramManifestNotNullSql,
           backfillJudgeResultFromLegacySql,
+          backfillJudgeResultSummaryVerdictsSql,
           replaceLanguageWithGeneratedSql,
           addCodeLengthGeneratedColumnSql,
           replaceJudgeDerivedColumnsSql,

@@ -3,7 +3,7 @@ package domains.submission.utils
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.objects.internal.SubmissionDetailRecord
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultSummary}
 
 import java.time.Instant
 
@@ -101,11 +101,14 @@ object SubmissionJudgeRules:
         Left("Judging may only finish with completed or failed status.")
 
   private def validateReasonMatchesVerdict(judgeResult: JudgeResult): Either[String, Unit] =
-    validateNodeReason("judgeResult", judgeResult.verdict, judgeResult.reason)
+    validateSummaryReason("judgeResult baseResult", judgeResult.baseResult)
+      .flatMap(_ => validateSummaryReason("judgeResult worstResult", judgeResult.worstResult))
       .flatMap(_ =>
         judgeResult.subtasks
           .map(subtask =>
-            validateNodeReason(judgeNodeLabel("subtask", subtask.index, subtask.label), subtask.verdict, subtask.reason)
+            val subtaskLabel = judgeNodeLabel("subtask", subtask.index, subtask.label)
+            validateSummaryReason(s"$subtaskLabel baseResult", subtask.baseResult)
+              .flatMap(_ => validateSummaryReason(s"$subtaskLabel worstResult", subtask.worstResult))
               .flatMap(_ =>
                 subtask.testcases
                   .map(testcase => validateNodeReason(judgeNodeLabel("testcase", testcase.index, testcase.label), testcase.verdict, testcase.reason))
@@ -116,6 +119,9 @@ object SubmissionJudgeRules:
           .collectFirst { case Left(message) => Left(message) }
           .getOrElse(Right(()))
       )
+
+  private def validateSummaryReason(label: String, summary: JudgeResultSummary): Either[String, Unit] =
+    validateNodeReason(label, summary.verdict, summary.reason)
 
   private def validateNodeReason(
     label: String,
@@ -135,15 +141,19 @@ object SubmissionJudgeRules:
       case None => s"$kind $index"
 
   private def containsSystemError(judgeResult: JudgeResult): Boolean =
-    judgeResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+    judgeResult.baseResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+      judgeResult.worstResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
       judgeResult.subtasks.exists(subtask =>
-        subtask.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+        subtask.baseResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
+          subtask.worstResult.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError ||
           subtask.testcases.exists(_.verdict == judgeprotocol.objects.SubmissionVerdict.SystemError)
       )
 
   private def containsFailureReason(judgeResult: JudgeResult): Boolean =
-    judgeResult.reason.nonEmpty ||
+    judgeResult.baseResult.reason.nonEmpty ||
+      judgeResult.worstResult.reason.nonEmpty ||
       judgeResult.subtasks.exists(subtask =>
-        subtask.reason.nonEmpty ||
+        subtask.baseResult.reason.nonEmpty ||
+          subtask.worstResult.reason.nonEmpty ||
           subtask.testcases.exists(_.reason.nonEmpty)
       )

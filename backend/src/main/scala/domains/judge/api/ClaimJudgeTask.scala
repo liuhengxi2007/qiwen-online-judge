@@ -19,7 +19,7 @@ import domains.submission.utils.SubmissionProgramStorage
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
-import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeTask, JudgeWorkerTask}
+import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeResult, JudgeResultSummary, JudgeTask, JudgeWorkerTask}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -242,9 +242,7 @@ final case class ClaimJudgeTask(
 
   private def systemErrorJudgeResult(reason: JudgeFailureReason): JudgeResult =
     JudgeResult(
-      baseResult = JudgeResultMetrics.failed,
-      worstResult = JudgeResultMetrics.failed,
-      verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
-      reason = Some(reason),
+      baseResult = JudgeResultSummary.failed(reason),
+      worstResult = JudgeResultSummary.failed(reason),
       subtasks = Nil
     )

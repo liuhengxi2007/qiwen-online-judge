@@ -25,22 +25,20 @@ aggregation:
   subtasks: sum_max_max
 
 subtasks:
-  - label: sample
-    scoreRatio: 0.2
+  - label: main
     testcases:
       - label: sample-1
+        type: sample
         input: sample/1.in
         answer: sample/1.ans
 
-  - label: main
-    scoreRatio: 0.8
-    testcases:
       - label: "1"
         input: tests/1.in
         answer: tests/1.ans
 `
 
 const aggregations = new Set(['min_max_max', 'min_sum_max', 'sum_max_max', 'sum_sum_max'])
+const testcaseTypes = new Set(['main', 'sample', 'hack'])
 const rolePattern = /^[A-Za-z0-9_-]+$/
 
 export type JudgeConfigValidationResult =
@@ -143,7 +141,7 @@ export function validateJudgeConfigYaml(
         ctx.errors.push(`${subtaskLabel}.testcases must contain at least one item.`)
       }
       if (testcases) {
-        validateSiblingRatios(testcases, `${subtaskLabel}.testcases`, ctx)
+        const mainTestcaseEntries: IndexedValue[] = []
         testcases.forEach((testcase, testcaseIndex) => {
           if (!isRecord(testcase)) {
             ctx.errors.push(`${subtaskLabel}.testcases[${testcaseIndex}] must be an object.`)
@@ -151,6 +149,13 @@ export function validateJudgeConfigYaml(
           }
 
           const testcaseLabel = `${subtaskLabel} ${judgeNodeLabel('testcase', testcaseIndex + 1, testcase.label)}`
+          const testcaseType = validateTestcaseType(testcase.type, `${testcaseLabel}.type`, ctx) ?? 'main'
+          if (testcaseType === 'main') {
+            mainTestcaseEntries.push({ value: testcase, index: testcaseIndex })
+          }
+          if (testcaseType !== 'main' && testcase.scoreRatio !== undefined) {
+            ctx.errors.push(`${testcaseLabel}.scoreRatio cannot be declared when type is ${testcaseType}.`)
+          }
           rejectLegacyName(testcase, testcaseLabel, ctx)
           validateOptionalLabel(testcase.label, `${testcaseLabel}.label`, ctx)
           if (testcase.mode !== undefined) {
@@ -185,6 +190,10 @@ export function validateJudgeConfigYaml(
             ctx.errors.push(`${testcaseLabel}.answer is required for builtin exact checker.`)
           }
         })
+        if (mainTestcaseEntries.length === 0) {
+          ctx.errors.push(`${subtaskLabel} must define at least one main testcase.`)
+        }
+        validateSiblingRatioEntries(mainTestcaseEntries, `${subtaskLabel}.testcases`, ctx)
       }
     })
   }
@@ -361,6 +370,17 @@ function validateAggregationValue(value: unknown, label: string, ctx: Validation
   return value
 }
 
+function validateTestcaseType(value: unknown, label: string, ctx: ValidationContext): 'main' | 'sample' | 'hack' | null {
+  if (value === undefined) {
+    return 'main'
+  }
+  if (typeof value !== 'string' || !testcaseTypes.has(value)) {
+    ctx.errors.push(`${label} must be one of: main, sample, hack.`)
+    return null
+  }
+  return value as 'main' | 'sample' | 'hack'
+}
+
 function mergeAggregation(parent: AggregationConfig, child: AggregationConfig): AggregationConfig {
   return {
     testcases: child.testcases ?? parent.testcases,
@@ -368,10 +388,19 @@ function mergeAggregation(parent: AggregationConfig, child: AggregationConfig): 
   }
 }
 
+type IndexedValue = {
+  value: unknown
+  index: number
+}
+
 function validateSiblingRatios(items: unknown[], label: string, ctx: ValidationContext): void {
+  validateSiblingRatioEntries(items.map((value, index) => ({ value, index })), label, ctx)
+}
+
+function validateSiblingRatioEntries(items: IndexedValue[], label: string, ctx: ValidationContext): void {
   let explicitSum = 0
 
-  items.forEach((item, index) => {
+  items.forEach(({ value: item, index }) => {
     if (!isRecord(item) || item.scoreRatio === undefined) {
       return
     }
