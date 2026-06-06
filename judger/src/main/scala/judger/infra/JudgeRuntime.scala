@@ -132,8 +132,8 @@ object JudgeRuntimeSupport:
       JudgeSubtaskResult(
         index = subtask.index,
         label = subtask.label,
-        baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
-        worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
+        baseResult = JudgeResultMetrics.failed,
+        worstResult = JudgeResultMetrics.failed,
         verdict = verdict,
         reason = reason,
         testcases = Nil
@@ -143,8 +143,8 @@ object JudgeRuntimeSupport:
       status = status,
       judgeResult = Some(
         JudgeResult(
-          baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
-          worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
+          baseResult = JudgeResultMetrics.failed,
+          worstResult = JudgeResultMetrics.failed,
           verdict = verdict,
           reason = reason,
           subtasks = subtasks

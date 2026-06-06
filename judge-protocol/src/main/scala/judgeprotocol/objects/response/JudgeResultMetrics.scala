@@ -10,5 +10,7 @@ final case class JudgeResultMetrics(
 )
 
 object JudgeResultMetrics:
+  val failed: JudgeResultMetrics = JudgeResultMetrics(BigDecimal(0), None, None)
+
   given Encoder[JudgeResultMetrics] = deriveEncoder[JudgeResultMetrics]
   given Decoder[JudgeResultMetrics] = deriveDecoder[JudgeResultMetrics]

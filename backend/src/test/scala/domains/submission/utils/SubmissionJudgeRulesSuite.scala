@@ -124,8 +124,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         JudgeSubtaskResult(
           index = 1,
           label = Some("sample"),
-          baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
-          worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
+          baseResult = JudgeResultMetrics.failed,
+          worstResult = JudgeResultMetrics.failed,
           verdict = SubmissionVerdict.SystemError,
           reason = None,
           testcases = Nil

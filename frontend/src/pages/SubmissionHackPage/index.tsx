@@ -1,10 +1,8 @@
-import type { ReactNode } from 'react'
 import { useEffect, useReducer, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { CreateHack } from '@/apis/hack/CreateHack'
@@ -15,11 +13,14 @@ import type { HackSubtaskInfo } from '@/objects/hack/response/HackSubtaskInfo'
 import { hackIdValue } from '@/objects/hack/HackId'
 import { parseSubmissionId, submissionIdValue } from '@/objects/submission/SubmissionId'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
+import { HackCard, HackErrorAlert } from '@/pages/components/HackCard'
+import { HackMetric } from '@/pages/components/HackMetric'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
 import { PageShell } from '@/pages/components/PageShell'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { hackModeLabel, hackStatusLabel } from '@/pages/objects/HackDisplay'
 import { formatOptionalScore } from '@/pages/objects/SubmissionDisplay'
 import { sendAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
@@ -123,30 +124,26 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
 
   return (
     <PageShell title={t('hack.submit.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
-      {state.errorMessage ? (
-        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{state.errorMessage}</AlertDescription>
-        </Alert>
-      ) : null}
+      {state.errorMessage ? <HackErrorAlert message={state.errorMessage} /> : null}
 
       {state.isLoading ? (
         <PageLoadingCard message={t('hack.submit.loading')} />
       ) : state.info ? (
         <div className="space-y-6">
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+          <HackCard>
             <CardHeader>
               <CardTitle className="text-xl text-slate-950">{t('hack.submit.target')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
-              <Metric label={t('submission.list.id')} value={`#${submissionIdValue(state.info.targetSubmissionId)}`} />
-              <Metric label={t('submission.list.submitter')} value={<UserProfileLink user={state.info.targetSubmitter} />} />
-              <Metric label={t('hack.subtask')} value={state.info.subtaskLabel ? `${state.info.subtaskIndex} (${state.info.subtaskLabel})` : String(state.info.subtaskIndex)} />
-              <Metric label={t('hack.subtaskScore')} value={formatOptionalScore(state.info.oldWorstScore)} />
-              <Metric label={t('hack.mode')} value={state.info.mode} />
+              <HackMetric label={t('submission.list.id')} value={`#${submissionIdValue(state.info.targetSubmissionId)}`} />
+              <HackMetric label={t('submission.list.submitter')} value={<UserProfileLink user={state.info.targetSubmitter} />} />
+              <HackMetric label={t('hack.subtask')} value={state.info.subtaskLabel ? `${state.info.subtaskIndex} (${state.info.subtaskLabel})` : String(state.info.subtaskIndex)} />
+              <HackMetric label={t('hack.subtaskScore')} value={formatOptionalScore(state.info.oldWorstScore)} />
+              <HackMetric label={t('hack.mode')} value={hackModeLabel(state.info.mode, t)} />
             </CardContent>
-          </Card>
+          </HackCard>
 
-          <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+          <HackCard>
             <CardHeader>
               <CardTitle className="text-xl text-slate-950">{t('hack.submit.input')}</CardTitle>
             </CardHeader>
@@ -165,7 +162,7 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
                 {isSubmitting ? t('hack.submit.submitting') : t('hack.submit.action')}
               </Button>
             </CardContent>
-          </Card>
+          </HackCard>
 
           {state.hack ? <HackAttemptPanel hack={state.hack} /> : null}
         </div>
@@ -177,46 +174,20 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
 function HackAttemptPanel({ hack }: { hack: HackDetail }) {
   const { t } = useI18n()
   return (
-    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+    <HackCard>
       <CardHeader>
         <CardTitle className="text-xl text-slate-950">
           <Link className="hover:underline" to={`/hacks/${hackIdValue(hack.id)}`}>#{hackIdValue(hack.id)}</Link>
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
-        <Metric label={t('hack.status')} value={hackStatusLabel(hack.status)} />
-        <Metric label={t('hack.oldScore')} value={formatOptionalScore(hack.oldScore)} />
-        <Metric label={t('hack.newScore')} value={formatOptionalScore(hack.newScore)} />
-        <Metric label={t('hack.validator')} value={hack.validatorMessage ?? '--'} />
-        <Metric label={t('hack.standard')} value={hack.standardMessage ?? '--'} />
-        <Metric label={t('hack.targetRun')} value={hack.targetMessage ?? '--'} />
+        <HackMetric label={t('hack.status')} value={hackStatusLabel(hack.status, t)} />
+        <HackMetric label={t('hack.oldScore')} value={formatOptionalScore(hack.oldScore)} />
+        <HackMetric label={t('hack.newScore')} value={formatOptionalScore(hack.newScore)} />
+        <HackMetric label={t('hack.validator')} value={hack.validatorMessage ?? '--'} />
+        <HackMetric label={t('hack.standard')} value={hack.standardMessage ?? '--'} />
+        <HackMetric label={t('hack.targetRun')} value={hack.targetMessage ?? '--'} />
       </CardContent>
-    </Card>
+    </HackCard>
   )
-}
-
-function Metric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="rounded-md border border-slate-200 px-3 py-2">
-      <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>
-      <div className="mt-1 font-medium text-slate-950">{value}</div>
-    </div>
-  )
-}
-
-function hackStatusLabel(status: HackDetail['status']): string {
-  switch (status) {
-    case 'queued':
-      return 'Queued'
-    case 'running':
-      return 'Running'
-    case 'success':
-      return 'Success'
-    case 'no_effect':
-      return 'No effect'
-    case 'invalid':
-      return 'Invalid'
-    case 'failed':
-      return 'Failed'
-  }
 }

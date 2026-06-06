@@ -242,8 +242,8 @@ final case class ClaimJudgeTask(
 
   private def systemErrorJudgeResult(reason: JudgeFailureReason): JudgeResult =
     JudgeResult(
-      baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
-      worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
+      baseResult = JudgeResultMetrics.failed,
+      worstResult = JudgeResultMetrics.failed,
       verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
       reason = Some(reason),
       subtasks = Nil
