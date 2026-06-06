@@ -100,6 +100,7 @@ object SubmissionTableSupport:
     value match
       case SubmissionLanguage.Cpp17 => "cpp17"
       case SubmissionLanguage.Python3 => "python3"
+      case SubmissionLanguage.Text => "text"
 
   def encodeSubmissionStatusColumn(value: SubmissionStatus): String =
     value match

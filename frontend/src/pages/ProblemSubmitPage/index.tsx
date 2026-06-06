@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ProblemSubmitEditorCard, type SubmitProgramDraft } from './components/ProblemSubmitEditorCard'
+import { ProblemSubmitEditorCard } from './components/ProblemSubmitEditorCard'
+import { buildSubmissionPrograms, normalizeSubmitProgramDraft, type SubmitProgramDraft } from './functions/SubmitPrograms'
 import { ProblemSubmitHeaderCard } from './components/ProblemSubmitHeaderCard'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
@@ -12,20 +13,17 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { useCreateSubmissionAction } from './hooks/useCreateSubmissionAction'
-import { parseSubmissionSourceCode } from '@/objects/submission/SubmissionSourceCode'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
 import { PageShell } from '@/pages/components/PageShell'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
-import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
 
 const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = [
   { value: 'cpp17', label: 'C++17' },
   { value: 'python3', label: 'Python 3' },
+  { value: 'text', label: 'Text' },
 ]
-
-const rolePattern = /^[A-Za-z0-9_-]+$/
 
 export function ProblemSubmitPage() {
   const { t } = useI18n()
@@ -101,7 +99,7 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
             }}
             onProgramChange={(id, update) => {
               setPrograms((currentPrograms) =>
-                currentPrograms.map((program) => (program.id === id ? { ...program, ...update } : program)),
+                currentPrograms.map((program) => (program.id === id ? normalizeSubmitProgramDraft(program, update) : program)),
               )
               createSubmissionAction.clearMessages()
             }}
@@ -110,40 +108,15 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
               createSubmissionAction.clearMessages()
             }}
             onSubmit={() => {
-              const payloadPrograms: CreateSubmissionRequest['programs'] = {}
-              const seenRoles = new Set<string>()
-
-              for (const program of programs) {
-                const role = program.role.trim()
-                if (!role || !rolePattern.test(role)) {
-                  createSubmissionAction.setErrorMessage('Role must contain only ASCII letters, digits, "_" or "-".')
-                  return
-                }
-                if (seenRoles.has(role)) {
-                  createSubmissionAction.setErrorMessage(`Role is duplicated: ${role}.`)
-                  return
-                }
-                seenRoles.add(role)
-
-                const sourceCodeResult = parseSubmissionSourceCode(program.sourceCode)
-                if (!sourceCodeResult.ok) {
-                  createSubmissionAction.setErrorMessage(sourceCodeResult.error)
-                  return
-                }
-                payloadPrograms[role] = {
-                  language: program.language,
-                  sourceCode: sourceCodeResult.value,
-                }
-              }
-
-              if (Object.keys(payloadPrograms).length === 0) {
-                createSubmissionAction.setErrorMessage('At least one program is required.')
+              const payload = buildSubmissionPrograms(programs)
+              if (!payload.ok) {
+                createSubmissionAction.setErrorMessage(payload.error)
                 return
               }
 
               void createSubmissionAction.submit({
                 problemSlug,
-                programs: payloadPrograms,
+                programs: payload.programs,
               })
             }}
             programs={programs}

@@ -39,7 +39,8 @@ subtasks:
 
 const aggregations = new Set(['min_max_max', 'min_sum_max', 'sum_max_max', 'sum_sum_max'])
 const testcaseTypes = new Set(['main', 'sample', 'hack'])
-const rolePattern = /^[A-Za-z0-9_-]+$/
+const codeRolePattern = /^[A-Za-z0-9_-]+$/
+const textRolePattern = /^[A-Za-z0-9_-]+\.txt$/
 
 export type JudgeConfigValidationResult =
   | { ok: true; warnings: string[] }
@@ -163,6 +164,12 @@ export function validateJudgeConfigYaml(
           }
           if (testcase.validator !== undefined) {
             ctx.errors.push(`${testcaseLabel}.validator cannot be declared on a testcase.`)
+          }
+          if (mode.type === 'interactive' && testcase.roles !== undefined) {
+            ctx.errors.push(`${testcaseLabel}.roles cannot be declared when mode is interactive.`)
+          }
+          if (mode.type === 'traditional') {
+            validateOptionalRoleList(testcase.roles, `${testcaseLabel}.roles`, ctx)
           }
           const testcaseLimits = validateLimits(testcase.limits, `${testcaseLabel}.limits`, ctx) ?? limits
           const testcaseChecker = validateChecker(testcase.checker, `${testcaseLabel}.checker`, ctx) ?? checker
@@ -299,12 +306,12 @@ function validateMode(value: unknown, label: string, ctx: ValidationContext): Mo
   }
 
   if (value.type === 'traditional') {
-    const role = validateRole(typeof value.role === 'string' ? value.role : 'main', `${label}.role`, ctx)
+    const role = validateRole(typeof value.role === 'string' ? value.role : 'main', `${label}.role`, ctx, { allowTextRole: true })
     return role ? { type: 'traditional', role } : null
   }
 
   if (value.type === 'interactive') {
-    const roles = validateRoleList(value.roles, `${label}.roles`, ctx)
+    const roles = validateRoleList(value.roles, `${label}.roles`, ctx, { allowTextRole: false })
     const interactor = validateLimitedTool(value.interactor, `${label}.interactor`, ctx)
     if (value.interactor === undefined) {
       ctx.errors.push(`${label}.interactor is required.`)
@@ -316,7 +323,7 @@ function validateMode(value: unknown, label: string, ctx: ValidationContext): Mo
   return null
 }
 
-function validateRoleList(value: unknown, label: string, ctx: ValidationContext): string[] | null {
+function validateRoleList(value: unknown, label: string, ctx: ValidationContext, options: { allowTextRole: boolean }): string[] | null {
   if (!Array.isArray(value)) {
     ctx.errors.push(`${label} is required and must be a list.`)
     return null
@@ -326,7 +333,7 @@ function validateRoleList(value: unknown, label: string, ctx: ValidationContext)
       ctx.errors.push(`${label}[${index}] must be a string.`)
       return []
     }
-    const role = validateRole(item, `${label}[${index}]`, ctx)
+    const role = validateRole(item, `${label}[${index}]`, ctx, options)
     return role ? [role] : []
   })
   if (roles.length === 0) {
@@ -335,10 +342,34 @@ function validateRoleList(value: unknown, label: string, ctx: ValidationContext)
   return roles
 }
 
-function validateRole(value: string, label: string, ctx: ValidationContext): string | null {
+function validateOptionalRoleList(value: unknown, label: string, ctx: ValidationContext): string[] | null {
+  if (value === undefined) {
+    return null
+  }
+  if (!Array.isArray(value)) {
+    ctx.errors.push(`${label} must be a list.`)
+    return null
+  }
+  const roles = value.flatMap((item, index) => {
+    if (typeof item !== 'string') {
+      ctx.errors.push(`${label}[${index}] must be a string.`)
+      return []
+    }
+    const role = validateRole(item, `${label}[${index}]`, ctx, { allowTextRole: true })
+    return role ? [role] : []
+  })
+  if (roles.length === 0) {
+    ctx.errors.push(`${label} must contain at least one role.`)
+  }
+  return roles
+}
+
+function validateRole(value: string, label: string, ctx: ValidationContext, options: { allowTextRole: boolean }): string | null {
   const role = value.trim()
-  if (!role || !rolePattern.test(role)) {
-    ctx.errors.push(`${label} must contain only ASCII letters, digits, "_" or "-".`)
+  const isValidRole = codeRolePattern.test(role) || (options.allowTextRole && textRolePattern.test(role))
+  if (!role || !isValidRole) {
+    const suffix = options.allowTextRole ? ', with an optional single ".txt" suffix' : ''
+    ctx.errors.push(`${label} must contain only ASCII letters, digits, "_" or "-"${suffix}.`)
     return null
   }
   return role

@@ -34,3 +34,25 @@ class SubmissionProgramManifestSuite extends FunSuite:
 
     assertEquals(decode[SubmissionProgramManifest](manifest.asJson.noSpaces), Right(manifest))
   }
+
+  test("fromPrograms accepts text roles with txt suffix") {
+    val manifest = SubmissionProgramManifest.fromPrograms(
+      UUID.fromString("33333333-3333-4333-8333-333333333333"),
+      Map(
+        "chain.txt" -> (SubmissionLanguage.Text -> SubmissionSourceCode("42\n")),
+        "main" -> (SubmissionLanguage.Cpp17 -> SubmissionSourceCode("int main() {}\n"))
+      )
+    )
+
+    assertEquals(manifest.map(_.programs("chain.txt").language), Right(SubmissionLanguage.Text))
+    assertEquals(manifest.map(_.programs("chain.txt").sizeBytes), Right(3L))
+  }
+
+  test("fromPrograms rejects invalid text role and language combinations") {
+    val submissionUuid = UUID.fromString("44444444-4444-4444-8444-444444444444")
+
+    assert(SubmissionProgramManifest.fromPrograms(submissionUuid, Map("main" -> (SubmissionLanguage.Text -> SubmissionSourceCode("42\n")))).isLeft)
+    assert(SubmissionProgramManifest.fromPrograms(submissionUuid, Map("chain.txt" -> (SubmissionLanguage.Cpp17 -> SubmissionSourceCode("int main() {}\n")))).isLeft)
+    assert(SubmissionProgramManifest.fromPrograms(submissionUuid, Map("a.b.txt" -> (SubmissionLanguage.Text -> SubmissionSourceCode("42\n")))).isLeft)
+    assert(SubmissionProgramManifest.fromPrograms(submissionUuid, Map("dir/chain.txt" -> (SubmissionLanguage.Text -> SubmissionSourceCode("42\n")))).isLeft)
+  }

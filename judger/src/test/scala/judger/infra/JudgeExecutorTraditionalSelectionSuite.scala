@@ -1,0 +1,132 @@
+package judger.infra
+
+import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionLanguage, SubmissionSourceCode, TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
+import judgeprotocol.objects.response.*
+import judger.objects.RuntimeCommand
+import munit.FunSuite
+
+class JudgeExecutorTraditionalSelectionSuite extends FunSuite:
+
+  private val mainCommand = RuntimeCommand("/box/main", Nil, processLimit = 1)
+  private val backupCommand = RuntimeCommand("/box/backup", Nil, processLimit = 1)
+
+  test("selects text role before code role") {
+    val selection = JudgeExecutor.selectTraditionalProgram(
+      task = task(
+        "chain.txt" -> JudgeTaskProgram(SubmissionLanguage.Text, SubmissionSourceCode("42\n")),
+        "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))
+      ),
+      subtask = subtask(),
+      testcase = testcase(roles = List("chain.txt", "main")),
+      programs = JudgeExecutor.PreparedPrograms(
+        commands = Map("main" -> mainCommand),
+        compileFailedRoles = Set.empty,
+        textOutputs = Map("chain.txt" -> "42\n")
+      )
+    )
+
+    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.TextOutput("42\n"))
+  }
+
+  test("falls back when earlier text role is missing") {
+    val selection = JudgeExecutor.selectTraditionalProgram(
+      task = task("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))),
+      subtask = subtask(),
+      testcase = testcase(roles = List("chain.txt", "main")),
+      programs = JudgeExecutor.PreparedPrograms(
+        commands = Map("main" -> mainCommand),
+        compileFailedRoles = Set.empty,
+        textOutputs = Map.empty
+      )
+    )
+
+    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.Command(mainCommand))
+  }
+
+  test("does not fall back after selected code role compile failure") {
+    val selection = JudgeExecutor.selectTraditionalProgram(
+      task = task(
+        "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}")),
+        "chain.txt" -> JudgeTaskProgram(SubmissionLanguage.Text, SubmissionSourceCode("42\n"))
+      ),
+      subtask = subtask(),
+      testcase = testcase(roles = List("main", "chain.txt")),
+      programs = JudgeExecutor.PreparedPrograms(
+        commands = Map.empty,
+        compileFailedRoles = Set("main"),
+        textOutputs = Map("chain.txt" -> "42\n")
+      )
+    )
+
+    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.CompileError)
+  }
+
+  test("uses mode role when testcase roles are absent") {
+    val selection = JudgeExecutor.selectTraditionalProgram(
+      task = task(
+        "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}")),
+        "backup" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))
+      ),
+      subtask = subtask(modeRole = "backup"),
+      testcase = testcase(),
+      programs = JudgeExecutor.PreparedPrograms(
+        commands = Map("main" -> mainCommand, "backup" -> backupCommand),
+        compileFailedRoles = Set.empty,
+        textOutputs = Map.empty
+      )
+    )
+
+    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.Command(backupCommand))
+  }
+
+  test("returns compile error when all roles are missing") {
+    val selection = JudgeExecutor.selectTraditionalProgram(
+      task = task("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))),
+      subtask = subtask(),
+      testcase = testcase(roles = List("chain.txt", "backup")),
+      programs = JudgeExecutor.PreparedPrograms(
+        commands = Map("main" -> mainCommand),
+        compileFailedRoles = Set.empty,
+        textOutputs = Map.empty
+      )
+    )
+
+    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.CompileError)
+  }
+
+  private def task(programs: (String, JudgeTaskProgram)*): JudgeTask =
+    JudgeTask(
+      submissionId = SubmissionId(1),
+      problemSlug = ProblemSlug("sample"),
+      programs = programs.toMap,
+      problemDataVersion = "v1",
+      roundingScale = 6,
+      aggregation = JudgeTaskAggregation("sum", "max", "max"),
+      subtasks = Nil
+    )
+
+  private def subtask(modeRole: String = "main"): JudgeTaskSubtask =
+    JudgeTaskSubtask(
+      index = 1,
+      label = None,
+      scoreRatio = BigDecimal(1),
+      mode = JudgeTaskMode.traditional(modeRole),
+      validator = None,
+      standard = None,
+      aggregation = JudgeTaskAggregation("sum", "max", "max"),
+      testcases = Nil
+    )
+
+  private def testcase(roles: List[String] = Nil): JudgeTaskTestcase =
+    JudgeTaskTestcase(
+      index = 1,
+      label = None,
+      testcaseType = JudgeTestcaseType.Main,
+      scoreRatio = BigDecimal(1),
+      limits = JudgeTaskLimits(TestcaseTimeLimitMs(1000), TestcaseMemoryLimitMb(256)),
+      checker = JudgeTaskChecker("builtin", Some("exact"), None),
+      input = JudgeTaskFileRef.unsafe("tests/1.in", 1L, "a" * 64),
+      answer = Some(JudgeTaskFileRef.unsafe("tests/1.ans", 1L, "b" * 64)),
+      strategyProvider = None,
+      roles = roles
+    )

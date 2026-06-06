@@ -77,6 +77,7 @@ object SubmissionJudgeRules:
     language match
       case judgeprotocol.objects.SubmissionLanguage.Cpp17 => Some(domains.submission.objects.SubmissionLanguage.Cpp17)
       case judgeprotocol.objects.SubmissionLanguage.Python3 => Some(domains.submission.objects.SubmissionLanguage.Python3)
+      case judgeprotocol.objects.SubmissionLanguage.Text => Some(domains.submission.objects.SubmissionLanguage.Text)
 
   private def statusName(status: SubmissionStatus): String =
     status match

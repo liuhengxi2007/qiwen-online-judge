@@ -180,6 +180,116 @@ subtasks:
     expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
   })
 
+  it('accepts traditional testcase role fallback list with text role', () => {
+    const yaml = `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - roles: [chain.txt, main]
+        input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects text roles in interactive role lists', () => {
+    const yaml = `version: 2
+mode:
+  type: interactive
+  roles: [chain.txt]
+  interactor:
+    path: tools/interactor.cpp
+    limits:
+      timeMs: 1000
+      memoryMb: 256
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('mode.roles[0] must contain only ASCII letters, digits, "_" or "-".')
+    }
+  })
+
+  it('rejects invalid testcase text roles and interactive testcase roles', () => {
+    const invalidTextRole = validateJudgeConfigYaml(
+      `version: 2
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - roles: [a.b.txt]
+        input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(invalidTextRole.ok).toBe(false)
+    if (!invalidTextRole.ok) {
+      expect(invalidTextRole.errors).toContain('subtask 1 testcase 1.roles[0] must contain only ASCII letters, digits, "_" or "-", with an optional single ".txt" suffix.')
+    }
+
+    const interactiveTestcaseRoles = validateJudgeConfigYaml(
+      `version: 2
+mode:
+  type: interactive
+  roles: [main]
+  interactor:
+    path: tools/interactor.cpp
+    limits:
+      timeMs: 1000
+      memoryMb: 256
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - roles: [main]
+        input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(interactiveTestcaseRoles.ok).toBe(false)
+    if (!interactiveTestcaseRoles.ok) {
+      expect(interactiveTestcaseRoles.errors).toContain('subtask 1 testcase 1.roles cannot be declared when mode is interactive.')
+    }
+  })
+
   it('rejects legacy real-time interactive tool limits', () => {
     const yaml = `version: 2
 mode:

@@ -32,5 +32,6 @@ object JudgerTableSupport:
       .flatMap {
         case "cpp17" => Some(SubmissionLanguage.Cpp17)
         case "python3" => Some(SubmissionLanguage.Python3)
+        case "text" => Some(SubmissionLanguage.Text)
         case _ => None
       }

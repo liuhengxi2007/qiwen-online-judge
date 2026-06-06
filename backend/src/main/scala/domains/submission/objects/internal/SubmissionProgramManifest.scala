@@ -20,7 +20,8 @@ final case class SubmissionProgramManifest(
 
 object SubmissionProgramManifest:
   final val DefaultProgramKey: String = "main"
-  private val ProgramKeyPattern = "^[A-Za-z0-9_-]+$".r
+  private val CodeProgramKeyPattern = "^[A-Za-z0-9_-]+$".r
+  private val TextProgramKeyPattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
   final case class Program(
     language: SubmissionLanguage,
@@ -55,8 +56,12 @@ object SubmissionProgramManifest:
       val normalized = rawPrograms.toList.map { case (key, program) => key.trim -> program }
       normalized.collectFirst {
         case (key, _) if key.isEmpty => "Submission program role must not be empty."
-        case (key, _) if ProgramKeyPattern.findFirstIn(key).isEmpty =>
-          s"Submission program role must contain only ASCII letters, digits, '_' or '-': $key."
+        case (key, _) if !isValidProgramKey(key) =>
+          s"Submission program role must contain only ASCII letters, digits, '_' or '-', with an optional single '.txt' suffix for text answers: $key."
+        case (key, (SubmissionLanguage.Text, _)) if !isTextProgramKey(key) =>
+          s"Submission text role must end with .txt: $key."
+        case (key, (language, _)) if language != SubmissionLanguage.Text && isTextProgramKey(key) =>
+          s"Submission role ending with .txt must use text language: $key."
       } match
         case Some(message) => Left(message)
         case None =>
@@ -86,6 +91,13 @@ object SubmissionProgramManifest:
 
   def sourceBytes(sourceCode: SubmissionSourceCode): Array[Byte] =
     sourceCode.value.getBytes(StandardCharsets.UTF_8)
+
+  def isTextProgramKey(programKey: String): Boolean =
+    TextProgramKeyPattern.findFirstIn(programKey).contains(programKey)
+
+  private def isValidProgramKey(programKey: String): Boolean =
+    CodeProgramKeyPattern.findFirstIn(programKey).contains(programKey) ||
+      TextProgramKeyPattern.findFirstIn(programKey).contains(programKey)
 
   private def sha256Hex(bytes: Array[Byte]): String =
     MessageDigest

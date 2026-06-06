@@ -12,7 +12,8 @@ final case class JudgeTaskTestcase(
   checker: JudgeTaskChecker,
   input: JudgeTaskFileRef,
   answer: Option[JudgeTaskFileRef],
-  strategyProvider: Option[JudgeTaskTool]
+  strategyProvider: Option[JudgeTaskTool],
+  roles: List[String] = Nil
 )
 
 object JudgeTaskTestcase:
@@ -28,5 +29,6 @@ object JudgeTaskTestcase:
       input <- cursor.downField("input").as[JudgeTaskFileRef]
       answer <- cursor.downField("answer").as[Option[JudgeTaskFileRef]]
       strategyProvider <- cursor.downField("strategyProvider").as[Option[JudgeTaskTool]]
-    yield JudgeTaskTestcase(index, label, testcaseType, scoreRatio, limits, checker, input, answer, strategyProvider)
+      roles <- cursor.downField("roles").as[Option[List[String]]].map(_.getOrElse(Nil))
+    yield JudgeTaskTestcase(index, label, testcaseType, scoreRatio, limits, checker, input, answer, strategyProvider, roles)
   }

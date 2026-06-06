@@ -25,6 +25,7 @@ describe('submission-display', () => {
   it('formats verdict status language and judge-state labels', () => {
     expect(submissionLanguageLabel('cpp17')).toBe('C++17')
     expect(submissionLanguageLabel('python3')).toBe('Python 3')
+    expect(submissionLanguageLabel('text')).toBe('Text')
     expect(submissionStatusLabel('queued')).toBe('Queued')
     expect(submissionStatusLabel('failed')).toBe('Failed')
     expect(submissionVerdictLabel('wrong_answer')).toBe('Wrong Answer')

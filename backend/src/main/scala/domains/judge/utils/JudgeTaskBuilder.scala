@@ -31,7 +31,8 @@ object JudgeTaskBuilder:
     reason: JudgeFailureReason
   )
 
-  private val RolePattern = "^[A-Za-z0-9_-]+$".r
+  private val CodeRolePattern = "^[A-Za-z0-9_-]+$".r
+  private val TextRolePattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
   private final case class StandardConfig(language: SubmissionLanguage, path: String)
 
@@ -48,6 +49,7 @@ object JudgeTaskBuilder:
     language match
       case domains.submission.objects.SubmissionLanguage.Cpp17 => SubmissionLanguage.Cpp17
       case domains.submission.objects.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
+      case domains.submission.objects.SubmissionLanguage.Text => SubmissionLanguage.Text
 
   private[utils] def parseConfigBytes(
     bytes: Array[Byte],
@@ -251,6 +253,7 @@ object JudgeTaskBuilder:
           parentLimits = limits,
           parentChecker = checker,
           parentStrategyProvider = strategyProvider,
+          subtaskMode = mode,
           subtaskIndex = index,
           subtaskLabel = label
         )
@@ -266,7 +269,8 @@ object JudgeTaskBuilder:
           checker = firstMainTestcase.checker,
           input = testcase.input,
           answer = Some(testcase.answer),
-          strategyProvider = firstMainTestcase.strategyProvider
+          strategyProvider = firstMainTestcase.strategyProvider,
+          roles = firstMainTestcase.roles
         )
       }
       testcases = configuredTestcases ++ generatedHackTestcases
@@ -290,6 +294,7 @@ object JudgeTaskBuilder:
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
     parentStrategyProvider: Option[JudgeTaskTool],
+    subtaskMode: JudgeTaskMode,
     subtaskIndex: Int,
     subtaskLabel: Option[String]
   ): Either[BuildError, JudgeTaskTestcase] =
@@ -300,6 +305,12 @@ object JudgeTaskBuilder:
       _ <- rejectLegacyName(raw, label)
       _ <- Either.cond(!raw.contains("mode"), (), buildError(s"mode cannot be declared on $label."))
       _ <- Either.cond(!raw.contains("validator"), (), buildError(s"validator cannot be declared on $label."))
+      _ <- Either.cond(
+        subtaskMode.`type` == "traditional" || !raw.contains("roles"),
+        (),
+        buildError(s"roles cannot be declared on $label when mode is interactive.")
+      )
+      roles <- optionalRoleListAt(raw, "roles", allowTextRoles = true).toBuildError
       limits <- limitsAt(raw).toBuildError.map(_.orElse(parentLimits)).flatMap(_.toRight(buildError(s"Limits are required for $label.")))
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker)).flatMap(_.toRight(buildError(s"Checker is required for $label.")))
       strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
@@ -324,7 +335,8 @@ object JudgeTaskBuilder:
         checker = resolvedChecker,
         input = inputRef,
         answer = answerRef,
-        strategyProvider = resolvedStrategyProvider
+        strategyProvider = resolvedStrategyProvider,
+        roles = roles.getOrElse(Nil)
       )
 
   private def testcaseTypeAt(raw: Map[String, Any]): Either[String, JudgeTestcaseType] =
@@ -372,13 +384,13 @@ object JudgeTaskBuilder:
         val modeMap = mode.asInstanceOf[Map[String, Any]]
         stringAt(modeMap, "type").flatMap {
           case "traditional" =>
-            optionalStringAt(modeMap, "role").flatMap(_.getOrElse(SubmissionProgramManifest.DefaultProgramKey).validateRole).map(role =>
+            optionalStringAt(modeMap, "role").flatMap(_.getOrElse(SubmissionProgramManifest.DefaultProgramKey).validateTraditionalRole).map(role =>
               Some(JudgeTaskMode.traditional(role))
             )
           case "interactive" =>
             for
               rawRoles <- listOfStringsAt(modeMap, "roles")
-              roles <- rawRoles.traverse(_.validateRole)
+              roles <- rawRoles.traverse(_.validateCodeRole)
               _ <- Either.cond(roles.nonEmpty, (), "interactive mode must declare at least one role.")
               interactor <- requiredLimitedToolFrom(modeMap.get("interactor"), "mode.interactor")
               resolvedInteractor <- resolveTool(manifest, interactor, "Interactor source file")
@@ -584,6 +596,23 @@ object JudgeTaskBuilder:
       case Some(_) => Left(s"$key must be a list.")
       case None => Left(s"$key is required.")
 
+  private def optionalRoleListAt(raw: Map[String, Any], key: String, allowTextRoles: Boolean): Either[String, Option[List[String]]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(items: List[?]) =>
+        sequence(items.zipWithIndex.map {
+          case (value: String, index) if value.trim.nonEmpty =>
+            val label = s"$key[$index]"
+            val role = value.trim
+            if allowTextRoles then role.validateTraditionalRole.left.map(message => s"$label $message")
+            else role.validateCodeRole.left.map(message => s"$label $message")
+          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (_, index) => Left(s"$key[$index] must be a string.")
+        }).flatMap { roles =>
+          Either.cond(roles.nonEmpty, Some(roles), s"$key must contain at least one role.")
+        }
+      case Some(_) => Left(s"$key must be a list.")
+
   private def stringAt(raw: Map[String, Any], key: String): Either[String, String] =
     optionalStringAt(raw, key).flatMap(_.toRight(s"$key is required."))
 
@@ -632,8 +661,19 @@ object JudgeTaskBuilder:
       either.left.map(buildError)
 
   extension (role: String)
-    private def validateRole: Either[String, String] =
-      Either.cond(RolePattern.findFirstIn(role).contains(role), role, s"Role must contain only ASCII letters, digits, '_' or '-': $role.")
+    private def validateCodeRole: Either[String, String] =
+      Either.cond(
+        CodeRolePattern.findFirstIn(role).contains(role),
+        role,
+        s"Role must contain only ASCII letters, digits, '_' or '-': $role."
+      )
+
+    private def validateTraditionalRole: Either[String, String] =
+      Either.cond(
+        CodeRolePattern.findFirstIn(role).contains(role) || TextRolePattern.findFirstIn(role).contains(role),
+        role,
+        s"Role must contain only ASCII letters, digits, '_' or '-', with an optional single '.txt' suffix: $role."
+      )
 
   extension [A](option: Option[Either[String, A]])
     private def sequence: Either[String, Option[A]] =

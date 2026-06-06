@@ -51,6 +51,8 @@ export function submissionLanguageLabel(language: SubmissionLanguage): string {
       return 'C++17'
     case 'python3':
       return 'Python 3'
+    case 'text':
+      return 'Text'
   }
 }
 

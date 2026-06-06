@@ -15,10 +15,16 @@ import java.nio.file.attribute.PosixFilePermissions
 import scala.util.Try
 
 object JudgeExecutor:
-  private final case class PreparedPrograms(
+  private[judger] final case class PreparedPrograms(
     commands: Map[String, RuntimeCommand],
-    compileFailedRoles: Set[String]
+    compileFailedRoles: Set[String],
+    textOutputs: Map[String, String]
   )
+
+  private[judger] enum TraditionalProgramSelection:
+    case Command(command: RuntimeCommand)
+    case TextOutput(output: String)
+    case CompileError
 
   private final case class PreparedTools(
     validators: Map[JudgeTaskFilePath, RuntimeCommand],
@@ -175,21 +181,26 @@ object JudgeExecutor:
   ): IO[Either[ReportJudgeResultRequest, PreparedPrograms]] =
     task.programs.toList
       .traverse { case (role, program) =>
-        runtimes.get(program.language) match
-          case None =>
-            IO.pure(Right(role -> None))
-          case Some(runtime) =>
-            runtime.prepare(role, program.sourceCode, config, workingDirectory).map {
-              case Right(command) => Right(role -> Some(command))
-              case Left(ProgramPrepareFailure.CompileError) => Right(role -> None)
-              case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
-            }
+        program.language match
+          case SubmissionLanguage.Text =>
+            IO.pure(Right(role -> (None, Some(program.sourceCode.value), false)))
+          case _ =>
+            runtimes.get(program.language) match
+              case None =>
+                IO.pure(Right(role -> (None, None, true)))
+              case Some(runtime) =>
+                runtime.prepare(role, program.sourceCode, config, workingDirectory).map {
+                  case Right(command) => Right(role -> (Some(command), None, false))
+                  case Left(ProgramPrepareFailure.CompileError) => Right(role -> (None, None, true))
+                  case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
+                }
       }
       .map { prepared =>
         prepared.collectFirst { case Left(result) => Left(result) }.getOrElse {
-          val roleCommands = prepared.collect { case Right((role, Some(command))) => role -> command }.toMap
-          val failedRoles = prepared.collect { case Right((role, None)) => role }.toSet
-          Right(PreparedPrograms(roleCommands, failedRoles))
+          val roleCommands = prepared.collect { case Right((role, (Some(command), _, _))) => role -> command }.toMap
+          val textOutputs = prepared.collect { case Right((role, (_, Some(output), _))) => role -> output }.toMap
+          val failedRoles = prepared.collect { case Right((role, (None, None, true))) => role }.toSet
+          Right(PreparedPrograms(roleCommands, failedRoles, textOutputs))
         }
       }
 
@@ -287,10 +298,11 @@ object JudgeExecutor:
       case Some(testcase) =>
         subtask.mode.`type` match
           case "traditional" =>
-            val role = subtask.mode.role.getOrElse("main")
-            programCommand(hackTask.targetTask, programs, role) match
-              case None => IO.pure(testcaseCompileError(testcase))
-              case Some(command) =>
+            selectTraditionalProgram(hackTask.targetTask, subtask, testcase, programs) match
+              case TraditionalProgramSelection.CompileError => IO.pure(testcaseCompileError(testcase))
+              case TraditionalProgramSelection.TextOutput(output) =>
+                runTraditionalTextTestcaseData(hackTask.targetTask, testcase, workingDirectory, sandbox, input, Some(answer), output, tools)
+              case TraditionalProgramSelection.Command(command) =>
                 runTraditionalTestcaseData(hackTask.targetTask, subtask, testcase, workingDirectory, sandbox, input, Some(answer), command, tools)
           case "interactive" =>
             runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answer, workingDirectory, sandbox, programs, tools)
@@ -564,13 +576,14 @@ object JudgeExecutor:
   ): IO[JudgeSubtaskResult] =
     subtask.mode.`type` match
       case "traditional" =>
-        val role = subtask.mode.role.getOrElse("main")
-        programCommand(task, programs, role) match
-          case None => IO.pure(subtaskCompileError(subtask))
-          case Some(command) =>
-            subtask.testcases.traverse { testcase =>
+        subtask.testcases.traverse { testcase =>
+          selectTraditionalProgram(task, subtask, testcase, programs) match
+            case TraditionalProgramSelection.CompileError => IO.pure(testcaseCompileError(testcase))
+            case TraditionalProgramSelection.TextOutput(output) =>
+              judgeTraditionalTextTestcase(task, testcase, workingDirectory, sandbox, problemDataCache, output, tools)
+            case TraditionalProgramSelection.Command(command) =>
               judgeTraditionalTestcase(task, subtask, testcase, workingDirectory, sandbox, problemDataCache, command, tools)
-            }.map(testcases => aggregateSubtask(subtask, testcases))
+        }.map(testcases => aggregateSubtask(subtask, testcases))
       case "interactive" =>
         val missingRole = subtask.mode.roles.find(role => programCommand(task, programs, role).isEmpty)
         missingRole match
@@ -590,6 +603,28 @@ object JudgeExecutor:
     if !task.programs.contains(role) || programs.compileFailedRoles.contains(role) then None
     else programs.commands.get(role)
 
+  private[judger] def selectTraditionalProgram(
+    task: JudgeTask,
+    subtask: JudgeTaskSubtask,
+    testcase: JudgeTaskTestcase,
+    programs: PreparedPrograms
+  ): TraditionalProgramSelection =
+    val roles = if testcase.roles.nonEmpty then testcase.roles else List(subtask.mode.role.getOrElse("main"))
+    roles.collectFirst {
+      case role if task.programs.contains(role) =>
+        task.programs(role).language match
+          case SubmissionLanguage.Text =>
+            programs.textOutputs.get(role) match
+              case Some(output) => TraditionalProgramSelection.TextOutput(output)
+              case None => TraditionalProgramSelection.CompileError
+          case _ if programs.compileFailedRoles.contains(role) =>
+            TraditionalProgramSelection.CompileError
+          case _ =>
+            programs.commands.get(role) match
+              case Some(command) => TraditionalProgramSelection.Command(command)
+              case None => TraditionalProgramSelection.CompileError
+    }.getOrElse(TraditionalProgramSelection.CompileError)
+
   private def judgeTraditionalTestcase(
     task: JudgeTask,
     subtask: JudgeTaskSubtask,
@@ -606,6 +641,34 @@ object JudgeExecutor:
       case Right((input, answerBytes)) =>
         runTraditionalTestcaseData(task, subtask, testcase, workingDirectory, sandbox, input, answerBytes, command, tools)
     }
+
+  private def judgeTraditionalTextTestcase(
+    task: JudgeTask,
+    testcase: JudgeTaskTestcase,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache,
+    output: String,
+    tools: PreparedTools
+  ): IO[JudgeTestcaseResult] =
+    loadTestcaseData(task, testcase, problemDataCache).flatMap {
+      case Left(reason) =>
+        IO.pure(testcaseSystemError(testcase, reason))
+      case Right((input, answerBytes)) =>
+        runTraditionalTextTestcaseData(task, testcase, workingDirectory, sandbox, input, answerBytes, output, tools)
+    }
+
+  private def runTraditionalTextTestcaseData(
+    task: JudgeTask,
+    testcase: JudgeTaskTestcase,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    input: Array[Byte],
+    answerBytes: Option[Array[Byte]],
+    output: String,
+    tools: PreparedTools
+  ): IO[JudgeTestcaseResult] =
+    scoreParticipantRun(task, testcase, workingDirectory, sandbox, input, successfulTextRun(output), answerBytes, tools)
 
   private def runTraditionalTestcaseData(
     task: JudgeTask,
@@ -1206,6 +1269,19 @@ object JudgeExecutor:
       case cats.effect.Outcome.Errored(error) => IO.raiseError(error)
       case cats.effect.Outcome.Canceled() => IO.canceled *> IO.never[A]
     }
+
+  private def successfulTextRun(output: String): ProcessResult =
+    ProcessResult(
+      exitCode = Some(0),
+      isolateStatus = None,
+      isolateMessage = None,
+      stdout = output,
+      stderr = "",
+      timedOut = false,
+      timeUsedMs = Some(0L),
+      wallTimeUsedMs = Some(0L),
+      memoryUsedKb = Some(0L)
+    )
 
   private def testcaseResult(
     testcase: JudgeTaskTestcase,

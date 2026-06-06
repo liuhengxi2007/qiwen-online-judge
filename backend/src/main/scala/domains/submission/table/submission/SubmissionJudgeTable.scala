@@ -16,6 +16,9 @@ object SubmissionJudgeTable:
 
   private def claimNextForLanguagesSQL(languageCount: Int): String =
     val placeholders = List.fill(languageCount)("?").mkString(", ")
+    val languagePredicate =
+      if languageCount == 0 then "program.data ->> 'language' = 'text'"
+      else s"(program.data ->> 'language' = 'text' or program.data ->> 'language' in ($placeholders))"
     s"""
       |with next_submission as (
       |  select s.id
@@ -26,7 +29,7 @@ object SubmissionJudgeTable:
       |    and exists (
       |      select 1
       |      from jsonb_each(s.program_manifest -> 'programs') as program(role, data)
-      |      where program.data ->> 'language' in ($placeholders)
+      |      where $languagePredicate
       |    )
       |    and p.ready = true
       |  order by s.judge_priority desc, s.judge_queued_at asc, s.public_id asc
@@ -51,8 +54,7 @@ object SubmissionJudgeTable:
     runningState: SubmissionJudgeState,
     minPriority: Int
   ): IO[Option[ClaimedSubmission]] =
-    if languages.isEmpty then IO.pure(None)
-    else IO.blocking {
+    IO.blocking {
       val statement = connection.prepareStatement(claimNextForLanguagesSQL(languages.size))
       try
         statement.setInt(1, minPriority)

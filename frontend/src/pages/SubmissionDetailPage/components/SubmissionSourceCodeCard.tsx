@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { submissionSourceCodeValue } from '@/objects/submission/SubmissionSourceCode'
 import type { SubmissionSourceCode } from '@/objects/submission/SubmissionSourceCode'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
+import { submissionLanguageLabel } from '@/pages/objects/SubmissionDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmissionDetailProgram = SubmissionDetail['programs'][string]
@@ -36,6 +37,7 @@ export function SubmissionSourceCodeCard({ programs, sourceCode }: SubmissionSou
           </TabsList>
           {sourceEntries.map(([role, program]) => (
             <TabsContent key={role} value={role}>
+              <p className="mb-3 text-sm font-medium text-slate-600">{submissionLanguageLabel(program.language)}</p>
               <pre className="overflow-x-auto rounded-3xl bg-slate-950 p-6 text-sm leading-7 text-slate-100">
                 <code>{submissionSourceCodeValue(program.sourceCode)}</code>
               </pre>

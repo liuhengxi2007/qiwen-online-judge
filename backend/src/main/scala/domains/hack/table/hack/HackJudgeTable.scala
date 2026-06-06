@@ -38,6 +38,9 @@ object HackJudgeTable:
 
   private def claimNextSQL(languageCount: Int): String =
     val placeholders = List.fill(languageCount)("?").mkString(", ")
+    val languagePredicate =
+      if languageCount == 0 then "program.data ->> 'language' = 'text'"
+      else s"(program.data ->> 'language' = 'text' or program.data ->> 'language' in ($placeholders))"
     s"""
       |with next_hack as (
       |  select h.id
@@ -51,7 +54,7 @@ object HackJudgeTable:
       |    and exists (
       |      select 1
       |      from jsonb_each(target.program_manifest -> 'programs') as program(role, data)
-      |      where program.data ->> 'language' in ($placeholders)
+      |      where $languagePredicate
       |    )
       |  order by h.created_at asc, h.public_id asc
       |  for update skip locked
@@ -83,8 +86,7 @@ object HackJudgeTable:
     languages: List[SubmissionLanguage],
     startedAt: Instant
   ): IO[Option[ClaimedHackAttemptRecord]] =
-    if languages.isEmpty then IO.pure(None)
-    else IO.blocking {
+    IO.blocking {
       val statement = connection.prepareStatement(claimNextSQL(languages.size))
       try
         languages.zipWithIndex.foreach { case (language, index) =>
@@ -208,3 +210,4 @@ object HackJudgeTable:
     value match
       case SubmissionLanguage.Cpp17 => "cpp17"
       case SubmissionLanguage.Python3 => "python3"
+      case SubmissionLanguage.Text => "text"

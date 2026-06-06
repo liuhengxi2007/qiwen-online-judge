@@ -29,6 +29,18 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   )
 
+  private val textSourceCode = SubmissionSourceCode("42\n")
+
+  private val claimedSubmissionWithText = claimedSubmission.copy(
+    programManifest = SubmissionProgramManifest.unsafeFromPrograms(
+      UUID.fromString("33333333-3333-4333-8333-333333333333"),
+      Map(
+        "chain.txt" -> (SubmissionLanguage.Text -> textSourceCode),
+        "main" -> (SubmissionLanguage.Cpp17 -> sourceCode)
+      )
+    )
+  )
+
   private val manifest = ProblemDataManifest.fromEntries(
     claimedSubmission.problemSlug,
     List(
@@ -460,6 +472,149 @@ class JudgeTaskBuilderSuite extends FunSuite:
       assertEquals(provider.limits.map(_.timeMs.value), Some(2000))
       assertEquals(provider.limits.map(_.memoryMb.value), Some(512))
     }
+  }
+
+  test("parseConfigBytes accepts traditional testcase role fallback list with text role") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: traditional
+        |  role: main
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - roles: [chain.txt, main]
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmissionWithText,
+      Map("chain.txt" -> textSourceCode, "main" -> sourceCode),
+      manifest
+    )
+
+    assertEquals(result.map(_.subtasks.head.testcases.head.roles), Right(List("chain.txt", "main")))
+  }
+
+  test("parseConfigBytes accepts traditional mode text role") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: traditional
+        |  role: chain.txt
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmissionWithText,
+      Map("chain.txt" -> textSourceCode, "main" -> sourceCode),
+      manifest
+    )
+
+    assertEquals(result.map(_.subtasks.head.mode.role), Right(Some("chain.txt")))
+  }
+
+  test("parseConfigBytes rejects text roles in interactive mode") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: interactive
+        |  roles: [chain.txt]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |    limits:
+        |      timeMs: 1000
+        |      memoryMb: 256
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmissionWithText,
+      Map("chain.txt" -> textSourceCode, "main" -> sourceCode),
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("Role must contain only ASCII letters, digits, '_' or '-': chain.txt."))
+  }
+
+  test("parseConfigBytes rejects invalid testcase text role names") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - roles: [a.b.txt]
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmissionWithText,
+      Map("chain.txt" -> textSourceCode, "main" -> sourceCode),
+      manifest
+    )
+
+    assertEquals(
+      result.left.toOption,
+      Some("roles[0] Role must contain only ASCII letters, digits, '_' or '-', with an optional single '.txt' suffix: a.b.txt.")
+    )
+  }
+
+  test("parseConfigBytes rejects testcase roles in interactive mode") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: interactive
+        |  roles: [main]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |    limits:
+        |      timeMs: 1000
+        |      memoryMb: 256
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - roles: [main]
+        |        input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("roles cannot be declared on subtask 1 testcase 1 when mode is interactive."))
   }
 
   test("parseConfigBytes rejects legacy real-time tool limits") {
