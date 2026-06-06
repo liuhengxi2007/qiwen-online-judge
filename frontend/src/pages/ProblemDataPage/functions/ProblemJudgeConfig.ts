@@ -58,7 +58,7 @@ type LimitsConfig = {
 }
 
 type ToolLimitsConfig = {
-  realTimeMs: number
+  timeMs: number
   memoryMb: number
 }
 
@@ -268,9 +268,9 @@ function validateToolLimits(value: unknown, label: string, ctx: ValidationContex
     return null
   }
 
-  const realTimeMs = validateIntegerRange(value.realTimeMs, `${label}.realTimeMs`, 1, 600000, ctx)
+  const timeMs = validateIntegerRange(value.timeMs, `${label}.timeMs`, 1, 600000, ctx)
   const memoryMb = validateIntegerRange(value.memoryMb, `${label}.memoryMb`, 1, 65536, ctx)
-  return realTimeMs !== null && memoryMb !== null ? { realTimeMs, memoryMb } : null
+  return timeMs !== null && memoryMb !== null ? { timeMs, memoryMb } : null
 }
 
 function validateMode(value: unknown, label: string, ctx: ValidationContext): ModeConfig | null {

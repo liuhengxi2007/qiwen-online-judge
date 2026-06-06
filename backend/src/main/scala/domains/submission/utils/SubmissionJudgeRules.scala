@@ -70,6 +70,7 @@ object SubmissionJudgeRules:
       case judgeprotocol.objects.SubmissionVerdict.CompileError => SubmissionVerdict.CompileError
       case judgeprotocol.objects.SubmissionVerdict.RuntimeError => SubmissionVerdict.RuntimeError
       case judgeprotocol.objects.SubmissionVerdict.TimeLimitExceeded => SubmissionVerdict.TimeLimitExceeded
+      case judgeprotocol.objects.SubmissionVerdict.IdlenessLimitExceeded => SubmissionVerdict.IdlenessLimitExceeded
       case judgeprotocol.objects.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
 
   def toSubmissionLanguage(language: judgeprotocol.objects.SubmissionLanguage): Option[domains.submission.objects.SubmissionLanguage] =

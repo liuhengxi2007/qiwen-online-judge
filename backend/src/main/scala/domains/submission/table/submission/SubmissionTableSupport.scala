@@ -116,6 +116,7 @@ object SubmissionTableSupport:
       case SubmissionVerdict.CompileError => "compile_error"
       case SubmissionVerdict.RuntimeError => "runtime_error"
       case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdict.IdlenessLimitExceeded => "idleness_limit_exceeded"
       case SubmissionVerdict.SystemError => "system_error"
 
   def decodeSubmissionVerdictColumn(value: String): Option[SubmissionVerdict] =

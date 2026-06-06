@@ -14,6 +14,7 @@ class SubmissionVerdictFilterSuite extends FunSuite:
       "compile_error" -> SubmissionVerdictFilter.CompileError,
       "runtime_error" -> SubmissionVerdictFilter.RuntimeError,
       "time_limit_exceeded" -> SubmissionVerdictFilter.TimeLimitExceeded,
+      "idleness_limit_exceeded" -> SubmissionVerdictFilter.IdlenessLimitExceeded,
       "system_error" -> SubmissionVerdictFilter.SystemError
     )
 
@@ -28,7 +29,7 @@ class SubmissionVerdictFilterSuite extends FunSuite:
     assertEquals(
       result,
       Left(
-        "Submission verdict filter must be one of: all, pending, accepted, accepted_by_protocol, wrong_answer, compile_error, runtime_error, time_limit_exceeded, system_error."
+        "Submission verdict filter must be one of: all, pending, accepted, accepted_by_protocol, wrong_answer, compile_error, runtime_error, time_limit_exceeded, idleness_limit_exceeded, system_error."
       )
     )
   }
@@ -38,7 +39,8 @@ class SubmissionVerdictFilterSuite extends FunSuite:
       SubmissionVerdictFilter.All -> "all",
       SubmissionVerdictFilter.Accepted -> "accepted",
       SubmissionVerdictFilter.AcceptedByProtocol -> "accepted_by_protocol",
-      SubmissionVerdictFilter.TimeLimitExceeded -> "time_limit_exceeded"
+      SubmissionVerdictFilter.TimeLimitExceeded -> "time_limit_exceeded",
+      SubmissionVerdictFilter.IdlenessLimitExceeded -> "idleness_limit_exceeded"
     )
 
     cases.foreach { (value, expected) =>

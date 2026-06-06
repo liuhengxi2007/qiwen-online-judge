@@ -381,13 +381,13 @@ object JudgeTaskBuilder:
       case None => Right(None)
       case Some(limits) =>
         for
-          realTimeMs <- intAt(limits, "realTimeMs")
+          timeMs <- intAt(limits, "timeMs")
             .left.map(message => s"$label.limits.$message")
             .flatMap(TestcaseTimeLimitMs.parse)
           memoryMb <- intAt(limits, "memoryMb")
             .left.map(message => s"$label.limits.$message")
             .flatMap(TestcaseMemoryLimitMb.parse)
-        yield Some(JudgeTaskToolLimits(realTimeMs, memoryMb))
+        yield Some(JudgeTaskToolLimits(timeMs, memoryMb))
     }
 
   private final case class AggregationConfig(testcases: Option[JudgeTaskAggregation], subtasks: Option[JudgeTaskAggregation]):

@@ -16,6 +16,7 @@ export const verdictFilterValues = [
   'compile_error',
   'runtime_error',
   'time_limit_exceeded',
+  'idleness_limit_exceeded',
   'system_error',
 ] as const satisfies readonly SubmissionVerdictFilter[]
 

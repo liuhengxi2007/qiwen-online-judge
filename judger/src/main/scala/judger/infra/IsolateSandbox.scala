@@ -163,7 +163,6 @@ object IsolateSandbox:
   private[judger] def timeUsedMs(meta: Map[String, String]): Option[Long] =
     meta
       .get("time")
-      .orElse(meta.get("time-wall"))
       .flatMap(value => scala.util.Try(BigDecimal(value)).toOption)
       .map(seconds => math.max(0L, (seconds * BigDecimal(1000)).setScale(0, BigDecimal.RoundingMode.HALF_UP).toLong))
 

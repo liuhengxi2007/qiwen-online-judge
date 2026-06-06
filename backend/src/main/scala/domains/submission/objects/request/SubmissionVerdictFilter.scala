@@ -13,6 +13,7 @@ enum SubmissionVerdictFilter:
   case CompileError
   case RuntimeError
   case TimeLimitExceeded
+  case IdlenessLimitExceeded
   case SystemError
 
 object SubmissionVerdictFilter:
@@ -29,10 +30,11 @@ object SubmissionVerdictFilter:
       case "compile_error" => Right(SubmissionVerdictFilter.CompileError)
       case "runtime_error" => Right(SubmissionVerdictFilter.RuntimeError)
       case "time_limit_exceeded" => Right(SubmissionVerdictFilter.TimeLimitExceeded)
+      case "idleness_limit_exceeded" => Right(SubmissionVerdictFilter.IdlenessLimitExceeded)
       case "system_error" => Right(SubmissionVerdictFilter.SystemError)
       case _ =>
         Left(
-          "Submission verdict filter must be one of: all, pending, accepted, accepted_by_protocol, wrong_answer, compile_error, runtime_error, time_limit_exceeded, system_error."
+          "Submission verdict filter must be one of: all, pending, accepted, accepted_by_protocol, wrong_answer, compile_error, runtime_error, time_limit_exceeded, idleness_limit_exceeded, system_error."
         )
 
   def encode(value: SubmissionVerdictFilter): String =
@@ -45,4 +47,5 @@ object SubmissionVerdictFilter:
       case SubmissionVerdictFilter.CompileError => "compile_error"
       case SubmissionVerdictFilter.RuntimeError => "runtime_error"
       case SubmissionVerdictFilter.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdictFilter.IdlenessLimitExceeded => "idleness_limit_exceeded"
       case SubmissionVerdictFilter.SystemError => "system_error"

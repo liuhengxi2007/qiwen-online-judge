@@ -311,12 +311,12 @@ class JudgeTaskBuilderSuite extends FunSuite:
         |  interactor:
         |    path: tools/interactor.cpp
         |    limits:
-        |      realTimeMs: 1000
+        |      timeMs: 1000
         |      memoryMb: 256
         |strategyProvider:
         |  path: tools/strategy.cpp
         |  limits:
-        |    realTimeMs: 2000
+        |    timeMs: 2000
         |    memoryMb: 512
         |limits:
         |  timeMs: 1000
@@ -342,11 +342,44 @@ class JudgeTaskBuilderSuite extends FunSuite:
       val provider = task.subtasks.head.testcases.head.strategyProvider.get
 
       assertEquals(interactor.source.path.value, "tools/interactor.cpp")
-      assertEquals(interactor.limits.map(_.realTimeMs.value), Some(1000))
+      assertEquals(interactor.limits.map(_.timeMs.value), Some(1000))
       assertEquals(provider.source.path.value, "tools/strategy.cpp")
-      assertEquals(provider.limits.map(_.realTimeMs.value), Some(2000))
+      assertEquals(provider.limits.map(_.timeMs.value), Some(2000))
       assertEquals(provider.limits.map(_.memoryMb.value), Some(512))
     }
+  }
+
+  test("parseConfigBytes rejects legacy real-time tool limits") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |mode:
+        |  type: interactive
+        |  roles: [main]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |    limits:
+        |      realTimeMs: 1000
+        |      memoryMb: 256
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |validator:
+        |  path: validators/validator.cpp
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("mode.interactor.limits.timeMs is required."))
   }
 
   test("parseConfigBytes rejects interactive interactor without limits") {

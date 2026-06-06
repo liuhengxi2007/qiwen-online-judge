@@ -83,6 +83,8 @@ export function submissionVerdictLabel(verdict: SubmissionVerdict | null): strin
       return 'Runtime Error'
     case 'time_limit_exceeded':
       return 'Time Limit Exceeded'
+    case 'idleness_limit_exceeded':
+      return 'Idleness Limit Exceeded'
     case 'system_error':
       return 'System Error'
   }
@@ -100,6 +102,7 @@ export function submissionVerdictTextStyle(verdict: SubmissionVerdict | null): C
     case 'compile_error':
       return { color: '#64748B' }
     case 'time_limit_exceeded':
+    case 'idleness_limit_exceeded':
       return { color: '#B99024' }
     case 'runtime_error':
       return { color: '#7B3294' }

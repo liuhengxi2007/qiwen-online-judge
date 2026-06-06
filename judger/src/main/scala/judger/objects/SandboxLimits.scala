@@ -28,10 +28,3 @@ object SandboxLimits:
       wallTimeLimit = WallTimeLimitMs(math.max(1L, wallTimeLimitMs)),
       memoryLimit = MemoryLimitMb(math.max(memoryLimitMb, 16))
     )
-
-  def realTime(realTimeMs: Long, memoryLimitMb: Int): SandboxLimits =
-    runtimeWithWall(
-      timeLimitMs = realTimeMs,
-      wallTimeLimitMs = realTimeMs,
-      memoryLimitMb = memoryLimitMb
-    )

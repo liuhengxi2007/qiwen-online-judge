@@ -9,6 +9,7 @@ enum SubmissionVerdict:
   case CompileError
   case RuntimeError
   case TimeLimitExceeded
+  case IdlenessLimitExceeded
   case SystemError
 
 object SubmissionVerdict:
@@ -20,6 +21,7 @@ object SubmissionVerdict:
       case SubmissionVerdict.CompileError => "compile_error"
       case SubmissionVerdict.RuntimeError => "runtime_error"
       case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdict.IdlenessLimitExceeded => "idleness_limit_exceeded"
       case SubmissionVerdict.SystemError => "system_error"
 
   given Encoder[SubmissionVerdict] = Encoder.encodeString.contramap(render)
@@ -30,6 +32,7 @@ object SubmissionVerdict:
     case "compile_error" => Right(SubmissionVerdict.CompileError)
     case "runtime_error" => Right(SubmissionVerdict.RuntimeError)
     case "time_limit_exceeded" => Right(SubmissionVerdict.TimeLimitExceeded)
+    case "idleness_limit_exceeded" => Right(SubmissionVerdict.IdlenessLimitExceeded)
     case "system_error" => Right(SubmissionVerdict.SystemError)
     case other => Left(s"Unsupported submission verdict: $other")
   }

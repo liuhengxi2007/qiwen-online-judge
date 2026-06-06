@@ -16,7 +16,7 @@ class JudgeTaskToolCodecSuite extends FunSuite:
     val cursor = json.hcursor
 
     assertEquals(cursor.downField("source").get[String]("path"), Right("tools/interactor.cpp"))
-    assertEquals(cursor.downField("limits").get[Int]("realTimeMs"), Right(1000))
+    assertEquals(cursor.downField("limits").get[Int]("timeMs"), Right(1000))
     assertEquals(cursor.downField("limits").get[Int]("memoryMb"), Right(256))
   }
 
@@ -28,13 +28,24 @@ class JudgeTaskToolCodecSuite extends FunSuite:
          |  "roles":["main"],
          |  "interactor":{
          |    "source":{"path":"tools/interactor.cpp","sizeBytes":42,"sha256":"$sha256"},
-         |    "limits":{"realTimeMs":1000,"memoryMb":256}
+         |    "limits":{"timeMs":1000,"memoryMb":256}
          |  }
          |}""".stripMargin
     )
 
-    assertEquals(decoded.map(_.interactor.flatMap(_.limits).map(_.realTimeMs.value)), Right(Some(1000)))
+    assertEquals(decoded.map(_.interactor.flatMap(_.limits).map(_.timeMs.value)), Right(Some(1000)))
     assertEquals(decoded.map(_.interactor.map(_.source.path.value)), Right(Some("tools/interactor.cpp")))
+  }
+
+  test("rejects legacy real-time tool limits") {
+    val decoded = decode[JudgeTaskTool](
+      s"""{
+         |  "source":{"path":"tools/tool.cpp","sizeBytes":42,"sha256":"$sha256"},
+         |  "limits":{"realTimeMs":1000,"memoryMb":256}
+         |}""".stripMargin
+    )
+
+    assert(decoded.isLeft)
   }
 
   test("allows tools without limits") {

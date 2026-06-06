@@ -305,34 +305,57 @@ object JudgeExecutor:
               .flatMap {
                 case Left(reason) =>
                   IO.pure(testcaseSystemError(testcase, reason))
-                case Right(runResult) if interactiveToolAcceptedByProtocol(interactor, strategyProvider, runResult) =>
+                case Right(runResult) if interactiveToolCpuLimitExceeded(interactor, strategyProvider.map(_.tool), runResult.interactor, runResult.strategyProvider) =>
                   IO.pure(testcaseAcceptedByProtocol(testcase))
-                case Right(runResult) if runResult.status.contains("accepted_by_protocol") =>
-                  IO.pure(testcaseAcceptedByProtocol(testcase))
-                case Right(runResult) if strategyFailed(strategyProvider, runResult.strategyProvider) =>
-                  IO.pure(testcaseAcceptedByProtocol(testcase))
-                case Right(runResult) if runResult.interactor.exitCode.getOrElse(-1) != 0 =>
-                  IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorRuntimeFailed))
                 case Right(runResult) =>
-                  participantFailure(runResult.participants) match
-                    case Some((verdict, participantResult)) =>
-                      IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, participantResult))
+                  interactiveWallOnlyVerdict(
+                    participants = runResult.participants,
+                    participantCpuLimitMs = testcase.limits.timeMs.value.toLong,
+                    processes = interactiveProcessesForTimeout(testcase, interactor, strategyProvider, runResult),
+                    fallback = runResult.interactor
+                  ) match
+                    case Some((verdict, processResult)) =>
+                      IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, processResult))
                     case None =>
-                      scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.output, answerBytes, tools.checkers).map {
-                        case Right(checkerScore) =>
-                          testcaseResult(
-                            testcase,
-                            checkerScore.score,
-                            if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
-                            checkerScore.message,
-                            None,
-                            runResult.interactor.copy(stdout = runResult.output)
-                          )
-                        case Left(reason) =>
-                          testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
-                      }
+                      scoreInteractiveRun(task, testcase, workingDirectory, sandbox, input, answerBytes, tools, strategyProvider, runResult)
               }
     }
+
+  private def scoreInteractiveRun(
+    task: JudgeTask,
+    testcase: JudgeTaskTestcase,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    input: Array[Byte],
+    answerBytes: Option[Array[Byte]],
+    tools: PreparedTools,
+    strategyProvider: Option[StrategyProviderRuntime],
+    runResult: InteractiveRunResult
+  ): IO[JudgeTestcaseResult] =
+    if runResult.status.contains("accepted_by_protocol") then
+      IO.pure(testcaseAcceptedByProtocol(testcase))
+    else if strategyFailed(strategyProvider, runResult.strategyProvider) then
+      IO.pure(testcaseAcceptedByProtocol(testcase))
+    else if runResult.interactor.exitCode.getOrElse(-1) != 0 then
+      IO.pure(testcaseSystemError(testcase, JudgeFailureReason.InteractorRuntimeFailed))
+    else
+      participantFailure(runResult.participants, testcase.limits.timeMs.value.toLong) match
+        case Some((verdict, participantResult)) =>
+          IO.pure(testcaseResult(testcase, BigDecimal(0), verdict, None, None, participantResult))
+        case None =>
+          scoreWithChecker(task, testcase, workingDirectory, sandbox, input, runResult.output, answerBytes, tools.checkers).map {
+            case Right(checkerScore) =>
+              testcaseResult(
+                testcase,
+                checkerScore.score,
+                if checkerScore.score == BigDecimal(1) then SubmissionVerdict.Accepted else SubmissionVerdict.WrongAnswer,
+                checkerScore.message,
+                None,
+                runResult.interactor.copy(stdout = runResult.output)
+              )
+            case Left(reason) =>
+              testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
+          }
 
   private def scoreParticipantRun(
     task: JudgeTask,
@@ -408,10 +431,17 @@ object JudgeExecutor:
         val strategyFifos = strategyProvider.map(_ => interactiveDir.resolve("to-strategy") -> interactiveDir.resolve("from-strategy"))
         val fifoPaths = roleFifos.flatMap { case (_, _, toParticipant, fromParticipant) => List(toParticipant, fromParticipant) } ++
           strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) => List(toStrategy, fromStrategy) }
+        val sharedWallTimeLimitMs =
+          interactiveWallTimeLimitMs(
+            testcase = testcase,
+            roleCount = subtask.mode.roles.size,
+            interactor = interactor,
+            strategyProvider = strategyProvider.map(_.tool)
+          )
         val participantLimits =
           SandboxLimits.runtimeWithWall(
             timeLimitMs = testcase.limits.timeMs.value.toLong,
-            wallTimeLimitMs = interactiveParticipantWallTimeMs(testcase, interactor, strategyProvider),
+            wallTimeLimitMs = sharedWallTimeLimitMs,
             memoryLimitMb = testcase.limits.memoryMb.value
           )
         val interactorArgs =
@@ -466,7 +496,11 @@ object JudgeExecutor:
                       provider.command.command
                     ) ++ provider.command.args,
                     stdin = None,
-                    limits = SandboxLimits.realTime(limits.realTimeMs.value.toLong, limits.memoryMb.value),
+                    limits = SandboxLimits.runtimeWithWall(
+                      timeLimitMs = limits.timeMs.value.toLong,
+                      wallTimeLimitMs = sharedWallTimeLimitMs,
+                      memoryLimitMb = limits.memoryMb.value
+                    ),
                     processLimit = provider.command.processLimit,
                     captureStdout = false
                   ),
@@ -481,7 +515,11 @@ object JudgeExecutor:
                 command = sigpipeLauncher.command,
                 args = sigpipeLauncher.args ++ List(interactorCommand.command) ++ interactorArgs,
                 stdin = None,
-                limits = SandboxLimits.realTime(interactorLimits.realTimeMs.value.toLong, interactorLimits.memoryMb.value),
+                limits = SandboxLimits.runtimeWithWall(
+                  timeLimitMs = interactorLimits.timeMs.value.toLong,
+                  wallTimeLimitMs = sharedWallTimeLimitMs,
+                  memoryLimitMb = interactorLimits.memoryMb.value
+                ),
                 processLimit = interactorCommand.processLimit
               ),
               workingDirectory
@@ -601,39 +639,76 @@ object JudgeExecutor:
           yield RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)
       }
 
-  private def interactiveParticipantWallTimeMs(
+  private[judger] def interactiveWallTimeLimitMs(
     testcase: JudgeTaskTestcase,
+    roleCount: Int,
     interactor: JudgeTaskTool,
-    strategyProvider: Option[StrategyProviderRuntime]
+    strategyProvider: Option[JudgeTaskTool]
   ): Long =
-    testcase.limits.timeMs.value.toLong +
-      interactor.limits.map(_.realTimeMs.value.toLong).getOrElse(0L) +
-      strategyProvider.flatMap(_.tool.limits).map(_.realTimeMs.value.toLong).getOrElse(0L) +
-      5000L
+    val totalCpuBudgetMs =
+      testcase.limits.timeMs.value.toLong * math.max(0, roleCount).toLong +
+        interactor.limits.map(_.timeMs.value.toLong).getOrElse(0L) +
+        strategyProvider.flatMap(_.limits).map(_.timeMs.value.toLong).getOrElse(0L)
+    (totalCpuBudgetMs * 3L + 1L) / 2L + 500L
 
-  private def interactiveToolAcceptedByProtocol(
+  private def interactiveProcessesForTimeout(
+    testcase: JudgeTaskTestcase,
     interactor: JudgeTaskTool,
     strategyProvider: Option[StrategyProviderRuntime],
     runResult: InteractiveRunResult
-  ): Boolean =
-    toolRealTimeExceeded(interactor, runResult.interactor) ||
-      strategyProvider.exists(provider => runResult.strategyProvider.exists(result => toolRealTimeExceeded(provider.tool, result)))
+  ): List[(ProcessResult, Long)] =
+    val participantProcesses =
+      runResult.participants.values.toList.map(_ -> testcase.limits.timeMs.value.toLong)
+    val interactorProcess =
+      interactor.limits.toList.map(limits => runResult.interactor -> limits.timeMs.value.toLong)
+    val strategyProcess =
+      strategyProvider.toList.flatMap(provider =>
+        provider.tool.limits.toList.zip(runResult.strategyProvider.toList).map { case (limits, result) =>
+          result -> limits.timeMs.value.toLong
+        }
+      )
+    participantProcesses ++ interactorProcess ++ strategyProcess
 
-  private def toolRealTimeExceeded(tool: JudgeTaskTool, result: ProcessResult): Boolean =
-    tool.limits.exists(limits =>
-      result.timedOut || result.wallTimeUsedMs.exists(_ > limits.realTimeMs.value.toLong)
-    )
+  private[judger] def interactiveToolCpuLimitExceeded(
+    interactor: JudgeTaskTool,
+    strategyProvider: Option[JudgeTaskTool],
+    interactorResult: ProcessResult,
+    strategyResult: Option[ProcessResult]
+  ): Boolean =
+    toolCpuLimitExceeded(interactor, interactorResult) ||
+      strategyProvider.exists(provider => strategyResult.exists(result => toolCpuLimitExceeded(provider, result)))
+
+  private[judger] def toolCpuLimitExceeded(tool: JudgeTaskTool, result: ProcessResult): Boolean =
+    tool.limits.exists(limits => cpuLimitExceeded(result, limits.timeMs.value.toLong))
+
+  private[judger] def cpuLimitExceeded(result: ProcessResult, timeLimitMs: Long): Boolean =
+    result.timedOut && result.timeUsedMs.exists(_ >= timeLimitMs)
+
+  private[judger] def interactiveWallOnlyVerdict(
+    participants: Map[String, ProcessResult],
+    participantCpuLimitMs: Long,
+    processes: List[(ProcessResult, Long)],
+    fallback: ProcessResult
+  ): Option[(SubmissionVerdict, ProcessResult)] =
+    Option.when(interactiveWallOnlyTimeout(processes)) {
+      participantFailure(participants, participantCpuLimitMs).getOrElse(SubmissionVerdict.IdlenessLimitExceeded -> fallback)
+    }
+
+  private[judger] def interactiveWallOnlyTimeout(processes: List[(ProcessResult, Long)]): Boolean =
+    processes.exists { case (result, _) => result.timedOut } &&
+      !processes.exists { case (result, timeLimitMs) => cpuLimitExceeded(result, timeLimitMs) }
 
   private def strategyFailed(strategyProvider: Option[StrategyProviderRuntime], result: Option[ProcessResult]): Boolean =
     strategyProvider.exists(_ =>
       result match
         case None => true
+        case Some(current) if current.timedOut => false
         case Some(current) => current.exitCode.getOrElse(-1) != 0
     )
 
-  private def participantFailure(participants: Map[String, ProcessResult]): Option[(SubmissionVerdict, ProcessResult)] =
+  private[judger] def participantFailure(participants: Map[String, ProcessResult], timeLimitMs: Long): Option[(SubmissionVerdict, ProcessResult)] =
     participants.toList.sortBy(_._1).collectFirst {
-      case (_, result) if result.timedOut => SubmissionVerdict.TimeLimitExceeded -> result
+      case (_, result) if cpuLimitExceeded(result, timeLimitMs) => SubmissionVerdict.TimeLimitExceeded -> result
       case (_, result) if result.exitCode.getOrElse(-1) != 0 => SubmissionVerdict.RuntimeError -> result
     }
 

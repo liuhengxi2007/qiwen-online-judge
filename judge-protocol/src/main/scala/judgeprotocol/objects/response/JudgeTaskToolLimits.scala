@@ -5,7 +5,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import judgeprotocol.objects.{TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
 
 final case class JudgeTaskToolLimits(
-  realTimeMs: TestcaseTimeLimitMs,
+  timeMs: TestcaseTimeLimitMs,
   memoryMb: TestcaseMemoryLimitMb
 )
 

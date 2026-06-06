@@ -505,6 +505,7 @@ object SubmissionQueryTable:
       case SubmissionVerdictFilter.CompileError => Some(SubmissionVerdict.CompileError)
       case SubmissionVerdictFilter.RuntimeError => Some(SubmissionVerdict.RuntimeError)
       case SubmissionVerdictFilter.TimeLimitExceeded => Some(SubmissionVerdict.TimeLimitExceeded)
+      case SubmissionVerdictFilter.IdlenessLimitExceeded => Some(SubmissionVerdict.IdlenessLimitExceeded)
       case SubmissionVerdictFilter.SystemError => Some(SubmissionVerdict.SystemError)
       case SubmissionVerdictFilter.All | SubmissionVerdictFilter.Pending => None
 

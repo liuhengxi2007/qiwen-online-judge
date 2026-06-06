@@ -146,7 +146,7 @@ subtasks:
     }
   })
 
-  it('accepts interactive tools with real-time limits', () => {
+  it('accepts interactive tools with CPU-time limits', () => {
     const yaml = `version: 2
 mode:
   type: interactive
@@ -154,12 +154,12 @@ mode:
   interactor:
     path: tools/interactor.cpp
     limits:
-      realTimeMs: 1000
+      timeMs: 1000
       memoryMb: 256
 strategyProvider:
   path: tools/strategy.cpp
   limits:
-    realTimeMs: 1000
+    timeMs: 1000
     memoryMb: 256
 limits:
   timeMs: 1000
@@ -178,6 +178,40 @@ subtasks:
 `
 
     expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects legacy real-time interactive tool limits', () => {
+    const yaml = `version: 2
+mode:
+  type: interactive
+  roles: [main]
+  interactor:
+    path: tools/interactor.cpp
+    limits:
+      realTimeMs: 1000
+      memoryMb: 256
+limits:
+  timeMs: 1000
+  memoryMb: 256
+validator:
+  path: validators/validator.cpp
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('mode.interactor.limits.timeMs must be an integer.')
+    }
   })
 
   it('rejects interactive tool declarations without limits', () => {
