@@ -29,6 +29,7 @@ object SubmissionTableSchema:
       |  language varchar(32) generated always as ((program_manifest #>> array['programs', program_manifest ->> 'defaultProgramKey', 'language'])) stored,
       |  status varchar(32) not null default 'queued',
       |  judge_priority integer not null default 0,
+      |  judge_queued_at timestamp not null default current_timestamp,
       |  hack_revision bigint not null default 0,
       |  judge_result jsonb,
       |  verdict varchar(64) generated always as (judge_result ->> 'verdict') stored,
@@ -75,6 +76,13 @@ object SubmissionTableSchema:
       |
       |  if not exists (
       |    select 1 from information_schema.columns
+      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'judge_queued_at'
+      |  ) then
+      |    alter table submissions add column judge_queued_at timestamp;
+      |  end if;
+      |
+      |  if not exists (
+      |    select 1 from information_schema.columns
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'hack_revision'
       |  ) then
       |    alter table submissions add column hack_revision bigint;
@@ -101,6 +109,10 @@ object SubmissionTableSchema:
       |  update submissions
       |  set judge_priority = 0
       |  where judge_priority is null;
+      |
+      |  update submissions
+      |  set judge_queued_at = submitted_at
+      |  where judge_queued_at is null;
       |
       |  update submissions
       |  set hack_revision = 0
@@ -410,6 +422,12 @@ object SubmissionTableSchema:
       |alter column judge_priority set default 0
       |""".stripMargin
 
+  val setJudgeQueuedAtDefaultSql: String =
+    """
+      |alter table submissions
+      |alter column judge_queued_at set default current_timestamp
+      |""".stripMargin
+
   val setHackRevisionDefaultSql: String =
     """
       |alter table submissions
@@ -426,6 +444,12 @@ object SubmissionTableSchema:
     """
       |alter table submissions
       |alter column judge_priority set not null
+      |""".stripMargin
+
+  val setJudgeQueuedAtNotNullSql: String =
+    """
+      |alter table submissions
+      |alter column judge_queued_at set not null
       |""".stripMargin
 
   val setHackRevisionNotNullSql: String =
@@ -468,8 +492,8 @@ object SubmissionTableSchema:
       |  on submissions (code_length);
       |create index if not exists submissions_contest_id_submitted_at_idx
       |  on submissions (contest_id, submitted_at desc, public_id desc);
-      |create index if not exists submissions_queued_language_idx
-      |  on submissions (language, judge_priority desc, submitted_at asc, public_id asc)
+      |create index if not exists submissions_queued_language_priority_idx
+      |  on submissions (language, judge_priority desc, judge_queued_at asc, public_id asc)
       |  where status = 'queued';
       |""".stripMargin
 
@@ -520,6 +544,8 @@ object SubmissionTableSchema:
           setStatusNotNullSql,
           setJudgePriorityDefaultSql,
           setJudgePriorityNotNullSql,
+          setJudgeQueuedAtDefaultSql,
+          setJudgeQueuedAtNotNullSql,
           setHackRevisionDefaultSql,
           setHackRevisionNotNullSql,
           setPublicIdDefaultSql,

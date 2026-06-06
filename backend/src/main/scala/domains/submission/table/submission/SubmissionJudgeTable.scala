@@ -6,11 +6,11 @@ import domains.submission.objects.{SubmissionId, SubmissionLanguage}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeState}
 import domains.submission.table.submission.SubmissionTableSupport.*
 
-import java.sql.Connection
+import java.sql.{Connection, Timestamp}
+import java.time.Instant
 
 object SubmissionJudgeTable:
 
-  val HighPriority: Int = 100
   val OrdinaryPriority: Int = 0
   val LowPriority: Int = -100
 
@@ -29,7 +29,7 @@ object SubmissionJudgeTable:
       |      where program.data ->> 'language' in ($placeholders)
       |    )
       |    and p.ready = true
-      |  order by s.judge_priority desc, s.submitted_at asc, s.public_id asc
+      |  order by s.judge_priority desc, s.judge_queued_at asc, s.public_id asc
       |  for update skip locked
       |  limit 1
       |)
@@ -55,10 +55,10 @@ object SubmissionJudgeTable:
     else IO.blocking {
       val statement = connection.prepareStatement(claimNextForLanguagesSQL(languages.size))
       try
+        statement.setInt(1, minPriority)
         languages.zipWithIndex.foreach { case (language, index) =>
-          statement.setString(index + 1, encodeSubmissionLanguageColumn(language))
+          statement.setString(index + 2, encodeSubmissionLanguageColumn(language))
         }
-        statement.setInt(languages.size + 1, minPriority)
         val stateStartIndex = languages.size + 2
         statement.setString(stateStartIndex, encodeSubmissionStatusColumn(runningState.status))
         setOptionalTimestamp(statement, stateStartIndex + 1, runningState.startedAt)
@@ -86,7 +86,8 @@ object SubmissionJudgeTable:
       |    judge_result = null,
       |    started_at = null,
       |    finished_at = null,
-      |    judge_priority = ?
+      |    judge_priority = ?,
+      |    judge_queued_at = ?
       |where public_id = ?
       |""".stripMargin
 
@@ -94,8 +95,9 @@ object SubmissionJudgeTable:
     IO.blocking {
       val statement = connection.prepareStatement(queueManualRejudgeSQL)
       try
-        statement.setInt(1, HighPriority)
-        statement.setLong(2, submissionId.value)
+        statement.setInt(1, OrdinaryPriority)
+        statement.setTimestamp(2, nowTimestamp)
+        statement.setLong(3, submissionId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -108,7 +110,8 @@ object SubmissionJudgeTable:
       |    judge_result = null,
       |    started_at = null,
       |    finished_at = null,
-      |    judge_priority = ?
+      |    judge_priority = ?,
+      |    judge_queued_at = ?
       |where problem_id = ?
       |  and status in ('completed', 'failed')
       |""".stripMargin
@@ -118,7 +121,8 @@ object SubmissionJudgeTable:
       val statement = connection.prepareStatement(queueHackRejudgeForProblemSQL)
       try
         statement.setInt(1, LowPriority)
-        statement.setObject(2, problemId.value)
+        statement.setTimestamp(2, nowTimestamp)
+        statement.setObject(3, problemId.value)
         statement.executeUpdate()
         ()
       finally statement.close()
@@ -131,7 +135,8 @@ object SubmissionJudgeTable:
       |    judge_result = null,
       |    started_at = null,
       |    finished_at = null,
-      |    judge_priority = ?
+      |    judge_priority = ?,
+      |    judge_queued_at = ?
       |from problems p
       |where s.public_id = ?
       |  and p.id = s.problem_id
@@ -144,10 +149,14 @@ object SubmissionJudgeTable:
       val statement = connection.prepareStatement(requeueIfHackRevisionStaleSQL)
       try
         statement.setInt(1, LowPriority)
-        statement.setLong(2, submissionId.value)
+        statement.setTimestamp(2, nowTimestamp)
+        statement.setLong(3, submissionId.value)
         statement.executeUpdate() > 0
       finally statement.close()
     }
+
+  private def nowTimestamp: Timestamp =
+    Timestamp.from(Instant.now())
 
   private val updateJudgeStateSQL: String =
     """

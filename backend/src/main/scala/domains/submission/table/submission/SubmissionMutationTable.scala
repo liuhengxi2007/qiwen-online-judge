@@ -19,8 +19,8 @@ object SubmissionMutationTable:
 
   private val insertSQL: String =
     s"""
-      |insert into submissions (id, public_id, problem_id, contest_id, submitter_username, program_manifest, status, judge_result, submitted_at, started_at, finished_at)
-      |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?, ?)
+      |insert into submissions (id, public_id, problem_id, contest_id, submitter_username, program_manifest, status, judge_result, submitted_at, judge_queued_at, started_at, finished_at)
+      |values (?, nextval('submission_public_id_seq'), ?, ?, ?, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?)
       |returning public_id, language, status, verdict, time_used_ms, memory_used_kb, score, judge_result::text as judge_result, code_length, null::varchar as source_contest_slug, null::varchar as source_contest_title, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
       |""".stripMargin
 
@@ -51,8 +51,9 @@ object SubmissionMutationTable:
         statement.setString(6, encodeSubmissionStatusColumn(SubmissionStatus.Queued))
         statement.setNull(7, java.sql.Types.VARCHAR)
         statement.setTimestamp(8, Timestamp.from(now))
-        statement.setNull(9, java.sql.Types.TIMESTAMP)
+        statement.setTimestamp(9, Timestamp.from(now))
         statement.setNull(10, java.sql.Types.TIMESTAMP)
+        statement.setNull(11, java.sql.Types.TIMESTAMP)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
