@@ -42,7 +42,7 @@ final case class CreateHack(
       _ <- HackApiSupport.validateHackText(request.input, request.strategyProviderSource, HackApiSupport.requiresStrategyProvider(context.subtask))
       hackUuid <- IO.randomUUID
       createdAt <- IO.realTimeInstant
-      oldScore = HackApiSupport.targetSubtaskLowestScore(context.submission, context.subtask.index)
+      oldScore = HackApiSupport.targetSubtaskWorstScore(context.submission, context.subtask.index)
       normalizedStrategy = request.strategyProviderSource.filter(_.trim.nonEmpty)
       hackId <- HackMutationTable.insertAttempt(
         connection = connection,

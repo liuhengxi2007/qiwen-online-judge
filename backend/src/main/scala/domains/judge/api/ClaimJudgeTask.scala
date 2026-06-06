@@ -19,7 +19,7 @@ import domains.submission.utils.SubmissionProgramStorage
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
-import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeResult, JudgeTask, JudgeWorkerTask}
+import judgeprotocol.objects.response.{HackTask, JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeTask, JudgeWorkerTask}
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -119,7 +119,7 @@ final case class ClaimJudgeTask(
               val request = judgeprotocol.objects.request.ReportHackResultRequest(
                 status = "failed",
                 answer = None,
-                oldScore = claimedHack.oldResult.subtasks.find(_.index == claimedHack.subtaskIndex).map(_.lowestScore).getOrElse(BigDecimal(0)),
+                oldScore = claimedHack.oldResult.subtasks.find(_.index == claimedHack.subtaskIndex).map(_.worstResult.score).getOrElse(BigDecimal(0)),
                 newScore = None,
                 newResult = None,
                 validatorMessage = None,
@@ -242,12 +242,9 @@ final case class ClaimJudgeTask(
 
   private def systemErrorJudgeResult(reason: JudgeFailureReason): JudgeResult =
     JudgeResult(
-      score = BigDecimal(0),
-      lowestScore = BigDecimal(0),
+      baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
+      worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
       verdict = judgeprotocol.objects.SubmissionVerdict.SystemError,
       reason = Some(reason),
-      timeUsedMs = None,
-      memoryUsedKb = None,
-      subtasks = Nil,
-      baseResult = None
+      subtasks = Nil
     )

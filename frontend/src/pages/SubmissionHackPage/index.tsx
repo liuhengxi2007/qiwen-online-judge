@@ -141,7 +141,7 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
               <Metric label={t('submission.list.id')} value={`#${submissionIdValue(state.info.targetSubmissionId)}`} />
               <Metric label={t('submission.list.submitter')} value={<UserProfileLink user={state.info.targetSubmitter} />} />
               <Metric label={t('hack.subtask')} value={state.info.subtaskLabel ? `${state.info.subtaskIndex} (${state.info.subtaskLabel})` : String(state.info.subtaskIndex)} />
-              <Metric label={t('hack.subtaskScore')} value={formatOptionalScore(state.info.oldLowestScore)} />
+              <Metric label={t('hack.subtaskScore')} value={formatOptionalScore(state.info.oldWorstScore)} />
               <Metric label={t('hack.mode')} value={state.info.mode} />
             </CardContent>
           </Card>

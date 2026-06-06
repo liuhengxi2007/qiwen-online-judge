@@ -55,6 +55,8 @@ export const enSubmissionMessages: Record<string, string> = {
   'submission.detail.problem': 'Problem {{slug}}',
   'submission.detail.submitter': 'Submitter',
   'submission.detail.judgeResult': 'Judge result',
+  'submission.detail.baseResult': 'Base result',
+  'submission.detail.worstResult': 'Worst result',
   'submission.detail.reason': 'Reason',
   'submission.detail.testcaseDetail': 'Detail',
   'submission.detail.testcases': 'Testcases',

@@ -6,7 +6,7 @@ import munit.FunSuite
 
 class JudgeExecutorAggregationSuite extends FunSuite:
 
-  test("sum subtask keeps aggregate score and tracks testcase minimum as lowest score") {
+  test("sum subtask keeps base result score and tracks testcase minimum as worst result score") {
     val targetSubtask = subtask(
       index = 1,
       scoreRatio = BigDecimal(1),
@@ -17,30 +17,25 @@ class JudgeExecutorAggregationSuite extends FunSuite:
         testcaseResult(5, JudgeTestcaseType.Main, BigDecimal(0), SubmissionVerdict.WrongAnswer)
 
     val baseResult = JudgeExecutor.aggregateSubtask(targetSubtask, baseTestcases)
-    assertEquals(baseResult.score, BigDecimal("0.8"))
-    assertEquals(baseResult.lowestScore, BigDecimal(0))
-    assertEquals(baseResult.baseResult, None)
+    assertEquals(baseResult.baseResult.score, BigDecimal("0.8"))
+    assertEquals(baseResult.worstResult.score, BigDecimal(0))
 
     val passingHackResult = JudgeExecutor.aggregateSubtask(
       targetSubtask,
       baseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(1), SubmissionVerdict.Accepted)
     )
-    assertEquals(passingHackResult.score, BigDecimal("0.8"))
-    assertEquals(passingHackResult.lowestScore, BigDecimal(0))
-    assertEquals(passingHackResult.baseResult.map(_.score), Some(BigDecimal("0.8")))
-    assertEquals(passingHackResult.baseResult.map(_.lowestScore), Some(BigDecimal(0)))
+    assertEquals(passingHackResult.baseResult.score, BigDecimal("0.8"))
+    assertEquals(passingHackResult.worstResult.score, BigDecimal(0))
 
     val failingHackResult = JudgeExecutor.aggregateSubtask(
       targetSubtask,
       baseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
     )
-    assertEquals(failingHackResult.score, BigDecimal(0))
-    assertEquals(failingHackResult.lowestScore, BigDecimal(0))
-    assertEquals(failingHackResult.baseResult.map(_.score), Some(BigDecimal("0.8")))
-    assertEquals(failingHackResult.baseResult.map(_.lowestScore), Some(BigDecimal(0)))
+    assertEquals(failingHackResult.baseResult.score, BigDecimal(0))
+    assertEquals(failingHackResult.worstResult.score, BigDecimal(0))
   }
 
-  test("sum task aggregates subtask lowest scores with task score aggregation") {
+  test("sum task aggregates subtask worst scores with task score aggregation") {
     val firstSubtask = subtask(
       index = 1,
       scoreRatio = BigDecimal("0.5"),
@@ -65,20 +60,16 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       firstBaseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(1), SubmissionVerdict.Accepted)
     )
     val passingTask = JudgeExecutor.aggregateTask(targetTask, List(firstPassingHack, secondResult))
-    assertEquals(passingTask.score, BigDecimal("0.9"))
-    assertEquals(passingTask.lowestScore, BigDecimal("0.5"))
-    assertEquals(passingTask.baseResult.map(_.score), Some(BigDecimal("0.9")))
-    assertEquals(passingTask.baseResult.map(_.lowestScore), Some(BigDecimal("0.5")))
+    assertEquals(passingTask.baseResult.score, BigDecimal("0.9"))
+    assertEquals(passingTask.worstResult.score, BigDecimal("0.5"))
 
     val firstFailingHack = JudgeExecutor.aggregateSubtask(
       firstSubtask,
       firstBaseTestcases :+ testcaseResult(6, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
     )
     val failingTask = JudgeExecutor.aggregateTask(targetTask, List(firstFailingHack, secondResult))
-    assertEquals(failingTask.score, BigDecimal(0))
-    assertEquals(failingTask.lowestScore, BigDecimal(0))
-    assertEquals(failingTask.baseResult.map(_.score), Some(BigDecimal("0.9")))
-    assertEquals(failingTask.baseResult.map(_.lowestScore), Some(BigDecimal("0.5")))
+    assertEquals(failingTask.baseResult.score, BigDecimal(0))
+    assertEquals(failingTask.worstResult.score, BigDecimal(0))
   }
 
   private def task(subtasks: JudgeTaskSubtask*): JudgeTask =

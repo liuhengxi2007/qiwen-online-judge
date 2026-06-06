@@ -32,9 +32,9 @@ object SubmissionTableSchema:
       |  hack_revision bigint not null default 0,
       |  judge_result jsonb,
       |  verdict varchar(64) generated always as (judge_result ->> 'verdict') stored,
-      |  time_used_ms bigint generated always as ((judge_result ->> 'timeUsedMs')::bigint) stored,
-      |  memory_used_kb bigint generated always as ((judge_result ->> 'memoryUsedKb')::bigint) stored,
-      |  score numeric generated always as ((judge_result ->> 'score')::numeric) stored,
+      |  time_used_ms bigint generated always as ((judge_result #>> '{baseResult,timeUsedMs}')::bigint) stored,
+      |  memory_used_kb bigint generated always as ((judge_result #>> '{baseResult,memoryUsedKb}')::bigint) stored,
+      |  score numeric generated always as ((judge_result #>> '{baseResult,score}')::numeric) stored,
       |  code_length integer generated always as (((program_manifest #>> array['programs', program_manifest ->> 'defaultProgramKey', 'sizeBytes'])::integer)) stored,
       |  submitted_at timestamp not null,
       |  started_at timestamp,
@@ -190,10 +190,17 @@ object SubmissionTableSchema:
       |update submissions
       |set judge_result = jsonb_strip_nulls(
       |  jsonb_build_object(
-      |    'score', coalesce(score, 0),
+      |    'baseResult', jsonb_strip_nulls(jsonb_build_object(
+      |      'score', coalesce(score, 0),
+      |      'timeUsedMs', time_used_ms,
+      |      'memoryUsedKb', memory_used_kb
+      |    )),
+      |    'worstResult', jsonb_strip_nulls(jsonb_build_object(
+      |      'score', coalesce(score, 0),
+      |      'timeUsedMs', time_used_ms,
+      |      'memoryUsedKb', memory_used_kb
+      |    )),
       |    'verdict', verdict,
-      |    'timeUsedMs', time_used_ms,
-      |    'memoryUsedKb', memory_used_kb,
       |    'subtasks', '[]'::jsonb
       |  )
       |)
@@ -245,7 +252,10 @@ object SubmissionTableSchema:
       |
       |  if exists (
       |    select 1 from information_schema.columns
-      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'time_used_ms' and is_generated <> 'ALWAYS'
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'time_used_ms'
+      |      and (is_generated <> 'ALWAYS' or generation_expression like '%CASE WHEN%' or generation_expression not like '%baseResult%')
       |  ) then
       |    alter table submissions drop column time_used_ms;
       |  end if;
@@ -254,12 +264,15 @@ object SubmissionTableSchema:
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'time_used_ms'
       |  ) then
       |    alter table submissions add column time_used_ms bigint
-      |      generated always as ((judge_result ->> 'timeUsedMs')::bigint) stored;
+      |      generated always as ((judge_result #>> '{baseResult,timeUsedMs}')::bigint) stored;
       |  end if;
       |
       |  if exists (
       |    select 1 from information_schema.columns
-      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'memory_used_kb' and is_generated <> 'ALWAYS'
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'memory_used_kb'
+      |      and (is_generated <> 'ALWAYS' or generation_expression like '%CASE WHEN%' or generation_expression not like '%baseResult%')
       |  ) then
       |    alter table submissions drop column memory_used_kb;
       |  end if;
@@ -268,12 +281,15 @@ object SubmissionTableSchema:
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'memory_used_kb'
       |  ) then
       |    alter table submissions add column memory_used_kb bigint
-      |      generated always as ((judge_result ->> 'memoryUsedKb')::bigint) stored;
+      |      generated always as ((judge_result #>> '{baseResult,memoryUsedKb}')::bigint) stored;
       |  end if;
       |
       |  if exists (
       |    select 1 from information_schema.columns
-      |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'score' and is_generated <> 'ALWAYS'
+      |    where table_schema = 'public'
+      |      and table_name = 'submissions'
+      |      and column_name = 'score'
+      |      and (is_generated <> 'ALWAYS' or generation_expression like '%CASE WHEN%' or generation_expression not like '%baseResult%')
       |  ) then
       |    alter table submissions drop column score;
       |  end if;
@@ -282,7 +298,7 @@ object SubmissionTableSchema:
       |    where table_schema = 'public' and table_name = 'submissions' and column_name = 'score'
       |  ) then
       |    alter table submissions add column score numeric
-      |      generated always as ((judge_result ->> 'score')::numeric) stored;
+      |      generated always as ((judge_result #>> '{baseResult,score}')::numeric) stored;
       |  end if;
       |end $$;
       |""".stripMargin

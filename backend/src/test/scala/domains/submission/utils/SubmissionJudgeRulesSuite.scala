@@ -4,7 +4,7 @@ import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
 import io.circe.parser.decode
 import judgeprotocol.objects.SubmissionVerdict
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTestcaseResult, JudgeTestcaseType}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeSubtaskResult, JudgeTestcaseResult, JudgeTestcaseType}
 import munit.FunSuite
 
 import java.time.Instant
@@ -82,11 +82,9 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         JudgeSubtaskResult(
           index = 1,
           label = Some("sample"),
-          score = BigDecimal(1),
-          lowestScore = BigDecimal(1),
+          baseResult = JudgeResultMetrics(BigDecimal(1), None, None),
+          worstResult = JudgeResultMetrics(BigDecimal(1), None, None),
           verdict = SubmissionVerdict.Accepted,
-          timeUsedMs = None,
-          memoryUsedKb = None,
           reason = None,
           testcases = List(
             JudgeTestcaseResult(
@@ -100,8 +98,7 @@ class SubmissionJudgeRulesSuite extends FunSuite:
               timeUsedMs = None,
               memoryUsedKb = None
             )
-          ),
-          baseResult = None
+          )
         )
       )
     )
@@ -127,14 +124,11 @@ class SubmissionJudgeRulesSuite extends FunSuite:
         JudgeSubtaskResult(
           index = 1,
           label = Some("sample"),
-          score = BigDecimal(0),
-          lowestScore = BigDecimal(0),
+          baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
+          worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
           verdict = SubmissionVerdict.SystemError,
-          timeUsedMs = None,
-          memoryUsedKb = None,
           reason = None,
-          testcases = Nil,
-          baseResult = None
+          testcases = Nil
         )
       )
     )
@@ -204,22 +198,36 @@ class SubmissionJudgeRulesSuite extends FunSuite:
     )
   }
 
-  test("JudgeResult decoder ignores legacy summary message fields") {
+  test("JudgeResult decoder ignores extra summary message fields") {
     val raw =
       """{
-        |  "score": 0,
+        |  "baseResult": {
+        |    "score": 0,
+        |    "timeUsedMs": 12,
+        |    "memoryUsedKb": 256
+        |  },
+        |  "worstResult": {
+        |    "score": 0,
+        |    "timeUsedMs": 12,
+        |    "memoryUsedKb": 256
+        |  },
         |  "verdict": "wrong_answer",
         |  "message": "Wrong answer.",
-        |  "timeUsedMs": 12,
-        |  "memoryUsedKb": 256,
         |  "subtasks": [
         |    {
         |      "index": 1,
         |      "label": "sample",
-        |      "score": 0,
+        |      "baseResult": {
+        |        "score": 0,
+        |        "timeUsedMs": 12,
+        |        "memoryUsedKb": 256
+        |      },
+        |      "worstResult": {
+        |        "score": 0,
+        |        "timeUsedMs": 12,
+        |        "memoryUsedKb": 256
+        |      },
         |      "verdict": "wrong_answer",
-        |      "timeUsedMs": 12,
-        |      "memoryUsedKb": 256,
         |      "message": "Wrong answer on sample.",
         |      "testcases": [
         |        {
@@ -238,6 +246,10 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val decoded = decode[JudgeResult](raw)
 
+    assertEquals(decoded.map(_.baseResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
+    assertEquals(decoded.map(_.worstResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
+    assertEquals(decoded.map(_.subtasks.head.baseResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
+    assertEquals(decoded.map(_.subtasks.head.worstResult), Right(JudgeResultMetrics(BigDecimal(0), Some(12L), Some(256L))))
     assertEquals(decoded.map(_.reason), Right(None))
     assertEquals(decoded.map(_.subtasks.head.reason), Right(None))
     assertEquals(decoded.map(_.subtasks.head.testcases.head.reason), Right(None))
@@ -254,12 +266,9 @@ class SubmissionJudgeRulesSuite extends FunSuite:
   ): JudgeResult =
     val score = if verdict == SubmissionVerdict.Accepted then BigDecimal(1) else BigDecimal(0)
     JudgeResult(
-      score = score,
-      lowestScore = subtasks.map(_.lowestScore).minOption.getOrElse(score),
+      baseResult = JudgeResultMetrics(score, None, None),
+      worstResult = JudgeResultMetrics(subtasks.map(_.worstResult.score).minOption.getOrElse(score), None, None),
       verdict = verdict,
       reason = reason,
-      timeUsedMs = None,
-      memoryUsedKb = None,
-      subtasks = subtasks,
-      baseResult = None
+      subtasks = subtasks
     )

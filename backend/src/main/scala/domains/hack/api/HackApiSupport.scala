@@ -48,14 +48,14 @@ object HackApiSupport:
       subtask <- task.subtasks.find(_.index == subtaskIndex) match
         case Some(value) => IO.pure(value)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
-      targetLowestScore = targetSubtaskLowestScore(submission, subtask.index)
-      _ <- HttpApiError.ensure(targetLowestScore > BigDecimal(0), HttpApiError.badRequest("This subtask's lowest score is already zero."))
+      targetWorstScore = targetSubtaskWorstScore(submission, subtask.index)
+      _ <- HttpApiError.ensure(targetWorstScore > BigDecimal(0), HttpApiError.badRequest("This subtask's worst score is already zero."))
       _ <- HttpApiError.ensure(subtask.validator.nonEmpty, HttpApiError.badRequest("This subtask has no validator."))
       _ <- HttpApiError.ensure(subtask.standard.nonEmpty, HttpApiError.badRequest("This subtask has no standard solution."))
     yield TargetContext(submission, task, subtask)
 
   def subtaskInfo(context: TargetContext): HackSubtaskInfo =
-    val targetLowestScore = targetSubtaskLowestScore(context.submission, context.subtask.index)
+    val targetWorstScore = targetSubtaskWorstScore(context.submission, context.subtask.index)
     HackSubtaskInfo(
       targetSubmissionId = context.submission.id,
       problemId = context.submission.problemId,
@@ -64,15 +64,15 @@ object HackApiSupport:
       targetSubmitter = context.submission.submitter,
       subtaskIndex = context.subtask.index,
       subtaskLabel = context.subtask.label,
-      oldLowestScore = targetLowestScore,
+      oldWorstScore = targetWorstScore,
       mode = context.subtask.mode.`type`,
       requiresStrategyProvider = requiresStrategyProvider(context.subtask)
     )
 
-  def targetSubtaskLowestScore(submission: domains.submission.objects.response.SubmissionDetail, subtaskIndex: Int): BigDecimal =
+  def targetSubtaskWorstScore(submission: domains.submission.objects.response.SubmissionDetail, subtaskIndex: Int): BigDecimal =
     submission.judgeResult
       .flatMap(_.subtasks.find(_.index == subtaskIndex))
-      .map(_.lowestScore)
+      .map(_.worstResult.score)
       .getOrElse(BigDecimal(0))
 
   def requiresStrategyProvider(subtask: JudgeTaskSubtask): Boolean =

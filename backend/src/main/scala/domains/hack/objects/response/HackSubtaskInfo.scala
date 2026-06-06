@@ -14,7 +14,7 @@ final case class HackSubtaskInfo(
   targetSubmitter: UserIdentity,
   subtaskIndex: Int,
   subtaskLabel: Option[String],
-  oldLowestScore: BigDecimal,
+  oldWorstScore: BigDecimal,
   mode: String,
   requiresStrategyProvider: Boolean
 )

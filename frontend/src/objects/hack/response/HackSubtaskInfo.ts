@@ -12,7 +12,7 @@ export type HackSubtaskInfo = {
   targetSubmitter: UserIdentity
   subtaskIndex: number
   subtaskLabel: string | null
-  oldLowestScore: number
+  oldWorstScore: number
   mode: string
   requiresStrategyProvider: boolean
 }

@@ -25,6 +25,10 @@ const allowedExceptions = new Map([
     'Frontend submission detail mirrors judge-protocol JudgeResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],
   [
+    'frontend-only:submission/JudgeResultMetrics',
+    'Frontend submission detail mirrors judge-protocol JudgeResultMetrics, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
+  [
     'frontend-only:submission/JudgeSubtaskResult',
     'Frontend submission detail mirrors judge-protocol JudgeSubtaskResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],

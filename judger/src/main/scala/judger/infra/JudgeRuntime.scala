@@ -3,7 +3,7 @@ package judger.infra
 import cats.effect.IO
 import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode, SubmissionStatus, SubmissionVerdict}
 import judgeprotocol.objects.request.ReportJudgeResultRequest
-import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeSubtaskResult, JudgeTask}
+import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultMetrics, JudgeSubtaskResult, JudgeTask}
 import judger.config.AppConfig
 import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits}
 
@@ -132,28 +132,22 @@ object JudgeRuntimeSupport:
       JudgeSubtaskResult(
         index = subtask.index,
         label = subtask.label,
-        score = BigDecimal(0),
-        lowestScore = BigDecimal(0),
+        baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
+        worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
         verdict = verdict,
-        timeUsedMs = None,
-        memoryUsedKb = None,
         reason = reason,
-        testcases = Nil,
-        baseResult = None
+        testcases = Nil
       )
     }
     ReportJudgeResultRequest(
       status = status,
       judgeResult = Some(
         JudgeResult(
-          score = BigDecimal(0),
-          lowestScore = BigDecimal(0),
+          baseResult = JudgeResultMetrics(BigDecimal(0), None, None),
+          worstResult = JudgeResultMetrics(BigDecimal(0), None, None),
           verdict = verdict,
           reason = reason,
-          timeUsedMs = None,
-          memoryUsedKb = None,
-          subtasks = subtasks,
-          baseResult = None
+          subtasks = subtasks
         )
       )
     )

@@ -14,6 +14,7 @@ import {
   submissionVerdictLabel,
 } from '@/pages/objects/SubmissionDisplay'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
+import type { JudgeResultMetrics } from '@/objects/submission/JudgeResultMetrics'
 import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -33,28 +34,35 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
           <span style={submissionVerdictTextStyle(judgeResult.verdict)}>
             {submissionVerdictLabel(judgeResult.verdict)}
           </span>{' '}
-          · <span style={scoreTextStyleForRatio(judgeResult.score)}>{formatOptionalScore(judgeResult.score)}</span>
+          · <span style={scoreTextStyleForRatio(judgeResult.baseResult.score)}>{formatOptionalScore(judgeResult.baseResult.score)}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 text-sm sm:grid-cols-4">
+        <div className="grid gap-3 text-sm lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <ResultMetric
             label={t('common.verdict')}
             value={submissionVerdictLabel(judgeResult.verdict)}
             valueStyle={submissionVerdictTextStyle(judgeResult.verdict)}
           />
-          <ResultMetric
-            label={t('submission.list.score')}
-            value={formatOptionalScore(judgeResult.score)}
-            valueStyle={scoreTextStyleForRatio(judgeResult.score)}
+          <ResultMetricsGroup
+            label={t('submission.detail.baseResult')}
+            metrics={judgeResult.baseResult}
+            scoreLabel={t('submission.list.score')}
+            timeLabel={t('submission.list.timeUsed')}
+            memoryLabel={t('submission.list.spaceUsed')}
           />
-          <ResultMetric label={t('submission.list.timeUsed')} value={formatOptionalDurationMs(judgeResult.timeUsedMs)} />
-          <ResultMetric label={t('submission.list.spaceUsed')} value={formatOptionalMemoryKb(judgeResult.memoryUsedKb)} />
+          <ResultMetricsGroup
+            label={t('submission.detail.worstResult')}
+            metrics={judgeResult.worstResult}
+            scoreLabel={t('submission.list.score')}
+            timeLabel={t('submission.list.timeUsed')}
+            memoryLabel={t('submission.list.spaceUsed')}
+          />
         </div>
         <JudgeReasonLine label={t('submission.detail.reason')} reason={judgeResult.reason} />
 
         {judgeResult.subtasks.map((subtask) => {
-          const canHackSubtask = subtask.lowestScore > 0
+          const canHackSubtask = subtask.worstResult.score > 0
 
           return (
             <div key={subtask.index} className="rounded-lg border border-slate-200">
@@ -65,12 +73,16 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
                     <span style={submissionVerdictTextStyle(subtask.verdict)}>
                       {submissionVerdictLabel(subtask.verdict)}
                     </span>{' '}
-                    · <span style={scoreTextStyleForRatio(subtask.score)}>{formatOptionalScore(subtask.score)}</span>
+                    · {t('submission.detail.baseResult')}{' '}
+                    <span style={scoreTextStyleForRatio(subtask.baseResult.score)}>{formatOptionalScore(subtask.baseResult.score)}</span>
+                    {' / '}
+                    {t('submission.detail.worstResult')}{' '}
+                    <span style={scoreTextStyleForRatio(subtask.worstResult.score)}>{formatOptionalScore(subtask.worstResult.score)}</span>
                   </p>
                   <JudgeReasonLine label={t('submission.detail.reason')} reason={subtask.reason} />
                 </div>
                 <div className="text-sm text-slate-500">
-                  {formatOptionalDurationMs(subtask.timeUsedMs)} · {formatOptionalMemoryKb(subtask.memoryUsedKb)}
+                  {formatOptionalDurationMs(subtask.baseResult.timeUsedMs)} · {formatOptionalMemoryKb(subtask.baseResult.memoryUsedKb)}
                 </div>
                 {canHackSubtask ? (
                   <Button asChild size="sm" variant="outline">
@@ -119,6 +131,48 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
         })}
       </CardContent>
     </Card>
+  )
+}
+
+function ResultMetricsGroup({
+  label,
+  metrics,
+  scoreLabel,
+  timeLabel,
+  memoryLabel,
+}: {
+  label: string
+  metrics: JudgeResultMetrics
+  scoreLabel: string
+  timeLabel: string
+  memoryLabel: string
+}) {
+  return (
+    <div className="rounded-md border border-slate-200 px-3 py-2">
+      <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+        <MetricValue label={scoreLabel} value={formatOptionalScore(metrics.score)} valueStyle={scoreTextStyleForRatio(metrics.score)} />
+        <MetricValue label={timeLabel} value={formatOptionalDurationMs(metrics.timeUsedMs)} />
+        <MetricValue label={memoryLabel} value={formatOptionalMemoryKb(metrics.memoryUsedKb)} />
+      </div>
+    </div>
+  )
+}
+
+function MetricValue({
+  label,
+  value,
+  valueStyle,
+}: {
+  label: string
+  value: string
+  valueStyle?: CSSProperties
+}) {
+  return (
+    <div>
+      <p className="text-[0.7rem] uppercase tracking-normal text-slate-400">{label}</p>
+      <p className="mt-0.5 font-medium text-slate-950" style={valueStyle}>{value}</p>
+    </div>
   )
 }
 
