@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react'
 
 import { ClearProblemData } from '@/apis/problem/ClearProblemData'
 import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
+import { DownloadProblemDataArchive } from '@/apis/problem/DownloadProblemDataArchive'
 import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
 import { ListProblemDataTree } from '@/apis/problem/ListProblemDataTree'
 import { SetProblemDataReady } from '@/apis/problem/SetProblemDataReady'
@@ -193,6 +194,8 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
     deleteDataPath,
     downloadDataPathUrl: (path: ProblemDataPath) =>
       new DownloadProblemDataPath(problemDataScope.problemSlug, path, problemDataScope.contestSlug).downloadUrl(),
+    downloadDataArchiveUrl: () =>
+      new DownloadProblemDataArchive(problemDataScope.problemSlug, problemDataScope.contestSlug).downloadUrl(),
     clearAllDataFiles,
     setReady,
   }

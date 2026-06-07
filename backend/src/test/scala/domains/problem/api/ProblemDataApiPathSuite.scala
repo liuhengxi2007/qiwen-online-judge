@@ -19,11 +19,12 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
 
   test("problem data APIs expose the renamed route surface") {
     val actualPaths = List(
-        "ListProblemDataFiles" -> ListProblemDataFiles(problemDataStorage).path,
-        "ListManageableProblemSuggestions" -> ListManageableProblemSuggestions.path,
-        "UploadProblemDataFile" -> UploadProblemDataFile(problemDataStorage).path,
+      "ListProblemDataFiles" -> ListProblemDataFiles(problemDataStorage).path,
+      "ListManageableProblemSuggestions" -> ListManageableProblemSuggestions.path,
+      "UploadProblemDataFile" -> UploadProblemDataFile(problemDataStorage).path,
       "ListProblemDataTree" -> ListProblemDataTree.path,
       "DownloadProblemDataPath" -> DownloadProblemDataPath(problemDataStorage).path,
+      "DownloadProblemDataArchive" -> DownloadProblemDataArchive(problemDataStorage).path,
       "DeleteProblemDataPath" -> DeleteProblemDataPath(problemDataStorage).path,
       "UploadProblemDataArchive" -> UploadProblemDataArchive(problemDataStorage).path,
       "ClearProblemData" -> ClearProblemData(problemDataStorage).path,
@@ -38,6 +39,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
         "UploadProblemDataFile" -> ApiPath("/api/problems/:problemSlug/data/files"),
         "ListProblemDataTree" -> ApiPath("/api/problems/:problemSlug/data/files/tree"),
         "DownloadProblemDataPath" -> ApiPath("/api/problems/:problemSlug/data/files/download"),
+        "DownloadProblemDataArchive" -> ApiPath("/api/problems/:problemSlug/data/archive-downloads"),
         "DeleteProblemDataPath" -> ApiPath("/api/problems/:problemSlug/data/files/delete"),
         "UploadProblemDataArchive" -> ApiPath("/api/problems/:problemSlug/data/archive-imports"),
         "ClearProblemData" -> ApiPath("/api/problems/:problemSlug/data/files/delete-all"),
@@ -90,6 +92,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
       Method.GET -> "/api/contests/sample-contest/problem-suggestions?q=two",
       Method.GET -> "/api/contests/sample-contest/problems/two-sum/data/files/tree",
       Method.GET -> "/api/contests/sample-contest/problems/two-sum/data/files/download?path=main.in",
+      Method.GET -> "/api/contests/sample-contest/problems/two-sum/data/archive-downloads",
       Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/files",
       Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/archive-imports",
       Method.POST -> "/api/contests/sample-contest/problems/two-sum/data/files/delete",

@@ -104,6 +104,7 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.data.clearing': '正在清空...',
   'problem.data.sizeUnknown': '大小未知',
   'problem.data.download': '下载',
+  'problem.data.downloadZip': '下载 zip',
   'problem.data.delete': '删除',
   'problem.data.deleting': '正在删除...',
   'problem.data.loadFailed': '404 未找到。',

@@ -1,4 +1,4 @@
-import { ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
+import { Archive, ArrowDownToLine, Eraser, FolderTree, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,6 +16,7 @@ type ProblemDataFilesCardProps = {
 
 export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
   const { t } = useI18n()
+  const hasFileNodes = model.dataTree.some((node) => node.kind === 'file')
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -32,7 +33,15 @@ export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
             <p className="text-sm text-slate-500">{t('problem.data.emptyFiles')}</p>
           ) : (
             <div className="space-y-3">
-              <div className="flex justify-end">
+              <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                {hasFileNodes ? (
+                  <Button asChild variant="outline" className="rounded-2xl border-slate-300 bg-white">
+                    <a href={model.downloadDataArchiveUrl()}>
+                      <Archive className="size-4" />
+                      {t('problem.data.downloadZip')}
+                    </a>
+                  </Button>
+                ) : null}
                 <ConfirmActionDialog
                   title={t('problem.data.clearAllTitle')}
                   description={t('problem.data.clearAllDescription')}

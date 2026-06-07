@@ -11,6 +11,7 @@ The repository currently implements:
 - multipart zip uploads for problem data
 - tree-shaped problem-data listing for management pages
 - path-aware file download and deletion for problem data
+- zip archive downloads for all current problem data
 - mandatory MinIO-backed storage in the backend
 - `problem_data_files` metadata persistence in PostgreSQL
 - judge-task transport by file reference instead of embedded base64 payloads
@@ -81,6 +82,9 @@ The current cache layout is:
 
 - `GET /api/problems/{slug}/data/files/download?path=...`
   Path-aware file download.
+
+- `GET /api/problems/{slug}/data/archive-downloads`
+  Downloads a zip archive containing all current problem-data files. Entry names preserve the stored relative paths exactly, such as `judge.yaml` and `cases/1.in`; the archive does not add an outer `{slug}/` directory. An empty problem-data manifest returns a valid empty zip.
 
 - `POST /api/problems/{slug}/data/files/delete`
   JSON body with `path`.

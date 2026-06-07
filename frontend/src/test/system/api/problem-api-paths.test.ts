@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { ClearProblemData } from '@/apis/problem/ClearProblemData'
 import { DeleteProblem } from '@/apis/problem/DeleteProblem'
 import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
+import { DownloadProblemDataArchive } from '@/apis/problem/DownloadProblemDataArchive'
 import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
 import { ListManageableProblemSuggestions } from '@/apis/problem/ListManageableProblemSuggestions'
 import { ListProblemDataFiles } from '@/apis/problem/ListProblemDataFiles'
@@ -44,6 +45,7 @@ describe('problem API paths', () => {
       new SetProblemDataReady(problemSlug, true, contestSlug).apiPath,
       new UploadProblemDataFile(problemSlug, file(), filename, contestSlug).apiPath,
       new UploadProblemDataArchive(problemSlug, file(), contestSlug).apiPath,
+      new DownloadProblemDataArchive(problemSlug, contestSlug).apiPath,
     ]
 
     expect(apiPaths).toEqual([
@@ -54,6 +56,7 @@ describe('problem API paths', () => {
       'problems/two-sum/data/ready-state?contestSlug=sample-contest',
       'problems/two-sum/data/files?contestSlug=sample-contest',
       'problems/two-sum/data/archive-imports?contestSlug=sample-contest',
+      'problems/two-sum/data/archive-downloads?contestSlug=sample-contest',
     ])
     expect(apiPaths.every((path) => !path.startsWith('contests/'))).toBe(true)
   })
@@ -61,6 +64,9 @@ describe('problem API paths', () => {
   it('preserves download path query while appending contest context', () => {
     expect(new DownloadProblemDataPath(problemSlug, dataPath, contestSlug).apiPath).toBe(
       'problems/two-sum/data/files/download?path=cases%2Fmain.in&contestSlug=sample-contest',
+    )
+    expect(new DownloadProblemDataArchive(problemSlug, contestSlug).apiPath).toBe(
+      'problems/two-sum/data/archive-downloads?contestSlug=sample-contest',
     )
   })
 

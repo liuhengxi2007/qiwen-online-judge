@@ -104,6 +104,7 @@ export const enProblemMessages: Record<string, string> = {
   'problem.data.clearing': 'Clearing...',
   'problem.data.sizeUnknown': 'Size unknown',
   'problem.data.download': 'Download',
+  'problem.data.downloadZip': 'Download zip',
   'problem.data.delete': 'Delete',
   'problem.data.deleting': 'Deleting...',
   'problem.data.loadFailed': '404 Not Found.',
