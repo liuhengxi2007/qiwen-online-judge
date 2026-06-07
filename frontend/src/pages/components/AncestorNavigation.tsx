@@ -19,7 +19,7 @@ type AncestorLink = {
     | 'contests'
 }
 
-function buildAncestorLinks(pathname: string): AncestorLink[] {
+export function buildAncestorLinks(pathname: string): AncestorLink[] {
   if (pathname === '/' || pathname === '/login' || pathname === '/register') {
     return []
   }
@@ -117,6 +117,50 @@ function buildAncestorLinks(pathname: string): AncestorLink[] {
     return [
       { to: '/', labelKey: 'dashboard' },
       { to: '/contests', labelKey: 'contests' },
+    ]
+  }
+
+  const contestProblemMatch =
+    pathname.match(/^\/contests\/([^/]+)\/problems\/([^/]+)(?:\/(submit|data))?$/)
+
+  if (contestProblemMatch) {
+    const contestSlug = contestProblemMatch[1]
+    const problemSlug = contestProblemMatch[2]
+
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+      { to: `/contests/${contestSlug}`, labelKey: 'contests' },
+      { to: `/contests/${contestSlug}/problems/${problemSlug}`, labelKey: 'problem' },
+    ]
+  }
+
+  if (/^\/contests\/[^/]+\/ranklist$/.test(pathname)) {
+    const slug = pathname.split('/')[2]
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+      { to: `/contests/${slug}`, labelKey: 'contests' },
+      { to: `${pathname}`, labelKey: 'ranklist' },
+    ]
+  }
+
+  if (/^\/contests\/[^/]+\/submissions$/.test(pathname)) {
+    const slug = pathname.split('/')[2]
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+      { to: `/contests/${slug}`, labelKey: 'contests' },
+      { to: `${pathname}`, labelKey: 'submissions' },
+    ]
+  }
+
+  if (/^\/contests\/[^/]+\/manage$/.test(pathname)) {
+    const slug = pathname.split('/')[2]
+    return [
+      { to: '/', labelKey: 'dashboard' },
+      { to: '/contests', labelKey: 'contests' },
+      { to: `/contests/${slug}`, labelKey: 'contests' },
     ]
   }
 
