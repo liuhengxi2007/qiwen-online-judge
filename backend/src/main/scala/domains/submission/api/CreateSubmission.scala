@@ -6,9 +6,8 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestId
 import domains.judge.utils.JudgeTaskBuilder
-import domains.problem.api.{EvaluateProblemAccess, GetProblemSubmissionResultDisplayMode}
+import domains.problem.api.{EvaluateProblemAccess, GetJudgeProblemDataManifest, GetProblemSubmissionResultDisplayMode}
 import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug, ProblemTitle}
-import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.ProblemDataStorage
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
@@ -134,7 +133,12 @@ final case class CreateSubmission(
   ): IO[Unit] =
     val judgeYamlPath = ProblemDataPath("judge.yaml")
     for
-      manifest <- ProblemDataFileTable.manifestForProblem(connection, problemId, problemSlug)
+      manifest <- GetJudgeProblemDataManifest
+        .plan(connection, GetJudgeProblemDataManifest.input(problemId, problemSlug))
+        .flatMap {
+          case Some(manifest) => IO.pure(manifest)
+          case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
+        }
       maybeConfig <- problemDataStorage.readPath(problemSlug, judgeYamlPath)
       configBytes <- maybeConfig match
         case Some((_, bytes)) => IO.pure(bytes)
