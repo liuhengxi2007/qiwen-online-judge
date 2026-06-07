@@ -23,7 +23,6 @@ describe('buildAncestorLinks contest paths', () => {
       { to: '/', labelKey: 'dashboard' },
       { to: '/contests', labelKey: 'contests' },
       { to: '/contests/sample', labelKey: 'contests' },
-      { to: '/contests/sample/ranklist', labelKey: 'ranklist' },
     ])
   })
 
@@ -32,7 +31,6 @@ describe('buildAncestorLinks contest paths', () => {
       { to: '/', labelKey: 'dashboard' },
       { to: '/contests', labelKey: 'contests' },
       { to: '/contests/sample', labelKey: 'contests' },
-      { to: '/contests/sample/submissions', labelKey: 'submissions' },
     ])
   })
 
@@ -49,7 +47,6 @@ describe('buildAncestorLinks contest paths', () => {
       { to: '/', labelKey: 'dashboard' },
       { to: '/contests', labelKey: 'contests' },
       { to: '/contests/sample', labelKey: 'contests' },
-      { to: '/contests/sample/problems/a', labelKey: 'problem' },
     ])
   })
 

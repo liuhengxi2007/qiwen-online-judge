@@ -15,11 +15,12 @@ type AncestorLink = {
     | 'problemSets'
     | 'messages'
     | 'submissions'
+    | 'ranklist'
     | 'userGroups'
     | 'contests'
 }
 
-export function buildAncestorLinks(pathname: string): AncestorLink[] {
+function buildAncestorLinksForPath(pathname: string): AncestorLink[] {
   if (pathname === '/' || pathname === '/login' || pathname === '/register') {
     return []
   }
@@ -225,6 +226,10 @@ export function buildAncestorLinks(pathname: string): AncestorLink[] {
   }
 
   return [{ to: '/', labelKey: 'dashboard' }]
+}
+
+export function buildAncestorLinks(pathname: string): AncestorLink[] {
+  return buildAncestorLinksForPath(pathname).filter((link) => link.to !== pathname)
 }
 
 export function AncestorNavigation({
