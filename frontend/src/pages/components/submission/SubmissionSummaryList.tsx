@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { cn } from '@/components/ui/class-names'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
@@ -12,6 +13,7 @@ import {
   submissionLanguageLabel,
   submissionProblemPath,
   submissionResultLabel,
+  submissionResultMotionClassName,
   submissionResultTextStyle,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
@@ -113,9 +115,13 @@ export function SubmissionSummaryList({
                     <dt className="text-slate-500">{t('submission.list.result')}</dt>
                     <dd className="mt-1 font-medium text-slate-900">
                       <span
-                        className="block min-h-[1.625rem] w-full py-1"
+                        className={cn(
+                          'block min-h-[1.625rem] w-full py-1',
+                          submissionResultMotionClassName(submission.status, submission.verdict),
+                        )}
                         style={submissionResultTextStyle(
                           submission.resultDisplayMode,
+                          submission.status,
                           submission.verdict,
                           submission.score,
                         )}

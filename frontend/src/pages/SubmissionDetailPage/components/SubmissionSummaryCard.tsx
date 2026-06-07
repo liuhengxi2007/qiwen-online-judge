@@ -3,6 +3,7 @@ import { Files, RotateCcw, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/components/ui/class-names'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
@@ -17,6 +18,7 @@ import {
   submissionLanguageLabel,
   submissionProblemPath,
   submissionResultLabel,
+  submissionResultMotionClassName,
   submissionResultTextStyle,
 } from '@/pages/objects/SubmissionDisplay'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
@@ -127,9 +129,13 @@ export function SubmissionSummaryCard({
         <div>
           <p className="text-slate-500">{t('submission.list.result')}</p>
           <p
-            className="mt-1 font-medium text-slate-900"
+            className={cn(
+              'mt-1 font-medium text-slate-900',
+              submissionResultMotionClassName(submission.status, submission.verdict),
+            )}
             style={submissionResultTextStyle(
               submission.resultDisplayMode,
+              submission.status,
               submission.verdict,
               submission.score,
             )}

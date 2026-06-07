@@ -13,8 +13,10 @@ import {
   formatTestcaseDetail,
   submissionProblemPath,
   submissionJudgeStateLabel,
+  submissionJudgeStateTextStyle,
   submissionLanguageLabel,
   submissionResultLabel,
+  submissionResultMotionClassName,
   submissionResultTextStyle,
   submissionStatusLabel,
   submissionVerdictTextStyle,
@@ -30,7 +32,8 @@ describe('submission-display', () => {
     expect(submissionStatusLabel('failed')).toBe('Failed')
     expect(submissionVerdictLabel('wrong_answer')).toBe('Wrong Answer')
     expect(submissionVerdictLabel('idleness_limit_exceeded')).toBe('Idleness Limit Exceeded')
-    expect(submissionJudgeStateLabel('running', null)).toBe('Pending')
+    expect(submissionJudgeStateLabel('queued', null)).toBe('Waiting')
+    expect(submissionJudgeStateLabel('running', null)).toBe('Judging')
     expect(submissionJudgeStateLabel('failed', null)).toBe('Failed')
     expect(submissionJudgeStateLabel('completed', 'accepted')).toBe('Accepted')
   })
@@ -38,7 +41,8 @@ describe('submission-display', () => {
   it('formats result labels from the display mode', () => {
     expect(submissionResultLabel('verdict', 'completed', 'accepted', 0.5)).toBe('Accepted')
     expect(submissionResultLabel('score', 'completed', 'accepted', 0.5)).toBe('50')
-    expect(submissionResultLabel('score', 'running', null, null)).toBe('--')
+    expect(submissionResultLabel('score', 'queued', null, null)).toBe('Waiting')
+    expect(submissionResultLabel('score', 'running', null, null)).toBe('Judging')
   })
 
   it('formats score styles from clamped ratios', () => {
@@ -75,10 +79,20 @@ describe('submission-display', () => {
     expect(submissionVerdictTextStyle('idleness_limit_exceeded')).toEqual({ color: '#B99024' })
     expect(submissionVerdictTextStyle('runtime_error')).toEqual({ color: '#7B3294' })
     expect(submissionVerdictTextStyle('system_error')).toEqual({ color: '#2166AC' })
-    expect(submissionResultTextStyle('verdict', 'wrong_answer', 0.5)).toEqual({ color: '#B2182B' })
-    expect(submissionResultTextStyle('score', 'wrong_answer', 0.5)).toEqual({
+    expect(submissionJudgeStateTextStyle('queued', null)).toEqual({ color: '#94A3B8' })
+    expect(submissionJudgeStateTextStyle('running', null)).toEqual({ color: '#94A3B8' })
+    expect(submissionResultTextStyle('verdict', 'completed', 'wrong_answer', 0.5)).toEqual({ color: '#B2182B' })
+    expect(submissionResultTextStyle('score', 'completed', 'wrong_answer', 0.5)).toEqual({
       color: 'hsl(58, 72%, 34%)',
     })
+    expect(submissionResultTextStyle('score', 'running', null, null)).toEqual({ color: '#94A3B8' })
+  })
+
+  it('animates only actively judging pending results', () => {
+    expect(submissionResultMotionClassName('queued', null)).toBeUndefined()
+    expect(submissionResultMotionClassName('running', null)).toBe('motion-safe:animate-pulse')
+    expect(submissionResultMotionClassName('running', 'accepted')).toBeUndefined()
+    expect(submissionResultMotionClassName('completed', null)).toBeUndefined()
   })
 
   it('formats testcase details with reason priority and message truncation', () => {

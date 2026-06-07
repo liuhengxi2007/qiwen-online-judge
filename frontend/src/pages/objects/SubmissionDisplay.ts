@@ -7,6 +7,7 @@ import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage
 import type { SubmissionResultDisplayMode } from '@/objects/submission/SubmissionResultDisplayMode'
 import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 import type { SubmissionStatus } from '@/objects/submission/SubmissionStatus'
+import { isTerminalSubmissionStatus } from '@/objects/submission/SubmissionStatus'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
@@ -123,12 +124,40 @@ export function submissionJudgeStateLabel(
 
   switch (status) {
     case 'queued':
+      return 'Waiting'
     case 'running':
-      return submissionVerdictLabel(null)
+      return 'Judging'
     case 'completed':
     case 'failed':
       return submissionStatusLabel(status)
   }
+}
+
+export function submissionJudgeStateTextStyle(
+  status: SubmissionStatus,
+  verdict: SubmissionVerdict | null,
+): CSSProperties {
+  if (verdict !== null) {
+    return submissionVerdictTextStyle(verdict)
+  }
+
+  switch (status) {
+    case 'queued':
+      return { color: '#94A3B8' }
+    case 'running':
+      return { color: '#94A3B8' }
+    case 'completed':
+      return { color: '#64748B' }
+    case 'failed':
+      return { color: '#B2182B' }
+  }
+}
+
+export function submissionResultMotionClassName(
+  status: SubmissionStatus,
+  verdict: SubmissionVerdict | null,
+): string | undefined {
+  return status === 'running' && verdict === null ? 'motion-safe:animate-pulse' : undefined
 }
 
 export function submissionProblemPath(source: SubmissionSource, problemSlug: ProblemSlug): string {
@@ -144,6 +173,10 @@ export function submissionResultLabel(
   verdict: SubmissionVerdict | null,
   score: number | null,
 ): string {
+  if (!isTerminalSubmissionStatus(status) && verdict === null) {
+    return submissionJudgeStateLabel(status, verdict)
+  }
+
   switch (mode) {
     case 'verdict':
       return submissionJudgeStateLabel(status, verdict)
@@ -154,12 +187,17 @@ export function submissionResultLabel(
 
 export function submissionResultTextStyle(
   mode: SubmissionResultDisplayMode,
+  status: SubmissionStatus,
   verdict: SubmissionVerdict | null,
   score: number | null,
 ): CSSProperties {
+  if (!isTerminalSubmissionStatus(status) && verdict === null) {
+    return submissionJudgeStateTextStyle(status, verdict)
+  }
+
   switch (mode) {
     case 'verdict':
-      return submissionVerdictTextStyle(verdict)
+      return submissionJudgeStateTextStyle(status, verdict)
     case 'score':
       return scoreTextStyleForRatio(score ?? Number.NaN)
   }
