@@ -34,7 +34,7 @@ type SubmissionSummaryListProps = {
 }
 
 const submissionListGridClassName =
-  'grid grid-cols-[4rem_minmax(12rem,2fr)_minmax(10rem,1.5fr)_5rem_minmax(9rem,1.2fr)_minmax(11rem,1.5fr)_6rem_7rem_6rem] items-center gap-3'
+  'grid grid-cols-[3.5rem_minmax(10.75rem,2fr)_minmax(9rem,1.5fr)_4.5rem_minmax(8rem,1.2fr)_minmax(9.75rem,1.5fr)_5.25rem_6.25rem_5.25rem] items-center gap-2.5'
 const submissionHeaderCellClassName = 'min-w-0 px-2'
 const submissionValueCellClassName = 'min-w-0 px-2 text-sm font-medium text-slate-900'
 const submissionValueTextClassName = 'block py-1'
@@ -68,7 +68,7 @@ export function SubmissionSummaryList({
         </div>
         <div className="space-y-3">
           <div className="overflow-x-auto pb-2">
-            <div className="min-w-[76rem] space-y-2">
+            <div className="min-w-[71rem] space-y-2">
               <div
                 className={cn(
                   submissionListGridClassName,
