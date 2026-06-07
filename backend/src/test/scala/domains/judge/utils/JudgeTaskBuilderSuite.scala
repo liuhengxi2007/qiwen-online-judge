@@ -715,6 +715,38 @@ class JudgeTaskBuilderSuite extends FunSuite:
     }
   }
 
+  test("parseConfigBytes preserves duplicate interactive roles") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |mode:
+        |  type: interactive
+        |  roles: [main, main]
+        |  interactor:
+        |    path: tools/interactor.cpp
+        |    limits:
+        |      timeMs: 1000
+        |      memoryMb: 256
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.map(_.subtasks.head.mode.roles), Right(List("main", "main")))
+  }
+
   test("parseConfigBytes accepts traditional testcase role fallback list with text role") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""

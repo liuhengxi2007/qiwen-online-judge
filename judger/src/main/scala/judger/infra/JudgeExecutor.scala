@@ -46,11 +46,19 @@ object JudgeExecutor:
 
   private final case class InteractiveRunResult(
     interactor: ProcessResult,
-    participants: Map[String, ProcessResult],
+    participants: List[(String, ProcessResult)],
     strategyProvider: Option[ProcessResult],
     output: String,
     status: Option[String],
     strategyProviderReadMonitor: Option[StrategyProviderReadMonitor]
+  )
+
+  private[judger] final case class InteractiveParticipant(
+    role: String,
+    occurrenceIndex: Int,
+    command: RuntimeCommand,
+    toParticipant: Path,
+    fromParticipant: Path
   )
 
   private final case class StrategyProviderReadMonitor(
@@ -884,13 +892,7 @@ object JudgeExecutor:
         val inputPath = interactiveDir.resolve("input")
         val outputPath = interactiveDir.resolve("output")
         val statusPath = interactiveDir.resolve("status")
-        val roleFifos =
-          subtask.mode.roles.flatMap { role =>
-            roleCommands.get(role).map { command =>
-              val safeRole = sanitizeInteractiveName(role)
-              (role, command, interactiveDir.resolve(s"to-participant-$safeRole"), interactiveDir.resolve(s"from-participant-$safeRole"))
-            }
-          }
+        val participants = interactiveParticipants(subtask.mode.roles, roleCommands, interactiveDir)
         val strategyFifos = strategyProvider.map(_ => interactiveDir.resolve("to-strategy") -> interactiveDir.resolve("from-strategy"))
         val strategyReadMonitorPaths =
           strategyProvider.flatMap { provider =>
@@ -902,7 +904,7 @@ object JudgeExecutor:
               )
             }
           }
-        val fifoPaths = roleFifos.flatMap { case (_, _, toParticipant, fromParticipant) => List(toParticipant, fromParticipant) } ++
+        val fifoPaths = participants.flatMap(participant => List(participant.toParticipant, participant.fromParticipant)) ++
           strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) => List(toStrategy, fromStrategy) }
         val sharedWallTimeLimitMs =
           interactiveWallTimeLimitMs(
@@ -920,8 +922,12 @@ object JudgeExecutor:
         val interactorArgs =
           interactorCommand.args ++
             List(relativeSandboxPath(workingDirectory, inputPath), relativeSandboxPath(workingDirectory, outputPath), relativeSandboxPath(workingDirectory, statusPath)) ++
-            roleFifos.flatMap { case (role, _, toParticipant, fromParticipant) =>
-              List(role, relativeSandboxPath(workingDirectory, toParticipant), relativeSandboxPath(workingDirectory, fromParticipant))
+            participants.flatMap { participant =>
+              List(
+                participant.role,
+                relativeSandboxPath(workingDirectory, participant.toParticipant),
+                relativeSandboxPath(workingDirectory, participant.fromParticipant)
+              )
             } ++
             strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) =>
               List("strategy", relativeSandboxPath(workingDirectory, toStrategy), relativeSandboxPath(workingDirectory, fromStrategy))
@@ -943,26 +949,26 @@ object JudgeExecutor:
                 )
               }
             _ <- prepareInteractiveWorkspace(interactiveDir, inputPath, outputPath, statusPath, fifoPaths, input, strategyReadMonitor.toList.map(_.logPath))
-            participantFibers <- roleFifos.zipWithIndex.traverse { case ((role, command, toParticipant, fromParticipant), index) =>
+            participantFibers <- participants.zipWithIndex.traverse { case (participant, index) =>
               sandbox
                 .runInBox(
                   index + 1,
                   SandboxExecutionRequest(
-                    phase = s"participant-$safeName-$role",
+                    phase = s"participant-$safeName-${participant.occurrenceIndex}-${sanitizeInteractiveName(participant.role)}",
                     command = fifoRedirectLauncher.command,
                     args = fifoRedirectLauncher.args ++ List(
-                      relativeSandboxPath(workingDirectory, toParticipant),
-                      relativeSandboxPath(workingDirectory, fromParticipant),
-                      command.command
-                    ) ++ command.args,
+                      relativeSandboxPath(workingDirectory, participant.toParticipant),
+                      relativeSandboxPath(workingDirectory, participant.fromParticipant),
+                      participant.command.command
+                    ) ++ participant.command.args,
                     stdin = None,
                     limits = participantLimits,
-                    processLimit = command.processLimit,
+                    processLimit = participant.command.processLimit,
                     captureStdout = false
                   ),
                   workingDirectory
                 )
-                .map(role -> _)
+                .map(participant.role -> _)
                 .start
             }
             strategyFiber <- strategyProvider.traverse { provider =>
@@ -970,7 +976,7 @@ object JudgeExecutor:
               val limits = provider.tool.limits.get
               sandbox
                 .runInBox(
-                  roleFifos.size + 1,
+                  participants.size + 1,
                   SandboxExecutionRequest(
                     phase = s"strategy-$safeName",
                     command = fifoRedirectLauncher.command,
@@ -993,7 +999,7 @@ object JudgeExecutor:
                 .start
             }
             interactorResult <- sandbox.runInBox(
-              roleFifos.size + strategyProvider.fold(0)(_ => 1) + 1,
+              participants.size + strategyProvider.fold(0)(_ => 1) + 1,
               SandboxExecutionRequest(
                 phase = s"interactor-$safeName",
                 command = sigpipeLauncher.command,
@@ -1025,7 +1031,7 @@ object JudgeExecutor:
             Right(
               InteractiveRunResult(
                 interactor = interactorResult,
-                participants = participantResults.toMap,
+                participants = participantResults,
                 strategyProvider = strategyResult,
                 output = output,
                 status = status,
@@ -1034,6 +1040,25 @@ object JudgeExecutor:
             )
 
         run.handleError(_ => Left(JudgeFailureReason.JudgerRuntimeFailed))
+
+  private[judger] def interactiveParticipants(
+    roles: List[String],
+    roleCommands: Map[String, RuntimeCommand],
+    interactiveDir: Path
+  ): List[InteractiveParticipant] =
+    roles.zipWithIndex.flatMap { case (role, index) =>
+      roleCommands.get(role).map { command =>
+        val safeRole = sanitizeInteractiveName(role)
+        val occurrenceIndex = index + 1
+        InteractiveParticipant(
+          role = role,
+          occurrenceIndex = occurrenceIndex,
+          command = command,
+          toParticipant = interactiveDir.resolve(s"to-participant-$occurrenceIndex-$safeRole"),
+          fromParticipant = interactiveDir.resolve(s"from-participant-$occurrenceIndex-$safeRole")
+        )
+      }
+    }
 
   private def prepareInteractiveWorkspace(
     interactiveDir: Path,
@@ -1180,7 +1205,7 @@ object JudgeExecutor:
     runResult: InteractiveRunResult
   ): List[(ProcessResult, Long)] =
     val participantProcesses =
-      runResult.participants.values.toList.map(_ -> testcase.limits.timeMs.value.toLong)
+      runResult.participants.map { case (_, result) => result -> testcase.limits.timeMs.value.toLong }
     val interactorProcess =
       interactor.limits.toList.map(limits => runResult.interactor -> limits.timeMs.value.toLong)
     val strategyProcess =
@@ -1207,7 +1232,7 @@ object JudgeExecutor:
     result.timedOut && result.timeUsedMs.exists(_ >= timeLimitMs)
 
   private[judger] def interactiveWallOnlyVerdict(
-    participants: Map[String, ProcessResult],
+    participants: List[(String, ProcessResult)],
     participantCpuLimitMs: Long,
     processes: List[(ProcessResult, Long)],
     fallback: ProcessResult,
@@ -1288,8 +1313,8 @@ object JudgeExecutor:
         case Some(current) => current.exitCode.getOrElse(-1) != 0
     )
 
-  private[judger] def participantFailure(participants: Map[String, ProcessResult], timeLimitMs: Long): Option[(SubmissionVerdict, ProcessResult)] =
-    participants.toList.sortBy(_._1).collectFirst {
+  private[judger] def participantFailure(participants: List[(String, ProcessResult)], timeLimitMs: Long): Option[(SubmissionVerdict, ProcessResult)] =
+    participants.collectFirst {
       case (_, result) if cpuLimitExceeded(result, timeLimitMs) => SubmissionVerdict.TimeLimitExceeded -> result
       case (_, result) if result.exitCode.getOrElse(-1) != 0 => SubmissionVerdict.RuntimeError -> result
     }

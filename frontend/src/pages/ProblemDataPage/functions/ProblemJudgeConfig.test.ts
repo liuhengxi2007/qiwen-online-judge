@@ -341,6 +341,34 @@ subtasks:
     expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
   })
 
+  it('accepts duplicate interactive role instances', () => {
+    const yaml = `version: 2
+hack: false
+mode:
+  type: interactive
+  roles: [main, main]
+  interactor:
+    path: tools/interactor.cpp
+    limits:
+      timeMs: 1000
+      memoryMb: 256
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
   it('accepts traditional testcase role fallback list with text role', () => {
     const yaml = `version: 2
 hack: false

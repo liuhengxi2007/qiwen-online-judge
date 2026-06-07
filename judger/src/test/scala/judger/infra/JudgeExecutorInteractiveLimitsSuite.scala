@@ -2,8 +2,10 @@ package judger.infra
 
 import judgeprotocol.objects.{SubmissionVerdict, TestcaseMemoryLimitMb, TestcaseTimeLimitMs}
 import judgeprotocol.objects.response.{JudgeTaskChecker, JudgeTaskFileRef, JudgeTaskLimits, JudgeTaskTestcase, JudgeTaskTool, JudgeTaskToolLimits, JudgeTestcaseType}
-import judger.objects.ProcessResult
+import judger.objects.{ProcessResult, RuntimeCommand}
 import munit.FunSuite
+
+import java.nio.file.Path
 
 class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
 
@@ -36,7 +38,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     assertEquals(JudgeExecutor.interactiveToolCpuLimitExceeded(interactor, None, wallOnly, None), false)
     assertEquals(
       JudgeExecutor.interactiveWallOnlyVerdict(
-        participants = Map.empty,
+        participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
         fallback = wallOnly
@@ -50,7 +52,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
 
     assertEquals(
       JudgeExecutor.interactiveWallOnlyVerdict(
-        participants = Map.empty,
+        participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
         fallback = wallOnly,
@@ -66,7 +68,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
 
     assertEquals(
       JudgeExecutor.interactiveWallOnlyVerdict(
-        participants = Map.empty,
+        participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
         fallback = wallOnly,
@@ -83,7 +85,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
 
     assertEquals(
       JudgeExecutor.interactiveWallOnlyVerdict(
-        participants = Map("main" -> runtimeError),
+        participants = List("main" -> runtimeError),
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L, runtimeError -> 1000L),
         fallback = wallOnly,
@@ -98,8 +100,27 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val participant = cpuTimeout(timeUsedMs = 1000)
 
     assertEquals(
-      JudgeExecutor.participantFailure(Map("main" -> participant), timeLimitMs = 1000).map(_._1),
+      JudgeExecutor.participantFailure(List("main" -> participant), timeLimitMs = 1000).map(_._1),
       Some(SubmissionVerdict.TimeLimitExceeded)
+    )
+  }
+
+  test("duplicate interactive roles get distinct participant FIFOs") {
+    val command = RuntimeCommand("/box/main", Nil, processLimit = 1)
+    val participants = JudgeExecutor.interactiveParticipants(List("main", "main"), Map("main" -> command), Path.of("/work/interactive"))
+
+    assertEquals(participants.map(_.role), List("main", "main"))
+    assertEquals(participants.map(_.occurrenceIndex), List(1, 2))
+    assertEquals(participants.map(_.toParticipant.getFileName.toString), List("to-participant-1-main", "to-participant-2-main"))
+    assertEquals(participants.map(_.fromParticipant.getFileName.toString), List("from-participant-1-main", "from-participant-2-main"))
+  }
+
+  test("participant failure checks duplicate role instances") {
+    val runtimeError = okResult(exitCode = Some(1))
+
+    assertEquals(
+      JudgeExecutor.participantFailure(List("main" -> okResult(), "main" -> runtimeError), timeLimitMs = 1000),
+      Some(SubmissionVerdict.RuntimeError -> runtimeError)
     )
   }
 
