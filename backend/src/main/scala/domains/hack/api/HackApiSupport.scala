@@ -40,14 +40,10 @@ object HackApiSupport:
       submission <- GetSubmission(submissionProgramStorage).plan(connection, actor, submissionId)
       _ <- HttpApiError.ensure(submission.status == SubmissionStatus.Completed, HttpApiError.badRequest("Only completed submissions can be hacked."))
       _ <- HttpApiError.ensure(submission.judgeResult.nonEmpty, HttpApiError.badRequest("Target submission has no judge result."))
-      _ <- HttpApiError.ensure(
-        submission.submitter.username != actor.username,
-        HttpApiError.forbidden(ApiMessages.submissionNotFound)
-      )
       task <- buildTask(connection, submission, problemDataStorage)
       subtask <- task.subtasks.find(_.index == subtaskIndex) match
         case Some(value) => IO.pure(value)
-        case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
+        case None => HttpApiError.raise(HttpApiError.badRequest("Hack target subtask is unavailable for the current judge configuration."))
       targetWorstScore = targetSubtaskWorstScore(submission, subtask.index)
       _ <- HttpApiError.ensure(targetWorstScore > BigDecimal(0), HttpApiError.badRequest("This subtask's worst score is already zero."))
       _ <- HttpApiError.ensure(subtask.validator.nonEmpty, HttpApiError.badRequest("This subtask has no validator."))
