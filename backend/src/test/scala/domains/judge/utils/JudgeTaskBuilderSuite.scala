@@ -6,7 +6,7 @@ import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifes
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSourceCode}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
-import judgeprotocol.objects.response.JudgeTestcaseType
+import judgeprotocol.objects.response.{JudgeTaskHackConfig, JudgeTestcaseType}
 import munit.FunSuite
 import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
@@ -53,6 +53,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     claimedSubmission.problemSlug,
     List(
       entry("validators/validator.cpp"),
+      entry("solutions/std.cpp"),
       entry("tools/interactor.cpp"),
       entry("tools/strategy.cpp"),
       entry("stubs/main.cpp"),
@@ -80,6 +81,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -122,6 +124,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -146,10 +149,200 @@ class JudgeTaskBuilderSuite extends FunSuite:
     }
   }
 
+  test("parseConfigBytes defaults hack to enabled and accepts standard false") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |validator:
+        |  path: validators/validator.cpp
+        |standard: false
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      assertEquals(task.subtasks.head.hack, JudgeTaskHackConfig.WithoutAnswerGenerator)
+      assertEquals(task.subtasks.head.standard, None)
+    }
+  }
+
+  test("parseConfigBytes rejects enabled hack without validator") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |standard: false
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("Validator is required for subtask 1 when hack is enabled."))
+  }
+
+  test("parseConfigBytes rejects enabled hack with omitted standard") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |validator:
+        |  path: validators/validator.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("standard must be declared as an answer generator object or false for subtask 1 when hack is enabled."))
+  }
+
+  test("parseConfigBytes accepts enabled hack with answer generator") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: true
+        |validator:
+        |  path: validators/validator.cpp
+        |standard:
+        |  language: cpp17
+        |  path: solutions/std.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      assertEquals(task.subtasks.head.hack, JudgeTaskHackConfig.WithAnswerGenerator)
+      assertEquals(task.subtasks.head.standard.map(_.source.path.value), Some("solutions/std.cpp"))
+    }
+  }
+
+  test("parseConfigBytes allows subtask hack and standard overrides") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |validator:
+        |  path: validators/validator.cpp
+        |standard: false
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - label: disabled
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |  - label: enabled
+        |    hack: true
+        |    standard:
+        |      language: cpp17
+        |      path: solutions/std.cpp
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      assertEquals(task.subtasks.map(_.hack), List(JudgeTaskHackConfig.Disabled, JudgeTaskHackConfig.WithAnswerGenerator))
+      assertEquals(task.subtasks(1).standard.map(_.source.path.value), Some("solutions/std.cpp"))
+    }
+  }
+
+  test("parseConfigBytes rejects testcase-level hack declarations") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |        hack: true
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.left.toOption, Some("hack cannot be declared on subtask 1 testcase 1."))
+  }
+
   test("parseConfigBytes rejects old comma aggregation values") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -180,6 +373,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |validator:
         |  path: validators/validator.cpp
         |checker:
@@ -203,6 +397,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -228,6 +423,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -256,6 +452,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  helper:
         |    stubs:
@@ -283,6 +480,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -307,6 +505,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val multiSubtask = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -329,6 +528,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val sumAggregation = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -354,6 +554,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val sampleResult = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -378,6 +579,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val hackResult = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -408,6 +610,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -435,6 +638,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -466,6 +670,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: interactive
         |  roles: [main]
@@ -514,6 +719,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: traditional
         |  role: main
@@ -541,6 +747,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  main:
         |    stubs:
@@ -568,6 +775,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val missingStub = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  main:
         |    stubs:
@@ -590,6 +798,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val unsupportedLanguage = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  main:
         |    stubs:
@@ -612,6 +821,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val textRole = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  chain.txt:
         |    stubs:
@@ -641,6 +851,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |roles:
         |  main:
         |    stubs:
@@ -671,6 +882,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: traditional
         |  role: chain.txt
@@ -697,6 +909,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: interactive
         |  roles: [chain.txt]
@@ -728,6 +941,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |limits:
         |  timeMs: 1000
         |  memoryMb: 256
@@ -755,6 +969,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: interactive
         |  roles: [main]
@@ -787,6 +1002,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: interactive
         |  roles: [main]
@@ -820,6 +1036,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |mode:
         |  type: interactive
         |  roles: [main]
@@ -850,6 +1067,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""
         |version: 2
+        |hack: false
         |strategyProvider: tools/strategy.cpp
         |limits:
         |  timeMs: 1000

@@ -6,6 +6,7 @@ import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemData
 export const judgeConfigPath = 'judge.yaml' as const
 
 export const judgeConfigTemplate = `version: 2
+hack: false
 roundingScale: 6
 
 mode:
@@ -80,6 +81,11 @@ type AggregationConfig = {
   subtasks?: string
 }
 
+type StandardConfig =
+  | { type: 'unspecified' }
+  | { type: 'none' }
+  | { type: 'generator'; path: string }
+
 export function validateJudgeConfigYaml(
   content: string,
   dataTree: ProblemDataTreeNode[],
@@ -110,7 +116,9 @@ export function validateJudgeConfigYaml(
 
   const rootLimits = validateLimits(root.limits, 'limits', ctx)
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
-  validateTool(root.validator, 'validator', ctx)
+  const rootValidator = validateTool(root.validator, 'validator', ctx)
+  const rootStandard = validateStandard(root.standard, 'standard', ctx)
+  const rootHack = validateOptionalBoolean(root.hack, 'hack', ctx) ?? true
   const rootMode = validateMode(root.mode, 'mode', ctx) ?? { type: 'traditional' as const, role: 'main' }
   validateRoleConfigs(root.roles, 'roles', ctx)
   validateLimitedTool(root.strategyProvider, 'strategyProvider', ctx)
@@ -133,7 +141,10 @@ export function validateJudgeConfigYaml(
       validateOptionalLabel(subtask.label, `subtasks[${index}].label`, ctx)
       const limits = validateLimits(subtask.limits, `${subtaskLabel}.limits`, ctx) ?? rootLimits
       const checker = validateChecker(subtask.checker, `${subtaskLabel}.checker`, ctx) ?? rootChecker
-      validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx)
+      const validator = validateTool(subtask.validator, `${subtaskLabel}.validator`, ctx) ?? rootValidator
+      const standard = inheritStandard(validateStandard(subtask.standard, `${subtaskLabel}.standard`, ctx), rootStandard)
+      const hack = validateOptionalBoolean(subtask.hack, `${subtaskLabel}.hack`, ctx) ?? rootHack
+      validateHackCapability(subtaskLabel, hack, validator, standard, ctx)
       const mode = validateMode(subtask.mode, `${subtaskLabel}.mode`, ctx) ?? rootMode
       validateLimitedTool(subtask.strategyProvider, `${subtaskLabel}.strategyProvider`, ctx)
       const aggregation = mergeAggregation(rootAggregation, validateAggregation(subtask.aggregation, `${subtaskLabel}.aggregation`, ctx))
@@ -165,6 +176,9 @@ export function validateJudgeConfigYaml(
           }
           if (testcase.validator !== undefined) {
             ctx.errors.push(`${testcaseLabel}.validator cannot be declared on a testcase.`)
+          }
+          if (testcase.hack !== undefined) {
+            ctx.errors.push(`${testcaseLabel}.hack cannot be declared on a testcase.`)
           }
           if (mode.type === 'interactive' && testcase.roles !== undefined) {
             ctx.errors.push(`${testcaseLabel}.roles cannot be declared when mode is interactive.`)
@@ -277,6 +291,47 @@ function validateLimitedTool(value: unknown, label: string, ctx: ValidationConte
   const path = validatePathValue(value.path, `${label}.path`, ctx)
   const limits = validateToolLimits(value.limits, `${label}.limits`, ctx)
   return path && limits ? { path, limits } : null
+}
+
+function validateStandard(value: unknown, label: string, ctx: ValidationContext): StandardConfig {
+  if (value === undefined) {
+    return { type: 'unspecified' }
+  }
+  if (value === false) {
+    return { type: 'none' }
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be an object or false.`)
+    return { type: 'unspecified' }
+  }
+
+  if (value.language !== 'cpp17' && value.language !== 'python3') {
+    ctx.errors.push(`${label}.language must be cpp17 or python3.`)
+  }
+  const path = validatePathValue(value.path, `${label}.path`, ctx)
+  return path ? { type: 'generator', path } : { type: 'unspecified' }
+}
+
+function inheritStandard(value: StandardConfig, parent: StandardConfig): StandardConfig {
+  return value.type === 'unspecified' ? parent : value
+}
+
+function validateHackCapability(
+  label: string,
+  enabled: boolean,
+  validator: ToolConfig | null,
+  standard: StandardConfig,
+  ctx: ValidationContext,
+): void {
+  if (!enabled) {
+    return
+  }
+  if (!validator) {
+    ctx.errors.push(`Validator is required for ${label} when hack is enabled.`)
+  }
+  if (standard.type === 'unspecified') {
+    ctx.errors.push(`standard must be declared as an answer generator object or false for ${label} when hack is enabled.`)
+  }
 }
 
 function validateToolLimits(value: unknown, label: string, ctx: ValidationContext): ToolLimitsConfig | null {
@@ -571,6 +626,17 @@ function validateOptionalInteger(
   if (value < min || value > max) {
     ctx.errors.push(`${label} must be between ${min} and ${max}.`)
   }
+}
+
+function validateOptionalBoolean(value: unknown, label: string, ctx: ValidationContext): boolean | null {
+  if (value === undefined) {
+    return null
+  }
+  if (typeof value !== 'boolean') {
+    ctx.errors.push(`${label} must be a boolean.`)
+    return null
+  }
+  return value
 }
 
 function validateIntegerRange(

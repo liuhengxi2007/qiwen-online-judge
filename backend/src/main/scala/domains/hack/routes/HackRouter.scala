@@ -23,6 +23,7 @@ object HackRouter:
       context,
       List(
         GetSubmissionHackSubtask(submissionProgramStorage, problemDataStorage),
+        GetSubmissionHackAvailability(submissionProgramStorage, problemDataStorage),
         CreateHack(submissionProgramStorage, problemDataStorage),
         GetHack,
         ListHacks,

@@ -16,7 +16,7 @@ export const zhCnHackMessages: Record<string, string> = {
   'hack.oldScore': '原最差分',
   'hack.newScore': '新最差分',
   'hack.validator': '校验器',
-  'hack.standard': '标准程序',
+  'hack.standard': '答案生成器',
   'hack.targetRun': '目标运行',
   'hack.targetSubmission': '目标提交',
   'hack.author': '提交者',

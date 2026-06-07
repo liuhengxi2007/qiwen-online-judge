@@ -86,7 +86,11 @@ function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissio
           />
 
           {submissionQuery.submission.judgeResult ? (
-            <SubmissionJudgeResultCard judgeResult={submissionQuery.submission.judgeResult} submissionId={submissionQuery.submission.id} />
+            <SubmissionJudgeResultCard
+              hackAvailability={submissionQuery.hackAvailability}
+              judgeResult={submissionQuery.submission.judgeResult}
+              submissionId={submissionQuery.submission.id}
+            />
           ) : null}
 
           <SubmissionSourceCodeCard programs={submissionQuery.submission.programs} sourceCode={submissionQuery.submission.sourceCode} />

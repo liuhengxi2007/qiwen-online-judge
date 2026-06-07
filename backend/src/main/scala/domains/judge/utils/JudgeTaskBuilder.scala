@@ -23,7 +23,7 @@ object JudgeTaskBuilder:
     subtaskIndex: Int,
     label: Option[String],
     input: JudgeTaskFileRef,
-    answer: JudgeTaskFileRef
+    answer: Option[JudgeTaskFileRef]
   )
 
   final case class BuildError(
@@ -34,7 +34,21 @@ object JudgeTaskBuilder:
   private val CodeRolePattern = "^[A-Za-z0-9_-]+$".r
   private val TextRolePattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
-  private final case class StandardConfig(language: SubmissionLanguage, path: String)
+  private enum StandardConfig:
+    case Unspecified
+    case NoAnswer
+    case Generator(language: SubmissionLanguage, path: String)
+
+    def inherit(parent: StandardConfig): StandardConfig =
+      this match
+        case Unspecified => parent
+        case _ => this
+
+    def generator: Option[StandardConfig.Generator] =
+      this match
+        case generator @ Generator(_, _) => Some(generator)
+        case _ => None
+
   private final case class RoleConfig(stubs: Map[SubmissionLanguage, JudgeTaskFileRef]):
     def restrictsLanguages: Boolean = stubs.nonEmpty
 
@@ -175,6 +189,7 @@ object JudgeTaskBuilder:
       rootChecker <- checkerAt(root).toBuildError
       rootValidator <- toolAt(root, "validator").toBuildError
       rootStandard <- standardAt(root).toBuildError
+      rootHack <- optionalBooleanAt(root, "hack").toBuildError.map(_.getOrElse(true))
       rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
       rootStrategyProvider <- limitedToolAt(root, "strategyProvider").toBuildError
       rootAggregation <- aggregationAt(root).toBuildError
@@ -192,6 +207,7 @@ object JudgeTaskBuilder:
           parentChecker = rootChecker,
           parentValidator = rootValidator,
           parentStandard = rootStandard,
+          parentHack = rootHack,
           parentMode = rootMode,
           parentStrategyProvider = rootStrategyProvider,
           parentAggregation = rootAggregation,
@@ -264,7 +280,8 @@ object JudgeTaskBuilder:
     parentLimits: Option[JudgeTaskLimits],
     parentChecker: Option[JudgeTaskChecker],
     parentValidator: Option[JudgeTaskTool],
-    parentStandard: Option[StandardConfig],
+    parentStandard: StandardConfig,
+    parentHack: Boolean,
     parentMode: JudgeTaskMode,
     parentStrategyProvider: Option[JudgeTaskTool],
     parentAggregation: AggregationConfig,
@@ -278,8 +295,11 @@ object JudgeTaskBuilder:
       checker <- checkerAt(raw).toBuildError.map(_.orElse(parentChecker))
       validator <- toolAt(raw, "validator").toBuildError.map(_.orElse(parentValidator))
       resolvedValidator <- validator.traverse(resolveTool(manifest, _, "Validator source file")).toBuildError
-      standard <- standardAt(raw).toBuildError.map(_.orElse(parentStandard))
-      resolvedStandard <- standard.traverse(resolveStandard(manifest, _)).toBuildError
+      standard <- standardAt(raw).toBuildError.map(_.inherit(parentStandard))
+      resolvedStandard <- standard.generator.traverse(resolveStandard(manifest, _)).toBuildError
+      subtaskHack <- optionalBooleanAt(raw, "hack").toBuildError
+      effectiveHack = subtaskHack.getOrElse(parentHack)
+      _ <- validateHackConfig(subtaskLabel, effectiveHack, validator, standard)
       mode <- modeAt(raw, manifest).toBuildError.map(_.getOrElse(parentMode))
       strategyProvider <- limitedToolAt(raw, "strategyProvider").toBuildError.map(_.orElse(parentStrategyProvider))
       aggregation <- aggregationAt(raw).toBuildError.map(parentAggregation.merge)
@@ -322,7 +342,7 @@ object JudgeTaskBuilder:
           limits = firstMainTestcase.limits,
           checker = firstMainTestcase.checker,
           input = testcase.input,
-          answer = Some(testcase.answer),
+          answer = testcase.answer,
           strategyProvider = firstMainTestcase.strategyProvider,
           roles = firstMainTestcase.roles
         )
@@ -336,6 +356,7 @@ object JudgeTaskBuilder:
         mode = mode,
         validator = resolvedValidator,
         standard = resolvedStandard,
+        hack = hackConfig(effectiveHack, standard),
         aggregation = aggregation.testcases.getOrElse(defaultAggregation),
         testcases = testcases
       )
@@ -359,6 +380,7 @@ object JudgeTaskBuilder:
       _ <- rejectLegacyName(raw, label)
       _ <- Either.cond(!raw.contains("mode"), (), buildError(s"mode cannot be declared on $label."))
       _ <- Either.cond(!raw.contains("validator"), (), buildError(s"validator cannot be declared on $label."))
+      _ <- Either.cond(!raw.contains("hack"), (), buildError(s"hack cannot be declared on $label."))
       _ <- Either.cond(
         subtaskMode.`type` == "traditional" || !raw.contains("roles"),
         (),
@@ -410,22 +432,48 @@ object JudgeTaskBuilder:
       buildError(s"scoreRatio cannot be declared on $label when type is ${JudgeTestcaseType.render(testcaseType)}.")
     )
 
-  private def standardAt(raw: Map[String, Any]): Either[String, Option[StandardConfig]] =
-    optionalMapAt(raw, "standard").flatMap {
-      case None => Right(None)
-      case Some(standard) =>
+  private def validateHackConfig(
+    label: String,
+    enabled: Boolean,
+    validator: Option[JudgeTaskTool],
+    standard: StandardConfig
+  ): Either[BuildError, Unit] =
+    if !enabled then Right(())
+    else
+      for
+        _ <- Either.cond(validator.nonEmpty, (), buildError(s"Validator is required for $label when hack is enabled."))
+        _ <- standard match
+          case StandardConfig.Unspecified => Left(buildError(s"standard must be declared as an answer generator object or false for $label when hack is enabled."))
+          case StandardConfig.NoAnswer => Right(())
+          case _: StandardConfig.Generator => Right(())
+      yield ()
+
+  private def hackConfig(enabled: Boolean, standard: StandardConfig): JudgeTaskHackConfig =
+    if !enabled then JudgeTaskHackConfig.Disabled
+    else
+      standard match
+        case _: StandardConfig.Generator => JudgeTaskHackConfig.WithAnswerGenerator
+        case StandardConfig.NoAnswer => JudgeTaskHackConfig.WithoutAnswerGenerator
+        case StandardConfig.Unspecified => JudgeTaskHackConfig.Disabled
+
+  private def standardAt(raw: Map[String, Any]): Either[String, StandardConfig] =
+    raw.get("standard") match
+      case None => Right(StandardConfig.Unspecified)
+      case Some(value: java.lang.Boolean) if !value.booleanValue => Right(StandardConfig.NoAnswer)
+      case Some(standard: Map[?, ?]) =>
+        val standardMap = standard.asInstanceOf[Map[String, Any]]
         for
-          language <- stringAt(standard, "language").flatMap(parseStandardLanguage)
-          path <- stringAt(standard, "path")
+          language <- stringAt(standardMap, "language").flatMap(parseStandardLanguage)
+          path <- stringAt(standardMap, "path")
           _ <- ProblemDataPath.parse(path).left.map(message => s"Invalid standard path: $message")
-        yield Some(StandardConfig(language, path))
-    }
+        yield StandardConfig.Generator(language, path)
+      case Some(_) => Left("standard must be an object or false.")
 
   private def parseStandardLanguage(raw: String): Either[String, SubmissionLanguage] =
     raw.trim match
       case "cpp17" => Right(SubmissionLanguage.Cpp17)
       case "python3" => Right(SubmissionLanguage.Python3)
-      case other => Left(s"Unsupported standard language: $other.")
+      case other => Left(s"Unsupported answer generator language: $other.")
 
   private def roleConfigsAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Map[String, RoleConfig]] =
     optionalMapAt(raw, "roles").flatMap {
@@ -622,8 +670,8 @@ object JudgeTaskBuilder:
   private def resolveTool(manifest: ProblemDataManifest, tool: JudgeTaskTool, label: String): Either[String, JudgeTaskTool] =
     findFile(manifest, tool.source.path.value, label).map(ref => tool.copy(source = ref))
 
-  private def resolveStandard(manifest: ProblemDataManifest, standard: StandardConfig): Either[String, JudgeTaskStandard] =
-    findFile(manifest, standard.path, "Standard source file").map(ref => JudgeTaskStandard(standard.language, ref))
+  private def resolveStandard(manifest: ProblemDataManifest, standard: StandardConfig.Generator): Either[String, JudgeTaskStandard] =
+    findFile(manifest, standard.path, "Answer generator source file").map(ref => JudgeTaskStandard(standard.language, ref))
 
   private def fileRef(entry: ProblemDataManifestEntry): Either[String, JudgeTaskFileRef] =
     JudgeTaskFileRef.from(entry.path.value, entry.sizeBytes, entry.sha256)
@@ -723,6 +771,12 @@ object JudgeTaskBuilder:
       case Some(value: java.lang.Long) if value >= Int.MinValue && value <= Int.MaxValue => Right(Some(value.intValue))
       case Some(value: java.math.BigInteger) if value.bitLength < 31 => Right(Some(value.intValue))
       case Some(value) => Left(s"$key must be an integer, found ${value.getClass.getSimpleName}.")
+
+  private def optionalBooleanAt(raw: Map[String, Any], key: String): Either[String, Option[Boolean]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(value: java.lang.Boolean) => Right(Some(value.booleanValue))
+      case Some(_) => Left(s"$key must be a boolean.")
 
   private def optionalDecimalAt(raw: Map[String, Any], key: String): Either[String, Option[BigDecimal]] =
     raw.get(key) match

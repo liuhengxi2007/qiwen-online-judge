@@ -44,11 +44,17 @@ object HackTableSchema:
       |  hack_attempt_public_id bigint not null unique references hack_attempts(public_id) on delete cascade,
       |  subtask_index integer not null,
       |  input_text text not null,
-      |  answer_text text not null,
+      |  answer_text text,
       |  strategy_provider_source text,
       |  created_by_username varchar(120) not null references auth_accounts(username),
       |  created_at timestamp not null
       |);
+      |""".stripMargin
+
+  val allowProblemHackTestcaseAnswerNullSql: String =
+    """
+      |alter table problem_hack_testcases
+      |alter column answer_text drop not null
       |""".stripMargin
 
   val addPublicIdUniqueConstraintSql: String =
@@ -86,6 +92,7 @@ object HackTableSchema:
           initAttemptTableSql,
           addPublicIdUniqueConstraintSql,
           initProblemHackTestcaseTableSql,
+          allowProblemHackTestcaseAnswerNullSql,
           createIndexesSql
         ).foreach(statement.execute)
       finally statement.close()

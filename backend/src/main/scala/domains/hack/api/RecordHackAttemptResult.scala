@@ -39,11 +39,11 @@ object RecordHackAttemptResult extends InternalOnlyApi[RecordHackAttemptResultIn
         targetMessage = input.request.targetMessage,
         finishedAt = finishedAt
       )
-      problemId <- (status, completed, input.request.answer) match
-        case (HackStatus.Success, Some(source), Some(answer)) =>
+      problemId <- (status, completed) match
+        case (HackStatus.Success, Some(source)) =>
           for
             testcaseId <- IO.randomUUID
-            _ <- HackMutationTable.insertProblemHackTestcase(connection, testcaseId, input.hackId, source, answer, finishedAt)
+            _ <- HackMutationTable.insertProblemHackTestcase(connection, testcaseId, input.hackId, source, input.request.answer, finishedAt)
             _ <- HackMutationTable.incrementProblemHackRevision(connection, source.problemId)
           yield Some(source.problemId)
         case _ =>

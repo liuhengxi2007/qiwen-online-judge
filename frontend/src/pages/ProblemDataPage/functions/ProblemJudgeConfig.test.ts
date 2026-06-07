@@ -18,6 +18,7 @@ function file(path: string): ProblemDataTreeNode {
 const templateFiles = [
   file('judge.yaml'),
   file('validators/validator.cpp'),
+  file('solutions/std.cpp'),
   file('tools/interactor.cpp'),
   file('tools/strategy.cpp'),
   file('stubs/main.cpp'),
@@ -52,6 +53,7 @@ describe('problem-judge-config', () => {
 
   it('rejects missing inherited limits and checker', () => {
     const yaml = `version: 2
+hack: false
 aggregation:
   testcases: sum_max_max
 subtasks:
@@ -70,6 +72,7 @@ subtasks:
 
   it('rejects testcase-level validator declarations', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -94,8 +97,163 @@ subtasks:
     }
   })
 
+  it('defaults hack to enabled and accepts standard false', () => {
+    const yaml = `version: 2
+validator:
+  path: validators/validator.cpp
+standard: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects enabled hack without validator or standard', () => {
+    const missingValidator = validateJudgeConfigYaml(
+      `version: 2
+standard: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(missingValidator.ok).toBe(false)
+    if (!missingValidator.ok) {
+      expect(missingValidator.errors).toContain('Validator is required for subtask 1 when hack is enabled.')
+    }
+
+    const missingStandard = validateJudgeConfigYaml(
+      `version: 2
+validator:
+  path: validators/validator.cpp
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(missingStandard.ok).toBe(false)
+    if (!missingStandard.ok) {
+      expect(missingStandard.errors).toContain('standard must be declared as an answer generator object or false for subtask 1 when hack is enabled.')
+    }
+  })
+
+  it('accepts enabled hack with an answer generator and subtask overrides', () => {
+    const objectStandard = `version: 2
+hack: true
+validator:
+  path: validators/validator.cpp
+standard:
+  language: cpp17
+  path: solutions/std.cpp
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(objectStandard, templateFiles).ok).toBe(true)
+
+    const overrides = `version: 2
+hack: false
+validator:
+  path: validators/validator.cpp
+standard: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - label: disabled
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+  - label: enabled
+    hack: true
+    standard:
+      language: cpp17
+      path: solutions/std.cpp
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(overrides, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects testcase-level hack declarations', () => {
+    const yaml = `version: 2
+hack: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+        hack: true
+`
+
+    const result = validateJudgeConfigYaml(yaml, templateFiles)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('subtask 1 testcase 1.hack cannot be declared on a testcase.')
+    }
+  })
+
   it('requires input and requires answer for builtin exact checker', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -122,6 +280,7 @@ subtasks:
 
   it('rejects out-of-range limits', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 600001
   memoryMb: 65537
@@ -149,6 +308,7 @@ subtasks:
 
   it('accepts interactive tools with CPU-time limits', () => {
     const yaml = `version: 2
+hack: false
 mode:
   type: interactive
   roles: [main]
@@ -183,6 +343,7 @@ subtasks:
 
   it('accepts traditional testcase role fallback list with text role', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -203,6 +364,7 @@ subtasks:
 
   it('accepts cpp17 role stubs', () => {
     const yaml = `version: 2
+hack: false
 roles:
   main:
     stubs:
@@ -227,6 +389,7 @@ subtasks:
   it('rejects invalid role stub declarations', () => {
     const result = validateJudgeConfigYaml(
       `version: 2
+hack: false
 roles:
   chain.txt:
     stubs:
@@ -261,6 +424,7 @@ subtasks:
 
   it('rejects text roles in interactive role lists', () => {
     const yaml = `version: 2
+hack: false
 mode:
   type: interactive
   roles: [chain.txt]
@@ -294,6 +458,7 @@ subtasks:
   it('rejects invalid testcase text roles and interactive testcase roles', () => {
     const invalidTextRole = validateJudgeConfigYaml(
       `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -318,6 +483,7 @@ subtasks:
 
     const interactiveTestcaseRoles = validateJudgeConfigYaml(
       `version: 2
+hack: false
 mode:
   type: interactive
   roles: [main]
@@ -351,6 +517,7 @@ subtasks:
 
   it('rejects legacy real-time interactive tool limits', () => {
     const yaml = `version: 2
+hack: false
 mode:
   type: interactive
   roles: [main]
@@ -385,6 +552,7 @@ subtasks:
 
   it('rejects interactive tool declarations without limits', () => {
     const yaml = `version: 2
+hack: false
 mode:
   type: interactive
   roles: [main]
@@ -457,6 +625,7 @@ subtasks:
 
     const invalidSum = validateJudgeConfigYaml(
       `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -485,6 +654,7 @@ subtasks:
 
   it('rejects scoreRatio on sample and hack testcases', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256
@@ -518,6 +688,7 @@ subtasks:
 
   it('rejects subtasks without a main testcase', () => {
     const yaml = `version: 2
+hack: false
 limits:
   timeMs: 1000
   memoryMb: 256

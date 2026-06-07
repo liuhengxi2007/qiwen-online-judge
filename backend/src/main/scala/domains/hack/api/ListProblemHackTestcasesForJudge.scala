@@ -15,7 +15,7 @@ final case class ProblemHackTestcaseForJudge(
   hackId: HackId,
   subtaskIndex: Int,
   inputRef: JudgeTaskFileRef,
-  answerRef: JudgeTaskFileRef
+  answerRef: Option[JudgeTaskFileRef]
 )
 
 object ListProblemHackTestcasesForJudge extends InternalOnlyApi[ProblemId, List[ProblemHackTestcaseForJudge]]:

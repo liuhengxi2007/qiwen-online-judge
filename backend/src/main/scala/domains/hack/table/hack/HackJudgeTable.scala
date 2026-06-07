@@ -33,7 +33,7 @@ object HackJudgeTable:
     hackId: HackId,
     subtaskIndex: Int,
     inputRef: JudgeTaskFileRef,
-    answerRef: JudgeTaskFileRef
+    answerRef: Option[JudgeTaskFileRef]
   )
 
   private def claimNextSQL(languageCount: Int): String =
@@ -146,9 +146,9 @@ object HackJudgeTable:
             try
               if resultSet.next() then
                 val content =
-                  if extension == "in" then resultSet.getString("input_text")
-                  else resultSet.getString("answer_text")
-                Some(rawPath.split('/').last -> content.getBytes(StandardCharsets.UTF_8))
+                  if extension == "in" then Some(resultSet.getString("input_text"))
+                  else Option(resultSet.getString("answer_text"))
+                content.map(value => rawPath.split('/').last -> value.getBytes(StandardCharsets.UTF_8))
               else None
             finally resultSet.close()
           finally statement.close()
@@ -178,12 +178,12 @@ object HackJudgeTable:
   private def readProblemHackTestcase(resultSet: ResultSet): ProblemHackTestcaseRecord =
     val hackId = HackId(resultSet.getLong("hack_attempt_public_id"))
     val input = resultSet.getString("input_text").getBytes(StandardCharsets.UTF_8)
-    val answer = resultSet.getString("answer_text").getBytes(StandardCharsets.UTF_8)
+    val answer = Option(resultSet.getString("answer_text")).map(_.getBytes(StandardCharsets.UTF_8))
     ProblemHackTestcaseRecord(
       hackId = hackId,
       subtaskIndex = resultSet.getInt("subtask_index"),
       inputRef = fileRef(inputPath(hackId), input),
-      answerRef = fileRef(answerPath(hackId), answer)
+      answerRef = answer.map(bytes => fileRef(answerPath(hackId), bytes))
     )
 
   def inputPath(hackId: HackId): String =

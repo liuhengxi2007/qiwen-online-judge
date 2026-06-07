@@ -2,7 +2,7 @@ package domains.hack.api
 
 import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.hack.objects.response.HackSubtaskInfo
+import domains.hack.objects.response.{HackSubtaskAvailability, HackSubtaskInfo, SubmissionHackAvailability}
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
@@ -11,7 +11,7 @@ import domains.submission.api.GetSubmission
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
 import domains.submission.utils.SubmissionProgramStorage
-import judgeprotocol.objects.response.{JudgeTask, JudgeTaskSubtask}
+import judgeprotocol.objects.response.{JudgeTask, JudgeTaskHackConfig, JudgeTaskSubtask}
 import shared.api.{ApiMessages, HttpApiError}
 
 import java.sql.Connection
@@ -28,6 +28,11 @@ object HackApiSupport:
     subtask: JudgeTaskSubtask
   )
 
+  final case class TargetTaskContext(
+    submission: domains.submission.objects.response.SubmissionDetail,
+    task: JudgeTask
+  )
+
   def loadTargetContext(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -37,18 +42,33 @@ object HackApiSupport:
     problemDataStorage: ProblemDataStorage
   ): IO[TargetContext] =
     for
+      target <- loadTargetTask(connection, actor, submissionId, submissionProgramStorage, problemDataStorage)
+      subtask <- target.task.subtasks.find(_.index == subtaskIndex) match
+        case Some(value) => IO.pure(value)
+        case None => HttpApiError.raise(HttpApiError.badRequest("Hack target subtask is unavailable for the current judge configuration."))
+      targetWorstScore = targetSubtaskWorstScore(target.submission, subtask.index)
+      _ <- HttpApiError.ensure(subtask.hack.enabled, HttpApiError.badRequest("Hack is disabled for this subtask."))
+      _ <- HttpApiError.ensure(targetWorstScore > BigDecimal(0), HttpApiError.badRequest("This subtask's worst score is already zero."))
+      _ <- HttpApiError.ensure(subtask.validator.nonEmpty, HttpApiError.badRequest("This subtask has no validator."))
+      _ <- HttpApiError.ensure(
+        subtask.hack.answerGeneration != JudgeTaskHackConfig.StandardAnswerGeneration || subtask.standard.nonEmpty,
+        HttpApiError.badRequest("This subtask has no answer generator.")
+      )
+    yield TargetContext(target.submission, target.task, subtask)
+
+  def loadTargetTask(
+    connection: Connection,
+    actor: AuthenticatedUser,
+    submissionId: domains.submission.objects.SubmissionId,
+    submissionProgramStorage: SubmissionProgramStorage,
+    problemDataStorage: ProblemDataStorage
+  ): IO[TargetTaskContext] =
+    for
       submission <- GetSubmission(submissionProgramStorage).plan(connection, actor, submissionId)
       _ <- HttpApiError.ensure(submission.status == SubmissionStatus.Completed, HttpApiError.badRequest("Only completed submissions can be hacked."))
       _ <- HttpApiError.ensure(submission.judgeResult.nonEmpty, HttpApiError.badRequest("Target submission has no judge result."))
       task <- buildTask(connection, submission, problemDataStorage)
-      subtask <- task.subtasks.find(_.index == subtaskIndex) match
-        case Some(value) => IO.pure(value)
-        case None => HttpApiError.raise(HttpApiError.badRequest("Hack target subtask is unavailable for the current judge configuration."))
-      targetWorstScore = targetSubtaskWorstScore(submission, subtask.index)
-      _ <- HttpApiError.ensure(targetWorstScore > BigDecimal(0), HttpApiError.badRequest("This subtask's worst score is already zero."))
-      _ <- HttpApiError.ensure(subtask.validator.nonEmpty, HttpApiError.badRequest("This subtask has no validator."))
-      _ <- HttpApiError.ensure(subtask.standard.nonEmpty, HttpApiError.badRequest("This subtask has no standard solution."))
-    yield TargetContext(submission, task, subtask)
+    yield TargetTaskContext(submission, task)
 
   def subtaskInfo(context: TargetContext): HackSubtaskInfo =
     val targetWorstScore = targetSubtaskWorstScore(context.submission, context.subtask.index)
@@ -63,6 +83,22 @@ object HackApiSupport:
       oldWorstScore = targetWorstScore,
       mode = context.subtask.mode.`type`,
       requiresStrategyProvider = requiresStrategyProvider(context.subtask)
+    )
+
+  def hackAvailability(context: TargetTaskContext): SubmissionHackAvailability =
+    SubmissionHackAvailability(
+      subtasks = context.task.subtasks.map { subtask =>
+        val targetWorstScore = targetSubtaskWorstScore(context.submission, subtask.index)
+        val reason =
+          if !subtask.hack.enabled then Some("hack_disabled")
+          else if targetWorstScore <= BigDecimal(0) then Some("score_already_zero")
+          else None
+        HackSubtaskAvailability(
+          subtaskIndex = subtask.index,
+          canHack = reason.isEmpty,
+          reason = reason
+        )
+      }
     )
 
   def targetSubtaskWorstScore(submission: domains.submission.objects.response.SubmissionDetail, subtaskIndex: Int): BigDecimal =

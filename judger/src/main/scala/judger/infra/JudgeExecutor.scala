@@ -132,46 +132,48 @@ object JudgeExecutor:
       case Some(subtask) =>
         val input = hackTask.input.getBytes(StandardCharsets.UTF_8)
         val oldWorstScore = targetSubtaskWorstScore(hackTask)
-        subtask.validator match
-          case None => IO.pure(hackFailed(hackTask, "Target subtask has no validator."))
-          case Some(validator) =>
-            runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
-              case Some(message) =>
-                IO.pure(
-                  ReportHackResultRequest(
-                    status = "invalid",
-                    answer = None,
-                    oldScore = oldWorstScore,
-                    newScore = None,
-                    newResult = None,
-                    validatorMessage = Some(message),
-                    standardMessage = None,
-                    targetMessage = None
+        if !subtask.hack.enabled then IO.pure(hackFailed(hackTask, "Hack is disabled for this subtask."))
+        else
+          subtask.validator match
+            case None => IO.pure(hackFailed(hackTask, "Target subtask has no validator."))
+            case Some(validator) =>
+              runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
+                case Some(message) =>
+                  IO.pure(
+                    ReportHackResultRequest(
+                      status = "invalid",
+                      answer = None,
+                      oldScore = oldWorstScore,
+                      newScore = None,
+                      newResult = None,
+                      validatorMessage = Some(message),
+                      standardMessage = None,
+                      targetMessage = None
+                    )
                   )
-                )
-              case None =>
-                runStandard(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes).flatMap {
-                  case Left(message) => IO.pure(hackFailed(hackTask, message, standardMessage = Some(message)))
-                  case Right(answer) =>
-                    runTargetOnHack(hackTask, subtask, input, answer, config, workingDirectory, sandbox, problemDataCache, programs, tools).map { testcaseResult =>
-                      val newSubtask = appendHackTestcaseResult(subtask, hackTask.oldResult.subtasks, testcaseResult)
-                      val newSubtasks = replaceSubtaskResult(hackTask.oldResult.subtasks, newSubtask)
-                      val newResult = aggregateTask(task, newSubtasks)
-                      val targetMessage = Some(s"${SubmissionVerdict.render(testcaseResult.verdict)} score=${testcaseResult.score}")
-                      val status = if newSubtask.worstResult.score < oldWorstScore then "success" else "no_effect"
-                      ReportHackResultRequest(
-                        status = status,
-                        answer = Some(new String(answer, StandardCharsets.UTF_8)),
-                        oldScore = oldWorstScore,
-                        newScore = Some(newSubtask.worstResult.score),
-                        newResult = Some(newResult),
-                        validatorMessage = Some("accepted"),
-                        standardMessage = Some("accepted"),
-                        targetMessage = targetMessage
-                      )
-                    }
-                }
-            }
+                case None =>
+                  prepareHackAnswer(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes).flatMap {
+                    case Left(message) => IO.pure(hackFailed(hackTask, message, standardMessage = Some(message)))
+                    case Right(answerBytes) =>
+                      runTargetOnHack(hackTask, subtask, input, answerBytes, config, workingDirectory, sandbox, problemDataCache, programs, tools).map { testcaseResult =>
+                        val newSubtask = appendHackTestcaseResult(subtask, hackTask.oldResult.subtasks, testcaseResult)
+                        val newSubtasks = replaceSubtaskResult(hackTask.oldResult.subtasks, newSubtask)
+                        val newResult = aggregateTask(task, newSubtasks)
+                        val targetMessage = Some(s"${SubmissionVerdict.render(testcaseResult.verdict)} score=${testcaseResult.score}")
+                        val status = if newSubtask.worstResult.score < oldWorstScore then "success" else "no_effect"
+                        ReportHackResultRequest(
+                          status = status,
+                          answer = answerBytes.map(answer => new String(answer, StandardCharsets.UTF_8)),
+                          oldScore = oldWorstScore,
+                          newScore = Some(newSubtask.worstResult.score),
+                          newResult = Some(newResult),
+                          validatorMessage = Some("accepted"),
+                          standardMessage = answerBytes.fold(Some("not_required"))(_ => Some("accepted")),
+                          targetMessage = targetMessage
+                        )
+                      }
+                  }
+              }
 
   private def preparePrograms(
     task: JudgeTask,
@@ -254,7 +256,7 @@ object JudgeExecutor:
             else Some(renderDetail("Validator rejected the hack input.", result))
           }
 
-  private def runStandard(
+  private def prepareHackAnswer(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
     input: Array[Byte],
@@ -263,47 +265,67 @@ object JudgeExecutor:
     sandbox: IsolateSandbox,
     problemDataCache: ProblemDataCache,
     runtimes: Map[SubmissionLanguage, JudgeRuntime]
+  ): IO[Either[String, Option[Array[Byte]]]] =
+    if !subtask.hack.enabled then IO.pure(Left("Hack is disabled for this subtask."))
+    else
+      subtask.hack.answerGeneration match
+        case JudgeTaskHackConfig.NoAnswerGeneration => IO.pure(Right(None))
+        case JudgeTaskHackConfig.StandardAnswerGeneration =>
+          (subtask.standard, templateHackTestcase(subtask)) match
+            case (None, _) => IO.pure(Left("Target subtask has no answer generator."))
+            case (_, None) => IO.pure(Left("Target subtask has no testcase template."))
+            case (Some(standard), Some(template)) =>
+              runAnswerGenerator(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes, standard, template).map(_.map(Some(_)))
+        case other => IO.pure(Left(s"Unsupported hack answer generation mode: $other."))
+
+  private def runAnswerGenerator(
+    hackTask: HackTask,
+    subtask: JudgeTaskSubtask,
+    input: Array[Byte],
+    config: AppConfig,
+    workingDirectory: Path,
+    sandbox: IsolateSandbox,
+    problemDataCache: ProblemDataCache,
+    runtimes: Map[SubmissionLanguage, JudgeRuntime],
+    standard: JudgeTaskStandard,
+    template: JudgeTaskTestcase
   ): IO[Either[String, Array[Byte]]] =
-    (subtask.standard, templateHackTestcase(subtask)) match
-      case (None, _) => IO.pure(Left("Target subtask has no standard solution."))
-      case (_, None) => IO.pure(Left("Target subtask has no testcase template."))
-      case (Some(standard), Some(template)) =>
-        runtimes.get(standard.language) match
-          case None => IO.pure(Left("Standard language is not supported by this judger."))
-          case Some(runtime) =>
-            problemDataCache.loadBytes(hackTask.targetTask.problemSlug, hackTask.targetTask.problemDataVersion, standard.source).attempt.flatMap {
-              case Left(error) => IO.pure(Left(s"Standard source could not be loaded: ${Option(error.getMessage).getOrElse(error.getClass.getName)}"))
-              case Right(sourceBytes) =>
-                val sourceCode = SubmissionSourceCode(new String(sourceBytes, StandardCharsets.UTF_8))
-                runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, None, config, workingDirectory).flatMap {
-                  case Left(ProgramPrepareFailure.CompileError) => IO.pure(Left("Standard solution failed to compile."))
-                  case Left(ProgramPrepareFailure.SystemError(reason)) => IO.pure(Left(s"Standard solution failed to prepare: ${JudgeFailureReason.render(reason)}."))
-                  case Right(command) =>
-                    sandbox
-                      .run(
-                        SandboxExecutionRequest(
-                          phase = s"hack-standard-${hackTask.hackId}-${subtask.index}",
-                          command = command.command,
-                          args = command.args,
-                          stdin = Some(input),
-                          limits = SandboxLimits.runtime(template.limits.timeMs.value.toLong, template.limits.memoryMb.value),
-                          processLimit = command.processLimit
-                        ),
-                        workingDirectory
-                      )
-                      .map { result =>
-                        if result.timedOut then Left(renderDetail("Standard solution timed out.", result))
-                        else if result.exitCode.getOrElse(-1) != 0 then Left(renderDetail("Standard solution failed at runtime.", result))
-                        else Right(result.stdout.getBytes(StandardCharsets.UTF_8))
-                      }
-                }
+    runtimes.get(standard.language) match
+      case None => IO.pure(Left("Answer generator language is not supported by this judger."))
+      case Some(runtime) =>
+        problemDataCache.loadBytes(hackTask.targetTask.problemSlug, hackTask.targetTask.problemDataVersion, standard.source).attempt.flatMap {
+          case Left(error) => IO.pure(Left(s"Answer generator source could not be loaded: ${Option(error.getMessage).getOrElse(error.getClass.getName)}"))
+          case Right(sourceBytes) =>
+            val sourceCode = SubmissionSourceCode(new String(sourceBytes, StandardCharsets.UTF_8))
+            runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, None, config, workingDirectory).flatMap {
+              case Left(ProgramPrepareFailure.CompileError) => IO.pure(Left("Answer generator failed to compile."))
+              case Left(ProgramPrepareFailure.SystemError(reason)) => IO.pure(Left(s"Answer generator failed to prepare: ${JudgeFailureReason.render(reason)}."))
+              case Right(command) =>
+                sandbox
+                  .run(
+                    SandboxExecutionRequest(
+                      phase = s"hack-standard-${hackTask.hackId}-${subtask.index}",
+                      command = command.command,
+                      args = command.args,
+                      stdin = Some(input),
+                      limits = SandboxLimits.runtime(template.limits.timeMs.value.toLong, template.limits.memoryMb.value),
+                      processLimit = command.processLimit
+                    ),
+                    workingDirectory
+                  )
+                  .map { result =>
+                    if result.timedOut then Left(renderDetail("Answer generator timed out.", result))
+                    else if result.exitCode.getOrElse(-1) != 0 then Left(renderDetail("Answer generator failed at runtime.", result))
+                    else Right(result.stdout.getBytes(StandardCharsets.UTF_8))
+                  }
             }
+        }
 
   private def runTargetOnHack(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
     input: Array[Byte],
-    answer: Array[Byte],
+    answerBytes: Option[Array[Byte]],
     config: AppConfig,
     workingDirectory: Path,
     sandbox: IsolateSandbox,
@@ -319,11 +341,11 @@ object JudgeExecutor:
             selectTraditionalProgram(hackTask.targetTask, subtask, testcase, programs) match
               case TraditionalProgramSelection.CompileError => IO.pure(testcaseCompileError(testcase))
               case TraditionalProgramSelection.TextOutput(output) =>
-                runTraditionalTextTestcaseData(hackTask.targetTask, testcase, workingDirectory, sandbox, input, Some(answer), output, tools)
+                runTraditionalTextTestcaseData(hackTask.targetTask, testcase, workingDirectory, sandbox, input, answerBytes, output, tools)
               case TraditionalProgramSelection.Command(command) =>
-                runTraditionalTestcaseData(hackTask.targetTask, subtask, testcase, workingDirectory, sandbox, input, Some(answer), command, tools)
+                runTraditionalTestcaseData(hackTask.targetTask, subtask, testcase, workingDirectory, sandbox, input, answerBytes, command, tools)
           case "interactive" =>
-            runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answer, workingDirectory, sandbox, programs, tools)
+            runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answerBytes, workingDirectory, sandbox, programs, tools)
           case _ =>
             IO.pure(testcaseSystemError(testcase, JudgeFailureReason.SystemError))
 
@@ -333,7 +355,7 @@ object JudgeExecutor:
     subtask: JudgeTaskSubtask,
     testcase: JudgeTaskTestcase,
     input: Array[Byte],
-    answer: Array[Byte],
+    answerBytes: Option[Array[Byte]],
     workingDirectory: Path,
     sandbox: IsolateSandbox,
     programs: PreparedPrograms,
@@ -376,7 +398,7 @@ object JudgeExecutor:
                               testcaseSystemError(testcase, JudgeFailureReason.SystemError)
                         }
                       else
-                        scoreInteractiveRun(hackTask.targetTask, testcase, workingDirectory, sandbox, input, Some(answer), tools, strategyProvider, runResult)
+                        scoreInteractiveRun(hackTask.targetTask, testcase, workingDirectory, sandbox, input, answerBytes, tools, strategyProvider, runResult)
                   }
             }
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { SubmissionHackAvailability } from '@/objects/hack/response/SubmissionHackAvailability'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import {
@@ -20,14 +21,16 @@ import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmissionJudgeResultCardProps = {
+  hackAvailability: SubmissionHackAvailability | null
   judgeResult: JudgeResult
   submissionId: SubmissionId
 }
 
-export function SubmissionJudgeResultCard({ judgeResult, submissionId }: SubmissionJudgeResultCardProps) {
+export function SubmissionJudgeResultCard({ hackAvailability, judgeResult, submissionId }: SubmissionJudgeResultCardProps) {
   const { t } = useI18n()
   const singleSubtask = judgeResult.subtasks.length === 1 ? judgeResult.subtasks[0] : null
-  const singleSubtaskCanHack = singleSubtask !== null && singleSubtask.worstResult.score > 0
+  const hackAvailabilityBySubtask = new Map(hackAvailability?.subtasks.map((subtask) => [subtask.subtaskIndex, subtask.canHack]) ?? [])
+  const singleSubtaskCanHack = singleSubtask !== null && hackAvailabilityBySubtask.get(singleSubtask.index) === true
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -70,7 +73,7 @@ export function SubmissionJudgeResultCard({ judgeResult, submissionId }: Submiss
           </div>
         ) : (
           judgeResult.subtasks.map((subtask) => {
-            const canHackSubtask = subtask.worstResult.score > 0
+            const canHackSubtask = hackAvailabilityBySubtask.get(subtask.index) === true
 
             return (
               <div key={subtask.index} className="rounded-lg border border-slate-200">

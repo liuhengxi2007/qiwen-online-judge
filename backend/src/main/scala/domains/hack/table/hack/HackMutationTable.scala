@@ -150,7 +150,7 @@ object HackMutationTable:
     id: UUID,
     hackId: HackId,
     source: CompletedAttemptSource,
-    answer: String,
+    answer: Option[String],
     createdAt: Instant
   ): IO[Unit] =
     IO.blocking {
@@ -161,7 +161,9 @@ object HackMutationTable:
         statement.setLong(3, hackId.value)
         statement.setInt(4, source.subtaskIndex)
         statement.setString(5, source.input)
-        statement.setString(6, answer)
+        answer match
+          case Some(value) => statement.setString(6, value)
+          case None => statement.setNull(6, java.sql.Types.VARCHAR)
         source.strategyProviderSource match
           case Some(value) => statement.setString(7, value)
           case None => statement.setNull(7, java.sql.Types.VARCHAR)

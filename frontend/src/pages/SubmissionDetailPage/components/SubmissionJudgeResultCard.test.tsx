@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { SubmissionJudgeResultCard } from './SubmissionJudgeResultCard'
 import type { JudgeResult } from '@/objects/submission/JudgeResult'
@@ -25,61 +25,69 @@ vi.mock('@/system/i18n/use-i18n', () => ({
   }),
 }))
 
+afterEach(() => {
+  cleanup()
+})
+
 describe('SubmissionJudgeResultCard', () => {
-  it('omits duplicate aggregation summaries when there is only one subtask', () => {
-    const judgeResult: JudgeResult = {
-      baseResult: {
-        score: 0,
-        verdict: 'wrong_answer',
-        reason: null,
-        timeUsedMs: 30,
-        memoryUsedKb: 3460,
-      },
-      worstResult: {
-        score: 0,
-        verdict: 'system_error',
-        reason: 'checker_runtime_failed',
-        timeUsedMs: 60,
-        memoryUsedKb: 4096,
-      },
-      subtasks: [
-        {
-          index: 1,
-          label: 'main',
-          baseResult: {
+  const judgeResult: JudgeResult = {
+    baseResult: {
+      score: 0,
+      verdict: 'wrong_answer',
+      reason: null,
+      timeUsedMs: 30,
+      memoryUsedKb: 3460,
+    },
+    worstResult: {
+      score: 0,
+      verdict: 'system_error',
+      reason: 'checker_runtime_failed',
+      timeUsedMs: 60,
+      memoryUsedKb: 4096,
+    },
+    subtasks: [
+      {
+        index: 1,
+        label: 'main',
+        baseResult: {
+          score: 0,
+          verdict: 'wrong_answer',
+          reason: null,
+          timeUsedMs: 30,
+          memoryUsedKb: 3460,
+        },
+        worstResult: {
+          score: 1,
+          verdict: 'wrong_answer',
+          reason: null,
+          timeUsedMs: 60,
+          memoryUsedKb: 4096,
+        },
+        testcases: [
+          {
+            index: 1,
+            label: '1',
+            testcaseType: 'main',
             score: 0,
             verdict: 'wrong_answer',
+            message: 'checker report',
             reason: null,
             timeUsedMs: 30,
             memoryUsedKb: 3460,
           },
-          worstResult: {
-            score: 1,
-            verdict: 'wrong_answer',
-            reason: null,
-            timeUsedMs: 60,
-            memoryUsedKb: 4096,
-          },
-          testcases: [
-            {
-              index: 1,
-              label: '1',
-              testcaseType: 'main',
-              score: 0,
-              verdict: 'wrong_answer',
-              message: 'checker report',
-              reason: null,
-              timeUsedMs: 30,
-              memoryUsedKb: 3460,
-            },
-          ],
-        },
-      ],
-    }
+        ],
+      },
+    ],
+  }
 
+  it('omits duplicate aggregation summaries when there is only one subtask', () => {
     const { container } = render(
       <MemoryRouter>
-        <SubmissionJudgeResultCard judgeResult={judgeResult} submissionId={1 as SubmissionId} />
+        <SubmissionJudgeResultCard
+          hackAvailability={{ subtasks: [{ subtaskIndex: 1, canHack: true, reason: null }] }}
+          judgeResult={judgeResult}
+          submissionId={1 as SubmissionId}
+        />
       </MemoryRouter>,
     )
 
@@ -92,5 +100,15 @@ describe('SubmissionJudgeResultCard', () => {
     expect(screen.getByText('checker_runtime_failed')).toBeTruthy()
     expect(container.textContent).not.toContain('Wrong Answer · 0')
     expect(container.textContent).not.toContain('30 ms · 3.38 MiB')
+  })
+
+  it('does not render Hack from score alone', () => {
+    render(
+      <MemoryRouter>
+        <SubmissionJudgeResultCard hackAvailability={null} judgeResult={judgeResult} submissionId={1 as SubmissionId} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Hack' })).toBeNull()
   })
 })
