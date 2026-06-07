@@ -2,7 +2,7 @@ package domains.hack.table.hack
 
 import cats.effect.IO
 import domains.hack.objects.{HackId, HackStatus}
-import domains.problem.objects.ProblemId
+import domains.problem.objects.{ProblemId, ProblemSlug}
 import domains.submission.objects.SubmissionId
 import domains.user.objects.Username
 import domains.hack.table.hack.HackTableSupport.*
@@ -65,7 +65,7 @@ object HackMutationTable:
 
   private val completeAttemptSQL: String =
     """
-      |update hack_attempts
+      |update hack_attempts h
       |set status = ?,
       |    answer_text = ?,
       |    new_score = ?,
@@ -73,16 +73,18 @@ object HackMutationTable:
       |    standard_message = ?,
       |    target_message = ?,
       |    finished_at = ?
-      |where public_id = ?
-      |  and status = 'running'
-      |returning problem_id, subtask_index, input_text, strategy_provider_source, author_username
+      |from problems p
+      |where h.public_id = ?
+      |  and h.status = 'running'
+      |  and p.id = h.problem_id
+      |returning h.problem_id, p.slug as problem_slug, h.subtask_index, h.input_text, h.author_username
       |""".stripMargin
 
   final case class CompletedAttemptSource(
     problemId: ProblemId,
+    problemSlug: ProblemSlug,
     subtaskIndex: Int,
     input: String,
-    strategyProviderSource: Option[String],
     authorUsername: Username
   )
 
@@ -124,53 +126,14 @@ object HackMutationTable:
             Some(
               CompletedAttemptSource(
                 problemId = ProblemId(resultSet.getObject("problem_id", classOf[UUID])),
+                problemSlug = ProblemSlug(resultSet.getString("problem_slug")),
                 subtaskIndex = resultSet.getInt("subtask_index"),
                 input = resultSet.getString("input_text"),
-                strategyProviderSource = Option(resultSet.getString("strategy_provider_source")),
                 authorUsername = Username.canonical(resultSet.getString("author_username"))
               )
             )
           else None
         finally resultSet.close()
-      finally statement.close()
-    }
-
-  private val insertProblemHackTestcaseSQL: String =
-    """
-      |insert into problem_hack_testcases (
-      |  id, problem_id, hack_attempt_public_id, subtask_index, input_text,
-      |  answer_text, strategy_provider_source, created_by_username, created_at
-      |)
-      |values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      |on conflict (hack_attempt_public_id) do nothing
-      |""".stripMargin
-
-  def insertProblemHackTestcase(
-    connection: Connection,
-    id: UUID,
-    hackId: HackId,
-    source: CompletedAttemptSource,
-    answer: Option[String],
-    createdAt: Instant
-  ): IO[Unit] =
-    IO.blocking {
-      val statement = connection.prepareStatement(insertProblemHackTestcaseSQL)
-      try
-        statement.setObject(1, id)
-        statement.setObject(2, source.problemId.value)
-        statement.setLong(3, hackId.value)
-        statement.setInt(4, source.subtaskIndex)
-        statement.setString(5, source.input)
-        answer match
-          case Some(value) => statement.setString(6, value)
-          case None => statement.setNull(6, java.sql.Types.VARCHAR)
-        source.strategyProviderSource match
-          case Some(value) => statement.setString(7, value)
-          case None => statement.setNull(7, java.sql.Types.VARCHAR)
-        statement.setString(8, source.authorUsername.value)
-        statement.setTimestamp(9, Timestamp.from(createdAt))
-        statement.executeUpdate()
-        ()
       finally statement.close()
     }
 

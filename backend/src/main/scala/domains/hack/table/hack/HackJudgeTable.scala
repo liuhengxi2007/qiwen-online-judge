@@ -8,14 +8,11 @@ import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgram
 import domains.user.objects.Username
 import domains.hack.table.hack.HackTableSupport.*
 import io.circe.parser.decode
-import judgeprotocol.objects.response.{JudgeResult, JudgeTaskFileRef}
+import judgeprotocol.objects.response.JudgeResult
 
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 import java.util.UUID
-import scala.util.matching.Regex
 
 object HackJudgeTable:
 
@@ -27,13 +24,6 @@ object HackJudgeTable:
     input: String,
     strategyProviderSource: Option[String],
     oldResult: JudgeResult
-  )
-
-  final case class ProblemHackTestcaseRecord(
-    hackId: HackId,
-    subtaskIndex: Int,
-    inputRef: JudgeTaskFileRef,
-    answerRef: Option[JudgeTaskFileRef]
   )
 
   private def claimNextSQL(languageCount: Int): String =
@@ -99,63 +89,6 @@ object HackJudgeTable:
       finally statement.close()
     }
 
-  private val listProblemHackTestcasesSQL: String =
-    """
-      |select hack_attempt_public_id, subtask_index, input_text, answer_text
-      |from problem_hack_testcases
-      |where problem_id = ?
-      |order by created_at asc, hack_attempt_public_id asc
-      |""".stripMargin
-
-  def listProblemHackTestcases(connection: Connection, problemId: ProblemId): IO[List[ProblemHackTestcaseRecord]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(listProblemHackTestcasesSQL)
-      try
-        statement.setObject(1, problemId.value)
-        val resultSet = statement.executeQuery()
-        try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map(_ => readProblemHackTestcase(resultSet))
-            .toList
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private val HackPathPattern: Regex = """^__hack__/([1-9][0-9]*)\.(in|ans)$""".r
-
-  private val readHackDataByPathSQL: String =
-    """
-      |select pht.input_text, pht.answer_text
-      |from problem_hack_testcases pht
-      |join problems p on p.id = pht.problem_id
-      |where p.slug = ?
-      |  and pht.hack_attempt_public_id = ?
-      |""".stripMargin
-
-  def readHackDataByPath(connection: Connection, problemSlug: ProblemSlug, rawPath: String): IO[Option[(String, Array[Byte])]] =
-    rawPath match
-      case HackPathPattern(rawHackId, extension) =>
-        IO.blocking {
-          val statement = connection.prepareStatement(readHackDataByPathSQL)
-          try
-            statement.setString(1, problemSlug.value)
-            statement.setLong(2, rawHackId.toLong)
-            val resultSet = statement.executeQuery()
-            try
-              if resultSet.next() then
-                val content =
-                  if extension == "in" then Some(resultSet.getString("input_text"))
-                  else Option(resultSet.getString("answer_text"))
-                content.map(value => rawPath.split('/').last -> value.getBytes(StandardCharsets.UTF_8))
-              else None
-            finally resultSet.close()
-          finally statement.close()
-        }
-      case _ =>
-        IO.pure(None)
-
   private def readClaimedHackAttempt(resultSet: ResultSet): ClaimedHackAttemptRecord =
     val targetSubmission =
       ClaimedSubmission(
@@ -174,33 +107,6 @@ object HackJudgeTable:
       oldResult = decode[JudgeResult](resultSet.getString("old_result"))
         .fold(error => throw IllegalStateException(s"Invalid target judge result JSON: ${error.getMessage}"), identity)
     )
-
-  private def readProblemHackTestcase(resultSet: ResultSet): ProblemHackTestcaseRecord =
-    val hackId = HackId(resultSet.getLong("hack_attempt_public_id"))
-    val input = resultSet.getString("input_text").getBytes(StandardCharsets.UTF_8)
-    val answer = Option(resultSet.getString("answer_text")).map(_.getBytes(StandardCharsets.UTF_8))
-    ProblemHackTestcaseRecord(
-      hackId = hackId,
-      subtaskIndex = resultSet.getInt("subtask_index"),
-      inputRef = fileRef(inputPath(hackId), input),
-      answerRef = answer.map(bytes => fileRef(answerPath(hackId), bytes))
-    )
-
-  def inputPath(hackId: HackId): String =
-    s"__hack__/${hackId.value}.in"
-
-  def answerPath(hackId: HackId): String =
-    s"__hack__/${hackId.value}.ans"
-
-  private def fileRef(path: String, bytes: Array[Byte]): JudgeTaskFileRef =
-    JudgeTaskFileRef.unsafe(path, bytes.length.toLong, sha256Hex(bytes))
-
-  private def sha256Hex(bytes: Array[Byte]): String =
-    MessageDigest
-      .getInstance("SHA-256")
-      .digest(bytes)
-      .map("%02x".format(_))
-      .mkString
 
   private def readProgramManifest(raw: String): SubmissionProgramManifest =
     decode[SubmissionProgramManifest](raw)

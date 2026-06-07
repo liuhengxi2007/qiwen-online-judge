@@ -278,6 +278,28 @@ subtasks:
     }
   })
 
+  it('accepts answerless hack testcase with builtin exact checker', () => {
+    const yaml = `version: 2
+hack: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - type: hack
+        input: hacks/7.in
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, [...templateFiles, file('hacks/7.in')]).ok).toBe(true)
+  })
+
   it('rejects out-of-range limits', () => {
     const yaml = `version: 2
 hack: false

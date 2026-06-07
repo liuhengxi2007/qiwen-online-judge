@@ -6,7 +6,7 @@ import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTaskBuilder
 import domains.judge.utils.JudgeTokenAuth
 import domains.judger.api.GetActiveJudgerSupportedLanguages
-import domains.hack.api.{ClaimNextHackAttempt, ClaimedHackAttempt, ListProblemHackTestcasesForJudge}
+import domains.hack.api.{ClaimNextHackAttempt, ClaimedHackAttempt, RecordHackAttemptResult}
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
@@ -126,8 +126,8 @@ final case class ClaimJudgeTask(
                 standardMessage = None,
                 targetMessage = Some(error.message)
               )
-              domains.hack.api.RecordHackAttemptResult
-                .plan(connection, domains.hack.api.RecordHackAttemptResult.input(claimedHack.hackId, request))
+              RecordHackAttemptResult(problemDataStorage)
+                .plan(connection, RecordHackAttemptResult.input(claimedHack.hackId, request))
                 .as(None)
             case Right(task) =>
               IO.pure(Some(taskResponse(JudgeWorkerTask.hack(task))))
@@ -142,7 +142,7 @@ final case class ClaimJudgeTask(
       case None =>
         IO.pure(Left(JudgeTaskBuilder.BuildError("Problem not found for claimed submission.", JudgeFailureReason.JudgeTaskBuildFailed)))
       case Some(manifest) =>
-        loadGeneratedHackTestcases(connection, claimedSubmission).flatMap(hackTestcases => loadConfig(claimedSubmission, manifest, hackTestcases))
+        loadConfig(claimedSubmission, manifest)
     }
 
   private def buildHackTask(
@@ -153,8 +153,7 @@ final case class ClaimJudgeTask(
       case None =>
         IO.pure(Left(JudgeTaskBuilder.BuildError("Problem not found for claimed hack attempt.", JudgeFailureReason.JudgeTaskBuildFailed)))
       case Some(manifest) =>
-        loadGeneratedHackTestcases(connection, claimedHack.targetSubmission)
-          .flatMap(hackTestcases => loadConfig(claimedHack.targetSubmission, manifest, hackTestcases))
+        loadConfig(claimedHack.targetSubmission, manifest)
           .map(_.map(task =>
             HackTask(
               hackId = claimedHack.hackId.value,
@@ -178,8 +177,7 @@ final case class ClaimJudgeTask(
 
   private def loadConfig(
     claimedSubmission: ClaimedSubmission,
-    manifest: ProblemDataManifest,
-    hackTestcases: List[JudgeTaskBuilder.GeneratedHackTestcase]
+    manifest: ProblemDataManifest
   ): IO[Either[JudgeTaskBuilder.BuildError, JudgeTask]] =
     ProblemDataPath.parse("judge.yaml") match
       case Left(message) =>
@@ -195,24 +193,9 @@ final case class ClaimJudgeTask(
           case Right(bytes) =>
             submissionProgramStorage.readSources(claimedSubmission.programManifest).map {
               case Left(message) => Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed))
-              case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases)
+              case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest)
             }
         }
-
-  private def loadGeneratedHackTestcases(
-    connection: Connection,
-    claimedSubmission: ClaimedSubmission
-  ): IO[List[JudgeTaskBuilder.GeneratedHackTestcase]] =
-    ListProblemHackTestcasesForJudge.plan(connection, claimedSubmission.problemId).map {
-      _.map(testcase =>
-        JudgeTaskBuilder.GeneratedHackTestcase(
-          subtaskIndex = testcase.subtaskIndex,
-          label = Some(s"hack #${testcase.hackId.value}"),
-          input = testcase.inputRef,
-          answer = testcase.answerRef
-        )
-      )
-    }
 
   private def failClaimedJudgeTask(
     connection: Connection,

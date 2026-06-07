@@ -23,6 +23,6 @@ object JudgeRouter:
         ClaimJudgeTask(judgeConfig, problemDataStorage, submissionProgramStorage),
         DownloadJudgeProblemData(judgeConfig, problemDataStorage),
         CompleteJudgeSubmission(judgeConfig),
-        CompleteHackAttempt(judgeConfig)
+        CompleteHackAttempt(judgeConfig, problemDataStorage)
       )
     )

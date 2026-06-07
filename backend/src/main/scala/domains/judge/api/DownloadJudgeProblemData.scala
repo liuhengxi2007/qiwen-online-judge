@@ -4,7 +4,6 @@ import cats.effect.IO
 import domains.auth.api.PublicResponseApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
-import domains.hack.api.ReadHackProblemData
 import domains.problem.utils.ProblemDataStorage
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.Stream
@@ -35,17 +34,13 @@ final case class DownloadJudgeProblemData(
     yield (problemSlug, path)
 
   override def plan(connection: Connection, input: (ProblemSlug, ProblemDataPath)): IO[Response[IO]] =
+    val _ = connection
     val (problemSlug, path) = input
-    ReadHackProblemData.plan(connection, ReadHackProblemData.input(problemSlug, path.value)).flatMap {
-      case Some((filename, bytes)) =>
-        IO.pure(bytesResponse(filename, bytes))
+    problemDataStorage.readPath(problemSlug, path).flatMap {
       case None =>
-        problemDataStorage.readPath(problemSlug, path).flatMap {
-          case None =>
-            HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
-          case Some((storedPath, bytes)) =>
-            IO.pure(bytesResponse(storedPath.fileName, bytes))
-        }
+        HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
+      case Some((storedPath, bytes)) =>
+        IO.pure(bytesResponse(storedPath.fileName, bytes))
     }
 
   private def bytesResponse(filename: String, bytes: Array[Byte]): Response[IO] =

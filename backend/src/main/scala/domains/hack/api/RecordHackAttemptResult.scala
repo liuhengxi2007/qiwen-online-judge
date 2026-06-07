@@ -2,9 +2,11 @@ package domains.hack.api
 
 import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
+import domains.hack.application.HackProblemDataMaterializer
 import domains.hack.objects.{HackId, HackStatus}
 import domains.hack.table.hack.HackMutationTable
 import domains.problem.objects.ProblemId
+import domains.problem.utils.ProblemDataStorage
 import judgeprotocol.objects.request.ReportHackResultRequest
 import org.http4s.Method
 import shared.api.ApiPath
@@ -16,13 +18,10 @@ final case class RecordHackAttemptResultInput(
   request: ReportHackResultRequest
 )
 
-object RecordHackAttemptResult extends InternalOnlyApi[RecordHackAttemptResultInput, Option[ProblemId]]:
+final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage) extends InternalOnlyApi[RecordHackAttemptResultInput, Option[ProblemId]]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/hacks/judge/result")
-
-  def input(hackId: HackId, request: ReportHackResultRequest): RecordHackAttemptResultInput =
-    RecordHackAttemptResultInput(hackId = hackId, request = request)
 
   override def plan(connection: Connection, input: RecordHackAttemptResultInput): IO[Option[ProblemId]] =
     for
@@ -42,10 +41,12 @@ object RecordHackAttemptResult extends InternalOnlyApi[RecordHackAttemptResultIn
       problemId <- (status, completed) match
         case (HackStatus.Success, Some(source)) =>
           for
-            testcaseId <- IO.randomUUID
-            _ <- HackMutationTable.insertProblemHackTestcase(connection, testcaseId, input.hackId, source, input.request.answer, finishedAt)
-            _ <- HackMutationTable.incrementProblemHackRevision(connection, source.problemId)
+            _ <- HackProblemDataMaterializer.materializeSuccessfulHack(connection, problemDataStorage, input.hackId, source, input.request.answer, finishedAt)
           yield Some(source.problemId)
         case _ =>
           IO.pure(None)
     yield problemId
+
+object RecordHackAttemptResult:
+  def input(hackId: HackId, request: ReportHackResultRequest): RecordHackAttemptResultInput =
+    RecordHackAttemptResultInput(hackId = hackId, request = request)

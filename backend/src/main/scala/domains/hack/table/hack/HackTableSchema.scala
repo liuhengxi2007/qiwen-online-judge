@@ -36,25 +36,9 @@ object HackTableSchema:
       |);
       |""".stripMargin
 
-  val initProblemHackTestcaseTableSql: String =
+  val dropProblemHackTestcaseTableSql: String =
     """
-      |create table if not exists problem_hack_testcases (
-      |  id uuid primary key,
-      |  problem_id uuid not null references problems(id) on delete cascade,
-      |  hack_attempt_public_id bigint not null unique references hack_attempts(public_id) on delete cascade,
-      |  subtask_index integer not null,
-      |  input_text text not null,
-      |  answer_text text,
-      |  strategy_provider_source text,
-      |  created_by_username varchar(120) not null references auth_accounts(username),
-      |  created_at timestamp not null
-      |);
-      |""".stripMargin
-
-  val allowProblemHackTestcaseAnswerNullSql: String =
-    """
-      |alter table problem_hack_testcases
-      |alter column answer_text drop not null
+      |drop table if exists problem_hack_testcases
       |""".stripMargin
 
   val addPublicIdUniqueConstraintSql: String =
@@ -79,8 +63,6 @@ object HackTableSchema:
       |  on hack_attempts (status, created_at asc, public_id asc);
       |create index if not exists hack_attempts_target_submission_idx
       |  on hack_attempts (target_submission_public_id);
-      |create index if not exists problem_hack_testcases_problem_idx
-      |  on problem_hack_testcases (problem_id, subtask_index, created_at asc);
       |""".stripMargin
 
   def initialize(connection: Connection): IO[Unit] =
@@ -91,8 +73,7 @@ object HackTableSchema:
           createPublicIdSequenceSql,
           initAttemptTableSql,
           addPublicIdUniqueConstraintSql,
-          initProblemHackTestcaseTableSql,
-          allowProblemHackTestcaseAnswerNullSql,
+          dropProblemHackTestcaseTableSql,
           createIndexesSql
         ).foreach(statement.execute)
       finally statement.close()

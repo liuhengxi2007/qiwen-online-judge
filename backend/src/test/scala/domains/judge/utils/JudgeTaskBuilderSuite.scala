@@ -606,6 +606,44 @@ class JudgeTaskBuilderSuite extends FunSuite:
     assertEquals(hackResult.left.toOption, Some("scoreRatio cannot be declared on subtask 1 testcase 1 when type is hack."))
   }
 
+  test("parseConfigBytes accepts answerless hack testcase with builtin exact checker") {
+    val manifestWithHack = ProblemDataManifest.fromEntries(
+      claimedSubmission.problemSlug,
+      manifest.entries :+ entry("hacks/7.in")
+    )
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |aggregation:
+        |  testcases: sum_max_max
+        |subtasks:
+        |  - testcases:
+        |      - type: hack
+        |        input: hacks/7.in
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifestWithHack
+    )
+
+    assert(result.isRight)
+    result.foreach { task =>
+      val hackTestcase = task.subtasks.head.testcases.head
+      assertEquals(hackTestcase.testcaseType, JudgeTestcaseType.Hack)
+      assertEquals(hackTestcase.answer, None)
+      assertEquals(hackTestcase.scoreRatio, BigDecimal(0))
+    }
+  }
+
   test("parseConfigBytes rejects subtasks without a main testcase") {
     val result = JudgeTaskBuilder.parseConfigBytes(
       yaml("""

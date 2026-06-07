@@ -208,7 +208,7 @@ export function validateJudgeConfigYaml(
 
           validateRequiredFileRef(testcase.input, `${testcaseLabel}.input`, ctx)
           validateOptionalFileRef(testcase.answer, `${testcaseLabel}.answer`, ctx)
-          if (testcaseChecker?.type === 'builtin' && testcaseChecker.name === 'exact' && testcase.answer === undefined) {
+          if (testcaseType !== 'hack' && testcaseChecker?.type === 'builtin' && testcaseChecker.name === 'exact' && testcase.answer === undefined) {
             ctx.errors.push(`${testcaseLabel}.answer is required for builtin exact checker.`)
           }
         })

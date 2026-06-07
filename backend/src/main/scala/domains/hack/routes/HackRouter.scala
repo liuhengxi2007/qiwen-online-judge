@@ -28,8 +28,6 @@ object HackRouter:
         GetHack,
         ListHacks,
         ClaimNextHackAttempt,
-        ListProblemHackTestcasesForJudge,
-        ReadHackProblemData,
-        RecordHackAttemptResult
+        RecordHackAttemptResult(problemDataStorage)
       )
     )

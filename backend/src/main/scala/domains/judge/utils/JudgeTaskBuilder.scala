@@ -19,13 +19,6 @@ object JudgeTaskBuilder:
     resultDisplayMode: SubmissionResultDisplayMode
   )
 
-  final case class GeneratedHackTestcase(
-    subtaskIndex: Int,
-    label: Option[String],
-    input: JudgeTaskFileRef,
-    answer: Option[JudgeTaskFileRef]
-  )
-
   final case class BuildError(
     message: String,
     reason: JudgeFailureReason
@@ -58,10 +51,9 @@ object JudgeTaskBuilder:
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest,
-    hackTestcases: List[GeneratedHackTestcase] = Nil
+    manifest: ProblemDataManifest
   ): Either[BuildError, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
@@ -75,26 +67,24 @@ object JudgeTaskBuilder:
     sourceCode: domains.submission.objects.SubmissionSourceCode,
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
-    parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, Nil)
+    parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest)
 
   private[utils] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest,
-    hackTestcases: List[GeneratedHackTestcase] = Nil
+    manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, hackTestcases).left.map(_.message)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest).left.map(_.message)
 
   private def parseConfigBytesDetailed(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest,
-    hackTestcases: List[GeneratedHackTestcase]
+    manifest: ProblemDataManifest
   ): Either[BuildError, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, sourceCodes, manifest, root, hackTestcases).map(_.task)
+      buildFromYaml(claimedSubmission, sourceCodes, manifest, root).map(_.task)
     }
 
   def validateSubmissionProgramsForConfig(
@@ -123,7 +113,7 @@ object JudgeTaskBuilder:
         sourceCode
       )
     )
-    parseYaml(bytes).flatMap(root => buildFromYaml(claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, root, Nil)).flatMap { built =>
+    parseYaml(bytes).flatMap(root => buildFromYaml(claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, root)).flatMap { built =>
       val task = built.task
       val rawPaths =
         built.roleConfigs.values.toList.flatMap(_.stubs.values.map(_.path.value)) ++
@@ -174,8 +164,7 @@ object JudgeTaskBuilder:
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest,
-    root: Map[String, Any],
-    hackTestcases: List[GeneratedHackTestcase]
+    root: Map[String, Any]
   ): Either[BuildError, BuiltTask] =
     for
       version <- optionalIntAt(root, "version").toBuildError.flatMap {
@@ -210,8 +199,7 @@ object JudgeTaskBuilder:
           parentHack = rootHack,
           parentMode = rootMode,
           parentStrategyProvider = rootStrategyProvider,
-          parentAggregation = rootAggregation,
-          hackTestcases = hackTestcases.filter(_.subtaskIndex == subtaskIndex + 1)
+          parentAggregation = rootAggregation
         )
       })
       programs <- buildPrograms(claimedSubmission, sourceCodes, roleConfigs)
@@ -284,8 +272,7 @@ object JudgeTaskBuilder:
     parentHack: Boolean,
     parentMode: JudgeTaskMode,
     parentStrategyProvider: Option[JudgeTaskTool],
-    parentAggregation: AggregationConfig,
-    hackTestcases: List[GeneratedHackTestcase]
+    parentAggregation: AggregationConfig
   ): Either[BuildError, JudgeTaskSubtask] =
     for
       label <- optionalStringAt(raw, "label").toBuildError
@@ -332,22 +319,6 @@ object JudgeTaskBuilder:
           subtaskLabel = label
         )
       })
-      firstMainTestcase = configuredTestcases.find(_.testcaseType == JudgeTestcaseType.Main).getOrElse(configuredTestcases.head)
-      generatedHackTestcases = hackTestcases.zipWithIndex.map { case (testcase, offset) =>
-        JudgeTaskTestcase(
-          index = configuredTestcases.size + offset + 1,
-          label = testcase.label,
-          testcaseType = JudgeTestcaseType.Hack,
-          scoreRatio = BigDecimal(0),
-          limits = firstMainTestcase.limits,
-          checker = firstMainTestcase.checker,
-          input = testcase.input,
-          answer = testcase.answer,
-          strategyProvider = firstMainTestcase.strategyProvider,
-          roles = firstMainTestcase.roles
-        )
-      }
-      testcases = configuredTestcases ++ generatedHackTestcases
     yield
       JudgeTaskSubtask(
         index = index,
@@ -358,7 +329,7 @@ object JudgeTaskBuilder:
         standard = resolvedStandard,
         hack = hackConfig(effectiveHack, standard),
         aggregation = aggregation.testcases.getOrElse(defaultAggregation),
-        testcases = testcases
+        testcases = configuredTestcases
       )
 
   private def buildTestcase(
@@ -397,7 +368,7 @@ object JudgeTaskBuilder:
       inputRef <- findFile(manifest, inputPath, s"Input file for $label").toBuildError
       answerRef <- answerPath.traverse(path => findFile(manifest, path, s"Answer file for $label")).toBuildError
       _ <- Either.cond(
-        resolvedChecker.`type` != "builtin" || !resolvedChecker.name.contains("exact") || answerRef.nonEmpty,
+        testcaseType == JudgeTestcaseType.Hack || resolvedChecker.`type` != "builtin" || !resolvedChecker.name.contains("exact") || answerRef.nonEmpty,
         (),
         buildError(s"Answer file is required for $label when using builtin exact checker.")
       )
