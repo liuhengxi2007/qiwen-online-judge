@@ -119,6 +119,7 @@ const backendDomainUtilsAllowlist = new Map([
   ['message', new Set(['MessageEventHub.scala'])],
   ['notification', new Set(['NotificationEventHub.scala', 'NotificationStreamEvent.scala'])],
   ['judge', new Set(['JudgeConfig.scala', 'JudgeTaskBuilder.scala', 'JudgeTokenAuth.scala'])],
+  ['rating', new Set(['RatingCalculator.scala'])],
 ])
 
 const pathOf = (...parts) => parts.join('/')

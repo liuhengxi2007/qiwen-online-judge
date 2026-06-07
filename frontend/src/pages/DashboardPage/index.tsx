@@ -1,6 +1,6 @@
 import { Link, Navigate } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
-import { BookCopy, CalendarDays, FileText, Files, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
+import { BookCopy, CalendarDays, FileText, Files, Gauge, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -127,6 +127,16 @@ function DashboardActionGrid({
   ]
 
   if (showSiteManage) {
+    actions.push({
+      title: t('dashboard.ratingManage.title'),
+      description: t('dashboard.ratingManage.description'),
+      openLabel: t('dashboard.ratingManage.open'),
+      to: '/ratings/manage',
+      icon: Gauge,
+      iconClassName: 'bg-amber-100 text-amber-700',
+      buttonClassName: 'bg-amber-300 text-amber-950 hover:bg-amber-400',
+    })
+
     actions.push({
       title: t('dashboard.siteManage.title'),
       description: t('dashboard.siteManage.description'),

@@ -17,6 +17,7 @@ import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.{MinioProblemDataStorage, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
+import domains.rating.table.rating.RatingTable
 import domains.submission.table.submission.SubmissionTable
 import domains.submission.utils.{MinioSubmissionProgramStorage, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
@@ -79,6 +80,7 @@ object Main extends IOApp.Simple:
             _ <- UserGroupTable.initialize(connection)
             _ <- MessageTable.initialize(connection)
             _ <- NotificationTable.initialize(connection)
+            _ <- RatingTable.initialize(connection)
           yield ()
         }
       }

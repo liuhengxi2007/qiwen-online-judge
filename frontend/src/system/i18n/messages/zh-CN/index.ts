@@ -12,6 +12,7 @@ import { zhCnUserSettingsMessages } from '@/system/i18n/messages/zh-CN/userSetti
 import { zhCnUserProfileMessages } from '@/system/i18n/messages/zh-CN/userProfile'
 import { zhCnForbiddenMessages } from '@/system/i18n/messages/zh-CN/forbidden'
 import { zhCnRanklistMessages } from '@/system/i18n/messages/zh-CN/ranklist'
+import { zhCnRatingManageMessages } from '@/system/i18n/messages/zh-CN/ratingManage'
 import { zhCnResourceAccessMessages } from '@/system/i18n/messages/zh-CN/resourceAccess'
 import { zhCnApiMessages } from '@/system/i18n/messages/zh-CN/api'
 import { zhCnMessageMessages } from '@/system/i18n/messages/zh-CN/message'
@@ -34,6 +35,7 @@ export const zhCnMessages: Record<string, string> = {
   ...zhCnUserProfileMessages,
   ...zhCnForbiddenMessages,
   ...zhCnRanklistMessages,
+  ...zhCnRatingManageMessages,
   ...zhCnResourceAccessMessages,
   ...zhCnApiMessages,
   ...zhCnMessageMessages,

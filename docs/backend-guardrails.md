@@ -140,6 +140,7 @@ Current domain-owned utility allowlist:
 - `domains/judge/utils/JudgeConfig.scala`
 - `domains/judge/utils/JudgeTaskBuilder.scala`
 - `domains/judge/utils/JudgeTokenAuth.scala`
+- `domains/rating/utils/RatingCalculator.scala`
 
 These files are domain-owned support code, not endpoint orchestration. Do not use `utils` as a replacement for API-object `plan(...)` bodies. Adding to this list is an explicit architecture decision, not the default place for miscellaneous helpers.
 

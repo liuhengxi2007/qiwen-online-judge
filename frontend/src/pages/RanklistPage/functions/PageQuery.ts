@@ -3,6 +3,6 @@ export function normalizePage(rawPage: string | null): number {
   return Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
 }
 
-export function pagePath(contributionPage: number, acceptedPage: number): string {
-  return `/ranklist?contributionPage=${contributionPage}&acceptedPage=${acceptedPage}`
+export function pagePath(contributionPage: number, acceptedPage: number, ratingPage: number): string {
+  return `/ranklist?contributionPage=${contributionPage}&acceptedPage=${acceptedPage}&ratingPage=${ratingPage}`
 }

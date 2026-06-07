@@ -14,6 +14,7 @@ type AcceptedRanklistCardProps = {
   items: UserAcceptedRanklistItem[]
   isLoading: boolean
   pageSize: number
+  ratingPage: number
   totalPages: number
 }
 
@@ -24,6 +25,7 @@ export function AcceptedRanklistCard({
   items,
   isLoading,
   pageSize,
+  ratingPage,
   totalPages,
 }: AcceptedRanklistCardProps) {
   const { t } = useI18n()
@@ -71,6 +73,7 @@ export function AcceptedRanklistCard({
             acceptedPage={acceptedPage}
             contributionPage={contributionPage}
             currentPage={acceptedPage}
+            ratingPage={ratingPage}
             target="accepted"
             totalPages={totalPages}
           />

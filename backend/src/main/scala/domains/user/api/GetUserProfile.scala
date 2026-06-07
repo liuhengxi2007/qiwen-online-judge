@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.blog.api.GetBlogContributionForAuthor
-
+import domains.rating.api.GetUserRating
 import domains.user.objects.{UserContribution, Username}
 import domains.user.objects.response.UserProfileResponse
 import domains.user.table.user_profile.{UserProfileQueryTable, UserProfileTable}
@@ -35,12 +35,14 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
       case Some(targetProfile) =>
         for
           contribution <- GetBlogContributionForAuthor.plan(connection, targetUsername).map(_.contribution)
+          rating <- GetUserRating.plan(connection, targetUsername)
           acceptedProblems <- UserProfileQueryTable.listAcceptedProblems(connection, targetUsername)
         yield UserProfileResponse(
           username = targetProfile.username,
           displayName = targetProfile.displayName,
           avatarUrl = targetProfile.avatarUrl,
           contribution = UserContribution(BigDecimal(contribution)),
+          rating = rating,
           acceptedProblems = acceptedProblems
         )
     }

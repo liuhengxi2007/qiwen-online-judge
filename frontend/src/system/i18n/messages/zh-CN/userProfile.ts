@@ -24,6 +24,8 @@ export const zhCnUserProfileMessages: Record<string, string> = {
   'userProfile.avatarUploadFailed': '无法上传头像。',
   'userProfile.contribution': '贡献',
   'userProfile.contributionDescription': '博客评分按 1 倍计入，评论评分按 0.1 倍计入，四舍五入为整数。',
+  'userProfile.rating': 'Rating',
+  'userProfile.ratingDescription': '基于管理端 rating 序列计算的比赛 rating。',
   'userProfile.acceptedProblems': '通过的题目',
   'userProfile.showAcceptedProblems': '展开通过题目',
   'userProfile.hideAcceptedProblems': '收起通过题目',

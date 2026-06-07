@@ -33,4 +33,7 @@ export const enDashboardMessages: Record<string, string> = {
   'dashboard.siteManage.title': 'Site Management',
   'dashboard.siteManage.description': 'Review registered users, adjust site-wide permissions, and maintain user accounts.',
   'dashboard.siteManage.open': 'Open Site Management',
+  'dashboard.ratingManage.title': 'Rating Management',
+  'dashboard.ratingManage.description': 'Append ended contests to the rating sequence and rebuild current standings.',
+  'dashboard.ratingManage.open': 'Open Rating Management',
 }

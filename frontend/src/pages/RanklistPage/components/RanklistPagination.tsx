@@ -9,14 +9,16 @@ type RanklistPaginationProps = {
   acceptedPage: number
   contributionPage: number
   currentPage: number
+  ratingPage: number
   totalPages: number
-  target: 'accepted' | 'contribution'
+  target: 'accepted' | 'contribution' | 'rating'
 }
 
 export function RanklistPagination({
   acceptedPage,
   contributionPage,
   currentPage,
+  ratingPage,
   totalPages,
   target,
 }: RanklistPaginationProps) {
@@ -25,8 +27,10 @@ export function RanklistPagination({
   const canGoNext = currentPage < totalPages
   const previousContributionPage = target === 'contribution' ? currentPage - 1 : contributionPage
   const previousAcceptedPage = target === 'accepted' ? currentPage - 1 : acceptedPage
+  const previousRatingPage = target === 'rating' ? currentPage - 1 : ratingPage
   const nextContributionPage = target === 'contribution' ? currentPage + 1 : contributionPage
   const nextAcceptedPage = target === 'accepted' ? currentPage + 1 : acceptedPage
+  const nextRatingPage = target === 'rating' ? currentPage + 1 : ratingPage
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
@@ -36,14 +40,14 @@ export function RanklistPagination({
       <div className="flex gap-2">
         <Button asChild={canGoPrevious} disabled={!canGoPrevious} variant="outline" className="rounded-2xl">
           {canGoPrevious ? (
-            <Link to={pagePath(previousContributionPage, previousAcceptedPage)}>{t('submission.pagination.previous')}</Link>
+            <Link to={pagePath(previousContributionPage, previousAcceptedPage, previousRatingPage)}>{t('submission.pagination.previous')}</Link>
           ) : (
             <span>{t('submission.pagination.previous')}</span>
           )}
         </Button>
         <Button asChild={canGoNext} disabled={!canGoNext} variant="outline" className="rounded-2xl">
           {canGoNext ? (
-            <Link to={pagePath(nextContributionPage, nextAcceptedPage)}>{t('submission.pagination.next')}</Link>
+            <Link to={pagePath(nextContributionPage, nextAcceptedPage, nextRatingPage)}>{t('submission.pagination.next')}</Link>
           ) : (
             <span>{t('submission.pagination.next')}</span>
           )}

@@ -37,6 +37,7 @@ import { SubmissionPage } from '@/pages/SubmissionPage'
 import { UserProfilePage } from '@/pages/UserProfilePage'
 import { UserBlogPage } from '@/pages/UserBlogPage'
 import { RanklistPage } from '@/pages/RanklistPage'
+import { RatingManagePage } from '@/pages/RatingManagePage'
 import { UserSettingsPage } from '@/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/pages/UserGroupDetailPage'
@@ -224,6 +225,10 @@ export const router = createBrowserRouter([
       {
         path: 'ranklist',
         element: <AuthenticatedRoute element={<RanklistPage />} />,
+      },
+      {
+        path: 'ratings/manage',
+        element: <AuthenticatedRoute element={<RatingManagePage />} />,
       },
       {
         path: 'user-groups',

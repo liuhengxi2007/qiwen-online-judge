@@ -28,6 +28,7 @@ object ContestRouter:
         ListContests,
         CreateContest,
         GetContest,
+        GetContestRatingSnapshot,
         RegisterContest,
         UnregisterContest,
         UpdateContest,

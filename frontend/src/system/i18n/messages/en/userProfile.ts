@@ -24,6 +24,8 @@ export const enUserProfileMessages: Record<string, string> = {
   'userProfile.avatarUploadFailed': 'Unable to upload avatar.',
   'userProfile.contribution': 'Contribution',
   'userProfile.contributionDescription': 'Blog rating counts at full weight. Comment rating counts at 0.1 weight, rounded to an integer.',
+  'userProfile.rating': 'Rating',
+  'userProfile.ratingDescription': 'Contest rating from the managed rating sequence.',
   'userProfile.acceptedProblems': 'Accepted problems',
   'userProfile.showAcceptedProblems': 'Show accepted problems',
   'userProfile.hideAcceptedProblems': 'Hide accepted problems',

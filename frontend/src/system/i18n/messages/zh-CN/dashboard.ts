@@ -33,4 +33,7 @@ export const zhCnDashboardMessages: Record<string, string> = {
   'dashboard.siteManage.title': '站点管理',
   'dashboard.siteManage.description': '查看注册用户、调整站点级权限，并维护用户账号。',
   'dashboard.siteManage.open': '打开站点管理',
+  'dashboard.ratingManage.title': 'Rating 管理',
+  'dashboard.ratingManage.description': '追加已结束比赛到 rating 序列，并重算当前排名。',
+  'dashboard.ratingManage.open': '打开 Rating 管理',
 }

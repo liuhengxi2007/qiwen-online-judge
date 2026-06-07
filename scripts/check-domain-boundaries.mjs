@@ -109,6 +109,9 @@ const publicModelTypes = new Map([
     'ProblemSetSlug',
     'ProblemSetTitle',
   ])],
+  ['rating', new Set([
+    'RatingValue',
+  ])],
   ['submission', new Set([
     // Internal claimed-task shape is intentionally consumed by the judge domain.
     'ClaimedSubmission',

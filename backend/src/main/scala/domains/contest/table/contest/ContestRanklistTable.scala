@@ -15,6 +15,13 @@ import java.util.UUID
 
 object ContestRanklistTable:
 
+  final case class RatingSnapshotParticipantRecord(
+    username: Username,
+    rank: ContestRank,
+    totalScore: ContestScore,
+    penaltyMillis: ContestPenaltyMillis
+  )
+
   def listForContest(
     connection: Connection,
     contestId: ContestId,
@@ -27,6 +34,76 @@ object ContestRanklistTable:
       totalItems <- countRows(connection, contestId)
       items <- readRows(connection, contestId, viewerUsername, canViewAllSubmissionDetails, page, pageSize)
     yield PageResponse(items = items, page = page, pageSize = pageSize, totalItems = totalItems)
+
+  private val ratingSnapshotRowsSql: String =
+    """
+      |with per_problem_best as (
+      |  select
+      |    cr.username,
+      |    cp.problem_id,
+      |    best_submission.score,
+      |    best_submission.submitted_at,
+      |    c.start_at
+      |  from contest_registrations cr
+      |  join contests c on c.id = cr.contest_id
+      |  left join contest_problems cp on cp.contest_id = c.id
+      |  left join lateral (
+      |    select
+      |      coalesce(s.score, 0) as score,
+      |      s.submitted_at
+      |    from submissions s
+      |    where s.problem_id = cp.problem_id
+      |      and s.contest_id = c.id
+      |      and s.submitter_username = cr.username
+      |    order by coalesce(s.score, 0) desc, s.submitted_at asc, s.public_id asc
+      |    limit 1
+      |  ) best_submission on true
+      |  where cr.contest_id = ?
+      |),
+      |user_scores as (
+      |  select
+      |    username,
+      |    coalesce(sum(score), 0) as total_score,
+      |    coalesce(sum(
+      |      case
+      |        when submitted_at is null then 0
+      |        else floor(extract(epoch from (submitted_at - start_at)) * 1000)::bigint
+      |      end
+      |    ), 0) as penalty_millis
+      |  from per_problem_best
+      |  group by username
+      |),
+      |ranked_scores as (
+      |  select
+      |    rank() over (order by total_score desc, penalty_millis asc) as contest_rank,
+      |    username,
+      |    total_score,
+      |    penalty_millis
+      |  from user_scores
+      |)
+      |select contest_rank, username, total_score, penalty_millis
+      |from ranked_scores
+      |order by contest_rank asc, username asc
+      |""".stripMargin
+
+  def listRatingSnapshotParticipants(
+    connection: Connection,
+    contestId: ContestId
+  ): IO[List[RatingSnapshotParticipantRecord]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(ratingSnapshotRowsSql)
+      try
+        statement.setObject(1, contestId.value)
+        val resultSet = statement.executeQuery()
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ => readRatingSnapshotParticipant(resultSet))
+            .toList
+        finally resultSet.close()
+      finally statement.close()
+    }
 
   private val countRowsSql: String =
     """
@@ -247,6 +324,14 @@ object ContestRanklistTable:
       totalScore = ContestScore(BigDecimal(resultSet.getBigDecimal("total_score"))),
       penaltyMillis = ContestPenaltyMillis(resultSet.getLong("penalty_millis")),
       problemResults = List.empty
+    )
+
+  private def readRatingSnapshotParticipant(resultSet: ResultSet): RatingSnapshotParticipantRecord =
+    RatingSnapshotParticipantRecord(
+      username = Username.canonical(resultSet.getString("username")),
+      rank = ContestRank(resultSet.getInt("contest_rank")),
+      totalScore = ContestScore(BigDecimal(resultSet.getBigDecimal("total_score"))),
+      penaltyMillis = ContestPenaltyMillis(resultSet.getLong("penalty_millis"))
     )
 
   private def readProblemResult(resultSet: ResultSet, canViewDetail: Boolean): ContestRanklistProblemResult =

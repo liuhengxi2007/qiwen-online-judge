@@ -12,6 +12,7 @@ import { enUserSettingsMessages } from '@/system/i18n/messages/en/userSettings'
 import { enUserProfileMessages } from '@/system/i18n/messages/en/userProfile'
 import { enForbiddenMessages } from '@/system/i18n/messages/en/forbidden'
 import { enRanklistMessages } from '@/system/i18n/messages/en/ranklist'
+import { enRatingManageMessages } from '@/system/i18n/messages/en/ratingManage'
 import { enResourceAccessMessages } from '@/system/i18n/messages/en/resourceAccess'
 import { enApiMessages } from '@/system/i18n/messages/en/api'
 import { enMessageMessages } from '@/system/i18n/messages/en/message'
@@ -34,6 +35,7 @@ export const enMessages: Record<string, string> = {
   ...enUserProfileMessages,
   ...enForbiddenMessages,
   ...enRanklistMessages,
+  ...enRatingManageMessages,
   ...enResourceAccessMessages,
   ...enApiMessages,
   ...enMessageMessages,

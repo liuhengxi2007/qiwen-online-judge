@@ -16,6 +16,7 @@ type ContributionRanklistCardProps = {
   items: UserContributionRanklistItem[]
   isLoading: boolean
   pageSize: number
+  ratingPage: number
   totalPages: number
 }
 
@@ -26,6 +27,7 @@ export function ContributionRanklistCard({
   items,
   isLoading,
   pageSize,
+  ratingPage,
   totalPages,
 }: ContributionRanklistCardProps) {
   const { t } = useI18n()
@@ -74,6 +76,7 @@ export function ContributionRanklistCard({
             acceptedPage={acceptedPage}
             contributionPage={contributionPage}
             currentPage={contributionPage}
+            ratingPage={ratingPage}
             target="contribution"
             totalPages={totalPages}
           />

@@ -21,6 +21,7 @@ import { ContributionPanel } from './components/ContributionPanel'
 import { ProfileAvatarUploadPanel } from './components/ProfileAvatarUploadPanel'
 import { ProfileActionsPanel } from './components/ProfileActionsPanel'
 import { ProfileOverviewPanel } from './components/ProfileOverviewPanel'
+import { RatingPanel } from './components/RatingPanel'
 
 const acceptedProblemsPerPage = 10
 
@@ -140,6 +141,8 @@ function UserProfilePageContent({
 
             <div className="space-y-5">
               <ContributionPanel displayedContribution={displayedContribution} isLoadingProfile={query.isLoadingProfile} />
+
+              <RatingPanel displayedRating={displayedUser?.rating ?? null} isLoadingProfile={query.isLoadingProfile} />
 
               <AcceptedProblemsPanel
                 acceptedProblems={acceptedProblems}
