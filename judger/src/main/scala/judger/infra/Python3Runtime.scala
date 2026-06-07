@@ -19,10 +19,12 @@ object Python3Runtime extends JudgeRuntime:
     role: String,
     sourceCode: SubmissionSourceCode,
     stubSourceCode: Option[SubmissionSourceCode],
+    headers: List[ProgramHeaderSource],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
     val _ = stubSourceCode
+    val _ = headers
     resolveInterpreterPath(config).flatMap {
       case Left(_) =>
         IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))

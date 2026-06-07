@@ -93,7 +93,13 @@ object JudgeTaskBuilder:
     manifest: ProblemDataManifest
   ): Either[String, Unit] =
     parseYaml(bytes)
-      .flatMap(root => roleConfigsAt(root, manifest).toBuildError.flatMap(validateSubmittedProgramLanguages(programs, _)))
+      .flatMap { root =>
+        for
+          _ <- headerRefsAt(root, manifest).toBuildError
+          roleConfigs <- roleConfigsAt(root, manifest).toBuildError
+          _ <- validateSubmittedProgramLanguages(programs, roleConfigs)
+        yield ()
+      }
       .left
       .map(_.message)
 
@@ -118,6 +124,7 @@ object JudgeTaskBuilder:
       val rawPaths =
         built.roleConfigs.values.toList.flatMap(_.stubs.values.map(_.path.value)) ++
           task.programs.values.toList.flatMap(_.stub.map(_.path.value)) ++
+          task.programs.values.toList.flatMap(_.headers.map(_.path.value)) ++
           task.subtasks.flatMap { subtask =>
             val subtaskPaths =
               subtask.validator.map(_.source.path.value).toList ++
@@ -182,6 +189,7 @@ object JudgeTaskBuilder:
       rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
       rootStrategyProvider <- limitedToolAt(root, "strategyProvider").toBuildError
       rootAggregation <- aggregationAt(root).toBuildError
+      headers <- headerRefsAt(root, manifest).toBuildError
       roleConfigs <- roleConfigsAt(root, manifest).toBuildError
       subtaskMaps <- listOfMapsAt(root, "subtasks").toBuildError
       _ <- Either.cond(subtaskMaps.nonEmpty, (), buildError("judge.yaml must define at least one subtask."))
@@ -202,7 +210,7 @@ object JudgeTaskBuilder:
           parentAggregation = rootAggregation
         )
       })
-      programs <- buildPrograms(claimedSubmission, sourceCodes, roleConfigs)
+      programs <- buildPrograms(claimedSubmission, sourceCodes, roleConfigs, headers)
       taskAggregation = rootAggregation.subtasks.getOrElse(defaultAggregation)
     yield
       BuiltTask(
@@ -221,7 +229,8 @@ object JudgeTaskBuilder:
   private def buildPrograms(
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    roleConfigs: Map[String, RoleConfig]
+    roleConfigs: Map[String, RoleConfig],
+    headers: List[JudgeTaskFileRef]
   ): Either[BuildError, Map[String, JudgeTaskProgram]] =
     sequenceBuild(claimedSubmission.programManifest.programs.toList.map { case (role, program) =>
       for
@@ -230,7 +239,8 @@ object JudgeTaskBuilder:
           .toRight(buildError(s"Source code for submission role $role was not found."))
         language = toProtocolLanguage(program.language)
         stub <- stubForSubmittedProgram(role, language, roleConfigs)
-      yield role -> JudgeTaskProgram(language, SubmissionSourceCode(sourceCode.value), stub)
+        programHeaders = if language == SubmissionLanguage.Cpp17 then headers else Nil
+      yield role -> JudgeTaskProgram(language, SubmissionSourceCode(sourceCode.value), stub, programHeaders)
     }).map(_.toMap)
 
   private def validateSubmittedProgramLanguages(
@@ -477,6 +487,35 @@ object JudgeTaskBuilder:
         }).map(items => RoleConfig(items.toMap))
     }
 
+  private def headerRefsAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, List[JudgeTaskFileRef]] =
+    optionalListOfStringsAt(raw, "headers").flatMap {
+      case None => Right(Nil)
+      case Some(paths) =>
+        sequence(paths.zipWithIndex.map { case (path, index) =>
+          findFile(manifest, path, s"Header file headers[$index]").flatMap { ref =>
+            Either.cond(
+              ref.path.value.toLowerCase(java.util.Locale.ROOT).endsWith(".h"),
+              ref,
+              s"Header file headers[$index] must end with .h: ${ref.path.value}."
+            )
+          }
+        }).flatMap(validateUniqueHeaderBasenames)
+    }
+
+  private def validateUniqueHeaderBasenames(headers: List[JudgeTaskFileRef]): Either[String, List[JudgeTaskFileRef]] =
+    val duplicateIncludeNames =
+      headers
+        .map(_.path.value.split('/').lastOption.getOrElse(""))
+        .groupBy(identity)
+        .collect { case (includeName, values) if values.size > 1 => includeName }
+        .toList
+        .sorted
+    Either.cond(
+      duplicateIncludeNames.isEmpty,
+      headers,
+      s"headers must not declare duplicate include names: ${duplicateIncludeNames.mkString(", ")}."
+    )
+
   private def parseStubLanguage(raw: String): Either[String, SubmissionLanguage] =
     raw.trim match
       case "cpp17" => Right(SubmissionLanguage.Cpp17)
@@ -704,6 +743,17 @@ object JudgeTaskBuilder:
         })
       case Some(_) => Left(s"$key must be a list.")
       case None => Left(s"$key is required.")
+
+  private def optionalListOfStringsAt(raw: Map[String, Any], key: String): Either[String, Option[List[String]]] =
+    raw.get(key) match
+      case None => Right(None)
+      case Some(items: List[?]) =>
+        sequence(items.zipWithIndex.map {
+          case (value: String, _) if value.trim.nonEmpty => Right(value.trim)
+          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (_, index) => Left(s"$key[$index] must be a string.")
+        }).map(Some(_))
+      case Some(_) => Left(s"$key must be a list.")
 
   private def optionalRoleListAt(raw: Map[String, Any], key: String, allowTextRoles: Boolean): Either[String, Option[List[String]]] =
     raw.get(key) match

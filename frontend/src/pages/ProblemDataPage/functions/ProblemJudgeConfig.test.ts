@@ -22,6 +22,9 @@ const templateFiles = [
   file('tools/interactor.cpp'),
   file('tools/strategy.cpp'),
   file('stubs/main.cpp'),
+  file('headers/xxx.h'),
+  file('headers/other/xxx.h'),
+  file('headers/readme.txt'),
   file('sample/1.in'),
   file('sample/1.ans'),
   file('tests/1.in'),
@@ -434,6 +437,61 @@ subtasks:
 `
 
     expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('accepts declared cpp headers', () => {
+    const yaml = `version: 2
+hack: false
+headers:
+  - headers/xxx.h
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects invalid header declarations', () => {
+    const result = validateJudgeConfigYaml(
+      `version: 2
+hack: false
+headers:
+  - headers/missing.h
+  - headers/readme.txt
+  - headers/xxx.h
+  - headers/other/xxx.h
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('headers[0] does not exist: headers/missing.h.')
+      expect(result.errors).toContain('headers[1] must end with .h.')
+      expect(result.errors).toContain('headers[3] duplicates include name xxx.h.')
+    }
   })
 
   it('rejects invalid role stub declarations', () => {

@@ -203,10 +203,14 @@ object JudgeExecutor:
                 loadProgramStub(task, program, problemDataCache).flatMap {
                   case Left(result) => IO.pure(Left(result))
                   case Right(stubSourceCode) =>
-                    runtime.prepare(role, program.sourceCode, stubSourceCode, config, workingDirectory).map {
-                      case Right(command) => Right(role -> (Some(command), None, false))
-                      case Left(ProgramPrepareFailure.CompileError) => Right(role -> (None, None, true))
-                      case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
+                    loadProgramHeaders(task, program, problemDataCache).flatMap {
+                      case Left(result) => IO.pure(Left(result))
+                      case Right(headers) =>
+                        runtime.prepare(role, program.sourceCode, stubSourceCode, headers, config, workingDirectory).map {
+                          case Right(command) => Right(role -> (Some(command), None, false))
+                          case Left(ProgramPrepareFailure.CompileError) => Right(role -> (None, None, true))
+                          case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
+                        }
                     }
                 }
       }
@@ -231,6 +235,24 @@ object JudgeExecutor:
           case Left(_) => Left(taskSystemError(task, JudgeFailureReason.ProblemDataLoadFailed))
           case Right(bytes) => Right(Some(SubmissionSourceCode(new String(bytes, StandardCharsets.UTF_8))))
         }
+
+  private def loadProgramHeaders(
+    task: JudgeTask,
+    program: JudgeTaskProgram,
+    problemDataCache: ProblemDataCache
+  ): IO[Either[ReportJudgeResultRequest, List[ProgramHeaderSource]]] =
+    program.headers.traverse { header =>
+      problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, header).attempt.map {
+        case Left(_) => Left(taskSystemError(task, JudgeFailureReason.ProblemDataLoadFailed))
+        case Right(bytes) =>
+          Right(ProgramHeaderSource(headerIncludeName(header), SubmissionSourceCode(new String(bytes, StandardCharsets.UTF_8))))
+      }
+    }.map { loaded =>
+      loaded.collectFirst { case Left(result) => Left(result) }.getOrElse(Right(loaded.collect { case Right(header) => header }))
+    }
+
+  private def headerIncludeName(header: JudgeTaskFileRef): String =
+    header.path.value.split('/').lastOption.getOrElse(header.path.value)
 
   private def runValidator(
     hackTask: HackTask,
@@ -305,7 +327,7 @@ object JudgeExecutor:
           case Left(error) => IO.pure(Left(s"Answer generator source could not be loaded: ${Option(error.getMessage).getOrElse(error.getClass.getName)}"))
           case Right(sourceBytes) =>
             val sourceCode = SubmissionSourceCode(new String(sourceBytes, StandardCharsets.UTF_8))
-            runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, None, config, workingDirectory).flatMap {
+            runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, None, Nil, config, workingDirectory).flatMap {
               case Left(ProgramPrepareFailure.CompileError) => IO.pure(Left("Answer generator failed to compile."))
               case Left(ProgramPrepareFailure.SystemError(reason)) => IO.pure(Left(s"Answer generator failed to prepare: ${JudgeFailureReason.render(reason)}."))
               case Right(command) =>

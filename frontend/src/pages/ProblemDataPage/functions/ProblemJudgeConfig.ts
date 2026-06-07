@@ -113,6 +113,7 @@ export function validateJudgeConfigYaml(
 
   requireExactNumber(root.version, 'version', 2, ctx)
   validateOptionalInteger(root.roundingScale, 'roundingScale', 0, 18, ctx)
+  validateHeaders(root.headers, 'headers', ctx)
 
   const rootLimits = validateLimits(root.limits, 'limits', ctx)
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
@@ -397,6 +398,34 @@ function validateRoleConfigs(value: unknown, label: string, ctx: ValidationConte
     if (parsedRole) {
       validateRoleStubs(config.stubs, `${label}.${role}.stubs`, ctx)
     }
+  })
+}
+
+function validateHeaders(value: unknown, label: string, ctx: ValidationContext): void {
+  if (value === undefined) {
+    return
+  }
+  if (!Array.isArray(value)) {
+    ctx.errors.push(`${label} must be a list.`)
+    return
+  }
+
+  const includeNames = new Set<string>()
+  value.forEach((item, index) => {
+    const path = validatePathValue(item, `${label}[${index}]`, ctx)
+    if (!path) {
+      return
+    }
+
+    if (!path.toLowerCase().endsWith('.h')) {
+      ctx.errors.push(`${label}[${index}] must end with .h.`)
+    }
+
+    const includeName = path.split('/').pop() ?? path
+    if (includeNames.has(includeName)) {
+      ctx.errors.push(`${label}[${index}] duplicates include name ${includeName}.`)
+    }
+    includeNames.add(includeName)
   })
 }
 

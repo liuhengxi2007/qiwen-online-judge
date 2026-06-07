@@ -19,9 +19,15 @@ trait JudgeRuntime:
     role: String,
     sourceCode: SubmissionSourceCode,
     stubSourceCode: Option[SubmissionSourceCode],
+    headers: List[ProgramHeaderSource],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]]
+
+final case class ProgramHeaderSource(
+  filename: String,
+  sourceCode: SubmissionSourceCode
+)
 
 sealed trait ProgramPrepareFailure
 

@@ -57,6 +57,9 @@ class JudgeTaskBuilderSuite extends FunSuite:
       entry("tools/interactor.cpp"),
       entry("tools/strategy.cpp"),
       entry("stubs/main.cpp"),
+      entry("headers/xxx.h"),
+      entry("headers/other/xxx.h"),
+      entry("headers/readme.txt"),
       entry("sample/1.in"),
       entry("sample/1.ans")
     )
@@ -476,6 +479,32 @@ class JudgeTaskBuilderSuite extends FunSuite:
     assertEquals(result.map(_.retainedPaths.contains(ProblemDataPath("stubs/main.cpp"))), Right(true))
   }
 
+  test("validateReadyConfigBytes retains declared header files") {
+    val result = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |headers:
+        |  - headers/xxx.h
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - label: sample
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+
+    assertEquals(result.map(_.retainedPaths.contains(ProblemDataPath("headers/xxx.h"))), Right(true))
+  }
+
   test("validateReadyConfigBytes derives verdict display for a single min testcase-aggregated subtask") {
     val result = JudgeTaskBuilder.validateReadyConfigBytes(
       yaml("""
@@ -839,6 +868,103 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
 
     assertEquals(result.map(_.programs("main").stub.map(_.path.value)), Right(Some("stubs/main.cpp")))
+  }
+
+  test("parseConfigBytes attaches declared headers to cpp17 programs") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |headers:
+        |  - headers/xxx.h
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.map(_.programs("main").headers.map(_.path.value)), Right(List("headers/xxx.h")))
+  }
+
+  test("parseConfigBytes rejects invalid header declarations") {
+    val missingHeader = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |headers:
+        |  - headers/missing.h
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+    val nonHeader = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |headers:
+        |  - headers/readme.txt
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+    val duplicateBasename = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |hack: false
+        |headers:
+        |  - headers/xxx.h
+        |  - headers/other/xxx.h
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(missingHeader.left.toOption, Some("Header file headers[0] does not exist: headers/missing.h."))
+    assertEquals(nonHeader.left.toOption, Some("Header file headers[0] must end with .h: headers/readme.txt."))
+    assertEquals(duplicateBasename.left.toOption, Some("headers must not declare duplicate include names: xxx.h."))
   }
 
   test("parseConfigBytes rejects invalid role stub declarations") {

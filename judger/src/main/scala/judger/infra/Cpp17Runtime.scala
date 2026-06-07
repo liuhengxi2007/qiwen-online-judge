@@ -19,6 +19,7 @@ object Cpp17Runtime extends JudgeRuntime:
     role: String,
     sourceCode: SubmissionSourceCode,
     stubSourceCode: Option[SubmissionSourceCode],
+    headers: List[ProgramHeaderSource],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
@@ -37,6 +38,7 @@ object Cpp17Runtime extends JudgeRuntime:
             stubSourceCode.zip(stubSourceName).foreach { case (stub, name) =>
               Files.writeString(workingDirectory.resolve(name), stub.value, StandardCharsets.UTF_8)
             }
+            writeHeaders(workingDirectory, headers)
           }
           compileResult <- runHostProcess(
             command = compilerPath,
@@ -60,7 +62,17 @@ object Cpp17Runtime extends JudgeRuntime:
     }
 
   private[judger] def compileArgs(sourceName: String, stubSourceName: Option[String], executableName: String): List[String] =
-    List(Some(sourceName), stubSourceName).flatten ++ List("-o", executableName, "-O2", "-std=c++17")
+    List(Some(sourceName), stubSourceName).flatten ++ List("-o", executableName, "-O2", "-std=c++17", "-I", ".")
+
+  private[judger] def writeHeaders(workingDirectory: Path, headers: List[ProgramHeaderSource]): Unit =
+    headers.foreach(writeHeader(workingDirectory, _))
+
+  private def writeHeader(workingDirectory: Path, header: ProgramHeaderSource): Unit =
+    val root = workingDirectory.normalize()
+    val target = root.resolve(header.filename).normalize()
+    if target.getParent != root then
+      throw RuntimeException(s"Invalid C++ header filename: ${header.filename}.")
+    Files.writeString(target, header.sourceCode.value, StandardCharsets.UTF_8)
 
   private def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
     IO.blocking {
