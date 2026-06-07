@@ -79,7 +79,8 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
       .routes(
         null.asInstanceOf[DatabaseSession],
         null.asInstanceOf[SessionStore],
-        submissionProgramStorage
+        submissionProgramStorage,
+        problemDataStorage
       )
       .orNotFound
 

@@ -18,6 +18,7 @@ trait JudgeRuntime:
   def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
+    stubSourceCode: Option[SubmissionSourceCode],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]]

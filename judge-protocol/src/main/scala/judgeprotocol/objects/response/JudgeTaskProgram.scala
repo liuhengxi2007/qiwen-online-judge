@@ -6,7 +6,8 @@ import judgeprotocol.objects.{SubmissionLanguage, SubmissionSourceCode}
 
 final case class JudgeTaskProgram(
   language: SubmissionLanguage,
-  sourceCode: SubmissionSourceCode
+  sourceCode: SubmissionSourceCode,
+  stub: Option[JudgeTaskFileRef] = None
 )
 
 object JudgeTaskProgram:

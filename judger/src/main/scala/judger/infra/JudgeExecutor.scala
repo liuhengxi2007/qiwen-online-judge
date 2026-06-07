@@ -81,7 +81,7 @@ object JudgeExecutor:
   ): IO[ReportJudgeResultRequest] =
     withWorkingDirectory(config.workRoot, "qiwen-judger-") { workingDirectory =>
       IsolateSandbox.resource(config) { sandbox =>
-        preparePrograms(task, config, workingDirectory, runtimes).flatMap {
+        preparePrograms(task, config, workingDirectory, problemDataCache, runtimes).flatMap {
           case Left(result) => IO.pure(result)
           case Right(programs) =>
             prepareTools(task, config, workingDirectory, problemDataCache).flatMap {
@@ -102,7 +102,7 @@ object JudgeExecutor:
   ): IO[ReportHackResultRequest] =
     withWorkingDirectory(config.workRoot, "qiwen-hack-") { workingDirectory =>
       IsolateSandbox.resource(config) { sandbox =>
-        preparePrograms(task.targetTask, config, workingDirectory, runtimes).flatMap {
+        preparePrograms(task.targetTask, config, workingDirectory, problemDataCache, runtimes).flatMap {
           case Left(result) => IO.pure(hackFailed(task, result.judgeResult.flatMap(_.baseResult.reason).map(JudgeFailureReason.render).getOrElse("Target prepare failed.")))
           case Right(programs) =>
             prepareTools(task.targetTask, config, workingDirectory, problemDataCache).flatMap {
@@ -177,6 +177,7 @@ object JudgeExecutor:
     task: JudgeTask,
     config: AppConfig,
     workingDirectory: Path,
+    problemDataCache: ProblemDataCache,
     runtimes: Map[SubmissionLanguage, JudgeRuntime]
   ): IO[Either[ReportJudgeResultRequest, PreparedPrograms]] =
     task.programs.toList
@@ -189,10 +190,14 @@ object JudgeExecutor:
               case None =>
                 IO.pure(Right(role -> (None, None, true)))
               case Some(runtime) =>
-                runtime.prepare(role, program.sourceCode, config, workingDirectory).map {
-                  case Right(command) => Right(role -> (Some(command), None, false))
-                  case Left(ProgramPrepareFailure.CompileError) => Right(role -> (None, None, true))
-                  case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
+                loadProgramStub(task, program, problemDataCache).flatMap {
+                  case Left(result) => IO.pure(Left(result))
+                  case Right(stubSourceCode) =>
+                    runtime.prepare(role, program.sourceCode, stubSourceCode, config, workingDirectory).map {
+                      case Right(command) => Right(role -> (Some(command), None, false))
+                      case Left(ProgramPrepareFailure.CompileError) => Right(role -> (None, None, true))
+                      case Left(ProgramPrepareFailure.SystemError(reason)) => Left(taskSystemError(task, reason))
+                    }
                 }
       }
       .map { prepared =>
@@ -203,6 +208,19 @@ object JudgeExecutor:
           Right(PreparedPrograms(roleCommands, failedRoles, textOutputs))
         }
       }
+
+  private def loadProgramStub(
+    task: JudgeTask,
+    program: JudgeTaskProgram,
+    problemDataCache: ProblemDataCache
+  ): IO[Either[ReportJudgeResultRequest, Option[SubmissionSourceCode]]] =
+    program.stub match
+      case None => IO.pure(Right(None))
+      case Some(stub) =>
+        problemDataCache.loadBytes(task.problemSlug, task.problemDataVersion, stub).attempt.map {
+          case Left(_) => Left(taskSystemError(task, JudgeFailureReason.ProblemDataLoadFailed))
+          case Right(bytes) => Right(Some(SubmissionSourceCode(new String(bytes, StandardCharsets.UTF_8))))
+        }
 
   private def runValidator(
     hackTask: HackTask,
@@ -257,7 +275,7 @@ object JudgeExecutor:
               case Left(error) => IO.pure(Left(s"Standard source could not be loaded: ${Option(error.getMessage).getOrElse(error.getClass.getName)}"))
               case Right(sourceBytes) =>
                 val sourceCode = SubmissionSourceCode(new String(sourceBytes, StandardCharsets.UTF_8))
-                runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, config, workingDirectory).flatMap {
+                runtime.prepare(s"standard-${hackTask.hackId}-${subtask.index}", sourceCode, None, config, workingDirectory).flatMap {
                   case Left(ProgramPrepareFailure.CompileError) => IO.pure(Left("Standard solution failed to compile."))
                   case Left(ProgramPrepareFailure.SystemError(reason)) => IO.pure(Left(s"Standard solution failed to prepare: ${JudgeFailureReason.render(reason)}."))
                   case Right(command) =>

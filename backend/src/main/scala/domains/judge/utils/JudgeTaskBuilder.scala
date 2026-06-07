@@ -35,6 +35,10 @@ object JudgeTaskBuilder:
   private val TextRolePattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
   private final case class StandardConfig(language: SubmissionLanguage, path: String)
+  private final case class RoleConfig(stubs: Map[SubmissionLanguage, JudgeTaskFileRef]):
+    def restrictsLanguages: Boolean = stubs.nonEmpty
+
+  private final case class BuiltTask(task: JudgeTask, roleConfigs: Map[String, RoleConfig])
 
   def buildJudgeTask(
     bytes: Array[Byte],
@@ -76,8 +80,18 @@ object JudgeTaskBuilder:
     hackTestcases: List[GeneratedHackTestcase]
   ): Either[BuildError, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, sourceCodes, manifest, root, hackTestcases)
+      buildFromYaml(claimedSubmission, sourceCodes, manifest, root, hackTestcases).map(_.task)
     }
+
+  def validateSubmissionProgramsForConfig(
+    bytes: Array[Byte],
+    programs: Map[String, domains.submission.objects.SubmissionLanguage],
+    manifest: ProblemDataManifest
+  ): Either[String, Unit] =
+    parseYaml(bytes)
+      .flatMap(root => roleConfigsAt(root, manifest).toBuildError.flatMap(validateSubmittedProgramLanguages(programs, _)))
+      .left
+      .map(_.message)
 
   def validateReadyConfigBytes(
     bytes: Array[Byte],
@@ -95,27 +109,32 @@ object JudgeTaskBuilder:
         sourceCode
       )
     )
-    parseConfigBytes(bytes, claimedSubmission, sourceCode, manifest).flatMap { task =>
+    parseYaml(bytes).flatMap(root => buildFromYaml(claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, root, Nil)).flatMap { built =>
+      val task = built.task
       val rawPaths =
-        task.subtasks.flatMap { subtask =>
-          val subtaskPaths =
-            subtask.validator.map(_.source.path.value).toList ++
-              subtask.standard.map(_.source.path.value).toList ++
-              subtask.mode.interactor.map(_.source.path.value).toList
-          val testcasePaths = subtask.testcases.flatMap { testcase =>
-            List(
-              Some(testcase.input.path.value),
-              testcase.answer.map(_.path.value),
-              testcase.checker.source.map(_.path.value),
-              testcase.strategyProvider.map(_.source.path.value)
-            ).flatten
+        built.roleConfigs.values.toList.flatMap(_.stubs.values.map(_.path.value)) ++
+          task.programs.values.toList.flatMap(_.stub.map(_.path.value)) ++
+          task.subtasks.flatMap { subtask =>
+            val subtaskPaths =
+              subtask.validator.map(_.source.path.value).toList ++
+                subtask.standard.map(_.source.path.value).toList ++
+                subtask.mode.interactor.map(_.source.path.value).toList
+            val testcasePaths = subtask.testcases.flatMap { testcase =>
+              List(
+                Some(testcase.input.path.value),
+                testcase.answer.map(_.path.value),
+                testcase.checker.source.map(_.path.value),
+                testcase.strategyProvider.map(_.source.path.value)
+              ).flatten
+            }
+            subtaskPaths ++ testcasePaths
           }
-          subtaskPaths ++ testcasePaths
-        }
       rawPaths
         .traverse(ProblemDataPath.parse)
+        .left
+        .map(buildError)
         .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml"), resultDisplayModeFor(task)))
-    }
+    }.left.map(_.message)
 
   private[utils] def resultDisplayModeFor(task: JudgeTask): SubmissionResultDisplayMode =
     task.subtasks match
@@ -143,7 +162,7 @@ object JudgeTaskBuilder:
     manifest: ProblemDataManifest,
     root: Map[String, Any],
     hackTestcases: List[GeneratedHackTestcase]
-  ): Either[BuildError, JudgeTask] =
+  ): Either[BuildError, BuiltTask] =
     for
       version <- optionalIntAt(root, "version").toBuildError.flatMap {
         case Some(2) => Right(2)
@@ -159,6 +178,7 @@ object JudgeTaskBuilder:
       rootMode <- modeAt(root, manifest).toBuildError.map(_.getOrElse(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
       rootStrategyProvider <- limitedToolAt(root, "strategyProvider").toBuildError
       rootAggregation <- aggregationAt(root).toBuildError
+      roleConfigs <- roleConfigsAt(root, manifest).toBuildError
       subtaskMaps <- listOfMapsAt(root, "subtasks").toBuildError
       _ <- Either.cond(subtaskMaps.nonEmpty, (), buildError("judge.yaml must define at least one subtask."))
       subtaskRatios <- ratiosFor(subtaskMaps).toBuildError
@@ -178,29 +198,63 @@ object JudgeTaskBuilder:
           hackTestcases = hackTestcases.filter(_.subtaskIndex == subtaskIndex + 1)
         )
       })
-      programs <- buildPrograms(claimedSubmission, sourceCodes)
+      programs <- buildPrograms(claimedSubmission, sourceCodes, roleConfigs)
       taskAggregation = rootAggregation.subtasks.getOrElse(defaultAggregation)
     yield
-      JudgeTask(
-        submissionId = SubmissionId(claimedSubmission.id.value),
-        problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
-        programs = programs,
-        problemDataVersion = manifest.version,
-        roundingScale = roundingScale,
-        aggregation = taskAggregation,
-        subtasks = subtasks
+      BuiltTask(
+        task = JudgeTask(
+          submissionId = SubmissionId(claimedSubmission.id.value),
+          problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
+          programs = programs,
+          problemDataVersion = manifest.version,
+          roundingScale = roundingScale,
+          aggregation = taskAggregation,
+          subtasks = subtasks
+        ),
+        roleConfigs = roleConfigs
       )
 
   private def buildPrograms(
     claimedSubmission: ClaimedSubmission,
-    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode]
+    sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
+    roleConfigs: Map[String, RoleConfig]
   ): Either[BuildError, Map[String, JudgeTaskProgram]] =
     sequenceBuild(claimedSubmission.programManifest.programs.toList.map { case (role, program) =>
-      sourceCodes
-        .get(role)
-        .toRight(buildError(s"Source code for submission role $role was not found."))
-        .map(sourceCode => role -> JudgeTaskProgram(toProtocolLanguage(program.language), SubmissionSourceCode(sourceCode.value)))
+      for
+        sourceCode <- sourceCodes
+          .get(role)
+          .toRight(buildError(s"Source code for submission role $role was not found."))
+        language = toProtocolLanguage(program.language)
+        stub <- stubForSubmittedProgram(role, language, roleConfigs)
+      yield role -> JudgeTaskProgram(language, SubmissionSourceCode(sourceCode.value), stub)
     }).map(_.toMap)
+
+  private def validateSubmittedProgramLanguages(
+    programs: Map[String, domains.submission.objects.SubmissionLanguage],
+    roleConfigs: Map[String, RoleConfig]
+  ): Either[BuildError, Unit] =
+    sequenceBuild(programs.toList.map { case (role, language) =>
+      stubForSubmittedProgram(role.trim, toProtocolLanguage(language), roleConfigs).void
+    }).void
+
+  private def stubForSubmittedProgram(
+    role: String,
+    language: SubmissionLanguage,
+    roleConfigs: Map[String, RoleConfig]
+  ): Either[BuildError, Option[JudgeTaskFileRef]] =
+    roleConfigs.get(role) match
+      case Some(roleConfig) if roleConfig.restrictsLanguages =>
+        roleConfig.stubs
+          .get(language)
+          .toRight(
+            buildError(
+              s"Submission role $role declares stubs but does not support language ${SubmissionLanguage.render(language)}. " +
+                s"Supported stub languages: ${roleConfig.stubs.keys.toList.map(SubmissionLanguage.render).sorted.mkString(", ")}."
+            )
+          )
+          .map(Some(_))
+      case _ =>
+        Right(None)
 
   private def buildSubtask(
     manifest: ProblemDataManifest,
@@ -372,6 +426,42 @@ object JudgeTaskBuilder:
       case "cpp17" => Right(SubmissionLanguage.Cpp17)
       case "python3" => Right(SubmissionLanguage.Python3)
       case other => Left(s"Unsupported standard language: $other.")
+
+  private def roleConfigsAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Map[String, RoleConfig]] =
+    optionalMapAt(raw, "roles").flatMap {
+      case None => Right(Map.empty)
+      case Some(roles) =>
+        sequence(roles.toList.map { case (role, value) =>
+          for
+            validRole <- role.validateCodeRole.left.map(message => s"roles.$role $message")
+            roleMap <- value match
+              case map: Map[?, ?] => Right(map.asInstanceOf[Map[String, Any]])
+              case _ => Left(s"roles.$role must be an object.")
+            roleConfig <- roleConfigAt(validRole, roleMap, manifest)
+          yield validRole -> roleConfig
+        }).map(_.toMap)
+    }
+
+  private def roleConfigAt(role: String, raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, RoleConfig] =
+    optionalMapAt(raw, "stubs").left.map(message => s"roles.$role.$message").flatMap {
+      case None => Right(RoleConfig(Map.empty))
+      case Some(stubs) =>
+        sequence(stubs.toList.map { case (languageKey, value) =>
+          for
+            language <- parseStubLanguage(languageKey).left.map(message => s"roles.$role.stubs.$languageKey $message")
+            path <- value match
+              case rawPath: String if rawPath.trim.nonEmpty => Right(rawPath.trim)
+              case _: String => Left(s"roles.$role.stubs.$languageKey must not be empty.")
+              case _ => Left(s"roles.$role.stubs.$languageKey must be a string.")
+            ref <- findFile(manifest, path, s"Stub source file for role $role language $languageKey")
+          yield language -> ref
+        }).map(items => RoleConfig(items.toMap))
+    }
+
+  private def parseStubLanguage(raw: String): Either[String, SubmissionLanguage] =
+    raw.trim match
+      case "cpp17" => Right(SubmissionLanguage.Cpp17)
+      case _ => Left("is not supported. Only cpp17 stubs are supported.")
 
   private def modeAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Option[JudgeTaskMode]] =
     raw.get("mode") match

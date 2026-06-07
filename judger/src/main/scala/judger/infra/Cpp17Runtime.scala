@@ -18,6 +18,7 @@ object Cpp17Runtime extends JudgeRuntime:
   override def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
+    stubSourceCode: Option[SubmissionSourceCode],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
@@ -27,13 +28,19 @@ object Cpp17Runtime extends JudgeRuntime:
       case Right(compilerPath) =>
         val safeRole = IsolateSandbox.sanitizeFilename(role)
         val sourceName = s"main-$safeRole.cpp"
+        val stubSourceName = stubSourceCode.map(_ => s"stub-$safeRole.cpp")
         val executableName = s"main-$safeRole"
         val sourceFile = workingDirectory.resolve(sourceName)
         for
-          _ <- IO.blocking(Files.writeString(sourceFile, sourceCode.value, StandardCharsets.UTF_8))
+          _ <- IO.blocking {
+            Files.writeString(sourceFile, sourceCode.value, StandardCharsets.UTF_8)
+            stubSourceCode.zip(stubSourceName).foreach { case (stub, name) =>
+              Files.writeString(workingDirectory.resolve(name), stub.value, StandardCharsets.UTF_8)
+            }
+          }
           compileResult <- runHostProcess(
             command = compilerPath,
-            args = List(sourceName, "-o", executableName, "-O2", "-std=c++17"),
+            args = compileArgs(sourceName, stubSourceName, executableName),
             cwd = workingDirectory,
             stdin = None,
             limits = CompileLimits,
@@ -51,6 +58,9 @@ object Cpp17Runtime extends JudgeRuntime:
               ensureExecutableExists(workingDirectory.resolve(executableName)).as(Right(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)))
         yield result
     }
+
+  private[judger] def compileArgs(sourceName: String, stubSourceName: Option[String], executableName: String): List[String] =
+    List(Some(sourceName), stubSourceName).flatten ++ List("-o", executableName, "-O2", "-std=c++17")
 
   private def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
     IO.blocking {

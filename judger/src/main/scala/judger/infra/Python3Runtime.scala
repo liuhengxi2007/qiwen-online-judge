@@ -18,9 +18,11 @@ object Python3Runtime extends JudgeRuntime:
   override def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
+    stubSourceCode: Option[SubmissionSourceCode],
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
+    val _ = stubSourceCode
     resolveInterpreterPath(config).flatMap {
       case Left(_) =>
         IO.pure(Left(ProgramPrepareFailure.SystemError(JudgeFailureReason.JudgerRuntimeFailed)))

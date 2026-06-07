@@ -112,6 +112,7 @@ export function validateJudgeConfigYaml(
   const rootChecker = validateChecker(root.checker, 'checker', ctx)
   validateTool(root.validator, 'validator', ctx)
   const rootMode = validateMode(root.mode, 'mode', ctx) ?? { type: 'traditional' as const, role: 'main' }
+  validateRoleConfigs(root.roles, 'roles', ctx)
   validateLimitedTool(root.strategyProvider, 'strategyProvider', ctx)
   const rootAggregation = validateAggregation(root.aggregation, 'aggregation', ctx)
   const subtasks = validateList(root.subtasks, 'subtasks', ctx)
@@ -321,6 +322,45 @@ function validateMode(value: unknown, label: string, ctx: ValidationContext): Mo
 
   ctx.errors.push(`${label}.type must be traditional or interactive.`)
   return null
+}
+
+function validateRoleConfigs(value: unknown, label: string, ctx: ValidationContext): void {
+  if (value === undefined) {
+    return
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be an object.`)
+    return
+  }
+
+  Object.entries(value).forEach(([role, config]) => {
+    const parsedRole = validateRole(role, `${label}.${role}`, ctx, { allowTextRole: false })
+    if (!isRecord(config)) {
+      ctx.errors.push(`${label}.${role} must be an object.`)
+      return
+    }
+    if (parsedRole) {
+      validateRoleStubs(config.stubs, `${label}.${role}.stubs`, ctx)
+    }
+  })
+}
+
+function validateRoleStubs(value: unknown, label: string, ctx: ValidationContext): void {
+  if (value === undefined) {
+    return
+  }
+  if (!isRecord(value)) {
+    ctx.errors.push(`${label} must be an object.`)
+    return
+  }
+
+  Object.entries(value).forEach(([language, path]) => {
+    if (language !== 'cpp17') {
+      ctx.errors.push(`${label}.${language} is not supported. Only cpp17 stubs are supported.`)
+      return
+    }
+    validatePathValue(path, `${label}.${language}`, ctx)
+  })
 }
 
 function validateRoleList(value: unknown, label: string, ctx: ValidationContext, options: { allowTextRole: boolean }): string[] | null {

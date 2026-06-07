@@ -7,6 +7,7 @@ import domains.contest.api.EvaluateContestAccess
 import domains.contest.objects.ContestSlug
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
+import domains.problem.utils.ProblemDataStorage
 import domains.submission.objects.SubmissionSource
 import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
@@ -17,7 +18,10 @@ import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
-final case class CreateContestSubmission(submissionProgramStorage: SubmissionProgramStorage)
+final case class CreateContestSubmission(
+  submissionProgramStorage: SubmissionProgramStorage,
+  problemDataStorage: ProblemDataStorage
+)
   extends AuthenticatedApi[(ContestSlug, CreateSubmissionRequest), SubmissionDetail]:
 
   override val method: Method = Method.POST
@@ -64,7 +68,7 @@ final case class CreateContestSubmission(submissionProgramStorage: SubmissionPro
         contestAccess.canSubmitContestProblem,
         HttpApiError.forbidden(ApiMessages.contestNotRegistered)
       )
-      submission <- CreateSubmission(submissionProgramStorage).createForAccessibleProblem(
+      submission <- CreateSubmission(submissionProgramStorage, problemDataStorage).createForAccessibleProblem(
         connection = connection,
         actor = actor,
         request = validRequest,

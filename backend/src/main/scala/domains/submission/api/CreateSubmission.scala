@@ -5,8 +5,11 @@ import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestId
+import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.api.{EvaluateProblemAccess, GetProblemSubmissionResultDisplayMode}
-import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug, ProblemTitle}
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.problem.utils.ProblemDataStorage
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
@@ -21,7 +24,10 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-final case class CreateSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[CreateSubmissionRequest, SubmissionDetail]:
+final case class CreateSubmission(
+  submissionProgramStorage: SubmissionProgramStorage,
+  problemDataStorage: ProblemDataStorage
+) extends AuthenticatedApi[CreateSubmissionRequest, SubmissionDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/submissions")
@@ -77,6 +83,7 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         case Some(value) => IO.pure(value)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
       }
+      _ <- validateReadyJudgeConfig(connection, problemId, problemSlug, validRequest.programs)
       manifestInput = validRequest.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
       programManifest <- HttpApiError.fromEitherBadRequest(SubmissionProgramManifest.fromPrograms(submissionUuid, manifestInput))
       _ <- programManifest.programs.toList.traverse_ { case (role, program) =>
@@ -118,3 +125,20 @@ final case class CreateSubmission(submissionProgramStorage: SubmissionProgramSto
         .fromPrograms(java.util.UUID.fromString("00000000-0000-4000-8000-000000000000"), manifestInput)
         .map(_ => validPrograms)
     })
+
+  private def validateReadyJudgeConfig(
+    connection: Connection,
+    problemId: ProblemId,
+    problemSlug: ProblemSlug,
+    programs: Map[String, CreateSubmissionRequest.Program]
+  ): IO[Unit] =
+    val judgeYamlPath = ProblemDataPath("judge.yaml")
+    for
+      manifest <- ProblemDataFileTable.manifestForProblem(connection, problemId, problemSlug)
+      maybeConfig <- problemDataStorage.readPath(problemSlug, judgeYamlPath)
+      configBytes <- maybeConfig match
+        case Some((_, bytes)) => IO.pure(bytes)
+        case None => HttpApiError.raise(HttpApiError.badRequest("judge.yaml is required at the problem data root."))
+      programLanguages = programs.map { case (role, program) => role -> program.language }
+      _ <- HttpApiError.fromEitherBadRequest(JudgeTaskBuilder.validateSubmissionProgramsForConfig(configBytes, programLanguages, manifest))
+    yield ()

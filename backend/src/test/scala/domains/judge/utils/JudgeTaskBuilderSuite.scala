@@ -41,12 +41,21 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
   )
 
+  private val claimedSubmissionPython = claimedSubmission.copy(
+    programManifest = SubmissionProgramManifest.singleDefault(
+      UUID.fromString("44444444-4444-4444-8444-444444444444"),
+      SubmissionLanguage.Python3,
+      SubmissionSourceCode("print('ok')")
+    )
+  )
+
   private val manifest = ProblemDataManifest.fromEntries(
     claimedSubmission.problemSlug,
     List(
       entry("validators/validator.cpp"),
       entry("tools/interactor.cpp"),
       entry("tools/strategy.cpp"),
+      entry("stubs/main.cpp"),
       entry("sample/1.in"),
       entry("sample/1.ans")
     )
@@ -241,6 +250,33 @@ class JudgeTaskBuilderSuite extends FunSuite:
       result.map(_.retainedPaths),
       Right(Set(ProblemDataPath("judge.yaml"), ProblemDataPath("validators/validator.cpp"), ProblemDataPath("sample/1.in"), ProblemDataPath("sample/1.ans")))
     )
+  }
+
+  test("validateReadyConfigBytes retains declared role stub files") {
+    val result = JudgeTaskBuilder.validateReadyConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  helper:
+        |    stubs:
+        |      cpp17: stubs/main.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - label: sample
+        |    testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      problem,
+      manifest
+    )
+
+    assertEquals(result.map(_.retainedPaths.contains(ProblemDataPath("stubs/main.cpp"))), Right(true))
   }
 
   test("validateReadyConfigBytes derives verdict display for a single min testcase-aggregated subtask") {
@@ -499,6 +535,136 @@ class JudgeTaskBuilderSuite extends FunSuite:
     )
 
     assertEquals(result.map(_.subtasks.head.testcases.head.roles), Right(List("chain.txt", "main")))
+  }
+
+  test("parseConfigBytes attaches matching cpp17 role stub") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  main:
+        |    stubs:
+        |      cpp17: stubs/main.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(result.map(_.programs("main").stub.map(_.path.value)), Right(Some("stubs/main.cpp")))
+  }
+
+  test("parseConfigBytes rejects invalid role stub declarations") {
+    val missingStub = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  main:
+        |    stubs:
+        |      cpp17: stubs/missing.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+    val unsupportedLanguage = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  main:
+        |    stubs:
+        |      python3: stubs/main.py
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+    val textRole = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  chain.txt:
+        |    stubs:
+        |      cpp17: stubs/main.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmission,
+      sourceCode,
+      manifest
+    )
+
+    assertEquals(missingStub.left.toOption, Some("Stub source file for role main language cpp17 does not exist: stubs/missing.cpp."))
+    assertEquals(unsupportedLanguage.left.toOption, Some("roles.main.stubs.python3 is not supported. Only cpp17 stubs are supported."))
+    assertEquals(textRole.left.toOption, Some("roles.chain.txt Role must contain only ASCII letters, digits, '_' or '-': chain.txt."))
+  }
+
+  test("parseConfigBytes rejects submitted languages without a matching role stub") {
+    val result = JudgeTaskBuilder.parseConfigBytes(
+      yaml("""
+        |version: 2
+        |roles:
+        |  main:
+        |    stubs:
+        |      cpp17: stubs/main.cpp
+        |limits:
+        |  timeMs: 1000
+        |  memoryMb: 256
+        |checker:
+        |  type: builtin
+        |  name: exact
+        |subtasks:
+        |  - testcases:
+        |      - input: sample/1.in
+        |        answer: sample/1.ans
+        |"""),
+      claimedSubmissionPython,
+      SubmissionSourceCode("print('ok')"),
+      manifest
+    )
+
+    assertEquals(
+      result.left.toOption,
+      Some("Submission role main declares stubs but does not support language python3. Supported stub languages: cpp17.")
+    )
   }
 
   test("parseConfigBytes accepts traditional mode text role") {

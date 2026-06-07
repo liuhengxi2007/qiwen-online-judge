@@ -20,6 +20,7 @@ const templateFiles = [
   file('validators/validator.cpp'),
   file('tools/interactor.cpp'),
   file('tools/strategy.cpp'),
+  file('stubs/main.cpp'),
   file('sample/1.in'),
   file('sample/1.ans'),
   file('tests/1.in'),
@@ -198,6 +199,64 @@ subtasks:
 `
 
     expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('accepts cpp17 role stubs', () => {
+    const yaml = `version: 2
+roles:
+  main:
+    stubs:
+      cpp17: stubs/main.cpp
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
+  it('rejects invalid role stub declarations', () => {
+    const result = validateJudgeConfigYaml(
+      `version: 2
+roles:
+  chain.txt:
+    stubs:
+      cpp17: stubs/main.cpp
+  helper:
+    stubs:
+      python3: stubs/main.py
+      cpp17: stubs/missing.cpp
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`,
+      templateFiles,
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors).toContain('roles.chain.txt must contain only ASCII letters, digits, "_" or "-".')
+      expect(result.errors).toContain('roles.helper.stubs.python3 is not supported. Only cpp17 stubs are supported.')
+      expect(result.errors).toContain('roles.helper.stubs.cpp17 does not exist: stubs/missing.cpp.')
+    }
   })
 
   it('rejects text roles in interactive role lists', () => {
