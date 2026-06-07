@@ -17,6 +17,7 @@ export const enContestMessages: Record<string, string> = {
   'contest.list.registerSuccess': 'Registered successfully.',
   'contest.list.unregisterSuccess': 'Registration cancelled.',
   'contest.list.registrationFailed': 'Unable to update registration.',
+  'contest.list.detailUnavailable': 'Not accessible',
   'contest.list.startAt': 'Start:',
   'contest.list.endAt': 'End:',
   'contest.create.pageTitle': 'Qiwen Online Judge - Create Contest',

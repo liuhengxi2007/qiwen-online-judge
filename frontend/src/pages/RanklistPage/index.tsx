@@ -62,7 +62,7 @@ export function RanklistPage() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-6">
         <RatingRanklistCard
           acceptedPage={acceptedPage}
           contributionPage={contributionPage}

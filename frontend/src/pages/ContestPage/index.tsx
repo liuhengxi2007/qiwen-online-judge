@@ -114,17 +114,20 @@ export function ContestPage() {
                 const isRegistered = contest.registrationStatus.isRegistered
                 const isUpdating = model.activeRegistrationSlug === contest.slug
                 const isLocked = hasStarted
+                const contestPath = `/contests/${contestSlugValue(contest.slug)}`
                 return (
                   <div key={contest.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex flex-wrap items-center gap-3">
-                        <Link
-                          className="text-lg font-semibold text-slate-950 hover:underline"
-                          to={`/contests/${contestSlugValue(contest.slug)}`}
-                        >
-                          {contestTitleValue(contest.title)}
-                        </Link>
+                        {contest.canViewDetail ? (
+                          <Link className="text-lg font-semibold text-slate-950 hover:underline" to={contestPath}>
+                            {contestTitleValue(contest.title)}
+                          </Link>
+                        ) : (
+                          <span className="text-lg font-semibold text-slate-500">{contestTitleValue(contest.title)}</span>
+                        )}
                         <Badge variant="secondary">{resourceAccessBadgeLabel(contest.accessPolicy, t)}</Badge>
+                        {!contest.canViewDetail ? <Badge variant="outline">{t('contest.list.detailUnavailable')}</Badge> : null}
                       </div>
                       <Button
                         type="button"

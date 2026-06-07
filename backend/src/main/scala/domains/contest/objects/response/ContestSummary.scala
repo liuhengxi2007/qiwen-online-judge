@@ -18,6 +18,7 @@ final case class ContestSummary(
   endAt: Instant,
   accessPolicy: ResourceAccessPolicy,
   registrationStatus: ContestRegistrationStatus,
+  canViewDetail: Boolean,
   author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant

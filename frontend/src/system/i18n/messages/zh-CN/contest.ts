@@ -17,6 +17,7 @@ export const zhCnContestMessages: Record<string, string> = {
   'contest.list.registerSuccess': '报名成功。',
   'contest.list.unregisterSuccess': '已取消报名。',
   'contest.list.registrationFailed': '无法更新报名状态。',
+  'contest.list.detailUnavailable': '暂不可进入',
   'contest.list.startAt': '开始：',
   'contest.list.endAt': '结束：',
   'contest.create.pageTitle': '气温在线评测 - 创建比赛',

@@ -21,5 +21,6 @@ export function parseRatingValue(rawRating: number): ParseResult<RatingValue> {
 export function formatRatingValue(rating: RatingValue): string {
   return ratingValue(rating).toLocaleString(undefined, {
     maximumFractionDigits: 2,
+    useGrouping: false,
   })
 }

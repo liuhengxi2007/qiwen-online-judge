@@ -16,5 +16,6 @@ export type ContestSummary = AuditFields & {
   endAt: string
   accessPolicy: ResourceAccessPolicy
   registrationStatus: ContestRegistrationStatus
+  canViewDetail: boolean
   author: UserIdentity | null
 }

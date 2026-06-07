@@ -33,6 +33,14 @@ type SubmissionSummaryListProps = {
   onPageChange: (page: number) => void
 }
 
+const submissionListGridClassName =
+  'grid grid-cols-[4rem_minmax(12rem,2fr)_minmax(10rem,1.5fr)_5rem_minmax(9rem,1.2fr)_minmax(11rem,1.5fr)_6rem_7rem_6rem] items-center gap-3'
+const submissionHeaderCellClassName = 'min-w-0 px-2'
+const submissionValueCellClassName = 'min-w-0 px-2 text-sm font-medium text-slate-900'
+const submissionValueTextClassName = 'block py-1'
+const submissionValueLinkClassName =
+  '-mx-2 block truncate rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline'
+
 export function SubmissionSummaryList({
   submissions,
   viewer,
@@ -58,111 +66,121 @@ export function SubmissionSummaryList({
             onPageChange={onPageChange}
           />
         </div>
-        <div className="space-y-4">
-          {submissions.map((submission) => (
-            <Card
-              key={submissionIdValue(submission.id)}
-              className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
-            >
-              <CardContent className="py-3.5">
-                <dl className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)]">
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.id')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {submission.canViewDetail ||
-                      usernameValue(submission.submitter.username) === usernameValue(viewer.username) ? (
-                        <Link
-                          className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                          to={`/submissions/${submissionIdValue(submission.id)}`}
-                        >
-                          {submissionIdValue(submission.id)}
-                        </Link>
-                      ) : (
-                        <span className="block min-h-[1.625rem] w-full px-2 py-1">
-                          {submissionIdValue(submission.id)}
-                        </span>
-                      )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.problem')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <Link
-                        className="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                        to={submissionProblemPath(submission.source, submission.problemSlug)}
-                      >
-                        {formatProblemTitleDisplay(submission.problemTitle, submission.problemSlug, problemTitleDisplayMode)}
-                      </Link>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.submitter')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <UserProfileLink
-                        className="block"
-                        linkClassName="-mx-2 block min-h-[1.625rem] w-full rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline"
-                        user={submission.submitter}
-                      />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.language')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{submissionLanguageLabel(submission.language)}</span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.result')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span
-                        className={cn(
-                          'block min-h-[1.625rem] w-full py-1',
-                          submissionResultMotionClassName(submission.status, submission.verdict),
-                        )}
-                        style={submissionResultTextStyle(
-                          submission.resultDisplayMode,
-                          submission.status,
-                          submission.verdict,
-                          submission.score,
-                        )}
-                      >
-                        {submissionResultLabel(
-                          submission.resultDisplayMode,
-                          submission.status,
-                          submission.verdict,
-                          submission.score,
-                        )}
-                      </span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('common.submittedAt')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <DateTimeText className="block min-h-[1.625rem] w-full py-1" value={submission.submittedAt} />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.timeUsed')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalDurationMs(submission.timeUsedMs)}</span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.spaceUsed')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{formatOptionalMemoryKb(submission.memoryUsedKb)}</span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">{t('submission.list.codeLength')}</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      <span className="block min-h-[1.625rem] w-full py-1">{formatCodeLength(submission.codeLength)}</span>
-                    </dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-3">
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-[76rem] space-y-2">
+              <div
+                className={cn(
+                  submissionListGridClassName,
+                  'px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500',
+                )}
+              >
+                <div className={submissionHeaderCellClassName}>{t('submission.list.id')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.problem')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.submitter')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.language')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.result')}</div>
+                <div className={submissionHeaderCellClassName}>{t('common.submittedAt')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.timeUsed')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.spaceUsed')}</div>
+                <div className={submissionHeaderCellClassName}>{t('submission.list.codeLength')}</div>
+              </div>
+
+              {submissions.map((submission) => {
+                const canOpenSubmission =
+                  submission.canViewDetail ||
+                  usernameValue(submission.submitter.username) === usernameValue(viewer.username)
+
+                return (
+                  <Card
+                    key={submissionIdValue(submission.id)}
+                    className="border-slate-200 bg-white py-0 shadow-[0_12px_32px_rgba(15,23,42,0.06)]"
+                  >
+                    <CardContent className="px-4 py-2">
+                      <div className={submissionListGridClassName}>
+                        <div className={submissionValueCellClassName}>
+                          {canOpenSubmission ? (
+                            <Link className={submissionValueLinkClassName} to={`/submissions/${submissionIdValue(submission.id)}`}>
+                              {submissionIdValue(submission.id)}
+                            </Link>
+                          ) : (
+                            <span className={submissionValueTextClassName}>{submissionIdValue(submission.id)}</span>
+                          )}
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <Link
+                            className={submissionValueLinkClassName}
+                            to={submissionProblemPath(submission.source, submission.problemSlug)}
+                          >
+                            {formatProblemTitleDisplay(submission.problemTitle, submission.problemSlug, problemTitleDisplayMode)}
+                          </Link>
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <UserProfileLink
+                            className="block min-w-0"
+                            linkClassName={submissionValueLinkClassName}
+                            user={submission.submitter}
+                          />
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <span className={submissionValueTextClassName}>{submissionLanguageLabel(submission.language)}</span>
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <span
+                            className={cn(
+                              submissionValueTextClassName,
+                              'leading-tight',
+                              submissionResultMotionClassName(submission.status, submission.verdict),
+                            )}
+                            style={submissionResultTextStyle(
+                              submission.resultDisplayMode,
+                              submission.status,
+                              submission.verdict,
+                              submission.score,
+                            )}
+                          >
+                            {submissionResultLabel(
+                              submission.resultDisplayMode,
+                              submission.status,
+                              submission.verdict,
+                              submission.score,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <DateTimeText className={cn(submissionValueTextClassName, 'whitespace-nowrap')} value={submission.submittedAt} />
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <span className={cn(submissionValueTextClassName, 'whitespace-nowrap')}>
+                            {formatOptionalDurationMs(submission.timeUsedMs)}
+                          </span>
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <span className={cn(submissionValueTextClassName, 'whitespace-nowrap')}>
+                            {formatOptionalMemoryKb(submission.memoryUsedKb)}
+                          </span>
+                        </div>
+
+                        <div className={submissionValueCellClassName}>
+                          <span className={cn(submissionValueTextClassName, 'whitespace-nowrap')}>
+                            {formatCodeLength(submission.codeLength)}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+
           <PaginationControls
             currentPage={currentPage}
             pageNumbers={pageNumbers}

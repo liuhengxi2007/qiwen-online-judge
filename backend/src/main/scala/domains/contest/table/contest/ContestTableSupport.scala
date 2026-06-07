@@ -78,6 +78,7 @@ object ContestTableSupport:
         Nil
       ),
       registrationStatus = ContestRegistrationStatus.notRegistered,
+      canViewDetail = false,
       author = readOptionalUserIdentity(resultSet, "author"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
