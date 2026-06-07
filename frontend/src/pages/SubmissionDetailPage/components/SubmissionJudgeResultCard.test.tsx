@@ -26,7 +26,7 @@ vi.mock('@/system/i18n/use-i18n', () => ({
 }))
 
 describe('SubmissionJudgeResultCard', () => {
-  it('renders owned base and worst summaries without duplicate node summaries', () => {
+  it('omits duplicate aggregation summaries when there is only one subtask', () => {
     const judgeResult: JudgeResult = {
       baseResult: {
         score: 0,
@@ -54,7 +54,7 @@ describe('SubmissionJudgeResultCard', () => {
             memoryUsedKb: 3460,
           },
           worstResult: {
-            score: 0,
+            score: 1,
             verdict: 'wrong_answer',
             reason: null,
             timeUsedMs: 60,
@@ -83,9 +83,11 @@ describe('SubmissionJudgeResultCard', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getAllByText('Base result')).toHaveLength(2)
-    expect(screen.getAllByText('Worst result')).toHaveLength(2)
+    expect(screen.getAllByText('Base result')).toHaveLength(1)
+    expect(screen.getAllByText('Worst result')).toHaveLength(1)
     expect(screen.getAllByText('Verdict').length).toBeGreaterThan(1)
+    expect(screen.queryByText('subtask 1 (main)')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Hack' }).getAttribute('href')).toBe('/submissions/1/hack/1')
     expect(screen.getByText('System Error')).toBeTruthy()
     expect(screen.getByText('checker_runtime_failed')).toBeTruthy()
     expect(container.textContent).not.toContain('Wrong Answer · 0')
