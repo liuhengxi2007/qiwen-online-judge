@@ -32,7 +32,7 @@ final case class CreateContestSubmission(
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, CreateSubmissionRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
-      body <- request.as[CreateSubmissionRequest]
+      body <- CreateSubmission.decodeRequest(request)
     yield (contestSlug, body)
 
   override def plan(

@@ -1,4 +1,4 @@
-import { Plus, Send, Trash2, Upload } from 'lucide-react'
+import { FileText, Plus, Send, Trash2, Upload } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { isSubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
@@ -19,6 +20,7 @@ import { isTextSubmissionRole, type SubmitProgramDraft } from '@/pages/ProblemSu
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemSubmitEditorCardProps = {
+  canSubmit: boolean
   errorMessage: string
   isSubmitting: boolean
   onAddProgram: () => void
@@ -31,6 +33,7 @@ type ProblemSubmitEditorCardProps = {
 }
 
 export function ProblemSubmitEditorCard({
+  canSubmit,
   errorMessage,
   isSubmitting,
   onAddProgram,
@@ -89,7 +92,7 @@ export function ProblemSubmitEditorCard({
           </Button>
           <Button
             type="button"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !canSubmit}
             className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
             onClick={onSubmit}
           >
@@ -175,9 +178,37 @@ function ProblemSubmitProgramEditor({
       </div>
 
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Label htmlFor={`problem-submit-source-${program.id}`}>{t('problem.submit.sourceCode')}</Label>
-          <div>
+        <Label htmlFor={`problem-submit-source-${program.id}`}>{t('problem.submit.sourceCode')}</Label>
+        <Tabs
+          value={program.sourceMode}
+          onValueChange={(value) => {
+            if (value === 'paste' || value === 'file') {
+              onProgramChange(program.id, { sourceMode: value })
+            }
+          }}
+        >
+          <TabsList className="h-9 rounded-lg">
+            <TabsTrigger value="paste" className="gap-2 rounded-md">
+              <FileText className="size-4" />
+              {t('problem.submit.sourcePaste')}
+            </TabsTrigger>
+            <TabsTrigger value="file" className="gap-2 rounded-md">
+              <Upload className="size-4" />
+              {t('problem.submit.sourceFile')}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="paste" className="mt-3">
+            <Textarea
+              id={`problem-submit-source-${program.id}`}
+              value={program.sourceCode}
+              className="min-h-[22rem] rounded-3xl font-mono text-sm"
+              onChange={(event) => {
+                onProgramChange(program.id, { sourceCode: event.target.value })
+              }}
+            />
+          </TabsContent>
+          <TabsContent value="file" className="mt-3">
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-slate-300 p-4">
             <Input
               id={`problem-submit-file-${program.id}`}
               type="file"
@@ -189,35 +220,43 @@ function ProblemSubmitProgramEditor({
                 if (!file) {
                   return
                 }
-                void file.text().then((sourceCode) => {
-                  onProgramChange(program.id, {
-                    sourceCode,
-                    ...(program.role.trim() ? {} : { role: file.name }),
-                  })
+                onProgramChange(program.id, {
+                  sourceFile: file,
+                  sourceMode: 'file',
+                  ...(program.role.trim() ? {} : { role: file.name }),
                 })
               }}
             />
             <Button
               asChild
               variant="outline"
-              className={`h-9 rounded-2xl border-slate-300 bg-white px-3 ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+              className={`h-9 rounded-lg border-slate-300 bg-white px-3 ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             >
               <label htmlFor={`problem-submit-file-${program.id}`} aria-disabled={isSubmitting}>
                 <Upload className="size-4" />
-                Import file
+                {t('problem.submit.chooseFile')}
               </label>
             </Button>
+              <span className="min-w-0 text-sm text-slate-600">
+                {program.sourceFile ? program.sourceFile.name : t('problem.submit.noFileSelected')}
+              </span>
+              {program.sourceFile ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={isSubmitting}
+                  className="h-9 rounded-lg px-3"
+                  onClick={() => {
+                    onProgramChange(program.id, { sourceFile: null })
+                  }}
+                >
+                  {t('problem.submit.clearFile')}
+                </Button>
+              ) : null}
+            </div>
+          </TabsContent>
+        </Tabs>
           </div>
-        </div>
-        <Textarea
-          id={`problem-submit-source-${program.id}`}
-          value={program.sourceCode}
-          className="min-h-[22rem] rounded-3xl font-mono text-sm"
-          onChange={(event) => {
-            onProgramChange(program.id, { sourceCode: event.target.value })
-          }}
-        />
-      </div>
     </div>
   )
 }

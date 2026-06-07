@@ -3,7 +3,12 @@ import { Navigate, useParams } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ProblemSubmitEditorCard } from './components/ProblemSubmitEditorCard'
-import { buildSubmissionPrograms, normalizeSubmitProgramDraft, type SubmitProgramDraft } from './functions/SubmitPrograms'
+import {
+  buildSubmissionPayload,
+  hasSubmissionDraftSource,
+  normalizeSubmitProgramDraft,
+  type SubmitProgramDraft,
+} from './functions/SubmitPrograms'
 import { ProblemSubmitHeaderCard } from './components/ProblemSubmitHeaderCard'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
@@ -58,10 +63,11 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
   const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const [programs, setPrograms] = useState<SubmitProgramDraft[]>([
-    { id: 'main', role: 'main', language: 'cpp17', sourceCode: '' },
+    { id: 'main', role: 'main', language: 'cpp17', sourceMode: 'paste', sourceCode: '', sourceFile: null },
   ])
   const createSubmissionAction = useCreateSubmissionAction(t('problem.submit.createFailed'), contestSlug)
-  const hasUnsavedChanges = programs.some((program) => program.sourceCode.trim().length > 0)
+  const hasUnsavedChanges = programs.some(hasSubmissionDraftSource)
+  const canSubmit = programs.length > 0 && programs.every(hasSubmissionDraftSource)
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -92,7 +98,9 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
                   id: crypto.randomUUID(),
                   role: `role-${currentPrograms.length + 1}`,
                   language: 'cpp17',
+                  sourceMode: 'paste',
                   sourceCode: '',
+                  sourceFile: null,
                 },
               ])
               createSubmissionAction.clearMessages()
@@ -108,17 +116,15 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
               createSubmissionAction.clearMessages()
             }}
             onSubmit={() => {
-              const payload = buildSubmissionPrograms(programs)
+              const payload = buildSubmissionPayload(problemSlug, programs)
               if (!payload.ok) {
                 createSubmissionAction.setErrorMessage(payload.error)
                 return
               }
 
-              void createSubmissionAction.submit({
-                problemSlug,
-                programs: payload.programs,
-              })
+              void createSubmissionAction.submit(payload.payload)
             }}
+            canSubmit={canSubmit}
             programs={programs}
             statusMessage={createSubmissionAction.statusMessage}
             supportedLanguages={supportedLanguages}

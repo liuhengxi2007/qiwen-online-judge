@@ -19,7 +19,7 @@ import java.util.UUID
 
 object HackApiSupport:
 
-  val MaxHackInputChars: Int = 100000
+  val MaxHackInputChars: Int = 10 * 1024 * 1024
   val MaxStrategyProviderChars: Int = 200000
 
   final case class TargetContext(
@@ -109,6 +109,16 @@ object HackApiSupport:
 
   def requiresStrategyProvider(subtask: JudgeTaskSubtask): Boolean =
     subtask.mode.`type` == "interactive" && subtask.testcases.exists(_.strategyProvider.nonEmpty)
+
+  def normalizeHackInput(input: String): String =
+    val normalizedNewlines = input.replace("\r\n", "\n").replace('\r', '\n')
+    if normalizedNewlines.isEmpty then ""
+    else
+      val strippedLines = normalizedNewlines
+        .split("\n", -1)
+        .map(_.replaceAll("[ \t]+$", ""))
+        .mkString("\n")
+      if strippedLines.endsWith("\n") then strippedLines else s"$strippedLines\n"
 
   def validateHackText(input: String, strategyProviderSource: Option[String], requiresStrategyProvider: Boolean): IO[Unit] =
     val normalizedStrategy = strategyProviderSource.filter(_.trim.nonEmpty)

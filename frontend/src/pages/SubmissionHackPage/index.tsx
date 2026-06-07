@@ -3,9 +3,12 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { CreateHack } from '@/apis/hack/CreateHack'
+import { FileText, Upload } from 'lucide-react'
+import { CreateHack, CreateHackMultipart } from '@/apis/hack/CreateHack'
 import { GetHack } from '@/apis/hack/GetHack'
 import { GetSubmissionHackSubtask } from '@/apis/hack/GetSubmissionHackSubtask'
 import type { HackDetail } from '@/objects/hack/response/HackDetail'
@@ -22,7 +25,12 @@ import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { hackModeLabel, hackStatusLabel } from '@/pages/objects/HackDisplay'
 import { formatOptionalScore } from '@/pages/objects/SubmissionDisplay'
-import { sendAPI } from '@/system/api/api-message'
+import {
+  canSubmitHackSources,
+  type HackSourceMode,
+  usesHackMultipart,
+} from './functions/HackSourceMode'
+import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -76,7 +84,11 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, { info: null, hack: null, isLoading: true, errorMessage: '' })
   const [input, setInput] = useState('')
+  const [inputMode, setInputMode] = useState<HackSourceMode>('paste')
+  const [inputFile, setInputFile] = useState<File | null>(null)
   const [strategyProviderSource, setStrategyProviderSource] = useState('')
+  const [strategyProviderMode, setStrategyProviderMode] = useState<HackSourceMode>('paste')
+  const [strategyProviderFile, setStrategyProviderFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -110,17 +122,51 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
       return
     }
 
+    const inputSource = { mode: inputMode, text: input, file: inputFile }
+    const strategyProvider = { mode: strategyProviderMode, text: strategyProviderSource, file: strategyProviderFile }
+    if (!canSubmitHackSources(inputSource, strategyProvider, state.info.requiresStrategyProvider)) {
+      return
+    }
+
     setIsSubmitting(true)
-    void sendAPI(new CreateHack({
-      targetSubmissionId: submissionId,
-      subtaskIndex,
-      input,
-      strategyProviderSource: state.info.requiresStrategyProvider ? strategyProviderSource : null,
-    }))
+    const request = (() => {
+      if (usesHackMultipart(inputSource, strategyProvider, state.info.requiresStrategyProvider)) {
+        const api = new CreateHackMultipart({
+          targetSubmissionId: submissionId,
+          subtaskIndex,
+          input: inputMode === 'file'
+            ? { kind: 'file', value: inputFile! }
+            : { kind: 'text', value: input },
+          strategyProviderSource: state.info.requiresStrategyProvider
+            ? (strategyProviderMode === 'file'
+                ? { kind: 'file' as const, value: strategyProviderFile! }
+                : { kind: 'text' as const, value: strategyProviderSource })
+            : null,
+        })
+        return sendMultipartAPI(api, api.formData())
+      }
+
+      return sendAPI(new CreateHack({
+        targetSubmissionId: submissionId,
+        subtaskIndex,
+        input,
+        strategyProviderSource: state.info.requiresStrategyProvider ? strategyProviderSource : null,
+      }))
+    })()
+
+    void request
       .then((hack) => dispatch({ type: 'hack_loaded', hack }))
       .catch((error: unknown) => dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.submit.submitFailed') }))
       .finally(() => setIsSubmitting(false))
   }
+
+  const canSubmit = state.info
+    ? canSubmitHackSources(
+        { mode: inputMode, text: input, file: inputFile },
+        { mode: strategyProviderMode, text: strategyProviderSource, file: strategyProviderFile },
+        state.info.requiresStrategyProvider,
+      )
+    : false
 
   return (
     <PageShell title={t('hack.submit.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
@@ -150,15 +196,35 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="hack-input">{t('hack.submit.input')}</Label>
-                <Textarea id="hack-input" className="min-h-48 font-mono" value={input} onChange={(event) => setInput(event.target.value)} />
+                <HackSourceTabs
+                  file={inputFile}
+                  fileInputId="hack-input-file"
+                  mode={inputMode}
+                  onFileChange={setInputFile}
+                  onModeChange={setInputMode}
+                  onTextChange={setInput}
+                  text={input}
+                  textAreaId="hack-input"
+                  disabled={isSubmitting}
+                />
               </div>
               {state.info.requiresStrategyProvider ? (
                 <div className="space-y-2">
                   <Label htmlFor="hack-strategy">{t('hack.submit.strategyProvider')}</Label>
-                  <Textarea id="hack-strategy" className="min-h-48 font-mono" value={strategyProviderSource} onChange={(event) => setStrategyProviderSource(event.target.value)} />
+                  <HackSourceTabs
+                    file={strategyProviderFile}
+                    fileInputId="hack-strategy-file"
+                    mode={strategyProviderMode}
+                    onFileChange={setStrategyProviderFile}
+                    onModeChange={setStrategyProviderMode}
+                    onTextChange={setStrategyProviderSource}
+                    text={strategyProviderSource}
+                    textAreaId="hack-strategy"
+                    disabled={isSubmitting}
+                  />
                 </div>
               ) : null}
-              <Button disabled={isSubmitting || Boolean(state.hack)} onClick={submit}>
+              <Button disabled={isSubmitting || Boolean(state.hack) || !canSubmit} onClick={submit}>
                 {isSubmitting ? t('hack.submit.submitting') : t('hack.submit.action')}
               </Button>
             </CardContent>
@@ -168,6 +234,88 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
         </div>
       ) : null}
     </PageShell>
+  )
+}
+
+type HackSourceTabsProps = {
+  disabled: boolean
+  file: File | null
+  fileInputId: string
+  mode: HackSourceMode
+  onFileChange: (file: File | null) => void
+  onModeChange: (mode: HackSourceMode) => void
+  onTextChange: (value: string) => void
+  text: string
+  textAreaId: string
+}
+
+function HackSourceTabs({
+  disabled,
+  file,
+  fileInputId,
+  mode,
+  onFileChange,
+  onModeChange,
+  onTextChange,
+  text,
+  textAreaId,
+}: HackSourceTabsProps) {
+  const { t } = useI18n()
+
+  return (
+    <Tabs
+      value={mode}
+      onValueChange={(value) => {
+        if (value === 'paste' || value === 'file') {
+          onModeChange(value)
+        }
+      }}
+    >
+      <TabsList className="h-9 rounded-lg">
+        <TabsTrigger value="paste" className="gap-2 rounded-md">
+          <FileText className="size-4" />
+          {t('hack.submit.sourcePaste')}
+        </TabsTrigger>
+        <TabsTrigger value="file" className="gap-2 rounded-md">
+          <Upload className="size-4" />
+          {t('hack.submit.sourceFile')}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="paste" className="mt-3">
+        <Textarea id={textAreaId} className="min-h-48 font-mono" value={text} onChange={(event) => onTextChange(event.target.value)} />
+      </TabsContent>
+      <TabsContent value="file" className="mt-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-slate-300 p-4">
+          <Input
+            id={fileInputId}
+            type="file"
+            disabled={disabled}
+            className="sr-only"
+            onChange={(event) => {
+              const selectedFile = event.currentTarget.files?.[0] ?? null
+              event.currentTarget.value = ''
+              onFileChange(selectedFile)
+            }}
+          />
+          <Button
+            asChild
+            variant="outline"
+            className={`h-9 rounded-lg border-slate-300 bg-white px-3 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+          >
+            <label htmlFor={fileInputId} aria-disabled={disabled}>
+              <Upload className="size-4" />
+              {t('hack.submit.chooseFile')}
+            </label>
+          </Button>
+          <span className="min-w-0 text-sm text-slate-600">{file ? file.name : t('hack.submit.noFileSelected')}</span>
+          {file ? (
+            <Button type="button" variant="ghost" disabled={disabled} className="h-9 rounded-lg px-3" onClick={() => onFileChange(null)}>
+              {t('hack.submit.clearFile')}
+            </Button>
+          ) : null}
+        </div>
+      </TabsContent>
+    </Tabs>
   )
 }
 

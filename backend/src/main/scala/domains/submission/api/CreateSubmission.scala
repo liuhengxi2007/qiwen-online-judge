@@ -16,10 +16,13 @@ import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
 import domains.submission.utils.SubmissionProgramStorage
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.deriveDecoder
+import io.circe.parser.decode as decodeJson
 import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.multipart.Multipart
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
+import shared.api.{ApiMessages, ApiPath, HttpApiError, MultipartTextSupport, PathParams}
 
 import java.sql.Connection
 
@@ -35,7 +38,7 @@ final case class CreateSubmission(
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateSubmissionRequest] =
     val _ = pathParams
-    request.as[CreateSubmissionRequest]
+    CreateSubmission.decodeRequest(request)
 
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     createForProblem(connection, actor, request)
@@ -146,3 +149,48 @@ final case class CreateSubmission(
       programLanguages = programs.map { case (role, program) => role -> program.language }
       _ <- HttpApiError.fromEitherBadRequest(JudgeTaskBuilder.validateSubmissionProgramsForConfig(configBytes, programLanguages, manifest))
     yield ()
+
+object CreateSubmission:
+
+  private val ScalarMaxBytes: Long = 64L * 1024L
+  private val SourceMaxBytes: Long = SubmissionSourceCode.MaxChars.toLong * 4L
+
+  private final case class MultipartProgram(
+    role: String,
+    language: domains.submission.objects.SubmissionLanguage,
+    sourcePart: String
+  )
+
+  private object MultipartProgram:
+    given Decoder[MultipartProgram] = deriveDecoder[MultipartProgram]
+
+  def decodeRequest(request: Request[IO]): IO[CreateSubmissionRequest] =
+    if MultipartTextSupport.isMultipart(request) then decodeMultipart(request)
+    else request.as[CreateSubmissionRequest]
+
+  private def decodeMultipart(request: Request[IO]): IO[CreateSubmissionRequest] =
+    for
+      multipart <- request.as[Multipart[IO]]
+      problemSlugText <- MultipartTextSupport.requireUtf8Text(multipart, "problemSlug", ScalarMaxBytes)
+      problemSlug <- HttpApiError.fromEitherBadRequest(domains.problem.objects.ProblemSlug.parse(problemSlugText))
+      programsText <- MultipartTextSupport.requireUtf8Text(multipart, "programs", ScalarMaxBytes)
+      programSpecs <- HttpApiError.fromEitherBadRequest(
+        decodeJson[List[MultipartProgram]](programsText).left.map(error => s"Multipart programs field is invalid JSON: ${error.getMessage}")
+      )
+      _ <- HttpApiError.ensure(programSpecs.nonEmpty, HttpApiError.badRequest("At least one program is required."))
+      _ <- HttpApiError.ensure(
+        programSpecs.map(_.sourcePart.trim).distinct.size == programSpecs.size,
+        HttpApiError.badRequest("Submission source part names must be unique.")
+      )
+      programs <- programSpecs.traverse { spec =>
+        val sourcePart = spec.sourcePart.trim
+        for
+          _ <- HttpApiError.ensure(sourcePart.nonEmpty, HttpApiError.badRequest("Submission source part name is required."))
+          source <- MultipartTextSupport.requireUtf8Text(multipart, sourcePart, SourceMaxBytes)
+        yield spec.role -> CreateSubmissionRequest.Program(spec.language, SubmissionSourceCode(source))
+      }
+      _ <- HttpApiError.ensure(
+        programs.map(_._1.trim).distinct.size == programs.size,
+        HttpApiError.badRequest("Submission program roles must be unique.")
+      )
+    yield CreateSubmissionRequest(problemSlug, programs.toMap)

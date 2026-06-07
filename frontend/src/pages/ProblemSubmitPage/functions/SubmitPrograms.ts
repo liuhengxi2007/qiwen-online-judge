@@ -1,12 +1,18 @@
+import type { CreateSubmissionMultipartRequest } from '@/apis/submission/CreateSubmission'
 import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
+import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { parseSubmissionSourceCode } from '@/objects/submission/SubmissionSourceCode'
+
+export type SubmitSourceMode = 'paste' | 'file'
 
 export type SubmitProgramDraft = {
   id: string
   role: string
   language: SubmissionLanguage
+  sourceMode: SubmitSourceMode
   sourceCode: string
+  sourceFile: File | null
 }
 
 const codeRolePattern = /^[A-Za-z0-9_-]+$/
@@ -62,6 +68,10 @@ export function buildSubmissionPrograms(programs: SubmitProgramDraft[]): BuildSu
     }
     seenRoles.add(role)
 
+    if (program.sourceMode === 'file') {
+      return { ok: false, error: 'File submissions require multipart payloads.' }
+    }
+
     const sourceCodeResult = parseSubmissionSourceCode(program.sourceCode)
     if (!sourceCodeResult.ok) {
       return { ok: false, error: sourceCodeResult.error }
@@ -77,4 +87,103 @@ export function buildSubmissionPrograms(programs: SubmitProgramDraft[]): BuildSu
   }
 
   return { ok: true, programs: payloadPrograms }
+}
+
+export type BuildSubmissionPayloadResult =
+  | { ok: true; payload: SubmissionCreatePayload }
+  | { ok: false; error: string }
+
+export type SubmissionCreatePayload =
+  | { kind: 'json'; request: CreateSubmissionRequest }
+  | { kind: 'multipart'; request: CreateSubmissionMultipartRequest }
+
+export function hasSubmissionDraftSource(program: SubmitProgramDraft): boolean {
+  return program.sourceMode === 'file'
+    ? program.sourceFile !== null
+    : program.sourceCode.trim().length > 0
+}
+
+export function buildSubmissionPayload(problemSlug: ProblemSlug, programs: SubmitProgramDraft[]): BuildSubmissionPayloadResult {
+  const roleResult = validateProgramRoles(programs)
+  if (!roleResult.ok) {
+    return roleResult
+  }
+
+  const hasFileSource = programs.some((program) => program.sourceMode === 'file')
+  if (!hasFileSource) {
+    const programsResult = buildSubmissionPrograms(programs)
+    if (!programsResult.ok) {
+      return programsResult
+    }
+    return { ok: true, payload: { kind: 'json', request: { problemSlug, programs: programsResult.programs } } }
+  }
+
+  const multipartPrograms: CreateSubmissionMultipartRequest['programs'] = []
+  const sources: CreateSubmissionMultipartRequest['sources'] = []
+
+  for (const [index, program] of programs.entries()) {
+    const role = program.role.trim()
+    const sourcePart = `source-${index + 1}`
+    multipartPrograms.push({
+      role,
+      language: program.language,
+      sourcePart,
+    })
+
+    if (program.sourceMode === 'file') {
+      if (!program.sourceFile) {
+        return { ok: false, error: `Source file is required for role ${role}.` }
+      }
+      sources.push({ sourcePart, source: program.sourceFile })
+    } else {
+      if (!program.sourceCode.trim()) {
+        return { ok: false, error: 'Source code is required.' }
+      }
+      sources.push({ sourcePart, source: program.sourceCode })
+    }
+  }
+
+  return {
+    ok: true,
+    payload: {
+      kind: 'multipart',
+      request: {
+        problemSlug,
+        programs: multipartPrograms,
+        sources,
+      },
+    },
+  }
+}
+
+type ValidateProgramRolesResult = { ok: true } | { ok: false; error: string }
+
+function validateProgramRoles(programs: SubmitProgramDraft[]): ValidateProgramRolesResult {
+  const seenRoles = new Set<string>()
+
+  for (const program of programs) {
+    const role = program.role.trim()
+    if (!role || !isValidSubmissionRole(role)) {
+      return {
+        ok: false,
+        error: 'Role must contain only ASCII letters, digits, "_" or "-", with an optional single ".txt" suffix.',
+      }
+    }
+    if (seenRoles.has(role)) {
+      return { ok: false, error: `Role is duplicated: ${role}.` }
+    }
+    if (isTextSubmissionRole(role) && program.language !== 'text') {
+      return { ok: false, error: `Role ${role} must use Text language.` }
+    }
+    if (!isTextSubmissionRole(role) && program.language === 'text') {
+      return { ok: false, error: 'Text submissions must use a .txt role.' }
+    }
+    seenRoles.add(role)
+  }
+
+  if (programs.length === 0) {
+    return { ok: false, error: 'At least one program is required.' }
+  }
+
+  return { ok: true }
 }

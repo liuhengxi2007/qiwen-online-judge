@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { CreateContestSubmission } from '@/apis/submission/CreateContestSubmission'
-import { CreateSubmission } from '@/apis/submission/CreateSubmission'
+import { CreateContestSubmission, CreateContestSubmissionMultipart } from '@/apis/submission/CreateContestSubmission'
+import { CreateSubmission, CreateSubmissionMultipart } from '@/apis/submission/CreateSubmission'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
-import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
-import { sendAPI } from '@/system/api/api-message'
+import type { SubmissionCreatePayload } from '@/pages/ProblemSubmitPage/functions/SubmitPrograms'
+import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { HttpClientError } from '@/system/api/http-client'
 
 export function useCreateSubmissionAction(createFailedMessage: string, contestSlug?: ContestSlug) {
@@ -16,13 +16,22 @@ export function useCreateSubmissionAction(createFailedMessage: string, contestSl
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submit = useCallback(
-    async (request: CreateSubmissionRequest) => {
+    async (payload: SubmissionCreatePayload) => {
       setIsSubmitting(true)
       setErrorMessage('')
       setStatusMessage('')
 
       try {
-        const submission = await sendAPI(contestSlug ? new CreateContestSubmission(contestSlug, request) : new CreateSubmission(request))
+        const submission = await (() => {
+          if (payload.kind === 'multipart') {
+            const api = contestSlug
+              ? new CreateContestSubmissionMultipart(contestSlug, payload.request)
+              : new CreateSubmissionMultipart(payload.request)
+            return sendMultipartAPI(api, api.formData())
+          }
+
+          return sendAPI(contestSlug ? new CreateContestSubmission(contestSlug, payload.request) : new CreateSubmission(payload.request))
+        })()
         navigate(`/submissions/${submissionIdValue(submission.id)}`)
       } catch (error) {
         setErrorMessage(error instanceof HttpClientError ? error.message : createFailedMessage)
