@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
 import { contestPenaltyMillisValue } from '@/objects/contest/ContestPenaltyMillis'
 import { contestRankValue } from '@/objects/contest/ContestRank'
-import { contestScoreValue } from '@/objects/contest/ContestScore'
+import { contestScoreValue, formatContestScore } from '@/objects/contest/ContestScore'
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestRanklistItem } from '@/objects/contest/response/ContestRanklistItem'
@@ -199,10 +199,6 @@ function ContestProblemResultCell({ result }: { result: ContestRanklistProblemRe
       {result.penaltyMillis ? <span className="font-mono text-[11px] text-slate-500">{formatPenaltyMillis(result.penaltyMillis)}</span> : null}
     </div>
   )
-}
-
-function formatContestScore(score: ContestRanklistItem['totalScore']): string {
-  return contestScoreValue(score).toLocaleString(undefined, { maximumFractionDigits: 2 })
 }
 
 function formatPenaltyMillis(penaltyMillis: ContestRanklistItem['penaltyMillis']): string {
