@@ -519,12 +519,17 @@ type IndexedValue = {
   index: number
 }
 
+type DecimalUnits = {
+  units: bigint
+  scale: number
+}
+
 function validateSiblingRatios(items: unknown[], label: string, ctx: ValidationContext): void {
   validateSiblingRatioEntries(items.map((value, index) => ({ value, index })), label, ctx)
 }
 
 function validateSiblingRatioEntries(items: IndexedValue[], label: string, ctx: ValidationContext): void {
-  let explicitSum = 0
+  const explicitRatios: DecimalUnits[] = []
 
   items.forEach(({ value: item, index }) => {
     if (!isRecord(item) || item.scoreRatio === undefined) {
@@ -538,12 +543,35 @@ function validateSiblingRatioEntries(items: IndexedValue[], label: string, ctx: 
       ctx.errors.push(`${label}[${index}].scoreRatio must be between 0 and 1.`)
       return
     }
-    explicitSum += item.scoreRatio
+    explicitRatios.push(decimalUnitsFromNumber(item.scoreRatio))
   })
 
-  if (explicitSum > 1) {
+  if (decimalUnitsExceedOne(explicitRatios)) {
     ctx.errors.push(`${label} explicit scoreRatio values must not sum above 1.`)
   }
+}
+
+function decimalUnitsFromNumber(value: number): DecimalUnits {
+  const [coefficient, exponentPart] = value.toString().toLowerCase().split('e')
+  const exponent = exponentPart === undefined ? 0 : Number(exponentPart)
+  const [wholePart, fractionPart = ''] = coefficient.split('.')
+  const digits = `${wholePart}${fractionPart}` || '0'
+  const scale = fractionPart.length - exponent
+
+  if (scale <= 0) {
+    return { units: BigInt(digits) * pow10(-scale), scale: 0 }
+  }
+  return { units: BigInt(digits), scale }
+}
+
+function decimalUnitsExceedOne(values: DecimalUnits[]): boolean {
+  const scale = Math.max(0, ...values.map((value) => value.scale))
+  const sum = values.reduce((total, value) => total + value.units * pow10(scale - value.scale), 0n)
+  return sum > pow10(scale)
+}
+
+function pow10(exponent: number): bigint {
+  return 10n ** BigInt(exponent)
 }
 
 function validateRequiredFileRef(value: unknown, label: string, ctx: ValidationContext): void {

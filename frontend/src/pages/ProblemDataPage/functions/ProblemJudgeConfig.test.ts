@@ -680,6 +680,35 @@ subtasks:
     }
   })
 
+  it('accepts decimal score ratios that sum exactly to one', () => {
+    const yaml = `version: 2
+hack: false
+limits:
+  timeMs: 1000
+  memoryMb: 256
+checker:
+  type: builtin
+  name: exact
+aggregation:
+  testcases: sum_max_max
+subtasks:
+  - scoreRatio: 0.33
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+  - scoreRatio: 0.56
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+  - scoreRatio: 0.11
+    testcases:
+      - input: tests/1.in
+        answer: tests/1.ans
+`
+
+    expect(validateJudgeConfigYaml(yaml, templateFiles).ok).toBe(true)
+  })
+
   it('rejects scoreRatio on sample and hack testcases', () => {
     const yaml = `version: 2
 hack: false
