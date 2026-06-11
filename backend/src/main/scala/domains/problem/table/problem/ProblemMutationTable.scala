@@ -110,6 +110,42 @@ object ProblemMutationTable:
       finally statement.close()
     }
 
+  private val lockExistingSQL: String =
+    """
+      |select 1
+      |from problems
+      |where id = ?
+      |for update
+      |""".stripMargin
+
+  def lockExisting(connection: Connection, problemId: ProblemId): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(lockExistingSQL)
+      try
+        statement.setObject(1, problemId.value)
+        val resultSet = statement.executeQuery()
+        try resultSet.next()
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val incrementHackRevisionSQL: String =
+    """
+      |update problems
+      |set hack_revision = hack_revision + 1
+      |where id = ?
+      |""".stripMargin
+
+  def incrementHackRevision(connection: Connection, problemId: ProblemId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(incrementHackRevisionSQL)
+      try
+        statement.setObject(1, problemId.value)
+        statement.executeUpdate()
+        ()
+      finally statement.close()
+    }
+
   private def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
     policy.copy(
       viewerGrants = policy.viewerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject)),

@@ -1,11 +1,12 @@
 package domains.hack.api
 
 import cats.effect.IO
+import cats.syntax.all.*
 import domains.auth.api.InternalOnlyApi
-import domains.hack.application.HackProblemDataMaterializer
 import domains.hack.objects.{HackId, HackStatus}
 import domains.hack.table.hack.HackMutationTable
-import domains.problem.objects.ProblemId
+import domains.problem.api.MaterializeHackProblemData
+import domains.problem.objects.{ProblemDataPath, ProblemId}
 import domains.problem.utils.ProblemDataStorage
 import judgeprotocol.objects.request.ReportHackResultRequest
 import org.http4s.Method
@@ -41,7 +42,22 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage)
       problemId <- (status, completed) match
         case (HackStatus.Success, Some(source)) =>
           for
-            _ <- HackProblemDataMaterializer.materializeSuccessfulHack(connection, problemDataStorage, input.hackId, source, input.request.answer, finishedAt)
+            inputPath <- RecordHackAttemptResult.problemDataPath(RecordHackAttemptResult.inputPathFor(input.hackId))
+            answerPath <- input.request.answer.traverse(_ => RecordHackAttemptResult.problemDataPath(RecordHackAttemptResult.answerPathFor(input.hackId)))
+            _ <- MaterializeHackProblemData(problemDataStorage).plan(
+              connection,
+              MaterializeHackProblemData.input(
+                problemId = source.problemId,
+                problemSlug = source.problemSlug,
+                subtaskIndex = source.subtaskIndex,
+                inputPath = inputPath,
+                answerPath = answerPath,
+                testcaseLabel = s"hack #${input.hackId.value}",
+                inputText = source.input,
+                answerText = input.request.answer,
+                createdAt = finishedAt
+              )
+            )
           yield Some(source.problemId)
         case _ =>
           IO.pure(None)
@@ -50,3 +66,12 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage)
 object RecordHackAttemptResult:
   def input(hackId: HackId, request: ReportHackResultRequest): RecordHackAttemptResultInput =
     RecordHackAttemptResultInput(hackId = hackId, request = request)
+
+  private def problemDataPath(value: String): IO[ProblemDataPath] =
+    IO.fromEither(ProblemDataPath.parse(value).left.map(IllegalArgumentException(_)))
+
+  private def inputPathFor(hackId: HackId): String =
+    s"hacks/${hackId.value}.in"
+
+  private def answerPathFor(hackId: HackId): String =
+    s"hacks/${hackId.value}.ans"

@@ -136,20 +136,3 @@ object HackMutationTable:
         finally resultSet.close()
       finally statement.close()
     }
-
-  private val incrementProblemHackRevisionSQL: String =
-    """
-      |update problems
-      |set hack_revision = hack_revision + 1
-      |where id = ?
-      |""".stripMargin
-
-  def incrementProblemHackRevision(connection: Connection, problemId: ProblemId): IO[Unit] =
-    IO.blocking {
-      val statement = connection.prepareStatement(incrementProblemHackRevisionSQL)
-      try
-        statement.setObject(1, problemId.value)
-        statement.executeUpdate()
-        ()
-      finally statement.close()
-    }

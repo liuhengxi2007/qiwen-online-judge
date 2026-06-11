@@ -1,6 +1,5 @@
-package domains.hack.application
+package domains.problem.api
 
-import domains.hack.objects.HackId
 import domains.problem.objects.ProblemDataPath
 import munit.FunSuite
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
@@ -8,10 +7,10 @@ import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.*
 
-class HackProblemDataMaterializerSuite extends FunSuite:
+class MaterializeHackProblemDataSuite extends FunSuite:
 
   test("appendHackTestcaseToJudgeYaml adds hack testcase to selected subtask") {
-    val updatedBytes = HackProblemDataMaterializer.appendHackTestcaseToJudgeYaml(
+    val updatedBytes = MaterializeHackProblemData.appendHackTestcaseToJudgeYaml(
       judgeYamlBytes = yaml("""
         |version: 2
         |hack: false
@@ -34,7 +33,7 @@ class HackProblemDataMaterializerSuite extends FunSuite:
         |        answer: sample/2.ans
         |"""),
       subtaskIndex = 2,
-      hackId = HackId(7),
+      testcaseLabel = "hack #7",
       inputPath = ProblemDataPath("hacks/7.in"),
       answerPath = Some(ProblemDataPath("hacks/7.ans"))
     )
@@ -50,7 +49,7 @@ class HackProblemDataMaterializerSuite extends FunSuite:
   }
 
   test("appendHackTestcaseToJudgeYaml omits answer when hack has no answer") {
-    val updatedBytes = HackProblemDataMaterializer.appendHackTestcaseToJudgeYaml(
+    val updatedBytes = MaterializeHackProblemData.appendHackTestcaseToJudgeYaml(
       judgeYamlBytes = yaml("""
         |version: 2
         |hack: false
@@ -60,7 +59,7 @@ class HackProblemDataMaterializerSuite extends FunSuite:
         |        answer: sample/1.ans
         |"""),
       subtaskIndex = 1,
-      hackId = HackId(8),
+      testcaseLabel = "hack #8",
       inputPath = ProblemDataPath("hacks/8.in"),
       answerPath = None
     )

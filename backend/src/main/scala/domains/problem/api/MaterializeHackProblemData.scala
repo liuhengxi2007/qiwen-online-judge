@@ -1,15 +1,17 @@
-package domains.hack.application
+package domains.problem.api
 
 import cats.effect.IO
 import cats.syntax.all.*
-import domains.hack.objects.HackId
-import domains.hack.table.hack.HackMutationTable
-import domains.problem.objects.ProblemDataPath
+import domains.auth.api.InternalOnlyApi
+import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug}
 import domains.problem.objects.internal.ProblemDataManifestEntry
+import domains.problem.table.problem.ProblemMutationTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.ProblemDataStorage
 import org.snakeyaml.engine.v2.api.{Dump, DumpSettings, Load, LoadSettings}
 import org.snakeyaml.engine.v2.common.FlowStyle
+import org.http4s.Method
+import shared.api.ApiPath
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -19,55 +21,93 @@ import java.util.{ArrayList, LinkedHashMap}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-object HackProblemDataMaterializer:
+final case class MaterializeHackProblemDataInput(
+  problemId: ProblemId,
+  problemSlug: ProblemSlug,
+  subtaskIndex: Int,
+  inputPath: ProblemDataPath,
+  answerPath: Option[ProblemDataPath],
+  testcaseLabel: String,
+  inputText: String,
+  answerText: Option[String],
+  createdAt: Instant
+)
+
+final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorage) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/internal/problems/hack-data")
+
+  override def plan(connection: Connection, input: MaterializeHackProblemDataInput): IO[Unit] =
+    MaterializeHackProblemData.materialize(connection, problemDataStorage, input)
+
+object MaterializeHackProblemData:
 
   private val JudgeYamlPath = ProblemDataPath("judge.yaml")
 
-  def materializeSuccessfulHack(
+  def input(
+    problemId: ProblemId,
+    problemSlug: ProblemSlug,
+    subtaskIndex: Int,
+    inputPath: ProblemDataPath,
+    answerPath: Option[ProblemDataPath],
+    testcaseLabel: String,
+    inputText: String,
+    answerText: Option[String],
+    createdAt: Instant
+  ): MaterializeHackProblemDataInput =
+    MaterializeHackProblemDataInput(
+      problemId = problemId,
+      problemSlug = problemSlug,
+      subtaskIndex = subtaskIndex,
+      inputPath = inputPath,
+      answerPath = answerPath,
+      testcaseLabel = testcaseLabel,
+      inputText = inputText,
+      answerText = answerText,
+      createdAt = createdAt
+    )
+
+  private def materialize(
     connection: Connection,
     problemDataStorage: ProblemDataStorage,
-    hackId: HackId,
-    source: HackMutationTable.CompletedAttemptSource,
-    answer: Option[String],
-    createdAt: Instant
+    input: MaterializeHackProblemDataInput
   ): IO[Unit] =
     for
-      inputPath <- problemDataPath(inputPathFor(hackId))
-      answerPath <- answer.traverse(_ => problemDataPath(answerPathFor(hackId)))
-      _ <- lockProblem(connection, source)
-      snapshot <- problemDataStorage.snapshotDirectory(source.problemSlug)
-      inputBytes = source.input.getBytes(StandardCharsets.UTF_8)
-      answerBytes = answer.map(_.getBytes(StandardCharsets.UTF_8))
+      _ <- lockProblem(connection, input.problemId)
+      snapshot <- problemDataStorage.snapshotDirectory(input.problemSlug)
+      inputBytes = input.inputText.getBytes(StandardCharsets.UTF_8)
+      answerBytes = input.answerText.map(_.getBytes(StandardCharsets.UTF_8))
       action =
         for
-          judgeYamlBytes <- readJudgeYaml(problemDataStorage, source)
+          judgeYamlBytes <- readJudgeYaml(problemDataStorage, input.problemSlug)
           updatedJudgeYaml = appendHackTestcaseToJudgeYaml(
             judgeYamlBytes = judgeYamlBytes,
-            subtaskIndex = source.subtaskIndex,
-            hackId = hackId,
-            inputPath = inputPath,
-            answerPath = answerPath
+            subtaskIndex = input.subtaskIndex,
+            testcaseLabel = input.testcaseLabel,
+            inputPath = input.inputPath,
+            answerPath = input.answerPath
           )
           entries = List(
-            Some(manifestEntry(inputPath, inputBytes)),
-            answerPath.zip(answerBytes).map { case (path, bytes) => manifestEntry(path, bytes) },
+            Some(manifestEntry(input.inputPath, inputBytes)),
+            input.answerPath.zip(answerBytes).map { case (path, bytes) => manifestEntry(path, bytes) },
             Some(manifestEntry(JudgeYamlPath, updatedJudgeYaml))
           ).flatten
-          _ <- problemDataStorage.writePath(source.problemSlug, inputPath, inputBytes)
-          _ <- answerPath.zip(answerBytes).traverse_ { case (path, bytes) =>
-            problemDataStorage.writePath(source.problemSlug, path, bytes)
+          _ <- problemDataStorage.writePath(input.problemSlug, input.inputPath, inputBytes)
+          _ <- input.answerPath.zip(answerBytes).traverse_ { case (path, bytes) =>
+            problemDataStorage.writePath(input.problemSlug, path, bytes)
           }
-          _ <- problemDataStorage.writePath(source.problemSlug, JudgeYamlPath, updatedJudgeYaml)
-          _ <- ProblemDataFileTable.upsertForProblem(connection, source.problemId, entries, createdAt)
-          _ <- HackMutationTable.incrementProblemHackRevision(connection, source.problemId)
+          _ <- problemDataStorage.writePath(input.problemSlug, JudgeYamlPath, updatedJudgeYaml)
+          _ <- ProblemDataFileTable.upsertForProblem(connection, input.problemId, entries, input.createdAt)
+          _ <- ProblemMutationTable.incrementHackRevision(connection, input.problemId)
         yield ()
-      _ <- action.handleErrorWith(error => problemDataStorage.restoreDirectory(source.problemSlug, snapshot) *> IO.raiseError(error))
+      _ <- action.handleErrorWith(error => problemDataStorage.restoreDirectory(input.problemSlug, snapshot) *> IO.raiseError(error))
     yield ()
 
-  private[hack] def appendHackTestcaseToJudgeYaml(
+  private[api] def appendHackTestcaseToJudgeYaml(
     judgeYamlBytes: Array[Byte],
     subtaskIndex: Int,
-    hackId: HackId,
+    testcaseLabel: String,
     inputPath: ProblemDataPath,
     answerPath: Option[ProblemDataPath]
   ): Array[Byte] =
@@ -80,7 +120,7 @@ object HackProblemDataMaterializer:
         copy
       case null => throw IllegalArgumentException(s"subtask $subtaskIndex must define testcases before hack materialization.")
       case _ => throw IllegalArgumentException(s"subtask $subtaskIndex testcases must be a list before hack materialization.")
-    existingTestcases.add(hackTestcaseMap(hackId, inputPath, answerPath))
+    existingTestcases.add(hackTestcaseMap(testcaseLabel, inputPath, answerPath))
     subtask.put("testcases", existingTestcases)
 
     val settings =
@@ -95,34 +135,20 @@ object HackProblemDataMaterializer:
 
   private def readJudgeYaml(
     problemDataStorage: ProblemDataStorage,
-    source: HackMutationTable.CompletedAttemptSource
+    problemSlug: ProblemSlug
   ): IO[Array[Byte]] =
-    problemDataStorage.readPath(source.problemSlug, JudgeYamlPath).flatMap {
+    problemDataStorage.readPath(problemSlug, JudgeYamlPath).flatMap {
       case Some((_, bytes)) => IO.pure(bytes)
       case None => IO.raiseError(IllegalStateException("judge.yaml is required before hack materialization."))
     }
 
-  private val lockProblemSQL: String =
-    """
-      |select 1
-      |from problems
-      |where id = ?
-      |for update
-      |""".stripMargin
-
   private def lockProblem(
     connection: Connection,
-    source: HackMutationTable.CompletedAttemptSource
+    problemId: ProblemId
   ): IO[Unit] =
-    IO.blocking {
-      val statement = connection.prepareStatement(lockProblemSQL)
-      try
-        statement.setObject(1, source.problemId.value)
-        val resultSet = statement.executeQuery()
-        try
-          if !resultSet.next() then throw IllegalStateException("Problem disappeared before hack materialization.")
-        finally resultSet.close()
-      finally statement.close()
+    ProblemMutationTable.lockExisting(connection, problemId).flatMap { exists =>
+      if exists then IO.unit
+      else IO.raiseError(IllegalStateException("Problem disappeared before hack materialization."))
     }
 
   private def parseJudgeYaml(bytes: Array[Byte]): LinkedHashMap[String, Any] =
@@ -153,25 +179,16 @@ object HackProblemDataMaterializer:
       case None => throw IllegalArgumentException(s"subtask $subtaskIndex does not exist before hack materialization.")
 
   private def hackTestcaseMap(
-    hackId: HackId,
+    testcaseLabel: String,
     inputPath: ProblemDataPath,
     answerPath: Option[ProblemDataPath]
   ): LinkedHashMap[String, Any] =
     val testcase = new LinkedHashMap[String, Any]()
-    testcase.put("label", s"hack #${hackId.value}")
+    testcase.put("label", testcaseLabel)
     testcase.put("type", "hack")
     testcase.put("input", inputPath.value)
     answerPath.foreach(path => testcase.put("answer", path.value))
     testcase
-
-  private def problemDataPath(value: String): IO[ProblemDataPath] =
-    IO.fromEither(ProblemDataPath.parse(value).left.map(IllegalArgumentException(_)))
-
-  private def inputPathFor(hackId: HackId): String =
-    s"hacks/${hackId.value}.in"
-
-  private def answerPathFor(hackId: HackId): String =
-    s"hacks/${hackId.value}.ans"
 
   private def manifestEntry(path: ProblemDataPath, bytes: Array[Byte]): ProblemDataManifestEntry =
     ProblemDataManifestEntry(path = path, sizeBytes = bytes.length.toLong, sha256 = sha256Hex(bytes))
