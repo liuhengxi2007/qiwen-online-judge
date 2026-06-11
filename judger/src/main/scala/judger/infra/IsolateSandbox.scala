@@ -2,7 +2,7 @@ package judger.infra
 
 import cats.effect.IO
 import judger.config.AppConfig
-import judger.objects.{ProcessResult, SandboxExecutionRequest}
+import judger.objects.{ProcessResult, SandboxRunSpec, SandboxStdin, SandboxStdout}
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
@@ -14,25 +14,45 @@ private final case class SandboxState(
   useCgroups: Boolean
 )
 
-final class IsolateSandbox private (private val state: SandboxState, config: AppConfig):
-  def run(request: SandboxExecutionRequest, hostWorkingDirectory: Path): IO[ProcessResult] =
+trait SandboxSession:
+  def run(spec: SandboxRunSpec, hostWorkingDirectory: Path): IO[ProcessResult]
+
+final class IsolateSandbox private (private val state: SandboxState, config: AppConfig) extends SandboxSession:
+  override def run(spec: SandboxRunSpec, hostWorkingDirectory: Path): IO[ProcessResult] =
+    if spec.boxOffset == 0 then runInCurrentBox(spec, hostWorkingDirectory)
+    else
+      val boxId = IsolateSandbox.boxIdAt(state.boxId, spec.boxOffset)
+      IsolateSandbox
+        .initialize(config, boxId, state.useCgroups)
+        .bracket(tempState => new IsolateSandbox(tempState, config).runInCurrentBox(spec.copy(boxOffset = 0), hostWorkingDirectory))(tempState =>
+          IsolateSandbox.cleanup(config, tempState)
+        )
+
+  private def runInCurrentBox(spec: SandboxRunSpec, hostWorkingDirectory: Path): IO[ProcessResult] =
     IO.blocking {
-      val safePhase = IsolateSandbox.sanitizeFilename(request.phase)
+      val safePhase = IsolateSandbox.sanitizeFilename(spec.phase)
       val metaPath = hostWorkingDirectory.resolve(s"$safePhase.meta")
       val defaultStdinPath = hostWorkingDirectory.resolve(s"$safePhase.stdin")
-      val stdoutFile = request.stdoutFile.getOrElse(s"$safePhase.stdout")
+      val (stdoutFile, captureStdout) =
+        spec.stdout match
+          case SandboxStdout.Capture => s"$safePhase.stdout" -> true
+          case SandboxStdout.File(path, capture) => path -> capture
+          case SandboxStdout.Discard => s"$safePhase.stdout" -> false
       val stdoutPath = hostWorkingDirectory.resolve(stdoutFile)
       val stderrPath = hostWorkingDirectory.resolve(s"$safePhase.stderr")
       Files.deleteIfExists(metaPath)
-      if request.stdinFile.isEmpty then Files.deleteIfExists(defaultStdinPath)
-      if request.stdoutFile.isEmpty then Files.deleteIfExists(stdoutPath)
+      spec.stdin match
+        case SandboxStdin.Bytes(bytes) => Files.write(defaultStdinPath, bytes)
+        case _ => Files.deleteIfExists(defaultStdinPath)
+      spec.stdout match
+        case SandboxStdout.File(_, _) => ()
+        case _ => Files.deleteIfExists(stdoutPath)
       Files.deleteIfExists(stderrPath)
-      request.stdin.foreach(bytes => Files.write(defaultStdinPath, bytes))
       val stdinArgs =
-        request.stdinFile
-          .orElse(Option.when(request.stdin.nonEmpty)(defaultStdinPath.getFileName.toString))
-          .map(path => List(s"--stdin=$path"))
-          .getOrElse(Nil)
+        spec.stdin match
+          case SandboxStdin.Empty => Nil
+          case SandboxStdin.Bytes(_) => List(s"--stdin=${defaultStdinPath.getFileName}")
+          case SandboxStdin.File(path) => List(s"--stdin=$path")
 
       val isolateArgs =
         List(
@@ -43,14 +63,14 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
           s"--stdout=$stdoutFile",
           s"--stderr=${stderrPath.getFileName}",
           "--chdir=/box",
-          s"--time=${IsolateSandbox.secondsCeil(request.limits.timeLimit.value)}",
-          s"--wall-time=${IsolateSandbox.secondsCeil(request.limits.wallTimeLimit.value)}",
-          s"--mem=${request.limits.memoryLimitKb.value}"
+          s"--time=${IsolateSandbox.secondsCeil(spec.limits.timeLimit.value)}",
+          s"--wall-time=${IsolateSandbox.secondsCeil(spec.limits.wallTimeLimit.value)}",
+          s"--mem=${spec.limits.memoryLimitKb.value}"
         ) ++ stdinArgs ++
           (
           (if state.useCgroups then List("--cg") else Nil) ++
-          List(s"--processes=${math.max(request.processLimit, 1)}") ++
-          List("--run", "--", request.command) ++ request.args
+          List(s"--processes=${math.max(spec.command.processLimit, 1)}") ++
+          List("--run", "--", spec.command.command) ++ spec.command.args
           )
 
       val builder = new ProcessBuilder(isolateArgs*)
@@ -58,7 +78,7 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
       val process = builder.start()
       process.getOutputStream.close()
 
-      val completed = process.waitFor(request.limits.wallTimeLimit.value + 5000L, TimeUnit.MILLISECONDS)
+      val completed = process.waitFor(spec.limits.wallTimeLimit.value + 5000L, TimeUnit.MILLISECONDS)
       if !completed then
         process.destroyForcibly()
         process.waitFor(5, TimeUnit.SECONDS)
@@ -66,7 +86,7 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
       val launcherStdout = IsolateSandbox.readStream(process.getInputStream)
       val launcherStderr = IsolateSandbox.readStream(process.getErrorStream)
       val meta = IsolateSandbox.readMeta(metaPath)
-      val stdout = if request.captureStdout then IsolateSandbox.readOptionalFile(stdoutPath) else ""
+      val stdout = if captureStdout then IsolateSandbox.readOptionalFile(stdoutPath) else ""
       val stderr = IsolateSandbox.nonEmptyOrFallback(IsolateSandbox.readOptionalFile(stderrPath), launcherStderr, launcherStdout)
 
       ProcessResult(
@@ -84,14 +104,6 @@ final class IsolateSandbox private (private val state: SandboxState, config: App
         memoryUsedKb = IsolateSandbox.memoryUsedKb(meta)
       )
     }
-
-  private[judger] def runInBox(boxOffset: Int, request: SandboxExecutionRequest, hostWorkingDirectory: Path): IO[ProcessResult] =
-    val boxId = IsolateSandbox.boxIdAt(state.boxId, boxOffset)
-    IsolateSandbox
-      .initialize(config, boxId, state.useCgroups)
-      .bracket(tempState => new IsolateSandbox(tempState, config).run(request, hostWorkingDirectory))(tempState =>
-        IsolateSandbox.cleanup(config, tempState)
-      )
 
   private[judger] def cleanup(): IO[Unit] =
     IsolateSandbox.cleanup(config, state)

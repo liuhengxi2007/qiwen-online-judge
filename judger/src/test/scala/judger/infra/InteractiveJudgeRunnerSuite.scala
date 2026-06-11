@@ -7,14 +7,14 @@ import munit.FunSuite
 
 import java.nio.file.Path
 
-class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
+class InteractiveJudgeRunnerSuite extends FunSuite:
 
   test("tool CPU timeout is protocol-side success") {
     val interactor = tool("tools/interactor.cpp", timeMs = 1000)
     val provider = tool("tools/strategy.cpp", timeMs = 500)
 
     assert(
-      JudgeExecutor.interactiveToolCpuLimitExceeded(
+      InteractiveJudgeRunner.interactiveToolCpuLimitExceeded(
         interactor,
         Some(provider),
         cpuTimeout(timeUsedMs = 1000),
@@ -22,7 +22,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
       )
     )
     assert(
-      JudgeExecutor.interactiveToolCpuLimitExceeded(
+      InteractiveJudgeRunner.interactiveToolCpuLimitExceeded(
         interactor,
         Some(provider),
         okResult(),
@@ -35,9 +35,9 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val interactor = tool("tools/interactor.cpp", timeMs = 1000)
     val wallOnly = wallTimeout(timeUsedMs = 25)
 
-    assertEquals(JudgeExecutor.interactiveToolCpuLimitExceeded(interactor, None, wallOnly, None), false)
+    assertEquals(InteractiveJudgeRunner.interactiveToolCpuLimitExceeded(interactor, None, wallOnly, None), false)
     assertEquals(
-      JudgeExecutor.interactiveWallOnlyVerdict(
+      InteractiveJudgeRunner.interactiveWallOnlyVerdict(
         participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
@@ -51,7 +51,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val wallOnly = wallTimeout(timeUsedMs = 25)
 
     assertEquals(
-      JudgeExecutor.interactiveWallOnlyVerdict(
+      InteractiveJudgeRunner.interactiveWallOnlyVerdict(
         participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
@@ -67,7 +67,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val wallOnly = wallTimeout(timeUsedMs = 25)
 
     assertEquals(
-      JudgeExecutor.interactiveWallOnlyVerdict(
+      InteractiveJudgeRunner.interactiveWallOnlyVerdict(
         participants = Nil,
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L),
@@ -84,7 +84,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val runtimeError = okResult(exitCode = Some(1))
 
     assertEquals(
-      JudgeExecutor.interactiveWallOnlyVerdict(
+      InteractiveJudgeRunner.interactiveWallOnlyVerdict(
         participants = List("main" -> runtimeError),
         participantCpuLimitMs = 1000,
         processes = List(wallOnly -> 1000L, runtimeError -> 1000L),
@@ -100,14 +100,14 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val participant = cpuTimeout(timeUsedMs = 1000)
 
     assertEquals(
-      JudgeExecutor.participantFailure(List("main" -> participant), timeLimitMs = 1000).map(_._1),
+      InteractiveJudgeRunner.participantFailure(List("main" -> participant), timeLimitMs = 1000).map(_._1),
       Some(SubmissionVerdict.TimeLimitExceeded)
     )
   }
 
   test("duplicate interactive roles get distinct participant FIFOs") {
     val command = RuntimeCommand("/box/main", Nil, processLimit = 1)
-    val participants = JudgeExecutor.interactiveParticipants(List("main", "main"), Map("main" -> command), Path.of("/work/interactive"))
+    val participants = InteractiveJudgeRunner.interactiveParticipants(List("main", "main"), Map("main" -> command), Path.of("/work/interactive"))
 
     assertEquals(participants.map(_.role), List("main", "main"))
     assertEquals(participants.map(_.occurrenceIndex), List(1, 2))
@@ -119,7 +119,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val runtimeError = okResult(exitCode = Some(1))
 
     assertEquals(
-      JudgeExecutor.participantFailure(List("main" -> okResult(), "main" -> runtimeError), timeLimitMs = 1000),
+      InteractiveJudgeRunner.participantFailure(List("main" -> okResult(), "main" -> runtimeError), timeLimitMs = 1000),
       Some(SubmissionVerdict.RuntimeError -> runtimeError)
     )
   }
@@ -130,7 +130,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
     val provider = tool("tools/strategy.cpp", timeMs = 500)
 
     assertEquals(
-      JudgeExecutor.interactiveWallTimeLimitMs(testcase, roleCount = 2, interactor, Some(provider)),
+      InteractiveJudgeRunner.interactiveWallTimeLimitMs(testcase, roleCount = 2, interactor, Some(provider)),
       4700L
     )
   }
@@ -148,7 +148,7 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
         |end 2 300 0
         |""".stripMargin
 
-    assertEquals(JudgeExecutor.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(1000L)), 130L)
+    assertEquals(InteractiveJudgeRunner.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(1000L)), 130L)
   }
 
   test("strategy provider read monitor parser closes pending begin with interactor wall time") {
@@ -158,13 +158,13 @@ class JudgeExecutorInteractiveLimitsSuite extends FunSuite:
         |begin 2 200
         |""".stripMargin
 
-    assertEquals(JudgeExecutor.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(500L)), 450L)
+    assertEquals(InteractiveJudgeRunner.strategyProviderReadWaitMs(log, interactorWallTimeUsedMs = Some(500L)), 450L)
   }
 
   test("strategy provider read monitor parser ignores empty or uncaptured logs") {
-    assertEquals(JudgeExecutor.strategyProviderReadWaitMs("", interactorWallTimeUsedMs = Some(1000L)), 0L)
+    assertEquals(InteractiveJudgeRunner.strategyProviderReadWaitMs("", interactorWallTimeUsedMs = Some(1000L)), 0L)
     assertEquals(
-      JudgeExecutor.strategyProviderReadWaitMs("begin 1 100\n", interactorWallTimeUsedMs = None),
+      InteractiveJudgeRunner.strategyProviderReadWaitMs("begin 1 100\n", interactorWallTimeUsedMs = None),
       0L
     )
   }

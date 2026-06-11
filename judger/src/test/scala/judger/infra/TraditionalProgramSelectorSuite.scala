@@ -5,93 +5,93 @@ import judgeprotocol.objects.response.*
 import judger.objects.RuntimeCommand
 import munit.FunSuite
 
-class JudgeExecutorTraditionalSelectionSuite extends FunSuite:
+class TraditionalProgramSelectorSuite extends FunSuite:
 
   private val mainCommand = RuntimeCommand("/box/main", Nil, processLimit = 1)
   private val backupCommand = RuntimeCommand("/box/backup", Nil, processLimit = 1)
 
   test("selects text role before code role") {
-    val selection = JudgeExecutor.selectTraditionalProgram(
+    val selection = TraditionalProgramSelector.select(
       task = task(
         "chain.txt" -> JudgeTaskProgram(SubmissionLanguage.Text, SubmissionSourceCode("42\n")),
         "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))
       ),
       subtask = subtask(),
       testcase = testcase(roles = List("chain.txt", "main")),
-      programs = JudgeExecutor.PreparedPrograms(
+      programs = JudgeToolPreparation.PreparedPrograms(
         commands = Map("main" -> mainCommand),
         compileFailedRoles = Set.empty,
         textOutputs = Map("chain.txt" -> "42\n")
       )
     )
 
-    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.TextOutput("42\n"))
+    assertEquals(selection, TraditionalProgramSelector.TraditionalProgramSelection.TextOutput("42\n"))
   }
 
   test("falls back when earlier text role is missing") {
-    val selection = JudgeExecutor.selectTraditionalProgram(
+    val selection = TraditionalProgramSelector.select(
       task = task("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))),
       subtask = subtask(),
       testcase = testcase(roles = List("chain.txt", "main")),
-      programs = JudgeExecutor.PreparedPrograms(
+      programs = JudgeToolPreparation.PreparedPrograms(
         commands = Map("main" -> mainCommand),
         compileFailedRoles = Set.empty,
         textOutputs = Map.empty
       )
     )
 
-    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.Command(mainCommand))
+    assertEquals(selection, TraditionalProgramSelector.TraditionalProgramSelection.Command(mainCommand))
   }
 
   test("does not fall back after selected code role compile failure") {
-    val selection = JudgeExecutor.selectTraditionalProgram(
+    val selection = TraditionalProgramSelector.select(
       task = task(
         "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}")),
         "chain.txt" -> JudgeTaskProgram(SubmissionLanguage.Text, SubmissionSourceCode("42\n"))
       ),
       subtask = subtask(),
       testcase = testcase(roles = List("main", "chain.txt")),
-      programs = JudgeExecutor.PreparedPrograms(
+      programs = JudgeToolPreparation.PreparedPrograms(
         commands = Map.empty,
         compileFailedRoles = Set("main"),
         textOutputs = Map("chain.txt" -> "42\n")
       )
     )
 
-    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.CompileError)
+    assertEquals(selection, TraditionalProgramSelector.TraditionalProgramSelection.CompileError)
   }
 
   test("uses mode role when testcase roles are absent") {
-    val selection = JudgeExecutor.selectTraditionalProgram(
+    val selection = TraditionalProgramSelector.select(
       task = task(
         "main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}")),
         "backup" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))
       ),
       subtask = subtask(modeRole = "backup"),
       testcase = testcase(),
-      programs = JudgeExecutor.PreparedPrograms(
+      programs = JudgeToolPreparation.PreparedPrograms(
         commands = Map("main" -> mainCommand, "backup" -> backupCommand),
         compileFailedRoles = Set.empty,
         textOutputs = Map.empty
       )
     )
 
-    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.Command(backupCommand))
+    assertEquals(selection, TraditionalProgramSelector.TraditionalProgramSelection.Command(backupCommand))
   }
 
   test("returns compile error when all roles are missing") {
-    val selection = JudgeExecutor.selectTraditionalProgram(
+    val selection = TraditionalProgramSelector.select(
       task = task("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}"))),
       subtask = subtask(),
       testcase = testcase(roles = List("chain.txt", "backup")),
-      programs = JudgeExecutor.PreparedPrograms(
+      programs = JudgeToolPreparation.PreparedPrograms(
         commands = Map("main" -> mainCommand),
         compileFailedRoles = Set.empty,
         textOutputs = Map.empty
       )
     )
 
-    assertEquals(selection, JudgeExecutor.TraditionalProgramSelection.CompileError)
+    assertEquals(selection, TraditionalProgramSelector.TraditionalProgramSelection.CompileError)
   }
 
   private def task(programs: (String, JudgeTaskProgram)*): JudgeTask =
