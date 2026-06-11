@@ -1,14 +1,8 @@
 package domains.submission.table.submission
 
 import cats.effect.IO
-import cats.syntax.all.*
-import domains.submission.objects.{SubmissionLanguage, SubmissionSourceCode}
-import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.utils.SubmissionProgramStorage
-import io.circe.syntax.*
 
 import java.sql.Connection
-import java.util.UUID
 
 object SubmissionTableSchema:
 
@@ -522,65 +516,51 @@ object SubmissionTableSchema:
       |  where status = 'queued';
       |""".stripMargin
 
-  private val selectLegacySubmissionSourcesSql: String =
-    """
-      |select id, language, source_code
-      |from submissions
-      |where program_manifest is null
-      |order by submitted_at asc, id asc
-      |""".stripMargin
-
-  private val updateProgramManifestSql: String =
-    """
-      |update submissions
-      |set program_manifest = ?::jsonb
-      |where id = ?
-      |  and program_manifest is null
-      |""".stripMargin
-
-  def initialize(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
-    for
-      _ <- executeStatements(
-        connection,
-        List(
-          createPublicIdSequenceSql,
-          initTableSql,
-          addLifecycleColumnsSql,
-          backfillContestSubmissionSourceSql,
-          ensureLegacyJudgeScalarColumnsSql,
-          addProgramManifestColumnSql,
-          addPublicIdColumnSql,
-          backfillPublicIdSql,
-          syncPublicIdSequenceSql
-        )
+  def initializeBeforeProgramManifestBackfill(connection: Connection): IO[Unit] =
+    executeStatements(
+      connection,
+      List(
+        createPublicIdSequenceSql,
+        initTableSql,
+        addLifecycleColumnsSql,
+        backfillContestSubmissionSourceSql,
+        ensureLegacyJudgeScalarColumnsSql,
+        addProgramManifestColumnSql,
+        addPublicIdColumnSql,
+        backfillPublicIdSql,
+        syncPublicIdSequenceSql
       )
-      _ <- backfillProgramManifest(connection, submissionProgramStorage)
-      _ <- executeStatements(
-        connection,
-        List(
-          setProgramManifestNotNullSql,
-          backfillJudgeResultFromLegacySql,
-          backfillJudgeResultSummaryVerdictsSql,
-          replaceLanguageWithGeneratedSql,
-          addCodeLengthGeneratedColumnSql,
-          replaceJudgeDerivedColumnsSql,
-          dropSourceCodeColumnSql,
-          dropJudgeMessageColumnSql,
-          setStatusDefaultSql,
-          setStatusNotNullSql,
-          setJudgePriorityDefaultSql,
-          setJudgePriorityNotNullSql,
-          setJudgeQueuedAtDefaultSql,
-          setJudgeQueuedAtNotNullSql,
-          setHackRevisionDefaultSql,
-          setHackRevisionNotNullSql,
-          setPublicIdDefaultSql,
-          setPublicIdNotNullSql,
-          addPublicIdUniqueConstraintSql,
-          createIndexesSql
-        )
+    )
+
+  def initializeAfterProgramManifestBackfill(connection: Connection): IO[Unit] =
+    executeStatements(
+      connection,
+      List(
+        setProgramManifestNotNullSql,
+        backfillJudgeResultFromLegacySql,
+        backfillJudgeResultSummaryVerdictsSql,
+        replaceLanguageWithGeneratedSql,
+        addCodeLengthGeneratedColumnSql,
+        replaceJudgeDerivedColumnsSql,
+        dropSourceCodeColumnSql,
+        dropJudgeMessageColumnSql,
+        setStatusDefaultSql,
+        setStatusNotNullSql,
+        setJudgePriorityDefaultSql,
+        setJudgePriorityNotNullSql,
+        setJudgeQueuedAtDefaultSql,
+        setJudgeQueuedAtNotNullSql,
+        setHackRevisionDefaultSql,
+        setHackRevisionNotNullSql,
+        setPublicIdDefaultSql,
+        setPublicIdNotNullSql,
+        addPublicIdUniqueConstraintSql,
+        createIndexesSql
       )
-    yield ()
+    )
+
+  def initialize(connection: Connection): IO[Unit] =
+    initializeBeforeProgramManifestBackfill(connection).flatMap(_ => initializeAfterProgramManifestBackfill(connection))
 
   private def executeStatements(connection: Connection, statements: List[String]): IO[Unit] =
     IO.blocking {
@@ -588,87 +568,3 @@ object SubmissionTableSchema:
       try statements.foreach(sql => statement.execute(sql))
       finally statement.close()
     }
-
-  private def backfillProgramManifest(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
-    for
-      hasLegacySourceCode <- columnExists(connection, "source_code")
-      hasLegacyLanguage <- columnExists(connection, "language")
-      _ <-
-        if hasLegacySourceCode && hasLegacyLanguage then
-          readLegacySubmissionSources(connection).flatMap { rows =>
-            rows.traverse_ { row =>
-              val manifest = SubmissionProgramManifest.singleDefault(row.id, row.language, row.sourceCode)
-              for
-                _ <- submissionProgramStorage.writeSource(manifest.programs(SubmissionProgramManifest.DefaultProgramKey).sourceKey, row.sourceCode)
-                _ <- writeProgramManifest(connection, row.id, manifest)
-              yield ()
-            }
-          }
-        else IO.unit
-    yield ()
-
-  private def columnExists(connection: Connection, columnName: String): IO[Boolean] =
-    IO.blocking {
-      val statement = connection.prepareStatement(
-        """
-          |select 1
-          |from information_schema.columns
-          |where table_schema = 'public'
-          |  and table_name = 'submissions'
-          |  and column_name = ?
-          |""".stripMargin
-      )
-      try
-        statement.setString(1, columnName)
-        val resultSet = statement.executeQuery()
-        try resultSet.next()
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private def readLegacySubmissionSources(connection: Connection): IO[List[LegacySubmissionSource]] =
-    IO.blocking {
-      val statement = connection.prepareStatement(selectLegacySubmissionSourcesSql)
-      try
-        val resultSet = statement.executeQuery()
-        try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map { _ =>
-              val id = resultSet.getObject("id", classOf[UUID])
-              val language =
-                SubmissionLanguage
-                  .parse(resultSet.getString("language"))
-                  .fold(message => throw IllegalStateException(s"Invalid legacy submission language: $message"), identity)
-              val sourceCode =
-                SubmissionSourceCode
-                  .parse(resultSet.getString("source_code"))
-                  .fold(message => throw IllegalStateException(s"Invalid legacy submission source: $message"), identity)
-              LegacySubmissionSource(id, language, sourceCode)
-            }
-            .toList
-        finally resultSet.close()
-      finally statement.close()
-    }
-
-  private def writeProgramManifest(
-    connection: Connection,
-    submissionUuid: UUID,
-    manifest: SubmissionProgramManifest
-  ): IO[Unit] =
-    IO.blocking {
-      val statement = connection.prepareStatement(updateProgramManifestSql)
-      try
-        statement.setString(1, manifest.asJson.noSpaces)
-        statement.setObject(2, submissionUuid)
-        statement.executeUpdate()
-        ()
-      finally statement.close()
-    }
-
-  private final case class LegacySubmissionSource(
-    id: UUID,
-    language: SubmissionLanguage,
-    sourceCode: SubmissionSourceCode
-  )

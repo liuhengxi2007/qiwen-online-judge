@@ -8,4 +8,8 @@ import java.sql.Connection
 object SubmissionTable:
 
   def initialize(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
-    SubmissionTableSchema.initialize(connection, submissionProgramStorage)
+    for
+      _ <- SubmissionTableSchema.initializeBeforeProgramManifestBackfill(connection)
+      _ <- SubmissionProgramManifestBackfill.run(connection, submissionProgramStorage)
+      _ <- SubmissionTableSchema.initializeAfterProgramManifestBackfill(connection)
+    yield ()
