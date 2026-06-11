@@ -4,7 +4,7 @@ import judgeprotocol.objects.{ProblemSlug, SubmissionId, SubmissionVerdict, Test
 import judgeprotocol.objects.response.*
 import munit.FunSuite
 
-class JudgeExecutorAggregationSuite extends FunSuite:
+class JudgeResultAggregatorSuite extends FunSuite:
 
   test("subtask base result aggregates only main testcases and worst includes sample and hack") {
     val targetSubtask = subtask(
@@ -17,7 +17,7 @@ class JudgeExecutorAggregationSuite extends FunSuite:
         testcase(4, JudgeTestcaseType.Hack, BigDecimal(0))
       )
     )
-    val result = JudgeExecutor.aggregateSubtask(
+    val result = JudgeResultAggregator.aggregateSubtask(
       targetSubtask,
       List(
         testcaseResult(1, JudgeTestcaseType.Sample, BigDecimal(0), SubmissionVerdict.WrongAnswer, timeUsedMs = Some(100), memoryUsedKb = Some(500)),
@@ -49,7 +49,7 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       )
     )
 
-    val result = JudgeExecutor.aggregateSubtask(
+    val result = JudgeResultAggregator.aggregateSubtask(
       targetSubtask,
       List(
         testcaseResult(1, JudgeTestcaseType.Sample, BigDecimal(1), SubmissionVerdict.Accepted, timeUsedMs = Some(100)),
@@ -77,19 +77,19 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       testcases = List(testcase(1, JudgeTestcaseType.Main, BigDecimal(1)))
     )
     val targetTask = task(firstSubtask, secondSubtask)
-    val firstResult = JudgeExecutor.aggregateSubtask(
+    val firstResult = JudgeResultAggregator.aggregateSubtask(
       firstSubtask,
       List(
         testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted),
         testcaseResult(2, JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.WrongAnswer)
       )
     )
-    val secondResult = JudgeExecutor.aggregateSubtask(
+    val secondResult = JudgeResultAggregator.aggregateSubtask(
       secondSubtask,
       List(testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.Accepted))
     )
 
-    val taskResult = JudgeExecutor.aggregateTask(targetTask, List(firstResult, secondResult))
+    val taskResult = JudgeResultAggregator.aggregateTask(targetTask, List(firstResult, secondResult))
 
     assertEquals(taskResult.baseResult.score, BigDecimal(1))
     assertEquals(taskResult.baseResult.verdict, SubmissionVerdict.Accepted)
@@ -103,11 +103,11 @@ class JudgeExecutorAggregationSuite extends FunSuite:
       scoreRatio = BigDecimal(1),
       testcases = List(testcase(1, JudgeTestcaseType.Main, BigDecimal(1)))
     )
-    val subtaskResult = JudgeExecutor.aggregateSubtask(
+    val subtaskResult = JudgeResultAggregator.aggregateSubtask(
       targetSubtask,
       List(testcaseResult(1, JudgeTestcaseType.Main, BigDecimal(1), SubmissionVerdict.AcceptedByProtocol))
     )
-    val taskResult = JudgeExecutor.aggregateTask(task(targetSubtask), List(subtaskResult))
+    val taskResult = JudgeResultAggregator.aggregateTask(task(targetSubtask), List(subtaskResult))
 
     assertEquals(subtaskResult.testcases.head.verdict, SubmissionVerdict.AcceptedByProtocol)
     assertEquals(subtaskResult.baseResult.verdict, SubmissionVerdict.Accepted)
