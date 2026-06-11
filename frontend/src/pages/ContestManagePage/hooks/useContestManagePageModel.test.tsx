@@ -152,8 +152,8 @@ describe('useContestManagePageModel problem attach warning', () => {
           apiPath: 'problem-suggestions/manageable?q=two&contestSlug=sample-contest',
         }),
       )
+      expect(rendered.result.current.problemSuggestions).toEqual([{ slug: problemSlug, title: 'Two Sum' }])
     })
-    expect(rendered.result.current.problemSuggestions).toEqual([{ slug: problemSlug, title: 'Two Sum' }])
   })
 
   it('opens confirmation and skips attach when cancelled', async () => {

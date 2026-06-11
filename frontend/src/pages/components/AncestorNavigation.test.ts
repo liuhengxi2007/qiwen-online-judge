@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildAncestorLinks } from './AncestorNavigation'
+import { buildAncestorLinks } from './AncestorNavigationLinks'
 
 describe('buildAncestorLinks contest paths', () => {
   it('keeps contest list root mapping', () => {

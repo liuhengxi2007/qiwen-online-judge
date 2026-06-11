@@ -87,8 +87,8 @@ export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlu
     }
   }, [contestSlug, dispatch, t])
 
-  const attachProblem = useCallback(async () => {
-    const parsedSlug = parseProblemSlug(problemSearchInput)
+  const attachProblemFromInput = useCallback(async (rawInput: string) => {
+    const parsedSlug = parseProblemSlug(rawInput)
     if (!parsedSlug.ok) {
       dispatch({ type: 'attach_problem_failed', message: parsedSlug.error })
       return
@@ -106,7 +106,11 @@ export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlu
       const message = error instanceof HttpClientError ? error.message : t('contest.manage.attachProblemFailed')
       dispatch({ type: 'attach_problem_failed', message })
     }
-  }, [attachProblemBySlug, contestSlug, dispatch, problemSearchInput, t])
+  }, [attachProblemBySlug, contestSlug, dispatch, t])
+
+  const attachProblem = useCallback(async () => {
+    await attachProblemFromInput(problemSearchInput)
+  }, [attachProblemFromInput, problemSearchInput])
 
   const closeAttachProblemWarning = useCallback((open: boolean) => {
     if (!open) {
