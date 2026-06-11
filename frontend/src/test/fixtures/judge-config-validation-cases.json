@@ -1,0 +1,68 @@
+{
+  "files": [
+    "judge.yaml",
+    "validators/validator.cpp",
+    "solutions/std.cpp",
+    "tools/interactor.cpp",
+    "tools/strategy.cpp",
+    "stubs/main.cpp",
+    "headers/xxx.h",
+    "headers/other/xxx.h",
+    "headers/readme.txt",
+    "sample/1.in",
+    "sample/1.ans",
+    "hacks/7.in"
+  ],
+  "cases": [
+    {
+      "name": "accepts minimal standard config",
+      "valid": true,
+      "yaml": "version: 2\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects unsupported version",
+      "valid": false,
+      "yaml": "version: 1\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "accepts enabled hack with answer generator",
+      "valid": true,
+      "yaml": "version: 2\nhack: true\nvalidator:\n  path: validators/validator.cpp\nstandard:\n  language: cpp17\n  path: solutions/std.cpp\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects enabled hack without standard declaration",
+      "valid": false,
+      "yaml": "version: 2\nhack: true\nvalidator:\n  path: validators/validator.cpp\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "accepts role stubs and headers",
+      "valid": true,
+      "yaml": "version: 2\nhack: false\nroles:\n  main:\n    stubs:\n      cpp17: stubs/main.cpp\nheaders:\n  - headers/xxx.h\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects duplicate header include names",
+      "valid": false,
+      "yaml": "version: 2\nhack: false\nheaders:\n  - headers/xxx.h\n  - headers/other/xxx.h\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects old comma aggregation",
+      "valid": false,
+      "yaml": "version: 2\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum,max,max\nsubtasks:\n  - testcases:\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "accepts sample main and answerless hack testcase types",
+      "valid": true,
+      "yaml": "version: 2\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - type: sample\n        input: sample/1.in\n        answer: sample/1.ans\n      - type: hack\n        input: hacks/7.in\n      - type: main\n        input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects score ratio on sample testcase",
+      "valid": false,
+      "yaml": "version: 2\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - type: sample\n        scoreRatio: 0\n        input: sample/1.in\n        answer: sample/1.ans\n      - input: sample/1.in\n        answer: sample/1.ans\n"
+    },
+    {
+      "name": "rejects missing input file",
+      "valid": false,
+      "yaml": "version: 2\nhack: false\nlimits:\n  timeMs: 1000\n  memoryMb: 256\nchecker:\n  type: builtin\n  name: exact\naggregation:\n  testcases: sum_max_max\nsubtasks:\n  - testcases:\n      - input: missing/1.in\n        answer: sample/1.ans\n"
+    }
+  ]
+}

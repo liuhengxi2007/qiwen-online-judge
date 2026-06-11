@@ -6,11 +6,15 @@ import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifes
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSourceCode}
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
+import io.circe.Decoder
+import io.circe.generic.semiauto.deriveDecoder
+import io.circe.parser.decode
 import judgeprotocol.objects.response.{JudgeTaskHackConfig, JudgeTestcaseType}
 import munit.FunSuite
 import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 import java.time.Instant
 import java.util.UUID
 
@@ -79,6 +83,22 @@ class JudgeTaskBuilderSuite extends FunSuite:
     createdAt = Instant.EPOCH,
     updatedAt = Instant.EPOCH
   )
+
+  test("shared judge.yaml validation fixtures stay aligned") {
+    val fixture = loadSharedValidationFixture()
+    val fixtureManifest = ProblemDataManifest.fromEntries(claimedSubmission.problemSlug, fixture.files.map(entry))
+
+    fixture.cases.foreach { testCase =>
+      val result = JudgeTaskBuilder.parseConfigBytes(
+        testCase.yaml.getBytes(StandardCharsets.UTF_8),
+        claimedSubmission,
+        sourceCode,
+        fixtureManifest
+      )
+
+      assertEquals(result.isRight, testCase.valid, testCase.name)
+    }
+  }
 
   test("parseConfigBytes accepts enum aggregation names") {
     val result = JudgeTaskBuilder.parseConfigBytes(
@@ -1289,5 +1309,27 @@ class JudgeTaskBuilderSuite extends FunSuite:
   private def entry(path: String): ProblemDataManifestEntry =
     ProblemDataManifestEntry(ProblemDataPath(path), sizeBytes = 1L, sha256 = "a" * 64)
 
+  private def loadSharedValidationFixture(): SharedJudgeConfigValidationFixture =
+    val path = Paths.get("..", "frontend", "src", "test", "fixtures", "judge-config-validation-cases.json")
+    val raw = Files.readString(path, StandardCharsets.UTF_8)
+    decode[SharedJudgeConfigValidationFixture](raw).fold(error => throw error, identity)
+
   private def yaml(content: String): Array[Byte] =
     content.stripMargin.trim.getBytes(StandardCharsets.UTF_8)
+
+private final case class SharedJudgeConfigValidationFixture(
+  files: List[String],
+  cases: List[SharedJudgeConfigValidationCase]
+)
+
+private object SharedJudgeConfigValidationFixture:
+  given Decoder[SharedJudgeConfigValidationFixture] = deriveDecoder
+
+private final case class SharedJudgeConfigValidationCase(
+  name: String,
+  valid: Boolean,
+  yaml: String
+)
+
+private object SharedJudgeConfigValidationCase:
+  given Decoder[SharedJudgeConfigValidationCase] = deriveDecoder
