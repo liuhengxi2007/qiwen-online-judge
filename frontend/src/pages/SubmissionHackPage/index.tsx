@@ -1,4 +1,3 @@
-import { useEffect, useReducer, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -8,11 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { FileText, Upload } from 'lucide-react'
-import { CreateHack, CreateHackMultipart } from '@/apis/hack/CreateHack'
-import { GetHack } from '@/apis/hack/GetHack'
-import { GetSubmissionHackSubtask } from '@/apis/hack/GetSubmissionHackSubtask'
 import type { HackDetail } from '@/objects/hack/response/HackDetail'
-import type { HackSubtaskInfo } from '@/objects/hack/response/HackSubtaskInfo'
 import { hackIdValue } from '@/objects/hack/HackId'
 import { parseSubmissionId, submissionIdValue } from '@/objects/submission/SubmissionId'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
@@ -25,37 +20,9 @@ import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { hackModeLabel, hackStatusLabel } from '@/pages/objects/HackDisplay'
 import { formatOptionalScore } from '@/pages/objects/SubmissionDisplay'
-import {
-  canSubmitHackSources,
-  type HackSourceMode,
-  usesHackMultipart,
-} from './functions/HackSourceMode'
-import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import type { HackSourceMode } from './functions/HackSourceMode'
+import { useSubmissionHackModel } from './hooks/useSubmissionHackModel'
 import { useI18n } from '@/system/i18n/use-i18n'
-
-type QueryState = {
-  info: HackSubtaskInfo | null
-  hack: HackDetail | null
-  isLoading: boolean
-  errorMessage: string
-}
-
-type QueryAction =
-  | { type: 'info_loaded'; info: HackSubtaskInfo }
-  | { type: 'hack_loaded'; hack: HackDetail }
-  | { type: 'failed'; message: string }
-
-function reducer(state: QueryState, action: QueryAction): QueryState {
-  switch (action.type) {
-    case 'info_loaded':
-      return { ...state, info: action.info, isLoading: false, errorMessage: '' }
-    case 'hack_loaded':
-      return { ...state, hack: action.hack, errorMessage: '' }
-    case 'failed':
-      return { ...state, isLoading: false, errorMessage: action.message }
-  }
-}
 
 export function SubmissionHackPage() {
   const { t } = useI18n()
@@ -82,110 +49,26 @@ export function SubmissionHackPage() {
 
 function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionId: SubmissionId; subtaskIndex: number }) {
   const { t } = useI18n()
-  const [state, dispatch] = useReducer(reducer, { info: null, hack: null, isLoading: true, errorMessage: '' })
-  const [input, setInput] = useState('')
-  const [inputMode, setInputMode] = useState<HackSourceMode>('paste')
-  const [inputFile, setInputFile] = useState<File | null>(null)
-  const [strategyProviderSource, setStrategyProviderSource] = useState('')
-  const [strategyProviderMode, setStrategyProviderMode] = useState<HackSourceMode>('paste')
-  const [strategyProviderFile, setStrategyProviderFile] = useState<File | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    void sendAPI(new GetSubmissionHackSubtask(submissionId, subtaskIndex))
-      .then((info) => {
-        if (!cancelled) dispatch({ type: 'info_loaded', info })
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.submit.loadFailed') })
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [submissionId, subtaskIndex, t])
-
-  useEffect(() => {
-    if (!state.hack || state.hack.finishedAt !== null) {
-      return
-    }
-
-    const intervalId = window.setInterval(() => {
-      void sendAPI(new GetHack(state.hack!.id)).then((hack) => dispatch({ type: 'hack_loaded', hack })).catch(() => undefined)
-    }, 2000)
-
-    return () => window.clearInterval(intervalId)
-  }, [state.hack])
-
-  const submit = () => {
-    if (!state.info) {
-      return
-    }
-
-    const inputSource = { mode: inputMode, text: input, file: inputFile }
-    const strategyProvider = { mode: strategyProviderMode, text: strategyProviderSource, file: strategyProviderFile }
-    if (!canSubmitHackSources(inputSource, strategyProvider, state.info.requiresStrategyProvider)) {
-      return
-    }
-
-    setIsSubmitting(true)
-    const request = (() => {
-      if (usesHackMultipart(inputSource, strategyProvider, state.info.requiresStrategyProvider)) {
-        const api = new CreateHackMultipart({
-          targetSubmissionId: submissionId,
-          subtaskIndex,
-          input: inputMode === 'file'
-            ? { kind: 'file', value: inputFile! }
-            : { kind: 'text', value: input },
-          strategyProviderSource: state.info.requiresStrategyProvider
-            ? (strategyProviderMode === 'file'
-                ? { kind: 'file' as const, value: strategyProviderFile! }
-                : { kind: 'text' as const, value: strategyProviderSource })
-            : null,
-        })
-        return sendMultipartAPI(api, api.formData())
-      }
-
-      return sendAPI(new CreateHack({
-        targetSubmissionId: submissionId,
-        subtaskIndex,
-        input,
-        strategyProviderSource: state.info.requiresStrategyProvider ? strategyProviderSource : null,
-      }))
-    })()
-
-    void request
-      .then((hack) => dispatch({ type: 'hack_loaded', hack }))
-      .catch((error: unknown) => dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.submit.submitFailed') }))
-      .finally(() => setIsSubmitting(false))
-  }
-
-  const canSubmit = state.info
-    ? canSubmitHackSources(
-        { mode: inputMode, text: input, file: inputFile },
-        { mode: strategyProviderMode, text: strategyProviderSource, file: strategyProviderFile },
-        state.info.requiresStrategyProvider,
-      )
-    : false
+  const model = useSubmissionHackModel({ submissionId, subtaskIndex })
 
   return (
     <PageShell title={t('hack.submit.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
-      {state.errorMessage ? <HackErrorAlert message={state.errorMessage} /> : null}
+      {model.errorMessage ? <HackErrorAlert message={model.errorMessage} /> : null}
 
-      {state.isLoading ? (
+      {model.isLoading ? (
         <PageLoadingCard message={t('hack.submit.loading')} />
-      ) : state.info ? (
+      ) : model.info ? (
         <div className="space-y-6">
           <HackCard>
             <CardHeader>
               <CardTitle className="text-xl text-slate-950">{t('hack.submit.target')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
-              <HackMetric label={t('submission.list.id')} value={`#${submissionIdValue(state.info.targetSubmissionId)}`} />
-              <HackMetric label={t('submission.list.submitter')} value={<UserProfileLink user={state.info.targetSubmitter} />} />
-              <HackMetric label={t('hack.subtask')} value={state.info.subtaskLabel ? `${state.info.subtaskIndex} (${state.info.subtaskLabel})` : String(state.info.subtaskIndex)} />
-              <HackMetric label={t('hack.subtaskScore')} value={formatOptionalScore(state.info.oldWorstScore)} />
-              <HackMetric label={t('hack.mode')} value={hackModeLabel(state.info.mode, t)} />
+              <HackMetric label={t('submission.list.id')} value={`#${submissionIdValue(model.info.targetSubmissionId)}`} />
+              <HackMetric label={t('submission.list.submitter')} value={<UserProfileLink user={model.info.targetSubmitter} />} />
+              <HackMetric label={t('hack.subtask')} value={model.info.subtaskLabel ? `${model.info.subtaskIndex} (${model.info.subtaskLabel})` : String(model.info.subtaskIndex)} />
+              <HackMetric label={t('hack.subtaskScore')} value={formatOptionalScore(model.info.oldWorstScore)} />
+              <HackMetric label={t('hack.mode')} value={hackModeLabel(model.info.mode, t)} />
             </CardContent>
           </HackCard>
 
@@ -197,40 +80,40 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
               <div className="space-y-2">
                 <Label htmlFor="hack-input">{t('hack.submit.input')}</Label>
                 <HackSourceTabs
-                  file={inputFile}
+                  file={model.inputFile}
                   fileInputId="hack-input-file"
-                  mode={inputMode}
-                  onFileChange={setInputFile}
-                  onModeChange={setInputMode}
-                  onTextChange={setInput}
-                  text={input}
+                  mode={model.inputMode}
+                  onFileChange={model.setInputFile}
+                  onModeChange={model.setInputMode}
+                  onTextChange={model.setInput}
+                  text={model.input}
                   textAreaId="hack-input"
-                  disabled={isSubmitting}
+                  disabled={model.isSubmitting}
                 />
               </div>
-              {state.info.requiresStrategyProvider ? (
+              {model.info.requiresStrategyProvider ? (
                 <div className="space-y-2">
                   <Label htmlFor="hack-strategy">{t('hack.submit.strategyProvider')}</Label>
                   <HackSourceTabs
-                    file={strategyProviderFile}
+                    file={model.strategyProviderFile}
                     fileInputId="hack-strategy-file"
-                    mode={strategyProviderMode}
-                    onFileChange={setStrategyProviderFile}
-                    onModeChange={setStrategyProviderMode}
-                    onTextChange={setStrategyProviderSource}
-                    text={strategyProviderSource}
+                    mode={model.strategyProviderMode}
+                    onFileChange={model.setStrategyProviderFile}
+                    onModeChange={model.setStrategyProviderMode}
+                    onTextChange={model.setStrategyProviderSource}
+                    text={model.strategyProviderSource}
                     textAreaId="hack-strategy"
-                    disabled={isSubmitting}
+                    disabled={model.isSubmitting}
                   />
                 </div>
               ) : null}
-              <Button disabled={isSubmitting || Boolean(state.hack) || !canSubmit} onClick={submit}>
-                {isSubmitting ? t('hack.submit.submitting') : t('hack.submit.action')}
+              <Button disabled={model.isSubmitting || Boolean(model.hack) || !model.canSubmit} onClick={model.submit}>
+                {model.isSubmitting ? t('hack.submit.submitting') : t('hack.submit.action')}
               </Button>
             </CardContent>
           </HackCard>
 
-          {state.hack ? <HackAttemptPanel hack={state.hack} /> : null}
+          {model.hack ? <HackAttemptPanel hack={model.hack} /> : null}
         </div>
       ) : null}
     </PageShell>
