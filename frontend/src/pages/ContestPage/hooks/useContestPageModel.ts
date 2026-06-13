@@ -6,7 +6,7 @@ import { UnregisterContest } from '@/apis/contest/UnregisterContest'
 import type { ContestSummary } from '@/objects/contest/response/ContestSummary'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ContestPageState = {
@@ -102,7 +102,7 @@ export function useContestPageModel(pageRequest: PageRequest) {
         message: contest.registrationStatus.isRegistered ? t('contest.list.unregisterSuccess') : t('contest.list.registerSuccess'),
       })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.list.registrationFailed')
+      const message = isHttpClientError(error) ? error.message : t('contest.list.registrationFailed')
       dispatch({ type: 'registration_failed', message })
     }
   }

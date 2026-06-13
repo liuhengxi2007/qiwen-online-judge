@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { DeleteProblem } from '@/apis/problem/DeleteProblem'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { sendAPI } from '@/system/api/api-message'
@@ -15,7 +15,7 @@ export function useProblemDeleteAction(problemSlug: ProblemSlug, contestSlug?: C
       await sendAPI(new DeleteProblem(problemSlug, contestSlug))
       return { ok: true, message: 'Problem deleted.' }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem.'
+      const message = isHttpClientError(error) ? error.message : 'Unable to delete problem.'
       return { ok: false, message }
     } finally {
       setIsDeleting(false)

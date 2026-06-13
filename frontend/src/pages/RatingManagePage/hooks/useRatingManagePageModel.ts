@@ -4,7 +4,7 @@ import { AppendRatingContest } from '@/apis/rating/AppendRatingContest'
 import { GetRatingManageState } from '@/apis/rating/GetRatingManageState'
 import { PopRatingContest } from '@/apis/rating/PopRatingContest'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import {
@@ -36,7 +36,7 @@ export function useRatingManagePageModel(canManage: boolean) {
           return
         }
 
-        const message = error instanceof HttpClientError ? error.message : t('ratingManage.loadFailed')
+        const message = isHttpClientError(error) ? error.message : t('ratingManage.loadFailed')
         dispatch({ type: 'load_failed', message })
       })
 
@@ -63,7 +63,7 @@ export function useRatingManagePageModel(canManage: boolean) {
       const response = await sendAPI(new AppendRatingContest(validation.request))
       dispatch({ type: 'append_succeeded', state: response, message: t('ratingManage.appendSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('ratingManage.appendFailed')
+      const message = isHttpClientError(error) ? error.message : t('ratingManage.appendFailed')
       dispatch({ type: 'append_failed', message })
     }
   }, [canManage, state.draft, t])
@@ -80,7 +80,7 @@ export function useRatingManagePageModel(canManage: boolean) {
       const response = await sendAPI(new PopRatingContest())
       dispatch({ type: 'pop_succeeded', state: response, message: t('ratingManage.popSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('ratingManage.popFailed')
+      const message = isHttpClientError(error) ? error.message : t('ratingManage.popFailed')
       dispatch({ type: 'pop_failed', message })
     }
   }, [canManage, t])

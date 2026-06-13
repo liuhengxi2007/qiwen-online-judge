@@ -12,7 +12,7 @@ import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from './useProblemDataPageModel'
 import { sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { createHttpClientError, isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
@@ -47,7 +47,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
       })
 
       if (!response.ok) {
-        throw new HttpClientError(
+        throw createHttpClientError(
           response.status === 404
             ? 'not-found'
             : response.status === 403
@@ -64,7 +64,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
       setLastSavedContent(loaded)
       setStatusMessage(t('problem.data.judgeConfig.loaded'))
     } catch (error) {
-      if (error instanceof HttpClientError && error.kind === 'not-found') {
+      if (isHttpClientError(error) && error.kind === 'not-found') {
         setContentValue(judgeConfigTemplate)
         setLastSavedContent(null)
         setStatusMessage(t('problem.data.judgeConfig.templateUnsaved'))

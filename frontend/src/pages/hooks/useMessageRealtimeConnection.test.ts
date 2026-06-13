@@ -6,61 +6,76 @@ import type { Username } from '@/objects/user/Username'
 import type { EmailAddress } from '@/objects/auth/EmailAddress'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 
-class MockEventSource {
-  static instances: MockEventSource[] = []
-
+type MockEventSource = {
   readonly url: string
   readonly withCredentials: boolean
-  closed = false
-  private readonly listeners = new Map<string, Set<(event: MessageEvent) => void>>()
-
-  constructor(url: string, init?: EventSourceInit) {
-    this.url = url
-    this.withCredentials = init?.withCredentials ?? false
-    MockEventSource.instances.push(this)
-  }
-
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject | null) {
-    if (!listener) {
-      return
-    }
-    const callback =
-      typeof listener === 'function'
-        ? listener
-        : ((event: Event) => {
-            listener.handleEvent(event)
-          })
-    const listeners = this.listeners.get(type) ?? new Set<(event: MessageEvent) => void>()
-    listeners.add(callback as (event: MessageEvent) => void)
-    this.listeners.set(type, listeners)
-  }
-
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject | null) {
-    if (!listener) {
-      return
-    }
-    const listeners = this.listeners.get(type)
-    if (!listeners) {
-      return
-    }
-    listeners.forEach((candidate) => {
-      if (candidate === listener) {
-        listeners.delete(candidate)
-      }
-    })
-  }
-
-  close() {
-    this.closed = true
-  }
-
-  emit(type: string, payload: unknown) {
-    const event = new MessageEvent(type, { data: JSON.stringify(payload) })
-    this.listeners.get(type)?.forEach((listener) => {
-      listener(event)
-    })
-  }
+  closed: boolean
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject | null): void
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject | null): void
+  close(): void
+  emit(type: string, payload: unknown): void
 }
+
+type MockEventSourceConstructor = {
+  new (url: string, init?: EventSourceInit): MockEventSource
+  instances: MockEventSource[]
+}
+
+function createMockEventSource(url: string, init?: EventSourceInit): MockEventSource {
+  const listenersByType = new Map<string, Set<(event: MessageEvent) => void>>()
+  const source: MockEventSource = {
+    url,
+    withCredentials: init?.withCredentials ?? false,
+    closed: false,
+    addEventListener(type, listener) {
+      if (!listener) {
+        return
+      }
+      const callback =
+        typeof listener === 'function'
+          ? listener
+          : ((event: Event) => {
+              listener.handleEvent(event)
+            })
+      const listeners = listenersByType.get(type) ?? new Set<(event: MessageEvent) => void>()
+      listeners.add(callback as (event: MessageEvent) => void)
+      listenersByType.set(type, listeners)
+    },
+    removeEventListener(type, listener) {
+      if (!listener) {
+        return
+      }
+      const listeners = listenersByType.get(type)
+      if (!listeners) {
+        return
+      }
+      listeners.forEach((candidate) => {
+        if (candidate === listener) {
+          listeners.delete(candidate)
+        }
+      })
+    },
+    close() {
+      source.closed = true
+    },
+    emit(type, payload) {
+      const event = new MessageEvent(type, { data: JSON.stringify(payload) })
+      listenersByType.get(type)?.forEach((listener) => {
+        listener(event)
+      })
+    },
+  }
+
+  MockEventSource.instances.push(source)
+  return source
+}
+
+const MockEventSource = Object.assign(
+  function MockEventSource(url: string, init?: EventSourceInit) {
+    return createMockEventSource(url, init)
+  } as unknown as MockEventSourceConstructor,
+  { instances: [] as MockEventSource[] },
+)
 
 type Harness = Awaited<ReturnType<typeof loadHarness>>
 

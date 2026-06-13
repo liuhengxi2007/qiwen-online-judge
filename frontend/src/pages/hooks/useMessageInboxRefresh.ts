@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { ListInbox } from '@/apis/message/ListInbox'
 import { useMessageStore } from '@/pages/stores/message/UseMessageStore'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
 const fallbackInboxLoadError = 'Unable to load messages.'
@@ -19,7 +19,7 @@ export function useMessageInboxRefresh() {
       try {
         replaceInbox(await sendAPI(new ListInbox(pageRequest)))
       } catch (error) {
-        failInboxLoad(error instanceof HttpClientError ? error.message : fallbackInboxLoadError)
+        failInboxLoad(isHttpClientError(error) ? error.message : fallbackInboxLoadError)
       }
     },
     [beginInboxLoad, failInboxLoad, replaceInbox],

@@ -5,7 +5,7 @@ import { RejudgeSubmission } from '@/apis/submission/RejudgeSubmission'
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 type UseSubmissionDetailActionsOptions = {
   submissionId: SubmissionId
@@ -32,7 +32,7 @@ export function useSubmissionDetailActions({
       const submission = await sendAPI(new RejudgeSubmission(submissionId))
       replaceSubmission(submission)
     } catch (error) {
-      setActionErrorMessage(error instanceof HttpClientError ? error.message : rejudgeFailedMessage)
+      setActionErrorMessage(isHttpClientError(error) ? error.message : rejudgeFailedMessage)
     } finally {
       setIsRejudging(false)
     }
@@ -45,7 +45,7 @@ export function useSubmissionDetailActions({
       await sendAPI(new DeleteSubmission(submissionId))
       setDeleted(true)
     } catch (error) {
-      setActionErrorMessage(error instanceof HttpClientError ? error.message : deleteFailedMessage)
+      setActionErrorMessage(isHttpClientError(error) ? error.message : deleteFailedMessage)
     } finally {
       setIsDeleting(false)
     }

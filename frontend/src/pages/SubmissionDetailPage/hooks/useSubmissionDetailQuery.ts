@@ -7,7 +7,7 @@ import type { SubmissionHackAvailability } from '@/objects/hack/response/Submiss
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 type SubmissionDetailQueryState = {
   submission: SubmissionDetail | null
@@ -80,7 +80,7 @@ export function useSubmissionDetailQuery(submissionId: SubmissionId) {
           dispatch({
             type: 'load_failed',
             message:
-              error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+              isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
                 ? '404 Not Found.'
                 : 'Unable to load submission details.',
           })

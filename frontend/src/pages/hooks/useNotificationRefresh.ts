@@ -4,7 +4,7 @@ import { GetNotificationUnreadCount } from '@/apis/notification/GetNotificationU
 import { ListNotifications } from '@/apis/notification/ListNotifications'
 import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
 const fallbackNotificationLoadError = 'Unable to load notifications.'
@@ -22,7 +22,7 @@ export function useNotificationRefresh() {
       try {
         replaceNotifications(await sendAPI(new ListNotifications(pageRequest)))
       } catch (error) {
-        failNotificationsLoad(error instanceof HttpClientError ? error.message : fallbackNotificationLoadError)
+        failNotificationsLoad(isHttpClientError(error) ? error.message : fallbackNotificationLoadError)
       }
     },
     [beginNotificationsLoad, failNotificationsLoad, replaceNotifications],

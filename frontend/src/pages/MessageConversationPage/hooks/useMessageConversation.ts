@@ -19,7 +19,7 @@ import { useMessageInboxRefresh } from '@/pages/hooks/useMessageInboxRefresh'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 const minimumIncomingMessagesBeforeBlockShortcut = 5
@@ -114,7 +114,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       } catch (error) {
         if (!cancelled) {
           setConversationId(null)
-          setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+          setErrorMessage(isHttpClientError(error) ? error.message : t('messages.loadFailed'))
         }
       } finally {
         if (!cancelled) {
@@ -146,7 +146,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       }
 
       void refreshConversationState(activeConversationId).catch((error) => {
-        setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+        setErrorMessage(isHttpClientError(error) ? error.message : t('messages.loadFailed'))
       })
     }
 
@@ -167,7 +167,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       setSendErrorMessage('')
       void refreshInbox()
     } catch (error) {
-      setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+      setErrorMessage(isHttpClientError(error) ? error.message : t('messages.loadFailed'))
     } finally {
       setIsMarkingConversationRead(false)
     }
@@ -187,7 +187,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
         setSendErrorMessage('')
         void refreshInbox()
       } catch (error) {
-        setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.loadFailed'))
+        setErrorMessage(isHttpClientError(error) ? error.message : t('messages.loadFailed'))
       } finally {
         setPendingReadMessageId(null)
       }
@@ -213,11 +213,11 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
         await refreshConversationState(conversationId, { autoMarkRead: false })
       })
       .catch((error) => {
-        if (error instanceof HttpClientError && error.code === 'api.error.message.blocked_by_recipient') {
+        if (isHttpClientError(error) && error.code === 'api.error.message.blocked_by_recipient') {
           setSendErrorMessage(error.message)
           return
         }
-        setErrorMessage(error instanceof HttpClientError ? error.message : t('messages.sendFailed'))
+        setErrorMessage(isHttpClientError(error) ? error.message : t('messages.sendFailed'))
       })
       .finally(() => setIsSending(false))
   }, [conversationId, draft, refreshConversationState, t])
@@ -242,7 +242,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
         })
       })
       .catch((error) => {
-        setOlderMessagesError(error instanceof HttpClientError ? error.message : t('messages.loadOlderFailed'))
+        setOlderMessagesError(isHttpClientError(error) ? error.message : t('messages.loadOlderFailed'))
       })
       .finally(() => setIsLoadingOlderMessages(false))
   }, [conversationId, history, t])

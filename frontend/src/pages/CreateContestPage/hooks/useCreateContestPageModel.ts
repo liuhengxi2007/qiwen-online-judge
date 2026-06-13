@@ -6,7 +6,7 @@ import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { CreateContestDraft } from '../functions/ContestForm'
 import { validateContestDraft } from '../functions/ContestForm'
@@ -104,7 +104,7 @@ export function useCreateContestPageModel(canCreate: boolean) {
       dispatch({ type: 'submit_succeeded' })
       return createdContest
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.create.failed')
+      const message = isHttpClientError(error) ? error.message : t('contest.create.failed')
       dispatch({ type: 'submit_failed', message })
       return null
     }

@@ -19,7 +19,7 @@ import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { hackStatusLabel } from '@/pages/objects/HackDisplay'
 import { formatOptionalScore } from '@/pages/objects/SubmissionDisplay'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type State = {
@@ -80,7 +80,7 @@ function HackDetailPageContent({ hackId }: { hackId: HackId }) {
         })
         .catch((error: unknown) => {
           if (!cancelled) {
-            dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.detail.loadFailed') })
+            dispatch({ type: 'failed', message: isHttpClientError(error) ? error.message : t('hack.detail.loadFailed') })
           }
         })
     }

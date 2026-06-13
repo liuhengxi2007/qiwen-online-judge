@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { CreateProblemSet } from '@/apis/problemset/CreateProblemSet'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
 import { validateProblemSetDraft } from '../functions/ProblemSetForm'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
@@ -110,7 +110,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
       dispatch({ type: 'submit_succeeded' })
       return createdProblemSet
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('problemSet.message.createFailed')
+      const message = isHttpClientError(error) ? error.message : t('problemSet.message.createFailed')
       dispatch({ type: 'submit_failed', message })
       return null
     }

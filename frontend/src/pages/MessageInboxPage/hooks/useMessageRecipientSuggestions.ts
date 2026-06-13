@@ -4,7 +4,7 @@ import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
 import { parseUserSearchQuery } from '@/objects/user/request/UserSearchQuery'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 export function useMessageRecipientSuggestions(searchQuery: string, searchFailedMessage: string) {
   const [suggestions, setSuggestions] = useState<UserIdentity[]>([])
@@ -38,7 +38,7 @@ export function useMessageRecipientSuggestions(searchQuery: string, searchFailed
           }
 
           setSuggestions([])
-          setSearchError(error instanceof HttpClientError ? error.message : searchFailedMessage)
+          setSearchError(isHttpClientError(error) ? error.message : searchFailedMessage)
         })
     }, 150)
 

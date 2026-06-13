@@ -6,7 +6,7 @@ import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import { toForbiddenRedirect } from '@/pages/routing/RoutePolicy'
 import { GetUserSettings } from '@/apis/user/GetUserSettings'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { translateMessage } from '@/system/i18n/messages'
 
 type UseUserSettingsQueryArgs = {
@@ -63,7 +63,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'forbidden') {
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,
@@ -73,7 +73,7 @@ export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserS
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'not-found') {
+        if (isHttpClientError(error) && error.kind === 'not-found') {
           setSettingsState({
             username: targetUsername,
             editedUser: null,

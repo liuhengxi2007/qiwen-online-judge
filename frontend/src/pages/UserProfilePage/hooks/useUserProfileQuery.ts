@@ -5,7 +5,7 @@ import type { Username } from '@/objects/user/Username'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import { toForbiddenRedirect } from '@/pages/routing/RoutePolicy'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { UserProfileResponse } from '@/objects/user/response/UserProfileResponse'
 import { translateMessage } from '@/system/i18n/messages'
 
@@ -50,7 +50,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'forbidden') {
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
           setProfileState({
             username: targetUsername,
             profile: null,
@@ -60,7 +60,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'not-found') {
+        if (isHttpClientError(error) && error.kind === 'not-found') {
           setProfileState({
             username: targetUsername,
             profile: null,

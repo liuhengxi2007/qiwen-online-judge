@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { AddProblemToProblemSet } from '@/apis/problemset/AddProblemToProblemSet'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { validateProblemSetLinkDraft } from '../functions/ProblemSetLinkForm'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
@@ -24,7 +24,7 @@ export function useProblemSetLinkProblemAction(problemSetSlug: ProblemSetSlug) {
         const updatedProblemSet = await sendAPI(new AddProblemToProblemSet(problemSetSlug, validation.request))
         return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.linkSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('problemSet.message.linkFailed')
+        const message = isHttpClientError(error) ? error.message : t('problemSet.message.linkFailed')
         return { ok: false, message }
       } finally {
         setActiveLink(false)

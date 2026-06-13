@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { ListRegisteredJudgers } from '@/apis/judger/ListRegisteredJudgers'
 import { ListUsers } from '@/apis/user/ListUsers'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { UserListRequest } from '@/objects/user/request/UserListRequest'
 import type { RegisteredJudgerListItem } from '@/objects/judger/response/RegisteredJudgerListItem'
@@ -75,7 +75,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'forbidden') {
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
           setQueryState((currentState) => ({
             ...currentState,
             enabled: siteManagerEnabled,
@@ -123,7 +123,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
           return
         }
 
-        if (error instanceof HttpClientError && error.kind === 'forbidden') {
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
           setQueryState((currentState) => ({
             ...currentState,
             enabled: siteManagerEnabled,

@@ -9,7 +9,7 @@ import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
 import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UseUserSettingsBlockListArgs = {
@@ -41,7 +41,7 @@ export function useUserSettingsBlockList({
         setBlockErrorMessage('')
       })
       .catch((error) => {
-        setBlockErrorMessage(error instanceof HttpClientError ? error.message : t('messages.blockLoadFailed'))
+        setBlockErrorMessage(isHttpClientError(error) ? error.message : t('messages.blockLoadFailed'))
       })
   }, [isEnabled, t])
 
@@ -63,7 +63,7 @@ export function useUserSettingsBlockList({
         })
         .catch((error) => {
           setBlockSuggestions([])
-          setBlockErrorMessage(error instanceof HttpClientError ? error.message : t('messages.blockActionFailed'))
+          setBlockErrorMessage(isHttpClientError(error) ? error.message : t('messages.blockActionFailed'))
         })
     }, 150)
 
@@ -95,7 +95,7 @@ export function useUserSettingsBlockList({
         setBlockSuggestions([])
         setBlockErrorMessage('')
       } catch (error) {
-        setBlockErrorMessage(error instanceof HttpClientError ? error.message : t('messages.blockActionFailed'))
+        setBlockErrorMessage(isHttpClientError(error) ? error.message : t('messages.blockActionFailed'))
       } finally {
         setIsUpdatingBlocks(false)
       }
@@ -111,7 +111,7 @@ export function useUserSettingsBlockList({
         setBlockedUsers((current) => current.filter((item) => item.user.username !== username))
         setBlockErrorMessage('')
       } catch (error) {
-        setBlockErrorMessage(error instanceof HttpClientError ? error.message : t('messages.blockActionFailed'))
+        setBlockErrorMessage(isHttpClientError(error) ? error.message : t('messages.blockActionFailed'))
       } finally {
         setIsUpdatingBlocks(false)
       }

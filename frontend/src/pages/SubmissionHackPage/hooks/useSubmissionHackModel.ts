@@ -7,7 +7,7 @@ import type { HackDetail } from '@/objects/hack/response/HackDetail'
 import type { HackSubtaskInfo } from '@/objects/hack/response/HackSubtaskInfo'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 import {
   canSubmitHackSources,
@@ -61,7 +61,7 @@ export function useSubmissionHackModel({ submissionId, subtaskIndex }: UseSubmis
         if (!cancelled) dispatch({ type: 'info_loaded', info })
       })
       .catch((error: unknown) => {
-        if (!cancelled) dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.submit.loadFailed') })
+        if (!cancelled) dispatch({ type: 'failed', message: isHttpClientError(error) ? error.message : t('hack.submit.loadFailed') })
       })
     return () => {
       cancelled = true
@@ -119,7 +119,7 @@ export function useSubmissionHackModel({ submissionId, subtaskIndex }: UseSubmis
 
     void request
       .then((hack) => dispatch({ type: 'hack_loaded', hack }))
-      .catch((error: unknown) => dispatch({ type: 'failed', message: error instanceof HttpClientError ? error.message : t('hack.submit.submitFailed') }))
+      .catch((error: unknown) => dispatch({ type: 'failed', message: isHttpClientError(error) ? error.message : t('hack.submit.submitFailed') }))
       .finally(() => setIsSubmitting(false))
   }
 

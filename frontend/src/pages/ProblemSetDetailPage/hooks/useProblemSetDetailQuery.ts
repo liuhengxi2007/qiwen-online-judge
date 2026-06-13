@@ -4,7 +4,7 @@ import { GetProblemSet } from '@/apis/problemset/GetProblemSet'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 type ProblemSetDetailQueryState = {
   problemSet: ProblemSetDetail | null
@@ -57,7 +57,7 @@ export function useProblemSetDetailQuery(problemSetSlug: ProblemSetSlug) {
         dispatch({
           type: 'load_failed',
           message:
-            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+            isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
               ? '404 Not Found.'
               : 'Unable to load problem set details.',
         })

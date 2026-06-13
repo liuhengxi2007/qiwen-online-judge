@@ -6,7 +6,7 @@ import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDeta
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateAddUserGroupMemberDraft } from '../functions/UserGroupForm'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
@@ -28,7 +28,7 @@ export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
         const updatedUserGroup = await sendAPI(new AddUserGroupMember(userGroupSlug, validation.request))
         return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.addMemberSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.addMemberFailed')
+        const message = isHttpClientError(error) ? error.message : t('userGroup.message.addMemberFailed')
         return { ok: false, message }
       } finally {
         setIsAddingMember(false)

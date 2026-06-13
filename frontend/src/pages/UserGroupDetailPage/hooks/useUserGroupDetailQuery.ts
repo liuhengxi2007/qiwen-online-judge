@@ -4,7 +4,7 @@ import { GetUserGroup } from '@/apis/usergroup/GetUserGroup'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { translateMessage } from '@/system/i18n/messages'
 
 type UserGroupDetailQueryState = {
@@ -61,7 +61,7 @@ export function useUserGroupDetailQuery(userGroupSlug: UserGroupSlug) {
         dispatch({
           type: 'load_failed',
           message:
-            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+            isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
               ? translateMessage('common.error.notFound')
               : translateMessage('userGroup.detailLoadFailed'),
         })

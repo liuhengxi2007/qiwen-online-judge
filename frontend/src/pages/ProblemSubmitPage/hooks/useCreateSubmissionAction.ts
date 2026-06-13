@@ -7,7 +7,7 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 import type { SubmissionCreatePayload } from '@/pages/ProblemSubmitPage/functions/SubmitPrograms'
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 export function useCreateSubmissionAction(createFailedMessage: string, contestSlug?: ContestSlug) {
   const navigate = useNavigate()
@@ -34,7 +34,7 @@ export function useCreateSubmissionAction(createFailedMessage: string, contestSl
         })()
         navigate(`/submissions/${submissionIdValue(submission.id)}`)
       } catch (error) {
-        setErrorMessage(error instanceof HttpClientError ? error.message : createFailedMessage)
+        setErrorMessage(isHttpClientError(error) ? error.message : createFailedMessage)
       } finally {
         setIsSubmitting(false)
       }

@@ -8,7 +8,7 @@ import type { UserProfileResponse } from '@/objects/user/response/UserProfileRes
 import type { Username } from '@/objects/user/Username'
 import { toAuthSession } from '@/pages/stores/auth/AuthSession'
 import { sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type ProfileAvatarUploadPanelProps = {
@@ -59,7 +59,7 @@ export function ProfileAvatarUploadPanel({
       setSelectedFile(null)
       setSuccessMessage(t('userProfile.avatarUploadSuccess'))
     } catch (error) {
-      setErrorMessage(error instanceof HttpClientError ? error.message : t('userProfile.avatarUploadFailed'))
+      setErrorMessage(isHttpClientError(error) ? error.message : t('userProfile.avatarUploadFailed'))
     } finally {
       setIsUploading(false)
     }

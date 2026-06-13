@@ -4,7 +4,7 @@ import { MarkAllNotificationsRead } from '@/apis/notification/MarkAllNotificatio
 import { MarkNotificationRead } from '@/apis/notification/MarkNotificationRead'
 import type { NotificationId } from '@/objects/notification/NotificationId'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
 type UseNotificationActionsOptions = {
@@ -48,7 +48,7 @@ export function useNotificationActions({
         markAllReadLocal()
         await refreshNotifications(pageRequest)
       } catch (error) {
-        setActionError(error instanceof HttpClientError ? error.message : markAllReadFailedMessage)
+        setActionError(isHttpClientError(error) ? error.message : markAllReadFailedMessage)
       } finally {
         setIsMarkingAllRead(false)
       }

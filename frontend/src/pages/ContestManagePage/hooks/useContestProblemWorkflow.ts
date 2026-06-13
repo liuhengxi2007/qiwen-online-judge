@@ -10,7 +10,7 @@ import { parseProblemSlug, problemSlugValue } from '@/objects/problem/ProblemSlu
 import { parseProblemSearchQuery } from '@/objects/problem/request/ProblemSearchQuery'
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { ContestManagePageAction } from './useContestManagePageModel'
 
@@ -82,7 +82,7 @@ export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlu
       setProblemSearchInput('')
       setProblemSuggestions([])
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.manage.attachProblemFailed')
+      const message = isHttpClientError(error) ? error.message : t('contest.manage.attachProblemFailed')
       dispatch({ type: 'attach_problem_failed', message })
     }
   }, [contestSlug, dispatch, t])
@@ -103,7 +103,7 @@ export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlu
         await attachProblemBySlug(parsedSlug.value)
       }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.manage.attachProblemFailed')
+      const message = isHttpClientError(error) ? error.message : t('contest.manage.attachProblemFailed')
       dispatch({ type: 'attach_problem_failed', message })
     }
   }, [attachProblemBySlug, contestSlug, dispatch, t])
@@ -139,7 +139,7 @@ export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlu
       const contest = await sendAPI(new RemoveProblemFromContest(contestSlug, parsedSlug.value))
       dispatch({ type: 'remove_problem_succeeded', contest, message: t('contest.manage.removeProblemSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.manage.removeProblemFailed')
+      const message = isHttpClientError(error) ? error.message : t('contest.manage.removeProblemFailed')
       dispatch({ type: 'remove_problem_failed', message })
     }
   }, [contestSlug, dispatch, t])

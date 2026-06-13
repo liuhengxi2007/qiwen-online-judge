@@ -8,7 +8,7 @@ import {
 } from '../functions/CreateUserGroupPageState'
 import { validateUserGroupDraft } from '../functions/UserGroupForm'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useCreateUserGroupPageModel() {
@@ -33,7 +33,7 @@ export function useCreateUserGroupPageModel() {
       dispatch({ type: 'submit_succeeded', message: t('userGroup.message.createSuccess') })
       return createdGroup
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('userGroup.message.createFailed')
+      const message = isHttpClientError(error) ? error.message : t('userGroup.message.createFailed')
       dispatch({ type: 'submit_failed', message })
       return null
     }

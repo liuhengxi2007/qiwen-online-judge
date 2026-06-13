@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { UpdateProblemSet } from '@/apis/problemset/UpdateProblemSet'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { validateProblemSetUpdateDraft } from '../functions/ProblemSetForm'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
@@ -32,7 +32,7 @@ export function useProblemSetUpdateAction(problemSetSlug: ProblemSetSlug) {
         const updatedProblemSet = await sendAPI(new UpdateProblemSet(problemSetSlug, validation.request))
         return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.updateSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('problemSet.message.updateFailed')
+        const message = isHttpClientError(error) ? error.message : t('problemSet.message.updateFailed')
         return { ok: false, message }
       } finally {
         setIsSaving(false)

@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from 'react'
 
 import { CreateProblem } from '@/apis/problem/CreateProblem'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import {
   initialCreateProblemPageState,
   reduceCreateProblemPageState,
@@ -45,7 +45,7 @@ export function useCreateProblemPageModel(canCreate: boolean) {
       dispatch({ type: 'submit_succeeded', message: t('problem.message.createSuccess') })
       return createdProblem
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('problem.message.createFailed')
+      const message = isHttpClientError(error) ? error.message : t('problem.message.createFailed')
       dispatch({ type: 'submit_failed', message })
       return null
     }

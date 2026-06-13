@@ -9,7 +9,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
 import { UserAvatar } from '@/pages/components/UserAvatar'
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UserAvatarSettingsCardProps = {
@@ -47,7 +47,7 @@ export function UserAvatarSettingsCard({
       setSelectedFile(null)
       setSuccessMessage(t('userSettings.avatarUploadSuccess'))
     } catch (error) {
-      setErrorMessage(error instanceof HttpClientError ? error.message : t('userSettings.avatarUploadFailed'))
+      setErrorMessage(isHttpClientError(error) ? error.message : t('userSettings.avatarUploadFailed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -64,7 +64,7 @@ export function UserAvatarSettingsCard({
       setSelectedFile(null)
       setSuccessMessage(t('userSettings.avatarDeleteSuccess'))
     } catch (error) {
-      setErrorMessage(error instanceof HttpClientError ? error.message : t('userSettings.avatarDeleteFailed'))
+      setErrorMessage(isHttpClientError(error) ? error.message : t('userSettings.avatarDeleteFailed'))
     } finally {
       setIsSubmitting(false)
     }

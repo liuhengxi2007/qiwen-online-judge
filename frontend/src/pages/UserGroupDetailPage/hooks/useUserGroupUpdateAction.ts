@@ -5,7 +5,7 @@ import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDeta
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { validateUserGroupUpdateDraft } from '../functions/UserGroupForm'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
@@ -27,7 +27,7 @@ export function useUserGroupUpdateAction(userGroupSlug: UserGroupSlug) {
         const updatedUserGroup = await sendAPI(new UpdateUserGroup(userGroupSlug, validation.request))
         return { ok: true, userGroup: updatedUserGroup, message: t('userGroup.message.updateSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.updateFailed')
+        const message = isHttpClientError(error) ? error.message : t('userGroup.message.updateFailed')
         return { ok: false, message }
       } finally {
         setIsSaving(false)

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { RemoveProblemFromProblemSet } from '@/apis/problemset/RemoveProblemFromProblemSet'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
@@ -19,7 +19,7 @@ export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug)
         const updatedProblemSet = await sendAPI(new RemoveProblemFromProblemSet(problemSetSlug, problemSlug))
         return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.removeSuccess') }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('problemSet.message.removeFailed')
+        const message = isHttpClientError(error) ? error.message : t('problemSet.message.removeFailed')
         return { ok: false, message }
       } finally {
         setActiveRemovingProblemSlug(null)

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { DeleteProblemSet } from '@/apis/problemset/DeleteProblemSet'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
 
@@ -14,7 +14,7 @@ export function useProblemSetDeleteAction(problemSetSlug: ProblemSetSlug) {
       await sendAPI(new DeleteProblemSet(problemSetSlug))
       return { ok: true, message: 'Problem set deleted.' }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem set.'
+      const message = isHttpClientError(error) ? error.message : 'Unable to delete problem set.'
       return { ok: false, message }
     } finally {
       setIsDeleting(false)

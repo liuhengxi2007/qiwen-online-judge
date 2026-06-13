@@ -19,7 +19,7 @@ import {
 } from '../functions/ProblemDataPageState'
 import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type UploadResult = { ok: true } | { ok: false; message: string }
@@ -60,7 +60,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
       dispatch({ type: 'load_succeeded', tree: tree.items })
       return { ok: true as const }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('problem.data.loadFailed')
+      const message = isHttpClientError(error) ? error.message : t('problem.data.loadFailed')
       dispatch({ type: 'load_failed', message })
       return { ok: false as const, message }
     }
@@ -107,7 +107,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
       await loadFiles()
       return { ok: true }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to upload problem data.'
+      const message = isHttpClientError(error) ? error.message : 'Unable to upload problem data.'
       dispatch({ type: 'upload_failed', message })
       return { ok: false, message }
     }
@@ -127,7 +127,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
         await loadFiles()
         return { ok: true }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : 'Unable to delete problem data.'
+        const message = isHttpClientError(error) ? error.message : 'Unable to delete problem data.'
         dispatch({ type: 'delete_failed', message })
         return { ok: false, message }
       }
@@ -145,7 +145,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
       await loadFiles()
       return { ok: true }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : 'Unable to clear problem data.'
+      const message = isHttpClientError(error) ? error.message : 'Unable to clear problem data.'
       dispatch({ type: 'clear_failed', message })
       return { ok: false, message }
     }
@@ -163,7 +163,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
       await loadFiles()
       return { ok: true }
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('problem.data.ready.saveFailed')
+      const message = isHttpClientError(error) ? error.message : t('problem.data.ready.saveFailed')
       dispatch({ type: 'ready_save_failed', message })
       return { ok: false, message }
     }

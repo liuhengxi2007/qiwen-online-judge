@@ -9,7 +9,7 @@ import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAc
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { ContestManageDraft } from '../functions/ContestManageForm'
 import { contestManageDraftFromDetail, validateContestManageDraft } from '../functions/ContestManageForm'
@@ -177,7 +177,7 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
       const contest = await sendAPI(new UpdateContest(contestSlug, validation.request))
       dispatch({ type: 'save_succeeded', contest, message: t('contest.manage.saveSuccess') })
     } catch (error) {
-      const message = error instanceof HttpClientError ? error.message : t('contest.manage.saveFailed')
+      const message = isHttpClientError(error) ? error.message : t('contest.manage.saveFailed')
       dispatch({ type: 'save_failed', message })
     }
   }, [contestSlug, state.draft, t])

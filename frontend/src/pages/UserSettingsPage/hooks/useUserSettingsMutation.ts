@@ -4,7 +4,7 @@ import { toAuthSession } from '@/pages/stores/auth/AuthSession'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
 import { Logout } from '@/apis/auth/Logout'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { UpdateAccount } from '@/apis/auth/UpdateAccount'
 import { UpdateUserPreferences } from '@/apis/user/UpdateUserPreferences'
 import { UpdateUserProfile } from '@/apis/user/UpdateUserProfile'
@@ -112,12 +112,12 @@ export function useUserSettingsMutation() {
 
         return { kind: 'updated', user: updatedUser, message }
       } catch (error) {
-        if (error instanceof HttpClientError && error.kind === 'forbidden') {
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
           setNavigationIntent(toSiteManageDeniedRedirect())
           return { kind: 'forbidden' }
         }
 
-        if (error instanceof HttpClientError && error.kind === 'unauthorized') {
+        if (isHttpClientError(error) && error.kind === 'unauthorized') {
           const message =
             error.message ||
             (params.kind === 'own_account' ? t('userSettings.currentPasswordTitle') : t('userSettings.updateFailed'))

@@ -6,7 +6,7 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 
 type ProblemDetailQueryState = {
   problem: ProblemDetail | null
@@ -63,7 +63,7 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug, contestSlug?: Co
         dispatch({
           type: 'load_failed',
           message:
-            error instanceof HttpClientError && (error.kind === 'not-found' || error.kind === 'forbidden')
+            isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
               ? '404 Not Found.'
               : 'Unable to load problem details.',
         })

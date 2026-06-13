@@ -4,23 +4,42 @@ import type { ApiMessageParam } from '@/objects/shared/ApiMessageParam'
 
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
 
+const httpClientErrorName = 'HttpClientError'
+
+export type HttpClientError = Error & {
+  readonly kind: HttpClientErrorKind
+  readonly code?: string
+  readonly params?: Record<string, ApiMessageParam>
+}
+
 type ApiMessageResponse = {
   code: string | null
   message: string | null
   params: Record<string, ApiMessageParam>
 }
 
-export class HttpClientError extends Error {
-  readonly kind: HttpClientErrorKind
-  readonly code?: string
-  readonly params?: Record<string, ApiMessageParam>
+export function createHttpClientError(
+  kind: HttpClientErrorKind,
+  message: string,
+  code?: string,
+  params?: Record<string, ApiMessageParam>,
+): HttpClientError {
+  const error = Object.assign(Error(message), {
+    name: httpClientErrorName,
+    kind,
+    code,
+    params,
+  })
 
-  constructor(kind: HttpClientErrorKind, message: string, code?: string, params?: Record<string, ApiMessageParam>) {
-    super(message)
-    this.kind = kind
-    this.code = code
-    this.params = params
-  }
+  return error as HttpClientError
+}
+
+export function isHttpClientError(error: unknown): error is HttpClientError {
+  return error instanceof Error && isRecord(error) && error.name === httpClientErrorName && isHttpClientErrorKind(error.kind)
+}
+
+function isHttpClientErrorKind(value: unknown): value is HttpClientErrorKind {
+  return value === 'unauthorized' || value === 'forbidden' || value === 'not-found' || value === 'http'
 }
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
@@ -153,25 +172,25 @@ export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Pr
   if (response.status === 401) {
     const message = await readErrorMessage(response, translateMessage('common.error.authRequired'))
     const data = decodeApiMessageResponse(await response.clone().json().catch(() => null))
-    throw new HttpClientError('unauthorized', message, data?.code ?? undefined, data?.params)
+    throw createHttpClientError('unauthorized', message, data?.code ?? undefined, data?.params)
   }
 
   if (response.status === 403) {
     const message = await readErrorMessage(response, translateMessage('common.error.forbidden'))
     const data = decodeApiMessageResponse(await response.clone().json().catch(() => null))
-    throw new HttpClientError('forbidden', message, data?.code ?? undefined, data?.params)
+    throw createHttpClientError('forbidden', message, data?.code ?? undefined, data?.params)
   }
 
   if (response.status === 404) {
     const message = await readErrorMessage(response, translateMessage('common.error.notFound'))
     const data = decodeApiMessageResponse(await response.clone().json().catch(() => null))
-    throw new HttpClientError('not-found', message, data?.code ?? undefined, data?.params)
+    throw createHttpClientError('not-found', message, data?.code ?? undefined, data?.params)
   }
 
   if (!response.ok) {
     const message = await readErrorMessage(response, translateMessage('common.error.requestFailed'))
     const data = decodeApiMessageResponse(await response.clone().json().catch(() => null))
-    throw new HttpClientError('http', message, data?.code ?? undefined, data?.params)
+    throw createHttpClientError('http', message, data?.code ?? undefined, data?.params)
   }
 
   if (response.status === 204) {

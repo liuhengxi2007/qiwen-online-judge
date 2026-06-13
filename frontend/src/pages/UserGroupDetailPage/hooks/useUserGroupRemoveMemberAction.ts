@@ -5,7 +5,7 @@ import { RemoveUserGroupMember } from '@/apis/usergroup/RemoveUserGroupMember'
 import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDetail'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { sendAPI } from '@/system/api/api-message'
-import { HttpClientError } from '@/system/api/http-client'
+import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
@@ -23,7 +23,7 @@ export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
           message: t('userGroup.message.removeMemberSuccess'),
         }
       } catch (error) {
-        const message = error instanceof HttpClientError ? error.message : t('userGroup.message.removeMemberFailed')
+        const message = isHttpClientError(error) ? error.message : t('userGroup.message.removeMemberFailed')
         return { ok: false, message }
       } finally {
         setActiveRemovingUsername(null)
