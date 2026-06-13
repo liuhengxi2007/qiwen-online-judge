@@ -4,12 +4,18 @@ import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 
 
 
+/** API 消息参数的封闭类型，用于把可本地化错误或成功消息的动态值传给前端。 */
 sealed trait ApiMessageParam
 
+/** 提供 API 消息参数的带 kind 字段 JSON 编解码。 */
 object ApiMessageParam:
+  /** 文本型消息参数。 */
   final case class Text(value: String) extends ApiMessageParam
+  /** Int 数值消息参数。 */
   final case class IntValue(value: Int) extends ApiMessageParam
+  /** Long 数值消息参数。 */
   final case class LongValue(value: Long) extends ApiMessageParam
+  /** Boolean 消息参数。 */
   final case class BoolValue(value: Boolean) extends ApiMessageParam
 
   given Encoder[ApiMessageParam] = Encoder.instance {

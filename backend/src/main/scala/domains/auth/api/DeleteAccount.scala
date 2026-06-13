@@ -12,6 +12,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 站点管理员删除账号 API，保护内置 admin、自删除和仍持有资源的用户。 */
 object DeleteAccount extends SiteManagerApi[Username, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -19,12 +20,14 @@ object DeleteAccount extends SiteManagerApi[Username, SuccessResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 从路径读取目标用户名并规范化，路径缺失返回 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Username] =
     val _ = request
     pathParams.require("targetUsername") match
       case Right(rawUsername) => IO.pure(Username.canonical(rawUsername))
       case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
 
+  /** 执行删除前的业务保护校验，删除失败按不存在或资源占用返回对应错误。 */
   override def plan(connection: Connection, actor: SiteManagerUser, targetUsername: Username): IO[SuccessResponse] =
     for
       _ <- HttpApiError.ensure(

@@ -7,11 +7,17 @@ import { useRegisterMutation } from './useRegisterMutation'
 import { parseDisplayName } from '@/objects/user/DisplayName'
 import { parseUsername } from '@/objects/user/Username'
 
+/**
+ * 注册表单状态，保存提交中标记和错误消息。
+ */
 type RegisterState = {
   draft: RegisterDraft
   errorMessage: string
 }
 
+/**
+ * 注册表单草稿，保存用户名、显示名、邮箱和密码输入。
+ */
 type RegisterDraft = {
   username: string
   displayName: string
@@ -20,6 +26,9 @@ type RegisterDraft = {
   confirmPassword: string
 }
 
+/**
+ * 注册表单 reducer 动作，覆盖字段编辑和提交状态。
+ */
 type RegisterAction =
   | { type: 'set_username'; value: string }
   | { type: 'set_display_name'; value: string }
@@ -42,6 +51,9 @@ const initialState: RegisterState = {
   errorMessage: '',
 }
 
+/**
+ * 注册表单 reducer；纯函数维护草稿、提交标记和错误文案。
+ */
 function registerReducer(state: RegisterState, action: RegisterAction): RegisterState {
   switch (action.type) {
     case 'set_username':
@@ -61,6 +73,9 @@ function registerReducer(state: RegisterState, action: RegisterAction): Register
   }
 }
 
+/**
+ * 注册表单模型 hook；维护注册草稿并提供提交状态更新动作。
+ */
 export function useRegisterModel() {
   const [state, dispatch] = useReducer(registerReducer, initialState)
   const mutation = useRegisterMutation()

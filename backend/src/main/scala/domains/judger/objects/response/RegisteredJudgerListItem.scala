@@ -6,6 +6,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.time.Instant
 import scala.util.Try
 
+/** 管理端 judger 列表项；展示注册前缀、实际 id、主机、进程和心跳时间。 */
 final case class RegisteredJudgerListItem(
   judgerId: String,
   requestedPrefix: String,
@@ -16,6 +17,7 @@ final case class RegisteredJudgerListItem(
   lastHeartbeatAt: Instant
 )
 
+/** RegisteredJudgerListItem 的 JSON 编解码器，Instant 以 ISO-8601 字符串表示。 */
 object RegisteredJudgerListItem:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>

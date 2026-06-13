@@ -8,11 +8,17 @@ import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplay } from '@/pages/hooks/useProblemTitleDisplay'
 import type { ProblemSummary } from '@/objects/problem/response/ProblemSummary'
 
+/**
+ * 题目列表项属性，包含题目摘要和是否补充显示 slug。
+ */
 type ProblemListItemProps = {
   problem: ProblemSummary
   showSlugSupplement: boolean
 }
 
+/**
+ * 题目列表项组件，展示标题、slug、公开状态和创建时间。
+ */
 export function ProblemListItem({ problem, showSlugSupplement }: ProblemListItemProps) {
   const { t } = useI18n()
   const titleText = useProblemTitleDisplay(problem.title, problem.slug)

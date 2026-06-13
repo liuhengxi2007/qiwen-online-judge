@@ -13,8 +13,10 @@ import shared.objects.PageResponse
 import java.sql.{Connection, ResultSet}
 import java.util.UUID
 
+/** 比赛榜单表访问对象，负责从提交记录计算榜单、逐题结果和评分快照。 */
 object ContestRanklistTable:
 
+  /** 评分所需的比赛参与者榜单记录，不包含逐题明细。 */
   final case class RatingSnapshotParticipantRecord(
     username: Username,
     rank: ContestRank,
@@ -22,6 +24,7 @@ object ContestRanklistTable:
     penaltyMillis: ContestPenaltyMillis
   )
 
+  /** 分页读取比赛榜单；canViewAllSubmissionDetails 控制是否显示他人提交详情入口。 */
   def listForContest(
     connection: Connection,
     contestId: ContestId,
@@ -86,6 +89,7 @@ object ContestRanklistTable:
       |order by contest_rank asc, username asc
       |""".stripMargin
 
+  /** 读取评分使用的完整参赛者排名快照，按排名和用户名稳定排序。 */
   def listRatingSnapshotParticipants(
     connection: Connection,
     contestId: ContestId
@@ -229,6 +233,7 @@ object ContestRanklistTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 读取榜单当前页，并根据查看者权限决定是否带出提交详情入口。 */
   private def readRows(
     connection: Connection,
     contestId: ContestId,
@@ -294,6 +299,7 @@ object ContestRanklistTable:
       |order by cp.position asc, cp.alias asc
       |""".stripMargin
 
+  /** 读取单个参赛者的逐题最佳提交结果，并按查看权限控制 submissionId 是否可进入详情。 */
   private def readProblemResults(
     connection: Connection,
     contestId: ContestId,

@@ -22,14 +22,23 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * Hack 详情页查询状态，保存详情、加载标记和错误消息。
+ */
 type State = {
   hack: HackDetail | null
   isLoading: boolean
   errorMessage: string
 }
 
+/**
+ * Hack 详情页 reducer 动作，覆盖加载成功和失败。
+ */
 type Action = { type: 'loaded'; hack: HackDetail } | { type: 'failed'; message: string }
 
+/**
+ * Hack 详情页 reducer；纯函数维护详情加载状态。
+ */
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'loaded':
@@ -39,6 +48,9 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+/**
+ * Hack 详情页入口，校验 hackId 路由参数后渲染详情内容。
+ */
 export function HackDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('hack.detail.pageTitle'))
@@ -61,6 +73,9 @@ export function HackDetailPage() {
   return <HackDetailPageContent hackId={hackIdResult.value} />
 }
 
+/**
+ * Hack 详情页主体，加载 Hack 明细并展示参与者、目标提交和评测消息。
+ */
 function HackDetailPageContent({ hackId }: { hackId: HackId }) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, { hack: null, isLoading: true, errorMessage: '' })

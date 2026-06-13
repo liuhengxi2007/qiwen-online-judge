@@ -13,6 +13,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 标记当前用户所有私信已读的认证 API，并向对端发布读回执事件。 */
 final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends AuthenticatedApi[Unit, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -20,10 +21,12 @@ final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends Authen
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 批量已读操作不需要路径参数或请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
     val _ = (request, pathParams)
     IO.unit
 
+  /** 先收集未读会话读回执，再批量标记已读，最后向对端和自己发布消息流事件。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

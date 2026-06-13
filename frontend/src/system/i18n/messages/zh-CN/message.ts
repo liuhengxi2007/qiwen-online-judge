@@ -1,3 +1,6 @@
+/**
+ * 简体中文私信消息，覆盖收件箱、会话、发送和实时状态文案。
+ */
 export const zhCnMessageMessages: Record<string, string> = {
   'messages.pageTitle': '私信',
   'messages.conversationPageTitle': '会话',

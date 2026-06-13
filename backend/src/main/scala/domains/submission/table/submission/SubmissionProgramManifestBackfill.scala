@@ -10,8 +10,10 @@ import io.circe.syntax.*
 import java.sql.Connection
 import java.util.UUID
 
+/** 旧提交源码到 program_manifest 的回填器；把 legacy source_code 写入对象存储并记录 manifest。 */
 object SubmissionProgramManifestBackfill:
 
+  /** 当 legacy language/source_code 列存在时执行回填；新表结构无旧列时无副作用。 */
   def run(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
     for
       hasLegacySourceCode <- columnExists(connection, "source_code")

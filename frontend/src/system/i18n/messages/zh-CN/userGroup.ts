@@ -1,3 +1,6 @@
+/**
+ * 简体中文用户组消息，覆盖用户组创建、详情、成员、权限和转让操作文案。
+ */
 export const zhCnUserGroupMessages: Record<string, string> = {
   'userGroup.pageTitle': '气温在线评测 - 用户组',
   'userGroup.heading': '用户组',

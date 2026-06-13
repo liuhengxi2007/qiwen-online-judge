@@ -14,6 +14,9 @@ import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信会话卡片属性，包含会话展示状态、发送草稿、已读状态和所有操作回调。
+ */
 type MessageConversationCardProps = {
   autoMarkMessageRead: boolean
   conversation: MessageConversationSummary | null
@@ -38,6 +41,10 @@ type MessageConversationCardProps = {
   submitDraft: () => void
 }
 
+/**
+ * 私信会话卡片，组合会话标题、手动标记已读按钮、消息列表和发送框。
+ * 组件不直接调用 API，所有副作用通过传入的模型回调触发。
+ */
 export function MessageConversationCard({
   autoMarkMessageRead,
   conversation,

@@ -9,8 +9,10 @@ import domains.problem.utils.ProblemDataStorage
 import domains.submission.utils.SubmissionProgramStorage
 import org.http4s.HttpRoutes
 
+/** hack 域路由装配器；注册 hack 查询、创建、worker claim 和结果记录 API。 */
 object HackRouter:
 
+  /** 构造 hack 域 HttpRoutes；创建和目标检查需要提交源码存储与题目数据存储。 */
   def routes(
     databaseSession: DatabaseSession,
     sessionStore: SessionStore,

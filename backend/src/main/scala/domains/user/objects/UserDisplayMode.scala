@@ -3,15 +3,18 @@ package domains.user.objects
 import io.circe.{Decoder, Encoder}
 
 
+/** 用户名显示偏好，控制前端展示展示名、用户名或二者组合。 */
 enum UserDisplayMode:
   case DisplayName
   case Username
   case DisplayNameWithUsername
 
+/** 提供显示模式的 JSON 编解码和输入解析。 */
 object UserDisplayMode:
   given Encoder[UserDisplayMode] = Encoder.encodeString.contramap(encode)
   given Decoder[UserDisplayMode] = Decoder.decodeString.emap(parse)
 
+  /** 解析传输层显示模式字符串，非法值返回业务校验错误。 */
   def parse(value: String): Either[String, UserDisplayMode] =
     value.trim match
       case "display_name" => Right(UserDisplayMode.DisplayName)

@@ -13,11 +13,13 @@ import shared.api.ApiPath
 
 import java.sql.Connection
 
+/** 内部题目访问评估 API；聚合题目策略、用户组和所属题单可见性，供其他域做权限判断。 */
 object EvaluateProblemAccess extends InternalOnlyAuthenticatedApi[ProblemSlug, ProblemAccessEvaluationResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/problems/evaluate-access")
 
+  /** 返回题目详情及 canView/canManage；题目不存在时不抛错，而是返回空 problem 和 false 权限。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, slug: ProblemSlug): IO[ProblemAccessEvaluationResponse] =
     ProblemQueryTable.findBySlug(connection, slug).flatMap {
       case None =>

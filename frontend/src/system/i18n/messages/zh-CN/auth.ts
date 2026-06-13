@@ -1,3 +1,6 @@
+/**
+ * 简体中文认证消息，覆盖登录、注册、会话和表单校验反馈文案。
+ */
 export const zhCnAuthMessages: Record<string, string> = {
   'auth.login.pageTitle': '气温在线评测 - 登录',
   'auth.login.heroTitle': '气温在线评测',

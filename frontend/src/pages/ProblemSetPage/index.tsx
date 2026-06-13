@@ -21,6 +21,9 @@ import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCo
 
 const problemSetsPerPage = 10
 
+/**
+ * 题单列表页，负责会话守卫、分页查询、创建入口和题单列表展示。
+ */
 export function ProblemSetPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.pageTitle'))

@@ -7,6 +7,9 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 比赛榜单查询状态，保存当前页响应、加载标记和错误消息。
+ */
 type ContestRanklistPageState = {
   items: ContestRanklistItem[]
   page: number
@@ -16,6 +19,9 @@ type ContestRanklistPageState = {
   errorMessage: string
 }
 
+/**
+ * 比赛榜单 reducer 动作，覆盖加载开始、成功和失败。
+ */
 type ContestRanklistPageAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; items: ContestRanklistItem[]; page: number; pageSize: number; totalItems: number }
@@ -30,6 +36,9 @@ const initialState: ContestRanklistPageState = {
   errorMessage: '',
 }
 
+/**
+ * 比赛榜单 reducer；纯函数维护列表加载状态。
+ */
 function reducer(state: ContestRanklistPageState, action: ContestRanklistPageAction): ContestRanklistPageState {
   switch (action.type) {
     case 'load_started':
@@ -41,6 +50,9 @@ function reducer(state: ContestRanklistPageState, action: ContestRanklistPageAct
   }
 }
 
+/**
+ * 比赛榜单模型 hook；按比赛 slug 和分页请求加载榜单页数据。
+ */
 export function useContestRanklistPageModel(contestSlug: ContestSlug, pageRequest: PageRequest) {
   const { t } = useI18n()
   const page = pageRequest.page

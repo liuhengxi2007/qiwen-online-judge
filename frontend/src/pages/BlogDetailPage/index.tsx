@@ -21,6 +21,10 @@ import { BlogEditForm } from './components/BlogEditForm'
 import { BlogMetaVoteBar } from './components/BlogMetaVoteBar'
 import { BlogOwnerActions } from './components/BlogOwnerActions'
 
+/**
+ * 博客详情页，负责登录保护、博客 id 解析、详情加载以及 hash 锚点滚动。
+ * 作者可在本页编辑、删除或提交到题目，普通读者只看到正文、投票和评论入口。
+ */
 export function BlogDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.detail.pageTitle'))

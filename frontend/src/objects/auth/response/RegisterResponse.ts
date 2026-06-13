@@ -4,6 +4,7 @@ import type { EmailAddress } from '@/objects/auth/EmailAddress'
 import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 import type { UserPreferences } from '@/objects/user/UserPreferences'
 
+/** 注册成功响应；返回新建账号的会话资料和后端提示消息。 */
 export type RegisterResponse = {
   displayName: DisplayName
   username: Username

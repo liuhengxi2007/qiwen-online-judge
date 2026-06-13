@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 获取提交详情的认证 API；按题目策略、本人身份和管理权限决定是否可见源码详情。 */
 final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
   override val method: Method = Method.GET
@@ -24,10 +25,12 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SubmissionDetail] = summon[Encoder[SubmissionDetail]]
 
+  /** 从路径解析提交 public id。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionId] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("submissionId").flatMap(SubmissionId.parse))
 
+  /** 查询提交并校验详情可见性；无权、题目不可见或提交不存在都返回提交不存在。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SubmissionDetail] =
     SubmissionQueryTable.findById(connection, submissionId).flatMap {
       case None =>

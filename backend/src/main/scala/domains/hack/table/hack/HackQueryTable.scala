@@ -12,8 +12,10 @@ import shared.objects.PageResponse
 import java.sql.{Connection, PreparedStatement, ResultSet}
 import java.util.UUID
 
+/** hack_attempts 表查询入口；封装 hack 详情和列表的可见性过滤。 */
 object HackQueryTable:
 
+  // FIXME-CN: hack 可见性只覆盖公开题目 detail 级别，未复用提交详情的 viewer grant、用户组或可见题集边界，可能和提交详情权限不一致。
   private val visibilityPredicate: String =
     """
       |(
@@ -72,6 +74,7 @@ object HackQueryTable:
       |  and $visibilityPredicate
       |""".stripMargin
 
+  /** 按公开 id 查询当前用户可见的 hack 详情。 */
   def findVisibleById(connection: Connection, actor: AuthenticatedUser, hackId: HackId): IO[Option[HackDetail]] =
     IO.blocking {
       val statement = connection.prepareStatement(findVisibleByIdSQL)
@@ -100,6 +103,7 @@ object HackQueryTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 分页列出当前用户可见 hack 摘要；页码和页大小在表层归一化。 */
   def listVisible(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[HackListResponse] =
     val normalizedPage = math.max(1, page)
     val normalizedPageSize = math.max(1, math.min(100, pageSize))

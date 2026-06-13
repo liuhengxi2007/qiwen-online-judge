@@ -8,6 +8,7 @@ import domains.auth.objects.SessionToken
 import java.sql.{Connection, Timestamp}
 import java.time.Duration
 
+/** auth_sessions 表结构迁移，负责会话生命周期字段和索引的初始化。 */
 object SessionTableSchema:
 
   val initTableSql: String =
@@ -133,6 +134,7 @@ object SessionTableSchema:
       finally selectStatement.close()
     }
 
+  /** 建表、补齐生命周期字段、回填旧数据并建立必要索引。 */
   def initialize(connection: Connection, sessionTtl: Duration): IO[Unit] =
     for
       _ <- IO.blocking {

@@ -12,8 +12,10 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, SQLException}
 
+/** auth_accounts 表访问层，负责账号凭据、权限和种子管理员的持久化操作。 */
 object AuthAccountTable:
 
+  /** 删除账号的表层结果，区分不存在、删除成功和外键资源占用。 */
   enum DeleteAccountTableResult:
     case NotFound
     case Deleted
@@ -43,6 +45,7 @@ object AuthAccountTable:
       |where lower(username) = lower(?)
       |""".stripMargin
 
+  /** 插入内置 admin 账号并确保其拥有全部管理权限；重复执行保持幂等。 */
   private def seedAdmin(connection: java.sql.Connection, passwordHash: PasswordHash): IO[Unit] =
     for
       _ <- IO.blocking {
@@ -67,6 +70,7 @@ object AuthAccountTable:
       _ <- logger.info(s"Ensured seeded auth user exists, username=${seedAdminUsername.value}")
     yield ()
 
+  /** 初始化账号表结构并确保内置 admin 账号存在且拥有全部管理权限。 */
   def initialize(connection: Connection, seedAdminPasswordHash: PasswordHash): IO[Unit] =
     for
       _ <- AuthAccountTableSchema.initializeSchema(connection)
@@ -80,6 +84,7 @@ object AuthAccountTable:
       |where lower(username) = lower(?)
       |""".stripMargin
 
+  /** 按用户名大小写不敏感查找完整账号记录，包含密码哈希和权限。 */
   def findAccountByUsername(connection: Connection, username: Username): IO[Option[AuthAccount]] =
     IO.blocking {
       val statement = connection.prepareStatement(findAuthAccountByUsernameSQL)
@@ -100,6 +105,7 @@ object AuthAccountTable:
       |where lower(username) = lower(?)
       |""".stripMargin
 
+  /** 按用户名读取运行时鉴权所需的最小用户身份和权限。 */
   def findAuthenticatedUserByUsername(connection: Connection, username: Username): IO[Option[AuthenticatedUser]] =
     IO.blocking {
       val statement = connection.prepareStatement(findAuthenticatedUserByUsernameSQL)
@@ -120,6 +126,7 @@ object AuthAccountTable:
       |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
+  /** 插入普通账号，默认不授予管理权限，返回数据库生成后的账号记录。 */
   def insertAccount(
     connection: Connection,
     username: Username,
@@ -152,6 +159,7 @@ object AuthAccountTable:
       |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
+  /** 更新账号邮箱和密码哈希，目标不存在时返回 None。 */
   def updateAccount(
     connection: Connection,
     username: Username,
@@ -181,6 +189,7 @@ object AuthAccountTable:
       |returning username, email, password_hash, site_manager, problem_manager, contest_manager
       |""".stripMargin
 
+  /** 更新账号权限并进行权限归一化，目标不存在时返回 None。 */
   def updatePermissions(
     connection: Connection,
     actor: SiteManagerUser,
@@ -190,6 +199,7 @@ object AuthAccountTable:
     contestManager: Boolean
   ): IO[Option[AuthAccount]] =
     IO.blocking {
+      /** 注意：actor 仅用于类型层表达调用方已通过 SiteManagerApi 校验，表层更新本身不读取 actor 字段。 */
       val _ = actor
       val permissions = AuthPermissionFlags.normalize(siteManager, problemManager, contestManager)
       val statement = connection.prepareStatement(updatePermissionsSQL)
@@ -213,6 +223,7 @@ object AuthAccountTable:
       |where username = ?
       |""".stripMargin
 
+  /** 删除账号；外键约束失败时返回 HasOwnedResources 而不是抛出 SQLException。 */
   def delete(connection: Connection, username: Username): IO[DeleteAccountTableResult] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteSQL)

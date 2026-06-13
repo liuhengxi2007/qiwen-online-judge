@@ -13,6 +13,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 标记单条通知已读的认证 API，只允许通知收件人操作。 */
 final class MarkNotificationRead(notificationEventHub: NotificationEventHub) extends AuthenticatedApi[NotificationId, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -20,16 +21,19 @@ final class MarkNotificationRead(notificationEventHub: NotificationEventHub) ext
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 从路径解析通知 id，非法 UUID 转为 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[NotificationId] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("notificationId").flatMap(NotificationId.parse))
 
+  /** 按通知 id 和当前收件人更新未读状态；不存在、不属于当前用户或已读时返回 404。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
     notificationId: NotificationId
   ): IO[SuccessResponse] =
     for
+      /** 注意：不属于当前用户的通知返回 404，用于隐藏其他用户通知是否存在；已读通知当前也按未找到处理。 */
       marked <- NotificationTable.markRead(connection, notificationId, actor.username)
       _ <- HttpApiError.ensure(marked, HttpApiError.notFound(ApiMessages.notificationNotFound))
       _ <- notificationEventHub.publish(actor.username, NotificationStreamEvent.NotificationsChanged)

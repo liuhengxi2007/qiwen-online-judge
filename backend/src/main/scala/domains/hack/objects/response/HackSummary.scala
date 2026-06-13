@@ -10,6 +10,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.time.Instant
 import scala.util.Try
 
+/** hack 列表摘要；不包含输入和程序输出等详情字段。 */
 final case class HackSummary(
   id: HackId,
   problemId: ProblemId,
@@ -27,6 +28,7 @@ final case class HackSummary(
   finishedAt: Option[Instant]
 )
 
+/** HackSummary 的 JSON 编解码器，Instant 以 ISO-8601 字符串表示。 */
 object HackSummary:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>

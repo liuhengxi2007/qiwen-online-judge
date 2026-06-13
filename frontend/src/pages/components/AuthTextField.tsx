@@ -4,6 +4,9 @@ import { cn } from '@/components/ui/class-names'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+/**
+ * 认证表单文本字段属性，包含标签、图标、值和输入变更回调。
+ */
 type AuthTextFieldProps = {
   id: string
   label: string
@@ -17,6 +20,9 @@ type AuthTextFieldProps = {
   iconClassName?: string
 }
 
+/**
+ * 认证页带图标文本输入组件，统一标签、图标定位和输入值回调。
+ */
 export function AuthTextField({
   id,
   label,

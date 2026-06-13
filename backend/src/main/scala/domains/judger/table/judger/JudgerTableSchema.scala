@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** judgers 表结构；保存 worker 租约、主机信息和支持语言集合。 */
 object JudgerTableSchema:
 
   val initTableSql: String =
@@ -21,6 +22,7 @@ object JudgerTableSchema:
       |);
       |""".stripMargin
 
+  /** 创建 judger 注册表。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

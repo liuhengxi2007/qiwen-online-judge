@@ -8,12 +8,22 @@ import { formatOptionalBinarySizeBytes } from '@/system/format/binary-size'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { useProblemDataPageModel } from '../hooks/useProblemDataPageModel'
 
+/**
+ * 测试数据页模型类型别名，限定文件列表卡片只消费页面模型的公开字段和动作。
+ */
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
+/**
+ * 测试数据文件列表卡片属性，传入聚合后的页面模型。
+ */
 type ProblemDataFilesCardProps = {
   model: ProblemDataPageModel
 }
 
+/**
+ * 测试数据文件列表卡片，展示目录树、文件大小、下载链接以及删除/清空确认入口。
+ * 清空和删除操作通过模型回调触发 API，组件本身只负责展示 loading/禁用状态。
+ */
 export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
   const { t } = useI18n()
   const hasFileNodes = model.dataTree.some((node) => node.kind === 'file')

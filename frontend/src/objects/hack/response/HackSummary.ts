@@ -6,6 +6,7 @@ import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 
+/** Hack 摘要响应；用于列表展示目标、作者、状态和分数变化。 */
 export type HackSummary = {
   id: HackId
   problemId: ProblemId

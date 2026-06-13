@@ -7,6 +7,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
 
+/** 比赛榜单逐题结果，submissionId 和 canViewDetail 控制前端能否进入提交详情。 */
 final case class ContestRanklistProblemResult(
   problem: ContestProblemSummary,
   score: Option[ContestScore],
@@ -16,6 +17,7 @@ final case class ContestRanklistProblemResult(
   canViewDetail: Boolean
 )
 
+/** 提供比赛榜单逐题结果 JSON codec。 */
 object ContestRanklistProblemResult:
   given Encoder[ContestRanklistProblemResult] = deriveEncoder[ContestRanklistProblemResult]
   given Decoder[ContestRanklistProblemResult] = deriveDecoder[ContestRanklistProblemResult]

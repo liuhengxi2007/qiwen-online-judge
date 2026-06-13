@@ -23,6 +23,9 @@ import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { usernameValue } from '@/objects/user/Username'
 
+/**
+ * 题单详情页入口，校验题单 slug 后渲染详情内容。
+ */
 export function ProblemSetDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.detail.pageTitle'))
@@ -45,6 +48,9 @@ export function ProblemSetDetailPage() {
   return <ProblemSetDetailPageContent canManageProblems={user.problemManager} problemSetSlug={slugResult.value} />
 }
 
+/**
+ * 题单详情页主体，组合会话守卫、详情查询、编辑器和题目管理卡片。
+ */
 function ProblemSetDetailPageContent({
   canManageProblems,
   problemSetSlug,

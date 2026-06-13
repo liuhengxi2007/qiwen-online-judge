@@ -13,7 +13,9 @@ import judger.objects.{SandboxLimits, SandboxRunSpec, SandboxStdin, SandboxStdou
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
+/** hack 尝试执行器，负责校验输入、生成可选答案、运行目标提交并重算结果。 */
 object HackAttemptRunner:
+  /** 执行完整 hack 流程；失败会转成 ReportHackResultRequest，而不是向上抛出业务异常。 */
   def hack(
     task: HackTask,
     config: AppConfig,
@@ -38,6 +40,7 @@ object HackAttemptRunner:
       hackFailed(task, Option(error.getMessage).getOrElse("Hack execution failed."))
     }
 
+  /** 执行单个已准备好的 hack 任务，按 validator、答案生成、目标运行的顺序推进。 */
   private def executeHack(
     hackTask: HackTask,
     config: AppConfig,
@@ -62,6 +65,7 @@ object HackAttemptRunner:
             case Some(validator) =>
               runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
                 case Some(message) =>
+                  // 注意：hack status 字符串与 backend HackStatus 协议值手工同步，当前 judger 只按协议字面值回报。
                   IO.pure(
                     ReportHackResultRequest(
                       status = "invalid",
@@ -98,6 +102,7 @@ object HackAttemptRunner:
                   }
               }
 
+  /** 运行子任务 validator；返回 Some(message) 表示 hack 输入无效。 */
   private def runValidator(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
@@ -112,6 +117,7 @@ object HackAttemptRunner:
       case Some(command) =>
         val limits = validator.limits
           .map(limits => SandboxLimits.runtime(limits.timeMs.value.toLong, limits.memoryMb.value))
+          // 注意：validator 没有显式 limits 时使用保守默认值，兼容旧题目配置。
           .getOrElse(SandboxLimits.runtime(timeLimitMs = 5000L, memoryLimitMb = 512))
         sandbox
           .run(
@@ -129,6 +135,7 @@ object HackAttemptRunner:
             else Some(renderDetail("Validator rejected the hack input.", result))
           }
 
+  /** 根据子任务 hack 配置决定是否运行标准程序生成答案。 */
   private def prepareHackAnswer(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
@@ -151,6 +158,7 @@ object HackAttemptRunner:
               runAnswerGenerator(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes, standard, template).map(_.map(Some(_)))
         case other => IO.pure(Left(s"Unsupported hack answer generation mode: $other."))
 
+  /** 编译并运行答案生成器；输出 stdout 字节作为 hack 答案。 */
   private def runAnswerGenerator(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
@@ -193,6 +201,7 @@ object HackAttemptRunner:
             }
         }
 
+  /** 用 hack 输入和可选答案运行目标提交，并返回新增 hack 测试点结果。 */
   private def runTargetOnHack(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
@@ -205,7 +214,9 @@ object HackAttemptRunner:
     tools: JudgeToolPreparation.PreparedTools
   ): IO[JudgeTestcaseResult] =
     templateHackTestcase(subtask) match
-      case None => IO.pure(JudgeTestcaseResult(1, Some("hack"), JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(JudgeFailureReason.SystemError), None, None))
+      case None =>
+        // FIXME-CN: 缺少模板测试点时硬编码 index=1/label=hack，可能与原子任务结果树索引冲突或隐藏配置构建错误。
+        IO.pure(JudgeTestcaseResult(1, Some("hack"), JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(JudgeFailureReason.SystemError), None, None))
       case Some(testcase) =>
         subtask.mode.`type` match
           case "traditional" =>
@@ -214,8 +225,10 @@ object HackAttemptRunner:
           case "interactive" =>
             runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answerBytes, workingDirectory, sandbox, programs, tools)
           case _ =>
+            // FIXME-CN: 未知 mode.type 在 hack 路径同样折叠为 SystemError，无法暴露协议扩展或配置拼写错误。
             IO.pure(testcaseSystemError(testcase, JudgeFailureReason.SystemError))
 
+  /** 在交互题子任务上运行 hack 输入，必要时编译本次 hack 提供的策略 provider。 */
   private def runInteractiveHackTestcase(
     hackTask: HackTask,
     config: AppConfig,
@@ -256,6 +269,7 @@ object HackAttemptRunner:
                 )
             }
 
+  /** 将 hack 请求携带的策略 provider 源码编译为本次交互运行的可选辅助工具。 */
   private def prepareHackStrategyProvider(
     hackTask: HackTask,
     testcase: JudgeTaskTestcase,
@@ -280,12 +294,15 @@ object HackAttemptRunner:
               case _ => Left(())
             }
 
+  /** 从原子任务中复制一个非 hack 测试点作为 hack 运行模板，并分配新的测试点索引。 */
   private def templateHackTestcase(subtask: JudgeTaskSubtask): Option[JudgeTaskTestcase] =
+    // FIXME-CN: 模板选择第一个非 Hack 测试点，若子任务内不同测试点资源/checker/策略不同，hack 运行语义可能与被攻击点不一致。
     subtask.testcases.find(_.testcaseType != JudgeTestcaseType.Hack).orElse(subtask.testcases.headOption).map { template =>
       val nextIndex = subtask.testcases.map(_.index).maxOption.getOrElse(0) + 1
       template.copy(index = nextIndex, label = Some("hack"), testcaseType = JudgeTestcaseType.Hack, scoreRatio = BigDecimal(1), answer = None)
     }
 
+  /** 构造 failed 状态的 hack 回报，保留旧分数并填充目标侧错误消息。 */
   private def hackFailed(
     task: HackTask,
     targetMessage: String,
@@ -302,9 +319,12 @@ object HackAttemptRunner:
       targetMessage = Some(targetMessage)
     )
 
+  /** 从旧结果中读取目标子任务最差分，缺失时按 0 处理。 */
   private def targetSubtaskWorstScore(task: HackTask): BigDecimal =
+    // FIXME-CN: 旧结果缺少目标子任务时默认 oldScore=0，会把结果树不完整误判为 hack 无收益。
     task.oldResult.subtasks.find(_.index == task.subtaskIndex).map(_.worstResult.score).getOrElse(BigDecimal(0))
 
+  /** 把新增 hack 测试点追加到旧子任务结果后重新聚合。 */
   private def appendHackTestcaseResult(
     subtask: JudgeTaskSubtask,
     oldSubtasks: List[JudgeSubtaskResult],
@@ -313,6 +333,7 @@ object HackAttemptRunner:
     val existingTestcases = oldSubtasks.find(_.index == subtask.index).map(_.testcases).getOrElse(Nil)
     JudgeResultAggregator.aggregateSubtask(subtask, existingTestcases :+ testcaseResult)
 
+  /** 用新子任务结果替换旧结果树中的同 index 子任务，缺失时追加。 */
   private def replaceSubtaskResult(subtasks: List[JudgeSubtaskResult], result: JudgeSubtaskResult): List[JudgeSubtaskResult] =
     if subtasks.exists(_.index == result.index) then
       subtasks.map(current => if current.index == result.index then result else current)

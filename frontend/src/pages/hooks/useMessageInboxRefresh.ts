@@ -8,6 +8,9 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 
 const fallbackInboxLoadError = 'Unable to load messages.'
 
+/**
+ * 返回刷新私信收件箱的回调；调用时发起列表请求并把结果或错误写入全局 store。
+ */
 export function useMessageInboxRefresh() {
   const beginInboxLoad = useMessageStore((state) => state.beginInboxLoad)
   const replaceInbox = useMessageStore((state) => state.replaceInbox)

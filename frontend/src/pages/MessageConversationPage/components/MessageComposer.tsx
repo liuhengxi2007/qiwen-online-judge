@@ -10,6 +10,9 @@ import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信发送框属性，包含当前草稿、发送状态、屏蔽管理快捷入口状态和键盘提交回调。
+ */
 type MessageComposerProps = {
   conversation: MessageConversationSummary | null
   draft: string
@@ -22,6 +25,9 @@ type MessageComposerProps = {
   handleDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void
 }
 
+/**
+ * 私信发送框，展示正文输入、发送错误、屏蔽管理快捷入口和发送按钮。
+ */
 export function MessageComposer({
   conversation,
   draft,

@@ -17,8 +17,10 @@ import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
+/** 汇总题单 domain 的 http4s 路由，统一注入数据库会话和登录会话解析。 */
 object ProblemSetRouter:
 
+  /** 构造题单相关 HTTP 路由，包含公开列表、管理入口和内部 slug 解析入口。 */
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
     val apiObjectContext = ApiObjectContext(databaseSession, SessionResolver(sessionStore))

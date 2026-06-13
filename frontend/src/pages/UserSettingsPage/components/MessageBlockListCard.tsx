@@ -10,6 +10,9 @@ import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 消息屏蔽列表卡片属性，包含列表状态、草稿和添加/移除回调。
+ */
 type MessageBlockListCardProps = {
   blockErrorMessage: string
   blockedUsers: MessageBlockEntry[]
@@ -21,6 +24,9 @@ type MessageBlockListCardProps = {
   removeBlock: (username: Username) => Promise<void>
 }
 
+/**
+ * 消息屏蔽列表卡片，展示被屏蔽用户并提供添加和移除操作。
+ */
 export function MessageBlockListCard({
   blockErrorMessage,
   blockedUsers,

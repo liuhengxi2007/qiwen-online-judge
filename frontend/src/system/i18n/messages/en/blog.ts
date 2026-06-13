@@ -1,3 +1,6 @@
+/**
+ * 英文博客消息，覆盖博客列表、详情、编辑、评论和题解关联文案。
+ */
 export const enBlogMessages: Record<string, string> = {
   'blog.pageTitle': 'Qiwen Online Judge - Blogs',
   'blog.heading': 'Blogs',

@@ -7,6 +7,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { RanklistPagination } from './RanklistPagination'
 
+/**
+ * AC 数榜卡片属性，包含当前页数据、加载/错误状态和三榜单页码上下文。
+ */
 type AcceptedRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
@@ -18,6 +21,9 @@ type AcceptedRanklistCardProps = {
   totalPages: number
 }
 
+/**
+ * AC 数榜卡片，按通过题目数量展示用户排名并在数据可用时渲染独立分页。
+ */
 export function AcceptedRanklistCard({
   acceptedPage,
   contributionPage,

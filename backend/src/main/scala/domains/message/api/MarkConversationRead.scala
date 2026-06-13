@@ -15,6 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 标记当前用户某个私信会话已读的认证 API，支持整会话或指定消息已读。 */
 final class MarkConversationRead(messageEventHub: MessageEventHub)
     extends AuthenticatedApi[(MessageConversationId, MarkConversationReadRequest), MessageConversationSummary]:
 
@@ -23,12 +24,14 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[MessageConversationSummary] = summon[Encoder[MessageConversationSummary]]
 
+  /** 从路径解析会话 id 并读取已读模式请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(MessageConversationId, MarkConversationReadRequest)] =
     for
       conversationId <- HttpApiError.fromEitherBadRequest(pathParams.require("conversationId").flatMap(MessageConversationId.parse))
       body <- request.as[MarkConversationReadRequest]
     yield (conversationId, body)
 
+  /** 校验当前用户属于会话，更新读状态后向对端发送读回执并刷新当前用户收件箱。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -46,6 +49,7 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.directMessageConversationNotFound))
       readUpToMessageId <- request.mode match
         case MarkConversationReadMode.Message =>
+          /** FIXME-CN: 这里依赖 MarkConversationReadRequest 的 Decoder 保证 messageId 非空；若后续内部构造绕过 Decoder，request.messageId.get 会抛异常。 */
           MessageReadTable.markMessageRead(connection, conversationId, actor.username, request.messageId.get).map {
             case true => request.messageId
             case false => None

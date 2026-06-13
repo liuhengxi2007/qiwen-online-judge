@@ -6,13 +6,22 @@ import type { SubmissionDetail } from '@/objects/submission/response/SubmissionD
 import { submissionLanguageLabel } from '@/pages/objects/SubmissionDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 提交详情中多文件程序的单个程序条目类型。
+ */
 type SubmissionDetailProgram = SubmissionDetail['programs'][string]
 
+/**
+ * 源码卡片属性，包含兼容旧单文件 sourceCode 和新多程序 programs。
+ */
 type SubmissionSourceCodeCardProps = {
   sourceCode: SubmissionSourceCode
   programs: Record<string, SubmissionDetailProgram>
 }
 
+/**
+ * 提交源码卡片，按程序角色分 tab 展示源码；无多程序数据时回退到 main/sourceCode。
+ */
 export function SubmissionSourceCodeCard({ programs, sourceCode }: SubmissionSourceCodeCardProps) {
   const { t } = useI18n()
   const entries = Object.entries(programs) as Array<[string, SubmissionDetailProgram]>

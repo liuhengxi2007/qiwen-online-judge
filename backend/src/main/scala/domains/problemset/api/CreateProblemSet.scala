@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 创建题单的认证 API，仅题目管理员可调用，并校验 slug 与访问策略。 */
 object CreateProblemSet extends AuthenticatedApi[CreateProblemSetRequest, ProblemSetDetail]:
 
   override val method: Method = Method.POST
@@ -24,10 +25,12 @@ object CreateProblemSet extends AuthenticatedApi[CreateProblemSetRequest, Proble
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
 
+  /** 读取创建题单请求体，路径参数不参与该入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateProblemSetRequest] =
     val _ = pathParams
     request.as[CreateProblemSetRequest]
 
+  /** 规范化 slug/标题/描述，拒绝题单 slug 重复或与题目 slug 冲突后写入题单。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

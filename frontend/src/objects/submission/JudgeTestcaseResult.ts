@@ -1,6 +1,7 @@
 import type { JudgeFailureReason } from '@/objects/submission/JudgeFailureReason'
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 
+/** 单个测试点判题结果；message 可能包含 checker 或系统返回的说明。 */
 export type JudgeTestcaseResult = {
   index: number
   label: string | null

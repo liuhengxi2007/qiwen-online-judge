@@ -9,6 +9,7 @@ import domains.submission.table.submission.SubmissionTableSupport.*
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** submissions 表判题队列写入入口；负责 claim、手动重判、hack 重判和状态更新。 */
 object SubmissionJudgeTable:
 
   val OrdinaryPriority: Int = 0
@@ -48,6 +49,7 @@ object SubmissionJudgeTable:
       |returning s.public_id, s.problem_id, p.slug as problem_slug, s.program_manifest::text as program_manifest
       |""".stripMargin
 
+  /** 原子领取下一个 queued 提交；使用 skip locked 支持多个 worker 并发 claim。 */
   def claimNextForLanguages(
     connection: Connection,
     languages: List[SubmissionLanguage],
@@ -93,7 +95,9 @@ object SubmissionJudgeTable:
       |where public_id = ?
       |""".stripMargin
 
+  /** 将单个终态提交重新入队为普通优先级；调用方负责先检查权限和当前状态。 */
   def queueManualRejudge(connection: Connection, submissionId: SubmissionId): IO[Unit] =
+    // FIXME-CN: 这里的 UPDATE 只按 public_id 命中，终态检查不在 SQL 内；手动重判与 worker 状态回写并发时可能互相覆盖。
     IO.blocking {
       val statement = connection.prepareStatement(queueManualRejudgeSQL)
       try
@@ -118,6 +122,7 @@ object SubmissionJudgeTable:
       |  and status in ('completed', 'failed')
       |""".stripMargin
 
+  /** 将题目下已终态提交低优先级重新入队；用于成功 hack 后批量重判。 */
   def queueHackRejudgeForProblem(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(queueHackRejudgeForProblemSQL)
@@ -146,6 +151,7 @@ object SubmissionJudgeTable:
       |  and s.hack_revision < p.hack_revision
       |""".stripMargin
 
+  /** 若提交的 hack_revision 落后于题目则低优先级重新入队，返回是否更新。 */
   def requeueIfHackRevisionStale(connection: Connection, submissionId: SubmissionId): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(requeueIfHackRevisionStaleSQL)
@@ -167,11 +173,13 @@ object SubmissionJudgeTable:
       |where public_id = ?
       |""".stripMargin
 
+  /** 写入提交判题状态快照；生命周期合法性由 SubmissionJudgeRules 在调用前校验。 */
   def updateJudgeState(
     connection: Connection,
     submissionId: SubmissionId,
     judgeState: SubmissionJudgeState
   ): IO[Unit] =
+    // FIXME-CN: UPDATE 只按 submission id 命中，没有校验当前状态或 started_at；旧 worker 可能覆盖已重排或已回收的提交状态。
     IO.blocking {
       val statement = connection.prepareStatement(updateJudgeStateSQL)
       try

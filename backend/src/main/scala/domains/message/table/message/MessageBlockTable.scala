@@ -7,6 +7,7 @@ import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
 
+/** 私信屏蔽表访问对象，负责检查、列出、写入和移除屏蔽关系。 */
 object MessageBlockTable:
 
   private val isBlockedSQL: String =
@@ -17,6 +18,7 @@ object MessageBlockTable:
       |  and lower(blocked_username) = lower(?)
       |""".stripMargin
 
+  /** 判断 owner 是否屏蔽了 blocked，用于发送私信前的权限边界。 */
   def isBlocked(connection: Connection, ownerUsername: Username, blockedUsername: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(isBlockedSQL)
@@ -40,6 +42,7 @@ object MessageBlockTable:
       |order by mb.created_at desc, lower(mb.blocked_username) asc
       |""".stripMargin
 
+  /** 读取当前用户屏蔽名单，按屏蔽时间倒序返回。 */
   def listBlocks(connection: Connection, ownerUsername: Username): IO[List[MessageBlockEntry]] =
     IO.blocking {
       val statement = connection.prepareStatement(listBlocksSQL)
@@ -70,6 +73,7 @@ object MessageBlockTable:
       |  and lower(mb.blocked_username) = lower(?)
       |""".stripMargin
 
+  /** 创建或刷新屏蔽关系，并重读被屏蔽用户身份用于响应。 */
   def upsertBlock(
     connection: Connection,
     ownerUsername: Username,
@@ -94,6 +98,7 @@ object MessageBlockTable:
           statement.setString(2, blockedUsername.value)
           val resultSet = statement.executeQuery()
           try
+            /** 注意：屏蔽关系刚刚 upsert；重读失败表示事务内数据不变量被破坏。 */
             if resultSet.next() then readBlockEntry(resultSet)
             else throw IllegalStateException("Inserted block entry is missing.")
           finally resultSet.close()
@@ -108,6 +113,7 @@ object MessageBlockTable:
       |  and lower(blocked_username) = lower(?)
       |""".stripMargin
 
+  /** 删除屏蔽关系；没有匹配记录时保持幂等成功。 */
   def removeBlock(connection: Connection, ownerUsername: Username, blockedUsername: Username): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(removeBlockSQL)

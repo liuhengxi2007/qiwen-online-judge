@@ -5,8 +5,10 @@ import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnPr
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 更新用户资料的请求联合；支持用户自助和管理员代管两种请求来源。 */
 type UpdateUserProfileRequest = UpdateOwnProfileRequest | UpdateManagedUserProfileRequest
 
+/** 更新指定用户资料；输入用户名和资料请求，输出新的会话设置快照。 */
 export class UpdateUserProfile implements APIWithSessionMessage<SessionResponse> {
   declare readonly responseType?: SessionResponse
   readonly method = 'POST'

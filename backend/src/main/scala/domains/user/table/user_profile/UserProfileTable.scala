@@ -13,8 +13,10 @@ import domains.user.table.user_profile.UserProfileTableSupport.*
 
 import java.sql.{Connection, Timestamp}
 
+/** user_profiles 表访问层，负责用户资料、偏好和头像元数据的持久化。 */
 object UserProfileTable:
 
+  /** 初始化用户资料表结构并从旧账号表回填资料字段。 */
   def initialize(connection: Connection): IO[Unit] =
     UserProfileTableSchema.initializeSchema(connection)
 
@@ -26,6 +28,7 @@ object UserProfileTable:
       |where lower(username) = lower(?)
       |""".stripMargin
 
+  /** 按用户名大小写不敏感读取资料设置，包含可选头像 URL。 */
   def findSettingsByUsername(connection: Connection, username: Username): IO[Option[UserProfileSettings]] =
     IO.blocking {
       val statement = connection.prepareStatement(findSettingsByUsernameSQL)
@@ -49,6 +52,7 @@ object UserProfileTable:
       |where lower(up.username) = lower(?)
       |""".stripMargin
 
+  /** 读取设置页所需的资料、邮箱和权限组合，用户不存在时返回 None。 */
   def findUserSettingsByUsername(connection: Connection, username: Username): IO[Option[UserSettingsResponse]] =
     IO.blocking {
       val statement = connection.prepareStatement(findUserSettingsByUsernameSQL)
@@ -70,6 +74,7 @@ object UserProfileTable:
       |          avatar_object_key, avatar_content_type, avatar_updated_at
       |""".stripMargin
 
+  /** 插入用户资料初始记录，返回插入后的资料设置。 */
   def insertProfile(
     connection: Connection,
     username: Username,
@@ -106,6 +111,7 @@ object UserProfileTable:
       |          avatar_object_key, avatar_content_type, avatar_updated_at
       |""".stripMargin
 
+  /** 更新用户资料和偏好字段，目标用户不存在时返回 None。 */
   def updateSettings(
     connection: Connection,
     username: Username,
@@ -140,6 +146,7 @@ object UserProfileTable:
       |where lower(username) = lower(?)
       |""".stripMargin
 
+  /** 读取头像元数据；用户不存在或头像字段不完整时返回 None。 */
   def findAvatarByUsername(connection: Connection, username: Username): IO[Option[UserAvatarRecord]] =
     IO.blocking {
       val statement = connection.prepareStatement(findAvatarByUsernameSQL)
@@ -161,6 +168,7 @@ object UserProfileTable:
       |returning username, avatar_object_key, avatar_content_type, avatar_updated_at
       |""".stripMargin
 
+  /** 更新头像对象 key、内容类型和更新时间，目标用户不存在时返回 None。 */
   def updateAvatar(
     connection: Connection,
     username: Username,
@@ -191,6 +199,7 @@ object UserProfileTable:
       |returning username
       |""".stripMargin
 
+  /** 清空用户头像元数据，返回是否匹配到用户记录。 */
   def clearAvatar(connection: Connection, username: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(clearAvatarSQL)

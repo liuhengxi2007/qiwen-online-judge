@@ -11,6 +11,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 当前会话 API，返回登录用户的账号、资料和权限状态。 */
 object GetSession extends AuthenticatedApi[Unit, SessionResponse]:
 
   override val method: Method = Method.GET
@@ -18,11 +19,13 @@ object GetSession extends AuthenticatedApi[Unit, SessionResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SessionResponse] = summon[Encoder[SessionResponse]]
 
+  /** 当前会话接口没有请求输入，认证由 AuthenticatedApi 模板完成。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
     val _ = request
     val _ = pathParams
     IO.unit
 
+  /** 重新读取账号和资料后组装会话响应，账号缺失视为会话失效。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: Unit): IO[SessionResponse] =
     val _ = input
     for

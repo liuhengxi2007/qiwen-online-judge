@@ -5,11 +5,13 @@ import io.circe.syntax.*
 
 import shared.objects.PageRequest
 
+/** 题目列表请求；包含可选搜索词和分页参数。 */
 final case class ProblemListRequest(
   query: Option[ProblemSearchQuery],
   pageRequest: PageRequest
 )
 
+/** ProblemListRequest 的扁平 JSON 编解码器，page/pageSize 保持顶层字段。 */
 object ProblemListRequest:
   given Encoder[ProblemListRequest] = Encoder.instance(request =>
     Json.obj(

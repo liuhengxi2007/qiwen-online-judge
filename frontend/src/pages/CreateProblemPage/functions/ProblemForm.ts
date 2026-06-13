@@ -6,6 +6,9 @@ import type { CreateProblemRequest } from '@/objects/problem/request/CreateProbl
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 
+/**
+ * 创建题目表单草稿，包含 slug、标题和访问策略。
+ */
 export type ProblemDraft = {
   slug: string
   title: string
@@ -18,10 +21,16 @@ export type ProblemDraft = {
   otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
+/**
+ * 创建题目草稿校验结果，成功时携带创建请求体。
+ */
 type ProblemDraftValidation =
   | { ok: true; request: CreateProblemRequest }
   | { ok: false; message: string }
 
+/**
+ * 校验创建题目草稿，解析 slug、标题并附带访问策略。
+ */
 export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidation {
   const slugResult = parseProblemSlug(draft.slug)
   if (!slugResult.ok) {

@@ -17,22 +17,26 @@ import shared.api.{ApiMessages, HttpApiError}
 import java.sql.Connection
 import java.util.UUID
 
+/** hack API 共享业务逻辑；负责目标提交加载、任务重建、可 hack 条件和输入文本校验。 */
 object HackApiSupport:
 
   val MaxHackInputChars: Int = 10 * 1024 * 1024
   val MaxStrategyProviderChars: Int = 200000
 
+  /** 已校验可 hack 的目标上下文；包含提交详情、构建出的任务和目标子任务。 */
   final case class TargetContext(
     submission: domains.submission.objects.response.SubmissionDetail,
     task: JudgeTask,
     subtask: JudgeTaskSubtask
   )
 
+  /** 目标提交对应的任务上下文；用于可用性列表。 */
   final case class TargetTaskContext(
     submission: domains.submission.objects.response.SubmissionDetail,
     task: JudgeTask
   )
 
+  /** 加载目标提交并校验指定子任务可 hack；失败返回 bad request 或隐藏资源错误。 */
   def loadTargetContext(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -56,6 +60,7 @@ object HackApiSupport:
       )
     yield TargetContext(target.submission, target.task, subtask)
 
+  /** 加载目标提交详情并重建 JudgeTask；要求提交已完成且有 judgeResult。 */
   def loadTargetTask(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -70,6 +75,7 @@ object HackApiSupport:
       task <- buildTask(connection, submission, problemDataStorage)
     yield TargetTaskContext(submission, task)
 
+  /** 从可 hack 上下文生成前端展示的子任务信息。 */
   def subtaskInfo(context: TargetContext): HackSubtaskInfo =
     val targetWorstScore = targetSubtaskWorstScore(context.submission, context.subtask.index)
     HackSubtaskInfo(
@@ -85,6 +91,7 @@ object HackApiSupport:
       requiresStrategyProvider = requiresStrategyProvider(context.subtask)
     )
 
+  /** 计算目标提交每个子任务的 hack 可用性及不可用原因。 */
   def hackAvailability(context: TargetTaskContext): SubmissionHackAvailability =
     SubmissionHackAvailability(
       subtasks = context.task.subtasks.map { subtask =>
@@ -101,15 +108,18 @@ object HackApiSupport:
       }
     )
 
+  /** 从目标提交结果中读取子任务最差分；缺失时按 0 处理以禁止 hack。 */
   def targetSubtaskWorstScore(submission: domains.submission.objects.response.SubmissionDetail, subtaskIndex: Int): BigDecimal =
     submission.judgeResult
       .flatMap(_.subtasks.find(_.index == subtaskIndex))
       .map(_.worstResult.score)
       .getOrElse(BigDecimal(0))
 
+  /** 判断交互式子任务是否需要用户提交策略程序。 */
   def requiresStrategyProvider(subtask: JudgeTaskSubtask): Boolean =
     subtask.mode.`type` == "interactive" && subtask.testcases.exists(_.strategyProvider.nonEmpty)
 
+  /** 规范化 hack 输入换行和行尾空白，确保最终以换行结尾。 */
   def normalizeHackInput(input: String): String =
     val normalizedNewlines = input.replace("\r\n", "\n").replace('\r', '\n')
     if normalizedNewlines.isEmpty then ""
@@ -120,6 +130,7 @@ object HackApiSupport:
         .mkString("\n")
       if strippedLines.endsWith("\n") then strippedLines else s"$strippedLines\n"
 
+  /** 校验 hack 输入和策略源码大小，并在需要策略程序时强制提供。 */
   def validateHackText(input: String, strategyProviderSource: Option[String], requiresStrategyProvider: Boolean): IO[Unit] =
     val normalizedStrategy = strategyProviderSource.filter(_.trim.nonEmpty)
     for
@@ -142,6 +153,7 @@ object HackApiSupport:
     val manifestInput = submission.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
     for
       programManifest <- HttpApiError.fromEitherBadRequest(
+        // 注意：固定 UUID 只用于从提交详情临时重建 JudgeTask，不会作为源码对象 key 写回存储。
         SubmissionProgramManifest.fromPrograms(UUID.fromString("00000000-0000-4000-8000-000000000000"), manifestInput)
       )
       manifest <- GetJudgeProblemDataManifest

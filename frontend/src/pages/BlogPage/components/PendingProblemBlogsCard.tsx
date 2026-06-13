@@ -4,6 +4,9 @@ import { BlogSummaryCard } from './BlogSummaryCard'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 待关联题解卡片属性，包含待处理列表和打开博客的回调。
+ */
 type PendingProblemBlogsCardProps = {
   pendingBlogs: BlogSummary[]
   isLoadingPending: boolean
@@ -13,6 +16,9 @@ type PendingProblemBlogsCardProps = {
   onReject: (blog: BlogSummary) => void
 }
 
+/**
+ * 待关联题解卡片，展示当前用户可继续处理的题解草稿。
+ */
 export function PendingProblemBlogsCard({
   pendingBlogs,
   isLoadingPending,

@@ -1,3 +1,6 @@
+/**
+ * 英文认证消息，覆盖登录、注册、会话和表单校验反馈文案。
+ */
 export const enAuthMessages: Record<string, string> = {
   'auth.login.pageTitle': 'Qiwen Online Judge - Sign In',
   'auth.login.heroTitle': 'Qiwen Online Judge',

@@ -7,8 +7,14 @@ import type { useProblemDataPageModel } from '../hooks/useProblemDataPageModel'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 测试数据页模型类型别名，供头部卡片读取题目标题、slug 和 ready 状态。
+ */
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
+/**
+ * 测试数据头部卡片，展示当前题目身份和测试数据 ready 状态；题目尚未加载时不渲染。
+ */
 export function ProblemDataHeaderCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()

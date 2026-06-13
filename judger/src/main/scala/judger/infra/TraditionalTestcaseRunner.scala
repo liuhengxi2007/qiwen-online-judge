@@ -9,7 +9,9 @@ import judger.objects.{ProcessResult, RuntimeCommand, SandboxLimits, SandboxRunS
 
 import java.nio.file.Path
 
+/** 执行传统题单测试点，并把程序输出交给 checker 评分。 */
 object TraditionalTestcaseRunner:
+  /** 基于已加载的输入/答案运行或评分一个测试点；不会自行下载题目数据。 */
   private[infra] def runData(
     task: JudgeTask,
     subtaskIndex: Int,
@@ -29,6 +31,7 @@ object TraditionalTestcaseRunner:
       case TraditionalProgramSelection.Command(command) =>
         runCommand(task, subtaskIndex, testcase, workingDirectory, sandbox, input, answerBytes, command, tools)
 
+  /** 根据选手程序运行结果决定 TLE/RE，或调用 checker 得到分数。 */
   private[infra] def scoreParticipantRun(
     task: JudgeTask,
     testcase: JudgeTaskTestcase,

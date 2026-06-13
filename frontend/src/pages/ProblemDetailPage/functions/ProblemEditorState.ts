@@ -9,6 +9,9 @@ import {
 } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 题目详情编辑器状态，保存内容字段、访问控制输入和弹窗状态。
+ */
 export type ProblemEditorState = {
   title: string
   statement: string
@@ -21,6 +24,9 @@ export type ProblemEditorState = {
   otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
+/**
+ * 题目详情编辑器动作，覆盖水合、内容编辑、访问控制编辑和弹窗开关。
+ */
 export type ProblemEditorAction =
   | { type: 'hydrate'; problem: ProblemDetail | null }
   | { type: 'set_title'; value: string }
@@ -33,6 +39,9 @@ export type ProblemEditorAction =
   | { type: 'set_manager_groups_input'; value: string }
   | { type: 'set_other_user_submission_access'; value: OtherUserSubmissionAccess }
 
+/**
+ * 题目详情编辑器初始状态，默认访问控制为受限且弹窗关闭。
+ */
 export const initialProblemEditorState: ProblemEditorState = {
   title: '',
   statement: '',
@@ -45,6 +54,9 @@ export const initialProblemEditorState: ProblemEditorState = {
   otherUserSubmissionAccess: 'none',
 }
 
+/**
+ * 从题目详情水合编辑器状态；详情为空时返回初始状态。
+ */
 export function hydrateProblemEditorState(problem: ProblemDetail | null): ProblemEditorState {
   return problem
     ? {
@@ -61,6 +73,9 @@ export function hydrateProblemEditorState(problem: ProblemDetail | null): Proble
     : initialProblemEditorState
 }
 
+/**
+ * 题目详情编辑器 reducer；纯函数维护编辑草稿和弹窗状态。
+ */
 export function reduceProblemEditorState(
   state: ProblemEditorState,
   action: ProblemEditorAction,

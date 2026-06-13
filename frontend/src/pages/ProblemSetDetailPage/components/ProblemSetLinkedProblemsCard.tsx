@@ -14,6 +14,9 @@ import {
 import type { ProblemSetProblemSummary } from '@/objects/problemset/ProblemSetProblemSummary'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 已关联题目卡片属性，包含题单详情、移除状态和权限标记。
+ */
 type ProblemSetLinkedProblemsCardProps = {
   problems: ProblemSetProblemSummary[]
   canManageProblems: boolean
@@ -23,6 +26,9 @@ type ProblemSetLinkedProblemsCardProps = {
   onRemoveProblem: (problemSlug: ProblemSetProblemSummary['slug']) => void
 }
 
+/**
+ * 已关联题目卡片，展示题单中的题目列表和可选移除操作。
+ */
 export function ProblemSetLinkedProblemsCard({
   problems,
   canManageProblems,
@@ -76,6 +82,9 @@ export function ProblemSetLinkedProblemsCard({
   )
 }
 
+/**
+ * 已关联题目条目，展示单题信息并在有权限时提供移除按钮。
+ */
 function LinkedProblemItem({
   problem,
   canManageProblems,

@@ -4,6 +4,7 @@ import io.circe.{Decoder, Encoder}
 
 
 
+/** 提交列表结论过滤器；All/Pending 是列表层额外语义，其余映射到提交结论。 */
 enum SubmissionVerdictFilter:
   case All
   case Pending
@@ -16,10 +17,12 @@ enum SubmissionVerdictFilter:
   case IdlenessLimitExceeded
   case SystemError
 
+/** 提交结论过滤器的 JSON/query 字符串编解码器。 */
 object SubmissionVerdictFilter:
   given Encoder[SubmissionVerdictFilter] = Encoder.encodeString.contramap(encode)
   given Decoder[SubmissionVerdictFilter] = Decoder.decodeString.emap(parse)
 
+  /** 将外部字符串解析为结论过滤器。 */
   def parse(value: String): Either[String, SubmissionVerdictFilter] =
     value.trim match
       case "all" => Right(SubmissionVerdictFilter.All)
@@ -37,6 +40,7 @@ object SubmissionVerdictFilter:
           "Submission verdict filter must be one of: all, pending, accepted, accepted_by_protocol, wrong_answer, compile_error, runtime_error, time_limit_exceeded, idleness_limit_exceeded, system_error."
         )
 
+  /** 将结论过滤器编码为字符串。 */
   def encode(value: SubmissionVerdictFilter): String =
     value match
       case SubmissionVerdictFilter.All => "all"

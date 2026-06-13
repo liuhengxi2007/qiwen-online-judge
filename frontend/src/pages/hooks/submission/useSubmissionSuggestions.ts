@@ -8,6 +8,9 @@ import { ListUserSuggestions } from '@/apis/user/ListUserSuggestions'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 提交筛选建议 hook 的输入，包含当前输入和两个建议面板的显示状态。
+ */
 type UseSubmissionSuggestionsArgs = {
   usernameFilterInput: string
   problemFilterInput: string
@@ -15,6 +18,9 @@ type UseSubmissionSuggestionsArgs = {
   showProblemSuggestionPanel: boolean
 }
 
+/**
+ * 为提交筛选框加载用户和题目建议；输入变化后延迟请求，面板关闭时返回空建议。
+ */
 export function useSubmissionSuggestions({
   usernameFilterInput,
   problemFilterInput,

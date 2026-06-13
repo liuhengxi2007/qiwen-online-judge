@@ -4,6 +4,7 @@ import type { HackDetail } from '@/objects/hack/response/HackDetail'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 
+/** 创建 Hack；输入目标提交、子任务和攻击输入，输出 Hack 详情。 */
 export class CreateHack implements APIWithSessionMessage<HackDetail> {
   declare readonly responseType?: HackDetail
   readonly method = 'POST'
@@ -19,6 +20,7 @@ export class CreateHack implements APIWithSessionMessage<HackDetail> {
   }
 }
 
+/** multipart 创建 Hack 请求；input/strategyProviderSource 可用文本或文件传输。 */
 export type CreateHackMultipartRequest = {
   targetSubmissionId: SubmissionId
   subtaskIndex: number
@@ -26,6 +28,7 @@ export type CreateHackMultipartRequest = {
   strategyProviderSource?: { kind: 'text'; value: string } | { kind: 'file'; value: File } | null
 }
 
+/** 创建 multipart Hack；formData 根据文本/文件分支组装输入和策略源码。 */
 export class CreateHackMultipart implements APIWithSessionMessage<HackDetail> {
   declare readonly responseType?: HackDetail
   readonly method = 'POST'

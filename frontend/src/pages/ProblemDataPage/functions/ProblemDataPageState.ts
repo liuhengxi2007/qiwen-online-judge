@@ -1,6 +1,9 @@
 import type { ProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
+/**
+ * 题目测试数据管理页状态，覆盖文件列表加载、上传/删除/清空、ready 保存和页面消息。
+ */
 export type ProblemDataPageState = {
   isSavingReady: boolean
   selectedFile: File | null
@@ -13,6 +16,9 @@ export type ProblemDataPageState = {
   successMessage: string
 }
 
+/**
+ * 题目测试数据管理页 reducer 动作，描述各异步流程开始、成功、失败和消息清理事件。
+ */
 export type ProblemDataPageAction =
   | { type: 'ready_save_started' }
   | { type: 'ready_save_succeeded'; message: string }
@@ -33,6 +39,9 @@ export type ProblemDataPageAction =
   | { type: 'error_cleared' }
   | { type: 'success_cleared' }
 
+/**
+ * 测试数据管理页初始状态；首次进入页面默认处于文件树加载中。
+ */
 export const initialProblemDataPageState: ProblemDataPageState = {
   isSavingReady: false,
   selectedFile: null,
@@ -45,6 +54,9 @@ export const initialProblemDataPageState: ProblemDataPageState = {
   successMessage: '',
 }
 
+/**
+ * 测试数据管理页 reducer，根据异步动作切换 loading 标记、当前路径和成功/错误消息。
+ */
 export function reduceProblemDataPageState(
   state: ProblemDataPageState,
   action: ProblemDataPageAction,

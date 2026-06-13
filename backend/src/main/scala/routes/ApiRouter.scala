@@ -14,8 +14,10 @@ import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*
 
+/** 全站 API 路由聚合器，负责把各领域路由组合成最终 HttpApp。 */
 object ApiRouter:
 
+  /** 注入跨领域运行时依赖并按领域顺序组合所有后端 API 路由。 */
   def httpApp(
     databaseSession: DatabaseSession,
     sessionStore: SessionStore,

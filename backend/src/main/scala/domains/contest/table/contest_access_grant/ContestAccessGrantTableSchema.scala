@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 比赛访问授权表结构初始化对象。 */
 object ContestAccessGrantTableSchema:
 
   val initTableSql: String =
@@ -26,6 +27,7 @@ object ContestAccessGrantTableSchema:
       |on contest_access_grants (subject_kind, subject_key, grant_role)
       |""".stripMargin
 
+  /** 执行比赛授权表和主体索引的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

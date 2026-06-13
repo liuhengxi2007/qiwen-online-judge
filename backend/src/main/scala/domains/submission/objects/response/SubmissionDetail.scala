@@ -12,6 +12,7 @@ import judgeprotocol.objects.response.JudgeResult
 import java.time.Instant
 import scala.util.Try
 
+/** 提交详情响应；包含判题结果、源码和多程序角色源码，是否可管理由 canManage 标识。 */
 final case class SubmissionDetail(
   id: SubmissionId,
   problemId: ProblemId,
@@ -36,19 +37,24 @@ final case class SubmissionDetail(
   finishedAt: Option[Instant]
 )
 
+/** 提交详情响应构造和 JSON 编解码工具。 */
 object SubmissionDetail:
+  /** 详情响应中单个程序角色的源码展示结构。 */
   final case class Program(
     language: SubmissionLanguage,
     sourceCode: SubmissionSourceCode
   )
 
+  /** Program 的 JSON 编解码器。 */
   object Program:
     given Encoder[Program] = deriveEncoder[Program]
     given Decoder[Program] = deriveDecoder[Program]
 
+  /** 从单源码记录构造详情响应；兼容旧的单 main 展示路径。 */
   def fromRecord(record: SubmissionDetailRecord, sourceCode: SubmissionSourceCode, canManage: Boolean): SubmissionDetail =
     fromRecord(record, Map(record.programManifest.defaultProgramKey -> sourceCode), canManage)
 
+  /** 从数据库记录和源码映射构造详情响应；缺失源码角色会以空源码占位。 */
   def fromRecord(record: SubmissionDetailRecord, sourceCodes: Map[String, SubmissionSourceCode], canManage: Boolean = false): SubmissionDetail =
     val defaultSourceCode = sourceCodes.getOrElse(record.programManifest.defaultProgramKey, SubmissionSourceCode(""))
     SubmissionDetail(

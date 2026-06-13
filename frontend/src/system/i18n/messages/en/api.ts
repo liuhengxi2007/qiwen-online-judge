@@ -1,3 +1,6 @@
+/**
+ * 英文 API 消息码翻译，用于把后端 code 转为用户可见反馈。
+ */
 export const enApiMessages: Record<string, string> = {
   'api.error.auth.invalid_credentials': 'Invalid username or password.',
   'api.error.auth.current_password_incorrect': 'Current password is incorrect.',

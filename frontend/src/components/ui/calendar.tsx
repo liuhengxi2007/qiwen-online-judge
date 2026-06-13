@@ -5,8 +5,14 @@ import type { ComponentProps } from 'react'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 日历组件输入属性，继承 react-day-picker 的完整选择和渲染配置。
+ */
 type CalendarProps = ComponentProps<typeof DayPicker>
 
+/**
+ * 日历选择组件，统一 DayPicker 的布局、导航图标和日期状态样式。
+ */
 function Calendar({
   className,
   classNames,

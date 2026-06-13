@@ -6,10 +6,13 @@ import io.circe.parser.decode as decodeJson
 import io.circe.syntax.*
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json}
 
+/** 通知 payload 数据库存储 JSON codec，负责在 NotificationPayload 与 jsonb 字符串之间转换。 */
 object NotificationPayloadJsonCodec:
+  /** 将通知 payload 编码为紧凑 JSON 字符串。 */
   def encode(payload: NotificationPayload): String =
     payload.asJson.noSpaces
 
+  /** 注意：从数据库 JSON 字符串解码通知 payload；非法数据视为数据库状态异常，因此抛出异常而不是返回业务错误。 */
   def decode(raw: String): NotificationPayload =
     decodeJson[NotificationPayload](raw).fold(
       error => throw IllegalStateException(s"Invalid notification payload: ${error.getMessage}"),
@@ -35,6 +38,7 @@ object NotificationPayloadJsonCodec:
     }
   }
 
+  /** 解码博客回复 payload，并对 id 与标题执行领域级校验。 */
   private def decodeBlogReply(cursor: HCursor): Decoder.Result[NotificationPayload] =
     for
       blogId <- cursor.downField("blogId").as[Long].flatMap(decodeBlogId(_, cursor))

@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream
 import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
 
+/** 基于 MinIO 的题目数据存储实现；对象 key 按 problems/{slug}/data/{path} 命名。 */
 final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) extends ProblemDataStorage:
 
   private val client =
@@ -21,6 +22,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       .credentials(config.accessKey, config.secretKey)
       .build()
 
+  /** 扫描题目对象前缀并返回相对路径列表；会在需要时创建 bucket。 */
   override def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]] =
     ensureBucket() *> IO.blocking {
       client
@@ -41,6 +43,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         .sortBy(_.value)
     }
 
+  /** 读取题目所有文件内容并生成清单版本；成本与数据集大小成正比。 */
   override def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest] =
     for
       snapshot <- snapshotDirectory(problemSlug)
@@ -51,6 +54,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         }
     yield ProblemDataManifest.fromEntries(problemSlug, entries)
 
+  /** 读取当前题目目录完整快照，用于失败补偿。 */
   override def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataSnapshot] =
     listPaths(problemSlug).flatMap { paths =>
       paths.foldLeft(IO.pure(Map.empty[ProblemDataPath, Array[Byte]])) { (accIo, path) =>
@@ -63,6 +67,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       }
     }
 
+  /** 上传或覆盖单个题目数据对象。 */
   override def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath] =
     ensureBucket() *> IO.blocking {
       client.putObject(
@@ -77,6 +82,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       path
     }
 
+  /** 读取单个题目数据对象；MinIO 缺失对象被映射为 None。 */
   override def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]] =
     ensureBucket() *> IO.blocking {
       try
@@ -90,10 +96,12 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         try Some((path, inputStream.readAllBytes()))
         finally inputStream.close()
       catch
+        // FIXME-CN: 这里把所有 MinIO ErrorResponseException 都当成对象不存在；权限、桶状态或服务端错误会被静默映射为 None。
         case _: io.minio.errors.ErrorResponseException =>
           None
     }
 
+  /** 删除单个对象；先读后删以返回是否存在。 */
   override def deletePath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Boolean] =
     readPath(problemSlug, path).flatMap {
       case None => IO.pure(false)
@@ -110,10 +118,13 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         }
     }
 
+  /** 删除题目前缀下所有数据对象。 */
   override def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
     listPaths(problemSlug).flatMap(paths => paths.foldLeft(IO.unit)((accIo, path) => accIo *> deletePath(problemSlug, path).void))
 
+  /** 以快照替换题目目录内容；先清空再逐个写回。 */
   override def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
+    // FIXME-CN: MinIO 恢复不是事务操作，清空后逐个写回期间失败会留下部分恢复状态，调用方补偿边界需要单独评估。
     deleteAllFiles(problemSlug) *> snapshot.toList.foldLeft(IO.unit) { case (accIo, (path, bytes)) =>
       accIo *> writePath(problemSlug, path, bytes).void
     }

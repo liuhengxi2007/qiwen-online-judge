@@ -1,3 +1,6 @@
+/**
+ * 提交列表用户名筛选草稿，区分输入框文本、已选用户名和焦点状态。
+ */
 export type UsernameFilterDraft = {
   query: string
   value: string
@@ -5,12 +8,18 @@ export type UsernameFilterDraft = {
   focused: boolean
 }
 
+/**
+ * 提交列表题目筛选草稿，记录当前输入文本和值以及建议面板焦点状态。
+ */
 export type ProblemFilterDraft = {
   query: string
   value: string
   focused: boolean
 }
 
+/**
+ * 提交列表页面本地状态，集中保存两个筛选草稿和建议面板开关。
+ */
 export type SubmissionPageState = {
   usernameDraft: UsernameFilterDraft
   problemDraft: ProblemFilterDraft
@@ -18,11 +27,17 @@ export type SubmissionPageState = {
   isProblemSuggestionEnabled: boolean
 }
 
+/**
+ * 提交列表状态初始化参数，来自 URL 查询参数。
+ */
 export type SubmissionPageStateInit = {
   usernameQueryParam: string
   problemQueryParam: string
 }
 
+/**
+ * 提交列表 reducer 动作集合，覆盖输入、焦点、建议选择、应用筛选和清空筛选。
+ */
 export type SubmissionPageAction =
   | { type: 'usernameInputChanged'; query: string; value: string }
   | { type: 'problemInputChanged'; query: string; value: string }
@@ -35,6 +50,9 @@ export type SubmissionPageAction =
   | { type: 'filtersApplied'; usernameQuery: string; problemQuery: string }
   | { type: 'filtersCleared' }
 
+/**
+ * 从 URL 查询参数创建提交列表初始状态；已有用户名筛选会同步为已选项。
+ */
 export function createSubmissionPageState({
   usernameQueryParam,
   problemQueryParam,
@@ -56,6 +74,9 @@ export function createSubmissionPageState({
   }
 }
 
+/**
+ * 提交列表状态 reducer；纯函数更新筛选草稿和建议面板状态，不触发网络或路由副作用。
+ */
 export function submissionPageReducer(state: SubmissionPageState, action: SubmissionPageAction): SubmissionPageState {
   switch (action.type) {
     case 'usernameInputChanged':

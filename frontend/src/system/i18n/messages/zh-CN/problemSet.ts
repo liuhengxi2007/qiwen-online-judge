@@ -1,3 +1,6 @@
+/**
+ * 简体中文题单消息，覆盖题单列表、详情、编辑和题目关联流程文案。
+ */
 export const zhCnProblemSetMessages: Record<string, string> = {
   'problemSet.pageTitle': '气温在线评测 - 题单',
   'problemSet.heading': '题单',

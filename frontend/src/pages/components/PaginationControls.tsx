@@ -1,6 +1,9 @@
 import { cn } from '@/components/ui/class-names'
 import { Button } from '@/components/ui/button'
 
+/**
+ * 通用分页控件属性，调用方负责提供页码窗口和切页回调。
+ */
 type PaginationControlsProps = {
   currentPage: number
   pageNumbers: number[]
@@ -12,6 +15,9 @@ type PaginationControlsProps = {
   className?: string
 }
 
+/**
+ * 渲染上一页、页码窗口和下一页按钮；点击时通过回调请求目标页。
+ */
 export function PaginationControls({
   currentPage,
   pageNumbers,

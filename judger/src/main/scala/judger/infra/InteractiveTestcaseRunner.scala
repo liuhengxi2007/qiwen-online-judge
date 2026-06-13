@@ -9,7 +9,9 @@ import judger.objects.{ProcessResult, RuntimeCommand}
 
 import java.nio.file.Path
 
+/** 交互题单测试点业务 runner，负责策略 provider 处理、超时归因和 checker 评分。 */
 object InteractiveTestcaseRunner:
+  /** 运行交互测试点；策略 provider 缺失或不可用时按协议接受该点。 */
   private[infra] def run(
     task: JudgeTask,
     config: AppConfig,
@@ -26,6 +28,7 @@ object InteractiveTestcaseRunner:
   ): IO[JudgeTestcaseResult] =
     strategyProviderRuntime(testcase, tools) match
       case Left(_) =>
+        // 注意：策略 provider 是 hack/防御辅助工具，不可用时当前协议选择 AcceptedByProtocol 而不是惩罚提交。
         IO.pure(testcaseAcceptedByProtocol(testcase))
       case Right(strategyProvider) =>
         runWithStrategy(
@@ -44,6 +47,7 @@ object InteractiveTestcaseRunner:
           strategyProvider = strategyProvider
         )
 
+  /** 在已解析策略 provider 的前提下运行交互测试点，并处理工具 CPU 超限与墙钟超时。 */
   private[infra] def runWithStrategy(
     task: JudgeTask,
     config: AppConfig,
@@ -89,6 +93,7 @@ object InteractiveTestcaseRunner:
             scoreInteractiveRun(task, testcase, workingDirectory, sandbox, input, answerBytes, tools, strategyProvider, runResult)
       }
 
+  /** 根据交互器、参赛程序和 checker 输出计算单个交互测试点结果。 */
   private def scoreInteractiveRun(
     task: JudgeTask,
     testcase: JudgeTaskTestcase,
@@ -100,6 +105,7 @@ object InteractiveTestcaseRunner:
     strategyProvider: Option[StrategyProviderRuntime],
     runResult: InteractiveRunResult
   ): IO[JudgeTestcaseResult] =
+    // 注意：accepted_by_protocol 是交互 launcher 与 runner 之间的内部状态哨兵，表示协议层已判定无需再跑 checker。
     if runResult.status.contains("accepted_by_protocol") then
       IO.pure(testcaseAcceptedByProtocol(testcase))
     else if strategyFailed(strategyProvider, runResult.strategyProvider) then
@@ -125,6 +131,7 @@ object InteractiveTestcaseRunner:
               testcaseResult(testcase, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(reason), runResult.interactor)
           }
 
+  /** 解析策略 provider 运行命令；缺 limits、编译失败或命令缺失都会交给调用方走协议接受路径。 */
   private[infra] def strategyProviderRuntime(
     testcase: JudgeTaskTestcase,
     tools: JudgeToolPreparation.PreparedTools

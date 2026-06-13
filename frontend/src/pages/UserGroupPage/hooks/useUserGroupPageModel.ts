@@ -9,6 +9,9 @@ import { translateMessage } from '@/system/i18n/messages'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 用户组列表模型 hook；按分页请求加载用户组摘要列表。
+ */
 export function useUserGroupPageModel(pageRequest: PageRequest) {
   const page = pageRequest.page
   const pageSize = pageRequest.pageSize

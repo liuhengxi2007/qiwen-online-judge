@@ -9,6 +9,7 @@ import domains.user.objects.Username
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** 博客投票表访问对象，负责写入、切换和撤销当前用户的博客投票。 */
 object BlogVoteTable:
 
   private val upsertVoteSQL: String =
@@ -23,6 +24,7 @@ object BlogVoteTable:
       |              updated_at = excluded.updated_at
       |""".stripMargin
 
+  /** 对可见博客投票；重复同向投票会撤销，成功后返回更新后的博客详情。 */
   def vote(
     connection: Connection,
     blogId: BlogId,

@@ -27,6 +27,9 @@ import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { usernameValue } from '@/objects/user/Username'
 
+/**
+ * 题目详情页入口，解析普通或比赛内题目路由参数后进入详情内容。
+ */
 export function ProblemDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.detail.pageTitle'))
@@ -56,6 +59,9 @@ export function ProblemDetailPage() {
   return <ProblemDetailPageContent contestSlug={parsedContestSlug} problemSlug={slugResult.value} />
 }
 
+/**
+ * 题目详情页主体，组合会话守卫、题目查询、编辑器和删除/更新动作。
+ */
 function ProblemDetailPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
   const otherUserSubmissionAccessOptions = [

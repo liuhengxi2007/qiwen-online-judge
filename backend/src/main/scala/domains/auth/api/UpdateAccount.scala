@@ -16,17 +16,20 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 账号设置更新 API，支持用户自改账号和站点管理员代改账号。 */
 final case class UpdateAccount(sessionStore: SessionStore) extends AuthenticatedResponseApi[(Username, Json)]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/accounts/:targetUsername/settings/account")
 
+  /** 从路径读取目标用户名，并保留原始 JSON 以便按操作者身份选择请求类型。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(Username, Json)] =
     for
       rawUsername <- HttpApiError.fromEitherBadRequest(pathParams.require("targetUsername"))
       body <- request.as[Json]
     yield (Username.canonical(rawUsername), body)
 
+  /** 根据目标是否为当前用户选择自助或管理员更新路径，非管理员跨用户访问返回 403。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -40,6 +43,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
     else
       HttpApiError.raise(HttpApiError.forbidden(ApiMessages.siteManagerRequired))
 
+  /** 处理用户自改账号资料；要求当前密码正确，密码变更后清理本人会话并返回清 cookie 响应。 */
   private def updateOwnAccount(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -60,6 +64,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
       )
     yield response
 
+  /** 处理站点管理员代改账号资料；不要求目标用户当前密码，也不清理管理员自己的 cookie。 */
   private def updateManagedAccount(
     connection: Connection,
     targetUsername: Username,
@@ -88,6 +93,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
     }
 
+  /** 写入账号邮箱和可选新密码，并在密码变更时删除目标账号所有服务端会话。 */
   private def updateAccountRecord(
     connection: Connection,
     targetAccount: AuthAccount,

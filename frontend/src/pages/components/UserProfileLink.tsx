@@ -5,6 +5,9 @@ import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { formatUserDisplayLabel } from '@/pages/objects/UserDisplayLabel'
 
+/**
+ * 用户资料链接属性，输入用户身份和可选布局、样式控制。
+ */
 type UserProfileLinkProps = {
   user: UserIdentity
   showUsername?: boolean
@@ -13,6 +16,9 @@ type UserProfileLinkProps = {
   linkClassName?: string
 }
 
+/**
+ * 按当前查看者偏好渲染用户资料链接，目标路径使用用户名构造。
+ */
 export function UserProfileLink({
   user,
   stacked = false,

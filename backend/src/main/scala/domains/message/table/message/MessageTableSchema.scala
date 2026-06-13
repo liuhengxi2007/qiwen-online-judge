@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 私信相关表结构初始化对象，维护会话、消息、屏蔽关系和索引。 */
 object MessageTableSchema:
 
   val initConversationTableSql: String =
@@ -75,6 +76,7 @@ object MessageTableSchema:
       |on message_blocks (owner_username, created_at desc)
       |""".stripMargin
 
+  /** 执行私信 domain 所有表和索引的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

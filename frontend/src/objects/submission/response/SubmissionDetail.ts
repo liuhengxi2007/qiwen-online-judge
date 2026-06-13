@@ -11,11 +11,13 @@ import type { JudgeResult } from '@/objects/submission/JudgeResult'
 import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 import type { SubmissionResultDisplayMode } from '@/objects/submission/SubmissionResultDisplayMode'
 
+/** 提交详情中的程序源码；用于多文件/多程序提交展示。 */
 type SubmissionDetailProgram = {
   language: SubmissionLanguage
   sourceCode: SubmissionSourceCode
 }
 
+/** 提交详情响应；包含源码、判题结果、可管理性和时间线。 */
 export type SubmissionDetail = {
   id: SubmissionId
   problemId: ProblemId

@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 比赛相关表结构初始化对象，维护 contests、contest_problems 和 contest_registrations。 */
 object ContestTableSchema:
 
   val initTableSql: String =
@@ -48,6 +49,7 @@ object ContestTableSchema:
       |);
       |""".stripMargin
 
+  /** 执行比赛表、赛题关系表和报名表的幂等建表 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

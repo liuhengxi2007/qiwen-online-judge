@@ -5,8 +5,10 @@ import type { UpdateOwnAccountRequest } from '@/objects/auth/request/UpdateOwnAc
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 更新账号请求联合；区分用户自助改账号和管理员代管账号两种 body。 */
 type UpdateAccountRequest = UpdateOwnAccountRequest | UpdateManagedUserAccountRequest
 
+/** 更新指定账号设置；输入目标用户名和请求体，输出新的会话快照，权限由后端区分。 */
 export class UpdateAccount implements APIWithSessionMessage<SessionResponse> {
   declare readonly responseType?: SessionResponse
   readonly method = 'POST'

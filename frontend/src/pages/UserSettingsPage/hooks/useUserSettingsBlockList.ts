@@ -12,12 +12,18 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户屏蔽列表 hook 输入，包含目标用户、权限和失败兜底文案。
+ */
 type UseUserSettingsBlockListArgs = {
   hash: string
   isEnabled: boolean
   viewerUsername: Username
 }
 
+/**
+ * 用户屏蔽列表 hook；加载、添加和移除被屏蔽用户，并维护本地反馈状态。
+ */
 export function useUserSettingsBlockList({
   hash,
   isEnabled,

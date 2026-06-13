@@ -6,6 +6,7 @@ import type { ContestTitle } from '@/objects/contest/ContestTitle'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 
+/** 比赛完整对象；包含时间窗口、题目列表、访问策略、作者和审计时间。 */
 export type Contest = {
   id: ContestId
   slug: ContestSlug

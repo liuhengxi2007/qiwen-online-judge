@@ -1,3 +1,6 @@
+/**
+ * 英文导航消息，定义主导航、用户菜单和路由入口的显示文案。
+ */
 export const enNavMessages: Record<string, string> = {
   'nav.backTo': 'Back to {{label}}',
   'nav.dashboard': 'Dashboard',

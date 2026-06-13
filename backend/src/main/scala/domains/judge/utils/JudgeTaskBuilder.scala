@@ -12,13 +12,16 @@ import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
+/** judge.yaml 到 judge-protocol 任务的构建器；负责配置解析、文件引用校验、角色/语言约束和 ready 校验。 */
 object JudgeTaskBuilder:
 
+  /** 题目数据 ready 校验结果；retainedPaths 是 ready 后仍需保留的数据文件集合。 */
   final case class ReadyValidation(
     retainedPaths: Set[ProblemDataPath],
     resultDisplayMode: SubmissionResultDisplayMode
   )
 
+  /** 构建判题任务失败的业务错误；reason 会映射到 worker 失败 JudgeResult。 */
   final case class BuildError(
     message: String,
     reason: JudgeFailureReason
@@ -47,6 +50,7 @@ object JudgeTaskBuilder:
 
   private final case class BuiltTask(task: JudgeTask, roleConfigs: Map[String, RoleConfig])
 
+  /** 从 judge.yaml、已领取提交、源码和数据清单构建 worker 可执行的 JudgeTask。 */
   def buildJudgeTask(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
@@ -87,6 +91,7 @@ object JudgeTaskBuilder:
       buildFromYaml(claimedSubmission, sourceCodes, manifest, root).map(_.task)
     }
 
+  /** 在创建提交前校验提交程序角色/语言是否满足 judge.yaml 的 roles/stubs 约束。 */
   def validateSubmissionProgramsForConfig(
     bytes: Array[Byte],
     programs: Map[String, domains.submission.objects.SubmissionLanguage],
@@ -103,6 +108,7 @@ object JudgeTaskBuilder:
       .left
       .map(_.message)
 
+  /** 在题目数据设为 ready 前完整构建一次任务，输出应保留的数据路径和结果展示模式。 */
   def validateReadyConfigBytes(
     bytes: Array[Byte],
     problem: domains.problem.objects.response.ProblemDetail,
@@ -113,6 +119,7 @@ object JudgeTaskBuilder:
       id = domains.submission.objects.SubmissionId(0L),
       problemId = problem.id,
       problemSlug = problem.slug,
+      // 注意：这里的固定 UUID 只用于 ready 校验时构造临时程序清单，不会写入存储或暴露给真实提交。
       programManifest = SubmissionProgramManifest.singleDefault(
         java.util.UUID.fromString("00000000-0000-4000-8000-000000000000"),
         domains.submission.objects.SubmissionLanguage.Cpp17,

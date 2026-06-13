@@ -8,6 +8,9 @@ import {
 } from '../functions/ProblemEditorState'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 题目编辑器状态 hook；在题目详情变化时水合编辑草稿。
+ */
 export function useProblemEditorState(problem: ProblemDetail | null) {
   const [state, dispatch] = useReducer(reduceProblemEditorState, initialProblemEditorState)
 

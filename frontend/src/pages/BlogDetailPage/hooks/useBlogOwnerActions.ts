@@ -11,6 +11,9 @@ import type { BlogVote } from '@/objects/blog/BlogVote'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客作者操作 hook 参数，提供当前博客、详情替换、删除完成回调和共享错误消息入口。
+ */
 type UseBlogOwnerActionsArgs = {
   blog: BlogDetail | null
   onDeleted: () => void
@@ -18,6 +21,10 @@ type UseBlogOwnerActionsArgs = {
   setCommentErrorMessage: (message: string) => void
 }
 
+/**
+ * 博客作者操作 hook，维护投票、编辑表单和删除博客副作用。
+ * 更新和投票成功后会用后端返回的博客详情替换页面状态，删除成功后交给页面跳转。
+ */
 export function useBlogOwnerActions({ blog, onDeleted, setBlog, setCommentErrorMessage }: UseBlogOwnerActionsArgs) {
   const { t } = useI18n()
   const [isVoting, setIsVoting] = useState(false)

@@ -8,6 +8,10 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组移除成员操作 hook，跟踪当前移除中的用户名并返回成功/失败结果对象。
+ * 成功结果包含更新后的用户组详情，由页面模型负责替换当前详情快照。
+ */
 export function useUserGroupRemoveMemberAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()
   const [activeRemovingUsername, setActiveRemovingUsername] = useState<Username | null>(null)

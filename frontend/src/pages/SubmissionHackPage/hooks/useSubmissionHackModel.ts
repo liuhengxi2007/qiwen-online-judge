@@ -15,6 +15,9 @@ import {
   usesHackMultipart,
 } from '../functions/HackSourceMode'
 
+/**
+ * 提交 Hack 页面查询状态，保存目标信息、加载标记和错误文案。
+ */
 type QueryState = {
   info: HackSubtaskInfo | null
   hack: HackDetail | null
@@ -22,11 +25,17 @@ type QueryState = {
   errorMessage: string
 }
 
+/**
+ * 提交 Hack 查询 reducer 动作，覆盖加载成功、失败和创建 Hack 后的状态更新。
+ */
 type QueryAction =
   | { type: 'info_loaded'; info: HackSubtaskInfo }
   | { type: 'hack_loaded'; hack: HackDetail }
   | { type: 'failed'; message: string }
 
+/**
+ * 提交 Hack 查询 reducer；纯函数维护目标信息、错误和已创建 Hack。
+ */
 function reducer(state: QueryState, action: QueryAction): QueryState {
   switch (action.type) {
     case 'info_loaded':
@@ -38,11 +47,17 @@ function reducer(state: QueryState, action: QueryAction): QueryState {
   }
 }
 
+/**
+ * 提交 Hack 模型 hook 的输入，来自已校验的路由参数。
+ */
 type UseSubmissionHackModelArgs = {
   submissionId: SubmissionId
   subtaskIndex: number
 }
 
+/**
+ * 提交 Hack 页面模型 hook；负责加载子任务信息、维护输入草稿并提交文本或 multipart Hack。
+ */
 export function useSubmissionHackModel({ submissionId, subtaskIndex }: UseSubmissionHackModelArgs) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, { info: null, hack: null, isLoading: true, errorMessage: '' })
@@ -73,6 +88,7 @@ export function useSubmissionHackModel({ submissionId, subtaskIndex }: UseSubmis
       return
     }
 
+    // 注意：effect 已排除空 hack，interval 闭包捕获的是本轮非空 hack，清理函数会在状态变化时撤销轮询。
     const intervalId = window.setInterval(() => {
       void sendAPI(new GetHack(state.hack!.id)).then((hack) => dispatch({ type: 'hack_loaded', hack })).catch(() => undefined)
     }, 2000)
@@ -94,6 +110,7 @@ export function useSubmissionHackModel({ submissionId, subtaskIndex }: UseSubmis
     setIsSubmitting(true)
     const request = (() => {
       if (usesHackMultipart(inputSource, strategyProvider, state.info.requiresStrategyProvider)) {
+        // 注意：canSubmitHackSources 与 usesHackMultipart 已约束 file 模式必须存在对应 File，非空断言对应此前校验。
         const api = new CreateHackMultipart({
           targetSubmissionId: submissionId,
           subtaskIndex,

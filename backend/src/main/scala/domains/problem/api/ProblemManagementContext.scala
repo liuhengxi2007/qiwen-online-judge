@@ -12,19 +12,23 @@ import shared.api.{ApiMessages, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 管理题目时的路径上下文；contestSlug 存在时表示通过竞赛管理入口操作题目。 */
 final case class ProblemManagementContext(
   problemSlug: ProblemSlug,
   contestSlug: Option[ContestSlug]
 )
 
+/** 题目管理上下文解析与权限校验工具；封装直接管理和竞赛管理两类边界。 */
 object ProblemManagementContext:
 
+  /** 从请求路径和 query 中解析题目 slug 与可选竞赛 slug。 */
   def decode(request: Request[IO], pathParams: PathParams): IO[ProblemManagementContext] =
     for
       problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
       contestSlug <- parseOptionalContestSlug(request)
     yield ProblemManagementContext(problemSlug, contestSlug)
 
+  /** 解析可选 contestSlug；缺失表示走题目自身访问策略。 */
   def parseOptionalContestSlug(request: Request[IO]): IO[Option[ContestSlug]] =
     request.uri.query.params.get("contestSlug") match
       case Some(rawContestSlug) =>
@@ -32,6 +36,7 @@ object ProblemManagementContext:
       case None =>
         IO.pure(None)
 
+  /** 按上下文确认调用者可管理题目；直接题目无权时隐藏资源存在性，竞赛上下文会暴露竞赛管理边界。 */
   def requireManagedProblem(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -43,6 +48,7 @@ object ProblemManagementContext:
       case None =>
         requireDirectManagedProblem(connection, actor, context.problemSlug)
 
+  /** 当请求携带竞赛上下文时校验竞赛管理权限；无竞赛上下文则无副作用通过。 */
   def requireContestManagementIfPresent(
     connection: Connection,
     actor: AuthenticatedUser,

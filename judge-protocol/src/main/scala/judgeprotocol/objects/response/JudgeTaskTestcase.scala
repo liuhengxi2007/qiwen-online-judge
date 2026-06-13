@@ -3,6 +3,7 @@ package judgeprotocol.objects.response
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveEncoder
 
+/** 子任务中的单个测试点配置，绑定输入、答案、checker、资源限制和可选策略 provider。 */
 final case class JudgeTaskTestcase(
   index: Int,
   label: Option[String],
@@ -16,6 +17,7 @@ final case class JudgeTaskTestcase(
   roles: List[String] = Nil
 )
 
+/** 负责测试点协议编解码，并为旧 payload 补齐 main 类型和空角色列表。 */
 object JudgeTaskTestcase:
   given Encoder[JudgeTaskTestcase] = deriveEncoder[JudgeTaskTestcase]
   given Decoder[JudgeTaskTestcase] = Decoder.instance { cursor =>

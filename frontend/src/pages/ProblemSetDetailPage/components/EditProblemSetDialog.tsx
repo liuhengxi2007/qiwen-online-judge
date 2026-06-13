@@ -6,6 +6,9 @@ import { ProblemSetDeleteCard } from './ProblemSetDeleteCard'
 import { ProblemSetLinkProblemCard } from './ProblemSetLinkProblemCard'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 编辑题单对话框属性，包含打开状态、草稿和保存回调。
+ */
 type EditProblemSetDialogProps = {
   open: boolean
   title: string
@@ -29,6 +32,9 @@ type EditProblemSetDialogProps = {
   onDeleteProblemSet: () => Promise<boolean>
 }
 
+/**
+ * 编辑题单对话框，提供标题和描述编辑表单。
+ */
 export function EditProblemSetDialog({
   open,
   title,

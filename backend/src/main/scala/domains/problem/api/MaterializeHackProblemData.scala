@@ -21,6 +21,7 @@ import java.util.{ArrayList, LinkedHashMap}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
+/** 成功 hack 物化为题目数据的内部输入；携带目标题目、子任务、生成文件路径和待写入文本。 */
 final case class MaterializeHackProblemDataInput(
   problemId: ProblemId,
   problemSlug: ProblemSlug,
@@ -33,18 +34,22 @@ final case class MaterializeHackProblemDataInput(
   createdAt: Instant
 )
 
+/** 内部 hack 数据物化 API；把成功 hack 写入题目数据文件、更新 judge.yaml，并提升题目 hack revision。 */
 final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorage) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/problems/hack-data")
 
+  /** 执行物化副作用；失败时恢复对象存储快照，数据库改动依赖调用方事务回滚。 */
   override def plan(connection: Connection, input: MaterializeHackProblemDataInput): IO[Unit] =
     MaterializeHackProblemData.materialize(connection, problemDataStorage, input)
 
+/** hack 数据物化的纯辅助逻辑与内部构造器；对外只暴露输入构造和可测的 judge.yaml 追加函数。 */
 object MaterializeHackProblemData:
 
   private val JudgeYamlPath = ProblemDataPath("judge.yaml")
 
+  /** 构造物化请求输入；调用方负责保证路径来自受控命名空间且文本已通过 hack 校验。 */
   def input(
     problemId: ProblemId,
     problemSlug: ProblemSlug,

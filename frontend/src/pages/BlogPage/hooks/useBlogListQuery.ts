@@ -8,12 +8,18 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 博客列表查询状态，保存分页响应、加载标记和错误消息。
+ */
 type BlogListQuery = {
   authorUsername: Username | null
   problemSlug: ProblemSlug | null
   pageRequest: PageRequest
 }
 
+/**
+ * 博客列表查询 hook；按作者、题目和分页请求加载博客摘要。
+ */
 export function useBlogListQuery(authorUsername: Username | null = null, problemSlug: ProblemSlug | null = null, pageRequest: PageRequest) {
   const page = pageRequest.page
   const pageSize = pageRequest.pageSize

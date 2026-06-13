@@ -5,6 +5,7 @@ import type { SubmissionUserQuery } from '@/objects/submission/request/Submissio
 import type { SubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
+/** 提交列表请求；组合用户/题目过滤、verdict 过滤、排序和分页条件。 */
 export type SubmissionListRequest = {
   userQuery: SubmissionUserQuery | null
   problemQuery: SubmissionProblemQuery | null

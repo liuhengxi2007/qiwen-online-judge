@@ -13,8 +13,10 @@ import domains.judger.table.judger.JudgerTableSupport.*
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** judgers 表读写入口；维护 worker 注册、心跳租约和支持语言。 */
 object JudgerTable:
 
+  /** 初始化 judger 注册表。 */
   def initialize(connection: Connection): IO[Unit] =
     JudgerTableSchema.initialize(connection)
 
@@ -42,6 +44,7 @@ object JudgerTable:
       |order by judger_id asc
       |""".stripMargin
 
+  // FIXME-CN: 分配 judger_id 是先查已占用再插入；同一 prefix 并发注册时可能选择相同 id，依赖唯一约束报错而非重试。
   private def allocateJudgerId(connection: java.sql.Connection, preferredPrefix: JudgerId): IO[JudgerId] =
     IO.blocking {
       val statement = connection.prepareStatement(listAllocatedIdsSQL)
@@ -75,6 +78,7 @@ object JudgerTable:
       |values (?, ?, ?, ?, ?, ?, ?)
       |""".stripMargin
 
+  /** 注册 judger 并分配唯一 id；注册前会删除已过期 worker 记录。 */
   def register(
     connection: Connection,
     request: RegisterJudgerRequest,
@@ -115,6 +119,7 @@ object JudgerTable:
       |  and last_heartbeat_at >= ?
       |""".stripMargin
 
+  /** 记录 judger 心跳；只有未过期记录会被更新，返回是否成功续约。 */
   def heartbeat(connection: Connection, judgerId: JudgerId, heartbeatTimeoutMs: Long): IO[Boolean] =
     IO.blocking {
       val now = Instant.now()
@@ -135,6 +140,7 @@ object JudgerTable:
       |  and last_heartbeat_at >= ?
       |""".stripMargin
 
+  /** 查询活动 judger 支持语言；过期或不存在时返回 None。 */
   def findActiveSupportedLanguages(
     connection: Connection,
     judgerId: JudgerId,
@@ -161,6 +167,7 @@ object JudgerTable:
       |order by last_heartbeat_at desc, judger_id asc
       |""".stripMargin
 
+  /** 清理过期记录后列出剩余 judger，按最近心跳倒序。 */
   def listJudgers(connection: Connection, heartbeatTimeoutMs: Long): IO[List[RegisteredJudgerListItem]] =
     for
       now <- IO.realTimeInstant

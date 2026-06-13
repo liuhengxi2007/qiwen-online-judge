@@ -7,6 +7,7 @@ import judgeprotocol.objects.response.JudgeResult
 
 import java.time.Instant
 
+/** 提交详情的数据库内部记录；包含程序 manifest 但不包含实际源码文本。 */
 final case class SubmissionDetailRecord(
   id: SubmissionId,
   problemId: ProblemId,

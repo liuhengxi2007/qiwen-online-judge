@@ -12,9 +12,12 @@ import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 
+/** 某种提交语言的准备器，将源代码编译或转换为 sandbox 可执行命令。 */
 trait JudgeRuntime:
+  /** 当前 runtime 支持的协议语言。 */
   def language: SubmissionLanguage
 
+  /** 准备一个 role 的程序；输入是源码、可选 stub 和头文件，输出可执行命令或编译/系统失败。 */
   def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
@@ -24,26 +27,33 @@ trait JudgeRuntime:
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]]
 
+/** 题目配置中的头文件源代码，filename 是写入工作目录的 include 文件名。 */
 final case class ProgramHeaderSource(
   filename: String,
   sourceCode: SubmissionSourceCode
 )
 
+/** 程序准备阶段的失败分类，区分用户编译错误和 judger/工具链系统错误。 */
 sealed trait ProgramPrepareFailure
 
+/** 提供程序准备失败的具体 ADT 构造。 */
 object ProgramPrepareFailure:
   case object CompileError extends ProgramPrepareFailure
   final case class SystemError(reason: JudgeFailureReason) extends ProgramPrepareFailure
 
+/** runtime 与 runner 共享的文件、进程和结果构造工具。 */
 object JudgeRuntimeSupport:
+  /** 创建临时工作目录并在使用后递归删除；目录会尽量设置为 sandbox 可访问。 */
   def withWorkingDirectory[A](workRoot: Path, prefix: String)(use: Path => IO[A]): IO[A] =
     IO.blocking {
       Files.createDirectories(workRoot)
       val path = Files.createTempDirectory(workRoot, prefix)
+      // 注意：isolate 以独立用户访问 /box 绑定目录，这里放宽临时目录权限是为了让 sandbox 内进程读写。
       ensureSandboxAccessible(path)
       path
     }.bracket(use)(deleteRecursively)
 
+  /** 在绝对路径或 PATH 中查找可执行文件，并解析为真实路径。 */
   def resolveExecutable(command: String): Option[String] =
     val commandPath = Path.of(command)
     if commandPath.isAbsolute && Files.isExecutable(commandPath) then resolveRealExecutablePath(commandPath)
@@ -56,9 +66,11 @@ object JudgeRuntimeSupport:
         .find(path => Files.isRegularFile(path) && Files.isExecutable(path))
         .flatMap(resolveRealExecutablePath)
 
+  /** 判断宿主可执行文件路径是否能在 isolate 默认挂载中直接访问。 */
   def isSandboxVisibleExecutable(path: String): Boolean =
     path.startsWith("/usr/") || path == "/usr" || path.startsWith("/bin/") || path == "/bin"
 
+  /** 在宿主机直接运行编译器等准备阶段进程，并用 prlimit 做粗粒度资源限制。 */
   def runHostProcess(
     command: String,
     args: List[String],
@@ -113,6 +125,7 @@ object JudgeRuntimeSupport:
       )
     }
 
+  /** 确认准备阶段产物存在且可执行；失败会以异常形式进入系统错误路径。 */
   def ensureExecutableExists(path: Path): IO[Unit] =
     IO.blocking {
       if !Files.exists(path) then
@@ -123,9 +136,11 @@ object JudgeRuntimeSupport:
         throw RuntimeException(s"Prepared executable is not executable: ${path.toAbsolutePath}.")
     }
 
+  /** 构造一个已完成的整题回报，用于无法逐点执行但可给出统一 verdict 的场景。 */
   def taskCompleted(task: JudgeTask, verdict: SubmissionVerdict): ReportJudgeResultRequest =
     taskResult(task, SubmissionStatus.Completed, verdict, None)
 
+  /** 构造一个系统失败的整题回报，并为每个子任务填充空测试点结果。 */
   def taskSystemError(task: JudgeTask, reason: JudgeFailureReason): ReportJudgeResultRequest =
     taskResult(task, SubmissionStatus.Failed, SubmissionVerdict.SystemError, Some(reason))
 
@@ -163,6 +178,7 @@ object JudgeRuntimeSupport:
       case other =>
         JudgeResultSummary.nonSystem(BigDecimal(0), other, None, None)
 
+  /** 组合用户可见的失败详情，优先包含 stderr/stdout，必要时附带 isolate 元信息。 */
   def renderDetail(detail: String, result: ProcessResult, includeIsolateDetail: Boolean = false): String =
     val isolateDetail =
       if includeIsolateDetail then
@@ -179,6 +195,7 @@ object JudgeRuntimeSupport:
       namedSection("stdout", result.stdout)
     ).flatten.mkString("\n\n")
 
+  /** 从两个候选输出中选第一个非空文本，否则返回兜底说明。 */
   def nonEmptyOrFallback(primary: String, secondary: String, fallback: String): String =
     val first = primary.trim
     if first.nonEmpty then first

@@ -13,6 +13,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 const inputClassName = 'h-12 rounded-2xl border-slate-200 bg-white pl-10 text-slate-900'
 
+/**
+ * 注册页，组合注册表单模型和注册请求，并在成功后写入会话。
+ */
 export function RegisterPage() {
   const { t } = useI18n()
   usePageTitle(t('auth.register.pageTitle'))

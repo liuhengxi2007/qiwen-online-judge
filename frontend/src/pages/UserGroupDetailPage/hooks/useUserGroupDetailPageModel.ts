@@ -19,6 +19,10 @@ import { useUserGroupUpdateMemberRoleAction } from './useUserGroupUpdateMemberRo
 import { useUserGroupUpdateAction } from './useUserGroupUpdateAction'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型 hook，聚合详情查询、编辑器状态、成员管理动作和权限判断。
+ * 输入为当前用户组 slug、访问者用户名和站点管理员标记；所有写操作先做前端权限防护再调用 API。
+ */
 export function useUserGroupDetailPageModel(userGroupSlug: UserGroupSlug, viewerUsername: Username, isSiteManager: boolean) {
   const { t } = useI18n()
   const detailQuery = useUserGroupDetailQuery(userGroupSlug)

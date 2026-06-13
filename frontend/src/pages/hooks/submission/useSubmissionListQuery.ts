@@ -12,6 +12,9 @@ import type { SubmissionSummary } from '@/objects/submission/response/Submission
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 为提交列表请求生成稳定 key，确保 effect 只在筛选、排序、分页或比赛范围变化时重跑。
+ */
 function requestKey(request: SubmissionListRequest, contestSlug?: ContestSlug): string {
   return JSON.stringify({
     contestSlug: contestSlug ? contestSlugValue(contestSlug) : null,
@@ -27,6 +30,9 @@ function requestKey(request: SubmissionListRequest, contestSlug?: ContestSlug): 
   })
 }
 
+/**
+ * 加载提交列表并轮询刷新非终态提交；返回当前请求对应的响应、加载状态和错误文案。
+ */
 export function useSubmissionListQuery(request: SubmissionListRequest, contestSlug?: ContestSlug) {
   const key = requestKey(request, contestSlug)
   const fallbackPage = request.pageRequest.page
@@ -50,6 +56,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest, contestSl
     let cancelled = false
     let intervalId: number | null = null
     let refreshInFlight = false
+    // FIXME-CN: activeRequest 由 requestKey 反序列化并断言为 SubmissionListRequest，绕过了领域解析器和品牌类型校验。
     const activeRequest = JSON.parse(key) as SubmissionListRequest
     let currentResponse: SubmissionListResponse = {
       items: [],

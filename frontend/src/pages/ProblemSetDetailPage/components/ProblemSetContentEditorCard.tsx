@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label'
 import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单内容编辑卡片属性，包含编辑模型和保存回调。
+ */
 type ProblemSetContentEditorCardProps = {
   title: string
   description: string
@@ -20,6 +23,9 @@ type ProblemSetContentEditorCardProps = {
   onSaveContent: () => void
 }
 
+/**
+ * 题单内容编辑卡片，渲染标题、描述和保存操作。
+ */
 export function ProblemSetContentEditorCard({
   title,
   description,

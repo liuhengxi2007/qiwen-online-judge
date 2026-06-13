@@ -9,10 +9,17 @@ import { isHttpClientError } from '@/system/api/http-client'
 import type { UserProfileResponse } from '@/objects/user/response/UserProfileResponse'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 用户资料查询 hook 参数，targetUsername 已由路由策略解析为合法领域类型。
+ */
 type UseUserProfileQueryArgs = {
   targetUsername: Username
 }
 
+/**
+ * 用户资料查询 hook，加载目标用户公开资料并处理 403/404 的页面语义。
+ * 403 返回权限跳转意图，404 留在页面展示未找到消息；过期响应通过 request id 丢弃。
+ */
 export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs) {
   const [profileState, setProfileState] = useState<{
     username: Username | null
@@ -51,6 +58,7 @@ export function useUserProfileQuery({ targetUsername }: UseUserProfileQueryArgs)
         }
 
         if (isHttpClientError(error) && error.kind === 'forbidden') {
+          // 注意：公开资料访问遇到 403 时统一跳转权限页，不在资料页展示资源是否存在的额外信息。
           setProfileState({
             username: targetUsername,
             profile: null,

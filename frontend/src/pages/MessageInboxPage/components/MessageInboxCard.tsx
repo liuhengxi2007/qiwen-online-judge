@@ -12,6 +12,9 @@ import { PaginationControls } from '@/pages/components/PaginationControls'
 import { messageConversationPath } from '@/pages/routing/MessagePaths'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信收件箱卡片属性，包含会话列表、分页状态、未读统计和操作回调。
+ */
 type MessageInboxCardProps = {
   conversations: MessageConversationSummary[]
   currentPage: number
@@ -26,6 +29,9 @@ type MessageInboxCardProps = {
   totalUnreadCount: number
 }
 
+/**
+ * 私信收件箱卡片，渲染会话列表、分页、加载/错误状态和全部已读按钮。
+ */
 export function MessageInboxCard({
   conversations,
   currentPage,

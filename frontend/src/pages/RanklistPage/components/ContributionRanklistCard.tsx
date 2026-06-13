@@ -9,6 +9,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { RanklistPagination } from './RanklistPagination'
 
+/**
+ * 贡献榜卡片属性，包含当前页数据、加载/错误状态和三榜单页码上下文。
+ */
 type ContributionRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
@@ -20,6 +23,9 @@ type ContributionRanklistCardProps = {
   totalPages: number
 }
 
+/**
+ * 贡献榜卡片，按贡献值展示用户排名并在数据可用时渲染独立分页。
+ */
 export function ContributionRanklistCard({
   acceptedPage,
   contributionPage,

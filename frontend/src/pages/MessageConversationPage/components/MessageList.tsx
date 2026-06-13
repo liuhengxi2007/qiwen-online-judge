@@ -7,6 +7,9 @@ import { MessageBubble } from './MessageBubble'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信消息列表属性，包含历史分页状态、已读状态和加载更早消息回调。
+ */
 type MessageListProps = {
   autoMarkMessageRead: boolean
   history: MessageHistoryResponse | null
@@ -21,6 +24,9 @@ type MessageListProps = {
   markSingleMessageRead: (messageId: MessageId) => Promise<void>
 }
 
+/**
+ * 私信消息列表，展示加载/空状态、历史分页按钮、错误消息和按发送方区分的消息气泡。
+ */
 export function MessageList({
   autoMarkMessageRead,
   history,

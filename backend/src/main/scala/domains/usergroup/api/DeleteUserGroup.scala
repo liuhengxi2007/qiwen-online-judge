@@ -14,6 +14,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 删除用户组 API，要求站点管理员或用户组 owner 权限。 */
 object DeleteUserGroup extends AuthenticatedApi[UserGroupSlug, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -21,10 +22,12 @@ object DeleteUserGroup extends AuthenticatedApi[UserGroupSlug, SuccessResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 从路径解析用户组 slug；请求体被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[UserGroupSlug] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
 
+  /** 查找用户组并校验删除权限，权限不足以 404 隐藏用户组存在性。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, groupSlug: UserGroupSlug): IO[SuccessResponse] =
     for
       maybeGroup <- UserGroupTable.findBySlug(connection, groupSlug)

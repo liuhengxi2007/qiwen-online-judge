@@ -6,6 +6,10 @@ import type { CreateBlogRequest } from '@/objects/blog/request/CreateBlogRequest
 import { blogIdValue } from '@/objects/blog/BlogId'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 创建博客操作 hook，提交创建请求并在成功后导航到新博客详情页。
+ * 失败时只设置传入的本地化错误消息，表单草稿由页面保留。
+ */
 export function useCreateBlogAction(createFailedMessage: string) {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)

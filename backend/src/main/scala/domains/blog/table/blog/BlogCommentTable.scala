@@ -12,6 +12,7 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** 博客评论表访问对象，负责评论/回复写入、更新删除、列表读取和通知上下文查询。 */
 object BlogCommentTable:
 
   private val insertCommentSQL: String =
@@ -35,6 +36,7 @@ object BlogCommentTable:
       |returning public_id
       |""".stripMargin
 
+  /** 在公开博客或作者自己的私有博客下创建评论/回复，返回更新后的博客详情和新评论公开 id。 */
   def insertComment(
     connection: Connection,
     blogId: BlogId,
@@ -112,6 +114,7 @@ object BlogCommentTable:
       |order by depth asc
       |""".stripMargin
 
+  /** 读取创建评论后的通知上下文，包含博客作者、触发评论内容和祖先评论作者链。 */
   def findCommentNotificationContext(
     connection: Connection,
     blogId: BlogId,
@@ -184,6 +187,7 @@ object BlogCommentTable:
       |  and c.author_username = ?
       |""".stripMargin
 
+  /** 仅允许评论作者在可见博客下更新评论内容，成功后返回更新后的博客详情。 */
   def updateComment(
     connection: Connection,
     blogId: BlogId,
@@ -218,6 +222,7 @@ object BlogCommentTable:
       |  and c.author_username = ?
       |""".stripMargin
 
+  /** 仅允许评论作者在可见博客下删除评论，成功后返回更新后的博客详情。 */
   def deleteComment(
     connection: Connection,
     blogId: BlogId,
@@ -264,6 +269,7 @@ object BlogCommentTable:
       |order by c.public_id asc
       |""".stripMargin
 
+  /** 读取博客评论列表，按博客可见性过滤并补充当前用户对每条评论的投票。 */
   def listComments(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[List[BlogCommentSummary]] =
     IO.blocking {
       val statement = connection.prepareStatement(listCommentsSQL)

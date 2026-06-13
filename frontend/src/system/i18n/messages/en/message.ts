@@ -1,3 +1,6 @@
+/**
+ * 英文私信消息，覆盖收件箱、会话、发送和实时状态文案。
+ */
 export const enMessageMessages: Record<string, string> = {
   'messages.pageTitle': 'Messages',
   'messages.conversationPageTitle': 'Conversation',

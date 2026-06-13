@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 权限不足提示页，作为受保护路由或资源访问被拒绝时的统一前端落点。
+ */
 export function ForbiddenPage() {
   const { t } = useI18n()
   usePageTitle(t('forbidden.pageTitle'))

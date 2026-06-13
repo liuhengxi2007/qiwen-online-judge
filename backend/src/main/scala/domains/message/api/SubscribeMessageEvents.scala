@@ -13,15 +13,18 @@ import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 
+/** 订阅当前用户私信事件的 SSE API，事件由消息事件中心按用户名过滤。 */
 final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends AuthenticatedResponseApi[Unit]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/messages/events")
 
+  /** SSE 订阅不需要路径参数或请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Unit] =
     val _ = (request, pathParams)
     IO.unit
 
+  /** 构造 text/event-stream 响应，副作用是保持订阅流直到客户端断开。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -52,6 +55,7 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends Aut
       io.circe.Json.obj()
   }
 
+  /** 将消息流内部事件映射为前端识别的 SSE 事件名和 JSON 数据。 */
   private def toServerSentEvent(event: MessageStreamEvent): ServerSentEvent =
     val eventName = event match
       case _: MessageStreamEvent.MessageReceived => "message_received"
@@ -60,5 +64,6 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends Aut
 
     ServerSentEvent(data = Some(event.asJson.noSpaces), eventType = Some(eventName))
 
+  /** 渲染单条 SSE 事件并补充事件分隔换行。 */
   private def toServerSentEventString(event: MessageStreamEvent): String =
     toServerSentEvent(event).renderString + "\n"

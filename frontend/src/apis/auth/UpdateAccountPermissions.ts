@@ -4,6 +4,7 @@ import type { UpdateUserPermissionsRequest } from '@/objects/auth/request/Update
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 更新账号权限位；输入目标用户名和权限请求，输出更新后的账号列表项。 */
 export class UpdateAccountPermissions implements APIWithSessionMessage<AuthAccountListItem> {
   declare readonly responseType?: AuthAccountListItem
   readonly method = 'POST'

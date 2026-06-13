@@ -5,6 +5,7 @@ import type { UserAcceptedProblem } from '@/objects/user/UserAcceptedProblem'
 import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 import type { UserContribution } from '@/objects/user/UserContribution'
 
+/** 用户公开资料响应；包含头像、贡献、rating 和已通过题目列表。 */
 export type UserProfileResponse = {
   username: Username
   displayName: DisplayName

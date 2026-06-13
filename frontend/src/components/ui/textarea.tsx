@@ -2,6 +2,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 统一样式的多行文本输入组件，透传原生 textarea 属性并提供最小高度。
+ */
 function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return (
     <textarea

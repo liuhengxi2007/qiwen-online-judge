@@ -19,6 +19,7 @@ import shared.api.{ApiPath, HttpApiError, MultipartTextSupport, PathParams}
 import java.sql.Connection
 import scala.util.Try
 
+/** 创建 hack attempt 的认证 API；校验目标提交详情权限、子任务可 hack、输入大小和策略源码要求。 */
 final case class CreateHack(
   submissionProgramStorage: SubmissionProgramStorage,
   problemDataStorage: ProblemDataStorage
@@ -29,11 +30,13 @@ final case class CreateHack(
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[HackDetail] = summon[Encoder[HackDetail]]
 
+  /** 支持 JSON 或 multipart 创建 hack；multipart 可从文本字段或文件字段读取输入。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateHackRequest] =
     val _ = pathParams
     if MultipartTextSupport.isMultipart(request) then decodeMultipart(request)
     else request.as[CreateHackRequest]
 
+  /** 创建 queued hack attempt，输出当前用户可见的 hack 详情。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateHackRequest): IO[HackDetail] =
     val normalizedInput = HackApiSupport.normalizeHackInput(request.input)
     for

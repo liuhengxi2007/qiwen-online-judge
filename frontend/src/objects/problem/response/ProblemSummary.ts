@@ -7,6 +7,7 @@ import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import type { AuditFields } from '@/objects/shared/AuditFields'
 
+/** 题目摘要响应；用于列表页展示，不包含题面正文。 */
 export type ProblemSummary = AuditFields & {
   id: ProblemId
   slug: ProblemSlug

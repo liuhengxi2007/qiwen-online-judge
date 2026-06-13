@@ -15,6 +15,7 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** submissions 表基础写入入口；负责创建提交和删除提交记录。 */
 object SubmissionMutationTable:
 
   private val insertSQL: String =
@@ -24,6 +25,7 @@ object SubmissionMutationTable:
       |returning public_id, language, status, verdict, time_used_ms, memory_used_kb, score, judge_result::text as judge_result, code_length, null::varchar as source_contest_slug, null::varchar as source_contest_title, ${UserIdentitySql.returningColumns("submitter_username", "submitter")}, submitted_at, started_at, finished_at
       |""".stripMargin
 
+  /** 插入 queued 提交；输入包含已写入对象存储的 manifest，输出新提交详情。 */
   def insert(
     connection: Connection,
     submissionUuid: UUID,
@@ -93,6 +95,7 @@ object SubmissionMutationTable:
       |where public_id = ?
       |""".stripMargin
 
+  /** 按公开 id 删除提交记录；源码对象由调用方另行清理。 */
   def deleteById(connection: Connection, submissionId: SubmissionId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteByIdSQL)

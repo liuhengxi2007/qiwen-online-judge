@@ -1,5 +1,6 @@
 package judger.infra
 
+/** 交互题辅助 launcher 的内嵌 C/C++ 源码，编译后用于忽略 SIGPIPE、FIFO 重定向和策略读监控。 */
 object InteractiveLauncherSources:
   private[infra] val SigpipeIgnore: String =
     """#include <signal.h>

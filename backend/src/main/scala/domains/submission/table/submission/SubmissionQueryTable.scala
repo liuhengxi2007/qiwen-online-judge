@@ -14,6 +14,7 @@ import shared.objects.PageResponse
 
 import java.sql.{Connection, PreparedStatement}
 
+/** submissions 表查询入口；封装全站/竞赛提交列表可见性、详情读取和 manifest 查询。 */
 object SubmissionQueryTable:
 
   private def toSqlDirection(direction: SubmissionSortDirection): String =
@@ -261,6 +262,7 @@ object SubmissionQueryTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 分页列出调用者可见的全站提交摘要；summary/detail 可见性使用不同谓词。 */
   def listVisibleTo(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -357,6 +359,7 @@ object SubmissionQueryTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 分页列出竞赛提交；竞赛管理员可看全部，普通用户只看本人提交。 */
   def listVisibleForContest(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -423,6 +426,7 @@ object SubmissionQueryTable:
       |where s.public_id = ?
       |""".stripMargin
 
+  /** 按公开 id 读取提交详情内部记录；不做权限过滤且不读取源码对象。 */
   def findById(connection: Connection, submissionId: SubmissionId): IO[Option[SubmissionDetailRecord]] =
     IO.blocking {
       val statement = connection.prepareStatement(findByIdSQL)
@@ -441,6 +445,7 @@ object SubmissionQueryTable:
       |where problem_id = ?
       |""".stripMargin
 
+  /** 列出题目下所有提交 program manifest；用于删除题目前准备源码对象清理。 */
   def listProgramManifestsForProblem(connection: Connection, problemId: ProblemId): IO[List[SubmissionProgramManifest]] =
     IO.blocking {
       val statement = connection.prepareStatement(listProgramManifestsForProblemSQL)

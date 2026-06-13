@@ -4,11 +4,13 @@ import domains.message.objects.*
 import io.circe.{Decoder, DecodingFailure, Encoder}
 import io.circe.generic.semiauto.deriveEncoder
 
+/** 标记会话已读请求体，message 模式必须携带 messageId。 */
 final case class MarkConversationReadRequest(
   mode: MarkConversationReadMode,
   messageId: Option[MessageId]
 )
 
+/** 提供已读请求体 codec，并在解码阶段校验 mode/messageId 的组合。 */
 object MarkConversationReadRequest:
   given Encoder[MarkConversationReadRequest] = deriveEncoder[MarkConversationReadRequest]
 

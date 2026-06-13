@@ -8,6 +8,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { RanklistPagination } from './RanklistPagination'
 
+/**
+ * Rating 榜卡片属性，包含当前页数据、加载/错误状态和三榜单页码上下文。
+ */
 type RatingRanklistCardProps = {
   acceptedPage: number
   contributionPage: number
@@ -19,6 +22,9 @@ type RatingRanklistCardProps = {
   totalPages: number
 }
 
+/**
+ * Rating 榜卡片，按用户 rating 展示排名并在数据可用时渲染独立分页。
+ */
 export function RatingRanklistCard({
   acceptedPage,
   contributionPage,

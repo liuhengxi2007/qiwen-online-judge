@@ -4,6 +4,7 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { problemSetSlugValue } from '@/objects/problemset/ProblemSetSlug'
 import type { UpdateProblemSetRequest } from '@/objects/problemset/request/UpdateProblemSetRequest'
 
+/** 更新题集；输入题集 slug 和更新请求，输出更新后的题集详情。 */
 export class UpdateProblemSet implements APIWithSessionMessage<ProblemSetDetail> {
   declare readonly responseType?: ProblemSetDetail
   readonly method = 'POST'

@@ -11,12 +11,15 @@ import java.sql.Connection
 import java.sql.Timestamp
 import java.time.{Duration, Instant}
 
+/** auth_sessions 表访问层，负责会话令牌的持久化、续期和删除。 */
 object SessionTable:
+  /** 数据库中仍未过期的会话记录，包含用户名和过期时间。 */
   final case class ActiveSession(
     username: Username,
     expiresAt: Instant
   )
 
+  /** 初始化会话表结构，并按当前 TTL 回填旧会话的生命周期字段。 */
   def initialize(connection: Connection, sessionTtl: Duration): IO[Unit] =
     SessionTableSchema.initialize(connection, sessionTtl)
 
@@ -26,6 +29,7 @@ object SessionTable:
       |values (?, ?, ?, ?, ?)
       |""".stripMargin
 
+  /** 插入新会话记录，记录创建时间、最后活跃时间和过期时间。 */
   def insert(connection: Connection, token: SessionToken, username: Username, expiresAt: Instant): IO[Unit] =
     IO.blocking {
       val now = Instant.now()
@@ -49,6 +53,7 @@ object SessionTable:
       |  and expires_at > ?
       |""".stripMargin
 
+  /** 按令牌查找未过期会话，过期或不存在时返回 None。 */
   def findActiveByToken(
     connection: Connection,
     token: SessionToken,
@@ -81,6 +86,7 @@ object SessionTable:
       |  and expires_at > ?
       |""".stripMargin
 
+  /** 续期仍未过期的会话，返回是否实际更新了行。 */
   def renewSession(
     connection: Connection,
     token: SessionToken,
@@ -105,6 +111,7 @@ object SessionTable:
       |where username = ?
       |""".stripMargin
 
+  /** 列出某用户所有会话令牌，用于密码变更后批量清理缓存和数据库。 */
   def findTokensByUsername(connection: Connection, username: Username): IO[List[SessionToken]] =
     IO.blocking {
       val statement = connection.prepareStatement(findTokensByUsernameSQL)
@@ -131,6 +138,7 @@ object SessionTable:
       |where expires_at <= ?
       |""".stripMargin
 
+  /** 删除已过期会话，通常在插入新会话前顺带清理。 */
   def deleteExpired(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteExpiredSQL)
@@ -147,6 +155,7 @@ object SessionTable:
       |where token = ?
       |""".stripMargin
 
+  /** 按令牌删除会话，删除不存在的会话也视为成功。 */
   def deleteByToken(connection: Connection, token: SessionToken): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteByTokenSQL)
@@ -163,6 +172,7 @@ object SessionTable:
       |where username = ?
       |""".stripMargin
 
+  /** 删除某用户名下全部会话，常用于密码变更或账号安全操作。 */
   def deleteByUsername(connection: Connection, username: Username): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteByUsernameSQL)

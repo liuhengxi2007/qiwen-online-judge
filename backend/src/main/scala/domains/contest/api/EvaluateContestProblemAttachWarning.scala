@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 评估把题目加入比赛时是否会扩大可见范围的认证 API，只有比赛和题目管理者可调用。 */
 object EvaluateContestProblemAttachWarning extends AuthenticatedApi[(ContestSlug, ProblemSlug), ContestProblemAttachWarningResponse]:
 
   override val method: Method = Method.GET
@@ -24,6 +25,7 @@ object EvaluateContestProblemAttachWarning extends AuthenticatedApi[(ContestSlug
   override protected val outputEncoder: Encoder[ContestProblemAttachWarningResponse] =
     summon[Encoder[ContestProblemAttachWarningResponse]]
 
+  /** 从路径解析比赛 slug 和题目 slug，查询型入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, ProblemSlug)] =
     val _ = request
     for
@@ -31,6 +33,7 @@ object EvaluateContestProblemAttachWarning extends AuthenticatedApi[(ContestSlug
       problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
     yield (contestSlug, problemSlug)
 
+  /** 校验比赛管理权和题目管理权后，检查题目是否已有比赛管理员之外的受众。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -48,6 +51,7 @@ object EvaluateContestProblemAttachWarning extends AuthenticatedApi[(ContestSlug
         HttpApiError.forbidden(ApiMessages.contestManagerRequired)
       )
       problemAccess <- EvaluateProblemAccess.plan(connection, actor, problemSlug)
+      /** 注意：题目不存在或调用者不能管理题目都返回 404，用于避免暴露不可管理题目的存在性。 */
       problem <- problemAccess.problem match
         case Some(problem) if problemAccess.canManage => IO.pure(problem)
         case _ => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))

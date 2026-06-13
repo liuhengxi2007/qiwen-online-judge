@@ -4,12 +4,14 @@ import io.circe.{Decoder, DecodingFailure, Encoder, HCursor}
 import io.circe.generic.semiauto.deriveEncoder
 import judgeprotocol.objects.SubmissionVerdict
 
+/** 整次提交判题的结果树，分别保留基础结果、最差结果和各子任务明细。 */
 final case class JudgeResult(
   baseResult: JudgeResultSummary,
   worstResult: JudgeResultSummary,
   subtasks: List[JudgeSubtaskResult]
 )
 
+/** 负责判题结果的协议编解码，并兼容旧格式中顶层 verdict/reason 的回填。 */
 object JudgeResult:
   given Encoder[JudgeResult] = deriveEncoder[JudgeResult]
   given Decoder[JudgeResult] = Decoder.instance { cursor =>
@@ -22,6 +24,7 @@ object JudgeResult:
     yield JudgeResult(baseResult, worstResult, subtasks)
   }
 
+  /** 解码 baseResult/worstResult 节点；缺失 verdict 时尝试从旧字段回退。 */
   private[response] def decodeSummaryField(
     cursor: HCursor,
     fieldName: String,

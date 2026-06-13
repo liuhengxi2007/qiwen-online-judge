@@ -14,8 +14,10 @@ import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** hack_attempts 表的 worker claim 入口；负责并发领取可执行 hack 并读取目标提交上下文。 */
 object HackJudgeTable:
 
+  /** claim 后供 worker 构建 HackTask 的数据库记录。 */
   final case class ClaimedHackAttemptRecord(
     hackId: HackId,
     targetSubmission: ClaimedSubmission,
@@ -71,6 +73,7 @@ object HackJudgeTable:
       |          target.judge_result::text as old_result
       |""".stripMargin
 
+  /** 原子领取一个 queued hack；使用 skip locked 支持多个 worker 并发 claim。 */
   def claimNextForLanguages(
     connection: Connection,
     languages: List[SubmissionLanguage],

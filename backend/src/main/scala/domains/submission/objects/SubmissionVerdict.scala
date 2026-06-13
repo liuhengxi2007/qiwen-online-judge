@@ -3,6 +3,7 @@ package domains.submission.objects
 import io.circe.{Decoder, Encoder}
 
 
+/** 提交判题结论；与 judge-protocol 的 verdict 枚举保持语义对齐。 */
 enum SubmissionVerdict:
   case Accepted
   case AcceptedByProtocol
@@ -13,10 +14,12 @@ enum SubmissionVerdict:
   case IdlenessLimitExceeded
   case SystemError
 
+/** 提交结论的 JSON/数据库字符串编解码器。 */
 object SubmissionVerdict:
   given Encoder[SubmissionVerdict] = Encoder.encodeString.contramap(encode)
   given Decoder[SubmissionVerdict] = Decoder.decodeString.emap(parse)
 
+  /** 将外部字符串解析为提交结论。 */
   def parse(value: String): Either[String, SubmissionVerdict] =
     value.trim match
       case "accepted" => Right(SubmissionVerdict.Accepted)

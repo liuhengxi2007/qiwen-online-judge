@@ -1,3 +1,6 @@
+/**
+ * 英文用户组消息，覆盖用户组创建、详情、成员、权限和转让操作文案。
+ */
 export const enUserGroupMessages: Record<string, string> = {
   'userGroup.pageTitle': 'Qiwen Online Judge - User Groups',
   'userGroup.heading': 'User Groups',

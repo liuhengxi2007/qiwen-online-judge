@@ -9,6 +9,9 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { UserSettingsSectionState } from '../functions/UserSettingsState'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户资料设置卡片属性，包含显示名草稿和保存回调。
+ */
 type UserSettingsProfileCardProps = {
   displayedUser: SessionResponse | null
   displayName: string
@@ -17,6 +20,9 @@ type UserSettingsProfileCardProps = {
   submit: () => void
 }
 
+/**
+ * 用户资料设置卡片，渲染显示名编辑表单。
+ */
 export function UserSettingsProfileCard({
   displayedUser,
   displayName,

@@ -6,6 +6,9 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 删除题目动作 hook；按普通或比赛上下文提交删除请求并维护状态。
+ */
 export function useProblemDeleteAction(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const [isDeleting, setIsDeleting] = useState(false)
 

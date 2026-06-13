@@ -10,6 +10,9 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单详情头部卡片属性，包含模型和当前访问者信息。
+ */
 type ProblemSetDetailHeaderCardProps = {
   problemSet: ProblemSetDetail
   canManageProblems: boolean
@@ -17,6 +20,9 @@ type ProblemSetDetailHeaderCardProps = {
   onTogglePanel: (panel: 'edit' | 'access') => void
 }
 
+/**
+ * 题单详情头部卡片，展示标题、描述、访问状态和主要操作。
+ */
 export function ProblemSetDetailHeaderCard({
   problemSet,
   canManageProblems,

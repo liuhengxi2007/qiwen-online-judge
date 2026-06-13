@@ -11,6 +11,9 @@ import { sendMultipartAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 头像上传面板属性，包含目标用户、当前资料和同步资料/会话的回调。
+ */
 type ProfileAvatarUploadPanelProps = {
   onProfileUpdated: (profile: UserProfileResponse) => void
   onSessionUpdated: (session: SessionResponse) => void
@@ -18,6 +21,9 @@ type ProfileAvatarUploadPanelProps = {
   targetUsername: Username
 }
 
+/**
+ * 头像上传面板，仅用于自己的资料页；上传成功后同步资料快照和当前会话。
+ */
 export function ProfileAvatarUploadPanel({
   onProfileUpdated,
   onSessionUpdated,
@@ -108,6 +114,9 @@ export function ProfileAvatarUploadPanel({
   )
 }
 
+/**
+ * 判断头像文件是否为允许的 png/jpg/jpeg，要求 MIME 类型和扩展名同时匹配。
+ */
 function isAcceptedAvatarFile(file: File): boolean {
   const lowerName = file.name.toLowerCase()
   return (

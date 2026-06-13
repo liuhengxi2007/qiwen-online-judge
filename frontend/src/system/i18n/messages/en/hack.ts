@@ -1,3 +1,6 @@
+/**
+ * 英文 Hack 相关消息，覆盖 Hack 列表、详情和提交对抗状态文案。
+ */
 export const enHackMessages: Record<string, string> = {
   'hack.action': 'Hack',
   'hack.id': 'Hack ID',

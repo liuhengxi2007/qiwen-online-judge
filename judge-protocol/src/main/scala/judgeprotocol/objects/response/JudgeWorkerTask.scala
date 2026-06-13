@@ -3,16 +3,20 @@ package judgeprotocol.objects.response
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
+/** worker claim 接口返回的联合任务载体，通过 kind 区分普通判题和 hack 判题。 */
 final case class JudgeWorkerTask(
   kind: String,
   judge: Option[JudgeTask],
   hack: Option[HackTask]
 )
 
+/** 提供 worker 任务联合类型的构造函数和协议编解码。 */
 object JudgeWorkerTask:
+  /** 构造普通提交判题任务；输出中仅填充 judge 字段。 */
   def judge(task: JudgeTask): JudgeWorkerTask =
     JudgeWorkerTask(kind = "judge", judge = Some(task), hack = None)
 
+  /** 构造 hack 尝试判题任务；输出中仅填充 hack 字段。 */
   def hack(task: HackTask): JudgeWorkerTask =
     JudgeWorkerTask(kind = "hack", judge = None, hack = Some(task))
 

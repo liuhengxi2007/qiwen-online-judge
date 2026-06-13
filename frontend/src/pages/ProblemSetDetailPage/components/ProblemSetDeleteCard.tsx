@@ -5,11 +5,17 @@ import { Button } from '@/components/ui/button'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 删除题单卡片属性，包含删除中状态和删除回调。
+ */
 type ProblemSetDeleteCardProps = {
   isDeleting: boolean
   onDeleteProblemSet: () => Promise<boolean>
 }
 
+/**
+ * 删除题单卡片，提示危险操作并要求用户确认。
+ */
 export function ProblemSetDeleteCard({ isDeleting, onDeleteProblemSet }: ProblemSetDeleteCardProps) {
   const { t } = useI18n()
   const navigate = useNavigate()

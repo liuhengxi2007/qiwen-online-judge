@@ -5,6 +5,7 @@ import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 从用户组移除成员；输入用户组 slug 和目标用户名，输出更新后的用户组详情。 */
 export class RemoveUserGroupMember implements APIWithSessionMessage<UserGroupDetail> {
   declare readonly responseType?: UserGroupDetail
   readonly method = 'POST'

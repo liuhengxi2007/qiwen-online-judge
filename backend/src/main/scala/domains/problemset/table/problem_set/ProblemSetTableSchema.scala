@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 题单相关表结构初始化对象，包含历史列迁移和题单题目关系表。 */
 object ProblemSetTableSchema:
 
   val initTableSql: String =
@@ -213,6 +214,7 @@ object ProblemSetTableSchema:
       |drop column if exists status
       |""".stripMargin
 
+  /** 执行题单表、历史作者/可见性迁移和题单题目关系表的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

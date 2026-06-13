@@ -5,14 +5,23 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { BlogCommentComposer } from './BlogCommentComposer'
 
+/**
+ * 博客详情页模型类型别名，供评论区读取评论草稿和操作回调。
+ */
 type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
 
+/**
+ * 评论区属性，包含博客详情、当前用户名和页面模型。
+ */
 type BlogCommentsSectionProps = {
   blog: BlogDetail
   currentUsername: string
   model: BlogDetailPageModel
 }
 
+/**
+ * 博客评论区，组合发表评论输入和评论树，并把所有操作回调透传给评论树组件。
+ */
 export function BlogCommentsSection({ blog, currentUsername, model }: BlogCommentsSectionProps) {
   const { t } = useI18n()
 

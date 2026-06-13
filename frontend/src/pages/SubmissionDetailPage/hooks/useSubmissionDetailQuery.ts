@@ -9,6 +9,9 @@ import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 
+/**
+ * 提交详情查询状态，包含提交详情、hack 可用性、加载标记和页面错误。
+ */
 type SubmissionDetailQueryState = {
   submission: SubmissionDetail | null
   hackAvailability: SubmissionHackAvailability | null
@@ -16,6 +19,9 @@ type SubmissionDetailQueryState = {
   errorMessage: string
 }
 
+/**
+ * 提交详情查询 reducer 动作，用于加载、失败和外部操作后替换提交详情。
+ */
 type SubmissionDetailQueryAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; submission: SubmissionDetail; hackAvailability: SubmissionHackAvailability | null }
@@ -29,6 +35,9 @@ const initialState: SubmissionDetailQueryState = {
   errorMessage: '',
 }
 
+/**
+ * 提交详情查询 reducer，保持提交详情和 hack 可用性在同一状态快照中更新。
+ */
 function reducer(state: SubmissionDetailQueryState, action: SubmissionDetailQueryAction): SubmissionDetailQueryState {
   switch (action.type) {
     case 'load_started':
@@ -42,6 +51,10 @@ function reducer(state: SubmissionDetailQueryState, action: SubmissionDetailQuer
   }
 }
 
+/**
+ * 提交详情查询 hook，按提交 id 加载详情并在非终态时每 2 秒轮询。
+ * 当提交完成且有裁判结果时额外查询 hack 可用性；组件卸载或 id 变化后丢弃过期响应。
+ */
 export function useSubmissionDetailQuery(submissionId: SubmissionId) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -80,6 +93,7 @@ export function useSubmissionDetailQuery(submissionId: SubmissionId) {
           dispatch({
             type: 'load_failed',
             message:
+              // 注意：提交详情把 forbidden 和 not-found 都展示为 404，用于隐藏不可见提交是否存在。
               isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
                 ? '404 Not Found.'
                 : 'Unable to load submission details.',

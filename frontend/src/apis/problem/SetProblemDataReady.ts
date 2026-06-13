@@ -5,10 +5,12 @@ import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 设置题目数据就绪状态的请求体；ready 表示是否允许进入判题使用。 */
 type SetProblemDataReadyRequest = {
   ready: boolean
 }
 
+/** 设置题目数据就绪状态；输入题目 slug、ready 和可选比赛上下文，输出题目详情。 */
 export class SetProblemDataReady implements APIWithSessionMessage<ProblemDetail> {
   declare readonly responseType?: ProblemDetail
   readonly method = 'POST'

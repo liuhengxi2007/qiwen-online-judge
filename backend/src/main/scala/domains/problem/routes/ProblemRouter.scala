@@ -30,8 +30,10 @@ import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
+/** 题目域路由装配器；集中注册公开题目、管理题目数据和内部题目引用相关 API。 */
 object ProblemRouter:
 
+  /** 构造题目域 HttpRoutes；注入数据库会话、会话解析器、题目数据存储和提交程序存储。 */
   def routes(
     databaseSession: DatabaseSession,
     sessionStore: SessionStore,

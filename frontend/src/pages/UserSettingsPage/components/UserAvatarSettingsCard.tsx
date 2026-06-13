@@ -12,12 +12,18 @@ import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户头像设置卡片属性，包含头像上传状态、错误和上传回调。
+ */
 type UserAvatarSettingsCardProps = {
   displayedUser: SessionResponse | null
   onUserUpdated: (user: SessionResponse) => void
   targetUsername: Username
 }
 
+/**
+ * 用户头像设置卡片，提供头像文件选择、上传状态和当前头像预览。
+ */
 export function UserAvatarSettingsCard({
   displayedUser,
   onUserUpdated,

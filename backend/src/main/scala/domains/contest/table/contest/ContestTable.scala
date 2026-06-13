@@ -18,20 +18,25 @@ import java.sql.{Connection, PreparedStatement, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** 比赛主表访问对象，封装比赛、赛题、报名和访问授权的持久化操作。 */
 object ContestTable:
 
+  /** 添加赛题的表层结果，用于 API 区分成功和重复关联。 */
   enum AddProblemTableResult:
     case AlreadyLinked
     case Linked
 
+  /** 报名写入的表层结果，用于 API 区分成功和重复报名。 */
   enum RegisterTableResult:
     case AlreadyRegistered
     case Registered
 
+  /** 取消报名的表层结果，用于 API 区分成功和原本未报名。 */
   enum UnregisterTableResult:
     case NotRegistered
     case Unregistered
 
+  /** 初始化比赛相关表和访问授权表。 */
   def initialize(connection: Connection): IO[Unit] =
     for
       _ <- ContestTableSchema.initialize(connection)
@@ -95,6 +100,7 @@ object ContestTable:
       |  )
       |""".stripMargin
 
+  /** 按调用者全局权限和访问授权分页读取可见比赛摘要，并补充报名状态和授权策略。 */
   def listVisibleTo(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[PageResponse[ContestSummary]] =
     for
       totalItems <- IO.blocking {
@@ -152,6 +158,7 @@ object ContestTable:
       |where c.slug = ?
       |""".stripMargin
 
+  /** 按 slug 读取比赛聚合，包含赛题列表和 viewer/manager 授权。 */
   def findBySlug(connection: Connection, slug: ContestSlug): IO[Option[Contest]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSQL)
@@ -179,6 +186,7 @@ object ContestTable:
       |returning id, slug, title, description, start_at, end_at, base_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
+  /** 插入比赛主体并替换初始访问授权，返回带策略的比赛聚合。 */
   def insert(connection: Connection, authorUsername: Username, request: CreateContestRequest): IO[Contest] =
     IO.blocking {
       val now = Instant.now()
@@ -222,6 +230,7 @@ object ContestTable:
       |returning id, slug, title, description, start_at, end_at, base_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
+  /** 更新比赛主体和访问授权，并重新加载赛题列表。 */
   def update(connection: Connection, contest: Contest, request: UpdateContestRequest): IO[Contest] =
     IO.blocking {
       val now = Instant.now()
@@ -281,6 +290,7 @@ object ContestTable:
       |values (?, ?, ?, ?)
       |""".stripMargin
 
+  /** 将题目追加到比赛末尾，并按位置生成默认别名。 */
   def addProblem(connection: Connection, contestId: ContestId, problemId: ProblemId): IO[AddProblemTableResult] =
     for
       alreadyLinked <- IO.blocking {
@@ -293,6 +303,7 @@ object ContestTable:
           finally resultSet.close()
         finally statement.close()
       }
+      /** FIXME-CN: 这里先查 relationExists 再用 max(position)+1 插入，没有显式锁或唯一冲突恢复；同一比赛并发加题可能撞 position/alias 唯一约束。 */
       result <- if alreadyLinked then
         IO.pure(AddProblemTableResult.AlreadyLinked)
       else
@@ -324,6 +335,7 @@ object ContestTable:
       |where contest_id = ? and problem_id = ?
       |""".stripMargin
 
+  /** 删除比赛与题目的关联，返回是否实际删除了记录。 */
   def removeProblem(connection: Connection, contestId: ContestId, problemId: ProblemId): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteRelationSQL)
@@ -341,6 +353,7 @@ object ContestTable:
       |where contest_id = ? and username = ?
       |""".stripMargin
 
+  /** 判断用户是否已报名指定比赛。 */
   def isRegistered(connection: Connection, contestId: ContestId, username: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(registrationExistsSQL)
@@ -359,6 +372,7 @@ object ContestTable:
       |values (?, ?, ?)
       |""".stripMargin
 
+  /** 写入比赛报名记录，重复报名返回 AlreadyRegistered。 */
   def register(connection: Connection, contestId: ContestId, username: Username): IO[RegisterTableResult] =
     for
       exists <- isRegistered(connection, contestId, username)
@@ -384,6 +398,7 @@ object ContestTable:
       |where contest_id = ? and username = ?
       |""".stripMargin
 
+  /** 删除比赛报名记录，原本未报名返回 NotRegistered。 */
   def unregister(connection: Connection, contestId: ContestId, username: Username): IO[UnregisterTableResult] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteRegistrationSQL)
@@ -412,6 +427,7 @@ object ContestTable:
       |where cr.contest_id = ?
       |""".stripMargin
 
+  /** 分页读取比赛报名用户，按报名时间和用户名稳定排序。 */
   def listRegistrants(connection: Connection, contestId: ContestId, page: Int, pageSize: Int): IO[PageResponse[ContestRegistrant]] =
     for
       totalItems <- IO.blocking {

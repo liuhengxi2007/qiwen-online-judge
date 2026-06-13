@@ -8,6 +8,7 @@ import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import type { AuditFields } from '@/objects/shared/AuditFields'
 
+/** 题目详情响应；包含题面、数据状态、访问策略和当前会话的管理能力。 */
 export type ProblemDetail = AuditFields & {
   id: ProblemId
   slug: ProblemSlug

@@ -16,6 +16,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 管理员解除博客与题目关联的认证 API。 */
 object UnlinkBlogFromProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -23,10 +24,12 @@ object UnlinkBlogFromProblem extends AuthenticatedApi[BlogProblemLinkInput, Succ
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 从路径解析题目 slug 和博客 id，解除关联入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[BlogProblemLinkInput] =
     val _ = request
     blogProblemLinkInput(pathParams)
 
+  /** 校验题目目录管理权限后删除关联；不存在关联时返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for
       _ <- HttpApiError.ensure(canManageProblemCatalog(actor), HttpApiError.forbidden(ApiMessages.problemBlogLinkManageForbidden))
@@ -34,6 +37,7 @@ object UnlinkBlogFromProblem extends AuthenticatedApi[BlogProblemLinkInput, Succ
       _ <- HttpApiError.ensure(unlinked, HttpApiError.notFound(ApiMessages.problemBlogLinkNotFound))
     yield SuccessResponse.fromApiMessage(ApiMessages.blogUnlinkedFromProblem)
 
+  /** 解析博客-题目关联路径参数，统一复用 problemSlug/blogId 的领域解析规则。 */
   private def blogProblemLinkInput(pathParams: PathParams): IO[BlogProblemLinkInput] =
     HttpApiError.fromEitherBadRequest {
       for
@@ -42,5 +46,6 @@ object UnlinkBlogFromProblem extends AuthenticatedApi[BlogProblemLinkInput, Succ
       yield BlogProblemLinkInput(problemSlug, blogId)
     }
 
+  /** 判断调用者是否拥有管理题目目录和博客关联的权限。 */
   private def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =
     actor.problemManager

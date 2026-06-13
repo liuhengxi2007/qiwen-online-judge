@@ -27,6 +27,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
+/** judge worker 领取任务的公开 API；使用共享 token 认证，优先领取普通提交，其次 hack，再领取低优先级提交。 */
 final case class ClaimJudgeTask(
   judgeConfig: JudgeConfig,
   problemDataStorage: ProblemDataStorage,
@@ -36,10 +37,12 @@ final case class ClaimJudgeTask(
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/worker/judge/claim")
 
+  /** 校验 worker token 并解析 claim 请求；路径参数无业务含义。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ClaimJudgeTaskRequest] =
     val _ = pathParams
     JudgeTokenAuth.ensureJudgeToken(request, judgeConfig) *> request.as[ClaimJudgeTaskRequest]
 
+  /** 校验 judger 注册和心跳有效性后返回 judge/hack 任务；没有任务时返回 204。 */
   override def plan(connection: Connection, request: ClaimJudgeTaskRequest): IO[Response[IO]] =
     for
       claimedAt <- IO.realTimeInstant

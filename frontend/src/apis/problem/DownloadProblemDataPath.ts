@@ -6,6 +6,7 @@ import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 下载题目数据单一路径；输入题目 slug、数据路径和可选比赛上下文，输出 Blob 或下载 URL。 */
 export class DownloadProblemDataPath implements APIWithSessionMessage<Blob> {
   declare readonly responseType?: Blob
   readonly method = 'GET'

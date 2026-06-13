@@ -5,6 +5,7 @@ import type { ContestProblemAttachWarningResponse } from '@/objects/contest/resp
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 评估向比赛附加题目前是否需要警告；输入比赛 slug 和题目 slug。 */
 export class EvaluateContestProblemAttachWarning implements APIWithSessionMessage<ContestProblemAttachWarningResponse> {
   declare readonly responseType?: ContestProblemAttachWarningResponse
   readonly method = 'GET'

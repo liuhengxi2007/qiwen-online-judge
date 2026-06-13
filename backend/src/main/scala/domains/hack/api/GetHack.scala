@@ -12,6 +12,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 获取 hack 详情的认证 API；只允许站点/题目管理员、作者、目标提交者或公开详情策略下的用户访问。 */
 object GetHack extends AuthenticatedApi[HackId, HackDetail]:
 
   override val method: Method = Method.GET
@@ -19,12 +20,15 @@ object GetHack extends AuthenticatedApi[HackId, HackDetail]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[HackDetail] = summon[Encoder[HackDetail]]
 
+  /** 从路径解析 hack public id。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[HackId] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("hackId").flatMap(HackId.parse))
 
+  /** 查询可见 hack 详情；不可见或不存在时返回 not found。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, hackId: HackId): IO[HackDetail] =
     HackQueryTable.findVisibleById(connection, actor, hackId).flatMap {
       case Some(value) => IO.pure(value)
+      // FIXME-CN: hack 详情缺失时复用 submissionNotFound 文案；如果前端按文案区分资源类型，这里会给出误导性错误。
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
     }

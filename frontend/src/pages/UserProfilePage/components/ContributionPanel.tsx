@@ -3,11 +3,17 @@ import { Sparkles } from 'lucide-react'
 import { contributionTextClassName } from '@/pages/objects/UserDisplayLabel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 贡献值面板属性，displayedContribution 为 null 时根据加载状态展示 loading 或占位。
+ */
 type ContributionPanelProps = {
   displayedContribution: number | null
   isLoadingProfile: boolean
 }
 
+/**
+ * 用户贡献值统计面板，按贡献值区间使用统一的文字色样式。
+ */
 export function ContributionPanel({ displayedContribution, isLoadingProfile }: ContributionPanelProps) {
   const { t } = useI18n()
 

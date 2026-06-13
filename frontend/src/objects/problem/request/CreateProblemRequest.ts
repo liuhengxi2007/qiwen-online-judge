@@ -4,6 +4,7 @@ import type { ProblemStatementText } from '@/objects/problem/ProblemStatementTex
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 
+/** 创建题目请求体；权限策略和他人提交可见级别由调用方显式传入。 */
 export type CreateProblemRequest = {
   slug: ProblemSlug
   title: ProblemTitle

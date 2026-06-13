@@ -15,6 +15,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 分页列出题目已接受博客关联的认证 API，按博客可见性过滤结果。 */
 object ListProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogListResponse]:
 
   override val method: Method = Method.GET
@@ -22,6 +23,7 @@ object ListProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogListResp
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[BlogListResponse] = summon[Encoder[BlogListResponse]]
 
+  /** 从路径解析题目 slug，并从查询参数解析分页信息。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemBlogsInput] =
     HttpApiError.fromEitherBadRequest {
       pathParams.require("problemSlug").flatMap(ProblemSlug.parse).map { problemSlug =>
@@ -29,5 +31,6 @@ object ListProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogListResp
       }
     }
 
+  /** 读取题目的 accepted 博客关联，私有博客只对作者本人可见。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: ProblemBlogsInput): IO[BlogListResponse] =
     BlogProblemLinkQueryTable.listByProblem(connection, input.problemSlug, actor.username, input.pageRequest.normalized)

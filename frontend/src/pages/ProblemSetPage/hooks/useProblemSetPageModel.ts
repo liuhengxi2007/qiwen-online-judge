@@ -5,6 +5,9 @@ import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSet
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 题单列表查询状态，保存分页响应、加载标记和错误消息。
+ */
 type ProblemSetPageState = {
   problemSets: ProblemSetSummary[]
   page: number
@@ -14,6 +17,9 @@ type ProblemSetPageState = {
   errorMessage: string
 }
 
+/**
+ * 题单列表 reducer 动作，覆盖加载开始、成功和失败。
+ */
 type ProblemSetPageAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; problemSets: ProblemSetSummary[]; page: number; pageSize: number; totalItems: number }
@@ -28,6 +34,9 @@ const initialState: ProblemSetPageState = {
   errorMessage: '',
 }
 
+/**
+ * 题单列表 reducer；纯函数维护列表加载状态。
+ */
 function reducer(state: ProblemSetPageState, action: ProblemSetPageAction): ProblemSetPageState {
   switch (action.type) {
     case 'load_started':
@@ -39,6 +48,9 @@ function reducer(state: ProblemSetPageState, action: ProblemSetPageAction): Prob
   }
 }
 
+/**
+ * 题单列表模型 hook；按分页请求加载题单摘要列表。
+ */
 export function useProblemSetPageModel(pageRequest: PageRequest) {
   const page = pageRequest.page
   const pageSize = pageRequest.pageSize

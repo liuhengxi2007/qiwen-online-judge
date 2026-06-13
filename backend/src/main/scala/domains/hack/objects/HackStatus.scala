@@ -2,6 +2,7 @@ package domains.hack.objects
 
 import io.circe.{Decoder, Encoder}
 
+/** hack attempt 生命周期和结果状态；queued/running 为非终态，其余为 worker 上报终态。 */
 enum HackStatus:
   case Queued
   case Running
@@ -10,10 +11,12 @@ enum HackStatus:
   case Invalid
   case Failed
 
+/** hack 状态的 JSON/数据库字符串编解码器。 */
 object HackStatus:
   given Encoder[HackStatus] = Encoder.encodeString.contramap(encode)
   given Decoder[HackStatus] = Decoder.decodeString.emap(parse)
 
+  /** 将外部字符串解析为 hack 状态。 */
   def parse(value: String): Either[String, HackStatus] =
     value.trim match
       case "queued" => Right(HackStatus.Queued)
@@ -24,6 +27,7 @@ object HackStatus:
       case "failed" => Right(HackStatus.Failed)
       case _ => Left("Hack status must be one of: queued, running, success, no_effect, invalid, failed.")
 
+  /** 将 hack 状态编码为数据库和 JSON 字符串。 */
   def encode(value: HackStatus): String =
     value match
       case HackStatus.Queued => "queued"

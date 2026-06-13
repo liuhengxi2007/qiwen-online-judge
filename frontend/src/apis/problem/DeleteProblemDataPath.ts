@@ -7,6 +7,7 @@ import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 删除题目数据中的指定路径；输入题目 slug、数据路径和可选比赛上下文。 */
 export class DeleteProblemDataPath implements APIWithSessionMessage<ProblemDetail> {
   declare readonly responseType?: ProblemDetail
   readonly method = 'POST'

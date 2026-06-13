@@ -13,6 +13,9 @@ import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Paginati
 import { useI18n } from '@/system/i18n/use-i18n'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
+/**
+ * 站点管理页，要求站点管理员权限并组合用户管理与判题机状态卡片。
+ */
 export function SiteManagePage() {
   const { t } = useI18n()
   usePageTitle(t('siteManage.pageTitle'))

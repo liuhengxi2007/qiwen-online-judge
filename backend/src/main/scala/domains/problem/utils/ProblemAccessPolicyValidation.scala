@@ -13,8 +13,10 @@ import shared.objects.access.{AccessSubject, ResourceAccessPolicy}
 
 import java.sql.Connection
 
+/** 题目访问策略校验；负责确认授权主体和 slug 冲突资源真实存在。 */
 object ProblemAccessPolicyValidation:
 
+  /** 检查原始 slug 是否已被题单占用；非法题单 slug 视为不存在。 */
   def problemSetSlugExists(connection: Connection, rawSlug: String): IO[Boolean] =
     ProblemSetSlug.parse(rawSlug) match
       case Left(_) =>
@@ -22,6 +24,7 @@ object ProblemAccessPolicyValidation:
       case Right(slug) =>
         ResolveProblemSetSlug.plan(connection, slug).map(_.exists)
 
+  /** 校验访问策略中所有用户和用户组主体存在；不存在时返回 bad request。 */
   def validateAccessPolicySubjects(connection: Connection, policy: ResourceAccessPolicy): IO[Unit] =
     (policy.viewerGrants ++ policy.managerGrants).traverse_(validateAccessPolicySubject(connection, _))
 

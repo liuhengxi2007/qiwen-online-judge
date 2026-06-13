@@ -2,6 +2,7 @@ import type { APIWithSessionMessage } from '@/system/api/api-message'
 import type { MessageInboxResponse } from '@/objects/message/response/MessageInboxResponse'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
+/** 查询私信收件箱；可选分页参数，输出会话摘要列表和总未读数。 */
 export class ListInbox implements APIWithSessionMessage<MessageInboxResponse> {
   declare readonly responseType?: MessageInboxResponse
   readonly method = 'GET'

@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** problem_access_grants 表结构与历史通用授权表迁移逻辑。 */
 object ProblemAccessGrantTableSchema:
 
   val initTableSql: String =
@@ -52,6 +53,7 @@ object ProblemAccessGrantTableSchema:
       |where resource_kind = 'problem'
       |""".stripMargin
 
+  /** 创建题目授权表，并从旧 resource_* 授权表迁移 problem 记录后删除旧记录。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

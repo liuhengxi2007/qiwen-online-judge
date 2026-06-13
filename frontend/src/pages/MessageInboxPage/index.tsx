@@ -17,6 +17,9 @@ import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCo
 
 const conversationsPerPage = 10
 
+/**
+ * 私信收件箱页面，负责会话守卫、分页加载、收件人搜索和全部已读操作组合。
+ */
 export function MessageInboxPage() {
   const { t } = useI18n()
   usePageTitle(t('messages.pageTitle'))

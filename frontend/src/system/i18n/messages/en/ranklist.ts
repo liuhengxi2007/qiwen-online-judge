@@ -1,3 +1,6 @@
+/**
+ * 英文排行榜消息，覆盖排名类型、筛选、分页和空状态文案。
+ */
 export const enRanklistMessages: Record<string, string> = {
   'ranklist.pageTitle': 'Qiwen Online Judge - Ranklist',
   'ranklist.heading': 'Ranklist',

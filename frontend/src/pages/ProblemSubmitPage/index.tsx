@@ -30,6 +30,9 @@ const supportedLanguages: Array<{ value: SubmissionLanguage; label: string }> = 
   { value: 'text', label: 'Text' },
 ]
 
+/**
+ * 题目提交页入口，校验普通或比赛内题目路由参数后进入提交表单。
+ */
 export function ProblemSubmitPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.submit.pageTitle'))
@@ -59,6 +62,9 @@ export function ProblemSubmitPage() {
   return <ProblemSubmitPageContent contestSlug={parsedContestSlug} problemSlug={slugResult.value} />
 }
 
+/**
+ * 题目提交页主体，加载题目详情并组合提交头部、编辑器和创建提交动作。
+ */
 function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)

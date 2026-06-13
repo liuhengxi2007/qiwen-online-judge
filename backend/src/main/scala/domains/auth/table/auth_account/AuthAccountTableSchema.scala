@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** auth_accounts 表结构和兼容旧字段的迁移脚本集合。 */
 object AuthAccountTableSchema:
 
   val migrateAuthUsersTableSql: String =
@@ -243,6 +244,7 @@ object AuthAccountTableSchema:
       |end $$;
       |""".stripMargin
 
+  /** 在当前事务连接上执行账号表建表、旧表/旧列迁移、权限约束和邮箱回填。 */
   def initializeSchema(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

@@ -3,8 +3,14 @@ import { parseDocument } from 'yaml'
 import { parseProblemDataPath, problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
+/**
+ * 题目数据中判题配置文件的固定路径。
+ */
 export const judgeConfigPath = 'judge.yaml' as const
 
+/**
+ * 新建题目数据时提供的 judge.yaml v2 模板，包含传统题、限制、checker 和示例测试点。
+ */
 export const judgeConfigTemplate = `version: 2
 hack: false
 roundingScale: 6
@@ -38,58 +44,101 @@ subtasks:
         answer: tests/1.ans
 `
 
+/**
+ * judge.yaml v2 支持的聚合策略集合，用于校验 testcase/subtask aggregation 字段。
+ */
 const aggregations = new Set(['min_max_max', 'min_sum_max', 'sum_max_max', 'sum_sum_max'])
+/**
+ * 测试点类型白名单，区分主测试点、样例和 Hack 专用数据。
+ */
 const testcaseTypes = new Set(['main', 'sample', 'hack'])
+/**
+ * 代码角色名格式，只允许 ASCII 字母、数字、下划线和连字符。
+ */
 const codeRolePattern = /^[A-Za-z0-9_-]+$/
+/**
+ * 文本角色名格式，供传统模式 testcase.roles 兼容单个 .txt 后缀。
+ */
 const textRolePattern = /^[A-Za-z0-9_-]+\.txt$/
 
+/**
+ * 判题配置校验结果；成功仅携带 warning，失败同时返回错误列表和 warning。
+ */
 export type JudgeConfigValidationResult =
   | { ok: true; warnings: string[] }
   | { ok: false; errors: string[]; warnings: string[] }
 
+/**
+ * 判题配置校验上下文，累积错误并保存题目数据中已存在的文件路径集合。
+ */
 type ValidationContext = {
   errors: string[]
   filePaths: Set<string>
 }
 
+/**
+ * 普通评测资源限制配置，单位与 judge.yaml 字段保持一致。
+ */
 type LimitsConfig = {
   timeMs: number
   memoryMb: number
 }
 
+/**
+ * 工具程序资源限制配置，用于 interactor、strategyProvider 等受限工具。
+ */
 type ToolLimitsConfig = {
   timeMs: number
   memoryMb: number
 }
 
+/**
+ * 工具程序配置，包含必需路径和可选资源限制。
+ */
 type ToolConfig = {
   path: string
   limits?: ToolLimitsConfig
 }
 
+/**
+ * checker 配置，支持内置 exact/echo 和 C++17 自定义 checker。
+ */
 type CheckerConfig =
   | { type: 'builtin'; name: 'exact' }
   | { type: 'builtin'; name: 'echo' }
   | { type: 'cpp17'; path: string }
 
+/**
+ * 判题模式配置，区分传统单角色和交互式多角色。
+ */
 type ModeConfig =
   | { type: 'traditional'; role: string }
   | { type: 'interactive'; roles: string[]; interactor: ToolConfig }
 
+/**
+ * 聚合策略配置，允许根级和 subtask 级分别声明 testcase/subtask 聚合方式。
+ */
 type AggregationConfig = {
   testcases?: string
   subtasks?: string
 }
 
+/**
+ * 标准答案生成配置，区分未声明、显式禁用和生成器文件。
+ */
 type StandardConfig =
   | { type: 'unspecified' }
   | { type: 'none' }
   | { type: 'generator'; path: string }
 
+/**
+ * 校验 judge.yaml 内容和题目数据文件树；解析 YAML、验证 schema、继承默认配置并返回错误集合。
+ */
 export function validateJudgeConfigYaml(
   content: string,
   dataTree: ProblemDataTreeNode[],
 ): JudgeConfigValidationResult {
+  // 注意：judge.yaml 来自用户可编辑文本，unknown/Record 校验是刻意设置的不可信输入边界。
   const document = parseDocument(content, { prettyErrors: false })
   const syntaxErrors = document.errors.map((error) => error.message)
   if (syntaxErrors.length > 0) {
@@ -224,6 +273,9 @@ export function validateJudgeConfigYaml(
   return toResult(ctx)
 }
 
+/**
+ * 校验 limits 对象；未声明返回 null，声明时要求 timeMs 和 memoryMb 都在允许范围内。
+ */
 function validateLimits(value: unknown, label: string, ctx: ValidationContext): LimitsConfig | null {
   if (value === undefined) {
     return null
@@ -238,6 +290,9 @@ function validateLimits(value: unknown, label: string, ctx: ValidationContext): 
   return timeMs !== null && memoryMb !== null ? { timeMs, memoryMb } : null
 }
 
+/**
+ * 校验 checker 配置；支持内置 checker 和 cpp17/cpp 自定义 checker 文件路径。
+ */
 function validateChecker(value: unknown, label: string, ctx: ValidationContext): CheckerConfig | null {
   if (value === undefined) {
     return null
@@ -264,6 +319,9 @@ function validateChecker(value: unknown, label: string, ctx: ValidationContext):
   return null
 }
 
+/**
+ * 校验不带资源限制的工具配置；允许简写为路径字符串或对象 path 字段。
+ */
 function validateTool(value: unknown, label: string, ctx: ValidationContext): ToolConfig | null {
   if (value === undefined) {
     return null
@@ -280,6 +338,9 @@ function validateTool(value: unknown, label: string, ctx: ValidationContext): To
   return path ? { path } : null
 }
 
+/**
+ * 校验带资源限制的工具配置；必须声明 path 和 limits。
+ */
 function validateLimitedTool(value: unknown, label: string, ctx: ValidationContext): ToolConfig | null {
   if (value === undefined) {
     return null
@@ -294,6 +355,9 @@ function validateLimitedTool(value: unknown, label: string, ctx: ValidationConte
   return path && limits ? { path, limits } : null
 }
 
+/**
+ * 校验 standard 配置；undefined 表示继承父级，false 表示禁用，对象表示答案生成器。
+ */
 function validateStandard(value: unknown, label: string, ctx: ValidationContext): StandardConfig {
   if (value === undefined) {
     return { type: 'unspecified' }
@@ -313,10 +377,16 @@ function validateStandard(value: unknown, label: string, ctx: ValidationContext)
   return path ? { type: 'generator', path } : { type: 'unspecified' }
 }
 
+/**
+ * 计算 standard 继承结果；子级未声明时使用父级配置。
+ */
 function inheritStandard(value: StandardConfig, parent: StandardConfig): StandardConfig {
   return value.type === 'unspecified' ? parent : value
 }
 
+/**
+ * 校验 Hack 开启时的必要依赖，要求 validator 和 standard 策略都明确存在。
+ */
 function validateHackCapability(
   label: string,
   enabled: boolean,
@@ -335,6 +405,9 @@ function validateHackCapability(
   }
 }
 
+/**
+ * 校验工具 limits 对象；工具限制必须同时声明合法的 timeMs 和 memoryMb。
+ */
 function validateToolLimits(value: unknown, label: string, ctx: ValidationContext): ToolLimitsConfig | null {
   if (!isRecord(value)) {
     ctx.errors.push(`${label} is required and must be an object.`)
@@ -346,6 +419,9 @@ function validateToolLimits(value: unknown, label: string, ctx: ValidationContex
   return timeMs !== null && memoryMb !== null ? { timeMs, memoryMb } : null
 }
 
+/**
+ * 校验判题模式；支持 traditional 简写字符串和 interactive 对象模式。
+ */
 function validateMode(value: unknown, label: string, ctx: ValidationContext): ModeConfig | null {
   if (value === undefined) {
     return null
@@ -380,6 +456,9 @@ function validateMode(value: unknown, label: string, ctx: ValidationContext): Mo
   return null
 }
 
+/**
+ * 校验 roles 配置对象，逐个校验角色名和对应 stub 配置。
+ */
 function validateRoleConfigs(value: unknown, label: string, ctx: ValidationContext): void {
   if (value === undefined) {
     return
@@ -401,6 +480,9 @@ function validateRoleConfigs(value: unknown, label: string, ctx: ValidationConte
   })
 }
 
+/**
+ * 校验 headers 列表，要求每个引用存在、以 .h 结尾且 include 文件名不重复。
+ */
 function validateHeaders(value: unknown, label: string, ctx: ValidationContext): void {
   if (value === undefined) {
     return
@@ -429,6 +511,9 @@ function validateHeaders(value: unknown, label: string, ctx: ValidationContext):
   })
 }
 
+/**
+ * 校验交互角色 stub 配置，目前只支持 cpp17 stub 文件路径。
+ */
 function validateRoleStubs(value: unknown, label: string, ctx: ValidationContext): void {
   if (value === undefined) {
     return
@@ -447,6 +532,9 @@ function validateRoleStubs(value: unknown, label: string, ctx: ValidationContext
   })
 }
 
+/**
+ * 校验必填角色列表，返回合法角色名数组，列表为空或非法时记录错误。
+ */
 function validateRoleList(value: unknown, label: string, ctx: ValidationContext, options: { allowTextRole: boolean }): string[] | null {
   if (!Array.isArray(value)) {
     ctx.errors.push(`${label} is required and must be a list.`)
@@ -466,6 +554,9 @@ function validateRoleList(value: unknown, label: string, ctx: ValidationContext,
   return roles
 }
 
+/**
+ * 校验可选角色列表；未声明返回 null，声明时必须是非空列表。
+ */
 function validateOptionalRoleList(value: unknown, label: string, ctx: ValidationContext): string[] | null {
   if (value === undefined) {
     return null
@@ -488,6 +579,9 @@ function validateOptionalRoleList(value: unknown, label: string, ctx: Validation
   return roles
 }
 
+/**
+ * 校验单个角色名格式，可按调用场景允许传统模式的 .txt 文本角色。
+ */
 function validateRole(value: string, label: string, ctx: ValidationContext, options: { allowTextRole: boolean }): string | null {
   const role = value.trim()
   const isValidRole = codeRolePattern.test(role) || (options.allowTextRole && textRolePattern.test(role))
@@ -499,6 +593,9 @@ function validateRole(value: string, label: string, ctx: ValidationContext, opti
   return role
 }
 
+/**
+ * 校验 aggregation 对象，分别读取 testcase 和 subtask 聚合策略。
+ */
 function validateAggregation(value: unknown, label: string, ctx: ValidationContext): AggregationConfig {
   if (value === undefined) {
     return {}
@@ -514,6 +611,9 @@ function validateAggregation(value: unknown, label: string, ctx: ValidationConte
   }
 }
 
+/**
+ * 校验单个聚合策略值，缺失时返回 undefined 以便后续继承父级。
+ */
 function validateAggregationValue(value: unknown, label: string, ctx: ValidationContext): string | undefined {
   if (value === undefined) {
     return undefined
@@ -525,6 +625,9 @@ function validateAggregationValue(value: unknown, label: string, ctx: Validation
   return value
 }
 
+/**
+ * 校验测试点类型；缺失时按 main 处理，非法值记录错误并返回 null。
+ */
 function validateTestcaseType(value: unknown, label: string, ctx: ValidationContext): 'main' | 'sample' | 'hack' | null {
   if (value === undefined) {
     return 'main'
@@ -536,6 +639,9 @@ function validateTestcaseType(value: unknown, label: string, ctx: ValidationCont
   return value as 'main' | 'sample' | 'hack'
 }
 
+/**
+ * 合并父级和子级聚合策略，子级声明优先。
+ */
 function mergeAggregation(parent: AggregationConfig, child: AggregationConfig): AggregationConfig {
   return {
     testcases: child.testcases ?? parent.testcases,
@@ -543,20 +649,32 @@ function mergeAggregation(parent: AggregationConfig, child: AggregationConfig): 
   }
 }
 
+/**
+ * 带原始下标的 YAML 节点值，用于错误消息指向列表位置。
+ */
 type IndexedValue = {
   value: unknown
   index: number
 }
 
+/**
+ * 十进制数字的整数化表示，用于无浮点误差地累加 scoreRatio。
+ */
 type DecimalUnits = {
   units: bigint
   scale: number
 }
 
+/**
+ * 校验同级列表中的 scoreRatio 总和是否超过 1。
+ */
 function validateSiblingRatios(items: unknown[], label: string, ctx: ValidationContext): void {
   validateSiblingRatioEntries(items.map((value, index) => ({ value, index })), label, ctx)
 }
 
+/**
+ * 校验带索引的 scoreRatio 条目，忽略未声明比例的条目并累加显式比例。
+ */
 function validateSiblingRatioEntries(items: IndexedValue[], label: string, ctx: ValidationContext): void {
   const explicitRatios: DecimalUnits[] = []
 
@@ -580,6 +698,9 @@ function validateSiblingRatioEntries(items: IndexedValue[], label: string, ctx: 
   }
 }
 
+/**
+ * 将 JS number 转为十进制整数和缩放位数，支持科学计数法输入。
+ */
 function decimalUnitsFromNumber(value: number): DecimalUnits {
   const [coefficient, exponentPart] = value.toString().toLowerCase().split('e')
   const exponent = exponentPart === undefined ? 0 : Number(exponentPart)
@@ -593,16 +714,25 @@ function decimalUnitsFromNumber(value: number): DecimalUnits {
   return { units: BigInt(digits), scale }
 }
 
+/**
+ * 在统一小数位后判断多个十进制比例之和是否超过 1。
+ */
 function decimalUnitsExceedOne(values: DecimalUnits[]): boolean {
   const scale = Math.max(0, ...values.map((value) => value.scale))
   const sum = values.reduce((total, value) => total + value.units * pow10(scale - value.scale), 0n)
   return sum > pow10(scale)
 }
 
+/**
+ * 返回 10 的 BigInt 幂，用于十进制比例缩放。
+ */
 function pow10(exponent: number): bigint {
   return 10n ** BigInt(exponent)
 }
 
+/**
+ * 校验必填文件引用，要求非空字符串且路径存在于题目数据树。
+ */
 function validateRequiredFileRef(value: unknown, label: string, ctx: ValidationContext): void {
   if (typeof value !== 'string' || value.trim() === '') {
     ctx.errors.push(`${label} is required.`)
@@ -611,6 +741,9 @@ function validateRequiredFileRef(value: unknown, label: string, ctx: ValidationC
   validateExistingFile(value, label, ctx)
 }
 
+/**
+ * 校验可选文件引用；缺失时跳过，存在时要求非空且路径有效。
+ */
 function validateOptionalFileRef(value: unknown, label: string, ctx: ValidationContext): void {
   if (value === undefined) {
     return
@@ -622,6 +755,9 @@ function validateOptionalFileRef(value: unknown, label: string, ctx: ValidationC
   validateExistingFile(value, label, ctx)
 }
 
+/**
+ * 校验路径字段，返回规范化后的题目数据路径或记录错误。
+ */
 function validatePathValue(value: unknown, label: string, ctx: ValidationContext): string | null {
   if (typeof value !== 'string' || value.trim() === '') {
     ctx.errors.push(`${label} is required.`)
@@ -630,6 +766,9 @@ function validatePathValue(value: unknown, label: string, ctx: ValidationContext
   return validateExistingFile(value, label, ctx)
 }
 
+/**
+ * 校验文件路径语法并确认文件存在于当前数据树。
+ */
 function validateExistingFile(rawPath: string, label: string, ctx: ValidationContext): string | null {
   const parsedPath = parseProblemDataPath(rawPath)
   if (!parsedPath.ok) {
@@ -645,12 +784,18 @@ function validateExistingFile(rawPath: string, label: string, ctx: ValidationCon
   return path
 }
 
+/**
+ * 拒绝 v1 遗留 name 字段，引导用户在 judge.yaml v2 中使用 label。
+ */
 function rejectLegacyName(value: Record<string, unknown>, label: string, ctx: ValidationContext): void {
   if (value.name !== undefined) {
     ctx.errors.push(`${label}.name is not supported in judge.yaml v2; use label instead.`)
   }
 }
 
+/**
+ * 校验可选 label 字段，存在时必须是非空字符串。
+ */
 function validateOptionalLabel(value: unknown, label: string, ctx: ValidationContext): void {
   if (value === undefined) {
     return
@@ -660,12 +805,18 @@ function validateOptionalLabel(value: unknown, label: string, ctx: ValidationCon
   }
 }
 
+/**
+ * 校验数字字段是否等于指定版本或常量值。
+ */
 function requireExactNumber(value: unknown, label: string, expected: number, ctx: ValidationContext): void {
   if (value !== expected) {
     ctx.errors.push(`${label} must be ${expected}.`)
   }
 }
 
+/**
+ * 校验可选整数范围；缺失时跳过，存在时必须为指定闭区间内整数。
+ */
 function validateOptionalInteger(
   value: unknown,
   label: string,
@@ -685,6 +836,9 @@ function validateOptionalInteger(
   }
 }
 
+/**
+ * 校验可选布尔字段；缺失返回 null，非法类型记录错误。
+ */
 function validateOptionalBoolean(value: unknown, label: string, ctx: ValidationContext): boolean | null {
   if (value === undefined) {
     return null
@@ -696,6 +850,9 @@ function validateOptionalBoolean(value: unknown, label: string, ctx: ValidationC
   return value
 }
 
+/**
+ * 校验必填整数范围，非法时记录错误并返回 null。
+ */
 function validateIntegerRange(
   value: unknown,
   label: string,
@@ -714,6 +871,9 @@ function validateIntegerRange(
   return value
 }
 
+/**
+ * 校验必填列表字段，非法时记录错误并返回 null。
+ */
 function validateList(value: unknown, label: string, ctx: ValidationContext): unknown[] | null {
   if (!Array.isArray(value)) {
     ctx.errors.push(`${label} is required and must be a list.`)
@@ -722,14 +882,23 @@ function validateList(value: unknown, label: string, ctx: ValidationContext): un
   return value
 }
 
+/**
+ * 生成用于错误消息的 subtask/testcase 标签，优先包含用户声明的 label。
+ */
 function judgeNodeLabel(kind: 'subtask' | 'testcase', index: number, label: unknown): string {
   return typeof label === 'string' && label.trim() ? `${kind} ${index} (${label.trim()})` : `${kind} ${index}`
 }
 
+/**
+ * 将未知 YAML 节点收窄为普通对象，排除 null 和数组。
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/**
+ * 根据上下文错误集合构造最终校验结果；当前校验器暂不产生 warning。
+ */
 function toResult(ctx: ValidationContext): JudgeConfigValidationResult {
   return ctx.errors.length > 0 ? { ok: false, errors: ctx.errors, warnings: [] } : { ok: true, warnings: [] }
 }

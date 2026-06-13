@@ -23,6 +23,9 @@ import { useContestPageModel } from './hooks/useContestPageModel'
 
 const contestsPerPage = 10
 
+/**
+ * 比赛列表页，负责会话守卫、分页查询、创建入口和列表展示。
+ */
 export function ContestPage() {
   const { t } = useI18n()
   usePageTitle(t('contest.pageTitle'))

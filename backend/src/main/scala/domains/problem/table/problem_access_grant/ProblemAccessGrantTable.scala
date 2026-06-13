@@ -8,8 +8,10 @@ import shared.objects.access.{AccessSubject, GrantRole}
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 
+/** 题目专用访问授权表入口；按题目和角色维护用户/用户组 grants。 */
 object ProblemAccessGrantTable:
 
+  /** 初始化题目访问授权表及历史授权迁移。 */
   def initialize(connection: Connection): IO[Unit] =
     ProblemAccessGrantTableSchema.initialize(connection)
 
@@ -21,6 +23,7 @@ object ProblemAccessGrantTable:
       |order by subject_kind asc, subject_key asc
       |""".stripMargin
 
+  /** 列出题目某个授权角色的所有主体，用于回填响应中的访问策略。 */
   def listForProblem(
     connection: Connection,
     problemId: ProblemId,
@@ -42,6 +45,7 @@ object ProblemAccessGrantTable:
       finally statement.close()
     }
 
+  /** 以给定 grants 替换题目某个角色的授权主体；会先删除再批量插入。 */
   def replaceForProblem(
     connection: Connection,
     problemId: ProblemId,
@@ -59,6 +63,7 @@ object ProblemAccessGrantTable:
       |where problem_id = ?
       |""".stripMargin
 
+  /** 删除题目的所有访问授权；通常在删除题目前显式清理。 */
   def deleteAllForProblem(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteAllForProblemSQL)

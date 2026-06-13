@@ -12,6 +12,9 @@ import { useSiteManageQuery } from './useSiteManageQuery'
 import { useUserDeleteMutation } from './useUserDeleteMutation'
 import { useUserPermissionsMutation } from './useUserPermissionsMutation'
 
+/**
+ * 站点管理页模型 hook；在权限允许时加载用户列表、判题机状态并提供权限/删除操作。
+ */
 export function useSiteManageModel(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
   const query = useSiteManageQuery(siteManagerEnabled, userListRequest)
   const [state, dispatch] = useReducer(reduceSiteManageState, initialSiteManageState)

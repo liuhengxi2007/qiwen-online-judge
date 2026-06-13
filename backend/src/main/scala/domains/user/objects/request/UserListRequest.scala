@@ -5,11 +5,13 @@ import io.circe.syntax.*
 
 import shared.objects.PageRequest
 
+/** 管理端用户列表查询请求，包含可选搜索词和分页参数。 */
 final case class UserListRequest(
   query: Option[UserSearchQuery],
   pageRequest: PageRequest
 )
 
+/** 提供用户列表查询请求的扁平 JSON 编解码。 */
 object UserListRequest:
   given Encoder[UserListRequest] = Encoder.instance(request =>
     Json.obj(

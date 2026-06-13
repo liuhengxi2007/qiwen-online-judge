@@ -7,6 +7,9 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
+/**
+ * 通知操作 hook 配置，提供刷新回调和失败兜底文案。
+ */
 type UseNotificationActionsOptions = {
   refreshNotifications: (pageRequest?: PageRequest) => Promise<void>
   markReadLocal: (notificationId: NotificationId) => void
@@ -14,6 +17,9 @@ type UseNotificationActionsOptions = {
   markAllReadFailedMessage: string
 }
 
+/**
+ * 通知操作 hook；提供单条已读和全部已读动作，并维护操作中状态。
+ */
 export function useNotificationActions({
   refreshNotifications,
   markReadLocal,
@@ -33,7 +39,7 @@ export function useNotificationActions({
         await sendAPI(new MarkNotificationRead(notificationId))
         markReadLocal(notificationId)
       } catch {
-        // Keep the caller's navigation working even if mark-read fails.
+        // 注意：单条标记已读失败不阻断通知点击后的导航，后续刷新会重新同步未读状态。
       }
     },
     [markReadLocal],

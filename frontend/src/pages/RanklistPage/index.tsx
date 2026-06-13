@@ -12,6 +12,9 @@ import { ContributionRanklistCard } from './components/ContributionRanklistCard'
 import { RatingRanklistCard } from './components/RatingRanklistCard'
 import { normalizePage } from './functions/PageQuery'
 
+/**
+ * 榜单页，负责登录保护、读取三个榜单的独立页码并组合三类榜单卡片。
+ */
 export function RanklistPage() {
   const { t } = useI18n()
   usePageTitle(t('ranklist.pageTitle'))

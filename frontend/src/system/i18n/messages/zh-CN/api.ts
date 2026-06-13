@@ -1,3 +1,6 @@
+/**
+ * 简体中文 API 消息码翻译，用于把后端 code 转为用户可见反馈。
+ */
 export const zhCnApiMessages: Record<string, string> = {
   'api.error.auth.invalid_credentials': '用户名或密码错误。',
   'api.error.auth.current_password_incorrect': '当前密码错误。',

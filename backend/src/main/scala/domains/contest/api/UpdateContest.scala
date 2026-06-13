@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 更新比赛基础信息和访问策略的认证 API，只有比赛管理者可调用。 */
 object UpdateContest extends AuthenticatedApi[(ContestSlug, UpdateContestRequest), ContestDetail]:
 
   override val method: Method = Method.POST
@@ -23,12 +24,14 @@ object UpdateContest extends AuthenticatedApi[(ContestSlug, UpdateContestRequest
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ContestDetail] = summon[Encoder[ContestDetail]]
 
+  /** 从路径解析比赛 slug 并读取更新请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, UpdateContestRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
       body <- request.as[UpdateContestRequest]
     yield (contestSlug, body)
 
+  /** 校验管理权、标题描述、时间范围和授权主体后更新比赛并返回最新详情。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

@@ -12,7 +12,9 @@ import judger.objects.RuntimeCommand
 
 import java.nio.file.Path
 
+/** 普通提交判题主流程，负责准备程序/工具、执行各子任务并汇总成回报请求。 */
 object SubmissionJudgeRunner:
+  /** 执行完整提交判题；副作用包括创建工作目录、初始化 isolate、下载题目数据和运行程序。 */
   def judge(
     task: JudgeTask,
     config: AppConfig,
@@ -34,6 +36,7 @@ object SubmissionJudgeRunner:
       taskSystemError(task, JudgeFailureReason.JudgerRuntimeFailed)
     }
 
+  /** 顺序执行所有子任务并聚合整题结果。 */
   private def judgeSubtasks(
     task: JudgeTask,
     config: AppConfig,
@@ -51,6 +54,7 @@ object SubmissionJudgeRunner:
       )
     }
 
+  /** 根据子任务模式分派传统题或交互题执行；未知模式返回系统错误。 */
   private def judgeSubtask(
     task: JudgeTask,
     config: AppConfig,
@@ -105,12 +109,15 @@ object SubmissionJudgeRunner:
                   }
                 }.map(testcases => JudgeResultAggregator.aggregateSubtask(subtask, testcases))
       case _ =>
+        // FIXME-CN: 未知 mode.type 只折叠为 SystemError，backend/judge.yaml 协议扩展时缺少显式兼容性错误。
         IO.pure(subtaskSystemError(subtask, JudgeFailureReason.SystemError))
 
+  /** 查询某个 role 的可执行命令；不存在或编译失败时返回 None。 */
   private[infra] def programCommand(task: JudgeTask, programs: JudgeToolPreparation.PreparedPrograms, role: String): Option[RuntimeCommand] =
     if !task.programs.contains(role) || programs.compileFailedRoles.contains(role) then None
     else programs.commands.get(role)
 
+  /** 下载单个测试点输入和可选答案；下载或 hash 校验失败统一映射为 ProblemDataLoadFailed。 */
   private[infra] def loadTestcaseData(
     task: JudgeTask,
     testcase: JudgeTaskTestcase,

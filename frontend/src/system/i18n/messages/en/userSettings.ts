@@ -1,3 +1,6 @@
+/**
+ * 英文用户设置消息，覆盖账户、偏好、资料、权限和屏蔽列表文案。
+ */
 export const enUserSettingsMessages: Record<string, string> = {
   'userSettings.pageTitle': 'Qiwen Online Judge - User Settings',
   'userSettings.heading': 'User Settings',

@@ -8,8 +8,15 @@ import { Label } from '@/components/ui/label'
 import type { useProblemDataPageModel } from '../hooks/useProblemDataPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 测试数据页模型类型别名，供上传卡片访问文件选择、提示消息和上传动作。
+ */
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
+/**
+ * 测试数据上传卡片，接收 zip 或单文件选择并通过页面模型提交上传。
+ * 选择文件时会清理旧消息，上传前的覆盖提示由模型根据当前文件树计算。
+ */
 export function ProblemDataUploadCard({ model }: { model: ProblemDataPageModel }) {
   const { t } = useI18n()
 

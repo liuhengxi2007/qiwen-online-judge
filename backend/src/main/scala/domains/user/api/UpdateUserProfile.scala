@@ -15,6 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 用户资料更新 API，允许用户本人或站点管理员修改展示名。 */
 object UpdateUserProfile extends AuthenticatedApi[(Username, UpdateOwnProfileRequest), UserSettingsResponse]:
 
   override val method: Method = Method.POST
@@ -22,12 +23,14 @@ object UpdateUserProfile extends AuthenticatedApi[(Username, UpdateOwnProfileReq
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserSettingsResponse] = summon[Encoder[UserSettingsResponse]]
 
+  /** 从路径读取目标用户名并从 JSON 请求体解码资料更新内容。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(Username, UpdateOwnProfileRequest)] =
     for
       rawUsername <- HttpApiError.fromEitherBadRequest(pathParams.require("targetUsername"))
       updateRequest <- request.as[UpdateOwnProfileRequest]
     yield (Username.canonical(rawUsername), updateRequest)
 
+  /** 校验本人或站点管理员权限后更新展示名，保持其他偏好字段不变。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

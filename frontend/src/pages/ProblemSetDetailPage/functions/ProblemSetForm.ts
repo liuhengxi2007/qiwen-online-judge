@@ -10,18 +10,27 @@ import {
   grantedUsersInputFromAccessPolicy,
 } from '@/pages/components/ResourceAccessEditorInput'
 
+/**
+ * 题单访问控制编辑状态，保存公开级别和授权主体输入。
+ */
 type ProblemSetAccessEditorState = {
   baseAccess: BaseAccess
   grantedUsersInput: string
   grantedGroupsInput: string
 }
 
+/**
+ * 题单内容编辑状态，包含标题、描述和访问控制输入。
+ */
 type ProblemSetContentEditorState = ProblemSetAccessEditorState & {
   title: string
   description: string
   authorUsername: string
 }
 
+/**
+ * 从题单编辑状态构造内容更新草稿。
+ */
 export function buildProblemSetContentUpdateDraft(
   problemSet: ProblemSetDetail,
   editor: ProblemSetContentEditorState,
@@ -36,6 +45,9 @@ export function buildProblemSetContentUpdateDraft(
   }
 }
 
+/**
+ * 从题单编辑状态构造访问控制更新草稿。
+ */
 export function buildProblemSetAccessUpdateDraft(
   problemSet: ProblemSetDetail,
   editor: ProblemSetAccessEditorState,
@@ -50,6 +62,9 @@ export function buildProblemSetAccessUpdateDraft(
   }
 }
 
+/**
+ * 从题单访问控制编辑状态构造结构化访问策略。
+ */
 export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditorState) {
   const accessPolicyResult = buildResourceAccessPolicy(
     editor.baseAccess,
@@ -62,6 +77,9 @@ export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditor
     : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] }
 }
 
+/**
+ * 题单更新草稿，保存标题、描述和访问策略。
+ */
 export type UpdateProblemSetDraft = {
   title: string
   description: string
@@ -71,6 +89,9 @@ export type UpdateProblemSetDraft = {
   grantedGroupsInput: string
 }
 
+/**
+ * 校验题单更新草稿，成功时构造后端更新请求。
+ */
 export function validateProblemSetUpdateDraft(
   draft: UpdateProblemSetDraft,
 ): { ok: true; request: UpdateProblemSetRequest } | { ok: false; message: string } {

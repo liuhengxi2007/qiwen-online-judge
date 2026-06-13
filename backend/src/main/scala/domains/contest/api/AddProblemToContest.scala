@@ -18,6 +18,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 将题目加入指定比赛的认证 API，要求调用者具备该比赛的管理权限以及题目的管理权限。 */
 object AddProblemToContest extends AuthenticatedApi[(ContestSlug, AddProblemToContestRequest), ContestDetail]:
 
   override val method: Method = Method.POST
@@ -25,12 +26,14 @@ object AddProblemToContest extends AuthenticatedApi[(ContestSlug, AddProblemToCo
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ContestDetail] = summon[Encoder[ContestDetail]]
 
+  /** 从路径读取比赛 slug 并解析请求体中的题目 slug，非法路径参数或请求体会转为 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, AddProblemToContestRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
       body <- request.as[AddProblemToContestRequest]
     yield (contestSlug, body)
 
+  /** 校验比赛存在、调用者可管理比赛和题目后写入关联，成功返回包含题目列表的最新比赛详情。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -48,6 +51,7 @@ object AddProblemToContest extends AuthenticatedApi[(ContestSlug, AddProblemToCo
         HttpApiError.forbidden(ApiMessages.contestManagerRequired)
       )
       problemAccess <- EvaluateProblemAccess.plan(connection, actor, request.problemSlug)
+      /** 注意：题目不存在或调用者不能管理题目都返回 404，用于避免暴露不可管理题目的存在性。 */
       problem <- problemAccess.problem match
         case Some(problem) if problemAccess.canManage => IO.pure(problem)
         case _ => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))

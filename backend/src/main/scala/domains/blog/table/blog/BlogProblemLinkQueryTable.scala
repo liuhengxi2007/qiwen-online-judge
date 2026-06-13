@@ -11,6 +11,7 @@ import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
+/** 博客与题目关联查询表访问对象，负责按题目列出博客和补全博客关联题目。 */
 object BlogProblemLinkQueryTable:
 
   private val blogSelectColumns: String =
@@ -63,6 +64,7 @@ object BlogProblemLinkQueryTable:
       |  and (b.visibility = 'public' or b.author_username = ?)
       |""".stripMargin
 
+  /** 分页读取题目 accepted 博客关联，并按当前用户过滤私有博客。 */
   def listByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -81,6 +83,7 @@ object BlogProblemLinkQueryTable:
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          /** 注意：enrichSummaries 内部同步读取关联题目；这里位于 IO.blocking 中，避免在计算线程直接阻塞。 */
           enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
@@ -116,6 +119,7 @@ object BlogProblemLinkQueryTable:
       |  and bpl.status = 'pending'
       |""".stripMargin
 
+  /** 分页读取题目 pending 博客关联，调用方负责先校验审核权限。 */
   def listPendingByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -133,6 +137,7 @@ object BlogProblemLinkQueryTable:
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          /** 注意：enrichSummaries 内部同步读取关联题目；这里位于 IO.blocking 中，避免在计算线程直接阻塞。 */
           enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
@@ -151,9 +156,11 @@ object BlogProblemLinkQueryTable:
       finally statement.close()
     }
 
+  /** 为博客摘要同步补充 accepted 关联题目；调用方应确保外层已经在阻塞上下文中。 */
   def enrichSummaries(connection: Connection)(summaries: List[BlogSummary]): List[BlogSummary] =
     summaries.map(summary => summary.copy(relatedProblems = listRelatedProblemsBlocking(connection, summary.id)))
 
+  /** 为单个博客摘要补充 accepted 关联题目，并显式包裹在 IO.blocking 中。 */
   def enrichSummary(connection: Connection, summary: BlogSummary): IO[BlogSummary] =
     IO.blocking(summary.copy(relatedProblems = listRelatedProblemsBlocking(connection, summary.id)))
 

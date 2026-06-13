@@ -4,6 +4,7 @@ import type { UserGroupDetail } from '@/objects/usergroup/response/UserGroupDeta
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 
+/** 向用户组添加成员；输入用户组 slug 和成员请求体，输出更新后的用户组详情。 */
 export class AddUserGroupMember implements APIWithSessionMessage<UserGroupDetail> {
   declare readonly responseType?: UserGroupDetail
   readonly method = 'POST'

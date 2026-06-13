@@ -9,6 +9,9 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 比赛列表查询状态，保存分页响应、加载标记和错误文案。
+ */
 type ContestPageState = {
   contests: ContestSummary[]
   page: number
@@ -20,6 +23,9 @@ type ContestPageState = {
   registrationMessage: string
 }
 
+/**
+ * 比赛列表 reducer 动作，覆盖加载开始、成功和失败。
+ */
 type ContestPageAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; contests: ContestSummary[]; page: number; pageSize: number; totalItems: number }
@@ -39,6 +45,9 @@ const initialState: ContestPageState = {
   registrationMessage: '',
 }
 
+/**
+ * 比赛列表 reducer；纯函数维护列表查询状态。
+ */
 function reducer(state: ContestPageState, action: ContestPageAction): ContestPageState {
   switch (action.type) {
     case 'load_started':
@@ -61,6 +70,9 @@ function reducer(state: ContestPageState, action: ContestPageAction): ContestPag
   }
 }
 
+/**
+ * 比赛列表模型 hook；根据分页请求加载比赛摘要列表。
+ */
 export function useContestPageModel(pageRequest: PageRequest) {
   const { t } = useI18n()
   const page = pageRequest.page

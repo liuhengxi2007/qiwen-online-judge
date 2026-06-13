@@ -1,3 +1,6 @@
+/**
+ * 祖先导航链接，使用翻译 key 表示目标页面名称。
+ */
 export type AncestorLink = {
   to: string
   labelKey:
@@ -14,6 +17,9 @@ export type AncestorLink = {
     | 'contests'
 }
 
+/**
+ * 根据当前路径构造面包屑式返回链接；未知路径默认返回仪表盘。
+ */
 function buildAncestorLinksForPath(pathname: string): AncestorLink[] {
   if (pathname === '/' || pathname === '/login' || pathname === '/register') {
     return []
@@ -222,6 +228,9 @@ function buildAncestorLinksForPath(pathname: string): AncestorLink[] {
   return [{ to: '/', labelKey: 'dashboard' }]
 }
 
+/**
+ * 构造最终祖先链接，并过滤掉指向当前页面自身的链接。
+ */
 export function buildAncestorLinks(pathname: string): AncestorLink[] {
   return buildAncestorLinksForPath(pathname).filter((link) => link.to !== pathname)
 }

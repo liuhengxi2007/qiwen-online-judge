@@ -3,6 +3,7 @@ import type { UserSettingsResponse } from '@/objects/user/response/UserSettingsR
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 上传指定用户头像；输入目标用户名和 File，使用 multipart 提交并返回更新后的设置。 */
 export class UploadUserAvatar implements APIWithSessionMessage<UserSettingsResponse> {
   declare readonly responseType?: UserSettingsResponse
   readonly method = 'POST'

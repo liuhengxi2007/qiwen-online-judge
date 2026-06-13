@@ -9,6 +9,10 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组成员角色更新 hook，跟踪当前更新中的成员并调用角色变更 API。
+ * owner 角色表示所有权转移，成功消息与普通角色更新不同。
+ */
 export function useUserGroupUpdateMemberRoleAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()
   const [activeUpdatingUsername, setActiveUpdatingUsername] = useState<Username | null>(null)

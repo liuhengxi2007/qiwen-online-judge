@@ -15,6 +15,9 @@ import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建用户组页，完成会话守卫后渲染用户组创建表单。
+ */
 export function CreateUserGroupPage() {
   const { t } = useI18n()
   usePageTitle(t('userGroup.create.pageTitle'))

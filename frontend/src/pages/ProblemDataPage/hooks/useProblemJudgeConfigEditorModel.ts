@@ -15,6 +15,9 @@ import { sendMultipartAPI } from '@/system/api/api-message'
 import { createHttpClientError, isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 测试数据页模型类型别名，供 judge 配置编辑器读取文件树、刷新列表和替换题目详情。
+ */
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
 const judgePath = parseProblemDataPath(judgeConfigPath)
@@ -23,6 +26,10 @@ if (!judgePath.ok) {
 }
 const judgeDataPath = judgePath.value
 
+/**
+ * judge.yaml 编辑器模型，负责加载现有配置、插入模板、实时校验 YAML 并保存为测试数据文件。
+ * 加载使用浏览器 fetch 读取下载 URL；保存通过 multipart API 上传并刷新题目数据列表。
+ */
 export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
   const problemDataScope = useMemo(() => ({ problemSlug, contestSlug }), [contestSlug, problemSlug])
@@ -47,6 +54,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
       })
 
       if (!response.ok) {
+        // FIXME-CN: judge.yaml 下载绕过 requestJson，错误响应只使用 statusText，无法解码后端 API message。
         throw createHttpClientError(
           response.status === 404
             ? 'not-found'
@@ -77,6 +85,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
   }, [problemDataScope, t])
 
   useEffect(() => {
+    // FIXME-CN: 异步加载没有取消或过期响应保护，scope 变化后旧响应仍可能写入当前编辑器状态。
     void loadConfig()
   }, [loadConfig])
 

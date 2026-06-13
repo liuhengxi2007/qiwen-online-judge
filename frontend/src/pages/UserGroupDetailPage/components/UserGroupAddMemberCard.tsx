@@ -9,8 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { useUserGroupDetailPageModel } from '../hooks/useUserGroupDetailPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型类型别名，供新增成员卡片读取新增草稿和操作状态。
+ */
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 
+/**
+ * 新增用户组成员卡片，仅对可管理用户展示用户名和角色输入。
+ */
 export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageModel }) {
   const { t } = useI18n()
 
@@ -42,6 +48,7 @@ export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageMo
         </div>
         <div className="space-y-2">
           <Label>{t('userGroup.detail.roleLabel')}</Label>
+          {/* 注意：新增成员只能选择 manager/member，SelectItem 字面值覆盖了这里的联合类型。 */}
           <Select value={model.memberRole} onValueChange={(value) => model.setMemberRole(value as 'manager' | 'member')}>
             <SelectTrigger>
               <SelectValue />

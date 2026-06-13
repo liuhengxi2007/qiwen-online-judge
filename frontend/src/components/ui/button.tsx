@@ -4,6 +4,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 按语义和尺寸集中定义按钮样式，供 Button 与分页等复合组件复用。
+ */
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
   {
@@ -33,11 +36,17 @@ const buttonVariants = cva(
   },
 )
 
+/**
+ * Button 的输入属性，兼容原生 button、样式变体和 Radix Slot 透传模式。
+ */
 type ButtonProps = ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }
 
+/**
+ * 基础按钮组件；根据 asChild 决定渲染原生 button 或把样式透传给子元素。
+ */
 function Button({
   className,
   variant,

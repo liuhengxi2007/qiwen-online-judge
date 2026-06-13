@@ -1,3 +1,6 @@
+/**
+ * 英文资源访问控制消息，覆盖公开、授权用户/用户组和管理权限编辑文案。
+ */
 export const enResourceAccessMessages: Record<string, string> = {
   'resourceAccess.public': 'Public access',
   'resourceAccess.publicDescription': 'Turn this on to make the resource visible to all signed-in users.',

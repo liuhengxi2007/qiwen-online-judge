@@ -1,3 +1,6 @@
+/**
+ * 简体中文 Hack 相关消息，覆盖 Hack 列表、详情和提交对抗状态文案。
+ */
 export const zhCnHackMessages: Record<string, string> = {
   'hack.action': 'Hack',
   'hack.id': 'Hack 编号',

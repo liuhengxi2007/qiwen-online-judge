@@ -1,3 +1,6 @@
+/**
+ * 简体中文通知消息，覆盖通知列表、实时刷新和已读操作相关文案。
+ */
 export const zhCnNotificationMessages: Record<string, string> = {
   'notifications.pageTitle': '气温在线评测 - 通知',
   'notifications.heading': '通知',

@@ -4,6 +4,7 @@ import type { ContestRegistrantListResponse } from '@/objects/contest/response/C
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { APIMessage } from '@/system/api/api-message'
 
+/** 查询比赛报名列表；输入比赛 slug 和可选分页参数，输出报名用户分页响应。 */
 export class ListContestRegistrants implements APIMessage<ContestRegistrantListResponse> {
   declare readonly responseType?: ContestRegistrantListResponse
   readonly method = 'GET'

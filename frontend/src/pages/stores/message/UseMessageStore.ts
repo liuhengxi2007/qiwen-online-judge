@@ -3,6 +3,9 @@ import { create } from 'zustand'
 import type { MessageInboxResponse } from '@/objects/message/response/MessageInboxResponse'
 import type { MessageConversationSummary } from '@/objects/message/response/MessageConversationSummary'
 
+/**
+ * 私信收件箱全局状态，保存当前页会话列表、未读数和加载错误。
+ */
 type MessageStoreState = {
   conversations: MessageConversationSummary[]
   totalUnreadCount: number
@@ -18,6 +21,9 @@ type MessageStoreState = {
   clear: () => void
 }
 
+/**
+ * 私信 Zustand store；由收件箱刷新和实时消息连接共同更新。
+ */
 export const useMessageStore = create<MessageStoreState>((set) => ({
   conversations: [],
   totalUnreadCount: 0,

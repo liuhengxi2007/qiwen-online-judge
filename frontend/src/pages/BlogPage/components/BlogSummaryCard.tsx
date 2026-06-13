@@ -12,6 +12,9 @@ import { DateTimeText } from '@/pages/components/DateTimeText'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客摘要卡片属性，包含博客摘要、当前用户名和显示偏好。
+ */
 type BlogSummaryCardProps = {
   blog: BlogSummary
   actions?: ReactNode
@@ -22,6 +25,9 @@ type BlogSummaryCardProps = {
   showDate?: boolean
 }
 
+/**
+ * 博客摘要卡片，展示标题、作者、关联题目、投票得分和创建时间。
+ */
 export function BlogSummaryCard({
   blog,
   actions,

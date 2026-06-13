@@ -14,6 +14,7 @@ import shared.objects.access.{GrantRole, ResourceAccessPolicy}
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** problems 表的写入入口；负责题目创建、更新、删除、行锁和 hack revision 推进。 */
 object ProblemMutationTable:
 
   private val insertSQL: String =
@@ -23,6 +24,7 @@ object ProblemMutationTable:
       |returning id, slug, title, statement_text, data_name, ready, base_access, other_user_submission_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
+  /** 插入题目主记录并写入访问授权 grants；输出基础题目详情。 */
   def insert(
     connection: Connection,
     problemId: ProblemId,
@@ -72,6 +74,7 @@ object ProblemMutationTable:
       |where id = ?
       |""".stripMargin
 
+  /** 更新题目元信息与授权 grants；调用方需先完成权限和主体存在性校验。 */
   def update(connection: Connection, problemId: ProblemId, updatedAt: Instant, request: UpdateProblemRequest): IO[Unit] =
     for
       _ <- IO.blocking {
@@ -100,6 +103,7 @@ object ProblemMutationTable:
       |where id = ?
       |""".stripMargin
 
+  /** 删除题目主记录；依赖数据库外键清理关联行，调用方负责对象存储清理。 */
   def delete(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteSQL)
@@ -118,6 +122,7 @@ object ProblemMutationTable:
       |for update
       |""".stripMargin
 
+  /** 对现有题目行加锁，供 hack 数据物化等跨存储写入串行化使用。 */
   def lockExisting(connection: Connection, problemId: ProblemId): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(lockExistingSQL)
@@ -136,6 +141,7 @@ object ProblemMutationTable:
       |where id = ?
       |""".stripMargin
 
+  /** 增加题目 hack revision；成功 hack 物化后用于触发旧提交低优先级重判。 */
   def incrementHackRevision(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(incrementHackRevisionSQL)

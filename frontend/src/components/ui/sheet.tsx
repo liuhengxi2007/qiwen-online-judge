@@ -6,22 +6,37 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/components/ui/class-names'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 抽屉根组件，复用 Dialog 的受控打开状态和模态交互。
+ */
 function Sheet(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="sheet" {...props} />
 }
 
+/**
+ * 抽屉触发器，负责把调用方元素接入打开交互。
+ */
 function SheetTrigger(props: ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
+/**
+ * 抽屉关闭触发器，供按钮或图标元素声明关闭行为。
+ */
 function SheetClose(props: ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
+/**
+ * 抽屉 Portal 包装，将浮层内容挂载到页面根层级。
+ */
 function SheetPortal(props: ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="sheet-portal" {...props} />
 }
 
+/**
+ * 抽屉遮罩层，隔离背景交互并随打开状态执行过渡动画。
+ */
 function SheetOverlay({
   className,
   ...props
@@ -38,6 +53,9 @@ function SheetOverlay({
   )
 }
 
+/**
+ * 抽屉内容的方向样式集合，控制从上下左右进入时的定位和边框。
+ */
 const sheetVariants = cva(
   'fixed z-50 gap-4 bg-background p-6 shadow-lg transition data-[state=open]:animate-in data-[state=closed]:animate-out',
   {
@@ -55,6 +73,9 @@ const sheetVariants = cva(
   },
 )
 
+/**
+ * 抽屉内容容器，组合 Portal、遮罩、方向样式和默认关闭按钮。
+ */
 function SheetContent({
   className,
   children,
@@ -80,10 +101,16 @@ function SheetContent({
   )
 }
 
+/**
+ * 抽屉头部布局组件，用于标题和说明的纵向排列。
+ */
 function SheetHeader({ className, ...props }: ComponentProps<'div'>) {
   return <div data-slot="sheet-header" className={cn('flex flex-col gap-2', className)} {...props} />
 }
 
+/**
+ * 抽屉底部布局组件，负责把操作按钮贴近底部并在桌面端右对齐。
+ */
 function SheetFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
@@ -94,6 +121,9 @@ function SheetFooter({ className, ...props }: ComponentProps<'div'>) {
   )
 }
 
+/**
+ * 抽屉标题组件，承接可访问标题语义并应用统一标题样式。
+ */
 function SheetTitle({ className, ...props }: ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
@@ -104,6 +134,9 @@ function SheetTitle({ className, ...props }: ComponentProps<typeof DialogPrimiti
   )
 }
 
+/**
+ * 抽屉说明组件；没有子内容时不渲染，避免空描述节点。
+ */
 function SheetDescription({
   className,
   ...props

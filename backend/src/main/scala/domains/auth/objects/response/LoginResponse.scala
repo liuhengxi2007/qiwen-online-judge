@@ -7,6 +7,7 @@ import domains.user.objects.{DisplayName, UserAvatarUrl, UserPreferences, Userna
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
+/** 登录成功响应，返回当前用户资料、邮箱、偏好和权限状态。 */
 final case class LoginResponse(
   displayName: DisplayName,
   username: Username,
@@ -19,10 +20,12 @@ final case class LoginResponse(
   message: String
 )
 
+/** 提供登录响应编解码和从账号/资料片段组装响应的入口。 */
 object LoginResponse:
   given Encoder[LoginResponse] = deriveEncoder[LoginResponse]
   given Decoder[LoginResponse] = deriveDecoder[LoginResponse]
 
+  /** 组合用户资料、账号邮箱和权限，归一化权限后生成登录响应。 */
   def fromParts(
     profile: UserProfileSettings,
     email: EmailAddress,

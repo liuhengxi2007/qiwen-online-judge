@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单关联题目卡片属性，包含模型状态和关联提交回调。
+ */
 type ProblemSetLinkProblemCardProps = {
   linkProblemSlug: string
   activeLink: boolean
@@ -15,6 +18,9 @@ type ProblemSetLinkProblemCardProps = {
   onAttachProblem: () => void
 }
 
+/**
+ * 题单关联题目卡片，渲染题目 slug 输入和关联操作反馈。
+ */
 export function ProblemSetLinkProblemCard({
   linkProblemSlug,
   activeLink,

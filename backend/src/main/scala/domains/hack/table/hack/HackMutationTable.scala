@@ -11,6 +11,7 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** hack_attempts 表写入入口；负责创建 attempt 和记录 worker 完成结果。 */
 object HackMutationTable:
 
   private val insertAttemptSQL: String =
@@ -24,6 +25,7 @@ object HackMutationTable:
       |returning public_id
       |""".stripMargin
 
+  /** 插入 queued hack attempt 并返回公开 id。 */
   def insertAttempt(
     connection: Connection,
     id: UUID,
@@ -80,6 +82,7 @@ object HackMutationTable:
       |returning h.problem_id, p.slug as problem_slug, h.subtask_index, h.input_text, h.author_username
       |""".stripMargin
 
+  /** 完成成功 hack 后用于物化题目数据的来源信息。 */
   final case class CompletedAttemptSource(
     problemId: ProblemId,
     problemSlug: ProblemSlug,
@@ -88,6 +91,7 @@ object HackMutationTable:
     authorUsername: Username
   )
 
+  /** 仅更新 running hack 的终态结果；返回物化所需来源信息，未命中 running 记录时返回 None。 */
   def completeAttempt(
     connection: Connection,
     hackId: HackId,

@@ -1,3 +1,6 @@
+/**
+ * 简体中文站点管理消息，覆盖用户权限、判题机状态和管理操作反馈文案。
+ */
 export const zhCnSiteManageMessages: Record<string, string> = {
   'siteManage.pageTitle': '气温在线评测 - 站点管理',
   'siteManage.heading': '站点管理',

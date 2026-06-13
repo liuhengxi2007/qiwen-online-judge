@@ -16,8 +16,14 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
+/**
+ * 用户组列表默认每页数量。
+ */
 const userGroupsPerPage = 10
 
+/**
+ * 用户组列表页，负责会话守卫、分页查询、创建入口和列表展示。
+ */
 export function UserGroupPage() {
   const { t } = useI18n()
   usePageTitle(t('userGroup.pageTitle'))

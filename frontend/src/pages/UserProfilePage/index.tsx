@@ -23,8 +23,14 @@ import { ProfileActionsPanel } from './components/ProfileActionsPanel'
 import { ProfileOverviewPanel } from './components/ProfileOverviewPanel'
 import { RatingPanel } from './components/RatingPanel'
 
+/**
+ * 个人资料页已接受题目列表的客户端分页大小。
+ */
 const acceptedProblemsPerPage = 10
 
+/**
+ * 用户资料入口页，负责登录保护和把当前会话传给资料内容组件。
+ */
 export function UserProfilePage() {
   const { t } = useI18n()
   usePageTitle(t('userProfile.pageTitle'))
@@ -42,6 +48,10 @@ export function UserProfilePage() {
   return <UserProfilePageContent routeUsername={routeUsername} setViewer={setSession} viewer={viewer} />
 }
 
+/**
+ * 用户资料内容区，解析目标用户名、执行路由权限策略、加载资料并组织统计/操作面板。
+ * 自己的资料页允许头像上传并同步会话；受限访问会按路由策略跳转到权限页。
+ */
 function UserProfilePageContent({
   routeUsername,
   setViewer,

@@ -4,6 +4,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 复选框控件包装，保留 Radix 状态语义并渲染选中图标。
+ */
 function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root

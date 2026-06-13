@@ -3,6 +3,7 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { PageResponse } from '@/objects/shared/PageResponse'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 
+/** 查询 rating 排行榜；可选分页参数，输出用户 rating 分页条目。 */
 export class ListRatingRanklist implements APIWithSessionMessage<PageResponse<RatingRanklistItem>> {
   declare readonly responseType?: PageResponse<RatingRanklistItem>
   readonly method = 'GET'

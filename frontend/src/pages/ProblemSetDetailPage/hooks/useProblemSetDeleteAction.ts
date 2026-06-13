@@ -5,6 +5,9 @@ import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 删除题单动作 hook；提交删除请求并维护删除中状态。
+ */
 export function useProblemSetDeleteAction(problemSetSlug: ProblemSetSlug) {
   const [isDeleting, setIsDeleting] = useState(false)
 

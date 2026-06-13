@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** hack_attempts 表结构与索引；维护公开 id、目标提交、输入和 worker 结果。 */
 object HackTableSchema:
 
   val createPublicIdSequenceSql: String =
@@ -65,6 +66,7 @@ object HackTableSchema:
       |  on hack_attempts (target_submission_public_id);
       |""".stripMargin
 
+  /** 执行 hack 表幂等建表、旧表清理和索引创建。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 更新用户组基础资料 API，要求站点管理员或组内管理权限。 */
 object UpdateUserGroup extends AuthenticatedApi[(UserGroupSlug, UpdateUserGroupRequest), UserGroupDetail]:
 
   override val method: Method = Method.POST
@@ -24,12 +25,14 @@ object UpdateUserGroup extends AuthenticatedApi[(UserGroupSlug, UpdateUserGroupR
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从路径解析用户组 slug，并从 JSON 请求体解码更新内容。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(UserGroupSlug, UpdateUserGroupRequest)] =
     for
       groupSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
       updateRequest <- request.as[UpdateUserGroupRequest]
     yield (groupSlug, updateRequest)
 
+  /** 校验输入和管理权限后更新名称/描述，权限不足以 404 隐藏用户组存在性。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

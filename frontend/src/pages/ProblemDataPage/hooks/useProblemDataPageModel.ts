@@ -22,10 +22,23 @@ import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 文件上传操作结果；失败时 message 可直接展示给页面。
+ */
 type UploadResult = { ok: true } | { ok: false; message: string }
+/**
+ * 文件删除或清空操作结果；成功后调用方可继续刷新列表或关闭确认框。
+ */
 type DeleteResult = { ok: true } | { ok: false; message: string }
+/**
+ * 测试数据 ready 状态保存结果；失败时保留服务端或本地错误消息。
+ */
 type ReadyResult = { ok: true } | { ok: false; message: string }
 
+/**
+ * 题目测试数据页模型 hook，组合题目详情、文件树加载、上传下载、删除清空和 ready 状态保存。
+ * 输入为题目 slug 与可选竞赛 slug，所有 API 副作用在 hook 内完成并通过 reducer 暴露 UI 状态。
+ */
 export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
   const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
@@ -67,6 +80,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
   }, [problemDataScope, t])
 
   useEffect(() => {
+    // FIXME-CN: 数据树加载没有取消或过期响应保护，题目/比赛 scope 变化后旧响应仍可能覆盖新状态。
     void loadFiles()
   }, [loadFiles])
 

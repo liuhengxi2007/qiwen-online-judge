@@ -15,6 +15,9 @@ import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 创建题目页模型 hook；维护创建草稿并在权限允许时提交创建请求。
+ */
 export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
   const { t } = useI18n()

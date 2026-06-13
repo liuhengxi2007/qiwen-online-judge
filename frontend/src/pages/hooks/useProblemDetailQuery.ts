@@ -8,12 +8,18 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 
+/**
+ * 题目详情查询状态，保存题目、加载标记和用户可见错误。
+ */
 type ProblemDetailQueryState = {
   problem: ProblemDetail | null
   isLoading: boolean
   errorMessage: string
 }
 
+/**
+ * 题目详情 reducer 动作，覆盖加载、替换和失败状态。
+ */
 type ProblemDetailQueryAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; problem: ProblemDetail }
@@ -26,6 +32,9 @@ const initialProblemDetailQueryState: ProblemDetailQueryState = {
   errorMessage: '',
 }
 
+/**
+ * 题目详情查询 reducer；纯函数维护加载状态，不直接触发网络请求。
+ */
 function reduceProblemDetailQueryState(
   state: ProblemDetailQueryState,
   action: ProblemDetailQueryAction,
@@ -42,6 +51,9 @@ function reduceProblemDetailQueryState(
   }
 }
 
+/**
+ * 加载普通或比赛内题目详情；会根据 contestSlug 选择 API，并返回替换题目详情的回调。
+ */
 export function useProblemDetailQuery(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const [state, dispatch] = useReducer(reduceProblemDetailQueryState, initialProblemDetailQueryState)
 
@@ -63,6 +75,7 @@ export function useProblemDetailQuery(problemSlug: ProblemSlug, contestSlug?: Co
         dispatch({
           type: 'load_failed',
           message:
+            // 注意：公开题目详情把 forbidden 和 not-found 都展示为 404，用于隐藏受保护题目是否存在。
             isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
               ? '404 Not Found.'
               : 'Unable to load problem details.',

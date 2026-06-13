@@ -16,6 +16,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** judger 心跳上报 API；使用 worker token 认证并延长指定 judger 的租约。 */
 final case class RecordJudgerHeartbeat(judgeConfig: JudgeConfig) extends PublicApi[JudgerId, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -23,6 +24,7 @@ final case class RecordJudgerHeartbeat(judgeConfig: JudgeConfig) extends PublicA
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 校验 token、解析 judger id，并确认请求体是合法心跳格式。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[JudgerId] =
     for
       _ <- JudgeTokenAuth.ensureJudgeToken(request, judgeConfig)
@@ -30,6 +32,7 @@ final case class RecordJudgerHeartbeat(judgeConfig: JudgeConfig) extends PublicA
       _ <- request.as[JudgerHeartbeatRequest]
     yield judgerId
 
+  /** 更新活动 judger 的 last_heartbeat_at；不存在或过期时返回 not found。 */
   override def plan(connection: Connection, judgerId: JudgerId): IO[SuccessResponse] =
     JudgerTable.heartbeat(connection, judgerId, judgeConfig.heartbeatTimeoutMs).flatMap {
       case true =>

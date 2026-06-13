@@ -9,8 +9,14 @@ import { Textarea } from '@/components/ui/textarea'
 import type { useUserGroupDetailPageModel } from '../hooks/useUserGroupDetailPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型类型别名，供编辑卡片读取草稿、权限和保存状态。
+ */
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 
+/**
+ * 用户组基本信息编辑卡片，仅对可管理用户展示名称和描述表单。
+ */
 export function UserGroupEditCard({ model }: { model: UserGroupDetailPageModel }) {
   const { t } = useI18n()
 

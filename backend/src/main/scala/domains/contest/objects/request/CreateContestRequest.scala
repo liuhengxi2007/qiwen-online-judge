@@ -7,6 +7,7 @@ import shared.objects.access.ResourceAccessPolicy
 
 import java.time.Instant
 
+/** 创建比赛请求体，包含基础信息、时间范围和访问策略。 */
 final case class CreateContestRequest(
   slug: ContestSlug,
   title: ContestTitle,
@@ -16,6 +17,7 @@ final case class CreateContestRequest(
   accessPolicy: ResourceAccessPolicy
 )
 
+/** 提供创建比赛请求体 JSON codec。 */
 object CreateContestRequest:
   given Encoder[CreateContestRequest] = deriveEncoder[CreateContestRequest]
   given Decoder[CreateContestRequest] = deriveDecoder[CreateContestRequest]

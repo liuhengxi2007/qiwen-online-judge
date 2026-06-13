@@ -3,10 +3,16 @@ import type { Username } from '@/objects/user/Username'
 import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 
+/**
+ * 站点管理页通知类型，区分权限保存、删除用户和错误反馈。
+ */
 export type SiteManageNotice =
   | { kind: 'permissions_updated'; displayName: DisplayName }
   | { kind: 'text'; message: string }
 
+/**
+ * 站点管理页本地状态，保存正在操作的用户和最近通知。
+ */
 export type SiteManageState = {
   notice: SiteManageNotice | null
   actionErrorMessage: string
@@ -14,6 +20,9 @@ export type SiteManageState = {
   navigationIntent: NavigationIntent | null
 }
 
+/**
+ * 站点管理页 reducer 动作，覆盖用户操作开始、成功、失败和通知清理。
+ */
 export type SiteManageAction =
   | { type: 'update_started'; username: Username }
   | { type: 'update_succeeded'; user: ManagedUserListItem }
@@ -22,6 +31,9 @@ export type SiteManageAction =
   | { type: 'update_failed'; message: string }
   | { type: 'redirect_requested'; intent: NavigationIntent }
 
+/**
+ * 站点管理页初始状态，默认没有进行中的用户操作。
+ */
 export const initialSiteManageState: SiteManageState = {
   notice: null,
   actionErrorMessage: '',
@@ -29,6 +41,9 @@ export const initialSiteManageState: SiteManageState = {
   navigationIntent: null,
 }
 
+/**
+ * 站点管理页 reducer；纯函数维护操作中用户和通知消息。
+ */
 export function reduceSiteManageState(
   state: SiteManageState,
   action: SiteManageAction,

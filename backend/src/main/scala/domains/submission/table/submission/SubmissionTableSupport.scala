@@ -16,8 +16,10 @@ import judgeprotocol.objects.response.JudgeResult
 import java.sql.{PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
 
+/** 提交表读写辅助；集中处理 ResultSet 映射、枚举列编解码、可空列和 JSON manifest/result 解析。 */
 object SubmissionTableSupport:
 
+  /** 从用户资料连接列读取提交者身份。 */
   def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
     val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
     UserIdentity(
@@ -25,6 +27,7 @@ object SubmissionTableSupport:
       displayName = DisplayName(row.displayName)
     )
 
+  /** 从当前 ResultSet 行读取提交列表摘要。 */
   def readSubmissionSummary(resultSet: ResultSet): SubmissionSummary =
     SubmissionSummary(
       id = SubmissionId(resultSet.getLong("public_id")),
@@ -51,6 +54,7 @@ object SubmissionTableSupport:
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
     )
 
+  /** 从当前 ResultSet 行读取提交详情内部记录。 */
   def readSubmissionDetailRecord(resultSet: ResultSet): SubmissionDetailRecord =
     SubmissionDetailRecord(
       id = SubmissionId(resultSet.getLong("public_id")),
@@ -87,6 +91,7 @@ object SubmissionTableSupport:
       case None =>
         SubmissionSource.FromProblemSet
 
+  /** 绑定可空提交结论列。 */
   def setOptionalVerdict(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -96,12 +101,14 @@ object SubmissionTableSupport:
       case Some(value) => statement.setString(parameterIndex, encodeSubmissionVerdictColumn(value))
       case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
 
+  /** 将提交语言编码为数据库列值。 */
   def encodeSubmissionLanguageColumn(value: SubmissionLanguage): String =
     value match
       case SubmissionLanguage.Cpp17 => "cpp17"
       case SubmissionLanguage.Python3 => "python3"
       case SubmissionLanguage.Text => "text"
 
+  /** 将提交状态编码为数据库列值。 */
   def encodeSubmissionStatusColumn(value: SubmissionStatus): String =
     value match
       case SubmissionStatus.Queued => "queued"
@@ -109,6 +116,7 @@ object SubmissionTableSupport:
       case SubmissionStatus.Completed => "completed"
       case SubmissionStatus.Failed => "failed"
 
+  /** 将提交结论编码为数据库列值。 */
   def encodeSubmissionVerdictColumn(value: SubmissionVerdict): String =
     value match
       case SubmissionVerdict.Accepted => "accepted"
@@ -120,9 +128,11 @@ object SubmissionTableSupport:
       case SubmissionVerdict.IdlenessLimitExceeded => "idleness_limit_exceeded"
       case SubmissionVerdict.SystemError => "system_error"
 
+  /** 从数据库列值解析提交结论；未知值返回 None 以兼容可空派生列读取。 */
   def decodeSubmissionVerdictColumn(value: String): Option[SubmissionVerdict] =
     SubmissionVerdict.parse(value).toOption
 
+  /** 绑定可空 Long 参数。 */
   def setOptionalLong(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -132,6 +142,7 @@ object SubmissionTableSupport:
       case Some(currentValue) => statement.setLong(parameterIndex, currentValue)
       case None => statement.setNull(parameterIndex, java.sql.Types.BIGINT)
 
+  /** 绑定可空 BigDecimal 参数。 */
   def setOptionalBigDecimal(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -141,6 +152,7 @@ object SubmissionTableSupport:
       case Some(currentValue) => statement.setBigDecimal(parameterIndex, currentValue.bigDecimal)
       case None => statement.setNull(parameterIndex, java.sql.Types.NUMERIC)
 
+  /** 绑定可空 judge_result JSON；Some 会序列化为 jsonb 文本。 */
   def setOptionalJudgeResult(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -150,6 +162,7 @@ object SubmissionTableSupport:
       case Some(currentValue) => statement.setString(parameterIndex, currentValue.asJson.noSpaces)
       case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
 
+  /** 绑定可空时间戳参数。 */
   def setOptionalTimestamp(
     statement: PreparedStatement,
     parameterIndex: Int,
@@ -159,24 +172,30 @@ object SubmissionTableSupport:
       case Some(value) => statement.setTimestamp(parameterIndex, Timestamp.from(value))
       case None => statement.setNull(parameterIndex, java.sql.Types.TIMESTAMP)
 
+  /** 解析必填领域列；数据库中非法值视为不可恢复的数据错误。 */
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
 
+  /** 处理 insert returning 没有返回行的异常分支。 */
   def missingInsertResult(entityName: String): Nothing =
     throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
 
+  /** 从可空 bigint 列读取 Long。 */
   def readOptionalLong(resultSet: ResultSet, columnName: String): Option[Long] =
     val value = resultSet.getLong(columnName)
     if resultSet.wasNull() then None else Some(value)
 
+  /** 从可空 numeric 列读取 BigDecimal。 */
   def readOptionalBigDecimal(resultSet: ResultSet, columnName: String): Option[BigDecimal] =
     Option(resultSet.getBigDecimal(columnName)).map(BigDecimal(_))
 
+  /** 从 JSON 文本列读取可空 JudgeResult；非法 JSON 视为数据损坏。 */
   def readOptionalJudgeResult(resultSet: ResultSet, columnName: String): Option[JudgeResult] =
     Option(resultSet.getString(columnName)).map { raw =>
       decode[JudgeResult](raw).fold(error => throw IllegalStateException(s"Invalid judge result JSON: ${error.getMessage}"), identity)
     }
 
+  /** 从 JSON 文本列读取提交程序 manifest；非法 JSON 视为数据损坏。 */
   def readProgramManifest(resultSet: ResultSet, columnName: String): SubmissionProgramManifest =
     decode[SubmissionProgramManifest](resultSet.getString(columnName))
       .fold(error => throw IllegalStateException(s"Invalid submission program manifest JSON: ${error.getMessage}"), identity)

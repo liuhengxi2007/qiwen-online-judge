@@ -1,3 +1,6 @@
+/**
+ * 英文站点管理消息，覆盖用户权限、判题机状态和管理操作反馈文案。
+ */
 export const enSiteManageMessages: Record<string, string> = {
   'siteManage.pageTitle': 'Qiwen Online Judge - Site Management',
   'siteManage.heading': 'Site Management',

@@ -14,6 +14,9 @@ import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { PageRequest } from '@/objects/shared/PageRequest'
 
+/**
+ * 博客列表模型输入，包含筛选条件和当前分页请求。
+ */
 type UseBlogPageModelArgs = {
   authorUsernameFilter?: Username
   problemSlugFilter?: ProblemSlug
@@ -21,6 +24,9 @@ type UseBlogPageModelArgs = {
   pageRequest: PageRequest
 }
 
+/**
+ * 博客列表页模型 hook；加载博客列表并处理待关联题解的状态。
+ */
 export function useBlogPageModel({
   authorUsernameFilter,
   problemSlugFilter,

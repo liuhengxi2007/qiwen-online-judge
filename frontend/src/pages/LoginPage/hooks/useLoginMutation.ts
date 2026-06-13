@@ -8,10 +8,16 @@ import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 登录请求结果，成功时返回会话，失败时返回错误消息。
+ */
 type LoginMutationResult =
   | { kind: 'succeeded'; data: LoginResponse }
   | { kind: 'failed'; message: string }
 
+/**
+ * 登录请求 hook；调用登录 API 并将响应规范化为前端会话。
+ */
 export function useLoginMutation() {
   const setSession = useAuthStore((state) => state.setSession)
   const [isSubmitting, setIsSubmitting] = useState(false)

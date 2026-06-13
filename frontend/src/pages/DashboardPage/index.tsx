@@ -10,6 +10,9 @@ import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 仪表盘入口卡片配置，描述目标路由、展示文案和视觉样式。
+ */
 type DashboardAction = {
   title: string
   description: string
@@ -20,6 +23,9 @@ type DashboardAction = {
   buttonClassName: string
 }
 
+/**
+ * 登录后仪表盘页，展示常用业务入口并根据站点管理员会话追加管理入口。
+ */
 export function DashboardPage() {
   const { t } = useI18n()
   usePageTitle(t('dashboard.title'))
@@ -54,6 +60,9 @@ export function DashboardPage() {
   )
 }
 
+/**
+ * 仪表盘入口网格，根据 showSiteManage 决定是否包含 rating 管理和站点管理卡片。
+ */
 function DashboardActionGrid({
   showSiteManage,
 }: {
@@ -157,6 +166,9 @@ function DashboardActionGrid({
   )
 }
 
+/**
+ * 单个仪表盘入口卡片，按配置渲染图标、说明和跳转按钮。
+ */
 function DashboardActionCard({ action }: { action: DashboardAction }) {
   const Icon = action.icon
 

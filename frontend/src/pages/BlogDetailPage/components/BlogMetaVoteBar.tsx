@@ -12,14 +12,23 @@ import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisp
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客详情页模型类型别名，供元信息栏触发博客投票。
+ */
 type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
 
+/**
+ * 博客元信息与投票栏属性，包含博客详情、页面模型和题目标题展示模式。
+ */
 type BlogMetaVoteBarProps = {
   blog: BlogDetail
   model: BlogDetailPageModel
   problemTitleDisplayMode: ProblemTitleDisplayMode
 }
 
+/**
+ * 博客元信息与投票栏，展示作者、关联题目、创建时间、分数和当前用户投票状态。
+ */
 export function BlogMetaVoteBar({ blog, model, problemTitleDisplayMode }: BlogMetaVoteBarProps) {
   const { t } = useI18n()
 

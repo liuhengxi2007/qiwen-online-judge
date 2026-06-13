@@ -13,6 +13,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 查询提交各子任务 hack 可用性的认证 API；需要用户能查看目标提交详情。 */
 final case class GetSubmissionHackAvailability(
   submissionProgramStorage: SubmissionProgramStorage,
   problemDataStorage: ProblemDataStorage
@@ -23,10 +24,12 @@ final case class GetSubmissionHackAvailability(
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SubmissionHackAvailability] = summon[Encoder[SubmissionHackAvailability]]
 
+  /** 从路径解析目标提交 public id。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionId] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("submissionId").flatMap(SubmissionId.parse))
 
+  /** 构建目标提交的 JudgeTask 并返回每个子任务是否可 hack。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SubmissionHackAvailability] =
     HackApiSupport
       .loadTargetTask(connection, actor, submissionId, submissionProgramStorage, problemDataStorage)

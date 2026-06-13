@@ -24,6 +24,9 @@ import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useContestManagePageModel } from './hooks/useContestManagePageModel'
 
+/**
+ * 比赛管理页入口，校验 slug 路由参数和管理员会话后渲染管理内容。
+ */
 export function ContestManagePage() {
   const { t } = useI18n()
   usePageTitle(t('contest.manage.pageTitle'))
@@ -46,6 +49,9 @@ export function ContestManagePage() {
   return <ContestManagePageContent contestSlug={slugResult.value} />
 }
 
+/**
+ * 比赛管理页主体，组合会话守卫、比赛管理模型、表单和题目关联工作流。
+ */
 function ContestManagePageContent({ contestSlug }: { contestSlug: ContestSlug }) {
   const { t } = useI18n()
   const model = useContestManagePageModel(contestSlug)
@@ -74,6 +80,9 @@ function ContestManagePageContent({ contestSlug }: { contestSlug: ContestSlug })
   )
 }
 
+/**
+ * 比赛基础信息表单卡片，负责展示草稿字段和保存比赛更新。
+ */
 function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestManagePageModel> }) {
   const { t } = useI18n()
   const draft = model.draft
@@ -166,6 +175,9 @@ function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestM
   )
 }
 
+/**
+ * 比赛题目管理卡片，展示已关联题目并提供附加、移除和排序入口。
+ */
 function ContestManageProblemCard({
   model,
   contest,
@@ -261,6 +273,9 @@ function ContestManageProblemCard({
   )
 }
 
+/**
+ * 比赛题目附加输入组件，负责输入题目 slug 并触发附加操作。
+ */
 function ProblemAttachInput({
   input,
   isLoading,

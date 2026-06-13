@@ -7,6 +7,7 @@ import type { BlogTitle } from '@/objects/blog/BlogTitle'
 import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
 import type { BlogVote } from '@/objects/blog/BlogVote'
 
+/** 博客详情响应；包含正文、关联题目、当前用户投票和评论列表。 */
 export type BlogDetail = {
   id: BlogId
   title: BlogTitle

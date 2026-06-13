@@ -12,7 +12,9 @@ import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import scala.util.Try
 
+/** 负责实际启动交互题多进程，包括 FIFO、launcher、interactor、选手和策略 provider。 */
 object InteractiveProcessRunner:
+  /** 执行一次交互测试点；输出 either 中的失败代表 judger/工具系统错误。 */
   private[infra] def run(
     config: AppConfig,
     subtask: JudgeTaskSubtask,
@@ -115,6 +117,7 @@ object InteractiveProcessRunner:
                 .start
             }
             strategyFiber <- strategyProvider.traverse { provider =>
+              // 注意：strategyProviderRuntime 已保证存在 limits，并且 strategyFifos 与 provider 同源构造。
               val (toStrategy, fromStrategy) = strategyFifos.get
               val limits = provider.tool.limits.get
               sandbox
@@ -187,8 +190,10 @@ object InteractiveProcessRunner:
               )
             )
 
+        // FIXME-CN: 交互运行的所有异常被折叠为 JudgerRuntimeFailed，丢失 mkfifo/launcher/文件读写等具体失败上下文。
         run.handleError(_ => Left(JudgeFailureReason.JudgerRuntimeFailed))
 
+  /** 读取策略 provider 监控日志并计算等待时间；读取失败按无监控数据处理。 */
   private[infra] def readStrategyProviderWaitMs(monitor: Option[StrategyProviderReadMonitor], interactorResult: judger.objects.ProcessResult): IO[Option[Long]] =
     monitor match
       case None => IO.pure(None)
@@ -201,6 +206,7 @@ object InteractiveProcessRunner:
           InteractiveJudgeRunner.strategyProviderReadWaitMs(content, interactorResult.wallTimeUsedMs)
         }.map(Some(_)).handleError(_ => None)
 
+  /** 准备交互题共享目录、输入文件、状态文件和 FIFO；会设置较宽的文件权限供 isolate 内进程访问。 */
   private def prepareInteractiveWorkspace(
     interactiveDir: Path,
     inputPath: Path,
@@ -221,6 +227,7 @@ object InteractiveProcessRunner:
       fifoPaths.foreach(createFifo)
     }
 
+  /** 通过宿主机 mkfifo 创建命名管道，失败时把进程输出转换为 runtime 异常。 */
   private def createFifo(path: Path): Unit =
     Files.deleteIfExists(path)
     val process = new ProcessBuilder("mkfifo", path.toString).start()
@@ -230,18 +237,22 @@ object InteractiveProcessRunner:
       throw RuntimeException(detail)
     setWorldFifo(path)
 
+  /** 尝试把目录设置为所有参与进程可读写执行；不支持 POSIX 权限的平台忽略失败。 */
   private def setWorldAccessible(path: Path): Unit =
     Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxrwxrwx")))
     ()
 
+  /** 尝试把普通文件设置为所有参与进程可读写；不支持 POSIX 权限的平台忽略失败。 */
   private def setWorldReadable(path: Path): Unit =
     Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-rw-rw-")))
     ()
 
+  /** 尝试把 FIFO 设置为所有参与进程可读写；不支持 POSIX 权限的平台忽略失败。 */
   private def setWorldFifo(path: Path): Unit =
     Try(Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-rw-rw-")))
     ()
 
+  /** 确保 SIGPIPE 忽略 launcher 已编译，并返回 sandbox 内可执行命令。 */
   private def ensureSigpipeIgnoreLauncher(config: AppConfig, workingDirectory: Path): IO[RuntimeCommand] =
     ensureCompiledLauncher(
       config = config,
@@ -251,6 +262,7 @@ object InteractiveProcessRunner:
       source = InteractiveLauncherSources.SigpipeIgnore
     )
 
+  /** 确保 FIFO 重定向 launcher 已编译，并返回 sandbox 内可执行命令。 */
   private def ensureFifoRedirectLauncher(config: AppConfig, workingDirectory: Path): IO[RuntimeCommand] =
     ensureCompiledLauncher(
       config = config,
@@ -260,6 +272,7 @@ object InteractiveProcessRunner:
       source = InteractiveLauncherSources.FifoRedirect
     )
 
+  /** 确保策略 provider 读等待监控动态库已编译，供交互器进程预加载采样。 */
   private def ensureStrategyProviderReadMonitor(config: AppConfig, workingDirectory: Path): IO[RuntimeCommand] =
     ensureCompiledLauncher(
       config = config,
@@ -271,6 +284,7 @@ object InteractiveProcessRunner:
       requireExecutable = false
     )
 
+  /** 组装交互器 launcher 参数；有监控库时额外传入 sandbox 内路径。 */
   private def interactorLauncherArgs(monitor: Option[StrategyProviderReadMonitor], interactorCommand: String): List[String] =
     monitor match
       case None => List(interactorCommand)
@@ -283,6 +297,7 @@ object InteractiveProcessRunner:
           interactorCommand
         )
 
+  /** 编译或复用交互辅助 launcher；编译失败会作为 judger runtime 异常抛出。 */
   private def ensureCompiledLauncher(
     config: AppConfig,
     workingDirectory: Path,
@@ -318,6 +333,7 @@ object InteractiveProcessRunner:
           yield RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1)
       }
 
+  /** 校验编译产物是普通文件，并调整权限供 sandbox 内进程读取。 */
   private def ensureRegularFileExists(path: Path): IO[Unit] =
     IO.blocking {
       if !Files.exists(path) then
@@ -327,15 +343,18 @@ object InteractiveProcessRunner:
       setWorldReadable(path)
     }
 
+  /** 把宿主机工作目录内路径转换为交互 launcher 使用的相对 sandbox 路径。 */
   private def relativeSandboxPath(workingDirectory: Path, path: Path): String =
     workingDirectory.relativize(path).toString
 
+  /** 将 role 名称规整为可用于临时文件和 FIFO 名称的安全片段。 */
   private def sanitizeInteractiveName(value: String): String =
     value.map {
       case current if current.isLetterOrDigit || current == '-' || current == '_' => current
       case _ => '_'
     }
 
+  /** 等待并传播子 fiber 的结果、错误或取消状态。 */
   private def joinFiber[A](fiber: cats.effect.FiberIO[A]): IO[A] =
     fiber.join.flatMap {
       case cats.effect.Outcome.Succeeded(result) => result

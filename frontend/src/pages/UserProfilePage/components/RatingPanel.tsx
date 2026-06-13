@@ -4,11 +4,17 @@ import type { RatingValue } from '@/objects/rating/RatingValue'
 import { formatRatingValue } from '@/objects/rating/RatingValue'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * Rating 面板属性，displayedRating 为 null 时根据加载状态展示 loading 或占位。
+ */
 type RatingPanelProps = {
   displayedRating: RatingValue | null
   isLoadingProfile: boolean
 }
 
+/**
+ * 用户 rating 统计面板，展示格式化后的 rating 或资料不可用占位。
+ */
 export function RatingPanel({ displayedRating, isLoadingProfile }: RatingPanelProps) {
   const { t } = useI18n()
 

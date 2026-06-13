@@ -9,11 +9,17 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * Rating 比赛序列组件属性，包含当前序列和加载状态。
+ */
 type RatingContestSequenceProps = {
   contests: RatingContestListItem[]
   isLoading: boolean
 }
 
+/**
+ * 展示 Rating 计算序列；加载中展示占位，空序列展示空状态。
+ */
 export function RatingContestSequence({ contests, isLoading }: RatingContestSequenceProps) {
   const { t } = useI18n()
 

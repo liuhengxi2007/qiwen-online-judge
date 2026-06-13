@@ -20,6 +20,9 @@ import { enNotificationMessages } from '@/system/i18n/messages/en/notification'
 import { enContestMessages } from '@/system/i18n/messages/en/contest'
 import { enHackMessages } from '@/system/i18n/messages/en/hack'
 
+/**
+ * 英文完整消息表，按领域消息字典展开合并后供运行时翻译查找。
+ */
 export const enMessages: Record<string, string> = {
   ...enCommonMessages,
   ...enNavMessages,

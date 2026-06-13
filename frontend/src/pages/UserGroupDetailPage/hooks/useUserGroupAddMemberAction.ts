@@ -9,6 +9,10 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组新增成员操作 hook，先校验用户名/角色草稿，再调用新增成员 API。
+ * 返回更新后的用户组详情，调用方负责刷新页面状态和清空输入。
+ */
 export function useUserGroupAddMemberAction(userGroupSlug: UserGroupSlug) {
   const { t } = useI18n()
   const [isAddingMember, setIsAddingMember] = useState(false)

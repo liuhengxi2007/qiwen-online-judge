@@ -8,6 +8,9 @@ import type { UserAcceptedProblem } from '@/objects/user/UserAcceptedProblem'
 import { formatDateTime, formatUtcOffsetTitle } from '@/system/format/date-time'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 已通过题目面板属性，包含完整数量、当前页切片和客户端分页控制回调。
+ */
 type AcceptedProblemsPanelProps = {
   acceptedProblems: UserAcceptedProblem[]
   acceptedProblemsExpanded: boolean
@@ -21,6 +24,9 @@ type AcceptedProblemsPanelProps = {
   onToggleExpanded: () => void
 }
 
+/**
+ * 已通过题目面板，展示通过数量，并在展开后按客户端分页列出题目和通过时间。
+ */
 export function AcceptedProblemsPanel({
   acceptedProblems,
   acceptedProblemsExpanded,

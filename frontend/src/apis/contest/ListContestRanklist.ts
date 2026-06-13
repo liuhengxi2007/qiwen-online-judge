@@ -4,6 +4,7 @@ import type { ContestRanklistResponse } from '@/objects/contest/response/Contest
 import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { APIMessage } from '@/system/api/api-message'
 
+/** 查询比赛排行榜；输入比赛 slug 和可选分页参数，输出排行榜分页响应。 */
 export class ListContestRanklist implements APIMessage<ContestRanklistResponse> {
   declare readonly responseType?: ContestRanklistResponse
   readonly method = 'GET'

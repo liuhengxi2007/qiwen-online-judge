@@ -12,13 +12,16 @@ import judger.objects.{RuntimeCommand, SandboxLimits}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
+/** 准备提交程序和题目工具，统一处理源码下载、编译和失败上报。 */
 object JudgeToolPreparation:
+  /** 已准备好的提交程序集合，区分可执行命令、编译失败 role 和 Text 语言输出。 */
   private[judger] final case class PreparedPrograms(
     commands: Map[String, RuntimeCommand],
     compileFailedRoles: Set[String],
     textOutputs: Map[String, String]
   )
 
+  /** 已准备好的 checker/validator/interactor/strategy provider 命令集合。 */
   private[infra] final case class PreparedTools(
     validators: Map[JudgeTaskFilePath, RuntimeCommand],
     checkers: Map[JudgeTaskFilePath, RuntimeCommand],
@@ -27,11 +30,13 @@ object JudgeToolPreparation:
     failedStrategyProviders: Set[JudgeTaskFilePath]
   )
 
+  /** C++ 工具编译结果，区分成功、用户工具编译失败和 judger 系统失败。 */
   private[infra] enum ToolCompileOutcome:
     case Success(command: RuntimeCommand)
     case CompileFailed
     case SystemFailed(reason: JudgeFailureReason)
 
+  /** 准备提交中的每个 role；任一系统错误会直接返回整题失败回报。 */
   private[infra] def preparePrograms(
     task: JudgeTask,
     config: AppConfig,
@@ -103,6 +108,7 @@ object JudgeToolPreparation:
   private def headerIncludeName(header: JudgeTaskFileRef): String =
     header.path.value.split('/').lastOption.getOrElse(header.path.value)
 
+  /** 准备任务中引用的题目工具；必需工具失败会转为系统失败，策略 provider 编译失败可被业务接受。 */
   private[infra] def prepareTools(
     task: JudgeTask,
     config: AppConfig,
@@ -192,6 +198,7 @@ object JudgeToolPreparation:
       case Right(bytes) => compileCppToolBytes(task, config, workingDirectory, source.path.value, bytes)
     }
 
+  /** 编译一段 C++ 工具源码字节，产物作为 /box 下的可执行命令返回。 */
   private[infra] def compileCppToolBytes(
     task: JudgeTask,
     config: AppConfig,
@@ -199,10 +206,13 @@ object JudgeToolPreparation:
     sourceNameHint: String,
     sourceBytes: Array[Byte]
   ): IO[ToolCompileOutcome] =
+    // 注意：task 参数保留给调用方语义和未来错误上下文，当前字节级编译逻辑只需要 config 与工作目录。
     val _ = task
     resolveCompilerPath(config).flatMap {
+      // FIXME-CN: 编译器不可见属于 judger 环境问题，这里被折叠成工具 CompileFailed，可能把系统故障误报为 checker/strategy 编译失败。
       case Left(_) => IO.pure(ToolCompileOutcome.CompileFailed)
       case Right(compilerPath) =>
+        // FIXME-CN: math.abs(Int.MinValue) 仍为负数，极端 hash 碰撞/负值会进入文件名；应使用无符号或 sha256 片段命名。
         val safeHash = math.abs(sourceNameHint.hashCode)
         val sourceName = s"tool-$safeHash.cpp"
         val executableName = s"tool-$safeHash"
@@ -230,6 +240,7 @@ object JudgeToolPreparation:
         yield result
     }
 
+  /** 解析 C++ 编译器路径，并要求其在 isolate 默认挂载中可见。 */
   private[infra] def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
     IO.blocking {
       resolveExecutable(config.cxx) match
@@ -241,6 +252,7 @@ object JudgeToolPreparation:
   private def uniqueRefs(refs: List[JudgeTaskFileRef]): List[JudgeTaskFileRef] =
     refs.groupBy(_.path).values.map(_.head).toList
 
+  // FIXME-CN: MinimalTestlibHeader 只实现了 testlib 的很小子集，使用高级 API 的 checker/validator 会编译或运行失败。
   private val MinimalTestlibHeader: String =
     """#pragma once
       |#include <bits/stdc++.h>

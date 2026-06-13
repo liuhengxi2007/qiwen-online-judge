@@ -11,6 +11,7 @@ import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
+/** 用户资料查询表层，负责管理列表、建议、排行榜和公开资料聚合查询。 */
 object UserProfileQueryTable:
 
   private def searchPredicate(usernameColumn: String, displayNameColumn: String): String =
@@ -34,6 +35,7 @@ object UserProfileQueryTable:
       |where ${searchPredicate("aa.username", "up.display_name")}
       |""".stripMargin
 
+  /** 查询管理端用户列表，按搜索词过滤并返回分页结果；调用者必须已校验站点管理员。 */
   def listUsers(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
     val _ = actor
     val normalizedPageRequest = request.pageRequest.normalized
@@ -93,6 +95,7 @@ object UserProfileQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
+  /** 根据搜索词返回用户建议，优先精确和前缀匹配。 */
   def listSuggestions(connection: Connection, query: UserSearchQuery): IO[List[UserIdentity]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSQL)
@@ -141,6 +144,7 @@ object UserProfileQueryTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 查询贡献排行榜分页，贡献由博客和评论投票聚合计算。 */
   def listContributionRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserContributionRanklistItem]] =
     IO.blocking {
       val normalizedPageRequest = pageRequest.normalized
@@ -186,6 +190,7 @@ object UserProfileQueryTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 查询 AC 题数排行榜分页，按不同 accepted 题目数量排序。 */
   def listAcceptedRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[UserAcceptedRanklistItem]] =
     IO.blocking {
       val normalizedPageRequest = pageRequest.normalized
@@ -225,6 +230,7 @@ object UserProfileQueryTable:
       |order by accepted_at desc, p.slug asc
       |""".stripMargin
 
+  /** 查询指定用户已通过的题目列表，按最近通过时间倒序。 */
   def listAcceptedProblems(connection: Connection, username: Username): IO[List[UserAcceptedProblem]] =
     IO.blocking {
       val statement = connection.prepareStatement(listAcceptedProblemsSQL)

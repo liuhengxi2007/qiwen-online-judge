@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 从题单移除题目的认证 API，仅题目管理员可调用。 */
 object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, ProblemSlug), ProblemSetDetail]:
 
   override val method: Method = Method.POST
@@ -23,6 +24,7 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
 
+  /** 从路径解析题单 slug 和题目 slug，移除入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSetSlug, ProblemSlug)] =
     val _ = request
     HttpApiError.fromEitherBadRequest(
@@ -32,6 +34,7 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
       yield (problemSetSlug, problemSlug)
     )
 
+  /** 校验全局题目管理权限和关联存在性后删除题单题目关联。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -39,6 +42,7 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
   ): IO[ProblemSetDetail] =
     val (problemSetSlug, problemSlug) = input
     for
+      /** 注意：非题目管理员返回 404，用于隐藏题单管理入口和题单存在性。 */
       _ <- HttpApiError.ensure(
         ProblemSetAccessRules.canManageProblemSets(actor),
         HttpApiError.notFound(ApiMessages.problemSetNotFound)

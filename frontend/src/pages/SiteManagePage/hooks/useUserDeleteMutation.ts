@@ -8,11 +8,17 @@ import { translateMessage } from '@/system/i18n/messages'
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 删除用户操作结果，成功携带提示，失败携带错误消息。
+ */
 type DeleteUserResult =
   | { kind: 'deleted'; message: string }
   | { kind: 'forbidden' }
   | { kind: 'failed'; message: string }
 
+/**
+ * 删除用户 hook；提交删除请求并返回标准化结果。
+ */
 export function useUserDeleteMutation() {
   const [deletingUsername, setDeletingUsername] = useState<Username | null>(null)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)

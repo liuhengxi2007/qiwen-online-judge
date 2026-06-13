@@ -16,8 +16,10 @@ import shared.objects.{PageRequest, PageResponse}
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 
+/** 评分表访问对象，负责维护评分比赛序列、重算用户粒子状态和读取排行榜。 */
 object RatingTable:
 
+  /** 追加评分比赛时写入 rating_contests 的完整记录。 */
   final case class AppendContestRecord(
     contestSlug: ContestSlug,
     contestTitle: ContestTitle,
@@ -31,23 +33,28 @@ object RatingTable:
     appendedAt: Instant
   )
 
+  /** 从数据库读取并参与重算的评分比赛事件。 */
   final case class StoredContestEvent(
     position: Int,
     m: Int,
     snapshot: RatingContestSnapshot
   )
 
+  /** 初始化评分比赛序列表和用户当前评分状态表。 */
   def initialize(connection: Connection): IO[Unit] =
     RatingTableSchema.initialize(connection)
 
+  /** 在事务级 advisory lock 下追加比赛并重算所有当前用户评分状态。 */
   def appendContest(connection: Connection, record: AppendContestRecord): IO[Unit] =
     for
       _ <- lockSequence(connection)
       position <- nextPosition(connection)
+      /** FIXME-CN: 当前没有 contest_slug 唯一约束或重复追加检查，同一比赛可被多次追加并重复影响评分序列。 */
       _ <- insertContest(connection, position, record)
       _ <- rebuildCurrentStates(connection)
     yield ()
 
+  /** 在事务级 advisory lock 下删除评分序列最后一场比赛，成功删除后重算评分状态。 */
   def popLatestContest(connection: Connection): IO[Boolean] =
     for
       _ <- lockSequence(connection)
@@ -57,6 +64,7 @@ object RatingTable:
 
   private val advisoryLockKey: Long = 7_202_406_071L
 
+  /** 获取评分序列事务级 advisory lock，串行化追加、弹出和重建操作。 */
   private def lockSequence(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement("select pg_advisory_xact_lock(?)")
@@ -72,6 +80,7 @@ object RatingTable:
       |from rating_contests
       |""".stripMargin
 
+  /** 读取下一场评分比赛的位置编号；调用方需已持有评分序列锁。 */
   private def nextPosition(connection: Connection): IO[Int] =
     IO.blocking {
       val statement = connection.prepareStatement(nextPositionSql)
@@ -241,6 +250,7 @@ object RatingTable:
       |order by rc.position asc
       |""".stripMargin
 
+  /** 读取评分管理页比赛序列，按追加位置升序返回。 */
   def listManageContests(connection: Connection): IO[List[RatingContestListItem]] =
     IO.blocking {
       val statement = connection.prepareStatement(listManageContestsSql)
@@ -264,6 +274,7 @@ object RatingTable:
       |limit 1
       |""".stripMargin
 
+  /** 读取评分序列中最后一场比赛的结束时间，用于提示时间重叠。 */
   def findLastContestEndAt(connection: Connection): IO[Option[Instant]] =
     IO.blocking {
       val statement = connection.prepareStatement(findLastContestEndAtSql)
@@ -283,6 +294,7 @@ object RatingTable:
       |where username = ?
       |""".stripMargin
 
+  /** 读取用户当前评分；用户没有评分状态时返回初始评分。 */
   def findUserRating(connection: Connection, username: Username): IO[RatingValue] =
     IO.blocking {
       val statement = connection.prepareStatement(findUserRatingSql)
@@ -324,6 +336,7 @@ object RatingTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 分页读取当前评分排行榜，按 rating 降序和用户名升序稳定排序。 */
   def listRanklist(connection: Connection, pageRequest: PageRequest): IO[PageResponse[RatingRanklistItem]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -349,6 +362,7 @@ object RatingTable:
     StoredContestEvent(
       position = resultSet.getInt("position"),
       m = resultSet.getInt("rating_m"),
+      /** 注意：评分快照 JSON 来自系统写入的历史记录；解码失败表示持久化数据损坏，应暴露为内部异常而非业务错误。 */
       snapshot = decode[RatingContestSnapshot](resultSet.getString("ranking_snapshot_json"))
         .fold(error => throw IllegalStateException(s"Invalid rating contest snapshot JSON: ${error.getMessage}"), identity)
     )

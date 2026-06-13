@@ -11,16 +11,25 @@ import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 const authSessionStorageKey = 'auth_session'
 const legacyAuthSessionStorageKey = 'auth_user'
 
+/**
+ * 将规范化后的会话写入 localStorage，并清理旧版本存储键。
+ */
 export function persistAuthSession(session: SessionResponse): void {
   window.localStorage.setItem(authSessionStorageKey, JSON.stringify(normalizeAuthPermissionFlags(session)))
   window.localStorage.removeItem(legacyAuthSessionStorageKey)
 }
 
+/**
+ * 清除当前和旧版本 localStorage 会话键，用于退出登录或会话失效。
+ */
 export function clearAuthSession(): void {
   window.localStorage.removeItem(authSessionStorageKey)
   window.localStorage.removeItem(legacyAuthSessionStorageKey)
 }
 
+/**
+ * 从 localStorage 读取并校验会话；旧键读取成功后会迁移到当前键。
+ */
 export function readAuthSession(): SessionResponse | null {
   const storedSession = readStoredSession()
 
@@ -44,6 +53,9 @@ export function readAuthSession(): SessionResponse | null {
   return session
 }
 
+/**
+ * 读取当前或旧版本会话原文，并标记是否需要迁移。
+ */
 function readStoredSession(): { rawSession: string; migratedFromLegacyKey: boolean } | null {
   const rawSession = window.localStorage.getItem(authSessionStorageKey)
   if (!rawSession) {
@@ -59,6 +71,9 @@ function readStoredSession(): { rawSession: string; migratedFromLegacyKey: boole
   return { rawSession, migratedFromLegacyKey: false }
 }
 
+/**
+ * 解码 localStorage 中的不可信会话 JSON；字段解析失败或结构不匹配时返回 null。
+ */
 function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
   try {
     const parsed = JSON.parse(rawSession) as unknown
@@ -88,6 +103,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
     return normalizeAuthPermissionFlags({
       displayName: displayNameResult.value,
       username: usernameResult.value,
+      // FIXME-CN: avatarUrl 只校验为字符串后直接品牌断言，localStorage 被篡改时可能把非法 URL 带入 img src。
       avatarUrl: typeof parsed.avatarUrl === 'string' ? (parsed.avatarUrl as UserAvatarUrl) : null,
       email: emailResult.value,
       preferences: {
@@ -105,6 +121,9 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
   }
 }
 
+/**
+ * 校验存储会话的原始结构，只确认字段形态，具体领域合法性由 parse 函数继续验证。
+ */
 function isStoredAuthSessionValue(
   value: unknown,
 ): value is {

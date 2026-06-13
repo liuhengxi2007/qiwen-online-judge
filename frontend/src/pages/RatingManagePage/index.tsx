@@ -15,6 +15,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import { RatingContestSequence } from './components/RatingContestSequence'
 import { useRatingManagePageModel } from './hooks/useRatingManagePageModel'
 
+/**
+ * Rating 管理页面，要求站点管理员权限并组合追加、回退和比赛序列展示。
+ */
 export function RatingManagePage() {
   const { t } = useI18n()
   usePageTitle(t('ratingManage.pageTitle'))

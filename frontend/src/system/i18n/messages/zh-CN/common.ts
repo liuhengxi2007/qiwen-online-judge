@@ -1,3 +1,6 @@
+/**
+ * 简体中文通用界面消息，覆盖按钮、分页、加载和通用反馈等跨页面文案。
+ */
 export const zhCnCommonMessages: Record<string, string> = {
   'common.siteName': '气温在线评测',
   'common.signedInAs': '当前登录：{{displayName}}（{{username}}）',

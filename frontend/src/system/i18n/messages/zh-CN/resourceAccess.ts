@@ -1,3 +1,6 @@
+/**
+ * 简体中文资源访问控制消息，覆盖公开、授权用户/用户组和管理权限编辑文案。
+ */
 export const zhCnResourceAccessMessages: Record<string, string> = {
   'resourceAccess.public': '公开访问',
   'resourceAccess.publicDescription': '开启后，所有已登录用户都可以查看该资源。',

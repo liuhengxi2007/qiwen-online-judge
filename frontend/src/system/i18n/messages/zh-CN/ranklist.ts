@@ -1,3 +1,6 @@
+/**
+ * 简体中文排行榜消息，覆盖排名类型、筛选、分页和空状态文案。
+ */
 export const zhCnRanklistMessages: Record<string, string> = {
   'ranklist.pageTitle': '气温在线评测 - 排行榜',
   'ranklist.heading': '排行榜',

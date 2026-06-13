@@ -3,6 +3,9 @@ import type { HTMLAttributes } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 徽标组件的视觉变体集合，用于状态、分类和轻量标签展示。
+ */
 const badgeVariants = cva(
   'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0 gap-1 [&>svg]:size-3',
   {
@@ -20,6 +23,9 @@ const badgeVariants = cva(
   },
 )
 
+/**
+ * 基础徽标组件；输入为普通 div 属性和变体，输出紧凑的状态标签元素。
+ */
 function Badge({
   className,
   variant,

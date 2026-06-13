@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.util.UUID
 
+/** 创建题目的认证 API；仅题目管理员可用，会校验 slug、正文、访问策略主体并写入题目表与授权表。 */
 object CreateProblem extends AuthenticatedApi[CreateProblemRequest, ProblemDetail]:
 
   override val method: Method = Method.POST
@@ -24,10 +25,12 @@ object CreateProblem extends AuthenticatedApi[CreateProblemRequest, ProblemDetai
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
+  /** 解析创建题目的 JSON 请求体；路径参数在该接口中没有业务含义。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateProblemRequest] =
     val _ = pathParams
     request.as[CreateProblemRequest]
 
+  /** 执行题目创建流程，输入为已登录用户和请求体，输出可管理的题目详情；会检查题目集 slug 冲突。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

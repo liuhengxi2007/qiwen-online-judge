@@ -5,6 +5,7 @@ import io.circe.syntax.*
 
 import shared.objects.PageRequest
 
+/** 提交列表请求；包含用户/题目过滤、结论过滤、排序和分页。 */
 final case class SubmissionListRequest(
   userQuery: Option[SubmissionUserQuery],
   problemQuery: Option[SubmissionProblemQuery],
@@ -14,6 +15,7 @@ final case class SubmissionListRequest(
   pageRequest: PageRequest
 )
 
+/** SubmissionListRequest 的扁平 JSON 编解码器，page/pageSize 保持顶层字段。 */
 object SubmissionListRequest:
   given Encoder[SubmissionListRequest] = Encoder.instance(request =>
     Json.obj(

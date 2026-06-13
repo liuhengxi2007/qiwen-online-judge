@@ -20,6 +20,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
+/** 删除题目数据中单个路径或目录子树的管理端 API；要求题目管理权限并同步对象存储与清单表。 */
 final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[(ProblemManagementContext, DeleteProblemDataPathRequest), ProblemDetail]:
 
@@ -28,12 +29,14 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
+  /** 解析题目管理上下文和待删除路径；路径语义由 ProblemDataPath 保证不会越界。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, DeleteProblemDataPathRequest)] =
     for
       context <- ProblemManagementContext.decode(request, pathParams)
       body <- request.as[DeleteProblemDataPathRequest]
     yield (context, body)
 
+  /** 校验管理权限后删除路径，输出刷新后的题目详情；不存在的目标路径返回文件未找到。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -44,6 +47,7 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
       .requireManagedProblem(connection, actor, context)
       .flatMap(_ => deleteManagedProblemDataPath(connection, context.problemSlug, request))
 
+  /** 在题目行锁内删除一个文件或目录下所有文件；对象存储失败时按删除前快照恢复。 */
   def deleteManagedProblemDataPath(
     connection: Connection,
     problemSlug: ProblemSlug,

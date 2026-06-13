@@ -1,3 +1,6 @@
+/**
+ * 简体中文导航消息，定义主导航、用户菜单和路由入口的显示文案。
+ */
 export const zhCnNavMessages: Record<string, string> = {
   'nav.backTo': '返回{{label}}',
   'nav.dashboard': '控制台',

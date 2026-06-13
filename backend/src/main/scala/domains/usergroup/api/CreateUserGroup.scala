@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 创建用户组 API，创建者会自动成为 owner 成员。 */
 object CreateUserGroup extends AuthenticatedApi[CreateUserGroupRequest, UserGroupDetail]:
 
   override val method: Method = Method.POST
@@ -24,10 +25,12 @@ object CreateUserGroup extends AuthenticatedApi[CreateUserGroupRequest, UserGrou
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从 JSON 请求体解码用户组创建请求；路径参数被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateUserGroupRequest] =
     val _ = pathParams
     request.as[CreateUserGroupRequest]
 
+  /** 校验创建权限、slug 唯一性和与用户名冲突后写入用户组和 owner 成员。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateUserGroupRequest): IO[UserGroupDetail] =
     for
       _ <- HttpApiError.ensure(

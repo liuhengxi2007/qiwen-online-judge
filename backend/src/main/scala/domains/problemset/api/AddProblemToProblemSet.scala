@@ -18,6 +18,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 将题目加入题单的认证 API，仅题目管理员可调用，并返回更新后的题单详情。 */
 object AddProblemToProblemSet extends AuthenticatedApi[(ProblemSetSlug, AddProblemToProblemSetRequest), ProblemSetDetail]:
 
   override val method: Method = Method.POST
@@ -25,12 +26,14 @@ object AddProblemToProblemSet extends AuthenticatedApi[(ProblemSetSlug, AddProbl
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
 
+  /** 从路径解析题单 slug 并读取待加入题目的请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSetSlug, AddProblemToProblemSetRequest)] =
     for
       problemSetSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSetSlug").flatMap(ProblemSetSlug.parse))
       body <- request.as[AddProblemToProblemSetRequest]
     yield (problemSetSlug, body)
 
+  /** 校验全局题目管理权限、题单存在性和题目存在性后写入关联。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -38,6 +41,7 @@ object AddProblemToProblemSet extends AuthenticatedApi[(ProblemSetSlug, AddProbl
   ): IO[ProblemSetDetail] =
     val (problemSetSlug, request) = input
     for
+      /** 注意：非题目管理员返回 404，用于隐藏题单管理入口和题单存在性。 */
       _ <- HttpApiError.ensure(
         ProblemSetAccessRules.canManageProblemSets(actor),
         HttpApiError.notFound(ApiMessages.problemSetNotFound)

@@ -22,13 +22,23 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 触发管理屏蔽快捷入口前所需的最少对方消息数。
+ */
 const minimumIncomingMessagesBeforeBlockShortcut = 5
 
+/**
+ * 私信会话 hook 参数，包含当前登录会话和目标用户名；缺失任一值时不加载。
+ */
 type UseMessageConversationArgs = {
   session: SessionResponse | null
   targetUsername: Username | null
 }
 
+/**
+ * 私信会话模型 hook，负责创建/定位会话、加载历史、处理实时刷新、发送消息和标记已读。
+ * hook 会依据用户偏好自动标记会话已读，并通过收件箱刷新 hook 同步导航角标。
+ */
 export function useMessageConversation({ session, targetUsername }: UseMessageConversationArgs) {
   const { t } = useI18n()
   const refreshInbox = useMessageInboxRefresh()
@@ -137,6 +147,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     const activeConversationId = conversationId
 
     function handleRealtimeEvent(event: Event) {
+      // 注意：监听的事件名只由 useMessageRealtimeConnection 分发，detail 类型在分发前已完成解码校验。
       const detail = (event as CustomEvent<MessageStreamEventDetail>).detail
       if (!detail || detail.type === 'inbox_changed') {
         return
@@ -205,6 +216,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       return
     }
 
+    // FIXME-CN: 回调入口没有用 isSending 防重入，快速重复触发可能在下一次渲染禁用按钮前重复发送。
     setIsSending(true)
     void sendAPI(new SendDirectMessage(conversationId, { content: validation.value }))
       .then(async () => {
@@ -226,6 +238,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     if (!conversationId || !history || history.messages.length === 0 || !history.hasMore) {
       return
     }
+    // FIXME-CN: 回调入口没有用 isLoadingOlderMessages 防并发，重复触发可能重复拼接同一段历史消息。
     setIsLoadingOlderMessages(true)
     setOlderMessagesError('')
     const earliestMessage = history.messages[0]

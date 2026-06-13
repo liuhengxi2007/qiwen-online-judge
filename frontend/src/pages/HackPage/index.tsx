@@ -21,6 +21,9 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * Hack 列表状态，保存列表、加载标记和错误消息。
+ */
 type HackListState = {
   hacks: HackSummary[]
   page: number
@@ -30,11 +33,17 @@ type HackListState = {
   errorMessage: string
 }
 
+/**
+ * Hack 列表 reducer 动作，覆盖加载成功和失败。
+ */
 type HackListAction =
   | { type: 'loaded'; hacks: HackSummary[]; page: number; pageSize: number; totalItems: number }
   | { type: 'failed'; message: string }
   | { type: 'page'; page: number }
 
+/**
+ * Hack 列表 reducer；纯函数维护加载状态和列表数据。
+ */
 function reducer(state: HackListState, action: HackListAction): HackListState {
   switch (action.type) {
     case 'loaded':
@@ -46,6 +55,9 @@ function reducer(state: HackListState, action: HackListAction): HackListState {
   }
 }
 
+/**
+ * Hack 列表页，加载最近 Hack 记录并展示状态、分数变化和目标提交。
+ */
 export function HackPage() {
   const { t } = useI18n()
   usePageTitle(t('hack.list.pageTitle'))
@@ -125,6 +137,9 @@ export function HackPage() {
   )
 }
 
+/**
+ * Hack 列表字段展示组件，渲染紧凑的标签和值。
+ */
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>

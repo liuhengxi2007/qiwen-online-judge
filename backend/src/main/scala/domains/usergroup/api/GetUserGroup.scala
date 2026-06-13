@@ -14,6 +14,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 用户组详情 API，只有站点管理员或组内成员可见。 */
 object GetUserGroup extends AuthenticatedApi[UserGroupSlug, UserGroupDetail]:
 
   override val method: Method = Method.GET
@@ -21,10 +22,12 @@ object GetUserGroup extends AuthenticatedApi[UserGroupSlug, UserGroupDetail]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从路径解析用户组 slug；请求体被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[UserGroupSlug] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
 
+  /** 读取用户组并校验可见性，权限不足以 404 隐藏用户组存在性。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, groupSlug: UserGroupSlug): IO[UserGroupDetail] =
     UserGroupTable.findBySlug(connection, groupSlug).flatMap {
       case None =>

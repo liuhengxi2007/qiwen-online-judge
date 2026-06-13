@@ -7,6 +7,9 @@ import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 
+/**
+ * 提交详情操作 hook 参数，包含目标提交、替换详情回调和本地化失败文案。
+ */
 type UseSubmissionDetailActionsOptions = {
   submissionId: SubmissionId
   replaceSubmission: (submission: SubmissionDetail) => void
@@ -14,6 +17,10 @@ type UseSubmissionDetailActionsOptions = {
   deleteFailedMessage: string
 }
 
+/**
+ * 提交详情操作 hook，封装重测和删除提交的 API 副作用。
+ * 重测成功会用返回详情替换页面状态，删除成功只标记 deleted 由页面负责跳转。
+ */
 export function useSubmissionDetailActions({
   submissionId,
   replaceSubmission,

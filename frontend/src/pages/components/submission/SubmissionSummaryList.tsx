@@ -23,6 +23,9 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 提交摘要列表属性，包含当前页数据、查看者、分页状态和切页回调。
+ */
 type SubmissionSummaryListProps = {
   submissions: SubmissionSummary[]
   viewer: SessionResponse
@@ -41,6 +44,9 @@ const submissionValueTextClassName = 'block py-1'
 const submissionValueLinkClassName =
   '-mx-2 block truncate rounded-lg px-2 py-1 font-medium text-slate-900 transition hover:bg-slate-100 hover:underline'
 
+/**
+ * 提交摘要列表组件，渲染可横向滚动的提交表格、分页和空/加载状态。
+ */
 export function SubmissionSummaryList({
   submissions,
   viewer,

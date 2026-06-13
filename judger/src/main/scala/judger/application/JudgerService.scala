@@ -13,6 +13,7 @@ import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.DurationLong
 
+/** judger 主业务服务，轮询 backend 任务并分派到普通判题或 hack 执行器。 */
 final class JudgerService(
   config: AppConfig,
   registeredJudgerRef: Ref[IO, RegisteredJudger],
@@ -20,6 +21,7 @@ final class JudgerService(
   problemDataCache: ProblemDataCache,
   logger: Logger[IO]
 ):
+  /** 永久轮询执行任务；单次异常会记录日志并继续下一轮。 */
   def runForever: IO[Nothing] =
     iteration.foreverM
 
@@ -36,17 +38,21 @@ final class JudgerService(
         handleTask(task)
     }
 
+  /** 根据 worker task kind 调用对应处理流程；缺失 payload 会记录错误但不回报结果。 */
   private def handleTask(task: JudgeWorkerTask): IO[Unit] =
     task.kind match
       case "judge" =>
         task.judge match
           case Some(judgeTask) => handleJudgeTask(judgeTask)
+          // FIXME-CN: claim 到 kind=judge 但 payload 缺失时只记录日志，backend 任务可能保持 running 而无法自动失败。
           case None => logger.error("[judger] Claimed judge task payload was missing judge data.")
       case "hack" =>
         task.hack match
           case Some(hackTask) => handleHackTask(hackTask)
+          // FIXME-CN: claim 到 kind=hack 但 payload 缺失时只记录日志，backend hack 尝试可能保持 running。
           case None => logger.error("[judger] Claimed hack task payload was missing hack data.")
       case other =>
+        // FIXME-CN: 未知 worker task kind 只记录错误且不回报，协议漂移时任务可能卡在已领取状态。
         logger.error(s"[judger] Claimed unsupported task kind: $other.")
 
   private def runtimes =
@@ -55,6 +61,7 @@ final class JudgerService(
       SubmissionLanguage.Python3 -> Python3Runtime
     )
 
+  /** 执行普通提交判题并回报结果；副作用包括 sandbox、缓存读取和 backend POST。 */
   private def handleJudgeTask(task: JudgeTask): IO[Unit] =
     JudgeExecutor
       .judge(task, config, problemDataCache, runtimes)
@@ -63,6 +70,7 @@ final class JudgerService(
           logResult(task, result)
       }
 
+  /** 执行 hack 尝试并回报结果；副作用包括可能生成答案和 materialize 触发所需数据。 */
   private def handleHackTask(task: HackTask): IO[Unit] =
     JudgeExecutor
       .hack(task, config, problemDataCache, runtimes)

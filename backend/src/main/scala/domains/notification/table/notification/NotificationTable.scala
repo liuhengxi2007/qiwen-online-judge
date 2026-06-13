@@ -14,8 +14,10 @@ import java.time.Instant
 import java.util.UUID
 import database.utils.UserIdentitySql
 
+/** 通知表访问对象，负责创建通知、分页读取、计数和已读状态更新。 */
 object NotificationTable:
 
+  /** 初始化通知表结构和索引。 */
   def initialize(connection: Connection): IO[Unit] =
     NotificationTableSchema.initialize(connection)
 
@@ -36,6 +38,7 @@ object NotificationTable:
       |) values (?, ?, ?, ?, 'unread', ?, ?, cast(? as jsonb), ?, ?, ?)
       |""".stripMargin
 
+  /** 插入一条未读通知，payload 会编码为 jsonb，actor 可为空表示系统通知。 */
   def insert(
     connection: Connection,
     recipientUsername: Username,
@@ -88,6 +91,7 @@ object NotificationTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 分页读取指定收件人的通知列表，并同时返回未读数和总数。 */
   def listForRecipient(connection: Connection, recipientUsername: Username, pageRequest: PageRequest): IO[NotificationListResponse] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -113,6 +117,7 @@ object NotificationTable:
       |where recipient_username = ?
       |""".stripMargin
 
+  /** 统计指定收件人的通知总数。 */
   def countForRecipient(connection: Connection, recipientUsername: Username): IO[Long] =
     IO.blocking {
       val statement = connection.prepareStatement(countByRecipientSQL)
@@ -132,6 +137,7 @@ object NotificationTable:
       |  and status = 'unread'
       |""".stripMargin
 
+  /** 统计指定收件人的未读通知数。 */
   def countUnreadForRecipient(connection: Connection, recipientUsername: Username): IO[Int] =
     IO.blocking {
       val statement = connection.prepareStatement(countUnreadSQL)
@@ -153,6 +159,7 @@ object NotificationTable:
       |  and status = 'unread'
       |""".stripMargin
 
+  /** 将指定收件人的单条未读通知置为已读，返回是否实际更新；已读通知也会返回 false。 */
   def markRead(connection: Connection, notificationId: NotificationId, recipientUsername: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(markReadSQL)
@@ -173,6 +180,7 @@ object NotificationTable:
       |  and status = 'unread'
       |""".stripMargin
 
+  /** 将指定收件人的所有未读通知置为已读。 */
   def markAllRead(connection: Connection, recipientUsername: Username): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(markAllReadSQL)

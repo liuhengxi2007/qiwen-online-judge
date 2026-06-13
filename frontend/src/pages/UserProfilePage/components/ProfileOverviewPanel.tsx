@@ -4,6 +4,9 @@ import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 import { userAvatarUrlValue } from '@/objects/user/UserAvatarUrl'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户资料概览面板属性，包含头像、显示名和加载状态。
+ */
 type ProfileOverviewPanelProps = {
   avatarUrl: UserAvatarUrl | null
   isLoadingProfile: boolean
@@ -11,6 +14,9 @@ type ProfileOverviewPanelProps = {
   profileDisplayName: DisplayName | null
 }
 
+/**
+ * 用户资料概览面板，展示头像或首字母占位，以及当前显示名。
+ */
 export function ProfileOverviewPanel({
   avatarUrl,
   isLoadingProfile,
@@ -32,6 +38,9 @@ export function ProfileOverviewPanel({
   )
 }
 
+/**
+ * 用户资料头像展示组件，优先使用头像 URL，缺失时用显示名首字母生成占位。
+ */
 function ProfilePageAvatar({
   avatarUrl,
   displayName,

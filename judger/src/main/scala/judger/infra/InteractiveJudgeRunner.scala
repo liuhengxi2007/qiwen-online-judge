@@ -6,7 +6,9 @@ import judger.objects.{ProcessResult, RuntimeCommand}
 
 import java.nio.file.Path
 
+/** 交互题判定辅助逻辑，负责参与者管道布局、共享时间限制和超时归因。 */
 object InteractiveJudgeRunner:
+  /** 一个交互参与程序的命令和双向 FIFO 路径。 */
   private[judger] final case class InteractiveParticipant(
     role: String,
     occurrenceIndex: Int,
@@ -15,6 +17,7 @@ object InteractiveJudgeRunner:
     fromParticipant: Path
   )
 
+  /** 根据 roles 和已准备命令生成参与者列表；缺失 role 会被过滤并由上层处理。 */
   private[judger] def interactiveParticipants(
     roles: List[String],
     roleCommands: Map[String, RuntimeCommand],
@@ -34,6 +37,7 @@ object InteractiveJudgeRunner:
       }
     }
 
+  /** 计算交互题所有进程共享的墙钟限制，用于覆盖通信等待时间。 */
   private[judger] def interactiveWallTimeLimitMs(
     testcase: JudgeTaskTestcase,
     roleCount: Int,
@@ -46,6 +50,7 @@ object InteractiveJudgeRunner:
         strategyProvider.flatMap(_.limits).map(_.timeMs.value.toLong).getOrElse(0L)
     (totalCpuBudgetMs * 3L + 1L) / 2L + 500L
 
+  /** 判断 interactor 或策略 provider 是否真正耗尽自身 CPU 时间。 */
   private[judger] def interactiveToolCpuLimitExceeded(
     interactor: JudgeTaskTool,
     strategyProvider: Option[JudgeTaskTool],
@@ -55,12 +60,15 @@ object InteractiveJudgeRunner:
     toolCpuLimitExceeded(interactor, interactorResult) ||
       strategyProvider.exists(provider => strategyResult.exists(result => toolCpuLimitExceeded(provider, result)))
 
+  /** 根据工具配置判断单个工具进程是否 CPU 超限。 */
   private[judger] def toolCpuLimitExceeded(tool: JudgeTaskTool, result: ProcessResult): Boolean =
     tool.limits.exists(limits => cpuLimitExceeded(result, limits.timeMs.value.toLong))
 
+  /** 判断某进程是否超时且 CPU 用量达到给定限制。 */
   private[judger] def cpuLimitExceeded(result: ProcessResult, timeLimitMs: Long): Boolean =
     result.timedOut && result.timeUsedMs.exists(_ >= timeLimitMs)
 
+  /** 对只有墙钟超时而无 CPU 超限的交互运行做归因，区分选手失败、策略等待和 idleness。 */
   private[judger] def interactiveWallOnlyVerdict(
     participants: List[(String, ProcessResult)],
     participantCpuLimitMs: Long,
@@ -77,10 +85,12 @@ object InteractiveJudgeRunner:
       }
     }
 
+  /** 判断是否存在墙钟超时但没有任何进程达到自身 CPU 限制。 */
   private[judger] def interactiveWallOnlyTimeout(processes: List[(ProcessResult, Long)]): Boolean =
     processes.exists { case (result, _) => result.timedOut } &&
       !processes.exists { case (result, timeLimitMs) => cpuLimitExceeded(result, timeLimitMs) }
 
+  /** 从 LD_PRELOAD 监控日志计算 interactor 读取策略 provider FIFO 的累计等待时间。 */
   private[judger] def strategyProviderReadWaitMs(logContent: String, interactorWallTimeUsedMs: Option[Long]): Long =
     final case class Begin(seq: Long, timestampMs: Long)
     val parsedEvents =
@@ -123,6 +133,7 @@ object InteractiveJudgeRunner:
       fallbackEndMs.toList.flatMap(endMs => pendingBegins.values.map(beginMs => math.max(0L, endMs - beginMs))).sum
     completeWaitMs + pendingWaitMs
 
+  /** 找到首个选手进程的 TLE 或 RE，用于交互题失败归因。 */
   private[judger] def participantFailure(participants: List[(String, ProcessResult)], timeLimitMs: Long): Option[(SubmissionVerdict, ProcessResult)] =
     participants.collectFirst {
       case (_, result) if cpuLimitExceeded(result, timeLimitMs) => SubmissionVerdict.TimeLimitExceeded -> result

@@ -12,6 +12,9 @@ import { blogScoreClassName } from '@/pages/objects/BlogDisplay'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客评论树属性，包含扁平评论列表、当前用户身份、回复/编辑草稿和操作回调。
+ */
 type BlogCommentThreadProps = {
   comments: BlogCommentSummary[]
   currentUsername: string
@@ -33,6 +36,10 @@ type BlogCommentThreadProps = {
   onRemoveComment: (commentId: BlogCommentId) => void
 }
 
+/**
+ * 博客评论树组件，从扁平评论列表按 parentId 递归渲染回复结构。
+ * 组件不直接访问 API，只通过外部回调提交回复、投票、编辑和删除操作。
+ */
 export function BlogCommentThread({
   comments,
   currentUsername,

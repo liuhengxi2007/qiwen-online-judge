@@ -9,11 +9,17 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 用户设置查询 hook 输入，包含是否允许加载目标用户和目标用户名。
+ */
 type UseUserSettingsQueryArgs = {
   canLoadTarget: boolean
   targetUsername: Username
 }
 
+/**
+ * 用户设置查询 hook；在权限允许时加载目标用户资料和权限信息。
+ */
 export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserSettingsQueryArgs) {
   const [settingsState, setSettingsState] = useState<{
     username: Username | null

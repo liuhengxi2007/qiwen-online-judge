@@ -10,6 +10,9 @@ import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAc
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建题单页状态，保存草稿、提交状态和反馈消息。
+ */
 type CreateProblemSetPageState = {
   isSubmitting: boolean
   draft: CreateProblemSetDraft
@@ -17,6 +20,9 @@ type CreateProblemSetPageState = {
   successMessage: string
 }
 
+/**
+ * 创建题单页内部草稿，包含内容字段和访问控制输入。
+ */
 type CreateProblemSetDraft = {
   slug: string
   title: string
@@ -26,6 +32,9 @@ type CreateProblemSetDraft = {
   grantedGroupsInput: string
 }
 
+/**
+ * 创建题单页 reducer 动作，覆盖字段编辑、访问控制编辑和提交状态。
+ */
 type CreateProblemSetPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_title'; value: string }
@@ -53,6 +62,9 @@ const initialState: CreateProblemSetPageState = {
   successMessage: '',
 }
 
+/**
+ * 创建题单页 reducer；纯函数维护草稿、访问策略输入和提交反馈。
+ */
 function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageAction): CreateProblemSetPageState {
   switch (action.type) {
     case 'set_slug':
@@ -82,6 +94,9 @@ function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageA
   }
 }
 
+/**
+ * 创建题单页模型 hook；维护表单草稿并在权限允许时提交创建请求。
+ */
 export function useCreateProblemSetPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)

@@ -7,6 +7,9 @@ import {
 } from '../functions/ProblemSetEditorState'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 题单编辑器状态 hook；在详情加载或变化时水合编辑草稿。
+ */
 export function useProblemSetEditorState(problemSet: ProblemSetDetail | null) {
   const [editorState, dispatch] = useReducer(reduceProblemSetEditorState, initialProblemSetEditorState)
 

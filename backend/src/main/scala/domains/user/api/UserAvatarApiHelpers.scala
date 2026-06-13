@@ -9,13 +9,16 @@ import shared.api.{ApiMessages, HttpApiError}
 
 import java.sql.Connection
 
+/** 用户头像 API 共享辅助，集中权限校验和设置刷新逻辑。 */
 object UserAvatarApiHelpers:
+  /** 校验操作者可管理目标用户头像；仅本人或站点管理员允许。 */
   def ensureCanManageAvatar(actor: AuthenticatedUser, targetUsername: Username): IO[Unit] =
     HttpApiError.ensure(
       targetUsername.value == actor.username.value || actor.siteManager,
       HttpApiError.forbidden(ApiMessages.siteManagerRequired)
     )
 
+  /** 头像变更后重新读取完整用户设置，用户不存在时返回 404。 */
   def refreshedSettings(connection: Connection, targetUsername: Username): IO[UserSettingsResponse] =
     UserProfileTable.findUserSettingsByUsername(connection, targetUsername).flatMap {
       case Some(settings) => IO.pure(settings)

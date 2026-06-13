@@ -9,6 +9,9 @@ import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单更新动作 hook；提交内容或访问控制更新并返回状态。
+ */
 export function useProblemSetUpdateAction(problemSetSlug: ProblemSetSlug) {
   const { t } = useI18n()
   const [isSaving, setIsSaving] = useState(false)

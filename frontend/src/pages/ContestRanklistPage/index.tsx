@@ -27,6 +27,9 @@ import { useContestRanklistPageModel } from './hooks/useContestRanklistPageModel
 
 const ranklistItemsPerPage = 10
 
+/**
+ * 比赛榜单页入口，校验比赛 slug 和分页参数后进入榜单内容。
+ */
 export function ContestRanklistPage() {
   const { t } = useI18n()
   usePageTitle(t('contest.ranklist.pageTitle'))
@@ -58,6 +61,9 @@ export function ContestRanklistPage() {
   )
 }
 
+/**
+ * 比赛榜单页主体，负责会话守卫、榜单查询、分页修正和表格展示。
+ */
 function ContestRanklistPageContent({
   contestSlug,
   currentPage,
@@ -127,6 +133,9 @@ function ContestRanklistPageContent({
   )
 }
 
+/**
+ * 比赛榜单表格，展示排名、用户、解题数、罚时和每题结果。
+ */
 function ContestRanklistTable({ items }: { items: ContestRanklistItem[] }) {
   const { t } = useI18n()
   const problemColumns = items[0]?.problemResults.map((result) => result.problem) ?? []
@@ -174,6 +183,9 @@ function ContestRanklistTable({ items }: { items: ContestRanklistItem[] }) {
   )
 }
 
+/**
+ * 比赛单题结果单元格，根据是否通过展示尝试次数和罚时。
+ */
 function ContestProblemResultCell({ result }: { result: ContestRanklistProblemResult }) {
   if (result.score === null || result.submissionId === null) {
     return <span className="text-slate-300">-</span>
@@ -201,6 +213,9 @@ function ContestProblemResultCell({ result }: { result: ContestRanklistProblemRe
   )
 }
 
+/**
+ * 将榜单罚时毫秒数格式化为分钟字符串；缺失时展示占位符。
+ */
 function formatPenaltyMillis(penaltyMillis: ContestRanklistItem['penaltyMillis']): string {
   const totalSeconds = Math.floor(contestPenaltyMillisValue(penaltyMillis) / 1000)
   const hours = Math.floor(totalSeconds / 3600)

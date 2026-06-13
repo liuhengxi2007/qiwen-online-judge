@@ -2,11 +2,17 @@ import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { AppendRatingContestRequest } from '@/objects/rating/request/AppendRatingContestRequest'
 import type { RatingManageState } from '@/objects/rating/response/RatingManageState'
 
+/**
+ * Rating 追加任务的表单草稿，保存比赛 slug 和 m 参数的原始输入。
+ */
 export type RatingManageDraft = {
   contestSlugInput: string
   mInput: string
 }
 
+/**
+ * Rating 管理页状态，包含加载、追加、回退任务状态和页面反馈消息。
+ */
 export type RatingManagePageState = {
   draft: RatingManageDraft
   errorMessage: string
@@ -17,6 +23,9 @@ export type RatingManagePageState = {
   noticeMessage: string
 }
 
+/**
+ * Rating 管理页 reducer 动作，覆盖字段编辑、加载、追加和回退流程。
+ */
 export type RatingManagePageAction =
   | { type: 'set_contest_slug_input'; value: string }
   | { type: 'set_m_input'; value: string }
@@ -30,8 +39,14 @@ export type RatingManagePageAction =
   | { type: 'pop_succeeded'; state: RatingManageState; message: string }
   | { type: 'pop_failed'; message: string }
 
+/**
+ * Rating 追加表单默认 m 值，和追加成功后重置值保持一致。
+ */
 export const defaultRatingMInput = '60'
 
+/**
+ * Rating 管理页初始状态，默认处于加载中并使用默认 m 输入。
+ */
 export const initialRatingManagePageState: RatingManagePageState = {
   draft: {
     contestSlugInput: '',
@@ -45,10 +60,16 @@ export const initialRatingManagePageState: RatingManagePageState = {
   noticeMessage: '',
 }
 
+/**
+ * Rating 追加草稿校验结果，成功时携带后端请求体，失败时携带用户可见错误。
+ */
 type ValidateRatingAppendDraftResult =
   | { ok: true; request: AppendRatingContestRequest }
   | { ok: false; message: string }
 
+/**
+ * 校验 Rating 追加草稿；解析比赛 slug，并要求 m 是 2 到 100 的安全整数。
+ */
 export function validateRatingAppendDraft(draft: RatingManageDraft): ValidateRatingAppendDraftResult {
   const contestSlug = parseContestSlug(draft.contestSlugInput)
   if (!contestSlug.ok) {
@@ -73,6 +94,9 @@ export function validateRatingAppendDraft(draft: RatingManageDraft): ValidateRat
   }
 }
 
+/**
+ * Rating 管理页 reducer；纯函数维护加载标记、草稿和成功/失败消息。
+ */
 export function ratingManagePageReducer(
   state: RatingManagePageState,
   action: RatingManagePageAction,

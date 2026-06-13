@@ -23,8 +23,10 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
+/** 设置题目数据 ready 状态的请求体；true 会触发 judge.yaml 完整校验，false 只下线数据。 */
 final case class SetProblemReadyRequest(ready: Boolean)
 
+/** 题目数据 ready 状态管理 API；校验题目数据可判、清理冗余文件并更新结果展示模式。 */
 final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[(ProblemManagementContext, SetProblemReadyRequest), ProblemDetail]:
 
@@ -35,12 +37,14 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDetail] = summon[Encoder[ProblemDetail]]
 
+  /** 解析题目管理上下文和 ready 布尔值。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, SetProblemReadyRequest)] =
     for
       context <- ProblemManagementContext.decode(request, pathParams)
       body <- request.as[SetProblemReadyRequest]
     yield (context, body)
 
+  /** 校验管理权限后设置 ready 状态；ready=true 会读取对象存储中的 judge.yaml 和清单。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -51,6 +55,7 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
       .requireManagedProblem(connection, actor, context)
       .flatMap(_ => setManagedProblemDataReady(connection, context.problemSlug, request.ready))
 
+  /** 在题目行锁内切换 ready 状态，输出刷新后的题目详情。 */
   def setManagedProblemDataReady(connection: Connection, problemSlug: ProblemSlug, ready: Boolean): IO[ProblemDetail] =
     ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
       if ready then markProblemReady(connection, problem)

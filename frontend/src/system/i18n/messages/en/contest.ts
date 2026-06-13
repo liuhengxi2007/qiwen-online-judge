@@ -1,3 +1,6 @@
+/**
+ * 英文比赛消息，覆盖比赛列表、详情、报名、榜单、管理和提交入口文案。
+ */
 export const enContestMessages: Record<string, string> = {
   'contest.pageTitle': 'Qiwen Online Judge - Contests',
   'contest.heading': 'Contests',

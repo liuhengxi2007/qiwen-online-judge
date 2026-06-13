@@ -21,6 +21,9 @@ import { ProblemListCard } from './components/ProblemListCard'
 
 const problemsPerPage = 10
 
+/**
+ * 题目列表页入口，完成会话守卫并根据权限展示创建入口。
+ */
 export function ProblemPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.pageTitle'))
@@ -37,6 +40,9 @@ export function ProblemPage() {
   return <ProblemPageContent canCreate={user.problemManager} />
 }
 
+/**
+ * 题目列表页主体，解析分页、加载题目列表并渲染分页修正。
+ */
 function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()

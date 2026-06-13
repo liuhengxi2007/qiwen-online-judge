@@ -11,8 +11,10 @@ import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 
+/** hack 列表 query 参数；表层会再归一化页码和页大小。 */
 final case class HackListQuery(page: Int, pageSize: Int)
 
+/** 列出当前用户可见 hack attempt 的认证 API。 */
 object ListHacks extends AuthenticatedApi[HackListQuery, HackListResponse]:
 
   override val method: Method = Method.GET
@@ -20,6 +22,7 @@ object ListHacks extends AuthenticatedApi[HackListQuery, HackListResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[HackListResponse] = summon[Encoder[HackListResponse]]
 
+  /** 从 query 参数解析 page/pageSize；非法值使用默认值。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[HackListQuery] =
     val _ = pathParams
     val params = request.uri.query.params
@@ -30,5 +33,6 @@ object ListHacks extends AuthenticatedApi[HackListQuery, HackListResponse]:
       )
     )
 
+  /** 分页返回调用者可见的 hack 摘要列表。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, query: HackListQuery): IO[HackListResponse] =
     HackQueryTable.listVisible(connection, actor, query.page, query.pageSize)

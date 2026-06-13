@@ -2,10 +2,12 @@ package shared.objects.access
 
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 
+/** 访问授权的主体，可以是单个用户，也可以是用户组。 */
 enum AccessSubject:
   case User(username: AccessUsername)
   case UserGroup(slug: AccessUserGroupSlug)
 
+/** 负责授权主体的带 kind 字段 JSON 编解码，并在解码时做领域值校验。 */
 object AccessSubject:
   given Encoder[AccessSubject] = Encoder.instance {
     case AccessSubject.User(username) =>

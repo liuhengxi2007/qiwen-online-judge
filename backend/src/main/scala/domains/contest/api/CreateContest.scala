@@ -15,6 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 创建比赛的认证 API，仅全局比赛管理员可调用，并负责校验时间范围与访问策略主体。 */
 object CreateContest extends AuthenticatedApi[CreateContestRequest, ContestDetail]:
 
   override val method: Method = Method.POST
@@ -22,10 +23,12 @@ object CreateContest extends AuthenticatedApi[CreateContestRequest, ContestDetai
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[ContestDetail] = summon[Encoder[ContestDetail]]
 
+  /** 读取创建比赛请求体，路径参数不参与该入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateContestRequest] =
     val _ = pathParams
     request.as[CreateContestRequest]
 
+  /** 规范化 slug/标题/描述，拒绝重复 slug 和无效授权主体，写库后返回可管理的比赛详情。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateContestRequest): IO[ContestDetail] =
     for
       _ <- HttpApiError.ensure(

@@ -11,6 +11,9 @@ import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建用户组页模型 hook；维护表单草稿并提交创建请求。
+ */
 export function useCreateUserGroupPageModel() {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reduceCreateUserGroupPageState, initialCreateUserGroupPageState)

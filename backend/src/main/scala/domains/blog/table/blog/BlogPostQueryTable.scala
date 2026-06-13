@@ -10,6 +10,7 @@ import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
+/** 博客查询表访问对象，负责列表、作者贡献、详情和可见性过滤。 */
 object BlogPostQueryTable:
 
   private val blogSelectColumns: String =
@@ -54,6 +55,7 @@ object BlogPostQueryTable:
       |where b.visibility = 'public' or b.author_username = ?
       |""".stripMargin
 
+  /** 分页读取当前用户可见的博客列表，包含公开博客和自己的私有博客。 */
   def listAll(connection: Connection, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -71,6 +73,7 @@ object BlogPostQueryTable:
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          /** 注意：enrichSummaries 内部同步读取关联题目；这里位于 IO.blocking 中，避免在计算线程直接阻塞。 */
           BlogProblemLinkQueryTable.enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
@@ -99,6 +102,7 @@ object BlogPostQueryTable:
       |  and (b.visibility = 'public' or b.author_username = ?)
       |""".stripMargin
 
+  /** 分页读取指定作者博客；私有博客只在查看者就是作者本人时返回。 */
   def listByAuthor(connection: Connection, authorUsername: Username, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -117,6 +121,7 @@ object BlogPostQueryTable:
             .takeWhile(identity)
             .map(_ => readBlogSummary(resultSet))
             .toList
+          /** 注意：enrichSummaries 内部同步读取关联题目；这里位于 IO.blocking 中，避免在计算线程直接阻塞。 */
           BlogProblemLinkQueryTable.enrichSummaries(connection)(summaries)
         finally resultSet.close()
       finally statement.close()
@@ -161,6 +166,7 @@ object BlogPostQueryTable:
       |) comment_scores on comment_scores.author_username = target.username
       |""".stripMargin
 
+  /** 统计作者博客和评论投票贡献，评论分按 0.1 权重计入。 */
   def contributionByAuthor(connection: Connection, authorUsername: Username): IO[BigDecimal] =
     IO.blocking {
       val statement = connection.prepareStatement(contributionByAuthorSQL)
@@ -187,6 +193,7 @@ object BlogPostQueryTable:
       |  and (b.visibility = 'public' or b.author_username = ?)
       |""".stripMargin
 
+  /** 按公开 id 查找当前用户可见的博客摘要，并补充 accepted 关联题目。 */
   def findSummaryById(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[Option[BlogSummary]] =
     IO.blocking {
       val statement = connection.prepareStatement(findByIdSQL)
@@ -203,6 +210,7 @@ object BlogPostQueryTable:
       case None => IO.pure(None)
     }
 
+  /** 按公开 id 查找当前用户可见的博客详情，并在可见时读取评论列表。 */
   def findById(connection: Connection, blogId: BlogId, viewerUsername: Username): IO[Option[BlogDetail]] =
     for
       summary <- findSummaryById(connection, blogId, viewerUsername)

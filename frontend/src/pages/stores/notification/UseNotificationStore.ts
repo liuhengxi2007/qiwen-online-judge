@@ -5,6 +5,9 @@ import type { NotificationSummary } from '@/objects/notification/response/Notifi
 import { notificationIdValue } from '@/objects/notification/NotificationId'
 import type { NotificationId } from '@/objects/notification/NotificationId'
 
+/**
+ * 通知全局状态，保存列表页数据、未读数、加载标记和本地已读修正动作。
+ */
 type NotificationStoreState = {
   notifications: NotificationSummary[]
   unreadCount: number
@@ -25,6 +28,9 @@ type NotificationStoreState = {
   clear: () => void
 }
 
+/**
+ * 通知 Zustand store；由列表查询、未读数查询和实时通知连接共同更新。
+ */
 export const useNotificationStore = create<NotificationStoreState>((set) => ({
   notifications: [],
   unreadCount: 0,

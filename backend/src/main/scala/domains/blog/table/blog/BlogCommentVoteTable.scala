@@ -9,6 +9,7 @@ import domains.user.objects.Username
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** 博客评论投票表访问对象，负责写入、切换和撤销当前用户的评论投票。 */
 object BlogCommentVoteTable:
 
   private val upsertCommentVoteSQL: String =
@@ -25,6 +26,7 @@ object BlogCommentVoteTable:
       |              updated_at = excluded.updated_at
       |""".stripMargin
 
+  /** 对可见博客下的评论投票；重复同向投票会撤销，成功后返回更新后的博客详情。 */
   def voteComment(
     connection: Connection,
     blogId: BlogId,

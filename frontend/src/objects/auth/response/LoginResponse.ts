@@ -4,6 +4,7 @@ import type { EmailAddress } from '@/objects/auth/EmailAddress'
 import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 import type { UserPreferences } from '@/objects/user/UserPreferences'
 
+/** 登录成功响应；返回当前会话用户资料、偏好和权限位。 */
 export type LoginResponse = {
   displayName: DisplayName
   username: Username

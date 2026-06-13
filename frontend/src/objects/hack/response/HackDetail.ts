@@ -6,6 +6,7 @@ import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 
+/** Hack 详情响应；包含目标提交、输入、状态、分数变化和各方消息。 */
 export type HackDetail = {
   id: HackId
   problemId: ProblemId

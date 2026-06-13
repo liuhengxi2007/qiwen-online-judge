@@ -1,3 +1,6 @@
+/**
+ * 简体中文提交消息，覆盖提交列表、详情、评测状态、筛选和代码展示文案。
+ */
 export const zhCnSubmissionMessages: Record<string, string> = {
   'submission.pageTitle': '气温在线评测 - 提交',
   'submission.heading': '提交',

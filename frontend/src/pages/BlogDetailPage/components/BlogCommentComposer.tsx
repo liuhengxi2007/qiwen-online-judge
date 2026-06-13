@@ -4,12 +4,21 @@ import { Textarea } from '@/components/ui/textarea'
 import type { useBlogDetailPageModel } from '../hooks/useBlogDetailPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客详情页模型类型别名，供评论输入框访问草稿和提交状态。
+ */
 type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
 
+/**
+ * 顶层评论输入框属性，传入博客详情页聚合模型。
+ */
 type BlogCommentComposerProps = {
   model: BlogDetailPageModel
 }
 
+/**
+ * 顶层评论输入框，展示评论草稿、提交按钮和创建评论错误消息。
+ */
 export function BlogCommentComposer({ model }: BlogCommentComposerProps) {
   const { t } = useI18n()
 

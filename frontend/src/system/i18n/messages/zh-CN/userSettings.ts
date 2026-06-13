@@ -1,3 +1,6 @@
+/**
+ * 简体中文用户设置消息，覆盖账户、偏好、资料、权限和屏蔽列表文案。
+ */
 export const zhCnUserSettingsMessages: Record<string, string> = {
   'userSettings.pageTitle': '气温在线评测 - 用户设置',
   'userSettings.heading': '用户设置',

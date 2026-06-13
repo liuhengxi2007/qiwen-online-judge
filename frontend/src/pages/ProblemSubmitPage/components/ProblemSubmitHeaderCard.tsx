@@ -7,8 +7,14 @@ import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 
+/**
+ * 题目详情查询模型类型别名，供提交页头部读取加载和错误状态。
+ */
 type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
 
+/**
+ * 题目提交页头部卡片，展示题目标题、slug 和加载/错误状态。
+ */
 export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemDetailQuery }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()

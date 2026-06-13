@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 评分表结构初始化对象，维护评分比赛序列和用户当前评分状态表。 */
 object RatingTableSchema:
 
   val initContestTableSql: String =
@@ -36,6 +37,7 @@ object RatingTableSchema:
       |);
       |""".stripMargin
 
+  /** 执行评分比赛表和用户评分状态表的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

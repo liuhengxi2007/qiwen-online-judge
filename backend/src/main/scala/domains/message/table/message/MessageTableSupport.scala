@@ -10,6 +10,7 @@ import database.utils.UserIdentitySql
 
 import java.sql.ResultSet
 
+/** 私信表读写辅助对象，集中处理 ResultSet 到响应对象的转换。 */
 object MessageTableSupport:
   private def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
     val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
@@ -18,9 +19,11 @@ object MessageTableSupport:
       displayName = DisplayName(row.displayName)
     )
 
+  /** 规范化两名参与者的存储顺序，使同一对用户只对应一个会话。 */
   def normalizeConversationPair(left: Username, right: Username): (Username, Username) =
     if left.value <= right.value then (left, right) else (right, left)
 
+  /** 从会话查询行读取当前用户视角的会话摘要。 */
   def readConversationSummary(resultSet: ResultSet): MessageConversationSummary =
     MessageConversationSummary(
       id = MessageConversationId(resultSet.getObject("id", classOf[java.util.UUID])),
@@ -31,6 +34,7 @@ object MessageTableSupport:
       unreadCount = resultSet.getInt("unread_count")
     )
 
+  /** 从消息查询行读取私信响应对象。 */
   def readDirectMessage(resultSet: ResultSet): DirectMessage =
     DirectMessage(
       id = MessageId(resultSet.getObject("id", classOf[java.util.UUID])),
@@ -42,12 +46,14 @@ object MessageTableSupport:
       readAt = Option(resultSet.getTimestamp("read_at")).map(_.toInstant)
     )
 
+  /** 从屏蔽查询行读取屏蔽名单条目。 */
   def readBlockEntry(resultSet: ResultSet): MessageBlockEntry =
     MessageBlockEntry(
       user = readUserIdentity(resultSet, "blocked"),
       createdAt = resultSet.getTimestamp("created_at").toInstant
     )
 
+  /** 从读回执查询行读取内部读回执对象。 */
   def readConversationReadReceipt(resultSet: ResultSet): ConversationReadReceipt =
     ConversationReadReceipt(
       conversationId = MessageConversationId(resultSet.getObject("conversation_id", classOf[java.util.UUID])),

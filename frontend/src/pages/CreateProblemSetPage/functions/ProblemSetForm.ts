@@ -5,6 +5,9 @@ import type { CreateProblemSetRequest } from '@/objects/problemset/request/Creat
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 
+/**
+ * 创建题单表单草稿，保存 slug、标题、描述、访问策略和授权输入。
+ */
 export type ProblemSetDraft = {
   slug: string
   title: string
@@ -14,6 +17,9 @@ export type ProblemSetDraft = {
   grantedGroupsInput: string
 }
 
+/**
+ * 校验创建题单草稿，成功时构造后端创建请求。
+ */
 export function validateProblemSetDraft(
   draft: ProblemSetDraft,
 ): { ok: true; request: CreateProblemSetRequest } | { ok: false; message: string } {

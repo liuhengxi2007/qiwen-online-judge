@@ -10,11 +10,13 @@ import judger.objects.{RuntimeCommand, SandboxLimits}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
+/** C++17 提交 runtime，负责写源码/头文件、调用编译器并产出 /box 可执行命令。 */
 object Cpp17Runtime extends JudgeRuntime:
   private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048)
 
   override val language: SubmissionLanguage = SubmissionLanguage.Cpp17
 
+  /** 编译一个 C++ role；编译失败归为 CompileError，编译器不可用归为 judger runtime 系统错误。 */
   override def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
@@ -61,12 +63,15 @@ object Cpp17Runtime extends JudgeRuntime:
         yield result
     }
 
+  /** 生成 C++17 编译参数；stub 会作为额外翻译单元参与链接。 */
   private[judger] def compileArgs(sourceName: String, stubSourceName: Option[String], executableName: String): List[String] =
     List(Some(sourceName), stubSourceName).flatten ++ List("-o", executableName, "-O2", "-std=c++17", "-I", ".")
 
+  /** 将题目配置头文件写入工作目录根部，供 -I . include。 */
   private[judger] def writeHeaders(workingDirectory: Path, headers: List[ProgramHeaderSource]): Unit =
     headers.foreach(writeHeader(workingDirectory, _))
 
+  /** 写入单个 C++ header；只允许文件位于工作目录根部，避免 include 文件逃逸。 */
   private def writeHeader(workingDirectory: Path, header: ProgramHeaderSource): Unit =
     val root = workingDirectory.normalize()
     val target = root.resolve(header.filename).normalize()
@@ -74,6 +79,7 @@ object Cpp17Runtime extends JudgeRuntime:
       throw RuntimeException(s"Invalid C++ header filename: ${header.filename}.")
     Files.writeString(target, header.sourceCode.value, StandardCharsets.UTF_8)
 
+  /** 解析 C++ 编译器路径，并确认该路径在 isolate sandbox 中可见。 */
   private def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
     IO.blocking {
       resolveExecutable(config.cxx) match

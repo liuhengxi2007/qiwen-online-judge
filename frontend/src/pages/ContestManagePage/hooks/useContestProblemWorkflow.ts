@@ -14,12 +14,18 @@ import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 import type { ContestManagePageAction } from './useContestManagePageModel'
 
+/**
+ * 比赛题目工作流 hook 输入，包含比赛 slug、状态 dispatch 和附加警告上下文。
+ */
 type UseContestProblemWorkflowArgs = {
   attachWarningProblemSlug: ProblemSlug | null
   contestSlug: ContestSlug
   dispatch: Dispatch<ContestManagePageAction>
 }
 
+/**
+ * 比赛题目工作流 hook；提供附加、移除和重排比赛题目的异步动作。
+ */
 export function useContestProblemWorkflow({ attachWarningProblemSlug, contestSlug, dispatch }: UseContestProblemWorkflowArgs) {
   const { t } = useI18n()
   const [problemSearchInput, setProblemSearchInput] = useState('')

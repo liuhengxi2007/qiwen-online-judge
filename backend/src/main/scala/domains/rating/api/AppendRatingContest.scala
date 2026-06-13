@@ -19,6 +19,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
+/** 将已结束比赛追加进评分序列的站点管理员 API，会持久化快照并重算当前评分。 */
 object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, RatingManageState]:
 
   override val method: Method = Method.POST
@@ -26,10 +27,12 @@ object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, Ra
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[RatingManageState] = summon[Encoder[RatingManageState]]
 
+  /** 读取追加评分比赛请求体，路径参数不参与该入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[AppendRatingContestRequest] =
     val _ = pathParams
     request.as[AppendRatingContestRequest]
 
+  /** 校验 m 值、比赛已结束和参与人数后追加快照；重叠或非顺序比赛允许追加但会返回告警。 */
   override def plan(
     connection: Connection,
     actor: SiteManagerUser,

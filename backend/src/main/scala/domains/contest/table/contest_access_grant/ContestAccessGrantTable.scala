@@ -8,8 +8,10 @@ import shared.objects.access.{AccessSubject, GrantRole}
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 
+/** 比赛访问授权表访问对象，负责 viewer/manager 授权的读取和替换。 */
 object ContestAccessGrantTable:
 
+  /** 初始化比赛访问授权表结构。 */
   def initialize(connection: Connection): IO[Unit] =
     ContestAccessGrantTableSchema.initialize(connection)
 
@@ -21,6 +23,7 @@ object ContestAccessGrantTable:
       |order by subject_kind asc, subject_key asc
       |""".stripMargin
 
+  /** 读取指定比赛和角色的授权主体列表，按主体类型和 key 稳定排序。 */
   def listForContest(connection: Connection, contestId: ContestId, grantRole: GrantRole): IO[List[AccessSubject]] =
     IO.blocking {
       val statement = connection.prepareStatement(listForContestSQL)
@@ -38,6 +41,7 @@ object ContestAccessGrantTable:
       finally statement.close()
     }
 
+  /** 用传入授权主体完整替换指定比赛和角色的授权集合。 */
   def replaceForContest(
     connection: Connection,
     contestId: ContestId,

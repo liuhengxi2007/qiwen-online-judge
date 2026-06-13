@@ -6,6 +6,7 @@ import type { APIWithSessionMessage } from '@/system/api/api-message'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { CreateSubmissionMultipartRequest } from './CreateSubmission'
 
+/** 创建比赛提交；输入比赛 slug 和提交请求，输出提交详情。 */
 export class CreateContestSubmission implements APIWithSessionMessage<SubmissionDetail> {
   declare readonly responseType?: SubmissionDetail
   readonly method = 'POST'
@@ -22,6 +23,7 @@ export class CreateContestSubmission implements APIWithSessionMessage<Submission
   }
 }
 
+/** 创建比赛 multipart 提交；输入比赛 slug 和文件化请求，formData 组装上传载荷。 */
 export class CreateContestSubmissionMultipart implements APIWithSessionMessage<SubmissionDetail> {
   declare readonly responseType?: SubmissionDetail
   readonly method = 'POST'

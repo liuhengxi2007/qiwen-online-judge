@@ -1,3 +1,6 @@
+/**
+ * 简体中文 Rating 管理消息，覆盖比赛序列、参数填写和追加评分任务文案。
+ */
 export const zhCnRatingManageMessages: Record<string, string> = {
   'ratingManage.pageTitle': '气温在线评测 - Rating 管理',
   'ratingManage.heading': 'Rating 管理',

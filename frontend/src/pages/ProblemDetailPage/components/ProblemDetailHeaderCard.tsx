@@ -15,8 +15,14 @@ import { MarkdownDocument } from '@/pages/components/MarkdownDocument'
 import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题目详情页模型类型别名，供头部卡片读取题目和操作状态。
+ */
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 
+/**
+ * 题目详情头部卡片属性，包含模型、标题展示偏好和比赛上下文。
+ */
 type ProblemDetailHeaderCardProps = {
   canManageProblem: boolean
   managementPanel: 'edit' | 'access' | null
@@ -24,6 +30,9 @@ type ProblemDetailHeaderCardProps = {
   setManagementPanel: (panel: 'edit' | 'access' | null | ((currentPanel: 'edit' | 'access' | null) => 'edit' | 'access' | null)) => void
 }
 
+/**
+ * 题目详情头部卡片，展示题目标题、访问状态和主要操作入口。
+ */
 export function ProblemDetailHeaderCard({
   canManageProblem,
   managementPanel,

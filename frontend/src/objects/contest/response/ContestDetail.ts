@@ -7,6 +7,7 @@ import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import type { ContestRegistrationStatus } from '@/objects/contest/response/ContestRegistrationStatus'
 
+/** 比赛详情响应；包含题目列表、报名状态和当前会话管理能力。 */
 export type ContestDetail = {
   id: ContestId
   slug: ContestSlug

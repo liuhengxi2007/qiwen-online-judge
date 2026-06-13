@@ -4,6 +4,7 @@ import type { MarkConversationReadRequest } from '@/objects/message/request/Mark
 import type { MessageConversationId } from '@/objects/message/MessageConversationId'
 import { messageConversationIdValue } from '@/objects/message/MessageConversationId'
 
+/** 标记私信会话已读；输入会话 ID 和模式化请求，输出更新后的会话事实。 */
 export class MarkConversationRead implements APIWithSessionMessage<ConversationMessageFacts> {
   declare readonly responseType?: ConversationMessageFacts
   readonly method = 'POST'

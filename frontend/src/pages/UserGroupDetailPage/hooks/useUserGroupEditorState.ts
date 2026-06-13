@@ -7,6 +7,9 @@ import {
   reduceUserGroupEditorState,
 } from '../functions/UserGroupEditorState'
 
+/**
+ * 用户组编辑器状态 hook，根据加载到的用户组详情水合名称、描述和新增成员草稿。
+ */
 export function useUserGroupEditorState(userGroup: UserGroupDetail | null) {
   const [state, dispatch] = useReducer(reduceUserGroupEditorState, initialUserGroupEditorState)
 

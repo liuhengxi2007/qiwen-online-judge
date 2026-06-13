@@ -13,6 +13,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 创建或获取两人私信会话的认证 API。 */
 object CreateConversation extends AuthenticatedApi[CreateConversationRequest, MessageConversationSummary]:
 
   override val method: Method = Method.POST
@@ -20,10 +21,12 @@ object CreateConversation extends AuthenticatedApi[CreateConversationRequest, Me
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[MessageConversationSummary] = summon[Encoder[MessageConversationSummary]]
 
+  /** 读取目标用户名请求体，路径参数不参与该入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateConversationRequest] =
     val _ = pathParams
     request.as[CreateConversationRequest]
 
+  /** 拒绝给自己建会话，校验目标账号存在后返回已有或新建的会话摘要。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

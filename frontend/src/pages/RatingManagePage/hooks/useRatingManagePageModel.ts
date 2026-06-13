@@ -13,6 +13,9 @@ import {
   validateRatingAppendDraft,
 } from '../functions/RatingManagePageState'
 
+/**
+ * Rating 管理页模型 hook；在具备权限时加载管理状态，并提供追加/回退 Rating 比赛的动作。
+ */
 export function useRatingManagePageModel(canManage: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(ratingManagePageReducer, initialRatingManagePageState)

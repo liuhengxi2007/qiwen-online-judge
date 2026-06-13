@@ -5,6 +5,9 @@ import { messageIdValue } from '@/objects/message/MessageId'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 单条私信气泡属性，包含消息数据、当前用户方向和单条已读操作状态。
+ */
 type MessageBubbleProps = {
   autoMarkMessageRead: boolean
   isMarkingConversationRead: boolean
@@ -15,6 +18,9 @@ type MessageBubbleProps = {
   markSingleMessageRead: (messageId: MessageId) => Promise<void>
 }
 
+/**
+ * 单条私信气泡，区分自己/对方消息样式，并在允许手动已读时展示单条标记按钮。
+ */
 export function MessageBubble({
   autoMarkMessageRead,
   isMarkingConversationRead,

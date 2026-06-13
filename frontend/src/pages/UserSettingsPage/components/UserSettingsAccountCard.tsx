@@ -9,6 +9,9 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { UserSettingsSectionState } from '../functions/UserSettingsState'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户账户设置卡片属性，包含账户草稿、保存状态和字段变更回调。
+ */
 type UserSettingsAccountCardProps = {
   confirmNewPassword: string
   currentPassword: string
@@ -24,6 +27,9 @@ type UserSettingsAccountCardProps = {
   submit: () => void
 }
 
+/**
+ * 用户账户设置卡片，渲染邮箱和密码变更表单。
+ */
 export function UserSettingsAccountCard({
   confirmNewPassword,
   currentPassword,

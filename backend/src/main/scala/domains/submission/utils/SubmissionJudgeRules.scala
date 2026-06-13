@@ -7,8 +7,10 @@ import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeRes
 
 import java.time.Instant
 
+/** 提交判题生命周期规则；集中校验 queued/running/terminal 状态转换和协议结果一致性。 */
 object SubmissionJudgeRules:
 
+  /** 将 queued 状态推进为 running；非 queued 状态返回错误，避免重复领取。 */
   def beginJudging(state: SubmissionJudgeState, startedAt: Instant): Either[String, SubmissionJudgeState] =
     state.status match
       case SubmissionStatus.Queued =>
@@ -23,6 +25,7 @@ object SubmissionJudgeRules:
       case _ =>
         Left(s"Only queued submissions can start judging, but found ${statusName(state.status)}.")
 
+  /** 将 running 状态推进为 completed/failed；校验终态结果、系统错误 reason 和状态匹配。 */
   def completeJudging(
     state: SubmissionJudgeState,
     completion: SubmissionJudgeCompletion,
@@ -47,6 +50,7 @@ object SubmissionJudgeRules:
       case _ =>
         Left(s"Only running submissions can finish judging, but found ${statusName(state.status)}.")
 
+  /** 从数据库详情记录抽取判题状态快照。 */
   def fromSubmissionRecord(submission: SubmissionDetailRecord): SubmissionJudgeState =
     SubmissionJudgeState(
       status = submission.status,
@@ -55,6 +59,7 @@ object SubmissionJudgeRules:
       finishedAt = submission.finishedAt
     )
 
+  /** 将 judge-protocol 状态映射为提交域状态。 */
   def fromProtocolStatus(status: judgeprotocol.objects.SubmissionStatus): SubmissionStatus =
     status match
       case judgeprotocol.objects.SubmissionStatus.Queued => SubmissionStatus.Queued
@@ -62,6 +67,7 @@ object SubmissionJudgeRules:
       case judgeprotocol.objects.SubmissionStatus.Completed => SubmissionStatus.Completed
       case judgeprotocol.objects.SubmissionStatus.Failed => SubmissionStatus.Failed
 
+  /** 将 judge-protocol 结论映射为提交域结论。 */
   def fromProtocolVerdict(verdict: judgeprotocol.objects.SubmissionVerdict): SubmissionVerdict =
     verdict match
       case judgeprotocol.objects.SubmissionVerdict.Accepted => SubmissionVerdict.Accepted
@@ -73,6 +79,7 @@ object SubmissionJudgeRules:
       case judgeprotocol.objects.SubmissionVerdict.IdlenessLimitExceeded => SubmissionVerdict.IdlenessLimitExceeded
       case judgeprotocol.objects.SubmissionVerdict.SystemError => SubmissionVerdict.SystemError
 
+  /** 将 judge-protocol 语言映射为提交域语言；未知语言返回 None 以便 claim 时忽略。 */
   def toSubmissionLanguage(language: judgeprotocol.objects.SubmissionLanguage): Option[domains.submission.objects.SubmissionLanguage] =
     language match
       case judgeprotocol.objects.SubmissionLanguage.Cpp17 => Some(domains.submission.objects.SubmissionLanguage.Cpp17)

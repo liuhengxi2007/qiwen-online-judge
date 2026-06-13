@@ -18,6 +18,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 更新用户组成员角色 API，包含 owner 转移逻辑。 */
 object UpdateUserGroupMemberRole extends AuthenticatedApi[(UserGroupSlug, Username, UpdateUserGroupMemberRoleRequest), UserGroupDetail]:
 
   override val method: Method = Method.POST
@@ -25,6 +26,7 @@ object UpdateUserGroupMemberRole extends AuthenticatedApi[(UserGroupSlug, Userna
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从路径解析用户组和成员用户名，并从 JSON 请求体解码目标角色。 */
   override def decode(
     request: Request[IO],
     pathParams: PathParams
@@ -35,6 +37,7 @@ object UpdateUserGroupMemberRole extends AuthenticatedApi[(UserGroupSlug, Userna
       updateRequest <- request.as[UpdateUserGroupMemberRoleRequest]
     yield (groupSlug, Username.canonical(rawUsername), updateRequest)
 
+  /** 要求 owner/site manager 级别权限；目标角色为 owner 时执行所有权转移。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

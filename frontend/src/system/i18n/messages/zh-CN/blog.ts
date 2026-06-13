@@ -1,3 +1,6 @@
+/**
+ * 简体中文博客消息，覆盖博客列表、详情、编辑、评论和题解关联文案。
+ */
 export const zhCnBlogMessages: Record<string, string> = {
   'blog.pageTitle': '气温在线评测 - 博客',
   'blog.heading': '博客',

@@ -21,6 +21,9 @@ import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCo
 
 const notificationsPerPage = 10
 
+/**
+ * 通知列表页，负责会话守卫、分页加载、已读操作和实时 store 状态展示。
+ */
 export function NotificationPage() {
   const { t } = useI18n()
   usePageTitle(t('notifications.pageTitle'))

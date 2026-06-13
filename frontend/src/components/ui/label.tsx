@@ -3,6 +3,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 表单标签组件，封装 Radix Label 语义并统一文本、禁用态和间距样式。
+ */
 function Label({ className, ...props }: ComponentProps<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root

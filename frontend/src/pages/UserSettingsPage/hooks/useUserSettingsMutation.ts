@@ -19,6 +19,9 @@ import { toPasswordChangedRedirect, toSiteManageDeniedRedirect } from '@/pages/r
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户设置提交参数，按区块携带对应草稿和本地化校验消息。
+ */
 type SubmitSettingsParams =
   | {
       kind: 'own_profile'
@@ -57,6 +60,9 @@ type SubmitSettingsParams =
       setViewer: (session: SessionResponse | null) => void
     }
 
+/**
+ * 用户设置提交结果，成功时携带最新会话和提示，失败时携带错误消息。
+ */
 type SubmitSettingsResult =
   | { kind: 'updated'; user: SessionResponse; message: string }
   | { kind: 'updated_and_signed_out' }
@@ -64,6 +70,9 @@ type SubmitSettingsResult =
   | { kind: 'unauthorized'; message: string }
   | { kind: 'failed'; message: string }
 
+/**
+ * 用户设置提交 hook；按区块调用资料、偏好或账户更新 API。
+ */
 export function useUserSettingsMutation() {
   const { t } = useI18n()
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)

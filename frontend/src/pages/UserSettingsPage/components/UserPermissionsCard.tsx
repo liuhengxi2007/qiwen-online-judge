@@ -5,12 +5,18 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户权限卡片属性，包含目标用户权限布尔值。
+ */
 type UserPermissionsCardProps = {
   user: SessionResponse | null
   title: string
   description: string
 }
 
+/**
+ * 用户权限卡片，展示目标用户当前管理权限。
+ */
 export function UserPermissionsCard({
   user,
   title,

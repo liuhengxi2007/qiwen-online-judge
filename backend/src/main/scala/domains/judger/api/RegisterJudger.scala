@@ -15,6 +15,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** judger 注册 API；使用 worker token 认证，分配唯一 judger id 并返回心跳参数。 */
 final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[RegisterJudgerRequest, RegisterJudgerResponse]:
 
   override val method: Method = Method.POST
@@ -22,10 +23,12 @@ final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[Regi
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[RegisterJudgerResponse] = summon[Encoder[RegisterJudgerResponse]]
 
+  /** 校验 token 并解析注册请求体；路径参数无业务含义。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[RegisterJudgerRequest] =
     val _ = pathParams
     JudgeTokenAuth.ensureJudgeToken(request, judgeConfig) *> request.as[RegisterJudgerRequest]
 
+  /** 校验注册字段并写入 judger 表；会清理过期记录再分配 id。 */
   override def plan(connection: Connection, request: RegisterJudgerRequest): IO[RegisterJudgerResponse] =
     for
       validRequest <- HttpApiError.fromEitherBadRequest(JudgerRegistryValidation.validateRegisterRequest(request))

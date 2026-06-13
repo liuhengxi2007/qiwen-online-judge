@@ -11,6 +11,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { ProblemListItem } from './ProblemListItem'
 
+/**
+ * 题目列表卡片属性，包含题目分页、权限入口和切页回调。
+ */
 type ProblemListCardProps = {
   canCreate: boolean
   currentPage: number
@@ -26,6 +29,9 @@ type ProblemListCardProps = {
   totalPages: number
 }
 
+/**
+ * 题目列表卡片，展示题目摘要列表、加载/空状态和分页控件。
+ */
 export function ProblemListCard({
   canCreate,
   currentPage,

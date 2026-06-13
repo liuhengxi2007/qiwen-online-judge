@@ -10,8 +10,10 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
 
+/** 题目数据本地缓存，按 sha256 存储 blob，并通过 backend 下载缺失文件。 */
 final class ProblemDataCache(config: AppConfig, httpClient: ProblemDataDownloader):
 
+  /** 读取题目数据字节；会 best-effort 记录 manifest、确保 blob 存在并校验 sha256。 */
   def loadBytes(problemSlug: ProblemSlug, problemDataVersion: String, fileRef: JudgeTaskFileRef): IO[Array[Byte]] =
     for
       _ <- rememberManifest(problemSlug, problemDataVersion, fileRef)
@@ -36,6 +38,7 @@ final class ProblemDataCache(config: AppConfig, httpClient: ProblemDataDownloade
           _ <- verifyHash(fileRef, bytes)
           _ <- IO.blocking {
             val tempPath = targetPath.resolveSibling(targetPath.getFileName.toString + ".tmp")
+            // FIXME-CN: 同一 sha256 blob 并发下载时共享 .tmp 路径，多个 worker/fiber 可能互相覆盖或移动失败。
             Files.write(tempPath, bytes)
             Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING)
           }
@@ -43,6 +46,7 @@ final class ProblemDataCache(config: AppConfig, httpClient: ProblemDataDownloade
     }
 
   private def rememberManifest(problemSlug: ProblemSlug, version: String, fileRef: JudgeTaskFileRef): IO[Unit] =
+    // FIXME-CN: manifest 文件名直接拼接 problemSlug 和 problemDataVersion；协议值若未来放宽，可能形成缓存目录路径风险。
     val manifestPath = config.problemDataCacheRoot.resolve("manifests").resolve(s"${problemSlug.value}-$version.txt")
     IO.blocking {
       Files.createDirectories(manifestPath.getParent)

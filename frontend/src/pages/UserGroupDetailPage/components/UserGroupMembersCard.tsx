@@ -9,13 +9,23 @@ import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型类型别名，供成员列表读取成员、权限和成员操作回调。
+ */
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 
+/**
+ * 成员列表卡片属性，包含页面模型和设置所有权转移目标的回调。
+ */
 type UserGroupMembersCardProps = {
   model: UserGroupDetailPageModel
   setOwnershipTargetUsername: (username: string | null) => void
 }
 
+/**
+ * 用户组成员卡片，展示成员资料、角色单选控件和移除按钮。
+ * 角色变更和移除是否可用完全依赖页面模型计算出的权限与进行中状态。
+ */
 export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: UserGroupMembersCardProps) {
   const { t } = useI18n()
 

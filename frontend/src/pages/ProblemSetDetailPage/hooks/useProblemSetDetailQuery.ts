@@ -6,12 +6,18 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 
+/**
+ * 题单详情查询状态，保存详情、加载标记和错误消息。
+ */
 type ProblemSetDetailQueryState = {
   problemSet: ProblemSetDetail | null
   isLoading: boolean
   errorMessage: string
 }
 
+/**
+ * 题单详情 reducer 动作，覆盖加载、替换和失败状态。
+ */
 type ProblemSetDetailQueryAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; problemSet: ProblemSetDetail }
@@ -24,6 +30,9 @@ const initialState: ProblemSetDetailQueryState = {
   errorMessage: '',
 }
 
+/**
+ * 题单详情查询 reducer；纯函数维护详情状态。
+ */
 function reducer(state: ProblemSetDetailQueryState, action: ProblemSetDetailQueryAction): ProblemSetDetailQueryState {
   switch (action.type) {
     case 'load_started':
@@ -37,6 +46,9 @@ function reducer(state: ProblemSetDetailQueryState, action: ProblemSetDetailQuer
   }
 }
 
+/**
+ * 题单详情查询 hook；加载题单详情并提供替换详情回调。
+ */
 export function useProblemSetDetailQuery(problemSetSlug: ProblemSetSlug) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -57,6 +69,7 @@ export function useProblemSetDetailQuery(problemSetSlug: ProblemSetSlug) {
         dispatch({
           type: 'load_failed',
           message:
+            // 注意：题单详情把 forbidden 和 not-found 都展示为 404，用于隐藏受保护题单是否存在。
             isHttpClientError(error) && (error.kind === 'not-found' || error.kind === 'forbidden')
               ? '404 Not Found.'
               : 'Unable to load problem set details.',

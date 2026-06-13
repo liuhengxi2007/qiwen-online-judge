@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 用户组和成员关系表结构迁移脚本集合。 */
 object UserGroupTableSchema:
 
   val initTableSql: String =
@@ -69,6 +70,7 @@ object UserGroupTableSchema:
       |create index if not exists idx_user_group_memberships_username on user_group_memberships(username);
       |""".stripMargin
 
+  /** 建立用户组表、visibility 字段和成员关系表及索引。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

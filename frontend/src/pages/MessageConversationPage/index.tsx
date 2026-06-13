@@ -8,6 +8,10 @@ import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信会话页，负责登录保护、目标用户名路由解析和会话模型装配。
+ * 非法用户名回到消息收件箱，实际会话创建和历史加载由 hook 处理。
+ */
 export function MessageConversationPage() {
   const { t } = useI18n()
   usePageTitle(t('messages.conversationPageTitle'))

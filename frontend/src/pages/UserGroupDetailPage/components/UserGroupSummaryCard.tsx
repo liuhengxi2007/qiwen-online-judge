@@ -6,8 +6,14 @@ import type { useUserGroupDetailPageModel } from '../hooks/useUserGroupDetailPag
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型类型别名，供摘要卡片读取用户组详情。
+ */
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 
+/**
+ * 用户组摘要卡片，展示名称、slug、描述和当前 owner。
+ */
 export function UserGroupSummaryCard({ model }: { model: UserGroupDetailPageModel }) {
   const { t } = useI18n()
 

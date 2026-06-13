@@ -4,18 +4,30 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 下拉选择根组件，承载选中值、打开状态和受控回调。
+ */
 function Select(props: ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />
 }
 
+/**
+ * 下拉选项分组组件，用于在菜单中组织相关选项。
+ */
 function SelectGroup(props: ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />
 }
 
+/**
+ * 下拉当前值展示组件，负责渲染选中项或占位文案。
+ */
 function SelectValue(props: ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
+/**
+ * 下拉触发按钮，展示当前值并提供打开菜单的交互入口。
+ */
 function SelectTrigger({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
     <SelectPrimitive.Trigger
@@ -34,6 +46,9 @@ function SelectTrigger({ className, children, ...props }: ComponentProps<typeof 
   )
 }
 
+/**
+ * 下拉菜单向上滚动按钮，供长列表在浮层内继续浏览。
+ */
 function SelectScrollUpButton({
   className,
   ...props
@@ -49,6 +64,9 @@ function SelectScrollUpButton({
   )
 }
 
+/**
+ * 下拉菜单向下滚动按钮，供长列表在浮层内继续浏览。
+ */
 function SelectScrollDownButton({
   className,
   ...props
@@ -64,6 +82,9 @@ function SelectScrollDownButton({
   )
 }
 
+/**
+ * 下拉菜单内容容器，使用 Portal 渲染并根据触发器宽度约束视口。
+ */
 function SelectContent({
   className,
   children,
@@ -99,6 +120,9 @@ function SelectContent({
   )
 }
 
+/**
+ * 下拉分组标签组件，用于给一组菜单项提供说明。
+ */
 function SelectLabel({ className, ...props }: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
@@ -109,6 +133,9 @@ function SelectLabel({ className, ...props }: ComponentProps<typeof SelectPrimit
   )
 }
 
+/**
+ * 下拉菜单项组件，展示选项内容和当前选中标记。
+ */
 function SelectItem({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
     <SelectPrimitive.Item
@@ -129,6 +156,9 @@ function SelectItem({ className, children, ...props }: ComponentProps<typeof Sel
   )
 }
 
+/**
+ * 下拉菜单分隔线组件，用于区分不同选项区域。
+ */
 function SelectSeparator({
   className,
   ...props

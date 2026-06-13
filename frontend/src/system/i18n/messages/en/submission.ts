@@ -1,3 +1,6 @@
+/**
+ * 英文提交消息，覆盖提交列表、详情、评测状态、筛选和代码展示文案。
+ */
 export const enSubmissionMessages: Record<string, string> = {
   'submission.pageTitle': 'Qiwen Online Judge - Submissions',
   'submission.heading': 'Submissions',

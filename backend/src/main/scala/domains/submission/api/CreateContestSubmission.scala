@@ -18,6 +18,7 @@ import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
+/** 创建竞赛提交的 API；校验竞赛可见、正在进行、题目属于竞赛且用户可提交。 */
 final case class CreateContestSubmission(
   submissionProgramStorage: SubmissionProgramStorage,
   problemDataStorage: ProblemDataStorage
@@ -29,12 +30,14 @@ final case class CreateContestSubmission(
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[SubmissionDetail] = summon[Encoder[SubmissionDetail]]
 
+  /** 解析竞赛 slug 和提交请求体；提交体复用普通提交的 JSON/multipart 解析。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, CreateSubmissionRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
       body <- CreateSubmission.decodeRequest(request)
     yield (contestSlug, body)
 
+  /** 在竞赛权限与时间窗口通过后创建提交，输出不会给普通参赛者 canManage 权限。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

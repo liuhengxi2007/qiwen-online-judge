@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { buildAncestorLinks } from './AncestorNavigationLinks'
 
+/**
+ * 当前页面的返回导航组件，根据 pathname 自动渲染可返回的上级入口。
+ */
 export function AncestorNavigation({
   buttonClassName = 'rounded-full border-slate-300 bg-white',
 }: {

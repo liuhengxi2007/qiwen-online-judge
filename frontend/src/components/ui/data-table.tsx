@@ -15,17 +15,24 @@ import {
 } from '@/components/ui/table'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 泛型数据表属性，调用方提供列定义、数据行和可选空状态文案。
+ */
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   emptyText?: string
 }
 
+/**
+ * 基于 TanStack Table 的只读数据表组件；输入列和行数据，输出表头、表体和空状态。
+ */
 function DataTable<TData, TValue>({
   columns,
   data,
   emptyText = translateMessage('common.emptyData'),
 }: DataTableProps<TData, TValue>) {
+  // 注意：TanStack Table 的 hook 返回表实例但不触发 React 状态订阅，此处按库官方模式使用并禁用误报规则。
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,

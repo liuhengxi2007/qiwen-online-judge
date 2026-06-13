@@ -10,11 +10,13 @@ import judger.objects.{RuntimeCommand, SandboxLimits}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
+/** Python3 提交 runtime，负责语法编译为 pyc 并产出 sandbox 可运行命令。 */
 object Python3Runtime extends JudgeRuntime:
   private val CompileLimits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048)
 
   override val language: SubmissionLanguage = SubmissionLanguage.Python3
 
+  /** 准备一个 Python role；当前忽略 stub/headers，只校验源码可编译并运行 pyc。 */
   override def prepare(
     role: String,
     sourceCode: SubmissionSourceCode,
@@ -23,6 +25,7 @@ object Python3Runtime extends JudgeRuntime:
     config: AppConfig,
     workingDirectory: Path
   ): IO[Either[ProgramPrepareFailure, RuntimeCommand]] =
+    // 注意：Python runtime 暂不支持题目 stub 和 headers，但 trait 签名必须与其他语言一致。
     val _ = stubSourceCode
     val _ = headers
     resolveInterpreterPath(config).flatMap {
@@ -57,6 +60,7 @@ object Python3Runtime extends JudgeRuntime:
         yield result
     }
 
+  /** 解析 Python 解释器路径，并确认该路径在 isolate sandbox 中可见。 */
   private def resolveInterpreterPath(config: AppConfig): IO[Either[String, String]] =
     IO.blocking {
       resolveExecutable(config.python3) match
@@ -71,6 +75,7 @@ object Python3Runtime extends JudgeRuntime:
           )
     }
 
+  /** 校验 py_compile 产物存在且是普通文件；失败视为 judger runtime 边界错误。 */
   private def ensureBytecodeExists(path: Path): IO[Unit] =
     IO.blocking {
       if !Files.exists(path) then

@@ -5,9 +5,13 @@ import { useNotificationRefresh } from '@/pages/hooks/useNotificationRefresh'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
 
+// 注意：通知 SSE 使用模块级单例和订阅计数，避免多个挂载点重复连接同一事件源。
 let notificationEventSource: EventSource | null = null
 let notificationSubscriberCount = 0
 
+/**
+ * 确保通知 SSE 连接已建立；连接收到变更事件后刷新未读数，并按需刷新已加载列表。
+ */
 function ensureNotificationEventSource(refreshNotifications: () => Promise<void>, refreshUnreadCount: () => Promise<void>) {
   if (notificationEventSource) {
     return
@@ -23,6 +27,9 @@ function ensureNotificationEventSource(refreshNotifications: () => Promise<void>
   })
 }
 
+/**
+ * 在订阅者归零后关闭通知 SSE 连接，避免页面切换后保留多余连接。
+ */
 function releaseNotificationEventSource() {
   if (notificationSubscriberCount <= 0 && notificationEventSource) {
     notificationEventSource.close()
@@ -30,6 +37,9 @@ function releaseNotificationEventSource() {
   }
 }
 
+/**
+ * 管理通知实时连接生命周期；登录时订阅，退出时清空 store 并关闭全局 EventSource。
+ */
 export function useNotificationRealtimeConnection() {
   const session = useAuthStore((state) => state.session)
   const { refreshNotifications, refreshUnreadCount } = useNotificationRefresh()

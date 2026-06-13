@@ -1,3 +1,6 @@
+/**
+ * 创建用户组页状态，保存草稿、提交状态和反馈消息。
+ */
 export type CreateUserGroupPageState = {
   isSubmitting: boolean
   slug: string
@@ -7,6 +10,9 @@ export type CreateUserGroupPageState = {
   successMessage: string
 }
 
+/**
+ * 创建用户组页 reducer 动作，覆盖字段编辑和提交成功/失败。
+ */
 export type CreateUserGroupPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_name'; value: string }
@@ -15,6 +21,9 @@ export type CreateUserGroupPageAction =
   | { type: 'submit_succeeded'; message: string }
   | { type: 'submit_failed'; message: string }
 
+/**
+ * 创建用户组页初始状态，默认表单为空。
+ */
 export const initialCreateUserGroupPageState: CreateUserGroupPageState = {
   isSubmitting: false,
   slug: '',
@@ -24,6 +33,9 @@ export const initialCreateUserGroupPageState: CreateUserGroupPageState = {
   successMessage: '',
 }
 
+/**
+ * 根据操作结果重置创建用户组页状态，成功时清空草稿并写入成功消息。
+ */
 export function resetCreateUserGroupPageState(
   state: CreateUserGroupPageState,
   successMessage: string,
@@ -39,6 +51,9 @@ export function resetCreateUserGroupPageState(
   }
 }
 
+/**
+ * 创建用户组页 reducer；纯函数维护草稿、提交状态和反馈。
+ */
 export function reduceCreateUserGroupPageState(
   state: CreateUserGroupPageState,
   action: CreateUserGroupPageAction,

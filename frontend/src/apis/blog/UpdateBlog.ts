@@ -4,6 +4,7 @@ import type { BlogId } from '@/objects/blog/BlogId'
 import { blogIdValue } from '@/objects/blog/BlogId'
 import type { UpdateBlogRequest } from '@/objects/blog/request/UpdateBlogRequest'
 
+/** 更新博客；输入博客 ID 和更新请求，输出更新后的博客详情。 */
 export class UpdateBlog implements APIWithSessionMessage<BlogDetail> {
   declare readonly responseType?: BlogDetail
   readonly method = 'POST'

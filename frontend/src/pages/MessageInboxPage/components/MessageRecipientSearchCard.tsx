@@ -8,6 +8,9 @@ import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 私信收件人搜索卡片属性，包含当前用户、搜索文本、建议和选择回调。
+ */
 type MessageRecipientSearchCardProps = {
   currentUsername: Username
   onSearchQueryChange: (value: string) => void
@@ -17,6 +20,9 @@ type MessageRecipientSearchCardProps = {
   suggestions: UserIdentity[]
 }
 
+/**
+ * 私信收件人搜索卡片，展示用户建议并跳转到选中的会话。
+ */
 export function MessageRecipientSearchCard({
   currentUsername,
   onSearchQueryChange,

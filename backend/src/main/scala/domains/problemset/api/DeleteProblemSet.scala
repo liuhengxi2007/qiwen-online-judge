@@ -15,6 +15,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** 删除题单的认证 API，仅题目管理员可调用，并清理题单访问授权。 */
 object DeleteProblemSet extends AuthenticatedApi[ProblemSetSlug, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -22,16 +23,19 @@ object DeleteProblemSet extends AuthenticatedApi[ProblemSetSlug, SuccessResponse
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 从路径解析题单 slug，删除入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemSetSlug] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("problemSetSlug").flatMap(ProblemSetSlug.parse))
 
+  /** 校验管理权限和题单存在性，先删除授权再删除题单主体。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
     problemSetSlug: ProblemSetSlug
   ): IO[SuccessResponse] =
     for
+      /** 注意：非题目管理员返回 404，用于隐藏题单管理入口和题单存在性。 */
       _ <- HttpApiError.ensure(
         ProblemSetAccessRules.canManageProblemSets(actor),
         HttpApiError.notFound(ApiMessages.problemSetNotFound)

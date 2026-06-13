@@ -6,8 +6,14 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { MarkdownDocument } from './MarkdownDocument'
 
+/**
+ * Markdown 编辑器当前标签页，区分输入模式和预览模式。
+ */
 export type MarkdownEditorTab = 'write' | 'preview'
 
+/**
+ * Markdown 编辑器标签页属性，包含 textarea 绑定、当前 tab 和内容变更回调。
+ */
 type MarkdownEditorTabsProps = {
   textareaId: string
   value: string
@@ -17,6 +23,9 @@ type MarkdownEditorTabsProps = {
   textareaClassName?: string
 }
 
+/**
+ * Markdown 编辑/预览复合组件，使用延迟值降低预览渲染对输入的影响。
+ */
 export function MarkdownEditorTabs({
   textareaId,
   value,
@@ -29,6 +38,7 @@ export function MarkdownEditorTabs({
   const deferredValue = useDeferredValue(value)
 
   return (
+    // 注意：TabsTrigger 只声明 write/preview 两个值，Radix 回调类型为 string，故在边界处收窄为本组件联合类型。
     <Tabs value={tab} onValueChange={(nextTab) => onTabChange(nextTab as MarkdownEditorTab)}>
       <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-slate-100">
         <TabsTrigger value="write" className="rounded-xl">

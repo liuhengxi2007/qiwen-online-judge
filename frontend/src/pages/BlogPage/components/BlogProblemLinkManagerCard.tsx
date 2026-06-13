@@ -2,6 +2,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客题目关联管理卡片属性，包含待处理数量。
+ */
 type BlogProblemLinkManagerCardProps = {
   linkBlogId: string
   linkMessage: string
@@ -10,6 +13,9 @@ type BlogProblemLinkManagerCardProps = {
   onSubmit: () => void
 }
 
+/**
+ * 博客题目关联管理卡片，提示用户处理未关联的题解。
+ */
 export function BlogProblemLinkManagerCard({
   linkBlogId,
   linkMessage,

@@ -3,6 +3,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 分隔线组件，支持水平或垂直方向，并默认作为装饰性元素处理。
+ */
 function Separator({
   className,
   orientation = 'horizontal',

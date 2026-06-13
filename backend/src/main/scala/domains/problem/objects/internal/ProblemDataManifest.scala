@@ -2,13 +2,16 @@ package domains.problem.objects.internal
 
 import domains.problem.objects.ProblemSlug
 
+/** 判题使用的题目数据清单；包含有序文件条目和基于内容摘要计算出的版本号。 */
 final case class ProblemDataManifest(
   problemSlug: ProblemSlug,
   entries: List[ProblemDataManifestEntry],
   version: String
 )
 
+/** 题目数据清单的构造工具；负责排序条目并生成稳定版本号。 */
 object ProblemDataManifest:
+  /** 从文件条目生成清单；输出版本随路径、大小或 sha256 变化。 */
   def fromEntries(problemSlug: ProblemSlug, entries: List[ProblemDataManifestEntry]): ProblemDataManifest =
     val sortedEntries = entries.sortBy(_.path.value)
     ProblemDataManifest(problemSlug = problemSlug, entries = sortedEntries, version = manifestVersion(sortedEntries))

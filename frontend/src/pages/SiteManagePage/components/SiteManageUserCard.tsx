@@ -20,8 +20,14 @@ import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { buildPermissionUpdate, displayedPermissionFlags } from '../functions/SiteManagePermissions'
 
+/**
+ * 站点管理模型类型别名，供用户卡片读取列表、分页和操作状态。
+ */
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
 
+/**
+ * 站点管理用户卡片属性，包含模型和分页回调。
+ */
 type SiteManageUserCardProps = {
   model: SiteManageModel
   siteManagerSession: boolean
@@ -35,6 +41,9 @@ type SiteManageUserCardProps = {
   onPageChange: (page: number) => void
 }
 
+/**
+ * 站点管理用户卡片，展示用户列表、权限复选框、删除操作和分页控件。
+ */
 export function SiteManageUserCard({
   model,
   siteManagerSession,

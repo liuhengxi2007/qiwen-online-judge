@@ -11,6 +11,7 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** 博客写操作表访问对象，负责创建、更新和删除博客主体。 */
 object BlogPostMutationTable:
 
   private val insertSQL: String =
@@ -20,6 +21,7 @@ object BlogPostMutationTable:
       |returning public_id, title, content, visibility, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
+  /** 创建博客并返回摘要，初始分数和关联题目为空。 */
   def insert(
     connection: Connection,
     authorUsername: Username,
@@ -69,6 +71,7 @@ object BlogPostMutationTable:
       |  and author_username = ?
       |""".stripMargin
 
+  /** 仅允许博客作者更新标题、正文和可见性，成功后返回更新后的博客详情。 */
   def update(
     connection: Connection,
     blogId: BlogId,
@@ -100,6 +103,7 @@ object BlogPostMutationTable:
       |  and author_username = ?
       |""".stripMargin
 
+  /** 仅允许博客作者删除博客，返回是否实际删除记录。 */
   def delete(connection: Connection, blogId: BlogId, actorUsername: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteBlogSQL)

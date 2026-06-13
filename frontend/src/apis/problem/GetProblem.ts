@@ -3,6 +3,7 @@ import type { ProblemDetail } from '@/objects/problem/response/ProblemDetail'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 获取题目详情；输入公开 slug，输出题目详情，公开访问边界由后端处理。 */
 export class GetProblem implements APIMessage<ProblemDetail> {
   declare readonly responseType?: ProblemDetail
   readonly method = 'GET'

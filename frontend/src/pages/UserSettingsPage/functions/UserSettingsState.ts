@@ -10,14 +10,23 @@ import type { ProblemTitleDisplayMode } from '@/objects/problem/ProblemTitleDisp
 import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
 import type { Username } from '@/objects/user/Username'
 
+/**
+ * 用户设置页的可编辑区块标识。
+ */
 export type UserSettingsSection = 'profile' | 'preferences' | 'account'
 
+/**
+ * 单个用户设置区块的保存状态和反馈消息。
+ */
 export type UserSettingsSectionState = {
   errorMessage: string
   successMessage: string
   isSubmitting: boolean
 }
 
+/**
+ * 用户设置页整体状态，保存各区块状态和头像上传反馈。
+ */
 export type UserSettingsState = {
   targetUsername: Username | null
   editedUser: SessionResponse | null
@@ -35,6 +44,9 @@ export type UserSettingsState = {
   navigationIntent: NavigationIntent | null
 }
 
+/**
+ * 用户设置页 reducer 动作，覆盖区块保存、头像上传和反馈清理。
+ */
 export type UserSettingsAction =
   | { type: 'target_changed'; targetUsername: Username; editedUser: SessionResponse | null }
   | { type: 'query_synced'; user: SessionResponse }
@@ -53,6 +65,9 @@ export type UserSettingsAction =
   | { type: 'submit_failed'; section: UserSettingsSection; message: string }
   | { type: 'redirect_requested'; intent: NavigationIntent }
 
+/**
+ * 创建单个设置区块的初始状态。
+ */
 function initialSectionState(): UserSettingsSectionState {
   return {
     errorMessage: '',
@@ -61,6 +76,9 @@ function initialSectionState(): UserSettingsSectionState {
   }
 }
 
+/**
+ * 创建全部设置区块的初始状态集合。
+ */
 function initialSections(): Record<UserSettingsSection, UserSettingsSectionState> {
   return {
     profile: initialSectionState(),
@@ -69,6 +87,9 @@ function initialSections(): Record<UserSettingsSection, UserSettingsSectionState
   }
 }
 
+/**
+ * 清理指定设置区块的反馈消息，同时保留提交中状态。
+ */
 function clearSectionFeedback(
   sections: Record<UserSettingsSection, UserSettingsSectionState>,
   section: UserSettingsSection,
@@ -83,6 +104,9 @@ function clearSectionFeedback(
   }
 }
 
+/**
+ * 用户设置页初始状态，所有区块和头像上传默认无反馈。
+ */
 export const initialUserSettingsState: UserSettingsState = {
   targetUsername: null,
   editedUser: null,
@@ -100,6 +124,9 @@ export const initialUserSettingsState: UserSettingsState = {
   navigationIntent: null,
 }
 
+/**
+ * 用户设置页 reducer；纯函数维护区块保存状态、头像上传状态和提示文案。
+ */
 export function reduceUserSettingsState(
   state: UserSettingsState,
   action: UserSettingsAction,

@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 添加用户组成员 API，要求操作者具备用户组管理权限。 */
 object AddUserGroupMember extends AuthenticatedApi[(UserGroupSlug, AddUserGroupMemberRequest), UserGroupDetail]:
 
   override val method: Method = Method.POST
@@ -24,12 +25,14 @@ object AddUserGroupMember extends AuthenticatedApi[(UserGroupSlug, AddUserGroupM
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从路径解析用户组 slug，并从 JSON 请求体解码成员添加请求。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(UserGroupSlug, AddUserGroupMemberRequest)] =
     for
       groupSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("groupSlug").flatMap(UserGroupSlug.parse))
       addRequest <- request.as[AddUserGroupMemberRequest]
     yield (groupSlug, addRequest)
 
+  /** 校验用户组可见/可管理、目标用户存在和成员唯一性，成功后返回刷新详情。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

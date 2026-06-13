@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 移除用户组成员 API，按角色限制 owner/manager 可移除的目标。 */
 object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username), UserGroupDetail]:
 
   override val method: Method = Method.POST
@@ -23,6 +24,7 @@ object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username),
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 
+  /** 从路径解析用户组 slug 和目标成员用户名；请求体被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(UserGroupSlug, Username)] =
     val _ = request
     for
@@ -30,6 +32,7 @@ object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username),
       rawUsername <- HttpApiError.fromEitherBadRequest(pathParams.require("memberUsername"))
     yield (groupSlug, Username.canonical(rawUsername))
 
+  /** 校验目标成员存在和移除权限，禁止直接移除 owner，成功后返回刷新详情。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: (UserGroupSlug, Username)): IO[UserGroupDetail] =
     val (groupSlug, targetUsername) = input
     for
@@ -37,6 +40,7 @@ object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username),
       group <- maybeGroup match
         case Some(group) => IO.pure(group)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userGroupNotFound))
+      // FIXME-CN: 这里先区分目标成员/owner 状态再校验操作者权限，无权限用户可能通过错误差异推断成员存在性或角色。
       targetMember <- group.members.find(_.username.value == targetUsername.value) match
         case Some(member) => IO.pure(member)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.groupMemberNotFound))

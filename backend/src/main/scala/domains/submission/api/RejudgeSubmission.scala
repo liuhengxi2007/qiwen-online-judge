@@ -15,6 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 手动重判提交的管理端 API；仅题目管理者可对已完成或失败的提交重新入队。 */
 final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
   override val method: Method = Method.POST
@@ -22,10 +23,12 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SubmissionDetail] = summon[Encoder[SubmissionDetail]]
 
+  /** 从路径解析提交 public id。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionId] =
     val _ = request
     HttpApiError.fromEitherBadRequest(pathParams.require("submissionId").flatMap(SubmissionId.parse))
 
+  /** 校验管理权限和提交终态后重置判题状态；输出包含源码的更新后提交详情。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, submissionId: SubmissionId): IO[SubmissionDetail] =
     for
       maybeRecord <- SubmissionQueryTable.findById(connection, submissionId)

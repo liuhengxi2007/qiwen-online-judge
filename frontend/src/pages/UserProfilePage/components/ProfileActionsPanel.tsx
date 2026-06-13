@@ -4,6 +4,9 @@ import { Files, Mail, NotebookPen, Settings, ShieldBan } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户资料操作面板属性，包含目标用户、是否本人、是否可管理和打开私信的回调。
+ */
 type ProfileActionsPanelProps = {
   canManageTarget: boolean
   isOwnProfile: boolean
@@ -11,6 +14,9 @@ type ProfileActionsPanelProps = {
   targetUsername: string
 }
 
+/**
+ * 用户资料操作面板，提供提交、博客、私信、设置和消息屏蔽管理入口。
+ */
 export function ProfileActionsPanel({
   canManageTarget,
   isOwnProfile,

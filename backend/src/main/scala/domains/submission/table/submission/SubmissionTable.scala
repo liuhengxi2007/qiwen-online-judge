@@ -5,8 +5,10 @@ import domains.submission.utils.SubmissionProgramStorage
 
 import java.sql.Connection
 
+/** 提交表初始化入口；负责 program_manifest 迁移前后两阶段表结构初始化。 */
 object SubmissionTable:
 
+  /** 初始化 submissions 表并执行旧 source_code 到对象存储 manifest 的回填。 */
   def initialize(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
     for
       _ <- SubmissionTableSchema.initializeBeforeProgramManifestBackfill(connection)

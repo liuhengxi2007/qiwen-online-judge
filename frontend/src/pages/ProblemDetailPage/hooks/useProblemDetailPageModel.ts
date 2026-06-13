@@ -16,6 +16,9 @@ import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
 import { useProblemEditorState } from './useProblemEditorState'
 import { useProblemUpdateAction } from './useProblemUpdateAction'
 
+/**
+ * 题目详情页模型 hook；组合详情查询、编辑器状态、删除和更新动作。
+ */
 export function useProblemDetailPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
   const editor = useProblemEditorState(detailQuery.problem)

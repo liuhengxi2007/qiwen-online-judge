@@ -9,6 +9,9 @@ import type { Username } from '@/objects/user/Username'
 import { UserAvatar } from '@/pages/components/UserAvatar'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户设置资料概览卡片属性，包含目标用户、权限和编辑状态。
+ */
 type UserProfileOverviewCardProps = {
   icon: ReactNode
   title: string
@@ -20,6 +23,9 @@ type UserProfileOverviewCardProps = {
   children?: ReactNode
 }
 
+/**
+ * 用户设置资料概览卡片，展示目标用户基本信息和当前访问权限提示。
+ */
 export function UserProfileOverviewCard({
   icon,
   title,

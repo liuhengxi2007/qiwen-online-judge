@@ -8,6 +8,7 @@ import shared.objects.access.ResourceAccessPolicy
 
 import java.time.Instant
 
+/** 比赛详情响应，包含访问策略、报名状态、管理标记和可选赛题列表。 */
 final case class ContestDetail(
   id: ContestId,
   slug: ContestSlug,
@@ -24,10 +25,12 @@ final case class ContestDetail(
   updatedAt: Instant
 )
 
+/** 提供比赛详情 JSON codec，以及从比赛聚合构造响应的转换。 */
 object ContestDetail:
   given Encoder[ContestDetail] = deriveEncoder[ContestDetail]
   given Decoder[ContestDetail] = deriveDecoder[ContestDetail]
 
+  /** 将比赛聚合转换为接口详情响应，includeProblems 控制是否隐藏赛题列表。 */
   def fromContest(contest: Contest, registrationStatus: ContestRegistrationStatus, canManage: Boolean, includeProblems: Boolean): ContestDetail =
     ContestDetail(
       id = contest.id,

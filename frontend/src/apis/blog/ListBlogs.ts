@@ -4,6 +4,7 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 查询博客列表；可按作者过滤并分页，输出博客摘要分页响应。 */
 export class ListBlogs implements APIMessage<BlogListResponse> {
   declare readonly responseType?: BlogListResponse
   readonly method = 'GET'

@@ -18,6 +18,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** judge worker 上报提交判题结果的公开 API；只接受 completed/failed 终态并校验生命周期。 */
 final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends PublicApi[(SubmissionId, ReportJudgeResultRequest), SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -25,6 +26,7 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 校验 worker token，解析提交 id 和上报结果体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(SubmissionId, ReportJudgeResultRequest)] =
     for
       _ <- JudgeTokenAuth.ensureJudgeToken(request, judgeConfig)
@@ -32,6 +34,7 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
       resultRequest <- request.as[ReportJudgeResultRequest]
     yield (submissionId, resultRequest)
 
+  /** 将 running 提交推进到终态并写入 JudgeResult；随后检查 hack revision 是否需要再次入队。 */
   override def plan(connection: Connection, input: (SubmissionId, ReportJudgeResultRequest)): IO[SuccessResponse] =
     val (submissionId, request) = input
     request.status match

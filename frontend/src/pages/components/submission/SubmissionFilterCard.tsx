@@ -21,6 +21,9 @@ import { usernameValue } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
 
+/**
+ * 提交筛选卡片属性，包含筛选草稿、建议列表、排序状态和所有交互回调。
+ */
 type SubmissionFilterCardProps = {
   hasFixedProblemFilter: boolean
   usernameFilterInput: string
@@ -59,6 +62,9 @@ type SubmissionFilterCardProps = {
   onApplyFiltersOnEnter: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
+/**
+ * 提交筛选卡片组件，渲染用户/题目筛选、建议面板、verdict 筛选和排序控制。
+ */
 export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
   const { t } = useI18n()
   const {

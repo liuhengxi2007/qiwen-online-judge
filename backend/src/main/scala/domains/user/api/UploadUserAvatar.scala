@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 上传用户头像 API，校验 multipart 图片并同步更新对象存储和数据库元数据。 */
 final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
     extends AuthenticatedApi[(Username, Array[Byte], Option[String]), UserSettingsResponse]:
 
@@ -24,6 +25,7 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserSettingsResponse] = summon[Encoder[UserSettingsResponse]]
 
+  /** 从路径读取目标用户名，并从 multipart file 字段读取头像字节和 content type。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(Username, Array[Byte], Option[String])] =
     for
       rawUsername <- HttpApiError.fromEitherBadRequest(pathParams.require("targetUsername"))
@@ -32,10 +34,12 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
       filePart <- multipart.parts.find(_.name.contains("file")) match
         case Some(part) => IO.pure(part)
         case None => HttpApiError.raise(HttpApiError.badRequest("Multipart file field 'file' is required."))
+      /** FIXME-CN: 头像 body 在大小校验前一次性读入内存，超大 multipart 请求可能造成内存压力。 */
       bytes <- filePart.body.compile.to(Array)
       contentType = filePart.headers.headers.find(_.name == CIString("Content-Type")).map(_.value.takeWhile(_ != ';').trim)
     yield (targetUsername, bytes, contentType)
 
+  /** 校验权限、文件大小和类型，先写对象存储再更新数据库，数据库失败会清理新对象。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

@@ -9,6 +9,7 @@ import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import type { SubmissionSource } from '@/objects/submission/SubmissionSource'
 import type { SubmissionResultDisplayMode } from '@/objects/submission/SubmissionResultDisplayMode'
 
+/** 提交摘要响应；用于列表展示并携带当前会话是否可查看详情。 */
 export type SubmissionSummary = {
   id: SubmissionId
   problemId: ProblemId

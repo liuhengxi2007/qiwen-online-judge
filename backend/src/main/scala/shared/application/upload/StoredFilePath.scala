@@ -3,19 +3,24 @@ package shared.application.upload
 import io.circe.{Decoder, Encoder}
 
 
+/** 存储系统中的相对文件路径，禁止绝对路径、空段和目录穿越片段。 */
 final case class StoredFilePath(value: String):
+  /** 返回路径最后一段文件名，路径已由 parse 保证不含空段。 */
   def fileName: String =
     value.split('/').lastOption.getOrElse(value)
 
+  /** 将子路径解析到当前目录下，并重新通过 parse 做边界校验。 */
   def resolve(child: StoredFilePath): Either[String, StoredFilePath] =
     StoredFilePath.parse(s"$value/${child.value}")
 
+/** 提供存储路径的编解码和安全解析。 */
 object StoredFilePath:
   given Encoder[StoredFilePath] = Encoder.encodeString.contramap(_.value)
   given Decoder[StoredFilePath] = Decoder.decodeString.emap(parse)
 
   private val separator = "/"
 
+  /** 解析外部路径输入，统一斜杠并拒绝绝对路径、空段、. 或 .. 段。 */
   def parse(raw: String): Either[String, StoredFilePath] =
     val normalized = raw.trim.replace('\\', '/')
     if normalized.isEmpty then Left("Stored file path is required.")

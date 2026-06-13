@@ -2,6 +2,7 @@ package judgeprotocol.objects
 
 import io.circe.{Decoder, Encoder}
 
+/** 表示单个测试点、子任务或整题聚合后的判题结论。 */
 enum SubmissionVerdict:
   case Accepted
   case AcceptedByProtocol
@@ -12,7 +13,9 @@ enum SubmissionVerdict:
   case IdlenessLimitExceeded
   case SystemError
 
+/** 提供判题结论与 JSON 协议字符串的互转。 */
 object SubmissionVerdict:
+  /** 将判题结论渲染为 backend 存储和前端展示使用的稳定字符串。 */
   def render(value: SubmissionVerdict): String =
     value match
       case SubmissionVerdict.Accepted => "accepted"

@@ -6,10 +6,16 @@ import type { ProblemListResponse } from '@/objects/problem/response/ProblemList
 import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 为题目列表请求生成稳定 key，确保分页变化时触发重新加载。
+ */
 function requestKey(request: ProblemListRequest): string {
   return JSON.stringify(request)
 }
 
+/**
+ * 题目列表模型 hook；按请求加载题目摘要分页并返回加载状态。
+ */
 export function useProblemPageModel(request: ProblemListRequest) {
   const query = request.query
   const page = request.pageRequest.page

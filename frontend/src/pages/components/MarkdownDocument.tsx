@@ -3,11 +3,17 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 
+/**
+ * Markdown 文档渲染属性，输入为可信业务 Markdown 文本和可选容器类名。
+ */
 type MarkdownDocumentProps = {
   content: string
   className?: string
 }
 
+/**
+ * Markdown 展示组件，禁用 HTML 并启用 GFM、数学公式和自定义链接/图片/代码样式。
+ */
 export function MarkdownDocument({ content, className = '' }: MarkdownDocumentProps) {
   return (
     <div className={`markdown-document ${className}`.trim()}>

@@ -3,6 +3,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 开关控件包装，保留 Radix checked/unchecked 状态并提供滑块视觉反馈。
+ */
 function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.Root>) {
   return (
     <SwitchPrimitive.Root

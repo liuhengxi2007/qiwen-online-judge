@@ -12,14 +12,24 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from '../hooks/useProblemDataPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 测试数据页模型类型别名，供 judge 配置编辑卡片保存配置后刷新题目与文件树。
+ */
 type ProblemDataPageModel = ReturnType<typeof useProblemDataPageModel>
 
+/**
+ * judge 配置编辑卡片属性，包含题目作用域和测试数据页模型。
+ */
 type ProblemJudgeConfigEditorCardProps = {
   contestSlug?: ContestSlug
   model: ProblemDataPageModel
   problemSlug: ProblemSlug
 }
 
+/**
+ * judge.yaml 在线编辑卡片，展示配置文本、校验结果、加载/保存动作以及 ready 状态切换按钮。
+ * 保存与 ready 变更都委托给对应模型，组件只负责按钮状态和错误/成功消息呈现。
+ */
 export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }: ProblemJudgeConfigEditorCardProps) {
   const { t } = useI18n()
   const editor = useProblemJudgeConfigEditorModel(model, problemSlug, contestSlug)

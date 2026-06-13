@@ -1,3 +1,6 @@
+/**
+ * 英文题单消息，覆盖题单列表、详情、编辑和题目关联流程文案。
+ */
 export const enProblemSetMessages: Record<string, string> = {
   'problemSet.pageTitle': 'Qiwen Online Judge - Problem Sets',
   'problemSet.heading': 'Problem Sets',

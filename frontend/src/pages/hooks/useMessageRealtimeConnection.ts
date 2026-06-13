@@ -15,30 +15,49 @@ import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
 import { parseUsername } from '@/objects/user/Username'
 
+/**
+ * 浏览器全局消息流事件名，用于会话页等组件监听 SSE 解码后的领域事件。
+ */
 export const messageStreamEventName = 'qiwen:message-stream-event'
 
+/**
+ * 消息 SSE 解码后的事件详情，覆盖新消息、会话已读和收件箱变更。
+ */
 export type MessageStreamEventDetail =
   | { type: 'message_received'; payload: DirectMessage }
   | { type: 'conversation_read'; payload: ConversationReadStreamPayload }
   | { type: 'inbox_changed'; payload: Record<string, never> }
 
+/**
+ * 会话已读事件载荷，描述读者和已读到的消息边界。
+ */
 type ConversationReadStreamPayload = {
   conversationId: MessageConversationId
   readUpToMessageId: MessageId
   readerUsername: Username
 }
 
+// 注意：消息 SSE 使用模块级单例和订阅计数，避免多个页面/组件同时建立重复 EventSource。
 let eventSource: EventSource | null = null
 let subscriberCount = 0
 
+/**
+ * 将解码后的消息流事件分发到 window，供不直接持有 EventSource 的组件订阅。
+ */
 function dispatchMessageStreamEvent(detail: MessageStreamEventDetail) {
   window.dispatchEvent(new CustomEvent<MessageStreamEventDetail>(messageStreamEventName, { detail }))
 }
 
+/**
+ * 将未知 SSE 载荷收窄为对象；字段合法性由后续读取函数负责。
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+/**
+ * 从未知载荷读取字符串字段；字段缺失或类型错误时抛出可定位的解码错误。
+ */
 function readString(value: unknown, field: string): string {
   if (typeof value !== 'string') {
     throw new Error(`Invalid ${field}.`)
@@ -47,6 +66,9 @@ function readString(value: unknown, field: string): string {
   return value
 }
 
+/**
+ * 将领域 parse 结果转为值或抛错，统一 SSE 解码失败路径。
+ */
 function requireParsed<T>(result: { ok: true; value: T } | { ok: false; error: string }, field: string): T {
   if (!result.ok) {
     throw new Error(`Invalid ${field}: ${result.error}`)
@@ -55,6 +77,9 @@ function requireParsed<T>(result: { ok: true; value: T } | { ok: false; error: s
   return result.value
 }
 
+/**
+ * 从 SSE 载荷读取用户身份，并校验用户名和显示名的领域格式。
+ */
 function readUserIdentity(value: unknown, field: string): UserIdentity {
   if (!isRecord(value)) {
     throw new Error(`Invalid ${field}.`)
@@ -66,6 +91,9 @@ function readUserIdentity(value: unknown, field: string): UserIdentity {
   }
 }
 
+/**
+ * 解码新私信事件载荷；输入来自 SSE JSON，字段不合法时抛出解码错误。
+ */
 function decodeDirectMessage(value: unknown): DirectMessage {
   if (!isRecord(value)) {
     throw new Error('Invalid direct message payload.')
@@ -82,6 +110,9 @@ function decodeDirectMessage(value: unknown): DirectMessage {
   }
 }
 
+/**
+ * 解码会话已读事件载荷，校验会话 ID、消息 ID 和读者用户名。
+ */
 function decodeConversationReadStreamPayload(value: unknown): ConversationReadStreamPayload {
   if (!isRecord(value)) {
     throw new Error('Invalid conversation read event payload.')
@@ -100,6 +131,9 @@ function decodeConversationReadStreamPayload(value: unknown): ConversationReadSt
   }
 }
 
+/**
+ * 解码收件箱变更事件；当前只校验对象形态，事件本身不携带字段。
+ */
 function decodeInboxChangedStreamPayload(value: unknown): Record<string, never> {
   if (!isRecord(value)) {
     throw new Error('Invalid inbox changed event payload.')
@@ -108,6 +142,9 @@ function decodeInboxChangedStreamPayload(value: unknown): Record<string, never> 
   return {}
 }
 
+/**
+ * 根据 SSE 事件类型解码原始 JSON 字符串；解码失败时记录错误并返回 null。
+ */
 function decodeMessageStreamEvent(type: 'message_received' | 'conversation_read' | 'inbox_changed', rawData: string): MessageStreamEventDetail | null {
   try {
     const parsed = JSON.parse(rawData) as unknown
@@ -125,6 +162,9 @@ function decodeMessageStreamEvent(type: 'message_received' | 'conversation_read'
   }
 }
 
+/**
+ * 处理单条 SSE 事件，成功解码后刷新收件箱并分发浏览器自定义事件。
+ */
 function handleIncomingEvent(type: 'message_received' | 'conversation_read' | 'inbox_changed', event: Event, refreshInbox: () => Promise<void>) {
   const decoded = decodeMessageStreamEvent(type, (event as MessageEvent).data)
   if (!decoded) {
@@ -135,6 +175,9 @@ function handleIncomingEvent(type: 'message_received' | 'conversation_read' | 'i
   dispatchMessageStreamEvent(decoded)
 }
 
+/**
+ * 确保消息 SSE 连接已建立，并为三类消息事件注册处理器。
+ */
 function ensureEventSource(refreshInbox: () => Promise<void>) {
   if (eventSource) {
     return
@@ -155,6 +198,9 @@ function ensureEventSource(refreshInbox: () => Promise<void>) {
   })
 }
 
+/**
+ * 在订阅者归零后关闭消息 SSE 连接，避免多页面实例重复连接。
+ */
 function releaseEventSource() {
   if (subscriberCount <= 0 && eventSource) {
     eventSource.close()
@@ -162,6 +208,9 @@ function releaseEventSource() {
   }
 }
 
+/**
+ * 管理消息实时连接生命周期；登录时订阅，退出时清空收件箱并关闭全局 EventSource。
+ */
 export function useMessageRealtimeConnection() {
   const session = useAuthStore((state) => state.session)
   const refreshInbox = useMessageInboxRefresh()

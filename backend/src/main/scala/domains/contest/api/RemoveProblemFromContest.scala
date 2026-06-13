@@ -16,6 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 从比赛移除题目的认证 API，只有比赛管理者可调用。 */
 object RemoveProblemFromContest extends AuthenticatedApi[(ContestSlug, ProblemSlug), ContestDetail]:
 
   override val method: Method = Method.POST
@@ -23,6 +24,7 @@ object RemoveProblemFromContest extends AuthenticatedApi[(ContestSlug, ProblemSl
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ContestDetail] = summon[Encoder[ContestDetail]]
 
+  /** 从路径解析比赛 slug 和题目 slug，删除入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, ProblemSlug)] =
     val _ = request
     for
@@ -30,6 +32,7 @@ object RemoveProblemFromContest extends AuthenticatedApi[(ContestSlug, ProblemSl
       problemSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSlug").flatMap(ProblemSlug.parse))
     yield (contestSlug, problemSlug)
 
+  /** 校验比赛管理权后删除赛题关联，并返回更新后的比赛详情。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,

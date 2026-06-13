@@ -1,3 +1,6 @@
+/**
+ * 英文首页仪表盘消息，覆盖概览入口和个人状态提示文案。
+ */
 export const enDashboardMessages: Record<string, string> = {
   'dashboard.title': 'Qiwen Online Judge',
   'dashboard.welcome': 'Welcome back, {{displayName}}',

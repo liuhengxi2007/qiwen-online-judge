@@ -11,6 +11,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import { useLoginModel } from './hooks/useLoginModel'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 
+/**
+ * 登录页，组合登录表单模型和登录请求，并根据 notice 参数展示提示。
+ */
 export function LoginPage() {
   const { t } = useI18n()
   usePageTitle(t('auth.login.pageTitle'))

@@ -10,11 +10,17 @@ import { toSiteManageDeniedRedirect } from '@/pages/routing/RoutePolicy'
 import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 用户权限保存结果，成功携带保存提示，失败携带错误消息。
+ */
 type SavePermissionsResult =
   | { kind: 'updated'; user: ManagedUserListItem }
   | { kind: 'forbidden' }
   | { kind: 'failed'; message: string }
 
+/**
+ * 用户权限保存 hook；提交权限更新请求并返回标准化结果。
+ */
 export function useUserPermissionsMutation() {
   const [updatingUsername, setUpdatingUsername] = useState<Username | null>(null)
   const [navigationIntent, setNavigationIntent] = useState<NavigationIntent | null>(null)

@@ -19,6 +19,9 @@ import { isSubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { isTextSubmissionRole, type SubmitProgramDraft } from '@/pages/ProblemSubmitPage/functions/SubmitPrograms'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题目提交编辑卡片属性，包含程序草稿、提交状态和所有字段变更回调。
+ */
 type ProblemSubmitEditorCardProps = {
   canSubmit: boolean
   errorMessage: string
@@ -32,6 +35,9 @@ type ProblemSubmitEditorCardProps = {
   supportedLanguages: Array<{ value: SubmissionLanguage; label: string }>
 }
 
+/**
+ * 题目提交编辑卡片，渲染多程序源码输入、提交按钮和错误提示。
+ */
 export function ProblemSubmitEditorCard({
   canSubmit,
   errorMessage,
@@ -105,6 +111,9 @@ export function ProblemSubmitEditorCard({
   )
 }
 
+/**
+ * 单个提交程序编辑器属性，封装角色、语言、源码和文件输入回调。
+ */
 type ProblemSubmitProgramEditorProps = {
   isOnlyProgram: boolean
   isSubmitting: boolean
@@ -114,6 +123,9 @@ type ProblemSubmitProgramEditorProps = {
   supportedLanguages: Array<{ value: SubmissionLanguage; label: string }>
 }
 
+/**
+ * 单个提交程序编辑器，支持粘贴源码或上传源码文件。
+ */
 function ProblemSubmitProgramEditor({
   isOnlyProgram,
   isSubmitting,

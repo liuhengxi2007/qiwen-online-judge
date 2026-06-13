@@ -1,3 +1,6 @@
+/**
+ * 简体中文首页仪表盘消息，覆盖概览入口和个人状态提示文案。
+ */
 export const zhCnDashboardMessages: Record<string, string> = {
   'dashboard.title': '气温在线评测',
   'dashboard.welcome': '欢迎回来，{{displayName}}',

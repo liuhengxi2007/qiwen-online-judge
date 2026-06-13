@@ -13,15 +13,18 @@ import io.circe.syntax.*
 
 import java.sql.Connection
 
+/** 登录 API，校验账号密码，创建会话并写入会话 cookie。 */
 final case class Login(sessionStore: SessionStore) extends PublicResponseApi[LoginRequest]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/login")
 
+  /** 从 JSON 请求体解码登录信息；路径参数被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[LoginRequest] =
     val _ = pathParams
     request.as[LoginRequest]
 
+  /** 在事务内验证密码、读取资料、创建会话，失败统一返回无枚举信息的 401。 */
   override def plan(connection: Connection, request: LoginRequest): IO[Response[IO]] =
     AuthAccountTable.findAccountByUsername(connection, request.username).flatMap {
       case None =>

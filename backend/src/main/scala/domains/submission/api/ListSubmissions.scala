@@ -15,6 +15,7 @@ import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 
+/** 列出全站可见提交的 API；可见性受题目提交公开策略、本人身份和题目管理员权限约束。 */
 object ListSubmissions extends AuthenticatedApi[SubmissionListRequest, SubmissionListResponse]:
 
   override val method: Method = Method.GET
@@ -22,9 +23,11 @@ object ListSubmissions extends AuthenticatedApi[SubmissionListRequest, Submissio
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SubmissionListResponse] = summon[Encoder[SubmissionListResponse]]
 
+  /** 从 query 参数解析筛选、排序和分页；非法筛选值会退回默认值。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionListRequest] =
     val _ = pathParams
     IO.pure(SubmissionListRequestQuery.parse(request.uri.query.params))
 
+  /** 返回调用者可见的提交摘要页，详情可见性单独标在每条记录上。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: SubmissionListRequest): IO[SubmissionListResponse] =
     SubmissionQueryTable.listVisibleTo(connection, actor, request, SubmissionAccessRules.hasGlobalViewOverride(actor))

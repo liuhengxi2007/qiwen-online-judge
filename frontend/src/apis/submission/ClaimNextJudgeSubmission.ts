@@ -3,12 +3,14 @@ import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage
 import type { ClaimedSubmission } from '@/objects/submission/ClaimedSubmission'
 import type { SubmissionJudgeState } from '@/objects/submission/SubmissionJudgeState'
 
+/** 内部领取提交判题任务请求体；描述 worker 支持语言、运行状态和最低优先级。 */
 type ClaimNextJudgeSubmissionBody = {
   languages: SubmissionLanguage[]
   runningState: SubmissionJudgeState
   minPriority: number
 }
 
+/** 判题 worker 领取下一个提交任务；输出提交任务或空值，不使用用户会话。 */
 export class ClaimNextJudgeSubmission implements APIMessage<ClaimedSubmission | null> {
   declare readonly responseType?: ClaimedSubmission | null
   readonly method = 'POST'

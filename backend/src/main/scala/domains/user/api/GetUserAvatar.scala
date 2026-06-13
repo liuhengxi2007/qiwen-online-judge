@@ -13,17 +13,20 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 用户头像读取 API，从对象存储读取头像字节并返回原始图片响应。 */
 final case class GetUserAvatar(userAvatarStorage: UserAvatarStorage) extends AuthenticatedResponseApi[Username]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/users/:targetUsername/avatar")
 
+  /** 从路径读取目标用户名；请求体被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Username] =
     val _ = request
     pathParams.require("targetUsername") match
       case Right(rawUsername) => IO.pure(Username.canonical(rawUsername))
       case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
 
+  /** 查询头像元数据并读取对象内容；用户或对象缺失时返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[Response[IO]] =
     val _ = actor
     UserProfileTable.findAvatarByUsername(connection, targetUsername).flatMap {

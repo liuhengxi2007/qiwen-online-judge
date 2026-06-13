@@ -24,6 +24,9 @@ import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useContestDetailPageModel } from './hooks/useContestDetailPageModel'
 
+/**
+ * 比赛详情页入口，校验比赛 slug 后渲染详情内容。
+ */
 export function ContestDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('contest.detail.pageTitle'))
@@ -46,6 +49,9 @@ export function ContestDetailPage() {
   return <ContestDetailPageContent contestSlug={slugResult.value} />
 }
 
+/**
+ * 比赛详情页主体，负责会话守卫、详情查询、报名/取消报名和入口卡片展示。
+ */
 function ContestDetailPageContent({
   contestSlug,
 }: {
@@ -76,6 +82,9 @@ function ContestDetailPageContent({
   )
 }
 
+/**
+ * 比赛详情头部卡片，展示比赛元信息和报名操作。
+ */
 function ContestDetailHeaderCard({
   contest,
 }: {
@@ -148,6 +157,9 @@ function ContestDetailHeaderCard({
   )
 }
 
+/**
+ * 比赛题目卡片，展示比赛内题目列表和跳转入口。
+ */
 function ContestProblemsCard({ contest }: { contest: ContestDetail }) {
   const { t } = useI18n()
 
@@ -175,6 +187,9 @@ function ContestProblemsCard({ contest }: { contest: ContestDetail }) {
   )
 }
 
+/**
+ * 比赛题目条目，按比赛路径链接到对应题目详情。
+ */
 function ContestProblemItem({ contestSlug, problem }: { contestSlug: ContestSlug; problem: ContestDetail['problems'][number] }) {
   const { t } = useI18n()
   const titleText = useProblemTitleDisplay(problem.title, problem.slug)

@@ -3,6 +3,7 @@ package judgeprotocol.objects.response
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveEncoder
 
+/** 判题任务中的子任务节点，定义分数权重、模式、工具和测试点集合。 */
 final case class JudgeTaskSubtask(
   index: Int,
   label: Option[String],
@@ -15,6 +16,7 @@ final case class JudgeTaskSubtask(
   testcases: List[JudgeTaskTestcase]
 )
 
+/** 负责子任务协议编解码，并兼容早期缺失 hack 配置的 payload。 */
 object JudgeTaskSubtask:
   given Encoder[JudgeTaskSubtask] = deriveEncoder[JudgeTaskSubtask]
   given Decoder[JudgeTaskSubtask] = Decoder.instance { cursor =>

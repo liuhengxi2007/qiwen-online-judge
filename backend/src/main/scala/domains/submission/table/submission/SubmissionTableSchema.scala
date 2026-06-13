@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** submissions 表结构与迁移片段；维护公开 id、程序 manifest、判题状态和派生结果列。 */
 object SubmissionTableSchema:
 
   val createPublicIdSequenceSql: String =
@@ -516,6 +517,7 @@ object SubmissionTableSchema:
       |  where status = 'queued';
       |""".stripMargin
 
+  /** 执行 program_manifest 回填前所需的建表和兼容列迁移。 */
   def initializeBeforeProgramManifestBackfill(connection: Connection): IO[Unit] =
     executeStatements(
       connection,
@@ -532,6 +534,7 @@ object SubmissionTableSchema:
       )
     )
 
+  /** 执行 manifest 回填后的约束、派生列、旧列清理和索引创建。 */
   def initializeAfterProgramManifestBackfill(connection: Connection): IO[Unit] =
     executeStatements(
       connection,
@@ -559,6 +562,7 @@ object SubmissionTableSchema:
       )
     )
 
+  /** 单阶段初始化兼容入口；不执行源码对象回填，主要供旧调用点使用。 */
   def initialize(connection: Connection): IO[Unit] =
     initializeBeforeProgramManifestBackfill(connection).flatMap(_ => initializeAfterProgramManifestBackfill(connection))
 

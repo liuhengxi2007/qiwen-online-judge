@@ -4,6 +4,7 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 查询题目待审核博客投稿；输入题目 slug 和可选分页，输出博客摘要分页响应。 */
 export class ListPendingProblemBlogs implements APIWithSessionMessage<BlogListResponse> {
   declare readonly responseType?: BlogListResponse
   readonly method = 'GET'

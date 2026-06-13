@@ -11,12 +11,18 @@ import { useSubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPa
 import { SubmissionFilterCard } from './SubmissionFilterCard'
 import { SubmissionSummaryList } from './SubmissionSummaryList'
 
+/**
+ * 提交列表页面内容属性，允许固定题目筛选或限定在比赛范围内查询。
+ */
 type SubmissionListPageContentProps = {
   fixedProblemSlugFilter?: ProblemSlug
   contestSlug?: ContestSlug
   titleKey?: string
 }
 
+/**
+ * 提交列表页面主体，负责会话守卫、筛选模型、错误提示、筛选卡片和结果列表组合。
+ */
 export function SubmissionListPageContent({ fixedProblemSlugFilter, contestSlug, titleKey = 'submission.heading' }: SubmissionListPageContentProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('submission.pageTitle'))

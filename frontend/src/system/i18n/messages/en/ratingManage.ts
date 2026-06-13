@@ -1,3 +1,6 @@
+/**
+ * 英文 Rating 管理消息，覆盖比赛序列、参数填写和追加评分任务文案。
+ */
 export const enRatingManageMessages: Record<string, string> = {
   'ratingManage.pageTitle': 'Qiwen Online Judge - Rating Management',
   'ratingManage.heading': 'Rating Management',

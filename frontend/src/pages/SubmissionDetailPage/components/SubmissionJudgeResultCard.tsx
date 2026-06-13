@@ -20,12 +20,18 @@ import type { JudgeSubtaskResult } from '@/objects/submission/JudgeSubtaskResult
 import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 裁判结果卡片属性，包含结果树、提交 id 和按子任务计算出的 hack 可用性。
+ */
 type SubmissionJudgeResultCardProps = {
   hackAvailability: SubmissionHackAvailability | null
   judgeResult: JudgeResult
   submissionId: SubmissionId
 }
 
+/**
+ * 提交裁判结果卡片，展示总结果、子任务/测试点明细，并在允许时提供 hack 指定子任务入口。
+ */
 export function SubmissionJudgeResultCard({ hackAvailability, judgeResult, submissionId }: SubmissionJudgeResultCardProps) {
   const { t } = useI18n()
   const singleSubtask = judgeResult.subtasks.length === 1 ? judgeResult.subtasks[0] : null
@@ -120,6 +126,9 @@ export function SubmissionJudgeResultCard({ hackAvailability, judgeResult, submi
   )
 }
 
+/**
+ * 子任务 hack 按钮，依据提交 id 和子任务索引生成 hack 路由。
+ */
 function HackSubtaskButton({
   submissionId,
   subtaskIndex,
@@ -138,6 +147,9 @@ function HackSubtaskButton({
   )
 }
 
+/**
+ * 子任务测试点表格，展示每个测试点的 verdict、分数、耗时、内存和详细原因。
+ */
 function SubtaskTestcaseTable({ subtask }: { subtask: JudgeSubtaskResult }) {
   const { t } = useI18n()
 
@@ -181,6 +193,9 @@ function SubtaskTestcaseTable({ subtask }: { subtask: JudgeSubtaskResult }) {
   )
 }
 
+/**
+ * 结果摘要分组，统一渲染基础结果或最差结果的 verdict、分数、耗时、内存和原因。
+ */
 function ResultSummaryGroup({
   label,
   summary,
@@ -216,6 +231,9 @@ function ResultSummaryGroup({
   )
 }
 
+/**
+ * 单个结果指标展示项，可选 valueStyle 用于 verdict/分数颜色。
+ */
 function MetricValue({
   label,
   value,
@@ -233,10 +251,16 @@ function MetricValue({
   )
 }
 
+/**
+ * 生成子任务或测试点标题，保留后端返回的可选 label 以辅助定位。
+ */
 function resultNodeTitle(kind: 'subtask' | 'testcase', index: number, label: string | null): string {
   return label ? `${kind} ${index} (${label})` : `${kind} ${index}`
 }
 
+/**
+ * 裁判原因行，仅在存在 reason 时展示，避免空原因占用布局。
+ */
 function JudgeReasonLine({ label, reason }: { label: string; reason: string | null }) {
   if (!reason) {
     return null

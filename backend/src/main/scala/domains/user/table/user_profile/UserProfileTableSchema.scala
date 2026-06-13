@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** user_profiles 表结构和从旧 auth_accounts 资料字段迁移的脚本集合。 */
 object UserProfileTableSchema:
 
   val initTableSql: String =
@@ -123,6 +124,7 @@ object UserProfileTableSchema:
       |  drop column if exists auto_mark_message_read
       |""".stripMargin
 
+  /** 建表、补头像列、从旧账号表回填资料，并删除旧资料列。 */
   def initializeSchema(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

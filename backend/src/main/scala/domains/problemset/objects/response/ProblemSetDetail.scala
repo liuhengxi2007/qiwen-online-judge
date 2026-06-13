@@ -10,6 +10,7 @@ import shared.objects.access.ResourceAccessPolicy
 import java.time.Instant
 import scala.util.Try
 
+/** 题单详情响应，包含题目列表、访问策略和作者信息。 */
 final case class ProblemSetDetail(
   id: ProblemSetId,
   slug: ProblemSetSlug,
@@ -22,6 +23,7 @@ final case class ProblemSetDetail(
   updatedAt: Instant
 )
 
+/** 提供题单详情 JSON codec，以及从题单聚合构造响应的转换。 */
 object ProblemSetDetail:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>
@@ -31,6 +33,7 @@ object ProblemSetDetail:
   given Encoder[ProblemSetDetail] = deriveEncoder[ProblemSetDetail]
   given Decoder[ProblemSetDetail] = deriveDecoder[ProblemSetDetail]
 
+  /** 将题单聚合转换为接口详情响应。 */
   def fromProblemSet(problemSet: ProblemSet): ProblemSetDetail =
     ProblemSetDetail(
       id = problemSet.id,

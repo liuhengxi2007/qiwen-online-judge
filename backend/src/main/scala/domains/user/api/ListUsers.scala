@@ -14,6 +14,7 @@ import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 
+/** 站点管理员用户列表 API，支持搜索和分页。 */
 object ListUsers extends SiteManagerApi[UserListRequest, UserListResponse]:
 
   override val method: Method = Method.GET
@@ -21,14 +22,17 @@ object ListUsers extends SiteManagerApi[UserListRequest, UserListResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserListResponse] = summon[Encoder[UserListResponse]]
 
+  /** 从查询参数解析搜索词和分页；非法搜索词会被忽略。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[UserListRequest] =
     val _ = pathParams
     IO.pure(
       UserListRequest(
+        /** FIXME-CN: q 参数解析失败会被静默当作无搜索条件，可能让非法搜索输入退化为全量列表。 */
         query = request.uri.query.params.get("q").flatMap(rawQuery => UserSearchQuery.parse(rawQuery).toOption),
         pageRequest = PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
       )
     )
 
+  /** 以站点管理员身份查询管理端用户列表。 */
   override def plan(connection: Connection, actor: SiteManagerUser, request: UserListRequest): IO[UserListResponse] =
     UserProfileQueryTable.listUsers(connection, actor, request)

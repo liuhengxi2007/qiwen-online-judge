@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 确认操作对话框属性，支持受控打开状态、可选触发器和危险操作样式。
+ */
 type ConfirmActionDialogProps = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -25,6 +28,9 @@ type ConfirmActionDialogProps = {
   destructive?: boolean
 }
 
+/**
+ * 通用确认对话框，执行提交、删除等不可逆操作前要求用户显式确认。
+ */
 export function ConfirmActionDialog({
   open,
   onOpenChange,

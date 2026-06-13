@@ -8,8 +8,10 @@ import shared.objects.access.{AccessSubject, GrantRole}
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 
+/** 题单访问授权表访问对象，负责 viewer 授权的读取、替换和清理。 */
 object ProblemSetAccessGrantTable:
 
+  /** 初始化题单访问授权表结构和历史授权迁移。 */
   def initialize(connection: Connection): IO[Unit] =
     ProblemSetAccessGrantTableSchema.initialize(connection)
 
@@ -21,6 +23,7 @@ object ProblemSetAccessGrantTable:
       |order by subject_kind asc, subject_key asc
       |""".stripMargin
 
+  /** 读取指定题单和角色的授权主体列表，按主体类型和 key 稳定排序。 */
   def listForProblemSet(
     connection: Connection,
     problemSetId: ProblemSetId,
@@ -42,6 +45,7 @@ object ProblemSetAccessGrantTable:
       finally statement.close()
     }
 
+  /** 用传入授权主体完整替换指定题单和角色的授权集合。 */
   def replaceForProblemSet(
     connection: Connection,
     problemSetId: ProblemSetId,
@@ -59,6 +63,7 @@ object ProblemSetAccessGrantTable:
       |where problem_set_id = ?
       |""".stripMargin
 
+  /** 删除某个题单的全部授权记录，通常用于题单删除前清理。 */
   def deleteAllForProblemSet(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteAllForProblemSetSQL)

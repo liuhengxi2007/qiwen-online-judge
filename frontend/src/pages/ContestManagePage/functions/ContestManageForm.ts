@@ -11,6 +11,9 @@ import {
   grantedUsersInputFromAccessPolicy,
 } from '@/pages/components/ResourceAccessEditorInput'
 
+/**
+ * 比赛管理表单草稿，保存标题、描述、时间和题目关联输入。
+ */
 export type ContestManageDraft = {
   title: string
   description: string
@@ -23,10 +26,16 @@ export type ContestManageDraft = {
   grantedManagerGroupsInput: string
 }
 
+/**
+ * 比赛管理草稿校验结果，成功时携带更新请求，失败时携带用户可见错误。
+ */
 type ValidateContestManageDraftResult =
   | { ok: true; request: UpdateContestRequest }
   | { ok: false; message: string }
 
+/**
+ * 从比赛详情构造管理表单草稿，把 ISO 时间转换为本地 datetime-local 输入格式。
+ */
 export function contestManageDraftFromDetail(contest: ContestDetail): ContestManageDraft {
   return {
     title: contestTitleValue(contest.title),
@@ -41,6 +50,9 @@ export function contestManageDraftFromDetail(contest: ContestDetail): ContestMan
   }
 }
 
+/**
+ * 校验比赛管理草稿，解析标题、描述和开始/结束时间后生成更新请求。
+ */
 export function validateContestManageDraft(draft: ContestManageDraft): ValidateContestManageDraftResult {
   const title = parseContestTitle(draft.title)
   if (!title.ok) {
@@ -89,6 +101,9 @@ export function validateContestManageDraft(draft: ContestManageDraft): ValidateC
   }
 }
 
+/**
+ * 将 datetime-local 输入解析为 ISO 字符串；空值或非法日期返回指定错误。
+ */
 function parseLocalDateTime(rawValue: string, emptyMessage: string): { ok: true; value: string } | { ok: false; message: string } {
   if (!rawValue.trim()) {
     return { ok: false, message: emptyMessage }
@@ -102,6 +117,9 @@ function parseLocalDateTime(rawValue: string, emptyMessage: string): { ok: true;
   return { ok: true, value: date.toISOString() }
 }
 
+/**
+ * 将 ISO 时间转换为 datetime-local 控件需要的本地时间字符串。
+ */
 function toLocalDateTimeInput(isoValue: string): string {
   const date = new Date(isoValue)
   if (Number.isNaN(date.getTime())) {

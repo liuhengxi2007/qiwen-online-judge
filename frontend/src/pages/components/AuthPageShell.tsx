@@ -2,6 +2,9 @@ import type { ReactNode } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 认证页外壳属性，调用方传入背景层、强调层和 hero 文案样式。
+ */
 type AuthPageShellProps = {
   children: ReactNode
   heroTitle: ReactNode
@@ -15,6 +18,9 @@ type AuthPageShellProps = {
   descriptionClassName: string
 }
 
+/**
+ * 登录/注册页外壳组件，提供全屏背景、hero 文案区和表单插槽。
+ */
 export function AuthPageShell({
   children,
   heroTitle,

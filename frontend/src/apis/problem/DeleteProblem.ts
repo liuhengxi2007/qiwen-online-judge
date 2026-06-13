@@ -5,6 +5,7 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
 
+/** 删除题目；输入题目 slug 和可选比赛上下文，输出通用成功响应。 */
 export class DeleteProblem implements APIWithSessionMessage<SuccessResponse> {
   declare readonly responseType?: SuccessResponse
   readonly method = 'POST'

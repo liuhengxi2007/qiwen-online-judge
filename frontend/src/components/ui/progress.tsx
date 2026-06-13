@@ -3,6 +3,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 进度条组件，根据 value 百分比移动指示器，缺失 value 时按 0% 展示。
+ */
 function Progress({ className, value, ...props }: ComponentProps<typeof ProgressPrimitive.Root>) {
   return (
     <ProgressPrimitive.Root

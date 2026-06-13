@@ -15,6 +15,7 @@ import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
 
+/** 用户组列表 API，仅返回当前用户可见的用户组摘要分页。 */
 object ListUserGroups extends AuthenticatedApi[PageRequest, PageResponse[UserGroupSummary]]:
 
   override val method: Method = Method.GET
@@ -22,10 +23,12 @@ object ListUserGroups extends AuthenticatedApi[PageRequest, PageResponse[UserGro
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[PageResponse[UserGroupSummary]] = summon[Encoder[PageResponse[UserGroupSummary]]]
 
+  /** 从查询参数解析分页请求。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
     IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
+  /** 按权限返回可见用户组；如果未来禁用列表权限，则返回空分页而不报错。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[PageResponse[UserGroupSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     if !UserGroupAccessRules.canList(actor) then

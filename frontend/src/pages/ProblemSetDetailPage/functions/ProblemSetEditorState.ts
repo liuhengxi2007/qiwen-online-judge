@@ -3,6 +3,9 @@ import { usernameValue } from '@/objects/user/Username'
 import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 题单详情编辑器状态，保存内容、访问控制和关联题目输入。
+ */
 export type ProblemSetEditorState = {
   title: string
   description: string
@@ -13,6 +16,9 @@ export type ProblemSetEditorState = {
   linkProblemSlug: string
 }
 
+/**
+ * 题单详情编辑器动作，覆盖水合、内容编辑、访问控制编辑和清空关联输入。
+ */
 export type ProblemSetEditorAction =
   | { type: 'hydrate'; problemSet: ProblemSetDetail | null }
   | { type: 'set_title'; value: string }
@@ -24,6 +30,9 @@ export type ProblemSetEditorAction =
   | { type: 'set_link_problem_slug'; value: string }
   | { type: 'clear_link_problem_slug' }
 
+/**
+ * 题单详情编辑器初始状态，默认限制访问且没有授权输入。
+ */
 export const initialProblemSetEditorState: ProblemSetEditorState = {
   title: '',
   description: '',
@@ -34,6 +43,9 @@ export const initialProblemSetEditorState: ProblemSetEditorState = {
   linkProblemSlug: '',
 }
 
+/**
+ * 题单详情编辑器 reducer；纯函数维护编辑草稿。
+ */
 export function reduceProblemSetEditorState(
   state: ProblemSetEditorState,
   action: ProblemSetEditorAction,

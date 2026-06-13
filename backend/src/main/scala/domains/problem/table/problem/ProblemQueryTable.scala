@@ -15,6 +15,7 @@ import shared.objects.access.GrantRole
 
 import java.sql.Connection
 
+/** problems 表的读取入口；封装题目可见性、管理建议、详情读取和题单包含可见性查询。 */
 object ProblemQueryTable:
 
   private val normalAccessPredicate: String =
@@ -130,6 +131,7 @@ object ProblemQueryTable:
       |  and $searchPredicate
       |""".stripMargin
 
+  /** 按访问策略分页列出调用者可见题目；输出摘要会补齐访问策略 grants。 */
   def listVisibleTo(connection: Connection, actor: AuthenticatedUser, request: ProblemListRequest): IO[PageResponse[ProblemSummary]] =
     for
       totalItems <- IO.blocking {
@@ -182,6 +184,7 @@ object ProblemQueryTable:
       |where p.slug = ?
       |""".stripMargin
 
+  /** 按 slug 读取题目详情并补齐授权策略；不做权限过滤。 */
   def findBySlug(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     findBySlugUsing(connection, slug, findBySlugSQL)
 
@@ -192,6 +195,7 @@ object ProblemQueryTable:
       |where id = ?
       |""".stripMargin
 
+  /** 按题目 id 读取提交结果展示模式；供提交创建时固化展示策略。 */
   def findResultDisplayModeById(connection: Connection, problemId: ProblemId): IO[Option[SubmissionResultDisplayMode]] =
     IO.blocking {
       val statement = connection.prepareStatement(findResultDisplayModeByIdSQL)
@@ -209,6 +213,7 @@ object ProblemQueryTable:
   private val findBySlugForUpdateSQL: String =
     findBySlugSQL + "\nfor update of p"
 
+  /** 按 slug 读取题目详情并加行锁；用于数据写入和 ready 状态更新。 */
   def findBySlugForUpdate(connection: Connection, slug: ProblemSlug): IO[Option[ProblemDetail]] =
     findBySlugUsing(connection, slug, findBySlugForUpdateSQL)
 
@@ -257,6 +262,7 @@ object ProblemQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
+  /** 返回调用者可见题目的搜索建议，按精确/前缀/包含匹配排序。 */
   def listSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSuggestionsSQL)
@@ -285,6 +291,7 @@ object ProblemQueryTable:
       |limit $suggestionLimit
       |""".stripMargin
 
+  /** 返回调用者可管理题目的搜索建议，使用管理权限谓词过滤。 */
   def listManageableSuggestions(connection: Connection, actor: AuthenticatedUser, query: ProblemSearchQuery): IO[List[ProblemSuggestion]] =
     IO.blocking {
       val statement = connection.prepareStatement(listManageableSuggestionsSQL)
@@ -332,6 +339,7 @@ object ProblemQueryTable:
       |limit 1
       |""".stripMargin
 
+  /** 判断是否存在调用者可见且包含该题目的题单；用于题目继承可见性。 */
   def hasVisibleContainingProblemSet(
     connection: Connection,
     actor: AuthenticatedUser,

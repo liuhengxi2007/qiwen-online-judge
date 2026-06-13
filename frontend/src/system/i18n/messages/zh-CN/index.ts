@@ -20,6 +20,9 @@ import { zhCnNotificationMessages } from '@/system/i18n/messages/zh-CN/notificat
 import { zhCnContestMessages } from '@/system/i18n/messages/zh-CN/contest'
 import { zhCnHackMessages } from '@/system/i18n/messages/zh-CN/hack'
 
+/**
+ * 简体中文完整消息表，按领域消息字典展开合并后供运行时翻译查找。
+ */
 export const zhCnMessages: Record<string, string> = {
   ...zhCnCommonMessages,
   ...zhCnNavMessages,

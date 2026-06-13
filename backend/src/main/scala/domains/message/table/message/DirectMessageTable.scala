@@ -9,6 +9,7 @@ import domains.user.objects.Username
 import java.sql.{Connection, Timestamp}
 import java.util.UUID
 
+/** 私信消息表访问对象，负责历史分页、消息事实统计和新消息写入。 */
 object DirectMessageTable:
 
   private val listConversationMessagesSQL: String =
@@ -50,6 +51,7 @@ object DirectMessageTable:
       |limit ?
       |""".stripMargin
 
+  /** 按会话读取历史消息，支持 beforeMessageId 游标并额外取一条判断 hasMore。 */
   def listConversationMessages(
     connection: Connection,
     conversationId: MessageConversationId,
@@ -90,6 +92,7 @@ object DirectMessageTable:
       |where conversation_id = ?
       |""".stripMargin
 
+  /** 统计当前用户是否发过消息及对端消息数，用于前端会话状态判断。 */
   def getConversationMessageFacts(
     connection: Connection,
     conversationId: MessageConversationId,
@@ -149,6 +152,7 @@ object DirectMessageTable:
       |where dm.id = ?
       |""".stripMargin
 
+  /** 写入一条私信并刷新会话最后消息时间，最后重读消息以补齐发送者身份。 */
   def insertMessage(
     connection: Connection,
     conversationId: MessageConversationId,
@@ -188,6 +192,7 @@ object DirectMessageTable:
           statement.setObject(1, messageId.value)
           val resultSet = statement.executeQuery()
           try
+            /** 注意：消息刚刚由本方法插入；重读失败表示事务内数据不变量被破坏。 */
             if resultSet.next() then readDirectMessage(resultSet)
             else throw IllegalStateException("Inserted message is missing.")
           finally resultSet.close()

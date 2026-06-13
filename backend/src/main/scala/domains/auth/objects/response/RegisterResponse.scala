@@ -7,6 +7,7 @@ import domains.user.objects.{DisplayName, UserAvatarUrl, UserPreferences, Userna
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
+/** 注册成功响应，形状与登录响应保持一致以便前端立即建立会话状态。 */
 final case class RegisterResponse(
   displayName: DisplayName,
   username: Username,
@@ -19,10 +20,12 @@ final case class RegisterResponse(
   message: String
 )
 
+/** 提供注册响应编解码和从账号/资料片段组装响应的入口。 */
 object RegisterResponse:
   given Encoder[RegisterResponse] = deriveEncoder[RegisterResponse]
   given Decoder[RegisterResponse] = deriveDecoder[RegisterResponse]
 
+  /** 组合新建用户资料、账号邮箱和权限，归一化权限后生成注册响应。 */
   def fromParts(
     profile: UserProfileSettings,
     email: EmailAddress,

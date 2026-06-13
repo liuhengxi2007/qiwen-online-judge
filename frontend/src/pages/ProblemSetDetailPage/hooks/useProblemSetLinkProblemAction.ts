@@ -8,6 +8,9 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单关联题目动作 hook；提交题目 slug 并返回操作状态和错误。
+ */
 export function useProblemSetLinkProblemAction(problemSetSlug: ProblemSetSlug) {
   const { t } = useI18n()
   const [activeLink, setActiveLink] = useState(false)

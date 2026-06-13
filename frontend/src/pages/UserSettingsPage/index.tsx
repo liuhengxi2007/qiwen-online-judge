@@ -18,6 +18,9 @@ import { useUserSettingsModel } from './hooks/useUserSettingsModel'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户设置页入口，解析可选用户名并校验当前会话。
+ */
 export function UserSettingsPage() {
   const { t } = useI18n()
   usePageTitle(t('userSettings.pageTitle'))
@@ -37,6 +40,9 @@ export function UserSettingsPage() {
   return <UserSettingsPageContent hash={hash} routeUsername={routeUsername} setViewer={setViewer} viewer={viewer} />
 }
 
+/**
+ * 用户设置页主体，组合路由权限策略、资料查询、表单模型和设置卡片。
+ */
 function UserSettingsPageContent({
   hash,
   routeUsername,

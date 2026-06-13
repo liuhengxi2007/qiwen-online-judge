@@ -14,13 +14,16 @@ import shared.api.ApiPath
 import java.sql.Connection
 import java.time.Instant
 
+/** 面向内部调用的比赛访问评估 API，集中输出比赛、题目关联、注册和管理权限事实。 */
 object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContestAccess.Input, Option[EvaluateContestAccess.Result]]:
 
+  /** 内部权限评估输入，使用比赛 slug 定位比赛，并可附带题目 id 判断题目是否在赛内。 */
   final case class Input(
     contestSlug: ContestSlug,
     problemId: Option[ProblemId]
   )
 
+  /** 内部权限评估输出，供提交、题目详情等跨 domain 流程复用，不直接产生 HTTP 错误。 */
   final case class Result(
     contestId: ContestId,
     contestSlug: ContestSlug,
@@ -40,6 +43,7 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/contests/evaluate-access")
 
+  /** 读取比赛、注册状态和用户组后计算权限；比赛不存在时返回 None，避免内部调用重复查库。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Option[Result]] =
     ContestTable.findBySlug(connection, input.contestSlug).flatMap {
       case None =>

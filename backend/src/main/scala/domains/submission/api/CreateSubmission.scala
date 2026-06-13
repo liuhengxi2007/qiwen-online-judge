@@ -26,6 +26,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, MultipartTextSupport, Pat
 
 import java.sql.Connection
 
+/** 创建普通题目提交的 API；校验题目可见、判题配置和程序角色后写入提交与源码对象。 */
 final case class CreateSubmission(
   submissionProgramStorage: SubmissionProgramStorage,
   problemDataStorage: ProblemDataStorage
@@ -36,13 +37,16 @@ final case class CreateSubmission(
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[SubmissionDetail] = summon[Encoder[SubmissionDetail]]
 
+  /** 支持 JSON 或 multipart 请求解析提交源码；路径参数无业务含义。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateSubmissionRequest] =
     val _ = pathParams
     CreateSubmission.decodeRequest(request)
 
+  /** 为可见题目创建提交；不可见或不存在的题目统一返回题目不存在。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     createForProblem(connection, actor, request)
 
+  /** 普通题目提交入口；校验题目访问权限后委托给通用创建流程。 */
   def createForProblem(connection: Connection, actor: AuthenticatedUser, request: CreateSubmissionRequest): IO[SubmissionDetail] =
     for
       problemSlug <- HttpApiError.fromEitherBadRequest(ProblemSlug.parse(request.problemSlug.value))
@@ -66,6 +70,7 @@ final case class CreateSubmission(
       )
     yield created
 
+  /** 为已确认可提交的题目创建提交；会写源码对象、插入提交行，插入失败时尽量删除已写源码。 */
   def createForAccessibleProblem(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -124,6 +129,7 @@ final case class CreateSubmission(
     HttpApiError.fromEitherBadRequest(parsed.flatMap { validPrograms =>
       val manifestInput = validPrograms.map { case (role, program) => role -> (program.language -> program.sourceCode) }
       SubmissionProgramManifest
+        // 注意：固定 UUID 只用于提交请求的角色/语言/源码清单校验，真实源码对象 key 会在创建提交时重新生成。
         .fromPrograms(java.util.UUID.fromString("00000000-0000-4000-8000-000000000000"), manifestInput)
         .map(_ => validPrograms)
     })
@@ -150,6 +156,7 @@ final case class CreateSubmission(
       _ <- HttpApiError.fromEitherBadRequest(JudgeTaskBuilder.validateSubmissionProgramsForConfig(configBytes, programLanguages, manifest))
     yield ()
 
+/** 提交创建请求解析辅助；处理 JSON 与 multipart 两种输入形态。 */
 object CreateSubmission:
 
   private val ScalarMaxBytes: Long = 64L * 1024L
@@ -164,6 +171,7 @@ object CreateSubmission:
   private object MultipartProgram:
     given Decoder[MultipartProgram] = deriveDecoder[MultipartProgram]
 
+  /** 根据请求 Content-Type 解析提交请求；multipart 会按 programs 描述读取多个源码 part。 */
   def decodeRequest(request: Request[IO]): IO[CreateSubmissionRequest] =
     if MultipartTextSupport.isMultipart(request) then decodeMultipart(request)
     else request.as[CreateSubmissionRequest]

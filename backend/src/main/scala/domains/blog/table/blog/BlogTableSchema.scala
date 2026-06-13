@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 博客相关表结构初始化对象，包含博客、题目关联、投票、评论和历史字段迁移。 */
 object BlogTableSchema:
 
   val initTableSql: String =
@@ -230,6 +231,7 @@ object BlogTableSchema:
       |create index if not exists blog_comments_blog_id_idx on blog_comments(blog_id, public_id asc)
       |""".stripMargin
 
+  /** 执行博客 domain 所有表、序列、索引和历史迁移的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

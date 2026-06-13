@@ -6,6 +6,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import { AncestorNavigation } from './AncestorNavigation'
 import { AppSectionBar } from './AppSectionBar'
 
+/**
+ * 标准页面外壳属性，定义标题、描述、右上操作区和布局 className 扩展点。
+ */
 type PageShellProps = {
   children: ReactNode
   title: ReactNode
@@ -19,6 +22,9 @@ type PageShellProps = {
   showSectionBar?: boolean
 }
 
+/**
+ * 标准页面外壳组件，统一顶部站点名、标题、祖先导航和主导航栏布局。
+ */
 export function PageShell({
   children,
   title,

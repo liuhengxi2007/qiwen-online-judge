@@ -19,6 +19,9 @@ import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建题目页入口，要求题目管理权限后渲染创建内容。
+ */
 export function CreateProblemPage() {
   const { t } = useI18n()
   usePageTitle(t('problem.create.pageTitle'))
@@ -35,6 +38,9 @@ export function CreateProblemPage() {
   return <CreateProblemPageContent canCreate={user.problemManager} />
 }
 
+/**
+ * 创建题目页主体，组合权限状态、表单模型和创建成功跳转。
+ */
 function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
   const { t } = useI18n()
   const otherUserSubmissionAccessOptions = [

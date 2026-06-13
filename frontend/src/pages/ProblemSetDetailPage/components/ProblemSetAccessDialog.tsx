@@ -8,6 +8,9 @@ import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAcces
 import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单访问控制对话框属性，包含访问策略草稿和保存回调。
+ */
 type ProblemSetAccessDialogProps = {
   open: boolean
   accessPolicy: ResourceAccessPolicy
@@ -24,6 +27,9 @@ type ProblemSetAccessDialogProps = {
   onSave: () => void
 }
 
+/**
+ * 题单访问控制对话框，渲染资源访问编辑器并保存访问策略。
+ */
 export function ProblemSetAccessDialog({
   open,
   accessPolicy,

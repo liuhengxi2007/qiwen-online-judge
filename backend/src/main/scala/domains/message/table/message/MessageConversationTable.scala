@@ -10,6 +10,7 @@ import shared.objects.PageRequest
 import java.sql.{Connection, Timestamp}
 import java.util.UUID
 
+/** 私信会话表访问对象，负责会话创建、收件箱列表和参与者校验。 */
 object MessageConversationTable:
 
   private val insertConversationSQL: String =
@@ -25,6 +26,7 @@ object MessageConversationTable:
       |values (?, ?, ?, ?, ?, ?)
       |""".stripMargin
 
+  /** 获取两名用户之间的会话；不存在时按用户名规范顺序创建并返回当前用户视角摘要。 */
   def getOrCreateConversation(
     connection: Connection,
     actorUsername: Username,
@@ -33,10 +35,12 @@ object MessageConversationTable:
     val (participantA, participantB) = normalizeConversationPair(actorUsername, targetUsername)
     findConversationIdForPair(connection, participantA, participantB).flatMap {
       case Some(conversationId) =>
+        /** 注意：会话 id 来自同一参与者对查询；随后按 actor 读取不到摘要表示表内参与者不变量被破坏。 */
         findConversationSummaryForUser(connection, actorUsername, conversationId).map(_.getOrElse {
           throw IllegalStateException("Conversation exists but is not readable by participant.")
         })
       case None =>
+        /** FIXME-CN: findConversationIdForPair 后再 insert，没有捕获唯一索引冲突；同一对用户并发创建会话时可能抛数据库异常而不是重读已有会话。 */
         for
           conversationId <- IO.delay(MessageConversationId(UUID.randomUUID()))
           now <- IO.realTimeInstant
@@ -54,6 +58,7 @@ object MessageConversationTable:
             finally statement.close()
           }
           summary <- findConversationSummaryForUser(connection, actorUsername, conversationId).map(_.getOrElse {
+            /** 注意：会话刚按 actor/target 创建；创建后不可读表示写入或读取 SQL 的参与者不变量被破坏。 */
             throw IllegalStateException("Created conversation is not readable by participant.")
           })
         yield summary
@@ -100,6 +105,7 @@ object MessageConversationTable:
       |  and (lower(mc.participant_a_username) = lower(?) or lower(mc.participant_b_username) = lower(?))
       |""".stripMargin
 
+  /** 按会话 id 读取当前用户视角的会话摘要，非参与者返回 None。 */
   def findConversationSummaryForUser(
     connection: Connection,
     actorUsername: Username,
@@ -179,6 +185,7 @@ object MessageConversationTable:
       |  and (lower(mc.participant_a_username) = lower(?) or lower(mc.participant_b_username) = lower(?))
       |""".stripMargin
 
+  /** 分页读取当前用户参与的所有会话，并统计总未读消息数。 */
   def listInbox(connection: Connection, actorUsername: Username, pageRequest: PageRequest): IO[MessageInboxResponse] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -231,6 +238,7 @@ object MessageConversationTable:
       |  and (lower(participant_a_username) = lower(?) or lower(participant_b_username) = lower(?))
       |""".stripMargin
 
+  /** 在确认当前用户属于会话的同时读取另一名参与者用户名。 */
   def findOtherParticipant(
     connection: Connection,
     actorUsername: Username,

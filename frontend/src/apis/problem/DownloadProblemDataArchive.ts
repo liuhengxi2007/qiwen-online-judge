@@ -4,6 +4,7 @@ import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 下载题目数据归档；输入题目 slug 和可选比赛上下文，输出 Blob 或下载 URL。 */
 export class DownloadProblemDataArchive implements APIWithSessionMessage<Blob> {
   declare readonly responseType?: Blob
   readonly method = 'GET'

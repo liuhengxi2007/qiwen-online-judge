@@ -7,8 +7,10 @@ import domains.submission.objects.SubmissionResultDisplayMode
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** problems 表中题目数据状态字段的写入入口；由数据上传、删除和 ready 切换流程调用。 */
 object ProblemDataStateTable:
 
+  /** 更新题目数据摘要文件名并下线 ready 状态；用于旧版按文件名上传兼容。 */
   def updateData(connection: Connection, problemId: ProblemId, updatedAt: Instant, filename: ProblemDataFilename): IO[Unit] =
     updateData(connection, problemId, updatedAt, Some(filename))
 
@@ -19,6 +21,7 @@ object ProblemDataStateTable:
       |where id = ?
       |""".stripMargin
 
+  /** 更新题目数据摘要文件名并把 ready 置为 false；用于文件集合发生变化后的默认状态。 */
   def updateData(
     connection: Connection,
     problemId: ProblemId,
@@ -45,6 +48,7 @@ object ProblemDataStateTable:
       |where id = ?
       |""".stripMargin
 
+  /** 更新题目 ready 状态、摘要文件名和结果展示模式；ready=true 只应在判题配置校验后调用。 */
   def updateDataReady(
     connection: Connection,
     problemId: ProblemId,

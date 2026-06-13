@@ -13,6 +13,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 查询提交单个子任务 hack 详情的认证 API；用于创建 hack 前展示旧分数和策略要求。 */
 final case class GetSubmissionHackSubtask(
   submissionProgramStorage: SubmissionProgramStorage,
   problemDataStorage: ProblemDataStorage
@@ -23,6 +24,7 @@ final case class GetSubmissionHackSubtask(
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[HackSubtaskInfo] = summon[Encoder[HackSubtaskInfo]]
 
+  /** 从路径解析目标提交 id 和正整数子任务下标。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(SubmissionId, Int)] =
     val _ = request
     for
@@ -32,6 +34,7 @@ final case class GetSubmissionHackSubtask(
       )
     yield submissionId -> subtaskIndex
 
+  /** 加载并校验目标子任务可 hack 后返回创建 hack 所需信息。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: (SubmissionId, Int)): IO[HackSubtaskInfo] =
     val (submissionId, subtaskIndex) = input
     HackApiSupport

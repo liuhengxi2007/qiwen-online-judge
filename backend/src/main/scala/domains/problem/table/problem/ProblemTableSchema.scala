@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** problems 表结构与迁移片段；维护题目元信息、访问策略基础字段、ready 状态和 hack revision。 */
 object ProblemTableSchema:
 
   val initTableSql: String =
@@ -410,6 +411,7 @@ object ProblemTableSchema:
       |drop column if exists status
       |""".stripMargin
 
+  /** 按固定顺序执行幂等建表和迁移语句；只变更数据库结构，不读写业务对象存储。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

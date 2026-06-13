@@ -15,6 +15,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 创建博客的认证 API，写入当前用户的博客并返回摘要。 */
 object CreateBlog extends AuthenticatedApi[CreateBlogRequest, BlogSummary]:
 
   override val method: Method = Method.POST
@@ -22,10 +23,12 @@ object CreateBlog extends AuthenticatedApi[CreateBlogRequest, BlogSummary]:
   override val successStatus: Status = Status.Created
   override protected val outputEncoder: Encoder[BlogSummary] = summon[Encoder[BlogSummary]]
 
+  /** 读取创建博客请求体，路径参数不参与该入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[CreateBlogRequest] =
     val _ = pathParams
     request.as[CreateBlogRequest]
 
+  /** 校验标题和正文长度后以当前用户为作者创建博客。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateBlogRequest): IO[BlogSummary] =
     for
       title <- HttpApiError.fromEitherBadRequest(BlogTitle.parse(request.title.value))

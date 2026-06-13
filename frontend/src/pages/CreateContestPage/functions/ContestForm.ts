@@ -5,6 +5,9 @@ import { parseContestTitle } from '@/objects/contest/ContestTitle'
 import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 创建比赛表单草稿，保存标题、描述和时间输入。
+ */
 export type CreateContestDraft = {
   slug: string
   title: string
@@ -16,10 +19,16 @@ export type CreateContestDraft = {
   grantedGroupsInput: string
 }
 
+/**
+ * 创建比赛草稿校验结果，成功时携带创建请求，失败时携带错误消息。
+ */
 type ValidateContestDraftResult =
   | { ok: true; request: CreateContestRequest }
   | { ok: false; message: string }
 
+/**
+ * 校验创建比赛表单，解析标题、描述和开始/结束时间。
+ */
 export function validateContestDraft(draft: CreateContestDraft): ValidateContestDraftResult {
   const slug = parseContestSlug(draft.slug)
   if (!slug.ok) {
@@ -68,6 +77,9 @@ export function validateContestDraft(draft: CreateContestDraft): ValidateContest
   }
 }
 
+/**
+ * 将 datetime-local 输入解析为 ISO 字符串；空值或非法日期返回指定错误。
+ */
 function parseLocalDateTime(rawValue: string, emptyMessage: string): { ok: true; value: string } | { ok: false; message: string } {
   if (!rawValue.trim()) {
     return { ok: false, message: emptyMessage }

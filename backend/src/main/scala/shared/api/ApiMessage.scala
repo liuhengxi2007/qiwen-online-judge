@@ -4,11 +4,13 @@ package shared.api
 
 import shared.objects.ApiMessageParams
 
+/** 可本地化 API 消息，code 对应前端文案 key，params 携带插值参数。 */
 final case class ApiMessage(
   code: String,
   params: ApiMessageParams = Map.empty
 )
 
+/** 集中声明跨领域复用的 API 消息 code，避免各接口散落裸字符串。 */
 object ApiMessages:
   val invalidCredentials: ApiMessage = ApiMessage("api.error.auth.invalid_credentials")
   val invalidCurrentPassword: ApiMessage = ApiMessage("api.error.auth.current_password_incorrect")

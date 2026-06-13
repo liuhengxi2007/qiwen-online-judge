@@ -16,6 +16,9 @@ import { SubmissionJudgeResultCard } from './components/SubmissionJudgeResultCar
 import { SubmissionSourceCodeCard } from './components/SubmissionSourceCodeCard'
 import { SubmissionSummaryCard } from './components/SubmissionSummaryCard'
 
+/**
+ * 提交详情入口页，负责登录保护、提交 id 路由参数解析和非法参数回退。
+ */
 export function SubmissionDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('submission.detail.pageTitle'))
@@ -39,6 +42,10 @@ export function SubmissionDetailPage() {
   return <SubmissionDetailPageContent currentSubmissionId={submissionIdResult.value} />
 }
 
+/**
+ * 提交详情内容区，加载提交详情、轮询结果并串联重测/删除操作。
+ * 删除成功或详情不可见时回到提交列表页。
+ */
 function SubmissionDetailPageContent({ currentSubmissionId }: { currentSubmissionId: SubmissionId }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()

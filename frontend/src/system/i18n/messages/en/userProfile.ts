@@ -1,3 +1,6 @@
+/**
+ * 英文用户资料页消息，描述公开资料、统计和头像相关界面文案。
+ */
 export const enUserProfileMessages: Record<string, string> = {
   'userProfile.pageTitle': 'Qiwen Online Judge - User Profile',
   'userProfile.heading': 'User Profile',

@@ -13,6 +13,9 @@ import type { UserLocale } from '@/objects/user/UserLocale'
 import type { UserSettingsSectionState } from '../functions/UserSettingsState'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户偏好设置卡片属性，包含偏好草稿、保存状态和所有偏好变更回调。
+ */
 type UserSettingsPreferencesCardProps = {
   autoMarkMessageRead: boolean
   displayedUser: SessionResponse | null
@@ -27,6 +30,9 @@ type UserSettingsPreferencesCardProps = {
   submit: () => void
 }
 
+/**
+ * 用户偏好设置卡片，渲染显示模式、语言、题名模式和消息自动已读选项。
+ */
 export function UserSettingsPreferencesCard({
   autoMarkMessageRead,
   displayedUser,
@@ -68,6 +74,7 @@ export function UserSettingsPreferencesCard({
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="settings-display-mode">{t('userSettings.displayMode')}</Label>
+          {/* 注意：以下偏好 Select 的选项值均由本组件内 SelectItem 字面值限定，Radix 回调统一为 string。 */}
           <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as UserDisplayMode)}>
             <SelectTrigger id="settings-display-mode" className="rounded-2xl border-slate-300 bg-white">
               <SelectValue />

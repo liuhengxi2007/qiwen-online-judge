@@ -7,6 +7,7 @@ import type { ProblemSetTitle } from '@/objects/problemset/ProblemSetTitle'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
 import type { AuditFields } from '@/objects/shared/AuditFields'
 
+/** 题集完整对象；包含题目顺序、访问策略、作者和审计字段。 */
 export type ProblemSet = AuditFields & {
   id: ProblemSetId
   slug: ProblemSetSlug

@@ -8,6 +8,7 @@ import domains.user.objects.Username
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
+/** 博客与题目关联写操作表访问对象，负责直接关联、提交审核、接受和解除关联。 */
 object BlogProblemLinkMutationTable:
 
   private val linkProblemSQL: String =
@@ -24,6 +25,7 @@ object BlogProblemLinkMutationTable:
       |              linked_at = excluded.linked_at
       |""".stripMargin
 
+  /** 管理员将公开博客直接关联到题目，已存在关联时置为 accepted 并刷新操作者和时间。 */
   def linkProblem(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -53,6 +55,7 @@ object BlogProblemLinkMutationTable:
       |on conflict (blog_id, problem_id) do nothing
       |""".stripMargin
 
+  /** 博客作者提交公开博客到题目待审队列；已有关联时不改变状态并返回 false。 */
   def submitProblem(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -85,6 +88,7 @@ object BlogProblemLinkMutationTable:
       |  and bpl.status = 'pending'
       |""".stripMargin
 
+  /** 管理员接受 pending 关联，将其置为 accepted 并记录审核操作者。 */
   def acceptProblem(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -112,6 +116,7 @@ object BlogProblemLinkMutationTable:
       |  and p.slug = ?
       |""".stripMargin
 
+  /** 删除博客与题目的关联，不区分 pending 或 accepted。 */
   def unlinkProblem(
     connection: Connection,
     problemSlug: ProblemSlug,

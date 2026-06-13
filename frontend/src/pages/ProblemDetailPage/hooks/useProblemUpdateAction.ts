@@ -11,6 +11,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 更新题目动作 hook；按普通或比赛上下文提交题目更新请求。
+ */
 export function useProblemUpdateAction(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const [isSaving, setIsSaving] = useState(false)
   const { t } = useI18n()

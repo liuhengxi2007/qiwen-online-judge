@@ -15,6 +15,9 @@ import type { ContestManageDraft } from '../functions/ContestManageForm'
 import { contestManageDraftFromDetail, validateContestManageDraft } from '../functions/ContestManageForm'
 import { useContestProblemWorkflow } from './useContestProblemWorkflow'
 
+/**
+ * 比赛管理页状态，保存详情、表单草稿、题目操作状态和反馈消息。
+ */
 type ContestManagePageState = {
   contest: ContestDetail | null
   draft: ContestManageDraft | null
@@ -30,6 +33,9 @@ type ContestManagePageState = {
   problemSuccessMessage: string
 }
 
+/**
+ * 比赛管理页动作集合，覆盖加载、表单编辑、保存和题目关联操作。
+ */
 export type ContestManagePageAction =
   | { type: 'load_started' }
   | { type: 'load_succeeded'; contest: ContestDetail }
@@ -70,6 +76,9 @@ const initialState: ContestManagePageState = {
   problemSuccessMessage: '',
 }
 
+/**
+ * 比赛管理页 reducer；纯函数维护管理状态、草稿和题目操作反馈。
+ */
 function reducer(state: ContestManagePageState, action: ContestManagePageAction): ContestManagePageState {
   switch (action.type) {
     case 'load_started':
@@ -121,6 +130,9 @@ function reducer(state: ContestManagePageState, action: ContestManagePageAction)
   }
 }
 
+/**
+ * 比赛管理页模型 hook；加载比赛详情并提供保存基础信息的动作。
+ */
 export function useContestManagePageModel(contestSlug: ContestSlug) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)

@@ -17,6 +17,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
+/** judge worker 完成 hack attempt 的公开 API；记录 hack 结果并在成功时触发题目提交重判。 */
 final case class CompleteHackAttempt(
   judgeConfig: JudgeConfig,
   problemDataStorage: ProblemDataStorage
@@ -27,6 +28,7 @@ final case class CompleteHackAttempt(
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
+  /** 校验 worker token，解析 hack id 和上报结果。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(HackId, ReportHackResultRequest)] =
     for
       _ <- JudgeTokenAuth.ensureJudgeToken(request, judgeConfig)
@@ -34,6 +36,7 @@ final case class CompleteHackAttempt(
       resultRequest <- request.as[ReportHackResultRequest]
     yield hackId -> resultRequest
 
+  /** 写入 hack 完成状态；成功 hack 会物化数据并把相关提交低优先级重判。 */
   override def plan(connection: Connection, input: (HackId, ReportHackResultRequest)): IO[SuccessResponse] =
     val (hackId, request) = input
     for

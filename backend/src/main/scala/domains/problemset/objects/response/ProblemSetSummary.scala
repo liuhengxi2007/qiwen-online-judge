@@ -10,6 +10,7 @@ import shared.objects.access.ResourceAccessPolicy
 import java.time.Instant
 import scala.util.Try
 
+/** 题单列表摘要响应，不携带题目列表。 */
 final case class ProblemSetSummary(
   id: ProblemSetId,
   slug: ProblemSetSlug,
@@ -21,6 +22,7 @@ final case class ProblemSetSummary(
   updatedAt: Instant
 )
 
+/** 提供题单摘要 JSON codec，并显式处理 Instant 字符串格式。 */
 object ProblemSetSummary:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>

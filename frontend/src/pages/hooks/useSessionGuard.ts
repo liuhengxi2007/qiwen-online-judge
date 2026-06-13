@@ -13,10 +13,16 @@ import {
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 会话守卫配置，允许页面声明必须具备站点管理员权限。
+ */
 type UseSessionGuardOptions = {
   requireSiteManager?: boolean
 }
 
+/**
+ * 校验并刷新当前登录会话；会发起 GetSession 请求，必要时清理会话并返回跳转意图。
+ */
 export function useSessionGuard(options: UseSessionGuardOptions = {}) {
   const session = useAuthStore((state) => state.session)
   const setSession = useAuthStore((state) => state.setSession)

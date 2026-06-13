@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** problem_data_files 表结构；保存题目数据 manifest 的持久化条目。 */
 object ProblemDataFileTableSchema:
 
   private val initTableSql =
@@ -20,6 +21,7 @@ object ProblemDataFileTableSchema:
       |);
       |""".stripMargin
 
+  /** 创建题目数据文件清单表。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

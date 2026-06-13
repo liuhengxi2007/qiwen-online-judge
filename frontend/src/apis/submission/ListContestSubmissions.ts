@@ -4,6 +4,7 @@ import type { SubmissionListRequest } from '@/objects/submission/request/Submiss
 import type { SubmissionListResponse } from '@/objects/submission/response/SubmissionListResponse'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 
+/** 查询比赛提交列表；输入比赛 slug 和过滤/排序/分页条件，输出分页响应。 */
 export class ListContestSubmissions implements APIWithSessionMessage<SubmissionListResponse> {
   declare readonly responseType?: SubmissionListResponse
   readonly method = 'GET'

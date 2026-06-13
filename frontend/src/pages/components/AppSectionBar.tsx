@@ -4,6 +4,9 @@ import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { AccountActions } from '@/pages/components/AccountActions'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 顶部模块导航项，包含目标路径、本地化后的标签和主题色调。
+ */
 type NavItem = {
   to: string
   label: string
@@ -17,6 +20,9 @@ type NavItem = {
     | 'cyan'
 }
 
+/**
+ * 根据导航项色调和激活状态生成 NavLink className。
+ */
 function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
   const tones: Record<NavItem['tone'], { active: string; idle: string }> = {
     emerald: {
@@ -54,6 +60,9 @@ function itemClassName(tone: NavItem['tone'], isActive: boolean): string {
     : `rounded-xl px-3 py-1.5 text-sm font-medium transition ${tones[tone].idle}`
 }
 
+/**
+ * 登录后页面的主模块导航条，同时承载账号操作区和未读入口。
+ */
 export function AppSectionBar() {
   const { t } = useI18n()
   const session = useAuthStore((state) => state.session)

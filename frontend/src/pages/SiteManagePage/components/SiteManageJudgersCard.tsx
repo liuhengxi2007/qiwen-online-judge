@@ -7,8 +7,14 @@ import type { useSiteManageModel } from '../hooks/useSiteManageModel'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 站点管理模型类型别名，供判题机卡片读取查询状态。
+ */
 type SiteManageModel = ReturnType<typeof useSiteManageModel>
 
+/**
+ * 判题机状态卡片，展示当前站点可见判题机及加载/错误状态。
+ */
 export function SiteManageJudgersCard({ model }: { model: SiteManageModel }) {
   const { t } = useI18n()
 

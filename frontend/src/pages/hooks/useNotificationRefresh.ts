@@ -9,6 +9,9 @@ import type { PageRequest } from '@/objects/shared/PageRequest'
 
 const fallbackNotificationLoadError = 'Unable to load notifications.'
 
+/**
+ * 返回刷新通知列表和未读数的回调集合；请求结果写入通知全局 store。
+ */
 export function useNotificationRefresh() {
   const beginNotificationsLoad = useNotificationStore((state) => state.beginNotificationsLoad)
   const replaceNotifications = useNotificationStore((state) => state.replaceNotifications)

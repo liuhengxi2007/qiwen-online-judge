@@ -19,6 +19,10 @@ import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建博客页，维护标题、正文、可见性和 Markdown 预览 tab 草稿。
+ * 存在未保存内容时注册离页提示，提交前按领域对象规则校验输入。
+ */
 export function CreateBlogPage() {
   const { t } = useI18n()
   usePageTitle(t('blog.create.pageTitle'))
@@ -95,6 +99,7 @@ export function CreateBlogPage() {
 
           <div className="space-y-2">
             <Label htmlFor="blog-visibility">{t('blog.create.visibilityLabel')}</Label>
+            {/* 注意：SelectItem 只提供 public/private 两个值，Radix 回调类型为 string，故在边界处收窄。 */}
             <Select value={visibility} onValueChange={(value) => setVisibility(value as BlogVisibility)}>
               <SelectTrigger id="blog-visibility" className="rounded-2xl border-slate-300 bg-white">
                 <SelectValue />

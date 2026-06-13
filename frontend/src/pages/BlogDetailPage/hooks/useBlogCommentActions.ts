@@ -13,11 +13,18 @@ import type { BlogVote } from '@/objects/blog/BlogVote'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客评论操作 hook 参数，包含当前博客详情和用于替换详情的回调。
+ */
 type UseBlogCommentActionsArgs = {
   blog: BlogDetail | null
   setBlog: (blog: BlogDetail | null) => void
 }
 
+/**
+ * 博客评论操作 hook，维护评论/回复/编辑草稿、评论投票状态和评论 API 副作用。
+ * 所有成功写操作都会用返回的博客详情刷新整页评论树和计数。
+ */
 export function useBlogCommentActions({ blog, setBlog }: UseBlogCommentActionsArgs) {
   const { t } = useI18n()
   const [votingCommentId, setVotingCommentId] = useState<BlogCommentId | null>(null)

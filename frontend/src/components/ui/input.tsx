@@ -2,6 +2,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 统一样式的文本输入组件，透传原生 input 属性并保留文件输入的局部样式。
+ */
 function Input({ className, type, ...props }: ComponentProps<'input'>) {
   return (
     <input

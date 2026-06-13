@@ -27,12 +27,18 @@ import type { UpdateOwnAccountRequest } from '@/objects/auth/request/UpdateOwnAc
 import type { UpdateOwnPreferencesRequest } from '@/objects/user/request/UpdateOwnPreferencesRequest'
 import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnProfileRequest'
 
+/**
+ * 用户设置模型 hook 输入，包含当前查看者、路由目标用户名和会话更新回调。
+ */
 type UseUserSettingsModelArgs = {
   viewer: SessionResponse
   routeUsername: string | undefined
   setViewer: (session: SessionResponse | null) => void
 }
 
+/**
+ * 用户设置页模型 hook；维护资料/偏好/账户草稿、权限策略和提交动作。
+ */
 export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUserSettingsModelArgs) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reduceUserSettingsState, initialUserSettingsState)
@@ -120,6 +126,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     }
 
     dispatch({ type: 'submit_started', section: 'profile' })
+    // 注意：validateUserProfileDraft 已按当前表单构造请求；这里的断言只是在 own/managed 联合分支间收窄。
     return submitSettings(
       isEditingOwnSettings
         ? {
@@ -150,6 +157,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     }
 
     dispatch({ type: 'submit_started', section: 'preferences' })
+    // 注意：validateUserPreferencesDraft 已按当前表单构造请求；这里的断言只是在 own/managed 联合分支间收窄。
     return submitSettings(
       isEditingOwnSettings
         ? {
@@ -187,6 +195,7 @@ export function useUserSettingsModel({ viewer, routeUsername, setViewer }: UseUs
     }
 
     dispatch({ type: 'submit_started', section: 'account' })
+    // 注意：validateUserAccountDraft 已按当前表单构造请求；这里的断言只是在 own/managed 联合分支间收窄。
     return submitSettings(
       isEditingOwnSettings
         ? {

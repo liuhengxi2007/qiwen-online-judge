@@ -8,8 +8,10 @@ import domains.message.utils.MessageEventHub
 import domains.message.api.*
 import org.http4s.HttpRoutes
 
+/** 汇总私信 domain 的 http4s 路由，负责把消息事件中心注入发送、已读和订阅 API。 */
 object MessageRouter:
 
+  /** 构造私信相关 HTTP 路由，SSE 和读回执共享同一个 MessageEventHub。 */
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, messageEventHub: MessageEventHub): HttpRoutes[IO] =
     val context = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
 

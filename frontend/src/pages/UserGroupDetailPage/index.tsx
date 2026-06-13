@@ -21,6 +21,9 @@ import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页入口，校验 slug 路由参数和会话后渲染详情内容。
+ */
 export function UserGroupDetailPage() {
   const { t } = useI18n()
   usePageTitle(t('userGroup.detail.pageTitle'))
@@ -43,6 +46,9 @@ export function UserGroupDetailPage() {
   return <UserGroupDetailPageContent isSiteManager={user.siteManager} userGroupSlug={slugResult.value} viewerUsername={user.username} />
 }
 
+/**
+ * 用户组详情页主体，组合查询、权限、编辑器、成员列表和所有用户组操作卡片。
+ */
 function UserGroupDetailPageContent({
   isSiteManager,
   userGroupSlug,

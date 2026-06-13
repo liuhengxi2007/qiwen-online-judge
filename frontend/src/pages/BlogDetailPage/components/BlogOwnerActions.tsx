@@ -4,13 +4,22 @@ import type { useBlogDetailPageModel } from '../hooks/useBlogDetailPageModel'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 博客详情页模型类型别名，供作者操作组件复用聚合后的页面动作。
+ */
 type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
 
+/**
+ * 博客作者操作组件属性，包含当前博客和页面模型。
+ */
 type BlogOwnerActionsProps = {
   blog: BlogDetail
   model: BlogDetailPageModel
 }
 
+/**
+ * 博客作者操作区，提供编辑、删除以及公开博客提交到题目的入口。
+ */
 export function BlogOwnerActions({ blog, model }: BlogOwnerActionsProps) {
   const { t } = useI18n()
 

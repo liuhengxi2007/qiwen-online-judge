@@ -18,6 +18,9 @@ import { BlogSummaryCard } from './components/BlogSummaryCard'
 import { PendingProblemBlogsCard } from './components/PendingProblemBlogsCard'
 import { useBlogPageModel } from './hooks/useBlogPageModel'
 
+/**
+ * 博客列表内容属性，可限定作者或题目筛选。
+ */
 type BlogListPageContentProps = {
   authorUsernameFilter?: Username
   problemSlugFilter?: ProblemSlug
@@ -25,6 +28,9 @@ type BlogListPageContentProps = {
 
 const blogsPerPage = 10
 
+/**
+ * 博客列表页面主体，负责会话守卫、分页查询、待关联题解和博客列表展示。
+ */
 export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }: BlogListPageContentProps = {}) {
   const { t } = useI18n()
   usePageTitle(t('blog.pageTitle'))

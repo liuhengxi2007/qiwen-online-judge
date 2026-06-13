@@ -4,6 +4,7 @@ import type { ProblemSearchQuery } from '@/objects/problem/request/ProblemSearch
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 
+/** 查询当前会话可管理题目建议；可选比赛上下文会影响可选题目范围。 */
 export class ListManageableProblemSuggestions implements APIWithSessionMessage<ProblemSuggestion[]> {
   declare readonly responseType?: ProblemSuggestion[]
   readonly method = 'GET'

@@ -17,6 +17,9 @@ import { useContestRegistrantPageModel } from './hooks/useContestRegistrantPageM
 
 const registrantsPerPage = 10
 
+/**
+ * 比赛报名用户页入口，校验比赛 slug 和分页参数后渲染报名列表。
+ */
 export function ContestRegistrantPage() {
   const { t } = useI18n()
   usePageTitle(t('contest.registrants.pageTitle'))
@@ -48,6 +51,9 @@ export function ContestRegistrantPage() {
   )
 }
 
+/**
+ * 比赛报名用户页主体，负责会话守卫、报名列表查询、分页修正和表格展示。
+ */
 function ContestRegistrantPageContent({
   contestSlug,
   currentPage,

@@ -7,6 +7,7 @@ import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAcces
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { ContestRegistrationStatus } from '@/objects/contest/response/ContestRegistrationStatus'
 
+/** 比赛摘要响应；用于列表展示并携带当前会话是否可查看详情。 */
 export type ContestSummary = AuditFields & {
   id: ContestId
   slug: ContestSlug

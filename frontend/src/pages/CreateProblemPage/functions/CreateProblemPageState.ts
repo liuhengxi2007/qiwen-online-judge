@@ -1,6 +1,9 @@
 import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
+/**
+ * 创建题目页表单草稿，保存题目 slug、标题、访问策略和授权输入。
+ */
 export type CreateProblemPageDraft = {
   slug: string
   title: string
@@ -13,6 +16,9 @@ export type CreateProblemPageDraft = {
   otherUserSubmissionAccess: OtherUserSubmissionAccess
 }
 
+/**
+ * 创建题目页状态，包含表单草稿、提交状态和反馈消息。
+ */
 export type CreateProblemPageState = {
   isSubmitting: boolean
   draft: CreateProblemPageDraft
@@ -20,6 +26,9 @@ export type CreateProblemPageState = {
   successMessage: string
 }
 
+/**
+ * 创建题目页 reducer 动作，覆盖字段编辑、访问控制编辑和提交状态。
+ */
 export type CreateProblemPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_title'; value: string }
@@ -34,6 +43,9 @@ export type CreateProblemPageAction =
   | { type: 'submit_succeeded'; message: string }
   | { type: 'submit_failed'; message: string }
 
+/**
+ * 创建题目页初始草稿，默认题目为受限访问。
+ */
 export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   slug: '',
   title: '',
@@ -46,6 +58,9 @@ export const initialCreateProblemPageDraft: CreateProblemPageDraft = {
   otherUserSubmissionAccess: 'none',
 }
 
+/**
+ * 创建题目页初始状态，默认没有提交中和反馈消息。
+ */
 export const initialCreateProblemPageState: CreateProblemPageState = {
   isSubmitting: false,
   draft: initialCreateProblemPageDraft,
@@ -53,6 +68,9 @@ export const initialCreateProblemPageState: CreateProblemPageState = {
   successMessage: '',
 }
 
+/**
+ * 根据创建题目结果重置页面状态，成功时清空草稿并写入成功消息。
+ */
 export function resetCreateProblemPageState(
   state: CreateProblemPageState,
   successMessage: string,
@@ -66,6 +84,9 @@ export function resetCreateProblemPageState(
   }
 }
 
+/**
+ * 创建题目页 reducer；纯函数维护草稿、访问控制输入和提交反馈。
+ */
 export function reduceCreateProblemPageState(
   state: CreateProblemPageState,
   action: CreateProblemPageAction,

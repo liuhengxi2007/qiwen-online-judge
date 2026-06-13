@@ -8,8 +8,10 @@ import domains.user.api.*
 import domains.user.utils.UserAvatarStorage
 import org.http4s.HttpRoutes
 
+/** user 领域路由聚合器，注册资料、设置、榜单、建议和头像 API。 */
 object UserRouter:
 
+  /** 构造 user HTTP routes，并注入数据库、会话和头像存储依赖。 */
   def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, userAvatarStorage: UserAvatarStorage): HttpRoutes[IO] =
     val context = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
 

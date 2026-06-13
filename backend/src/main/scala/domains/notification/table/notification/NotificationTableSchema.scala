@@ -6,6 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 通知表结构初始化对象，维护 notifications 表、状态约束和查询索引。 */
 object NotificationTableSchema:
 
   val initTableSql: String =
@@ -52,6 +53,7 @@ object NotificationTableSchema:
       |on notifications(recipient_username, status)
       |""".stripMargin
 
+  /** 执行通知表、状态约束和收件人索引的幂等初始化 SQL。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()

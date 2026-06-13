@@ -9,6 +9,9 @@ import type { SubmissionCreatePayload } from '@/pages/ProblemSubmitPage/function
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 
+/**
+ * 创建提交动作 hook；根据是否处于比赛内选择提交 API，并返回提交中状态和错误。
+ */
 export function useCreateSubmissionAction(createFailedMessage: string, contestSlug?: ContestSlug) {
   const navigate = useNavigate()
   const [statusMessage, setStatusMessage] = useState('')

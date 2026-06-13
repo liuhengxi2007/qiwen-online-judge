@@ -15,6 +15,7 @@ import shared.api.{ApiPath, PathParams}
 
 import java.sql.Connection
 
+/** 分页列出博客的认证 API，可按作者过滤，并隐藏非本人私有博客。 */
 object ListBlogs extends AuthenticatedApi[ListBlogsInput, BlogListResponse]:
 
   override val method: Method = Method.GET
@@ -22,6 +23,7 @@ object ListBlogs extends AuthenticatedApi[ListBlogsInput, BlogListResponse]:
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[BlogListResponse] = summon[Encoder[BlogListResponse]]
 
+  /** 从查询参数解析可选作者用户名和分页信息。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ListBlogsInput] =
     val _ = pathParams
     IO.pure(
@@ -31,6 +33,7 @@ object ListBlogs extends AuthenticatedApi[ListBlogsInput, BlogListResponse]:
       )
     )
 
+  /** 根据是否带作者过滤选择列表查询，查询层按当前用户处理私有博客可见性。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: ListBlogsInput): IO[BlogListResponse] =
     input.authorUsername match
       case Some(username) =>

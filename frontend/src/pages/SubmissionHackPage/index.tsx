@@ -24,6 +24,9 @@ import type { HackSourceMode } from './functions/HackSourceMode'
 import { useSubmissionHackModel } from './hooks/useSubmissionHackModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 提交 Hack 页面入口，校验路由参数和会话后进入具体 Hack 表单内容。
+ */
 export function SubmissionHackPage() {
   const { t } = useI18n()
   usePageTitle(t('hack.submit.pageTitle'))
@@ -47,6 +50,9 @@ export function SubmissionHackPage() {
   return <SubmissionHackPageContent submissionId={submissionIdResult.value} subtaskIndex={parsedSubtaskIndex} />
 }
 
+/**
+ * 提交 Hack 页面主体，加载目标子任务信息并渲染输入、策略生成器和 Hack 结果。
+ */
 function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionId: SubmissionId; subtaskIndex: number }) {
   const { t } = useI18n()
   const model = useSubmissionHackModel({ submissionId, subtaskIndex })
@@ -120,6 +126,9 @@ function SubmissionHackPageContent({ submissionId, subtaskIndex }: { submissionI
   )
 }
 
+/**
+ * Hack 数据源标签页属性，封装文本/文件模式的值和变更回调。
+ */
 type HackSourceTabsProps = {
   disabled: boolean
   file: File | null
@@ -132,6 +141,9 @@ type HackSourceTabsProps = {
   textAreaId: string
 }
 
+/**
+ * Hack 数据源输入组件，允许在粘贴文本和选择文件之间切换。
+ */
 function HackSourceTabs({
   disabled,
   file,
@@ -202,6 +214,9 @@ function HackSourceTabs({
   )
 }
 
+/**
+ * Hack 创建后的结果面板，展示 Hack 编号、状态、分数变化和各阶段输出消息。
+ */
 function HackAttemptPanel({ hack }: { hack: HackDetail }) {
   const { t } = useI18n()
   return (

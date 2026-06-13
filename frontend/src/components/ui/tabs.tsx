@@ -3,10 +3,16 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 标签页根组件，承载当前标签值和切换回调。
+ */
 function Tabs(props: ComponentProps<typeof TabsPrimitive.Root>) {
   return <TabsPrimitive.Root data-slot="tabs" {...props} />
 }
 
+/**
+ * 标签页列表组件，负责横向排列触发器并提供背景容器。
+ */
 function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
@@ -20,6 +26,9 @@ function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.L
   )
 }
 
+/**
+ * 标签页触发器组件，根据 active 状态展示选中样式并透传禁用状态。
+ */
 function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
@@ -33,6 +42,9 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
   )
 }
 
+/**
+ * 标签页内容组件，承载当前面板内容并提供键盘聚焦反馈。
+ */
 function TabsContent({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content

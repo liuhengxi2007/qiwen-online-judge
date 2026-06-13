@@ -3,7 +3,9 @@ package judger.infra
 import judgeprotocol.objects.SubmissionVerdict
 import judgeprotocol.objects.response.*
 
+/** 按任务配置把测试点结果聚合为子任务和整题结果。 */
 object JudgeResultAggregator:
+  /** 同步携带基础结果与最差结果，避免两套聚合逻辑分叉。 */
   private final case class ResultTrees[A](base: A, worst: A):
     def map[B](f: A => B): ResultTrees[B] =
       ResultTrees(f(base), f(worst))
@@ -11,11 +13,13 @@ object JudgeResultAggregator:
     def zip[B](other: ResultTrees[B]): ResultTrees[(A, B)] =
       ResultTrees(base -> other.base, worst -> other.worst)
 
+  /** 分数和 verdict 子节点的中间聚合结果。 */
   private final case class ScoreAggregation(
     scores: ResultTrees[BigDecimal],
     verdictChildren: ResultTrees[List[(BigDecimal, SubmissionVerdict)]]
   )
 
+  /** 聚合一个子任务；输入为该子任务所有已执行测试点，输出带基础/最差摘要的结果节点。 */
   private[infra] def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
     val baseTestcases = mainTestcases(testcases)
     val scoreAggregation = aggregateTestcaseScores(subtask, testcases)
@@ -49,6 +53,7 @@ object JudgeResultAggregator:
       testcases
     )
 
+  /** 聚合整题结果；会按 roundingScale 对最终分数向上取整并保留非满分边界。 */
   private[infra] def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
     val scoreAggregation = aggregateSubtaskScores(task, subtasks)
     val scores = scoreAggregation.scores.map(score => roundFinalScore(score, task.roundingScale))
@@ -95,11 +100,13 @@ object JudgeResultAggregator:
     )
 
   private def testcaseScoreRatios(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): List[BigDecimal] =
+    // FIXME-CN: 测试点结果找不到原始配置时默认 scoreRatio=1 会掩盖 backend/judger 测试点索引不对齐。
     testcases.map(result => subtask.testcases.find(_.index == result.index).map(_.scoreRatio).getOrElse(BigDecimal(1)))
 
   private def mainTestcases(testcases: List[JudgeTestcaseResult]): List[JudgeTestcaseResult] =
     testcases.filter(_.testcaseType == JudgeTestcaseType.Main)
 
+  /** 子任务或整题节点的资源用量摘要。 */
   private final case class UsageSummary(timeUsedMs: Option[Long], memoryUsedKb: Option[Long])
 
   private def worstSubtaskUsage(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): UsageSummary =
@@ -143,6 +150,7 @@ object JudgeResultAggregator:
     kind match
       case "min" => if scores.isEmpty then BigDecimal(0) else scores.min
       case "sum" => scores.zip(ratios).map { case (score, ratio) => score * ratio }.sum
+      // FIXME-CN: 未知分数聚合策略被静默当作 0 分，协议漂移时会误判提交而不是暴露任务构建错误。
       case _ => BigDecimal(0)
 
   private def aggregateUsage(kind: String, values: List[Long]): Option[Long] =
@@ -150,6 +158,7 @@ object JudgeResultAggregator:
     else
       kind match
         case "sum" => Some(values.sum)
+        // FIXME-CN: 未知资源聚合策略被静默当作 max，可能隐藏 backend 与 judger 的配置不对齐。
         case _ => Some(values.max)
 
   private def aggregateVerdict(score: BigDecimal, children: List[(BigDecimal, SubmissionVerdict)]): SubmissionVerdict =
@@ -162,9 +171,11 @@ object JudgeResultAggregator:
     if score < BigDecimal(1) && roundedUp >= BigDecimal(1) then BigDecimal(1) - BigDecimal(java.math.BigDecimal.ONE.movePointLeft(scale))
     else roundedUp
 
+  /** 将 checker 或协议计算得到的分数限制在 [0, 1]。 */
   private[infra] def clampScore(score: BigDecimal): BigDecimal =
     score.max(BigDecimal(0)).min(BigDecimal(1))
 
+  /** 判断结果树中任意节点是否含系统错误，用于决定回报状态 completed/failed。 */
   private[infra] def containsSystemError(result: JudgeResult): Boolean =
     result.baseResult.verdict == SubmissionVerdict.SystemError ||
       result.worstResult.verdict == SubmissionVerdict.SystemError ||

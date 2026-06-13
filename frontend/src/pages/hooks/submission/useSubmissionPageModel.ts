@@ -33,6 +33,10 @@ import {
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { verdictFilterLabel } from '@/pages/objects/SubmissionDisplay'
 
+/**
+ * 提交列表页模型 hook，维护 URL 查询参数、筛选输入草稿、建议列表、排序和分页。
+ * fixedProblemSlugFilter 存在时题目过滤由路由固定，contestSlug 存在时查询竞赛内提交。
+ */
 export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, contestSlug?: ContestSlug) {
   const [searchParams, setSearchParams] = useSearchParams()
   const usernameQueryParam = searchParams.get('username')?.trim() ?? ''
@@ -249,11 +253,17 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, con
   }
 }
 
+/**
+ * 从 URL 查询参数读取提交排序字段，非法值回退为提交时间排序。
+ */
 function readSubmissionSort(searchParams: URLSearchParams): SubmissionSort {
   const rawSort = searchParams.get('sort')
   return rawSort && isSubmissionSort(rawSort) ? rawSort : 'submitted'
 }
 
+/**
+ * 从 URL 查询参数读取排序方向，非法值按当前排序字段的默认方向处理。
+ */
 function readSubmissionSortDirection(
   searchParams: URLSearchParams,
   activeSort: SubmissionSort,
@@ -262,11 +272,17 @@ function readSubmissionSortDirection(
   return rawDirection && isSubmissionSortDirection(rawDirection) ? rawDirection : defaultSortDirection(activeSort)
 }
 
+/**
+ * 从 URL 查询参数读取 verdict 筛选，非法值回退为全部。
+ */
 function readSubmissionVerdictFilter(searchParams: URLSearchParams): SubmissionVerdictFilter {
   const rawVerdict = searchParams.get('verdict')
   return rawVerdict && isSubmissionVerdictFilter(rawVerdict) ? rawVerdict : 'all'
 }
 
+/**
+ * 判断输入框内容是否足以展示键入建议，空白输入不触发建议面板。
+ */
 function shouldShowTypingSuggestions(value: string): boolean {
   return value.trim().length > 0
 }

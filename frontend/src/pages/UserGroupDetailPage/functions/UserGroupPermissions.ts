@@ -2,12 +2,18 @@ import type { Username } from '@/objects/user/Username'
 import type { UserGroupMember } from '@/objects/usergroup/UserGroupMember'
 import type { UserGroupRole } from '@/objects/usergroup/UserGroupRole'
 
+/**
+ * 当前查看者对用户组的权限集合，供详情页控制编辑、成员角色和删除入口。
+ */
 export type UserGroupViewerPermissions = {
   canManage: boolean
   canManageMemberRoles: boolean
   canDelete: boolean
 }
 
+/**
+ * 根据当前成员关系和站点管理员身份计算用户组详情页权限。
+ */
 export function resolveUserGroupViewerPermissions(
   members: UserGroupMember[],
   viewerUsername: Username,
@@ -23,6 +29,9 @@ export function resolveUserGroupViewerPermissions(
   }
 }
 
+/**
+ * 判断当前查看者是否可以移除目标成员；站点管理员和 owner/manager 的边界不同。
+ */
 export function canRemoveUserGroupMember(
   members: UserGroupMember[],
   viewerUsername: Username,

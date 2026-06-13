@@ -6,6 +6,7 @@ import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 更新用户组成员角色；输入用户组 slug、目标用户名和角色请求，输出更新后的详情。 */
 export class UpdateUserGroupMemberRole implements APIWithSessionMessage<UserGroupDetail> {
   declare readonly responseType?: UserGroupDetail
   readonly method = 'POST'

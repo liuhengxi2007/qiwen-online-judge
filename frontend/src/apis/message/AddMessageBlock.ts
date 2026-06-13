@@ -3,6 +3,7 @@ import type { MessageBlockEntry } from '@/objects/message/response/MessageBlockE
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 
+/** 添加消息屏蔽对象；输入目标用户名，输出屏蔽列表条目。 */
 export class AddMessageBlock implements APIWithSessionMessage<MessageBlockEntry> {
   declare readonly responseType?: MessageBlockEntry
   readonly method = 'POST'

@@ -10,12 +10,19 @@ import type { PageResponse } from '@/objects/shared/PageResponse'
 import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 榜单查询 hook 参数，分别表示 AC 数、贡献值和 rating 榜单当前页。
+ */
 type UseRanklistQueryArgs = {
   acceptedPage: number
   contributionPage: number
   ratingPage: number
 }
 
+/**
+ * 榜单查询 hook，并行维护贡献、AC 数和 rating 三个榜单的分页状态。
+ * 每个查询分支用 request id 丢弃过期响应，避免快速翻页时旧响应覆盖新状态。
+ */
 export function useRanklistQuery({ acceptedPage, contributionPage, ratingPage }: UseRanklistQueryArgs) {
   const [contributionState, setContributionState] = useState<{
     page: number | null

@@ -20,6 +20,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
+/** 上传题目数据单文件的管理端 API；路径可由表单字段指定，也可退回到上传文件名。 */
 final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedApi[(ProblemManagementContext, ProblemDataPath, Array[Byte]), ProblemDataUploadResult]:
 
@@ -28,6 +29,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemDataUploadResult] = summon[Encoder[ProblemDataUploadResult]]
 
+  /** 解析 multipart 文件、题目上下文和目标相对路径；路径非法或缺失时拒绝请求。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemManagementContext, ProblemDataPath, Array[Byte])] =
     for
       context <- ProblemManagementContext.decode(request, pathParams)
@@ -43,6 +45,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
         case None => HttpApiError.raise(HttpApiError.badRequest("Multipart upload requires a valid 'path' field or uploaded filename."))
     yield (context, resolvedPath, bytes)
 
+  /** 校验单文件上传策略和管理权限后写入数据文件。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -61,6 +64,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
               .requireManagedProblem(connection, actor, context)
               .flatMap(_ => uploadManagedProblemDataFile(connection, context.problemSlug, path, bytes))
 
+  /** 对已授权题目写入单个数据文件；同步更新数据摘要和清单，失败时恢复对象存储快照。 */
   def uploadManagedProblemDataFile(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -103,6 +107,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
   ): IO[Option[(Part[IO], Array[Byte])]] =
     multipart.parts.find(_.name.contains(fieldName)) match
       case None => IO.pure(None)
+      // FIXME-CN: 单文件上传会完整读入内存后再校验和写入存储，当前入口没有显式大小限制。
       case Some(part) => part.body.compile.to(Array).map(bytes => Some((part, bytes)))
 
   private def extractOptionalPathField(
@@ -112,6 +117,7 @@ final case class UploadProblemDataFile(problemDataStorage: ProblemDataStorage)
     multipart.parts.find(_.name.contains(fieldName)) match
       case None => IO.pure(None)
       case Some(part) =>
+        // FIXME-CN: path 文本 part 也会完整读入字符串且没有显式大小限制，恶意 multipart 可绕过二进制 part 的资源预期。
         decodeTextPart(part).flatMap { rawValue =>
           val normalized = rawValue.trim
           if normalized.isEmpty then IO.pure(None)

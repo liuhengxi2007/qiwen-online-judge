@@ -21,16 +21,20 @@ import java.time.Instant
 import java.util.UUID
 import database.utils.UserIdentitySql
 
+/** 题单主表访问对象，封装题单、题单题目和访问授权的持久化操作。 */
 object ProblemSetTable:
 
+  /** 添加题单题目的表层结果，用于 API 区分成功和重复关联。 */
   enum AddProblemTableResult:
     case AlreadyLinked
     case Linked
 
+  /** 移除题单题目的表层结果，用于 API 区分成功和原本未关联。 */
   enum RemoveProblemTableResult:
     case NotLinked
     case Removed
 
+  /** 初始化题单相关表和访问授权表。 */
   def initialize(connection: Connection): IO[Unit] =
     for
       _ <- ProblemSetTableSchema.initialize(connection)
@@ -94,6 +98,7 @@ object ProblemSetTable:
       |  )
       |""".stripMargin
 
+  /** 按调用者题目管理权限和 viewer 授权分页读取可见题单摘要。 */
   def listVisibleTo(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[PageResponse[ProblemSetSummary]] =
     for
       totalItems <- IO.blocking {
@@ -143,6 +148,7 @@ object ProblemSetTable:
       |order by psp.position asc, p.slug asc
       |""".stripMargin
 
+  /** 按 slug 读取题单聚合，包含题目列表和 viewer 授权。 */
   def findBySlug(connection: Connection, slug: ProblemSetSlug): IO[Option[ProblemSet]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSQL)
@@ -169,6 +175,7 @@ object ProblemSetTable:
       |returning id, slug, title, description, base_access, ${UserIdentitySql.returningOptionalColumns("author_username", "author")}, created_at, updated_at
       |""".stripMargin
 
+  /** 插入题单主体并替换初始 viewer 授权，返回带策略的题单聚合。 */
   def insert(connection: Connection, authorUsername: Username, request: CreateProblemSetRequest): IO[ProblemSet] =
     IO.blocking {
       val now = Instant.now()
@@ -216,6 +223,7 @@ object ProblemSetTable:
       |values (?, ?, ?)
       |""".stripMargin
 
+  /** 将题目追加到题单末尾。 */
   def addProblem(connection: Connection, problemSetId: ProblemSetId, problemId: ProblemId): IO[AddProblemTableResult] =
     for
       alreadyLinked <- IO.blocking {
@@ -228,6 +236,7 @@ object ProblemSetTable:
           finally resultSet.close()
         finally statement.close()
       }
+      /** FIXME-CN: 这里先查 relationExists 再用 max(position)+1 插入，没有显式锁或唯一冲突恢复；同一题单并发加题可能撞 position 唯一约束。 */
       result <- if alreadyLinked then
         IO.pure(AddProblemTableResult.AlreadyLinked)
       else
@@ -261,6 +270,7 @@ object ProblemSetTable:
       |where id = ?
       |""".stripMargin
 
+  /** 更新题单主体字段和 viewer 授权，authorUsername 为 None 时清空作者引用。 */
   def update(connection: Connection, problemSetId: ProblemSetId, request: UpdateProblemSetRequest): IO[Unit] =
     IO.blocking {
       val now = Instant.now()
@@ -286,6 +296,7 @@ object ProblemSetTable:
       |where id = ?
       |""".stripMargin
 
+  /** 删除题单主体，题单题目关系依赖外键级联清理。 */
   def delete(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteSQL)
@@ -316,6 +327,7 @@ object ProblemSetTable:
       |where problem_set_id = ? and position > ?
       |""".stripMargin
 
+  /** 删除题单题目关系并压缩后续位置，保持题单位置连续。 */
   def removeProblem(connection: Connection, problemSetId: ProblemSetId, problemId: ProblemId): IO[RemoveProblemTableResult] =
     IO.blocking {
       val positionStatement = connection.prepareStatement(findRelationPositionSQL)

@@ -11,6 +11,9 @@ import { toSiteManageDeniedRedirect } from '@/pages/routing/RoutePolicy'
 import { sendAPI } from '@/system/api/api-message'
 import { translateMessage } from '@/system/i18n/messages'
 
+/**
+ * 站点管理查询 hook；按权限开关加载托管用户列表和判题机列表。
+ */
 export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
   const requestKey = JSON.stringify(userListRequest)
   const fallbackUserPage = userListRequest.pageRequest.page
@@ -50,6 +53,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
 
     let isCancelled = false
 
+    // FIXME-CN: activeUserListRequest 由 requestKey 反序列化并断言为 UserListRequest，搜索词品牌类型未重新解析。
     const activeUserListRequest = JSON.parse(requestKey) as UserListRequest
 
     void sendAPI(new ListUsers(activeUserListRequest))

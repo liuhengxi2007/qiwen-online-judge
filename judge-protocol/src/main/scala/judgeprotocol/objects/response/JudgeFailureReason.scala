@@ -2,6 +2,7 @@ package judgeprotocol.objects.response
 
 import io.circe.{Decoder, Encoder}
 
+/** worker 回报系统级失败时使用的可分类原因。 */
 enum JudgeFailureReason:
   case JudgeTaskBuildFailed
   case JudgerRuntimeFailed
@@ -12,7 +13,9 @@ enum JudgeFailureReason:
   case ProblemDataLoadFailed
   case SystemError
 
+/** 提供系统失败原因与协议字符串之间的稳定映射。 */
 object JudgeFailureReason:
+  /** 将失败原因渲染成 backend 存储和日志共用的协议值。 */
   def render(value: JudgeFailureReason): String =
     value match
       case JudgeFailureReason.JudgeTaskBuildFailed => "judge_task_build_failed"

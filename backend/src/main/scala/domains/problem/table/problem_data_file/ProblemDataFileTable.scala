@@ -10,11 +10,14 @@ import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifes
 import java.sql.Connection
 import java.time.Instant
 
+/** 题目数据文件清单表入口；记录对象存储中每个文件的路径、大小和 sha256。 */
 object ProblemDataFileTable:
 
+  /** 初始化题目数据文件清单表。 */
   def initialize(connection: Connection): IO[Unit] =
     ProblemDataFileTableSchema.initialize(connection)
 
+  /** 用给定清单完整替换题目的文件记录；适用于全量导入或重建。 */
   def replaceForProblem(
     connection: Connection,
     problemId: ProblemId,
@@ -23,6 +26,7 @@ object ProblemDataFileTable:
   ): IO[Unit] =
     deleteAllForProblem(connection, problemId) *> entries.traverse_(entry => insert(connection, problemId, entry, createdAt))
 
+  /** 增量写入或更新题目文件清单记录；适用于单文件上传和 hack 物化。 */
   def upsertForProblem(
     connection: Connection,
     problemId: ProblemId,
@@ -39,6 +43,7 @@ object ProblemDataFileTable:
       |order by relative_path asc
       |""".stripMargin
 
+  /** 按路径顺序列出题目文件清单条目。 */
   def listForProblem(connection: Connection, problemId: ProblemId): IO[List[ProblemDataManifestEntry]] =
     IO.blocking {
       val statement = connection.prepareStatement(listSQL)
@@ -61,6 +66,7 @@ object ProblemDataFileTable:
       |where problem_id = ? and relative_path = ?
       |""".stripMargin
 
+  /** 删除题目清单中的单个路径记录。 */
   def deleteForProblemPath(connection: Connection, problemId: ProblemId, path: ProblemDataPath): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteByPathSQL)
@@ -78,6 +84,7 @@ object ProblemDataFileTable:
       |where problem_id = ?
       |""".stripMargin
 
+  /** 删除题目的所有数据清单记录。 */
   def deleteAllForProblem(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteAllSQL)
@@ -96,6 +103,7 @@ object ProblemDataFileTable:
       |  and relative_path not in ($placeholders)
       |""".stripMargin
 
+  /** 删除不在保留集合中的清单记录；空集合会清空题目所有清单。 */
   def deleteExceptPaths(connection: Connection, problemId: ProblemId, paths: Set[ProblemDataPath]): IO[Unit] =
     if paths.isEmpty then deleteAllForProblem(connection, problemId)
     else
@@ -111,6 +119,7 @@ object ProblemDataFileTable:
         finally statement.close()
       }
 
+  /** 读取题目清单记录并构造判题使用的数据 manifest。 */
   def manifestForProblem(connection: Connection, problemId: ProblemId, problemSlug: ProblemSlug): IO[ProblemDataManifest] =
     listForProblem(connection, problemId).map(entries => ProblemDataManifest.fromEntries(problemSlug, entries))
 

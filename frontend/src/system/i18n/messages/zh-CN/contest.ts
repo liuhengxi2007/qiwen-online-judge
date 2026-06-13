@@ -1,3 +1,6 @@
+/**
+ * 简体中文比赛消息，覆盖比赛列表、详情、报名、榜单、管理和提交入口文案。
+ */
 export const zhCnContestMessages: Record<string, string> = {
   'contest.pageTitle': '气温在线评测 - 比赛',
   'contest.heading': '比赛',

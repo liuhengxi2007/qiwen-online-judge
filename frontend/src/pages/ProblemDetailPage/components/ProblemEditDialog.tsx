@@ -12,8 +12,14 @@ import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题目详情页模型类型别名，供编辑对话框读取草稿和保存状态。
+ */
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 
+/**
+ * 题目编辑对话框属性，包含详情页模型和保存回调。
+ */
 type ProblemEditDialogProps = {
   model: ProblemDetailPageModel
   open: boolean
@@ -22,6 +28,9 @@ type ProblemEditDialogProps = {
   setStatementTab: (value: 'write' | 'preview') => void
 }
 
+/**
+ * 题目编辑对话框，提供标题编辑表单。
+ */
 export function ProblemEditDialog({
   model,
   open,

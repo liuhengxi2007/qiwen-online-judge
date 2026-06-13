@@ -8,6 +8,9 @@ import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单移除题目动作 hook；提交移除请求并返回操作状态。
+ */
 export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug) {
   const { t } = useI18n()
   const [activeRemovingProblemSlug, setActiveRemovingProblemSlug] = useState<string | null>(null)

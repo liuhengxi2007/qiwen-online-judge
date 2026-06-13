@@ -4,6 +4,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
+/** 题单访问授权表结构初始化对象，包含旧通用授权表回填迁移。 */
 object ProblemSetAccessGrantTableSchema:
 
   val initTableSql: String =
@@ -52,6 +53,7 @@ object ProblemSetAccessGrantTableSchema:
       |where resource_kind = 'problem_set'
       |""".stripMargin
 
+  /** 创建题单授权表并从旧 resource 授权表回填后删除旧题单授权记录。 */
   def initialize(connection: Connection): IO[Unit] =
     IO.blocking {
       val statement = connection.createStatement()
@@ -66,6 +68,7 @@ object ProblemSetAccessGrantTableSchema:
       finally statement.close()
     }
 
+  /** 检查历史迁移源表是否存在，用于兼容不同数据库版本。 */
   private def tableExists(connection: Connection, tableName: String): Boolean =
     Option(connection.getMetaData.getTables(null, null, tableName, null)).exists { resultSet =>
       try resultSet.next()

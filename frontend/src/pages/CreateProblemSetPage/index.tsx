@@ -18,6 +18,9 @@ import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 创建题单页入口，要求具备题目管理权限后渲染创建表单。
+ */
 export function CreateProblemSetPage() {
   const { t } = useI18n()
   usePageTitle(t('problemSet.create.pageTitle'))
@@ -34,6 +37,9 @@ export function CreateProblemSetPage() {
   return <CreateProblemSetPageContent canCreate={user.problemManager} />
 }
 
+/**
+ * 创建题单页主体，组合权限状态、题单表单模型和成功跳转。
+ */
 function CreateProblemSetPageContent({ canCreate }: { canCreate: boolean }) {
   const { t } = useI18n()
   const navigate = useNavigate()

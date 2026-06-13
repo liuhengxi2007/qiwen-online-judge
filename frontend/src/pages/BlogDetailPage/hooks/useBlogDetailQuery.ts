@@ -5,6 +5,10 @@ import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import type { BlogId } from '@/objects/blog/BlogId'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 博客详情查询 hook，根据博客 id 拉取详情并暴露 setBlog 供评论、投票和编辑操作替换整篇详情。
+ * blogId 为 null 时不会请求后端，而是返回 invalid 错误供页面展示非法 URL。
+ */
 export function useBlogDetailQuery(blogId: BlogId | null) {
   const [queryState, setQueryState] = useState<{
     blogId: BlogId | null

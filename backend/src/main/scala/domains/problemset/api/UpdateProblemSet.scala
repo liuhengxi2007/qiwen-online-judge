@@ -17,6 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 更新题单信息和访问策略的认证 API，仅题目管理员可调用。 */
 object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemSetRequest), ProblemSetDetail]:
 
   override val method: Method = Method.POST
@@ -24,12 +25,14 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
 
+  /** 从路径解析题单 slug 并读取更新请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSetSlug, UpdateProblemSetRequest)] =
     for
       problemSetSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("problemSetSlug").flatMap(ProblemSetSlug.parse))
       body <- request.as[UpdateProblemSetRequest]
     yield (problemSetSlug, body)
 
+  /** 校验管理权、标题描述、作者账号和授权主体后更新题单并返回最新详情。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -37,6 +40,7 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
   ): IO[ProblemSetDetail] =
     val (problemSetSlug, request) = input
     for
+      /** 注意：非题目管理员返回 404，用于隐藏题单管理入口和题单存在性。 */
       _ <- HttpApiError.ensure(
         ProblemSetAccessRules.canManageProblemSets(actor),
         HttpApiError.notFound(ApiMessages.problemSetNotFound)
@@ -57,6 +61,7 @@ object UpdateProblemSet extends AuthenticatedApi[(ProblemSetSlug, UpdateProblemS
       }
     yield ProblemSetDetail.fromProblemSet(updatedProblemSet)
 
+  /** 校验可选展示作者账号存在；None 表示清空作者引用。 */
   private def validateAuthorUsername(connection: Connection, authorUsername: Option[domains.user.objects.Username]): IO[Unit] =
     authorUsername match
       case Some(username) =>

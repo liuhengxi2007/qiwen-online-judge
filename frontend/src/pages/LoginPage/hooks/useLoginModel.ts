@@ -5,12 +5,18 @@ import type { LoginRequest } from '@/objects/auth/request/LoginRequest'
 import { useLoginMutation } from './useLoginMutation'
 import { parseUsername } from '@/objects/user/Username'
 
+/**
+ * 登录表单状态，保存输入值、提交中标记和错误消息。
+ */
 type LoginState = {
   username: string
   password: string
   errorMessage: string
 }
 
+/**
+ * 登录表单 reducer 动作，覆盖字段编辑和提交状态。
+ */
 type LoginAction =
   | { type: 'set_username'; value: string }
   | { type: 'set_password'; value: string }
@@ -23,6 +29,9 @@ const initialState: LoginState = {
   errorMessage: '',
 }
 
+/**
+ * 登录表单 reducer；纯函数维护用户名、密码和提交反馈。
+ */
 function loginReducer(state: LoginState, action: LoginAction): LoginState {
   switch (action.type) {
     case 'set_username':
@@ -36,6 +45,9 @@ function loginReducer(state: LoginState, action: LoginAction): LoginState {
   }
 }
 
+/**
+ * 登录表单模型 hook；提供字段更新、提交状态和错误消息管理。
+ */
 export function useLoginModel() {
   const [state, dispatch] = useReducer(loginReducer, initialState)
   const mutation = useLoginMutation()

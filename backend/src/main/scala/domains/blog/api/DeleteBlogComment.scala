@@ -14,6 +14,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
+/** 删除当前用户评论的认证 API，成功后返回更新后的博客详情。 */
 object DeleteBlogComment extends AuthenticatedApi[DeleteBlogCommentInput, BlogDetail]:
 
   override val method: Method = Method.POST
@@ -21,6 +22,7 @@ object DeleteBlogComment extends AuthenticatedApi[DeleteBlogCommentInput, BlogDe
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[BlogDetail] = summon[Encoder[BlogDetail]]
 
+  /** 从路径解析博客 id 和评论 id，删除评论不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[DeleteBlogCommentInput] =
     val _ = request
     HttpApiError.fromEitherBadRequest {
@@ -30,6 +32,7 @@ object DeleteBlogComment extends AuthenticatedApi[DeleteBlogCommentInput, BlogDe
       yield DeleteBlogCommentInput(blogId, commentId)
     }
 
+  /** 仅当评论属于当前用户且博客对其可见时删除评论，否则返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: DeleteBlogCommentInput): IO[BlogDetail] =
     BlogCommentTable.deleteComment(connection, input.blogId, input.commentId, actor.username).flatMap {
       case Some(blog) => IO.pure(blog)

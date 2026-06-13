@@ -9,6 +9,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.time.Instant
 import scala.util.Try
 
+/** 博客列表摘要响应，包含正文预览来源、关联题目和当前用户投票。 */
 final case class BlogSummary(
   id: BlogId,
   title: BlogTitle,
@@ -22,6 +23,7 @@ final case class BlogSummary(
   updatedAt: Instant
 )
 
+/** 提供博客摘要 JSON codec，并显式处理 Instant 字符串格式。 */
 object BlogSummary:
   private given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   private given Decoder[Instant] = Decoder.decodeString.emap { value =>

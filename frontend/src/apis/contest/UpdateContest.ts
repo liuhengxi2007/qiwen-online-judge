@@ -4,6 +4,7 @@ import type { UpdateContestRequest } from '@/objects/contest/request/UpdateConte
 import type { ContestDetail } from '@/objects/contest/response/ContestDetail'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 
+/** 更新比赛；输入比赛 slug 和更新请求，输出更新后的比赛详情。 */
 export class UpdateContest implements APIWithSessionMessage<ContestDetail> {
   declare readonly responseType?: ContestDetail
   readonly method = 'POST'

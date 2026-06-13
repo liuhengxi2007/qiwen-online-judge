@@ -24,6 +24,9 @@ import {
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 提交摘要卡片属性，包含提交详情、标题展示模式和管理动作状态。
+ */
 type SubmissionSummaryCardProps = {
   deleteCurrentSubmission: () => Promise<void>
   isDeleting: boolean
@@ -33,6 +36,9 @@ type SubmissionSummaryCardProps = {
   submission: SubmissionDetail
 }
 
+/**
+ * 提交摘要卡片，展示题目、提交者、语言、结果、资源占用，并在有权限时提供重测/删除。
+ */
 export function SubmissionSummaryCard({
   deleteCurrentSubmission,
   isDeleting,

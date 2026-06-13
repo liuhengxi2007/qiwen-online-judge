@@ -17,6 +17,9 @@ import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useCreateContestPageModel } from './hooks/useCreateContestPageModel'
 
+/**
+ * 创建比赛页入口，要求具备比赛管理权限后渲染创建表单。
+ */
 export function CreateContestPage() {
   const { t } = useI18n()
   usePageTitle(t('contest.create.pageTitle'))
@@ -33,6 +36,9 @@ export function CreateContestPage() {
   return <CreateContestPageContent canCreate={user.contestManager} />
 }
 
+/**
+ * 创建比赛页主体，组合权限状态、表单模型和成功跳转。
+ */
 function CreateContestPageContent({ canCreate }: { canCreate: boolean }) {
   const { t } = useI18n()
   const navigate = useNavigate()

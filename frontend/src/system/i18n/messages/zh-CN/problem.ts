@@ -1,3 +1,6 @@
+/**
+ * 简体中文题目消息，覆盖题目列表、详情、创建、编辑和数据管理入口文案。
+ */
 export const zhCnProblemMessages: Record<string, string> = {
   'problem.pageTitle': '气温在线评测 - 题目',
   'problem.list.heading': '题目',

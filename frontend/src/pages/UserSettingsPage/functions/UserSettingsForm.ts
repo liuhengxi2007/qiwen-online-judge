@@ -7,10 +7,16 @@ import type { UpdateOwnProfileRequest } from '@/objects/user/request/UpdateOwnPr
 import { parseUserDisplayMode, type UserDisplayMode } from '@/objects/user/UserDisplayMode'
 import { parseUserLocale, type UserLocale } from '@/objects/user/UserLocale'
 
+/**
+ * 用户资料设置草稿，保存显示名输入。
+ */
 export type UserProfileDraft = {
   displayName: string
 }
 
+/**
+ * 用户偏好设置草稿，保存显示模式、语言、题名展示模式和消息已读偏好。
+ */
 export type UserPreferencesDraft = {
   displayMode: UserDisplayMode
   locale: UserLocale
@@ -18,16 +24,25 @@ export type UserPreferencesDraft = {
   autoMarkMessageRead: boolean
 }
 
+/**
+ * 用户资料/偏好校验成功结果，携带可提交请求体。
+ */
 type ValidationSuccess<T> = {
   ok: true
   request: T
 }
 
+/**
+ * 用户资料/偏好校验失败结果，携带用户可见错误。
+ */
 type ValidationFailure = {
   ok: false
   message: string
 }
 
+/**
+ * 校验用户资料草稿，成功时构造资料更新请求。
+ */
 export function validateUserProfileDraft(
   draft: UserProfileDraft,
 ): ValidationSuccess<UpdateOwnProfileRequest | UpdateManagedUserProfileRequest> | ValidationFailure {
@@ -44,6 +59,9 @@ export function validateUserProfileDraft(
   }
 }
 
+/**
+ * 校验用户偏好草稿，成功时构造偏好更新请求。
+ */
 export function validateUserPreferencesDraft(
   draft: UserPreferencesDraft,
 ): ValidationSuccess<UpdateOwnPreferencesRequest | UpdateManagedUserPreferencesRequest> | ValidationFailure {

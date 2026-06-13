@@ -10,8 +10,14 @@ import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
 import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题目详情页模型类型别名，供访问控制对话框读取编辑状态。
+ */
 type ProblemDetailPageModel = ReturnType<typeof useProblemDetailPageModel>
 
+/**
+ * 题目访问控制对话框属性，包含详情页模型和保存回调。
+ */
 type ProblemAccessDialogProps = {
   model: ProblemDetailPageModel
   open: boolean
@@ -19,6 +25,9 @@ type ProblemAccessDialogProps = {
   setOpen: (open: boolean) => void
 }
 
+/**
+ * 题目访问控制对话框，渲染资源访问编辑器并保存访问策略。
+ */
 export function ProblemAccessDialog({
   model,
   open,

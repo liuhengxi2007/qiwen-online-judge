@@ -6,6 +6,7 @@ import domains.problem.objects.ProblemId
 
 import java.sql.Connection
 
+/** 比赛题目可见性审计表访问对象，用于判断题目加入比赛是否会扩大受众。 */
 object ContestProblemVisibilityTable:
 
   private val hasOutsideContestManagerAudienceSQL: String =
@@ -95,6 +96,7 @@ object ContestProblemVisibilityTable:
       |limit 1
       |""".stripMargin
 
+  /** 检查题目是否存在比赛管理员之外的可见受众，返回 true 时前端应提示风险。 */
   def hasOutsideContestManagerAudience(
     connection: Connection,
     contestId: ContestId,

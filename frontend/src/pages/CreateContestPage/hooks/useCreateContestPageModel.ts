@@ -11,6 +11,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import type { CreateContestDraft } from '../functions/ContestForm'
 import { validateContestDraft } from '../functions/ContestForm'
 
+/**
+ * 创建比赛页状态，保存表单草稿、提交状态和反馈消息。
+ */
 type CreateContestPageState = {
   isSubmitting: boolean
   draft: CreateContestDraft
@@ -18,6 +21,9 @@ type CreateContestPageState = {
   successMessage: string
 }
 
+/**
+ * 创建比赛页 reducer 动作，覆盖字段编辑和提交成功/失败。
+ */
 type CreateContestPageAction =
   | { type: 'set_slug'; value: string }
   | { type: 'set_title'; value: string }
@@ -49,6 +55,9 @@ const initialState: CreateContestPageState = {
   successMessage: '',
 }
 
+/**
+ * 创建比赛页 reducer；纯函数维护草稿和提交反馈。
+ */
 function reducer(state: CreateContestPageState, action: CreateContestPageAction): CreateContestPageState {
   switch (action.type) {
     case 'set_slug':
@@ -76,6 +85,9 @@ function reducer(state: CreateContestPageState, action: CreateContestPageAction)
   }
 }
 
+/**
+ * 创建比赛页模型 hook；在有权限时提交创建请求并返回新比赛 slug。
+ */
 export function useCreateContestPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)

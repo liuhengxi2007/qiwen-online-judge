@@ -4,6 +4,9 @@ import type { ComponentProps } from 'react'
 
 import { cn } from '@/components/ui/class-names'
 
+/**
+ * 单选组根组件，负责排列单选项并透传 Radix 单选组状态。
+ */
 function RadioGroup({ className, ...props }: ComponentProps<typeof RadioGroupPrimitive.Root>) {
   return (
     <RadioGroupPrimitive.Root
@@ -14,6 +17,9 @@ function RadioGroup({ className, ...props }: ComponentProps<typeof RadioGroupPri
   )
 }
 
+/**
+ * 单选项组件，渲染可访问的选择圆点并接受禁用、值等 Radix 属性。
+ */
 function RadioGroupItem({
   className,
   ...props

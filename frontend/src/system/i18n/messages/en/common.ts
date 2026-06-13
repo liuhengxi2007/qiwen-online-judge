@@ -1,3 +1,6 @@
+/**
+ * 英文通用界面消息，覆盖按钮、分页、加载和通用反馈等跨页面文案。
+ */
 export const enCommonMessages: Record<string, string> = {
   'common.siteName': 'Qiwen Online Judge',
   'common.signedInAs': 'Signed in as {{displayName}} ({{username}}).',

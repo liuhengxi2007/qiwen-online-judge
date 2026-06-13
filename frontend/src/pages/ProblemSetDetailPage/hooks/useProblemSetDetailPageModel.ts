@@ -20,6 +20,9 @@ import { useProblemSetRemoveProblemAction } from './useProblemSetRemoveProblemAc
 import { useProblemSetUpdateAction } from './useProblemSetUpdateAction'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 题单详情页模型 hook；组合详情查询、编辑器和题目关联/移除/删除/更新动作。
+ */
 export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, canManageProblems: boolean) {
   const { t } = useI18n()
   const detailQuery = useProblemSetDetailQuery(problemSetSlug)

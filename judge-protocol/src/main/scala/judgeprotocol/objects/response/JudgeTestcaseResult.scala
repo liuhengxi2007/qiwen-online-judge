@@ -4,6 +4,7 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveEncoder
 import judgeprotocol.objects.SubmissionVerdict
 
+/** 单个测试点执行后的分数、判定、可展示消息和资源用量。 */
 final case class JudgeTestcaseResult(
   index: Int,
   label: Option[String],
@@ -16,6 +17,7 @@ final case class JudgeTestcaseResult(
   memoryUsedKb: Option[Long]
 )
 
+/** 负责测试点结果的协议编解码，并兼容旧 payload 缺失 testcaseType 的情况。 */
 object JudgeTestcaseResult:
   given Encoder[JudgeTestcaseResult] = deriveEncoder[JudgeTestcaseResult]
   given Decoder[JudgeTestcaseResult] = Decoder.instance { cursor =>

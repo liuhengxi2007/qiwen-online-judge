@@ -16,21 +16,26 @@ import java.sql.{Connection, SQLException, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
+/** user_groups 和 user_group_memberships 表访问层，负责用户组及成员关系持久化。 */
 object UserGroupTable:
 
+  /** 添加成员的表层结果，区分重复、成功和外键用户不存在。 */
   enum AddMemberTableResult:
     case AlreadyExists
     case Added
     case UserNotFound
 
+  /** 更新成员角色的表层结果，区分成员不存在和更新成功。 */
   enum UpdateMemberRoleTableResult:
     case MemberNotFound
     case Updated
 
+  /** 移除成员的表层结果，区分成员不存在和删除成功。 */
   enum RemoveMemberTableResult:
     case MemberNotFound
     case Removed
 
+  /** 初始化用户组及成员关系表结构。 */
   def initialize(connection: Connection): IO[Unit] =
     UserGroupTableSchema.initialize(connection)
 
@@ -64,6 +69,7 @@ object UserGroupTable:
       |limit ? offset ?
       |""".stripMargin
 
+  /** 查询当前用户可见的用户组摘要分页；站点管理员可见全部，普通用户可见自己拥有或加入的组。 */
   def listVisibleTo(connection: Connection, actor: AuthenticatedUser, page: Int, pageSize: Int): IO[PageResponse[UserGroupSummary]] =
     for
       totalItems <- IO.blocking {
@@ -107,6 +113,7 @@ object UserGroupTable:
       |  lower(ugm.username) asc
       |""".stripMargin
 
+  /** 读取用户组成员并按 owner、manager、member 和用户名排序，供详情接口组装返回。 */
   private def listMembers(connection: java.sql.Connection, groupId: UserGroupId): IO[List[UserGroupMember]] =
     IO.blocking {
       val statement = connection.prepareStatement(listMembersSQL)
@@ -125,6 +132,7 @@ object UserGroupTable:
       |where slug = ?
       |""".stripMargin
 
+  /** 按 slug 查找用户组详情，并额外加载成员列表。 */
   def findBySlug(connection: Connection, slug: UserGroupSlug): IO[Option[UserGroup]] =
     IO.blocking {
       val statement = connection.prepareStatement(findBySlugSQL)
@@ -148,6 +156,7 @@ object UserGroupTable:
       |order by ug.slug asc
       |""".stripMargin
 
+  /** 查询指定用户加入的全部用户组 slug，用于跨领域访问控制。 */
   def listGroupSlugsForMember(connection: Connection, username: Username): IO[Set[UserGroupSlug]] =
     IO.blocking {
       val statement = connection.prepareStatement(listGroupSlugsForMemberSQL)
@@ -177,6 +186,7 @@ object UserGroupTable:
       |values (?, ?, 'owner', ?)
       |""".stripMargin
 
+  /** 插入用户组并创建 owner 成员关系，返回带成员列表的用户组详情。 */
   def insert(connection: Connection, ownerUsername: Username, request: CreateUserGroupRequest): IO[UserGroup] =
     IO.blocking {
       val now = Instant.now()
@@ -216,6 +226,7 @@ object UserGroupTable:
       |where id = ?
       |""".stripMargin
 
+  /** 更新用户组名称、描述和更新时间，不返回受影响行数。 */
   def update(connection: Connection, groupId: UserGroupId, request: UpdateUserGroupRequest): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(updateSQL)
@@ -235,6 +246,7 @@ object UserGroupTable:
       |where id = ?
       |""".stripMargin
 
+  /** 删除用户组，成员关系由外键级联删除。 */
   def delete(connection: Connection, groupId: UserGroupId): IO[Unit] =
     IO.blocking {
       val statement = connection.prepareStatement(deleteSQL)
@@ -252,6 +264,7 @@ object UserGroupTable:
       |where username = ?
       |""".stripMargin
 
+  /** 检查账号表中用户是否存在。 */
   def userExists(connection: Connection, username: Username): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(userExistsSQL)
@@ -276,6 +289,7 @@ object UserGroupTable:
       |values (?, ?, ?, ?)
       |""".stripMargin
 
+  /** 添加成员关系，处理唯一约束和用户外键错误并返回表层结果。 */
   def addMember(connection: Connection, groupId: UserGroupId, request: AddUserGroupMemberRequest): IO[AddMemberTableResult] =
     for
       membershipExists <- IO.blocking {
@@ -316,6 +330,7 @@ object UserGroupTable:
       |where user_group_id = ? and username = ?
       |""".stripMargin
 
+  /** 更新成员角色，成员不存在时返回 MemberNotFound。 */
   def updateMemberRole(
     connection: Connection,
     groupId: UserGroupId,
@@ -340,6 +355,7 @@ object UserGroupTable:
       |where id = ?
       |""".stripMargin
 
+  /** 转移用户组所有权：当前 owner 降为 manager，新 owner 升为 owner，并更新 user_groups.owner_username。 */
   def transferOwnership(
     connection: Connection,
     groupId: UserGroupId,
@@ -373,6 +389,7 @@ object UserGroupTable:
       |where user_group_id = ? and username = ?
       |""".stripMargin
 
+  /** 删除成员关系，成员不存在时返回 MemberNotFound。 */
   def removeMember(
     connection: Connection,
     groupId: UserGroupId,

@@ -5,6 +5,9 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { pagePath } from '../functions/PageQuery'
 
+/**
+ * 榜单分页组件属性，携带三个榜单当前页和本组件要翻页的目标榜单。
+ */
 type RanklistPaginationProps = {
   acceptedPage: number
   contributionPage: number
@@ -14,6 +17,9 @@ type RanklistPaginationProps = {
   target: 'accepted' | 'contribution' | 'rating'
 }
 
+/**
+ * 榜单分页组件，只修改目标榜单页码，并在链接中保留另外两个榜单页码。
+ */
 export function RanklistPagination({
   acceptedPage,
   contributionPage,

@@ -1,3 +1,6 @@
+/**
+ * 简体中文用户资料页消息，描述公开资料、统计和头像相关界面文案。
+ */
 export const zhCnUserProfileMessages: Record<string, string> = {
   'userProfile.pageTitle': '气温在线评测 - 用户资料',
   'userProfile.heading': '用户资料',

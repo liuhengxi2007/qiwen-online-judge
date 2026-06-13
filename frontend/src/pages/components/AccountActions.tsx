@@ -13,10 +13,16 @@ import { UserAvatar } from '@/pages/components/UserAvatar'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { sendAPI } from '@/system/api/api-message'
 
+/**
+ * 账号操作区属性，控制退出按钮是否显示文字标签。
+ */
 type AccountActionsProps = {
   showSignOutLabel?: boolean
 }
 
+/**
+ * 顶部账号操作区，展示当前用户、通知/私信未读数和退出登录按钮。
+ */
 export function AccountActions({ showSignOutLabel = false }: AccountActionsProps) {
   const { t } = useI18n()
   const session = useAuthStore((state) => state.session)

@@ -1,12 +1,18 @@
 import { cn } from '@/components/ui/class-names'
 import { Card, CardContent } from '@/components/ui/card'
 
+/**
+ * 页面加载卡片属性，包含展示文案、色调和外部样式扩展。
+ */
 type PageLoadingCardProps = {
   message: string
   tone?: 'slate' | 'stone'
   className?: string
 }
 
+/**
+ * 页面级加载/空状态卡片，用于在主体内容区域展示轻量状态信息。
+ */
 export function PageLoadingCard({ message, tone = 'slate', className }: PageLoadingCardProps) {
   const toneClasses =
     tone === 'stone'

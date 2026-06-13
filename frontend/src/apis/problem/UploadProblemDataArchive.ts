@@ -5,6 +5,7 @@ import type { ProblemDataUploadResult } from '@/objects/problem/response/Problem
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 
+/** 上传题目数据归档；输入题目 slug、文件和可选比赛上下文，使用 multipart 提交。 */
 export class UploadProblemDataArchive implements APIWithSessionMessage<ProblemDataUploadResult> {
   declare readonly responseType?: ProblemDataUploadResult
   readonly method = 'POST'

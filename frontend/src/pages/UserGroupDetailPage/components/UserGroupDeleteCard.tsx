@@ -7,8 +7,15 @@ import type { useUserGroupDetailPageModel } from '../hooks/useUserGroupDetailPag
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { useI18n } from '@/system/i18n/use-i18n'
 
+/**
+ * 用户组详情页模型类型别名，供删除卡片读取删除权限和动作状态。
+ */
 type UserGroupDetailPageModel = ReturnType<typeof useUserGroupDetailPageModel>
 
+/**
+ * 用户组删除卡片，仅在当前访问者拥有删除权限时展示确认操作。
+ * 删除成功后由组件导航回用户组列表。
+ */
 export function UserGroupDeleteCard({ model }: { model: UserGroupDetailPageModel }) {
   const { t } = useI18n()
   const navigate = useNavigate()

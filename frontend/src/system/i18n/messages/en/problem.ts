@@ -1,3 +1,6 @@
+/**
+ * 英文题目消息，覆盖题目列表、详情、创建、编辑和数据管理入口文案。
+ */
 export const enProblemMessages: Record<string, string> = {
   'problem.pageTitle': 'Qiwen Online Judge - Problems',
   'problem.list.heading': 'Problems',

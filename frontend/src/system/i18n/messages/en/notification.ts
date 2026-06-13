@@ -1,3 +1,6 @@
+/**
+ * 英文通知消息，覆盖通知列表、实时刷新和已读操作相关文案。
+ */
 export const enNotificationMessages: Record<string, string> = {
   'notifications.pageTitle': 'Qiwen Online Judge - Notifications',
   'notifications.heading': 'Notifications',
