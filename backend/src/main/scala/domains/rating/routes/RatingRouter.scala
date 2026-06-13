@@ -2,8 +2,8 @@ package domains.rating.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
-import domains.auth.utils.SessionStore
+import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
+import domains.auth.utils.SessionStoreContext
 import domains.rating.api.*
 import org.http4s.HttpRoutes
 
@@ -11,8 +11,8 @@ import org.http4s.HttpRoutes
 object RatingRouter:
 
   /** 构造评分相关 HTTP 路由，站点管理员权限由各 SiteManagerApi 自身处理。 */
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val apiObjectContext = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
+  def routes(databaseSession: DatabaseSession, sessionStore: SessionStoreContext): HttpRoutes[IO] =
+    val apiObjectContext = ApiObjectContext(databaseSession, sessionStore)
 
     ApiObjectRouter.routes(
       apiObjectContext,

@@ -3,7 +3,7 @@ package domains.notification.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
 import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
@@ -13,7 +13,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 标记当前用户所有通知已读的认证 API，完成后发布通知流变更事件。 */
-final class MarkAllNotificationsRead(notificationEventHub: NotificationEventHub) extends AuthenticatedApi[Unit, SuccessResponse]:
+final class MarkAllNotificationsRead(notificationEventHub: NotificationEventHubContext) extends AuthenticatedApi[Unit, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/notifications/mark-all-read")
@@ -34,7 +34,7 @@ final class MarkAllNotificationsRead(notificationEventHub: NotificationEventHub)
     val _ = input
     for
       _ <- NotificationTable.markAllRead(connection, actor.username)
-      _ <- notificationEventHub.publish(actor.username, NotificationStreamEvent.NotificationsChanged)
+      _ <- NotificationEventHub.publish(notificationEventHub, actor.username, NotificationStreamEvent.NotificationsChanged)
     yield SuccessResponse(
       code = Some(ApiMessages.notificationsMarkedRead.code),
       message = None,

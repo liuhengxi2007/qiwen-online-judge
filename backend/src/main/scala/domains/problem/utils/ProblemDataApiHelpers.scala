@@ -41,7 +41,7 @@ object ProblemDataApiHelpers:
 
   /** 将预处理后的文件逐个转换为题目路径并写入对象存储。 */
   def writePreparedFiles(
-    problemDataStorage: ProblemDataStorage,
+    problemDataStorage: ProblemDataStorageContext,
     problemSlug: ProblemSlug,
     preparedFiles: List[shared.application.upload.PreparedUploadFile]
   ): IO[Unit] =
@@ -50,7 +50,7 @@ object ProblemDataApiHelpers:
         ProblemDataUploadPreparation
           .toProblemDataPath(preparedFile.path)
           .leftMap(message => IllegalArgumentException(message))
-      ).flatMap(path => problemDataStorage.writePath(problemSlug, path, preparedFile.bytes).void)
+      ).flatMap(path => ProblemDataStorage.writePath(problemDataStorage, problemSlug, path, preparedFile.bytes).void)
     }
 
   /** 选择本次上传中排序最后一个文件名作为题目数据摘要文件名；空上传会失败。 */

@@ -11,12 +11,12 @@ import domains.hack.objects.response.ClaimedHackAttempt
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
 import domains.submission.utils.SubmissionJudgeRules
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest
@@ -31,8 +31,8 @@ import java.time.Instant
 /** judge worker 领取任务的公开 API；使用共享 token 认证，优先领取普通提交，其次 hack，再领取低优先级提交。 */
 final case class ClaimJudgeTask(
   judgeConfig: JudgeConfig,
-  problemDataStorage: ProblemDataStorage,
-  submissionProgramStorage: SubmissionProgramStorage
+  problemDataStorage: ProblemDataStorageContext,
+  submissionProgramStorage: SubmissionProgramStorageContext
 ) extends PublicResponseApi[ClaimJudgeTaskRequest]:
 
   override val method: Method = Method.POST
@@ -189,7 +189,7 @@ final case class ClaimJudgeTask(
       case Left(message) =>
         IO.pure(Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed)))
       case Right(configPath) =>
-        problemDataStorage.readPath(claimedSubmission.problemSlug, configPath).map {
+        ProblemDataStorage.readPath(problemDataStorage, claimedSubmission.problemSlug, configPath).map {
           case None =>
             Left(JudgeTaskBuilder.BuildError("judge.yaml is required at the problem data root.", JudgeFailureReason.JudgeTaskBuildFailed))
           case Some((_, bytes)) =>
@@ -197,7 +197,7 @@ final case class ClaimJudgeTask(
         }.flatMap {
           case Left(message) => IO.pure(Left(message))
           case Right(bytes) =>
-            submissionProgramStorage.readSources(claimedSubmission.programManifest).map {
+            SubmissionProgramStorage.readSources(submissionProgramStorage, claimedSubmission.programManifest).map {
               case Left(message) => Left(JudgeTaskBuilder.BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed))
               case Right(sourceCodes) => JudgeTaskBuilder.buildJudgeTask(bytes, claimedSubmission, sourceCodes, manifest, startedAtEpochMilli)
             }

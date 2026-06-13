@@ -3,7 +3,7 @@ package domains.notification.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -14,7 +14,7 @@ import shared.api.{ApiPath, PathParams}
 import java.sql.Connection
 
 /** 订阅当前用户通知变更的 SSE API，事件由通知事件中心按用户名过滤。 */
-final class SubscribeNotificationEvents(notificationEventHub: NotificationEventHub) extends AuthenticatedResponseApi[Unit]:
+final class SubscribeNotificationEvents(notificationEventHub: NotificationEventHubContext) extends AuthenticatedResponseApi[Unit]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/notifications/events")
@@ -38,7 +38,7 @@ final class SubscribeNotificationEvents(notificationEventHub: NotificationEventH
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          notificationEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
+          NotificationEventHub.subscribe(notificationEventHub, actor.username).map(toServerSentEventString).through(text.utf8.encode)
         )
     )
 

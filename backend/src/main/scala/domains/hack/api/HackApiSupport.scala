@@ -7,11 +7,11 @@ import domains.hack.objects.response.{HackSubtaskAvailability, HackSubtaskInfo, 
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.submission.api.GetSubmission
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import judgeprotocol.objects.response.{JudgeTask, JudgeTaskHackConfig, JudgeTaskSubtask}
 import shared.api.{ApiMessages, HttpApiError}
 
@@ -43,8 +43,8 @@ object HackApiSupport:
     actor: AuthenticatedUser,
     submissionId: domains.submission.objects.SubmissionId,
     subtaskIndex: Int,
-    submissionProgramStorage: SubmissionProgramStorage,
-    problemDataStorage: ProblemDataStorage
+    submissionProgramStorage: SubmissionProgramStorageContext,
+    problemDataStorage: ProblemDataStorageContext
   ): IO[TargetContext] =
     for
       target <- loadTargetTask(connection, actor, submissionId, submissionProgramStorage, problemDataStorage)
@@ -66,8 +66,8 @@ object HackApiSupport:
     connection: Connection,
     actor: AuthenticatedUser,
     submissionId: domains.submission.objects.SubmissionId,
-    submissionProgramStorage: SubmissionProgramStorage,
-    problemDataStorage: ProblemDataStorage
+    submissionProgramStorage: SubmissionProgramStorageContext,
+    problemDataStorage: ProblemDataStorageContext
   ): IO[TargetTaskContext] =
     for
       submission <- GetSubmission(submissionProgramStorage).plan(connection, actor, submissionId)
@@ -154,7 +154,7 @@ object HackApiSupport:
   private def buildTask(
     connection: Connection,
     submission: domains.submission.objects.response.SubmissionDetail,
-    problemDataStorage: ProblemDataStorage
+    problemDataStorage: ProblemDataStorageContext
   ): IO[JudgeTask] =
     val manifestInput = submission.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
     for
@@ -169,7 +169,7 @@ object HackApiSupport:
           case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         }
       configPath <- HttpApiError.fromEitherBadRequest(ProblemDataPath.parse("judge.yaml"))
-      configBytes <- problemDataStorage.readPath(submission.problemSlug, configPath).flatMap {
+      configBytes <- ProblemDataStorage.readPath(problemDataStorage, submission.problemSlug, configPath).flatMap {
         case Some((_, bytes)) => IO.pure(bytes)
         case None => HttpApiError.raise(HttpApiError.badRequest("judge.yaml is required at the problem data root."))
       }

@@ -2,7 +2,7 @@ package domains.auth.api
 
 import cats.effect.IO
 import domains.auth.objects.SessionToken
-import domains.auth.utils.{AuthSessionCookies, SessionStore}
+import domains.auth.utils.{AuthSessionCookies, SessionStore, SessionStoreContext}
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiMessages, ApiPath, PathParams}
@@ -12,7 +12,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 登出 API，删除当前会话并清理客户端 cookie；未登录调用也返回成功。 */
-final case class Logout(sessionStore: SessionStore) extends PublicResponseApi[Option[SessionToken]]:
+final case class Logout(sessionStore: SessionStoreContext) extends PublicResponseApi[Option[SessionToken]]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/logout")
@@ -26,7 +26,7 @@ final case class Logout(sessionStore: SessionStore) extends PublicResponseApi[Op
   override def plan(connection: Connection, maybeToken: Option[SessionToken]): IO[Response[IO]] =
     val _ = connection
     val deleteSession = maybeToken match
-      case Some(token) => sessionStore.deleteSession(token)
+      case Some(token) => SessionStore.deleteSession(sessionStore, token)
       case None => IO.unit
 
     deleteSession.as(

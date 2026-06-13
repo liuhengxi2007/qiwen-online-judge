@@ -5,7 +5,7 @@ import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
 import domains.auth.objects.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
 import domains.auth.objects.response.SessionResponse
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
 import domains.user.api.FindUserProfileSettings
 import domains.user.objects.Username
 import io.circe.Json
@@ -17,7 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 账号设置更新 API，支持用户自改账号和站点管理员代改账号。 */
-final case class UpdateAccount(sessionStore: SessionStore) extends AuthenticatedResponseApi[(Username, Json)]:
+final case class UpdateAccount(sessionStore: SessionStoreContext) extends AuthenticatedResponseApi[(Username, Json)]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/accounts/:targetUsername/settings/account")
@@ -119,7 +119,7 @@ final case class UpdateAccount(sessionStore: SessionStore) extends Authenticated
         case Some(profile) => IO.pure(profile)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }
-      _ <- if passwordChanged then sessionStore.deleteSessionsForUsername(targetAccount.username) else IO.unit
+      _ <- if passwordChanged then SessionStore.deleteSessionsForUsername(sessionStore, targetAccount.username) else IO.unit
     yield
       val response =
         Response[IO](status = Status.Ok)

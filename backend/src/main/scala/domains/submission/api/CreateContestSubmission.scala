@@ -7,11 +7,11 @@ import domains.contest.api.EvaluateContestAccess
 import domains.contest.objects.ContestSlug
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import domains.submission.objects.SubmissionSource
 import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
@@ -20,8 +20,8 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 /** 创建竞赛提交的 API；校验竞赛可见、正在进行、题目属于竞赛且用户可提交。 */
 final case class CreateContestSubmission(
-  submissionProgramStorage: SubmissionProgramStorage,
-  problemDataStorage: ProblemDataStorage
+  submissionProgramStorage: SubmissionProgramStorageContext,
+  problemDataStorage: ProblemDataStorageContext
 )
   extends AuthenticatedApi[(ContestSlug, CreateSubmissionRequest), SubmissionDetail]:
 

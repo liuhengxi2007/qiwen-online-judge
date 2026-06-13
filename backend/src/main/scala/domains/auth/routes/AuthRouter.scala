@@ -2,7 +2,7 @@ package domains.auth.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStore
+import domains.auth.utils.SessionStoreContext
 import domains.auth.api.*
 import org.http4s.HttpRoutes
 
@@ -10,8 +10,8 @@ import org.http4s.HttpRoutes
 object AuthRouter:
 
   /** 构造 auth HTTP routes，并注入数据库会话和会话存储依赖。 */
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore): HttpRoutes[IO] =
-    val context = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
+  def routes(databaseSession: DatabaseSession, sessionStore: SessionStoreContext): HttpRoutes[IO] =
+    val context = ApiObjectContext(databaseSession, sessionStore)
 
     ApiObjectRouter.routes(
       context,

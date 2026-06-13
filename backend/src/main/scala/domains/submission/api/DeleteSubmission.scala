@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.SubmissionId
 import domains.submission.table.submission.{SubmissionMutationTable, SubmissionQueryTable}
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
@@ -16,7 +16,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 删除提交的管理端 API；只有目标题目的管理者可删除，并尽力清理源码对象。 */
-final case class DeleteSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SuccessResponse]:
+final case class DeleteSubmission(submissionProgramStorage: SubmissionProgramStorageContext) extends AuthenticatedApi[SubmissionId, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/submissions/:submissionId/delete")
@@ -42,5 +42,5 @@ final case class DeleteSubmission(submissionProgramStorage: SubmissionProgramSto
       _ <- HttpApiError.ensure(access.canManage, HttpApiError.notFound(ApiMessages.submissionNotFound))
       _ <- SubmissionMutationTable.deleteById(connection, submissionId)
       // 注意：对象存储删除是 best-effort，数据库删除成功后不会因源码对象清理失败回滚。
-      _ <- submissionProgramStorage.deleteManifest(record.programManifest).handleError(_ => ())
+      _ <- SubmissionProgramStorage.deleteManifest(submissionProgramStorage, record.programManifest).handleError(_ => ())
     yield SuccessResponse(code = Some(ApiMessages.submissionDeleted.code), message = None, params = ApiMessages.submissionDeleted.params)

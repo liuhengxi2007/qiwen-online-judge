@@ -3,7 +3,7 @@ import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
 import domains.auth.table.auth_account.{AuthAccountTable, AuthAccountTableSupport}
 import domains.auth.table.session.SessionTable
-import domains.auth.utils.{PasswordHasher, RedisSessionCache, SessionCache, SessionCacheConfig, SessionConfig, SessionStore}
+import domains.auth.utils.{PasswordHasher, SessionCache, SessionCacheConfig, SessionCacheContext, SessionConfig, SessionStore}
 import domains.blog.table.blog.BlogTable
 import domains.contest.table.contest.ContestTable
 import domains.hack.table.hack.HackTable
@@ -15,13 +15,13 @@ import domains.notification.table.notification.NotificationTable
 import domains.notification.utils.NotificationEventHub
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
-import domains.problem.utils.{MinioProblemDataStorage, ProblemDataStorageConfig}
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.rating.table.rating.RatingTable
 import domains.submission.table.submission.SubmissionTable
-import domains.submission.utils.{MinioSubmissionProgramStorage, SubmissionProgramStorageConfig}
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
-import domains.user.utils.{MinioUserAvatarStorage, UserAvatarStorageConfig}
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageConfig}
 import domains.usergroup.table.user_group.UserGroupTable
 import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
@@ -47,8 +47,8 @@ object Main extends IOApp.Simple:
       databaseSession <- DatabaseSession.resource
       sessionCache <- SessionCacheConfig
         .fromEnvironment(sys.env)
-        .map(RedisSessionCache.resource)
-        .getOrElse(Resource.pure[IO, SessionCache](SessionCache.noop))
+        .map(SessionCache.resource)
+        .getOrElse(Resource.pure[IO, SessionCacheContext](SessionCache.noop))
       sessionStore <- Resource.eval(SessionStore.create(databaseSession, sessionCache))
       messageEventHub <- MessageEventHub.resource
       notificationEventHub <- NotificationEventHub.resource
@@ -59,9 +59,9 @@ object Main extends IOApp.Simple:
       problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
       submissionProgramStorageConfig = SubmissionProgramStorageConfig.loadFromEnvironment()
       userAvatarStorageConfig = UserAvatarStorageConfig.loadFromEnvironment()
-      problemDataStorage = MinioProblemDataStorage(problemDataStorageConfig.minio)
-      submissionProgramStorage = MinioSubmissionProgramStorage(submissionProgramStorageConfig.minio)
-      userAvatarStorage = MinioUserAvatarStorage(userAvatarStorageConfig.minio)
+      problemDataStorage = ProblemDataStorage.create(problemDataStorageConfig.minio)
+      submissionProgramStorage = SubmissionProgramStorage.create(submissionProgramStorageConfig.minio)
+      userAvatarStorage = UserAvatarStorage.create(userAvatarStorageConfig.minio)
       _ <- Resource.eval {
         databaseSession.withTransactionConnection { connection =>
           for

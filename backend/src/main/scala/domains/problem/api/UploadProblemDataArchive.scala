@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.{ProblemDataStorage, ProblemDataUploadPreparation}
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext, ProblemDataUploadPreparation}
 import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 /** 上传题目数据 zip 归档的管理端 API；解包后写入对象存储、更新数据状态和文件清单。 */
-final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage)
+final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedApi[(ProblemManagementContext, Option[ProblemDataPath], Array[Byte]), ProblemDataUploadResult]:
 
   private val maxArchiveBytes = 256 * 1024 * 1024
@@ -85,7 +85,7 @@ final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage
           case Right(summaryFilename) =>
             ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
               for
-                snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+                snapshot <- ProblemDataStorage.snapshotDirectory(problemDataStorage, problem.slug)
                 uploadResult <- ProblemDataApiHelpers
                   .writePreparedFiles(problemDataStorage, problem.slug, preparedFiles)
                   .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), summaryFilename))
@@ -100,7 +100,7 @@ final case class UploadProblemDataArchive(problemDataStorage: ProblemDataStorage
                   .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data update."))
                   .map(problem => ProblemDataUploadResult(problem, preparedFiles.length))
                   .handleErrorWith { error =>
-                    problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                    ProblemDataStorage.restoreDirectory(problemDataStorage, problem.slug, snapshot) *> IO.raiseError(error)
                   }
               yield uploadResult
             }

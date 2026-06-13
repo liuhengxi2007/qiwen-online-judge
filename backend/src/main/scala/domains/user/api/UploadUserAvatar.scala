@@ -7,7 +7,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.user.objects.response.UserSettingsResponse
 import domains.user.table.user_profile.UserProfileTable
-import domains.user.utils.{UserAvatarStorage, UserAvatarUploadValidation}
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageContext, UserAvatarUploadValidation}
 import io.circe.Encoder
 import org.http4s.multipart.Multipart
 import org.http4s.{Method, Request, Status}
@@ -17,7 +17,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 上传用户头像 API，校验 multipart 图片并同步更新对象存储和数据库元数据。 */
-final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
+final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorageContext)
     extends AuthenticatedApi[(Username, Array[Byte], Option[String]), UserSettingsResponse]:
 
   override val method: Method = Method.POST
@@ -55,16 +55,16 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
       prepared <- HttpApiError.fromEitherBadRequest(UserAvatarUploadValidation.prepare(targetUsername, bytes, contentType, uploadId))
       previousAvatar <- UserProfileTable.findAvatarByUsername(connection, targetUsername)
       now <- IO.realTimeInstant
-      _ <- userAvatarStorage.writeObject(prepared.objectKey, prepared.bytes, prepared.contentType)
+      _ <- UserAvatarStorage.writeObject(userAvatarStorage, prepared.objectKey, prepared.bytes, prepared.contentType)
       _ <- UserProfileTable
         .updateAvatar(connection, targetUsername, prepared.objectKey, prepared.contentType, now)
-        .handleErrorWith(error => userAvatarStorage.deleteObject(prepared.objectKey) *> IO.raiseError(error))
+        .handleErrorWith(error => UserAvatarStorage.deleteObject(userAvatarStorage, prepared.objectKey) *> IO.raiseError(error))
         .flatMap {
           case Some(_) => IO.unit
           case None =>
-            userAvatarStorage.deleteObject(prepared.objectKey) *> HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
+            UserAvatarStorage.deleteObject(userAvatarStorage, prepared.objectKey) *> HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
         }
-      _ <- previousAvatar.traverse(avatar => userAvatarStorage.deleteObject(avatar.objectKey)).void
+      _ <- previousAvatar.traverse(avatar => UserAvatarStorage.deleteObject(userAvatarStorage, avatar.objectKey)).void
       settings <- UserAvatarApiHelpers.refreshedSettings(connection, targetUsername)
     yield settings
 

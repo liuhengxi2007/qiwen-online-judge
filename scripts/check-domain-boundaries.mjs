@@ -28,7 +28,7 @@ const publicAuthApiObjectProtocol = new Set([
 ])
 
 const publicWiringTypes = new Set([
-  'domains.auth.utils.SessionStore',
+  'domains.auth.utils.SessionStoreContext',
 ])
 
 const explicitCollaborationBoundaries = new Set([
@@ -38,8 +38,10 @@ const explicitCollaborationBoundaries = new Set([
   'domains.notification.objects.NotificationKind',
   'domains.notification.objects.NotificationPayload',
   'domains.notification.utils.NotificationEventHub',
+  'domains.notification.utils.NotificationEventHubContext',
   'domains.notification.utils.NotificationStreamEvent',
   'domains.problem.utils.ProblemDataStorage',
+  'domains.problem.utils.ProblemDataStorageContext',
   'domains.submission.objects.SubmissionStatus',
   'domains.submission.objects.SubmissionVerdict',
   'domains.submission.objects.internal.ClaimedSubmission',
@@ -48,6 +50,7 @@ const explicitCollaborationBoundaries = new Set([
   'domains.submission.objects.internal.SubmissionJudgeState',
   'domains.submission.utils.SubmissionProgramCleanup',
   'domains.submission.utils.SubmissionProgramStorage',
+  'domains.submission.utils.SubmissionProgramStorageContext',
   'domains.submission.utils.SubmissionJudgeRules',
 ])
 

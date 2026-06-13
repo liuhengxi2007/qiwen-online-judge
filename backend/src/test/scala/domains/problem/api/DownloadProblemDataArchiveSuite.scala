@@ -2,8 +2,7 @@ package domains.problem.api
 
 import cats.effect.IO
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
-import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.objects.internal.ProblemDataManifestEntry
 import munit.CatsEffectSuite
 import org.http4s.Status
 import org.typelevel.ci.CIString
@@ -18,18 +17,16 @@ class DownloadProblemDataArchiveSuite extends CatsEffectSuite:
   private val problemSlug = ProblemSlug("two-sum")
 
   test("writes zip entries with original relative paths and contents") {
-    val storage = FixedProblemDataStorage(
-      Map(
-        path("judge.yaml") -> utf8("checker: diff\n"),
-        path("cases/1.in") -> utf8("1 2\n"),
-        path("cases/1.out") -> utf8("3\n")
-      )
+    val files = Map(
+      path("judge.yaml") -> utf8("checker: diff\n"),
+      path("cases/1.in") -> utf8("1 2\n"),
+      path("cases/1.out") -> utf8("3\n")
     )
-    val api = DownloadProblemDataArchive(storage)
 
-    api.archiveResponse(
+    DownloadProblemDataArchive.archiveResponse(
       problemSlug,
-      List(entry("cases/1.out"), entry("judge.yaml"), entry("cases/1.in"))
+      List(entry("cases/1.out"), entry("judge.yaml"), entry("cases/1.in")),
+      fixedReadPath(files)
     ).flatMap { response =>
       response.body.compile.to(Array).map { bytes =>
         assertEquals(response.status, Status.Ok)
@@ -52,9 +49,7 @@ class DownloadProblemDataArchiveSuite extends CatsEffectSuite:
   }
 
   test("writes a readable empty zip when manifest has no entries") {
-    val api = DownloadProblemDataArchive(FixedProblemDataStorage(Map.empty))
-
-    api.archiveResponse(problemSlug, List.empty).flatMap { response =>
+    DownloadProblemDataArchive.archiveResponse(problemSlug, List.empty, fixedReadPath(Map.empty)).flatMap { response =>
       response.body.compile.to(Array).map { bytes =>
         assertEquals(response.status, Status.Ok)
         assertEquals(unzipUtf8(bytes), List.empty)
@@ -63,15 +58,18 @@ class DownloadProblemDataArchiveSuite extends CatsEffectSuite:
   }
 
   test("returns internal error when manifest references missing stored bytes") {
-    val api = DownloadProblemDataArchive(FixedProblemDataStorage(Map.empty))
-
-    api.archiveResponse(problemSlug, List(entry("judge.yaml"))).attempt.map {
+    DownloadProblemDataArchive.archiveResponse(problemSlug, List(entry("judge.yaml")), fixedReadPath(Map.empty)).attempt.map {
       case Left(error: HttpApiError) =>
         assertEquals(error.status, Status.InternalServerError)
       case other =>
         fail(s"Expected HttpApiError, got $other")
     }
   }
+
+  private def fixedReadPath(files: Map[ProblemDataPath, Array[Byte]]): DownloadProblemDataArchive.ReadPath =
+    (slug, path) =>
+      val _ = slug
+      IO.pure(files.get(path).map(bytes => path -> bytes))
 
   private def path(value: String): ProblemDataPath =
     ProblemDataPath(value)
@@ -96,42 +94,3 @@ class DownloadProblemDataArchiveSuite extends CatsEffectSuite:
         }
         .toList
     finally zip.close()
-
-  private final class FixedProblemDataStorage(files: Map[ProblemDataPath, Array[Byte]]) extends ProblemDataStorage:
-    override def listPaths(problemSlug: ProblemSlug): IO[List[ProblemDataPath]] =
-      val _ = problemSlug
-      IO.pure(files.keys.toList.sortBy(_.value))
-
-    override def describeManifest(problemSlug: ProblemSlug): IO[ProblemDataManifest] =
-      IO.pure(
-        ProblemDataManifest.fromEntries(
-          problemSlug,
-          files.toList.map { case (path, bytes) =>
-            ProblemDataManifestEntry(path, sizeBytes = bytes.length.toLong, sha256 = "0" * 64)
-          }
-        )
-      )
-
-    override def snapshotDirectory(problemSlug: ProblemSlug): IO[ProblemDataStorage.ProblemDataSnapshot] =
-      val _ = problemSlug
-      IO.pure(files)
-
-    override def writePath(problemSlug: ProblemSlug, path: ProblemDataPath, bytes: Array[Byte]): IO[ProblemDataPath] =
-      val _ = (problemSlug, bytes)
-      IO.pure(path)
-
-    override def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]] =
-      val _ = problemSlug
-      IO.pure(files.get(path).map(bytes => path -> bytes))
-
-    override def deletePath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Boolean] =
-      val _ = (problemSlug, path)
-      IO.pure(false)
-
-    override def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
-      val _ = problemSlug
-      IO.unit
-
-    override def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataStorage.ProblemDataSnapshot): IO[Unit] =
-      val _ = (problemSlug, snapshot)
-      IO.unit

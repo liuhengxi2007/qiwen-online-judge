@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 
 import domains.problem.objects.response.ProblemDataFileListResponse
 import io.circe.Encoder
@@ -13,7 +13,7 @@ import shared.api.{ApiPath, PathParams}
 import java.sql.Connection
 
 /** 列出题目数据文件名的管理端 API；从对象存储读取当前文件列表，要求题目管理权限。 */
-final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorage)
+final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedApi[ProblemManagementContext, ProblemDataFileListResponse]:
 
   override val method: Method = Method.GET
@@ -33,4 +33,4 @@ final case class ListProblemDataFiles(problemDataStorage: ProblemDataStorage)
   ): IO[ProblemDataFileListResponse] =
     ProblemManagementContext
       .requireManagedProblem(connection, actor, context)
-      .flatMap(problem => problemDataStorage.listFiles(problem.slug).map(ProblemDataFileListResponse(_)))
+      .flatMap(problem => ProblemDataStorage.listFiles(problemDataStorage, problem.slug).map(ProblemDataFileListResponse(_)))

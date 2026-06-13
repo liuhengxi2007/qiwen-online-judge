@@ -2,18 +2,18 @@ package domains.blog.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStore
-import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
+import domains.auth.utils.SessionStoreContext
+import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
 import domains.blog.api.*
-import domains.notification.utils.NotificationEventHub
+import domains.notification.utils.NotificationEventHubContext
 import org.http4s.HttpRoutes
 
 /** 汇总博客 domain 的 http4s 路由，负责把数据库会话、登录会话和通知事件中心注入 API 对象。 */
 object BlogRouter:
 
   /** 构造博客相关 HTTP 路由，评论 API 会使用 notificationEventHub 推送通知变更。 */
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
-    val context = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
+  def routes(databaseSession: DatabaseSession, sessionStore: SessionStoreContext, notificationEventHub: NotificationEventHubContext): HttpRoutes[IO] =
+    val context = ApiObjectContext(databaseSession, sessionStore)
 
     ApiObjectRouter.routes(
       context,

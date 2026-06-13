@@ -7,9 +7,9 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.request.CreateHackRequest
 import domains.hack.objects.response.HackDetail
 import domains.hack.table.hack.{HackMutationTable, HackQueryTable}
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.multipart.{Multipart, Part}
@@ -21,8 +21,8 @@ import scala.util.Try
 
 /** 创建 hack attempt 的认证 API；校验目标提交详情权限、子任务可 hack、输入大小和策略源码要求。 */
 final case class CreateHack(
-  submissionProgramStorage: SubmissionProgramStorage,
-  problemDataStorage: ProblemDataStorage
+  submissionProgramStorage: SubmissionProgramStorageContext,
+  problemDataStorage: ProblemDataStorageContext
 ) extends AuthenticatedApi[CreateHackRequest, HackDetail]:
 
   override val method: Method = Method.POST

@@ -27,7 +27,7 @@ API objects should return typed outputs unless the endpoint must customize the r
 
 For authenticated APIs:
 
-- session cookie resolution happens in `domains/auth/api/SessionResolver`
+- session cookie resolution happens in the `domains/auth/api/SessionResolver` object
 - `plan(...)` receives `AuthenticatedUser` or `SiteManagerUser`, never raw cookies or session tokens
 - transaction-backed APIs receive a `Connection`
 - the visible business workflow belongs directly in the API object's `plan(...)`

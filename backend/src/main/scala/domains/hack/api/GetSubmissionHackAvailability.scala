@@ -4,9 +4,9 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.response.SubmissionHackAvailability
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -15,8 +15,8 @@ import java.sql.Connection
 
 /** 查询提交各子任务 hack 可用性的认证 API；需要用户能查看目标提交详情。 */
 final case class GetSubmissionHackAvailability(
-  submissionProgramStorage: SubmissionProgramStorage,
-  problemDataStorage: ProblemDataStorage
+  submissionProgramStorage: SubmissionProgramStorageContext,
+  problemDataStorage: ProblemDataStorageContext
 ) extends AuthenticatedApi[SubmissionId, SubmissionHackAvailability]:
 
   override val method: Method = Method.GET

@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.table.message.MessageReadTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
@@ -14,7 +14,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 标记当前用户所有私信已读的认证 API，并向对端发布读回执事件。 */
-final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends AuthenticatedApi[Unit, SuccessResponse]:
+final class MarkAllMessagesRead(messageEventHub: MessageEventHubContext) extends AuthenticatedApi[Unit, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/messages/mark-all-read")
@@ -37,12 +37,13 @@ final class MarkAllMessagesRead(messageEventHub: MessageEventHub) extends Authen
       receipts <- MessageReadTable.listUnreadConversationReadReceipts(connection, actor.username)
       _ <- MessageReadTable.markAllMessagesRead(connection, actor.username)
       _ <- receipts.traverse_(receipt =>
-        messageEventHub.publish(
+        MessageEventHub.publish(
+          messageEventHub,
           receipt.otherParticipant,
           MessageStreamEvent.ConversationRead(receipt.conversationId, receipt.readUpToMessageId, actor.username)
         )
       )
-      _ <- messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
+      _ <- MessageEventHub.publish(messageEventHub, actor.username, MessageStreamEvent.InboxChanged)
     yield SuccessResponse(
       code = Some(ApiMessages.directMessagesMarkedRead.code),
       message = None,

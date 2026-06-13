@@ -2,7 +2,7 @@ package domains.auth.api
 
 import cats.effect.IO
 import domains.auth.objects.response.LoginResponse
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
 import domains.auth.objects.request.LoginRequest
 import domains.auth.table.auth_account.AuthAccountTable
 import domains.user.api.FindUserProfileSettings
@@ -14,7 +14,7 @@ import io.circe.syntax.*
 import java.sql.Connection
 
 /** 登录 API，校验账号密码，创建会话并写入会话 cookie。 */
-final case class Login(sessionStore: SessionStore) extends PublicResponseApi[LoginRequest]:
+final case class Login(sessionStore: SessionStoreContext) extends PublicResponseApi[LoginRequest]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/login")
@@ -36,7 +36,7 @@ final case class Login(sessionStore: SessionStore) extends PublicResponseApi[Log
           case true =>
             for
               profile <- findProfile(connection, account.username)
-              sessionToken <- sessionStore.createSessionInConnection(connection, account.username)
+              sessionToken <- SessionStore.createSessionInConnection(sessionStore, connection, account.username)
             yield
                 Response[IO](status = Status.Ok)
                   .withEntity(

@@ -8,7 +8,7 @@ import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.{SubmissionId, SubmissionStatus}
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -16,7 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 手动重判提交的管理端 API；仅题目管理者可对已完成或失败的提交重新入队。 */
-final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
+final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramStorageContext) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/submissions/:submissionId/rejudge")
@@ -49,7 +49,7 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
       updatedRecord <- SubmissionQueryTable.findById(connection, submissionId).map(
         _.getOrElse(throw new IllegalStateException("Submission disappeared after rejudge."))
       )
-      sourceCodes <- submissionProgramStorage.readSources(updatedRecord.programManifest).flatMap {
+      sourceCodes <- SubmissionProgramStorage.readSources(submissionProgramStorage, updatedRecord.programManifest).flatMap {
         case Right(sourceCodes) => IO.pure(sourceCodes)
         case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
       }

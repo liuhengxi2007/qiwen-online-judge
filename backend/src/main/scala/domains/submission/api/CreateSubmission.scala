@@ -8,14 +8,14 @@ import domains.contest.objects.ContestId
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.api.{EvaluateProblemAccess, GetJudgeProblemDataManifest, GetProblemSubmissionResultDisplayMode}
 import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug, ProblemTitle}
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.parser.decode as decodeJson
@@ -28,8 +28,8 @@ import java.sql.Connection
 
 /** 创建普通题目提交的 API；校验题目可见、判题配置和程序角色后写入提交与源码对象。 */
 final case class CreateSubmission(
-  submissionProgramStorage: SubmissionProgramStorage,
-  problemDataStorage: ProblemDataStorage
+  submissionProgramStorage: SubmissionProgramStorageContext,
+  problemDataStorage: ProblemDataStorageContext
 ) extends AuthenticatedApi[CreateSubmissionRequest, SubmissionDetail]:
 
   override val method: Method = Method.POST
@@ -94,7 +94,7 @@ final case class CreateSubmission(
       manifestInput = validRequest.programs.map { case (role, program) => role -> (program.language -> program.sourceCode) }
       programManifest <- HttpApiError.fromEitherBadRequest(SubmissionProgramManifest.fromPrograms(submissionUuid, manifestInput))
       _ <- programManifest.programs.toList.traverse_ { case (role, program) =>
-        submissionProgramStorage.writeSource(program.sourceKey, validRequest.programs(role).sourceCode)
+        SubmissionProgramStorage.writeSource(submissionProgramStorage, program.sourceKey, validRequest.programs(role).sourceCode)
       }
       defaultSourceCode = validRequest.programs(programManifest.defaultProgramKey).sourceCode
       created <- SubmissionMutationTable
@@ -112,7 +112,7 @@ final case class CreateSubmission(
           sourceCode = defaultSourceCode
         )
         .handleErrorWith { error =>
-          submissionProgramStorage.deleteManifest(programManifest).handleError(_ => ()).void *> IO.raiseError(error)
+          SubmissionProgramStorage.deleteManifest(submissionProgramStorage, programManifest).handleError(_ => ()).void *> IO.raiseError(error)
         }
       responsePrograms = programManifest.programs.map { case (role, program) =>
         role -> SubmissionDetail.Program(program.language, validRequest.programs(role).sourceCode)
@@ -148,7 +148,7 @@ final case class CreateSubmission(
           case Some(manifest) => IO.pure(manifest)
           case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemNotFound))
         }
-      maybeConfig <- problemDataStorage.readPath(problemSlug, judgeYamlPath)
+      maybeConfig <- ProblemDataStorage.readPath(problemDataStorage, problemSlug, judgeYamlPath)
       configBytes <- maybeConfig match
         case Some((_, bytes)) => IO.pure(bytes)
         case None => HttpApiError.raise(HttpApiError.badRequest("judge.yaml is required at the problem data root."))

@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.ProblemSlug
@@ -21,7 +21,7 @@ import java.sql.Connection
 import java.time.Instant
 
 /** 删除题目数据中单个路径或目录子树的管理端 API；要求题目管理权限并同步对象存储与清单表。 */
-final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
+final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedApi[(ProblemManagementContext, DeleteProblemDataPathRequest), ProblemDetail]:
 
   override val method: Method = Method.POST
@@ -57,13 +57,13 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
       for
         entries <- ProblemDataFileTable.listForProblem(connection, problem.id)
         pathsToDelete = entries.map(_.path).filter(entryPath => entryPath == request.path || entryPath.value.startsWith(s"${request.path.value}/"))
-        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+        snapshot <- ProblemDataStorage.snapshotDirectory(problemDataStorage, problem.slug)
         deletedProblem <-
           if pathsToDelete.isEmpty then
             HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
           else
             pathsToDelete
-              .traverse_(pathToDelete => problemDataStorage.deletePath(problem.slug, pathToDelete).void)
+              .traverse_(pathToDelete => ProblemDataStorage.deletePath(problemDataStorage, problem.slug, pathToDelete).void)
               .flatMap(_ => pathsToDelete.traverse_(pathToDelete => ProblemDataFileTable.deleteForProblemPath(connection, problem.id, pathToDelete)))
               .flatMap(_ => ProblemDataFileTable.listForProblem(connection, problem.id))
               .flatMap(entries =>
@@ -76,7 +76,7 @@ final case class DeleteProblemDataPath(problemDataStorage: ProblemDataStorage)
               )
               .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after data deletion."))
               .handleErrorWith { error =>
-                problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+                ProblemDataStorage.restoreDirectory(problemDataStorage, problem.slug, snapshot) *> IO.raiseError(error)
               }
       yield deletedProblem
     }

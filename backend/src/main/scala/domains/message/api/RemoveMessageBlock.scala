@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.table.message.MessageBlockTable
 import domains.user.objects.Username
 import io.circe.Encoder
@@ -14,7 +14,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 移除当前用户私信屏蔽关系的认证 API，成功后刷新当前用户收件箱事件。 */
-final class RemoveMessageBlock(messageEventHub: MessageEventHub) extends AuthenticatedApi[Username, SuccessResponse]:
+final class RemoveMessageBlock(messageEventHub: MessageEventHubContext) extends AuthenticatedApi[Username, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/messages/blocks/:targetUsername/remove")
@@ -30,7 +30,7 @@ final class RemoveMessageBlock(messageEventHub: MessageEventHub) extends Authent
   override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[SuccessResponse] =
     for
       _ <- MessageBlockTable.removeBlock(connection, actor.username, targetUsername)
-      _ <- messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
+      _ <- MessageEventHub.publish(messageEventHub, actor.username, MessageStreamEvent.InboxChanged)
     yield SuccessResponse(
       code = Some(ApiMessages.directMessageBlockRemoved.code),
       message = None,

@@ -11,7 +11,7 @@ import domains.blog.objects.request.CreateBlogCommentRequest
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
 import domains.notification.api.CreateNotification
-import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
 import domains.notification.objects.{NotificationKind, NotificationPayload}
 import domains.user.objects.Username
 import io.circe.Encoder
@@ -22,7 +22,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 创建博客评论回复的认证 API，成功后通知被回复链路中的相关作者。 */
-final class CreateBlogCommentReply(notificationEventHub: NotificationEventHub) extends AuthenticatedApi[CreateBlogCommentInput, BlogDetail]:
+final class CreateBlogCommentReply(notificationEventHub: NotificationEventHubContext) extends AuthenticatedApi[CreateBlogCommentInput, BlogDetail]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/blogs/:blogId/comments/:commentId/replies")
@@ -52,7 +52,7 @@ final class CreateBlogCommentReply(notificationEventHub: NotificationEventHub) e
         case Some(context) => createBlogReplyNotifications(connection, actor, context)
         case None => IO.pure(Nil)
       _ <- notificationRecipients.foldLeft(IO.unit)((acc, username) =>
-        acc *> notificationEventHub.publish(username, NotificationStreamEvent.NotificationsChanged)
+        acc *> NotificationEventHub.publish(notificationEventHub, username, NotificationStreamEvent.NotificationsChanged)
       )
     yield blog
 

@@ -1,7 +1,7 @@
 package domains.submission.table.submission
 
 import cats.effect.IO
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 
 import java.sql.Connection
 
@@ -9,7 +9,7 @@ import java.sql.Connection
 object SubmissionTable:
 
   /** 初始化 submissions 表并执行旧 source_code 到对象存储 manifest 的回填。 */
-  def initialize(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
+  def initialize(connection: Connection, submissionProgramStorage: SubmissionProgramStorageContext): IO[Unit] =
     for
       _ <- SubmissionTableSchema.initializeBeforeProgramManifestBackfill(connection)
       _ <- SubmissionProgramManifestBackfill.run(connection, submissionProgramStorage)

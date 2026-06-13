@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.table.problem.ProblemMutationTable
 import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
 import domains.submission.utils.SubmissionProgramCleanup
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 
@@ -16,7 +16,7 @@ import shared.objects.response.SuccessResponse
 import java.sql.Connection
 
 /** 删除题目的管理端 API；会先校验题目或竞赛管理权限，再删除题目记录并尽力清理关联提交程序对象。 */
-final case class DeleteProblem(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[ProblemManagementContext, SuccessResponse]:
+final case class DeleteProblem(submissionProgramStorage: SubmissionProgramStorageContext) extends AuthenticatedApi[ProblemManagementContext, SuccessResponse]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/delete")

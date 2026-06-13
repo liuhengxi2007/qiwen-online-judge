@@ -5,7 +5,7 @@ import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.user.table.user_profile.UserProfileTable
-import domains.user.utils.UserAvatarStorage
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageContext}
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
@@ -14,7 +14,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 用户头像读取 API，从对象存储读取头像字节并返回原始图片响应。 */
-final case class GetUserAvatar(userAvatarStorage: UserAvatarStorage) extends AuthenticatedResponseApi[Username]:
+final case class GetUserAvatar(userAvatarStorage: UserAvatarStorageContext) extends AuthenticatedResponseApi[Username]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/users/:targetUsername/avatar")
@@ -33,7 +33,7 @@ final case class GetUserAvatar(userAvatarStorage: UserAvatarStorage) extends Aut
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       case Some(avatar) =>
-        userAvatarStorage.readObject(avatar.objectKey).flatMap {
+        UserAvatarStorage.readObject(userAvatarStorage, avatar.objectKey).flatMap {
           case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
           case Some(bytes) => IO.pure(avatarResponse(avatar.contentType, bytes))
         }

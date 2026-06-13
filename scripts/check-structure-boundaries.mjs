@@ -64,7 +64,7 @@ const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
 const backendDomainUtilsFilePattern =
   /^backend\/src\/main\/scala\/domains\/([^/]+)\/utils\/(.+\.scala)$/
 const backendEffectPattern =
-  /(?:\.prepareStatement\s*\(|\bFiles\.|\bInstant\.now\s*\(|\bLocalDateTime\.now\s*\(|\bSystem\.currentTimeMillis\s*\(|\bUUID\.randomUUID\s*\(|\bSecureRandom\s*\(|\.nextBytes\s*\(|\.publish1\s*\(|\.publish\s*\(|\bclient\.(?:get|set|setex|del|listObjects|putObject|getObject|removeObject|bucketExists|makeBucket)\s*\(|\bproblemDataStorage\.(?:list|read|write|delete|snapshot|restore)\w*\s*\()/
+  /(?:\.prepareStatement\s*\(|\bFiles\.|\bInstant\.now\s*\(|\bLocalDateTime\.now\s*\(|\bSystem\.currentTimeMillis\s*\(|\bUUID\.randomUUID\s*\(|\bSecureRandom\s*\(|\.nextBytes\s*\(|\.publish1\s*\(|\.publish\s*\(|\bclient\.(?:get|set|setex|del|listObjects|putObject|getObject|removeObject|bucketExists|makeBucket)\s*\(|\b(?:ProblemDataStorage|SubmissionProgramStorage|UserAvatarStorage|SessionCache|SessionStore|MessageEventHub|NotificationEventHub)\.(?:create|resource|list|read|write|delete|snapshot|restore|publish|subscribe|put|get|lookup)\w*\s*\()/
 const backendEffectfulReturnPattern = /:\s*(?:IO|Resource)\s*\[|:\s*Stream\s*\[\s*IO\b/
 
 const backendDomainUtilsAllowlist = new Map([
@@ -74,7 +74,6 @@ const backendDomainUtilsAllowlist = new Map([
       'AuthAccountRules.scala',
       'PasswordHasher.scala',
       'AuthSessionCookies.scala',
-      'RedisSessionCache.scala',
       'SessionCache.scala',
       'SessionCacheConfig.scala',
       'SessionConfig.scala',
@@ -84,7 +83,6 @@ const backendDomainUtilsAllowlist = new Map([
   [
     'problem',
     new Set([
-      'MinioProblemDataStorage.scala',
       'ProblemDataStorage.scala',
       'ProblemDataStorageConfig.scala',
       'ProblemAccessRules.scala',
@@ -102,13 +100,11 @@ const backendDomainUtilsAllowlist = new Map([
       'SubmissionJudgeRules.scala',
       'SubmissionListRequestQuery.scala',
       'SubmissionProgramStorage.scala',
-      'MinioSubmissionProgramStorage.scala',
       'SubmissionProgramStorageConfig.scala',
       'SubmissionProgramCleanup.scala',
     ]),
   ],
   ['user', new Set([
-    'MinioUserAvatarStorage.scala',
     'UserApiRules.scala',
     'UserAvatarStorage.scala',
     'UserAvatarStorageConfig.scala',

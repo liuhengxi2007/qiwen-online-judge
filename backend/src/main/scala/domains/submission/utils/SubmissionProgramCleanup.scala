@@ -14,9 +14,9 @@ object SubmissionProgramCleanup:
   def prepareDeleteForProblem(
     connection: Connection,
     problemId: ProblemId,
-    submissionProgramStorage: SubmissionProgramStorage
+    submissionProgramStorage: SubmissionProgramStorageContext
   ): IO[IO[Unit]] =
     SubmissionQueryTable
       .listProgramManifestsForProblem(connection, problemId)
       // 注意：清理提交程序对象失败不会阻断题目删除，后续需要独立的孤儿对象回收机制兜底。
-      .map(_.traverse_(manifest => submissionProgramStorage.deleteManifest(manifest).handleError(_ => ())))
+      .map(_.traverse_(manifest => SubmissionProgramStorage.deleteManifest(submissionProgramStorage, manifest).handleError(_ => ())))

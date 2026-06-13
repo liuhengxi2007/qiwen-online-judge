@@ -4,6 +4,7 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.objects.SiteManagerUser
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.auth.utils.SessionStoreContext
 import io.circe.Encoder
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*
@@ -15,14 +16,14 @@ import java.sql.Connection
 /** API 执行上下文，携带数据库事务入口和可选的会话解析器。 */
 final case class ApiObjectContext(
   databaseSession: DatabaseSession,
-  sessionResolver: Option[SessionResolver]
+  sessionStore: Option[SessionStoreContext]
 )
 
 /** API 上下文构造器，区分需要登录态解析器的普通上下文和纯公开上下文。 */
 object ApiObjectContext:
   /** 构造带会话解析器的上下文，供登录态或管理员 API 使用。 */
-  def apply(databaseSession: DatabaseSession, sessionResolver: SessionResolver): ApiObjectContext =
-    ApiObjectContext(databaseSession, Some(sessionResolver))
+  def apply(databaseSession: DatabaseSession, sessionStore: SessionStoreContext): ApiObjectContext =
+    ApiObjectContext(databaseSession, Some(sessionStore))
 
   /** 构造无会话解析器的上下文，仅适用于公开 API。 */
   def public(databaseSession: DatabaseSession): ApiObjectContext =
@@ -126,7 +127,7 @@ trait AuthenticatedApi[Input, Output] extends ApiObject:
       input <- decode(request, pathParams)
       response <- context.databaseSession.withTransactionConnection { connection =>
         for
-          actor <- requiredSessionResolver(context).resolveAuthenticatedUser(connection, request)
+          actor <- SessionResolver.resolveAuthenticatedUser(requiredSessionStore(context), connection, request)
           output <- plan(connection, actor, input)
           response <- jsonResponse(output)
         yield response
@@ -157,7 +158,7 @@ trait SiteManagerApi[Input, Output] extends ApiObject:
       input <- decode(request, pathParams)
       response <- context.databaseSession.withTransactionConnection { connection =>
         for
-          actor <- requiredSessionResolver(context).resolveSiteManager(connection, request)
+          actor <- SessionResolver.resolveSiteManager(requiredSessionStore(context), connection, request)
           output <- plan(connection, actor, input)
           response <- jsonResponse(output)
         yield response
@@ -184,7 +185,7 @@ trait AuthenticatedResponseApi[Input] extends ApiObject:
       input <- decode(request, pathParams)
       response <- context.databaseSession.withTransactionConnection { connection =>
         for
-          actor <- requiredSessionResolver(context).resolveAuthenticatedUser(connection, request)
+          actor <- SessionResolver.resolveAuthenticatedUser(requiredSessionStore(context), connection, request)
           response <- plan(connection, actor, input)
         yield response
       }
@@ -204,6 +205,6 @@ trait InternalOnlyAuthenticatedApi[Input, Output] extends ApiObject:
     val _ = (context, request, pathParams)
     HttpApiError.forbidden(ApiMessages.internalApiNotCallable).toResponse
 
-/** 从上下文取出会话解析器；认证模板配置错误时抛出状态异常。 */
-private def requiredSessionResolver(context: ApiObjectContext): SessionResolver =
-  context.sessionResolver.getOrElse(throw new IllegalStateException("Session resolver is required for authenticated API objects."))
+/** 从上下文取出会话存储；认证模板配置错误时抛出状态异常。 */
+private def requiredSessionStore(context: ApiObjectContext): SessionStoreContext =
+  context.sessionStore.getOrElse(throw new IllegalStateException("Session store is required for authenticated API objects."))

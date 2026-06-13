@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.objects.response.MessageBlockEntry
 import domains.message.table.message.{MessageBlockTable, MessageUserTable}
 import domains.user.objects.Username
@@ -14,7 +14,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 添加私信屏蔽用户的认证 API，成功后刷新当前用户消息收件箱事件。 */
-final class AddMessageBlock(messageEventHub: MessageEventHub) extends AuthenticatedApi[Username, MessageBlockEntry]:
+final class AddMessageBlock(messageEventHub: MessageEventHubContext) extends AuthenticatedApi[Username, MessageBlockEntry]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/messages/blocks/:targetUsername")
@@ -33,5 +33,5 @@ final class AddMessageBlock(messageEventHub: MessageEventHub) extends Authentica
       targetExists <- MessageUserTable.userExists(connection, targetUsername)
       _ <- HttpApiError.ensure(targetExists, HttpApiError.notFound(ApiMessages.userNotFound))
       entry <- MessageBlockTable.upsertBlock(connection, actor.username, targetUsername)
-      _ <- messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
+      _ <- MessageEventHub.publish(messageEventHub, actor.username, MessageStreamEvent.InboxChanged)
     yield entry

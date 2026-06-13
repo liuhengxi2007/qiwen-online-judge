@@ -2,9 +2,9 @@ package domains.notification.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStore
-import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
-import domains.notification.utils.NotificationEventHub
+import domains.auth.utils.SessionStoreContext
+import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
+import domains.notification.utils.NotificationEventHubContext
 import domains.notification.api.*
 import org.http4s.HttpRoutes
 
@@ -12,8 +12,8 @@ import org.http4s.HttpRoutes
 object NotificationRouter:
 
   /** 构造通知相关 HTTP 路由，内部创建通知 API 与用户可见通知 API 共用同一上下文。 */
-  def routes(databaseSession: DatabaseSession, sessionStore: SessionStore, notificationEventHub: NotificationEventHub): HttpRoutes[IO] =
-    val context = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
+  def routes(databaseSession: DatabaseSession, sessionStore: SessionStoreContext, notificationEventHub: NotificationEventHubContext): HttpRoutes[IO] =
+    val context = ApiObjectContext(databaseSession, sessionStore)
 
     ApiObjectRouter.routes(
       context,

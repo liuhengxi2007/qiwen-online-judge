@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.PublicResponseApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
@@ -16,7 +16,7 @@ import java.sql.Connection
 /** judge worker 下载题目数据单文件的公开响应 API；使用共享 token 认证，不走用户会话权限。 */
 final case class DownloadJudgeProblemData(
   judgeConfig: JudgeConfig,
-  problemDataStorage: ProblemDataStorage
+  problemDataStorage: ProblemDataStorageContext
 ) extends PublicResponseApi[(ProblemSlug, ProblemDataPath)]:
 
   override val method: Method = Method.GET
@@ -39,7 +39,7 @@ final case class DownloadJudgeProblemData(
   override def plan(connection: Connection, input: (ProblemSlug, ProblemDataPath)): IO[Response[IO]] =
     val _ = connection
     val (problemSlug, path) = input
-    problemDataStorage.readPath(problemSlug, path).flatMap {
+    ProblemDataStorage.readPath(problemDataStorage, problemSlug, path).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
       case Some((storedPath, bytes)) =>

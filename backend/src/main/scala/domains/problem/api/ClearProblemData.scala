@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.ProblemSlug
@@ -18,7 +18,7 @@ import java.sql.Connection
 import java.time.Instant
 
 /** 清空题目数据目录的管理端 API；要求调用者具备题目管理权限，副作用是删除对象存储文件、清空清单表并更新题目数据状态。 */
-final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
+final case class ClearProblemData(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedApi[ProblemManagementContext, ProblemDetail]:
 
   override val method: Method = Method.POST
@@ -44,14 +44,14 @@ final case class ClearProblemData(problemDataStorage: ProblemDataStorage)
   def clearManagedProblemData(connection: Connection, problemSlug: ProblemSlug): IO[ProblemDetail] =
     ProblemDataApiHelpers.withProblemForUpdate(connection, problemSlug) { problem =>
       for
-        snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
-        clearedProblem <- problemDataStorage
-          .deleteAllFiles(problem.slug)
+        snapshot <- ProblemDataStorage.snapshotDirectory(problemDataStorage, problem.slug)
+        clearedProblem <- ProblemDataStorage
+          .deleteAllFiles(problemDataStorage, problem.slug)
           .flatMap(_ => ProblemDataFileTable.deleteAllForProblem(connection, problem.id))
           .flatMap(_ => ProblemDataStateTable.updateData(connection, problem.id, Instant.now(), None))
           .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after clearing data."))
           .handleErrorWith { error =>
-            problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+            ProblemDataStorage.restoreDirectory(problemDataStorage, problem.slug, snapshot) *> IO.raiseError(error)
           }
       yield clearedProblem
     }

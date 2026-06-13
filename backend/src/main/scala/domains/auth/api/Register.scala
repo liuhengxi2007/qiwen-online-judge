@@ -5,7 +5,7 @@ import domains.auth.objects.EmailAddress
 import domains.auth.objects.request.RegisterRequest
 import domains.auth.objects.response.RegisterResponse
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
 import domains.problem.objects.ProblemTitleDisplayMode
 import domains.user.api.CreateUserProfileSettings
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}
@@ -19,7 +19,7 @@ import io.circe.syntax.*
 import java.sql.Connection
 
 /** 注册 API，创建账号与用户资料，并直接建立登录会话。 */
-final case class Register(sessionStore: SessionStore) extends PublicResponseApi[RegisterRequest]:
+final case class Register(sessionStore: SessionStoreContext) extends PublicResponseApi[RegisterRequest]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/auth/register")
@@ -58,7 +58,7 @@ final case class Register(sessionStore: SessionStore) extends PublicResponseApi[
           autoMarkMessageRead = false
         )
       )
-      sessionToken <- sessionStore.createSessionInConnection(connection, createdAccount.username)
+      sessionToken <- SessionStore.createSessionInConnection(sessionStore, connection, createdAccount.username)
     yield
       Response[IO](status = Status.Created)
         .withEntity(

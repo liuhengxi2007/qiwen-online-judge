@@ -7,7 +7,7 @@ import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug}
 import domains.problem.objects.internal.ProblemDataManifestEntry
 import domains.problem.table.problem.ProblemMutationTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import org.snakeyaml.engine.v2.api.{Dump, DumpSettings, Load, LoadSettings}
 import org.snakeyaml.engine.v2.common.FlowStyle
 import org.http4s.Method
@@ -35,7 +35,7 @@ final case class MaterializeHackProblemDataInput(
 )
 
 /** 内部 hack 数据物化 API；把成功 hack 写入题目数据文件、更新 judge.yaml，并提升题目 hack revision。 */
-final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorage) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:
+final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorageContext) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/problems/hack-data")
@@ -75,12 +75,12 @@ object MaterializeHackProblemData:
 
   private def materialize(
     connection: Connection,
-    problemDataStorage: ProblemDataStorage,
+    problemDataStorage: ProblemDataStorageContext,
     input: MaterializeHackProblemDataInput
   ): IO[Unit] =
     for
       _ <- lockProblem(connection, input.problemId)
-      snapshot <- problemDataStorage.snapshotDirectory(input.problemSlug)
+      snapshot <- ProblemDataStorage.snapshotDirectory(problemDataStorage, input.problemSlug)
       inputBytes = input.inputText.getBytes(StandardCharsets.UTF_8)
       answerBytes = input.answerText.map(_.getBytes(StandardCharsets.UTF_8))
       action =
@@ -98,15 +98,15 @@ object MaterializeHackProblemData:
             input.answerPath.zip(answerBytes).map { case (path, bytes) => manifestEntry(path, bytes) },
             Some(manifestEntry(JudgeYamlPath, updatedJudgeYaml))
           ).flatten
-          _ <- problemDataStorage.writePath(input.problemSlug, input.inputPath, inputBytes)
+          _ <- ProblemDataStorage.writePath(problemDataStorage, input.problemSlug, input.inputPath, inputBytes)
           _ <- input.answerPath.zip(answerBytes).traverse_ { case (path, bytes) =>
-            problemDataStorage.writePath(input.problemSlug, path, bytes)
+            ProblemDataStorage.writePath(problemDataStorage, input.problemSlug, path, bytes)
           }
-          _ <- problemDataStorage.writePath(input.problemSlug, JudgeYamlPath, updatedJudgeYaml)
+          _ <- ProblemDataStorage.writePath(problemDataStorage, input.problemSlug, JudgeYamlPath, updatedJudgeYaml)
           _ <- ProblemDataFileTable.upsertForProblem(connection, input.problemId, entries, input.createdAt)
           _ <- ProblemMutationTable.incrementHackRevision(connection, input.problemId)
         yield ()
-      _ <- action.handleErrorWith(error => problemDataStorage.restoreDirectory(input.problemSlug, snapshot) *> IO.raiseError(error))
+      _ <- action.handleErrorWith(error => ProblemDataStorage.restoreDirectory(problemDataStorage, input.problemSlug, snapshot) *> IO.raiseError(error))
     yield ()
 
   private[api] def appendHackTestcaseToJudgeYaml(
@@ -139,10 +139,10 @@ object MaterializeHackProblemData:
     normalized.getBytes(StandardCharsets.UTF_8)
 
   private def readJudgeYaml(
-    problemDataStorage: ProblemDataStorage,
+    problemDataStorage: ProblemDataStorageContext,
     problemSlug: ProblemSlug
   ): IO[Array[Byte]] =
-    problemDataStorage.readPath(problemSlug, JudgeYamlPath).flatMap {
+    ProblemDataStorage.readPath(problemDataStorage, problemSlug, JudgeYamlPath).flatMap {
       case Some((_, bytes)) => IO.pure(bytes)
       case None => IO.raiseError(IllegalStateException("judge.yaml is required before hack materialization."))
     }

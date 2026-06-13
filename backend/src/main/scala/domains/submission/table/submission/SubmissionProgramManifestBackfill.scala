@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.submission.objects.{SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.syntax.*
 
 import java.sql.Connection
@@ -14,7 +14,7 @@ import java.util.UUID
 object SubmissionProgramManifestBackfill:
 
   /** 当 legacy language/source_code 列存在时执行回填；新表结构无旧列时无副作用。 */
-  def run(connection: Connection, submissionProgramStorage: SubmissionProgramStorage): IO[Unit] =
+  def run(connection: Connection, submissionProgramStorage: SubmissionProgramStorageContext): IO[Unit] =
     for
       hasLegacySourceCode <- columnExists(connection, "source_code")
       hasLegacyLanguage <- columnExists(connection, "language")
@@ -24,7 +24,7 @@ object SubmissionProgramManifestBackfill:
             rows.traverse_ { row =>
               val manifest = SubmissionProgramManifest.singleDefault(row.id, row.language, row.sourceCode)
               for
-                _ <- submissionProgramStorage.writeSource(manifest.programs(SubmissionProgramManifest.DefaultProgramKey).sourceKey, row.sourceCode)
+                _ <- SubmissionProgramStorage.writeSource(submissionProgramStorage, manifest.programs(SubmissionProgramManifest.DefaultProgramKey).sourceKey, row.sourceCode)
                 _ <- writeProgramManifest(connection, row.id, manifest)
               yield ()
             }

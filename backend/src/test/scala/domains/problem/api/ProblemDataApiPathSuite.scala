@@ -3,19 +3,19 @@ package domains.problem.api
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
-import domains.auth.utils.SessionStore
+import domains.auth.utils.SessionStoreContext
 import domains.contest.routes.ContestRouter
 import domains.problem.routes.ProblemRouter
-import domains.problem.utils.ProblemDataStorage
-import domains.submission.utils.SubmissionProgramStorage
+import domains.problem.utils.ProblemDataStorageContext
+import domains.submission.utils.SubmissionProgramStorageContext
 import munit.CatsEffectSuite
 import org.http4s.{Method, Request, Status, Uri}
 import shared.api.ApiPath
 
 class ProblemDataApiPathSuite extends CatsEffectSuite:
 
-  private val problemDataStorage = null.asInstanceOf[ProblemDataStorage]
-  private val submissionProgramStorage = null.asInstanceOf[SubmissionProgramStorage]
+  private val problemDataStorage = null.asInstanceOf[ProblemDataStorageContext]
+  private val submissionProgramStorage = null.asInstanceOf[SubmissionProgramStorageContext]
 
   test("problem data APIs expose the renamed route surface") {
     val actualPaths = List(
@@ -52,7 +52,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
     val routes = ProblemRouter
       .routes(
         null.asInstanceOf[DatabaseSession],
-        null.asInstanceOf[SessionStore],
+        null.asInstanceOf[SessionStoreContext],
         problemDataStorage,
         submissionProgramStorage
       )
@@ -80,7 +80,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
     val routes = ContestRouter
       .routes(
         null.asInstanceOf[DatabaseSession],
-        null.asInstanceOf[SessionStore],
+        null.asInstanceOf[SessionStoreContext],
         submissionProgramStorage,
         problemDataStorage
       )

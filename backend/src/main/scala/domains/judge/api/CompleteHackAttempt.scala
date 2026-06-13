@@ -6,7 +6,7 @@ import domains.auth.api.PublicApi
 import domains.hack.api.RecordHackAttemptResult
 import domains.hack.objects.HackId
 import domains.judge.utils.{JudgeConfig, JudgeTokenAuth}
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import domains.submission.api.QueueHackRejudgeForProblem
 import io.circe.Encoder
 import judgeprotocol.objects.request.ReportHackResultRequest
@@ -20,7 +20,7 @@ import java.sql.Connection
 /** judge worker 完成 hack attempt 的公开 API；记录 hack 结果并在成功时触发题目提交重判。 */
 final case class CompleteHackAttempt(
   judgeConfig: JudgeConfig,
-  problemDataStorage: ProblemDataStorage
+  problemDataStorage: ProblemDataStorageContext
 ) extends PublicApi[(HackId, ReportHackResultRequest), SuccessResponse]:
 
   override val method: Method = Method.POST

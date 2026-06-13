@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.objects.MessageConversationId
 import domains.message.objects.request.SendDirectMessageRequest
 import domains.message.objects.response.DirectMessage
@@ -16,7 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 发送私信的认证 API，要求当前用户属于会话且未被收件人屏蔽。 */
-final class SendDirectMessage(messageEventHub: MessageEventHub)
+final class SendDirectMessage(messageEventHub: MessageEventHubContext)
     extends AuthenticatedApi[(MessageConversationId, SendDirectMessageRequest), DirectMessage]:
 
   override val method: Method = Method.POST
@@ -47,5 +47,5 @@ final class SendDirectMessage(messageEventHub: MessageEventHub)
       _ <- HttpApiError.ensure(!blocked, HttpApiError.forbidden(ApiMessages.directMessageBlockedByRecipient))
       message <- DirectMessageTable.insertMessage(connection, conversationId, actor.username, recipientUsername, request.content)
       /** 注意：这里只向收件人 SSE 发布新消息；发送方其他标签页依赖本次 HTTP 响应或后续刷新同步 inbox 摘要。 */
-      _ <- messageEventHub.publish(recipientUsername, MessageStreamEvent.MessageReceived(message))
+      _ <- MessageEventHub.publish(messageEventHub, recipientUsername, MessageStreamEvent.MessageReceived(message))
     yield message

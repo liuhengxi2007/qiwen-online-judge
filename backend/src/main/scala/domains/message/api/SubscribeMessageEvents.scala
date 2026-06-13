@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import fs2.text
 import io.circe.Encoder
 import io.circe.syntax.*
@@ -14,7 +14,7 @@ import shared.api.{ApiPath, PathParams}
 import java.sql.Connection
 
 /** 订阅当前用户私信事件的 SSE API，事件由消息事件中心按用户名过滤。 */
-final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends AuthenticatedResponseApi[Unit]:
+final class SubscribeMessageEvents(messageEventHub: MessageEventHubContext) extends AuthenticatedResponseApi[Unit]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/messages/events")
@@ -38,7 +38,7 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHub) extends Aut
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          messageEventHub.subscribe(actor.username).map(toServerSentEventString).through(text.utf8.encode)
+          MessageEventHub.subscribe(messageEventHub, actor.username).map(toServerSentEventString).through(text.utf8.encode)
         )
     )
 

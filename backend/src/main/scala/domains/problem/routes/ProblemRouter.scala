@@ -23,10 +23,10 @@ import domains.problem.api.UploadProblemDataFile
 import domains.problem.api.UploadProblemDataArchive
 import domains.problem.api.UpdateProblem
 import domains.problem.api.DeleteProblem
-import domains.auth.utils.SessionStore
-import domains.problem.utils.ProblemDataStorage
-import domains.submission.utils.SubmissionProgramStorage
-import domains.auth.api.{ApiObjectContext, ApiObjectRouter, SessionResolver}
+import domains.auth.utils.SessionStoreContext
+import domains.problem.utils.ProblemDataStorageContext
+import domains.submission.utils.SubmissionProgramStorageContext
+import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
@@ -36,12 +36,12 @@ object ProblemRouter:
   /** 构造题目域 HttpRoutes；注入数据库会话、会话解析器、题目数据存储和提交程序存储。 */
   def routes(
     databaseSession: DatabaseSession,
-    sessionStore: SessionStore,
-    problemDataStorage: ProblemDataStorage,
-    submissionProgramStorage: SubmissionProgramStorage
+    sessionStore: SessionStoreContext,
+    problemDataStorage: ProblemDataStorageContext,
+    submissionProgramStorage: SubmissionProgramStorageContext
   ): HttpRoutes[IO] =
     given Http4sDsl[IO] = new Http4sDsl[IO] {}
-    val apiObjectContext = ApiObjectContext(databaseSession, SessionResolver(sessionStore))
+    val apiObjectContext = ApiObjectContext(databaseSession, sessionStore)
 
     ApiObjectRouter.routes(
       apiObjectContext,

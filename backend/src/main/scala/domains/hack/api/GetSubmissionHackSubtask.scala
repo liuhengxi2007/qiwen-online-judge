@@ -4,9 +4,9 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.response.HackSubtaskInfo
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
@@ -15,8 +15,8 @@ import java.sql.Connection
 
 /** 查询提交单个子任务 hack 详情的认证 API；用于创建 hack 前展示旧分数和策略要求。 */
 final case class GetSubmissionHackSubtask(
-  submissionProgramStorage: SubmissionProgramStorage,
-  problemDataStorage: ProblemDataStorage
+  submissionProgramStorage: SubmissionProgramStorageContext,
+  problemDataStorage: ProblemDataStorageContext
 ) extends AuthenticatedApi[(SubmissionId, Int), HackSubtaskInfo]:
 
   override val method: Method = Method.GET

@@ -3,7 +3,7 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.objects.MessageConversationId
 import domains.message.objects.request.{MarkConversationReadMode, MarkConversationReadRequest}
 import domains.message.objects.response.MessageConversationSummary
@@ -16,7 +16,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 标记当前用户某个私信会话已读的认证 API，支持整会话或指定消息已读。 */
-final class MarkConversationRead(messageEventHub: MessageEventHub)
+final class MarkConversationRead(messageEventHub: MessageEventHubContext)
     extends AuthenticatedApi[(MessageConversationId, MarkConversationReadRequest), MessageConversationSummary]:
 
   override val method: Method = Method.POST
@@ -62,8 +62,8 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
       updatedSummary <- MessageConversationTable.findConversationSummaryForUser(connection, actor.username, conversationId).map(_.getOrElse(existingSummary))
       _ <- readUpToMessageId match
         case Some(messageId) =>
-          messageEventHub.publish(otherParticipant, MessageStreamEvent.ConversationRead(conversationId, messageId, actor.username)) *>
-            messageEventHub.publish(actor.username, MessageStreamEvent.InboxChanged)
+          MessageEventHub.publish(messageEventHub, otherParticipant, MessageStreamEvent.ConversationRead(conversationId, messageId, actor.username)) *>
+            MessageEventHub.publish(messageEventHub, actor.username, MessageStreamEvent.InboxChanged)
         case None =>
           IO.unit
     yield updatedSummary

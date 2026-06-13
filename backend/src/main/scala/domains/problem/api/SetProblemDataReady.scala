@@ -5,7 +5,7 @@ import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.judge.utils.JudgeTaskBuilder
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
@@ -27,7 +27,7 @@ import java.time.Instant
 final case class SetProblemReadyRequest(ready: Boolean)
 
 /** 题目数据 ready 状态管理 API；校验题目数据可判、清理冗余文件并更新结果展示模式。 */
-final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
+final case class SetProblemDataReady(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedApi[(ProblemManagementContext, SetProblemReadyRequest), ProblemDetail]:
 
   private given Decoder[SetProblemReadyRequest] = deriveDecoder[SetProblemReadyRequest]
@@ -74,7 +74,7 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
     val judgeYamlPath = ProblemDataPath("judge.yaml")
     for
       manifest <- ProblemDataFileTable.manifestForProblem(connection, problem.id, problem.slug)
-      maybeConfig <- problemDataStorage.readPath(problem.slug, judgeYamlPath)
+      maybeConfig <- ProblemDataStorage.readPath(problemDataStorage, problem.slug, judgeYamlPath)
       result <- maybeConfig match
         case None =>
           HttpApiError.raise(HttpApiError.badRequest("judge.yaml is required at the problem data root."))
@@ -97,9 +97,9 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
     val retainedEntries = entries.filter(entry => retainedPaths.contains(entry.path))
     val redundantPaths = entries.map(_.path).filterNot(retainedPaths.contains)
     for
-      snapshot <- problemDataStorage.snapshotDirectory(problem.slug)
+      snapshot <- ProblemDataStorage.snapshotDirectory(problemDataStorage, problem.slug)
       updatedProblem <- redundantPaths
-        .traverse_(path => problemDataStorage.deletePath(problem.slug, path).void)
+        .traverse_(path => ProblemDataStorage.deletePath(problemDataStorage, problem.slug, path).void)
         .flatMap(_ => ProblemDataFileTable.deleteExceptPaths(connection, problem.id, retainedPaths))
         .flatMap(_ =>
           ProblemDataStateTable.updateDataReady(
@@ -113,6 +113,6 @@ final case class SetProblemDataReady(problemDataStorage: ProblemDataStorage)
         )
         .flatMap(_ => ProblemDataApiHelpers.refreshedManagedProblem(connection, problem, "Problem disappeared after ready update."))
         .handleErrorWith { error =>
-          problemDataStorage.restoreDirectory(problem.slug, snapshot) *> IO.raiseError(error)
+          ProblemDataStorage.restoreDirectory(problemDataStorage, problem.slug, snapshot) *> IO.raiseError(error)
         }
     yield updatedProblem

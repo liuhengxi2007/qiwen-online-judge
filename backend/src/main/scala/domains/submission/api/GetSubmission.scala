@@ -10,7 +10,7 @@ import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionDetailRecord
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionQueryTable
-import domains.submission.utils.SubmissionProgramStorage
+import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -18,7 +18,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 获取提交详情的认证 API；按题目策略、本人身份和管理权限决定是否可见源码详情。 */
-final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorage) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
+final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorageContext) extends AuthenticatedApi[SubmissionId, SubmissionDetail]:
 
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/submissions/:submissionId")
@@ -58,7 +58,7 @@ final case class GetSubmission(submissionProgramStorage: SubmissionProgramStorag
     }
 
   private def loadSubmissionDetail(record: SubmissionDetailRecord, canManage: Boolean): IO[SubmissionDetail] =
-    submissionProgramStorage.readSources(record.programManifest).flatMap {
+    SubmissionProgramStorage.readSources(submissionProgramStorage, record.programManifest).flatMap {
       case Right(sourceCodes) => IO.pure(SubmissionDetail.fromRecord(record, sourceCodes, canManage))
       case Left(message) => HttpApiError.raise(HttpApiError.internal(message))
     }

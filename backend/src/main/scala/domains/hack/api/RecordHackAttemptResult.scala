@@ -7,7 +7,7 @@ import domains.hack.objects.{HackId, HackStatus}
 import domains.hack.table.hack.HackMutationTable
 import domains.problem.api.MaterializeHackProblemData
 import domains.problem.objects.{ProblemDataPath, ProblemId}
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.ProblemDataStorageContext
 import judgeprotocol.objects.request.ReportHackResultRequest
 import org.http4s.Method
 import shared.api.ApiPath
@@ -21,7 +21,7 @@ final case class RecordHackAttemptResultInput(
 )
 
 /** 内部记录 hack 结果 API；成功 hack 会物化为题目数据并返回受影响题目 id。 */
-final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage) extends InternalOnlyApi[RecordHackAttemptResultInput, Option[ProblemId]]:
+final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorageContext) extends InternalOnlyApi[RecordHackAttemptResultInput, Option[ProblemId]]:
 
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/hacks/judge/result")

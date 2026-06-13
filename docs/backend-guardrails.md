@@ -103,12 +103,10 @@ Current domain-owned utility allowlist:
 - `domains/auth/utils/AuthAccountRules.scala`
 - `domains/auth/utils/PasswordHasher.scala`
 - `domains/auth/utils/AuthSessionCookies.scala`
-- `domains/auth/utils/RedisSessionCache.scala`
 - `domains/auth/utils/SessionCache.scala`
 - `domains/auth/utils/SessionCacheConfig.scala`
 - `domains/auth/utils/SessionConfig.scala`
 - `domains/auth/utils/SessionStore.scala`
-- `domains/problem/utils/MinioProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorageConfig.scala`
 - `domains/problem/utils/ProblemAccessRules.scala`
@@ -123,10 +121,8 @@ Current domain-owned utility allowlist:
 - `domains/submission/utils/SubmissionJudgeRules.scala`
 - `domains/submission/utils/SubmissionListRequestQuery.scala`
 - `domains/submission/utils/SubmissionProgramStorage.scala`
-- `domains/submission/utils/MinioSubmissionProgramStorage.scala`
 - `domains/submission/utils/SubmissionProgramStorageConfig.scala`
 - `domains/submission/utils/SubmissionProgramCleanup.scala`
-- `domains/user/utils/MinioUserAvatarStorage.scala`
 - `domains/user/utils/UserApiRules.scala`
 - `domains/user/utils/UserAvatarStorage.scala`
 - `domains/user/utils/UserAvatarStorageConfig.scala`
@@ -153,8 +149,8 @@ Allowed public domain boundaries:
 - allowlisted durable/public object types under `domains/<domain>/objects`
 - explicitly imported owner-domain API objects under `domains.<target>.api.<Name>` for cross-domain `plan(...)` calls
 - domain routers, such as `domains.problem.routes.ProblemRouter`
-- auth-owned API-object protocol types in `domains.auth.api`: `AuthenticatedApi`, `AuthenticatedResponseApi`, `InternalOnlyApi`, `InternalOnlyAuthenticatedApi`, `PublicApi`, `PublicResponseApi`, `SiteManagerApi`, `ApiObjectContext`, `ApiObjectRouter`, and `SessionResolver`
-- router/session wiring through `domains.auth.utils.SessionStore`
+- auth-owned API-object protocol types in `domains.auth.api`: `AuthenticatedApi`, `AuthenticatedResponseApi`, `InternalOnlyApi`, `InternalOnlyAuthenticatedApi`, `PublicApi`, `PublicResponseApi`, `SiteManagerApi`, `ApiObjectContext`, `ApiObjectRouter`, and the `SessionResolver` object
+- router/session wiring through `domains.auth.utils.SessionStoreContext` values and `SessionStore` functions
 
 Cross-domain application code should call the target domain's API object `plan(...)` instead of importing the target domain's `table` package. Wildcard imports such as `domains.problem.api.*` are intentionally forbidden across domains; name the API object being used.
 
@@ -164,9 +160,10 @@ The judge worker channel is the frontend API mirroring exception. Worker-only ca
 
 Current explicitly guarded collaboration boundaries:
 
-- notification event dispatch and payload typing: `NotificationEventHub`, `NotificationStreamEvent`, `NotificationKind`, and `NotificationPayload`
+- notification event dispatch and payload typing: `NotificationEventHubContext`, `NotificationEventHub`, `NotificationStreamEvent`, `NotificationKind`, and `NotificationPayload`
 - judge registration/execution support: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
-- problem data access through `ProblemDataStorage`
+- problem data access through `ProblemDataStorageContext` values and `ProblemDataStorage` functions
+- submission program access through `SubmissionProgramStorageContext` values and `SubmissionProgramStorage` functions
 - submission judge state transitions used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeCompletion`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
 - cross-domain API-object collaborations explicitly named at the call site; new cross-domain table imports are forbidden
 
@@ -238,7 +235,7 @@ Preferred structure for business CRUD domains:
   registers API objects with `ApiObjectRouter.routes(...)`
 - `api/<Name>.scala`
   endpoint object/case class with method, path, decode, and `plan(...)`
-- auth-owned API object router and `SessionResolver` in `domains/auth/api`
+- auth-owned API object router and `SessionResolver` object in `domains/auth/api`
 
 Frontend and backend endpoint API basenames should match when both sides expose the endpoint. For example, the frontend `src/apis/problem/ListProblems.ts` client function corresponds to backend `domains/problem/api/ListProblems.scala`.
 

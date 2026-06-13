@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemDataStorage
+import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.objects.ProblemDataPath
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
@@ -13,7 +13,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 下载题目数据单个路径的管理端响应 API；要求题目管理权限，返回原始文件字节流。 */
-final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
+final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorageContext)
     extends AuthenticatedResponseApi[(ProblemManagementContext, ProblemDataPath)]:
 
   override val method: Method = Method.GET
@@ -41,7 +41,7 @@ final case class DownloadProblemDataPath(problemDataStorage: ProblemDataStorage)
 
   /** 为已授权题目读取指定路径并构造下载响应；输出文件名取存储路径最后一段。 */
   def downloadManagedProblemDataPath(problem: domains.problem.objects.response.ProblemDetail, path: ProblemDataPath): IO[Response[IO]] =
-    problemDataStorage.readPath(problem.slug, path).flatMap {
+    ProblemDataStorage.readPath(problemDataStorage, problem.slug, path).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.problemDataFileNotFound))
       case Some((storedPath, bytes)) =>

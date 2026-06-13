@@ -7,7 +7,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.user.objects.response.UserSettingsResponse
 import domains.user.table.user_profile.UserProfileTable
-import domains.user.utils.UserAvatarStorage
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
@@ -15,7 +15,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 
 /** 删除用户头像 API，清除数据库头像元数据并删除旧对象存储文件。 */
-final case class DeleteUserAvatar(userAvatarStorage: UserAvatarStorage)
+final case class DeleteUserAvatar(userAvatarStorage: UserAvatarStorageContext)
     extends AuthenticatedApi[Username, UserSettingsResponse]:
 
   override val method: Method = Method.POST
@@ -38,6 +38,6 @@ final case class DeleteUserAvatar(userAvatarStorage: UserAvatarStorage)
       _ <- UserProfileTable.clearAvatar(connection, targetUsername).flatMap { cleared =>
         HttpApiError.ensure(cleared, HttpApiError.notFound(ApiMessages.userNotFound))
       }
-      _ <- previousAvatar.traverse(avatar => userAvatarStorage.deleteObject(avatar.objectKey)).void
+      _ <- previousAvatar.traverse(avatar => UserAvatarStorage.deleteObject(userAvatarStorage, avatar.objectKey)).void
       settings <- UserAvatarApiHelpers.refreshedSettings(connection, targetUsername)
     yield settings

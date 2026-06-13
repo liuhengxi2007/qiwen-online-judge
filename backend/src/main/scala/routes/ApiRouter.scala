@@ -3,13 +3,13 @@ package routes
 import cats.effect.IO
 import cats.syntax.semigroupk.*
 import database.DatabaseSession
-import domains.auth.utils.SessionStore
+import domains.auth.utils.SessionStoreContext
 import domains.judge.utils.JudgeConfig
-import domains.message.utils.MessageEventHub
-import domains.notification.utils.NotificationEventHub
-import domains.problem.utils.ProblemDataStorage
-import domains.submission.utils.SubmissionProgramStorage
-import domains.user.utils.UserAvatarStorage
+import domains.message.utils.MessageEventHubContext
+import domains.notification.utils.NotificationEventHubContext
+import domains.problem.utils.ProblemDataStorageContext
+import domains.submission.utils.SubmissionProgramStorageContext
+import domains.user.utils.UserAvatarStorageContext
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.implicits.*
@@ -20,13 +20,13 @@ object ApiRouter:
   /** 注入跨领域运行时依赖并按领域顺序组合所有后端 API 路由。 */
   def httpApp(
     databaseSession: DatabaseSession,
-    sessionStore: SessionStore,
+    sessionStore: SessionStoreContext,
     judgeConfig: JudgeConfig,
-    problemDataStorage: ProblemDataStorage,
-    submissionProgramStorage: SubmissionProgramStorage,
-    userAvatarStorage: UserAvatarStorage,
-    messageEventHub: MessageEventHub,
-    notificationEventHub: NotificationEventHub
+    problemDataStorage: ProblemDataStorageContext,
+    submissionProgramStorage: SubmissionProgramStorageContext,
+    userAvatarStorage: UserAvatarStorageContext,
+    messageEventHub: MessageEventHubContext,
+    notificationEventHub: NotificationEventHubContext
   ): HttpApp[IO] =
     val allRoutes: HttpRoutes[IO] =
       domains.auth.routes.AuthRouter.routes(databaseSession, sessionStore) <+>
