@@ -9,18 +9,15 @@ import domains.message.objects.{MessageConversationId, MessageId}
 import fs2.Stream
 import fs2.concurrent.Topic
 
-/** 私信 SSE 内部事件基类，事件按目标用户名发布给订阅者。 */
-sealed trait MessageStreamEvent
-
 /** 私信 SSE 事件集合，覆盖新消息、读回执和收件箱刷新。 */
-object MessageStreamEvent:
-  final case class MessageReceived(message: DirectMessage) extends MessageStreamEvent
-  final case class ConversationRead(
+enum MessageStreamEvent:
+  case MessageReceived(message: DirectMessage)
+  case ConversationRead(
     conversationId: MessageConversationId,
     readUpToMessageId: MessageId,
     readerUsername: Username
-  ) extends MessageStreamEvent
-  case object InboxChanged extends MessageStreamEvent
+  )
+  case InboxChanged
 
 /** 基于内存 Topic 的私信事件中心上下文。 */
 final case class MessageEventHubContext(topic: Topic[IO, Option[(Username, MessageStreamEvent)]])
