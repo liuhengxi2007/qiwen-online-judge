@@ -44,7 +44,8 @@ final case class RejudgeSubmission(submissionProgramStorage: SubmissionProgramSt
         record.status != SubmissionStatus.Queued && record.status != SubmissionStatus.Running,
         HttpApiError.badRequest("Only completed or failed submissions can be rejudged.")
       )
-      _ <- SubmissionJudgeTable.queueManualRejudge(connection, submissionId)
+      queued <- SubmissionJudgeTable.queueManualRejudge(connection, submissionId)
+      _ <- HttpApiError.ensure(queued, HttpApiError.badRequest("Submission can no longer be rejudged."))
       updatedRecord <- SubmissionQueryTable.findById(connection, submissionId).map(
         _.getOrElse(throw new IllegalStateException("Submission disappeared after rejudge."))
       )

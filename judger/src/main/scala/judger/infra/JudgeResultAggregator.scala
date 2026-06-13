@@ -2,6 +2,7 @@ package judger.infra
 
 import judgeprotocol.objects.SubmissionVerdict
 import judgeprotocol.objects.response.*
+import judger.infra.JudgeTestcaseResults.subtaskSystemError
 
 /** 按任务配置把测试点结果聚合为子任务和整题结果。 */
 object JudgeResultAggregator:
@@ -21,60 +22,67 @@ object JudgeResultAggregator:
 
   /** 聚合一个子任务；输入为该子任务所有已执行测试点，输出带基础/最差摘要的结果节点。 */
   private[infra] def aggregateSubtask(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): JudgeSubtaskResult =
-    val baseTestcases = mainTestcases(testcases)
-    val scoreAggregation = aggregateTestcaseScores(subtask, testcases)
-    val metrics = scoreAggregation.scores
-      .zip(scoreAggregation.verdictChildren)
-      .zip(
-        ResultTrees(
-          base = UsageSummary(
-            aggregateUsage(subtask.aggregation.time, baseTestcases.flatMap(_.timeUsedMs)),
-            aggregateUsage(subtask.aggregation.memory, baseTestcases.flatMap(_.memoryUsedKb))
-          ),
-          worst = worstSubtaskUsage(subtask, testcases)
+    if !validSubtaskAggregation(subtask) || testcases.exists(result => subtask.testcases.forall(_.index != result.index)) then
+      subtaskSystemError(subtask, JudgeFailureReason.JudgeTaskBuildFailed)
+    else
+      val baseTestcases = mainTestcases(testcases)
+      val scoreAggregation = aggregateTestcaseScores(subtask, testcases)
+      val metrics = scoreAggregation.scores
+        .zip(scoreAggregation.verdictChildren)
+        .zip(
+          ResultTrees(
+            base = UsageSummary(
+              aggregateUsage(subtask.aggregation.time, baseTestcases.flatMap(_.timeUsedMs)),
+              aggregateUsage(subtask.aggregation.memory, baseTestcases.flatMap(_.memoryUsedKb))
+            ),
+            worst = worstSubtaskUsage(subtask, testcases)
+          )
         )
+        .zip(ResultTrees(base = baseTestcases, worst = testcases))
+        .map { case (((score, verdictChildren), usage), summaryTestcases) =>
+          val verdict = aggregateVerdict(score, verdictChildren)
+          resultSummary(
+            score = score,
+            verdict = verdict,
+            reason = reasonForTestcases(verdict, summaryTestcases),
+            timeUsedMs = usage.timeUsedMs,
+            memoryUsedKb = usage.memoryUsedKb
+          )
+        }
+      JudgeSubtaskResult(
+        subtask.index,
+        subtask.label,
+        metrics.base,
+        metrics.worst,
+        testcases
       )
-      .zip(ResultTrees(base = baseTestcases, worst = testcases))
-      .map { case (((score, verdictChildren), usage), summaryTestcases) =>
-        val verdict = aggregateVerdict(score, verdictChildren)
-        resultSummary(
-          score = score,
-          verdict = verdict,
-          reason = reasonForTestcases(verdict, summaryTestcases),
-          timeUsedMs = usage.timeUsedMs,
-          memoryUsedKb = usage.memoryUsedKb
-        )
-      }
-    JudgeSubtaskResult(
-      subtask.index,
-      subtask.label,
-      metrics.base,
-      metrics.worst,
-      testcases
-    )
 
   /** 聚合整题结果；会按 roundingScale 对最终分数向上取整并保留非满分边界。 */
   private[infra] def aggregateTask(task: JudgeTask, subtasks: List[JudgeSubtaskResult]): JudgeResult =
-    val scoreAggregation = aggregateSubtaskScores(task, subtasks)
-    val scores = scoreAggregation.scores.map(score => roundFinalScore(score, task.roundingScale))
-    val metrics = scores
-      .zip(scoreAggregation.verdictChildren)
-      .zip(ResultTrees(base = subtasks.map(_.baseResult), worst = subtasks.map(_.worstResult)))
-      .map { case ((score, verdictChildren), childSummaries) =>
-        val verdict = aggregateVerdict(score, verdictChildren)
-        resultSummary(
-          score = score,
-          verdict = verdict,
-          reason = reasonForSummaries(verdict, childSummaries),
-          timeUsedMs = aggregateUsage(task.aggregation.time, childSummaries.flatMap(_.timeUsedMs)),
-          memoryUsedKb = aggregateUsage(task.aggregation.memory, childSummaries.flatMap(_.memoryUsedKb))
-        )
-      }
-    JudgeResult(
-      metrics.base,
-      metrics.worst,
-      subtasks
-    )
+    if !validTaskAggregation(task) then
+      val summary = JudgeResultSummary.failed(JudgeFailureReason.JudgeTaskBuildFailed)
+      JudgeResult(summary, summary, subtasks)
+    else
+      val scoreAggregation = aggregateSubtaskScores(task, subtasks)
+      val scores = scoreAggregation.scores.map(score => roundFinalScore(score, task.roundingScale))
+      val metrics = scores
+        .zip(scoreAggregation.verdictChildren)
+        .zip(ResultTrees(base = subtasks.map(_.baseResult), worst = subtasks.map(_.worstResult)))
+        .map { case ((score, verdictChildren), childSummaries) =>
+          val verdict = aggregateVerdict(score, verdictChildren)
+          resultSummary(
+            score = score,
+            verdict = verdict,
+            reason = reasonForSummaries(verdict, childSummaries),
+            timeUsedMs = aggregateUsage(task.aggregation.time, childSummaries.flatMap(_.timeUsedMs)),
+            memoryUsedKb = aggregateUsage(task.aggregation.memory, childSummaries.flatMap(_.memoryUsedKb))
+          )
+        }
+      JudgeResult(
+        metrics.base,
+        metrics.worst,
+        subtasks
+      )
 
   private def aggregateTestcaseScores(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): ScoreAggregation =
     val baseTestcases = mainTestcases(testcases)
@@ -100,8 +108,7 @@ object JudgeResultAggregator:
     )
 
   private def testcaseScoreRatios(subtask: JudgeTaskSubtask, testcases: List[JudgeTestcaseResult]): List[BigDecimal] =
-    // FIXME-CN: 测试点结果找不到原始配置时默认 scoreRatio=1 会掩盖 backend/judger 测试点索引不对齐。
-    testcases.map(result => subtask.testcases.find(_.index == result.index).map(_.scoreRatio).getOrElse(BigDecimal(1)))
+    testcases.flatMap(result => subtask.testcases.find(_.index == result.index).map(_.scoreRatio))
 
   private def mainTestcases(testcases: List[JudgeTestcaseResult]): List[JudgeTestcaseResult] =
     testcases.filter(_.testcaseType == JudgeTestcaseType.Main)
@@ -150,7 +157,6 @@ object JudgeResultAggregator:
     kind match
       case "min" => if scores.isEmpty then BigDecimal(0) else scores.min
       case "sum" => scores.zip(ratios).map { case (score, ratio) => score * ratio }.sum
-      // FIXME-CN: 未知分数聚合策略被静默当作 0 分，协议漂移时会误判提交而不是暴露任务构建错误。
       case _ => BigDecimal(0)
 
   private def aggregateUsage(kind: String, values: List[Long]): Option[Long] =
@@ -158,8 +164,24 @@ object JudgeResultAggregator:
     else
       kind match
         case "sum" => Some(values.sum)
-        // FIXME-CN: 未知资源聚合策略被静默当作 max，可能隐藏 backend 与 judger 的配置不对齐。
+        case "max" => Some(values.max)
         case _ => Some(values.max)
+
+  private def validSubtaskAggregation(subtask: JudgeTaskSubtask): Boolean =
+    validScoreAggregation(subtask.aggregation.score) &&
+      validUsageAggregation(subtask.aggregation.time) &&
+      validUsageAggregation(subtask.aggregation.memory)
+
+  private def validTaskAggregation(task: JudgeTask): Boolean =
+    validScoreAggregation(task.aggregation.score) &&
+      validUsageAggregation(task.aggregation.time) &&
+      validUsageAggregation(task.aggregation.memory)
+
+  private def validScoreAggregation(kind: String): Boolean =
+    kind == "min" || kind == "sum"
+
+  private def validUsageAggregation(kind: String): Boolean =
+    kind == "sum" || kind == "max"
 
   private def aggregateVerdict(score: BigDecimal, children: List[(BigDecimal, SubmissionVerdict)]): SubmissionVerdict =
     if score == BigDecimal(1) && children.exists(_._2 == SubmissionVerdict.AcceptedByProtocol) then SubmissionVerdict.AcceptedByProtocol

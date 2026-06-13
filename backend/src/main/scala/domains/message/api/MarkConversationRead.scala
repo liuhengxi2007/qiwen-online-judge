@@ -49,11 +49,14 @@ final class MarkConversationRead(messageEventHub: MessageEventHub)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.directMessageConversationNotFound))
       readUpToMessageId <- request.mode match
         case MarkConversationReadMode.Message =>
-          /** FIXME-CN: 这里依赖 MarkConversationReadRequest 的 Decoder 保证 messageId 非空；若后续内部构造绕过 Decoder，request.messageId.get 会抛异常。 */
-          MessageReadTable.markMessageRead(connection, conversationId, actor.username, request.messageId.get).map {
-            case true => request.messageId
-            case false => None
-          }
+          request.messageId match
+            case Some(messageId) =>
+              MessageReadTable.markMessageRead(connection, conversationId, actor.username, messageId).map {
+                case true => Some(messageId)
+                case false => None
+              }
+            case None =>
+              HttpApiError.raise(HttpApiError.badRequest("messageId is required when mode is message."))
         case MarkConversationReadMode.Conversation =>
           MessageReadTable.markConversationRead(connection, conversationId, actor.username)
       updatedSummary <- MessageConversationTable.findConversationSummaryForUser(connection, actor.username, conversationId).map(_.getOrElse(existingSummary))

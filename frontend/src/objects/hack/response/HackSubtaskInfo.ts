@@ -3,6 +3,7 @@ import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
+import type { HackMode } from '@/objects/hack/HackMode'
 
 /** 可 Hack 子任务信息；用于创建 Hack 前展示目标、模式和策略要求。 */
 export type HackSubtaskInfo = {
@@ -14,7 +15,6 @@ export type HackSubtaskInfo = {
   subtaskIndex: number
   subtaskLabel: string | null
   oldWorstScore: number
-  /** FIXME-CN: mode 是判题配置中的 hack answer generation mode，当前裸 string 容易和未知模式混用，应镜像后端/协议枚举。 */
-  mode: string
+  mode: HackMode
   requiresStrategyProvider: boolean
 }

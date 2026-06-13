@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
 import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
@@ -12,7 +12,7 @@ import { parseProblemDataPath } from '@/objects/problem/ProblemDataPath'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { useProblemDataPageModel } from './useProblemDataPageModel'
 import { sendMultipartAPI } from '@/system/api/api-message'
-import { createHttpClientError, isHttpClientError } from '@/system/api/http-client'
+import { createHttpClientError, isHttpClientError, readErrorMessage } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
@@ -39,11 +39,15 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
   const [isSaving, setIsSaving] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const loadConfigRequestRef = useRef(0)
 
   const validation = useMemo(() => validateJudgeConfigYaml(content, model.dataTree), [content, model.dataTree])
   const isDirty = lastSavedContent === null || content !== lastSavedContent
 
   const loadConfig = useCallback(async () => {
+    const requestId = loadConfigRequestRef.current + 1
+    loadConfigRequestRef.current = requestId
+    const isCurrentRequest = () => loadConfigRequestRef.current === requestId
     setIsLoading(true)
     setErrorMessage('')
     setStatusMessage('')
@@ -54,7 +58,7 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
       })
 
       if (!response.ok) {
-        // FIXME-CN: judge.yaml 下载绕过 requestJson，错误响应只使用 statusText，无法解码后端 API message。
+        const message = await readErrorMessage(response, response.statusText || `Unable to read ${judgeConfigPath}.`)
         throw createHttpClientError(
           response.status === 404
             ? 'not-found'
@@ -63,15 +67,21 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
               : response.status === 401
                 ? 'unauthorized'
                 : 'http',
-          response.statusText || `Unable to read ${judgeConfigPath}.`,
+          message,
         )
       }
 
       const loaded = await response.text()
+      if (!isCurrentRequest()) {
+        return
+      }
       setContentValue(loaded)
       setLastSavedContent(loaded)
       setStatusMessage(t('problem.data.judgeConfig.loaded'))
     } catch (error) {
+      if (!isCurrentRequest()) {
+        return
+      }
       if (isHttpClientError(error) && error.kind === 'not-found') {
         setContentValue(judgeConfigTemplate)
         setLastSavedContent(null)
@@ -80,13 +90,17 @@ export function useProblemJudgeConfigEditorModel(model: ProblemDataPageModel, pr
         setErrorMessage(error instanceof Error ? error.message : t('problem.data.judgeConfig.loadFailed'))
       }
     } finally {
-      setIsLoading(false)
+      if (isCurrentRequest()) {
+        setIsLoading(false)
+      }
     }
   }, [problemDataScope, t])
 
   useEffect(() => {
-    // FIXME-CN: 异步加载没有取消或过期响应保护，scope 变化后旧响应仍可能写入当前编辑器状态。
     void loadConfig()
+    return () => {
+      loadConfigRequestRef.current += 1
+    }
   }, [loadConfig])
 
   const saveConfig = useCallback(async () => {

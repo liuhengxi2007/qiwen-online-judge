@@ -21,6 +21,7 @@ export const enCommonMessages: Record<string, string> = {
   'common.pagination.more': 'More pages',
   'common.success.generic': 'Operation succeeded.',
   'common.error.invalidSuccessPayload': 'Invalid success response payload.',
+  'common.error.invalidResponsePayload': 'Invalid response payload.',
   'common.error.authRequired': 'Authentication required.',
   'common.error.forbidden': 'Access denied.',
   'common.error.notFound': '404 Not Found.',

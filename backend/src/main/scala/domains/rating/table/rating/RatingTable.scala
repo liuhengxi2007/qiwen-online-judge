@@ -19,6 +19,11 @@ import java.time.Instant
 /** 评分表访问对象，负责维护评分比赛序列、重算用户粒子状态和读取排行榜。 */
 object RatingTable:
 
+  /** 追加评分比赛的表层结果，区分成功和重复追加。 */
+  enum AppendContestResult:
+    case AlreadyAppended
+    case Appended
+
   /** 追加评分比赛时写入 rating_contests 的完整记录。 */
   final case class AppendContestRecord(
     contestSlug: ContestSlug,
@@ -45,14 +50,18 @@ object RatingTable:
     RatingTableSchema.initialize(connection)
 
   /** 在事务级 advisory lock 下追加比赛并重算所有当前用户评分状态。 */
-  def appendContest(connection: Connection, record: AppendContestRecord): IO[Unit] =
+  def appendContest(connection: Connection, record: AppendContestRecord): IO[AppendContestResult] =
     for
       _ <- lockSequence(connection)
-      position <- nextPosition(connection)
-      /** FIXME-CN: 当前没有 contest_slug 唯一约束或重复追加检查，同一比赛可被多次追加并重复影响评分序列。 */
-      _ <- insertContest(connection, position, record)
-      _ <- rebuildCurrentStates(connection)
-    yield ()
+      alreadyAppended <- contestExists(connection, record.contestSlug)
+      result <- if alreadyAppended then IO.pure(AppendContestResult.AlreadyAppended)
+      else
+        for
+          position <- nextPosition(connection)
+          _ <- insertContest(connection, position, record)
+          _ <- rebuildCurrentStates(connection)
+        yield AppendContestResult.Appended
+    yield result
 
   /** 在事务级 advisory lock 下删除评分序列最后一场比赛，成功删除后重算评分状态。 */
   def popLatestContest(connection: Connection): IO[Boolean] =
@@ -87,6 +96,25 @@ object RatingTable:
       try
         val resultSet = statement.executeQuery()
         try if resultSet.next() then resultSet.getInt("next_position") else 1
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  private val contestExistsSql: String =
+    """
+      |select 1
+      |from rating_contests
+      |where contest_slug = ?
+      |limit 1
+      |""".stripMargin
+
+  private def contestExists(connection: Connection, contestSlug: ContestSlug): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(contestExistsSql)
+      try
+        statement.setString(1, contestSlug.value)
+        val resultSet = statement.executeQuery()
+        try resultSet.next()
         finally resultSet.close()
       finally statement.close()
     }

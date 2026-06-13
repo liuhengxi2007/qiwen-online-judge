@@ -56,51 +56,54 @@ object HackAttemptRunner:
       case None =>
         IO.pure(hackFailed(hackTask, "Target subtask was not found."))
       case Some(subtask) =>
-        val input = hackTask.input.getBytes(StandardCharsets.UTF_8)
-        val oldWorstScore = targetSubtaskWorstScore(hackTask)
-        if !subtask.hack.enabled then IO.pure(hackFailed(hackTask, "Hack is disabled for this subtask."))
-        else
-          subtask.validator match
-            case None => IO.pure(hackFailed(hackTask, "Target subtask has no validator."))
-            case Some(validator) =>
-              runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
-                case Some(message) =>
-                  // 注意：hack status 字符串与 backend HackStatus 协议值手工同步，当前 judger 只按协议字面值回报。
-                  IO.pure(
-                    ReportHackResultRequest(
-                      status = "invalid",
-                      answer = None,
-                      oldScore = oldWorstScore,
-                      newScore = None,
-                      newResult = None,
-                      validatorMessage = Some(message),
-                      standardMessage = None,
-                      targetMessage = None
-                    )
-                  )
-                case None =>
-                  prepareHackAnswer(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes).flatMap {
-                    case Left(message) => IO.pure(hackFailed(hackTask, message, standardMessage = Some(message)))
-                    case Right(answerBytes) =>
-                      runTargetOnHack(hackTask, subtask, input, answerBytes, config, workingDirectory, sandbox, programs, tools).map { testcaseResult =>
-                        val newSubtask = appendHackTestcaseResult(subtask, hackTask.oldResult.subtasks, testcaseResult)
-                        val newSubtasks = replaceSubtaskResult(hackTask.oldResult.subtasks, newSubtask)
-                        val newResult = JudgeResultAggregator.aggregateTask(task, newSubtasks)
-                        val targetMessage = Some(s"${SubmissionVerdict.render(testcaseResult.verdict)} score=${testcaseResult.score}")
-                        val status = if newSubtask.worstResult.score < oldWorstScore then "success" else "no_effect"
+        (targetSubtaskWorstScore(hackTask), templateHackTestcase(subtask)) match
+          case (Left(message), _) => IO.pure(hackFailed(hackTask, message))
+          case (_, Left(message)) => IO.pure(hackFailed(hackTask, message))
+          case (Right(oldWorstScore), Right(template)) =>
+            val input = hackTask.input.getBytes(StandardCharsets.UTF_8)
+            if !subtask.hack.enabled then IO.pure(hackFailed(hackTask, "Hack is disabled for this subtask."))
+            else
+              subtask.validator match
+                case None => IO.pure(hackFailed(hackTask, "Target subtask has no validator."))
+                case Some(validator) =>
+                  runValidator(hackTask, subtask, input, workingDirectory, sandbox, validator, tools).flatMap {
+                    case Some(message) =>
+                      // 注意：hack status 字符串与 backend HackStatus 协议值手工同步，当前 judger 只按协议字面值回报。
+                      IO.pure(
                         ReportHackResultRequest(
-                          status = status,
-                          answer = answerBytes.map(answer => new String(answer, StandardCharsets.UTF_8)),
+                          status = "invalid",
+                          answer = None,
                           oldScore = oldWorstScore,
-                          newScore = Some(newSubtask.worstResult.score),
-                          newResult = Some(newResult),
-                          validatorMessage = Some("accepted"),
-                          standardMessage = answerBytes.fold(Some("not_required"))(_ => Some("accepted")),
-                          targetMessage = targetMessage
+                          newScore = None,
+                          newResult = None,
+                          validatorMessage = Some(message),
+                          standardMessage = None,
+                          targetMessage = None
                         )
+                      )
+                    case None =>
+                      prepareHackAnswer(hackTask, subtask, template, input, config, workingDirectory, sandbox, problemDataCache, runtimes).flatMap {
+                        case Left(message) => IO.pure(hackFailed(hackTask, message, standardMessage = Some(message)))
+                        case Right(answerBytes) =>
+                          runTargetOnHack(hackTask, subtask, template, input, answerBytes, config, workingDirectory, sandbox, programs, tools).map { testcaseResult =>
+                            val newSubtask = appendHackTestcaseResult(subtask, hackTask.oldResult.subtasks, testcaseResult)
+                            val newSubtasks = replaceSubtaskResult(hackTask.oldResult.subtasks, newSubtask)
+                            val newResult = JudgeResultAggregator.aggregateTask(task, newSubtasks)
+                            val targetMessage = Some(s"${SubmissionVerdict.render(testcaseResult.verdict)} score=${testcaseResult.score}")
+                            val status = if newSubtask.worstResult.score < oldWorstScore then "success" else "no_effect"
+                            ReportHackResultRequest(
+                              status = status,
+                              answer = answerBytes.map(answer => new String(answer, StandardCharsets.UTF_8)),
+                              oldScore = oldWorstScore,
+                              newScore = Some(newSubtask.worstResult.score),
+                              newResult = Some(newResult),
+                              validatorMessage = Some("accepted"),
+                              standardMessage = answerBytes.fold(Some("not_required"))(_ => Some("accepted")),
+                              targetMessage = targetMessage
+                            )
+                          }
                       }
                   }
-              }
 
   /** 运行子任务 validator；返回 Some(message) 表示 hack 输入无效。 */
   private def runValidator(
@@ -139,6 +142,7 @@ object HackAttemptRunner:
   private def prepareHackAnswer(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
+    template: JudgeTaskTestcase,
     input: Array[Byte],
     config: AppConfig,
     workingDirectory: Path,
@@ -151,10 +155,9 @@ object HackAttemptRunner:
       subtask.hack.answerGeneration match
         case JudgeTaskHackConfig.NoAnswerGeneration => IO.pure(Right(None))
         case JudgeTaskHackConfig.StandardAnswerGeneration =>
-          (subtask.standard, templateHackTestcase(subtask)) match
-            case (None, _) => IO.pure(Left("Target subtask has no answer generator."))
-            case (_, None) => IO.pure(Left("Target subtask has no testcase template."))
-            case (Some(standard), Some(template)) =>
+          subtask.standard match
+            case None => IO.pure(Left("Target subtask has no answer generator."))
+            case Some(standard) =>
               runAnswerGenerator(hackTask, subtask, input, config, workingDirectory, sandbox, problemDataCache, runtimes, standard, template).map(_.map(Some(_)))
         case other => IO.pure(Left(s"Unsupported hack answer generation mode: $other."))
 
@@ -205,6 +208,7 @@ object HackAttemptRunner:
   private def runTargetOnHack(
     hackTask: HackTask,
     subtask: JudgeTaskSubtask,
+    testcase: JudgeTaskTestcase,
     input: Array[Byte],
     answerBytes: Option[Array[Byte]],
     config: AppConfig,
@@ -213,20 +217,14 @@ object HackAttemptRunner:
     programs: JudgeToolPreparation.PreparedPrograms,
     tools: JudgeToolPreparation.PreparedTools
   ): IO[JudgeTestcaseResult] =
-    templateHackTestcase(subtask) match
-      case None =>
-        // FIXME-CN: 缺少模板测试点时硬编码 index=1/label=hack，可能与原子任务结果树索引冲突或隐藏配置构建错误。
-        IO.pure(JudgeTestcaseResult(1, Some("hack"), JudgeTestcaseType.Hack, BigDecimal(0), SubmissionVerdict.SystemError, None, Some(JudgeFailureReason.SystemError), None, None))
-      case Some(testcase) =>
-        subtask.mode.`type` match
-          case "traditional" =>
-            val selection = TraditionalProgramSelector.select(hackTask.targetTask, subtask, testcase, programs)
-            TraditionalTestcaseRunner.runData(hackTask.targetTask, subtask.index, testcase, workingDirectory, sandbox, input, answerBytes, selection, tools)
-          case "interactive" =>
-            runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answerBytes, workingDirectory, sandbox, programs, tools)
-          case _ =>
-            // FIXME-CN: 未知 mode.type 在 hack 路径同样折叠为 SystemError，无法暴露协议扩展或配置拼写错误。
-            IO.pure(testcaseSystemError(testcase, JudgeFailureReason.SystemError))
+    subtask.mode.`type` match
+      case "traditional" =>
+        val selection = TraditionalProgramSelector.select(hackTask.targetTask, subtask, testcase, programs)
+        TraditionalTestcaseRunner.runData(hackTask.targetTask, subtask.index, testcase, workingDirectory, sandbox, input, answerBytes, selection, tools)
+      case "interactive" =>
+        runInteractiveHackTestcase(hackTask, config, subtask, testcase, input, answerBytes, workingDirectory, sandbox, programs, tools)
+      case _ =>
+        IO.pure(testcaseSystemError(testcase, JudgeFailureReason.JudgeTaskBuildFailed))
 
   /** 在交互题子任务上运行 hack 输入，必要时编译本次 hack 提供的策略 provider。 */
   private def runInteractiveHackTestcase(
@@ -294,13 +292,19 @@ object HackAttemptRunner:
               case _ => Left(())
             }
 
-  /** 从原子任务中复制一个非 hack 测试点作为 hack 运行模板，并分配新的测试点索引。 */
-  private def templateHackTestcase(subtask: JudgeTaskSubtask): Option[JudgeTaskTestcase] =
-    // FIXME-CN: 模板选择第一个非 Hack 测试点，若子任务内不同测试点资源/checker/策略不同，hack 运行语义可能与被攻击点不一致。
-    subtask.testcases.find(_.testcaseType != JudgeTestcaseType.Hack).orElse(subtask.testcases.headOption).map { template =>
-      val nextIndex = subtask.testcases.map(_.index).maxOption.getOrElse(0) + 1
-      template.copy(index = nextIndex, label = Some("hack"), testcaseType = JudgeTestcaseType.Hack, scoreRatio = BigDecimal(1), answer = None)
-    }
+  /** 从原子任务中复制一个明确的非 hack 测试点模板，并分配新的测试点索引。 */
+  private def templateHackTestcase(subtask: JudgeTaskSubtask): Either[String, JudgeTaskTestcase] =
+    val candidates = subtask.testcases.filter(_.testcaseType != JudgeTestcaseType.Hack)
+    candidates match
+      case Nil => Left("Target subtask has no testcase template.")
+      case first :: rest if rest.exists(testcase => hackTemplateSignature(testcase) != hackTemplateSignature(first)) =>
+        Left("Target subtask has ambiguous testcase templates for hack execution.")
+      case first :: _ =>
+        val nextIndex = subtask.testcases.map(_.index).maxOption.getOrElse(0) + 1
+        Right(first.copy(index = nextIndex, label = Some("hack"), testcaseType = JudgeTestcaseType.Hack, scoreRatio = BigDecimal(1), answer = None))
+
+  private def hackTemplateSignature(testcase: JudgeTaskTestcase): (JudgeTaskLimits, JudgeTaskChecker, Option[JudgeTaskTool], Boolean) =
+    (testcase.limits, testcase.checker, testcase.strategyProvider, testcase.answer.nonEmpty)
 
   /** 构造 failed 状态的 hack 回报，保留旧分数并填充目标侧错误消息。 */
   private def hackFailed(
@@ -311,7 +315,7 @@ object HackAttemptRunner:
     ReportHackResultRequest(
       status = "failed",
       answer = None,
-      oldScore = targetSubtaskWorstScore(task),
+      oldScore = targetSubtaskWorstScore(task).getOrElse(BigDecimal(0)),
       newScore = None,
       newResult = None,
       validatorMessage = None,
@@ -319,10 +323,9 @@ object HackAttemptRunner:
       targetMessage = Some(targetMessage)
     )
 
-  /** 从旧结果中读取目标子任务最差分，缺失时按 0 处理。 */
-  private def targetSubtaskWorstScore(task: HackTask): BigDecimal =
-    // FIXME-CN: 旧结果缺少目标子任务时默认 oldScore=0，会把结果树不完整误判为 hack 无收益。
-    task.oldResult.subtasks.find(_.index == task.subtaskIndex).map(_.worstResult.score).getOrElse(BigDecimal(0))
+  /** 从旧结果中读取目标子任务最差分。 */
+  private def targetSubtaskWorstScore(task: HackTask): Either[String, BigDecimal] =
+    task.oldResult.subtasks.find(_.index == task.subtaskIndex).map(_.worstResult.score).toRight("Target old result is missing the requested subtask.")
 
   /** 把新增 hack 测试点追加到旧子任务结果后重新聚合。 */
   private def appendHackTestcaseResult(

@@ -7,6 +7,7 @@ import database.DatabaseSession
 import domains.auth.objects.SessionToken
 import domains.user.objects.Username
 import domains.auth.table.session.SessionTable
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.Connection
 import java.security.SecureRandom
@@ -38,29 +39,20 @@ final class SessionStore private (
   def createSessionInConnection(connection: Connection, username: Username): IO[SessionToken] =
     createSessionInConnection(connection, username, None)
 
-  /** 根据令牌查找用户名；缓存命中且无需续期时不访问数据库，否则校验并可能续期。 */
+  /** 根据令牌查找用户名；缓存用于快速解码，数据库仍作为会话有效性的最终来源。 */
   def lookupUsername(token: SessionToken): IO[Option[Username]] =
     for
       now <- IO.realTimeInstant
       cached <- cacheGet(token)
       result <- cached match
         case Some(session) if session.expiresAt.isAfter(now) && !shouldRenew(session.expiresAt, now) =>
-          IO.pure(Some(session.username))
+          loadAndRefreshCache(token, now)
         case Some(session) if session.expiresAt.isAfter(now) =>
-          loadAndMaybeRenewFromDatabase(token, now).flatTap {
-            case Some(activeSession) => cachePut(token, CachedSession(activeSession.username, activeSession.expiresAt))
-            case None => cacheDelete(token)
-          }.map(_.map(_.username))
+          loadAndRefreshCache(token, now)
         case Some(_) =>
-          cacheDelete(token) *> loadAndMaybeRenewFromDatabase(token, now).flatTap {
-            case Some(activeSession) => cachePut(token, CachedSession(activeSession.username, activeSession.expiresAt))
-            case None => IO.unit
-          }.map(_.map(_.username))
+          cacheDelete(token) *> loadAndRefreshCache(token, now)
         case None =>
-          loadAndMaybeRenewFromDatabase(token, now).flatTap {
-            case Some(activeSession) => cachePut(token, CachedSession(activeSession.username, activeSession.expiresAt))
-            case None => IO.unit
-          }.map(_.map(_.username))
+          loadAndRefreshCache(token, now)
     yield result
 
   /** 删除单个会话，同时清理数据库记录和缓存。 */
@@ -125,11 +117,17 @@ final class SessionStore private (
       }
     }
 
+  private def loadAndRefreshCache(token: SessionToken, now: java.time.Instant): IO[Option[Username]] =
+    loadAndMaybeRenewFromDatabase(token, now).flatTap {
+      case Some(activeSession) => cachePut(token, CachedSession(activeSession.username, activeSession.expiresAt))
+      case None => cacheDelete(token)
+    }.map(_.map(_.username))
+
   private def shouldRenew(expiresAt: java.time.Instant, now: java.time.Instant): Boolean =
     !expiresAt.isAfter(now.plus(sessionConfig.renewalThreshold))
 
   private def cacheGet(token: SessionToken): IO[Option[CachedSession]] =
-    /** 注意：缓存命中且未到续期阈值时会跳过数据库校验；缓存读取失败按 miss 处理，避免 Redis 故障阻断登录态解析。 */
+    /** 注意：缓存读取失败按 miss 处理，避免 Redis 故障阻断登录态解析。 */
     sessionCache.get(token).handleErrorWith(_ => IO.pure(None))
 
   private def cachePut(token: SessionToken, session: CachedSession): IO[Unit] =
@@ -137,11 +135,12 @@ final class SessionStore private (
     sessionCache.put(token, session).handleErrorWith(_ => IO.unit)
 
   private def cacheDelete(token: SessionToken): IO[Unit] =
-    /** FIXME-CN: 缓存删除失败后，lookupUsername 可能在 Redis TTL 内信任已删除的 token，导致强制下线延迟生效。 */
-    sessionCache.delete(token).handleErrorWith(_ => IO.unit)
+    sessionCache.delete(token).handleErrorWith(error => SessionStore.logger.warn(error)("Failed to delete session cache entry.") *> IO.unit)
 
 /** 会话存储服务构造器，装配默认会话配置和安全随机数源。 */
 object SessionStore:
+
+  private val logger = Slf4jLogger.getLogger[IO]
 
   /** 创建 SessionStore 实例；不会立即访问数据库。 */
   def create(databaseSession: DatabaseSession, sessionCache: SessionCache): IO[SessionStore] =

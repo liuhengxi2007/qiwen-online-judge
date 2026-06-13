@@ -16,6 +16,7 @@ import java.sql.Connection
 object GetConversationHistory extends AuthenticatedApi[GetConversationHistory.Input, MessageHistoryResponse]:
 
   private val defaultHistoryLimit = 50
+  private val maxHistoryLimit = 100
 
   /** 会话历史查询输入，支持按 beforeMessageId 向前翻页和自定义正数 limit。 */
   final case class Input(
@@ -29,18 +30,15 @@ object GetConversationHistory extends AuthenticatedApi[GetConversationHistory.In
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[MessageHistoryResponse] = summon[Encoder[MessageHistoryResponse]]
 
-  /** 从路径解析会话 id，并从查询参数读取 before 和 limit；无效 before 会被忽略。 */
+  /** 从路径解析会话 id，并从查询参数读取 before 和 limit；无效查询参数返回 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[Input] =
+    val queryParams = request.uri.query.params
     HttpApiError.fromEitherBadRequest {
-      pathParams.require("conversationId").flatMap(MessageConversationId.parse).map { conversationId =>
-        Input(
-          conversationId = conversationId,
-          /** FIXME-CN: before 参数解析失败会被 flatMap(...toOption) 静默忽略，客户端传入非法游标时不会得到 400，可能导致分页从最新消息重新开始。 */
-          beforeMessageId = request.uri.query.params.get("before").flatMap(rawId => MessageId.parse(rawId).toOption),
-          /** FIXME-CN: limit 参数解析失败会被静默忽略，且后续只校验正数不设上限，恶意大 limit 可能造成过大的历史消息查询。 */
-          limit = request.uri.query.params.get("limit").flatMap(_.toIntOption)
-        )
-      }
+      for
+        conversationId <- pathParams.require("conversationId").flatMap(MessageConversationId.parse)
+        beforeMessageId <- queryParams.get("before").map(rawId => MessageId.parse(rawId).map(Some(_))).getOrElse(Right(None))
+        limit <- parseLimit(queryParams.get("limit"))
+      yield Input(conversationId = conversationId, beforeMessageId = beforeMessageId, limit = limit)
     }
 
   /** 校验当前用户属于会话后读取历史消息、更多标记和会话消息事实。 */
@@ -58,7 +56,7 @@ object GetConversationHistory extends AuthenticatedApi[GetConversationHistory.In
         connection,
         input.conversationId,
         input.beforeMessageId,
-        input.limit.filter(_ > 0).getOrElse(defaultHistoryLimit)
+        input.limit.getOrElse(defaultHistoryLimit)
       )
       facts <- DirectMessageTable.getConversationMessageFacts(connection, input.conversationId, actor.username)
       (messages, hasMore) = messagesAndMore
@@ -68,3 +66,12 @@ object GetConversationHistory extends AuthenticatedApi[GetConversationHistory.In
       hasMore = hasMore,
       facts = facts
     )
+
+  private def parseLimit(rawLimit: Option[String]): Either[String, Option[Int]] =
+    rawLimit match
+      case None => Right(None)
+      case Some(raw) =>
+        raw.trim.toIntOption match
+          case Some(value) if value >= 1 && value <= maxHistoryLimit => Right(Some(value))
+          case Some(_) => Left(s"limit must be between 1 and $maxHistoryLimit.")
+          case None => Left("limit must be a positive integer.")

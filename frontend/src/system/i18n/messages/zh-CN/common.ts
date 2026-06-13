@@ -21,6 +21,7 @@ export const zhCnCommonMessages: Record<string, string> = {
   'common.pagination.more': '更多页面',
   'common.success.generic': '操作成功。',
   'common.error.invalidSuccessPayload': '成功响应数据格式无效。',
+  'common.error.invalidResponsePayload': '响应数据格式无效。',
   'common.error.authRequired': '需要登录。',
   'common.error.forbidden': '无权访问。',
   'common.error.notFound': '404 未找到。',

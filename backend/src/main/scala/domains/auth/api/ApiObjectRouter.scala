@@ -3,11 +3,14 @@ package domains.auth.api
 import cats.data.OptionT
 import cats.effect.IO
 import org.http4s.{HttpRoutes, InvalidMessageBodyFailure, MessageBodyFailure, Request, Response, Status}
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import shared.api.HttpApiError
 import shared.api.utils.HttpResponseSupport
 
 /** 将声明式 ApiObject 列表转换为 http4s 路由，并统一处理 API 错误。 */
 object ApiObjectRouter:
+
+  private val logger = Slf4jLogger.getLogger[IO]
 
   /** 按方法和路径匹配 API 对象，匹配成功后交给对象自身 handle 执行。 */
   def routes(context: ApiObjectContext, apiObjects: List[ApiObject]): HttpRoutes[IO] =
@@ -40,6 +43,6 @@ object ApiObjectRouter:
       case error: MessageBodyFailure =>
         HttpResponseSupport.errorResponse(Status.BadRequest, error.getMessage)
       case error =>
-        // FIXME-CN: 非预期异常直接把 error.getMessage 返回给客户端，可能泄露内部实现或数据库错误细节。
-        HttpResponseSupport.errorResponse(Status.InternalServerError, error.getMessage)
+        logger.error(error)("Unhandled API error.") *>
+          HttpResponseSupport.errorResponse(Status.InternalServerError, "Internal server error.")
     }

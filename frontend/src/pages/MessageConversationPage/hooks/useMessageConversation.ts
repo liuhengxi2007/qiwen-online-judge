@@ -54,6 +54,8 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
   const [pendingReadMessageId, setPendingReadMessageId] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<MessageConversationId | null>(null)
   const isAutoMarkingConversationReadRef = useRef(false)
+  const isSendingRef = useRef(false)
+  const isLoadingOlderMessagesRef = useRef(false)
   const autoMarkMessageRead = session?.preferences.autoMarkMessageRead ?? false
 
   const syncConversationReadState = useCallback(
@@ -207,7 +209,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
   )
 
   const submitDraft = useCallback(() => {
-    if (!conversationId) {
+    if (!conversationId || isSendingRef.current) {
       return
     }
     const validation = parseMessageContent(draft)
@@ -216,7 +218,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       return
     }
 
-    // FIXME-CN: 回调入口没有用 isSending 防重入，快速重复触发可能在下一次渲染禁用按钮前重复发送。
+    isSendingRef.current = true
     setIsSending(true)
     void sendAPI(new SendDirectMessage(conversationId, { content: validation.value }))
       .then(async () => {
@@ -231,14 +233,17 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
         }
         setErrorMessage(isHttpClientError(error) ? error.message : t('messages.sendFailed'))
       })
-      .finally(() => setIsSending(false))
+      .finally(() => {
+        isSendingRef.current = false
+        setIsSending(false)
+      })
   }, [conversationId, draft, refreshConversationState, t])
 
   const loadOlderMessages = useCallback(() => {
-    if (!conversationId || !history || history.messages.length === 0 || !history.hasMore) {
+    if (!conversationId || !history || history.messages.length === 0 || !history.hasMore || isLoadingOlderMessagesRef.current) {
       return
     }
-    // FIXME-CN: 回调入口没有用 isLoadingOlderMessages 防并发，重复触发可能重复拼接同一段历史消息。
+    isLoadingOlderMessagesRef.current = true
     setIsLoadingOlderMessages(true)
     setOlderMessagesError('')
     const earliestMessage = history.messages[0]
@@ -257,7 +262,10 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
       .catch((error) => {
         setOlderMessagesError(isHttpClientError(error) ? error.message : t('messages.loadOlderFailed'))
       })
-      .finally(() => setIsLoadingOlderMessages(false))
+      .finally(() => {
+        isLoadingOlderMessagesRef.current = false
+        setIsLoadingOlderMessages(false)
+      })
   }, [conversationId, history, t])
 
   const updateDraft = useCallback(

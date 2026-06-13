@@ -40,7 +40,10 @@ object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username),
       group <- maybeGroup match
         case Some(group) => IO.pure(group)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userGroupNotFound))
-      // FIXME-CN: 这里先区分目标成员/owner 状态再校验操作者权限，无权限用户可能通过错误差异推断成员存在性或角色。
+      _ <- HttpApiError.ensure(
+        UserGroupAccessRules.canEdit(actor, group),
+        HttpApiError.notFound(ApiMessages.userGroupNotFound)
+      )
       targetMember <- group.members.find(_.username.value == targetUsername.value) match
         case Some(member) => IO.pure(member)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.groupMemberNotFound))

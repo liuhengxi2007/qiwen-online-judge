@@ -1,4 +1,5 @@
 import type { HackStatus } from '@/objects/hack/HackStatus'
+import type { HackMode } from '@/objects/hack/HackMode'
 
 /**
  * Hack 展示层使用的翻译函数形态，缺失时回退到英文硬编码标签。
@@ -32,15 +33,13 @@ export function hackStatusLabel(status: HackStatus, t?: Translate): string {
 }
 
 /**
- * 将 Hack 模式转换为用户可读标签；未知模式原样返回以保留后端信息。
+ * 将 Hack 模式转换为用户可读标签。
  */
-export function hackModeLabel(mode: string, t?: Translate): string {
+export function hackModeLabel(mode: HackMode, t?: Translate): string {
   switch (mode) {
     case 'traditional':
       return t ? t('hack.mode.traditional') : 'Traditional'
     case 'interactive':
       return t ? t('hack.mode.interactive') : 'Interactive'
-    default:
-      return mode
   }
 }

@@ -6,6 +6,7 @@ import judgeprotocol.objects.response.{JudgeFailureReason, JudgeTaskSubtask, Jud
 import judger.config.AppConfig
 import judger.infra.JudgeRuntimeSupport.*
 import judger.objects.{RuntimeCommand, SandboxLimits, SandboxRunSpec, SandboxStdin, SandboxStdout}
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -14,6 +15,8 @@ import scala.util.Try
 
 /** 负责实际启动交互题多进程，包括 FIFO、launcher、interactor、选手和策略 provider。 */
 object InteractiveProcessRunner:
+
+  private val logger = Slf4jLogger.getLogger[IO]
   /** 执行一次交互测试点；输出 either 中的失败代表 judger/工具系统错误。 */
   private[infra] def run(
     config: AppConfig,
@@ -190,8 +193,10 @@ object InteractiveProcessRunner:
               )
             )
 
-        // FIXME-CN: 交互运行的所有异常被折叠为 JudgerRuntimeFailed，丢失 mkfifo/launcher/文件读写等具体失败上下文。
-        run.handleError(_ => Left(JudgeFailureReason.JudgerRuntimeFailed))
+        run.handleErrorWith(error =>
+          logger.error(error)("Interactive process run failed while preparing workspace, launchers, FIFOs, or result files.") *>
+            IO.pure(Left(JudgeFailureReason.JudgerRuntimeFailed))
+        )
 
   /** 读取策略 provider 监控日志并计算等待时间；读取失败按无监控数据处理。 */
   private[infra] def readStrategyProviderWaitMs(monitor: Option[StrategyProviderReadMonitor], interactorResult: judger.objects.ProcessResult): IO[Option[Long]] =

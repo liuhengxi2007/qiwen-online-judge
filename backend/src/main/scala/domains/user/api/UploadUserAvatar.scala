@@ -34,8 +34,7 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
       filePart <- multipart.parts.find(_.name.contains("file")) match
         case Some(part) => IO.pure(part)
         case None => HttpApiError.raise(HttpApiError.badRequest("Multipart file field 'file' is required."))
-      /** FIXME-CN: 头像 body 在大小校验前一次性读入内存，超大 multipart 请求可能造成内存压力。 */
-      bytes <- filePart.body.compile.to(Array)
+      bytes <- readPartBytes(filePart, UserAvatarUploadValidation.maxAvatarBytes, "Avatar file")
       contentType = filePart.headers.headers.find(_.name == CIString("Content-Type")).map(_.value.takeWhile(_ != ';').trim)
     yield (targetUsername, bytes, contentType)
 
@@ -68,3 +67,9 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorage)
       _ <- previousAvatar.traverse(avatar => userAvatarStorage.deleteObject(avatar.objectKey)).void
       settings <- UserAvatarApiHelpers.refreshedSettings(connection, targetUsername)
     yield settings
+
+  private def readPartBytes(part: org.http4s.multipart.Part[IO], maxBytes: Int, label: String): IO[Array[Byte]] =
+    part.body.take(maxBytes.toLong + 1L).compile.to(Array).flatMap { bytes =>
+      if bytes.length > maxBytes then HttpApiError.raise(HttpApiError.badRequest(s"$label must be at most ${maxBytes / 1024 / 1024} MB."))
+      else IO.pure(bytes)
+    }

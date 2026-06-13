@@ -8,6 +8,7 @@ import judgeprotocol.objects.{ProblemSlug, SubmissionId}
 final case class JudgeTask(
   submissionId: SubmissionId,
   problemSlug: ProblemSlug,
+  startedAtEpochMilli: Long,
   programs: Map[String, JudgeTaskProgram],
   problemDataVersion: String,
   roundingScale: Int,

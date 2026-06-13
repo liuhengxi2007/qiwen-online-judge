@@ -9,6 +9,7 @@ import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
+import scala.util.Try
 
 /** 密码哈希工具，使用 PBKDF2-SHA256 生成和验证可持久化密码哈希。 */
 object PasswordHasher:
@@ -65,10 +66,11 @@ object PasswordHasher:
   private def parseHash(encodedHash: PasswordHash): Option[ParsedHash] =
     encodedHash.value.split("\\$", -1).toList match
       case prefix :: iterationValue :: saltValue :: hashValue :: Nil if prefix == hashPrefix =>
-        /** FIXME-CN: salt/hash 的 Base64 解码异常未被捕获，畸形持久化哈希可能让登录校验抛 500 而不是返回 false。 */
-        iterationValue.toIntOption.map(iteration =>
-          ParsedHash(iteration, decode(saltValue), decode(hashValue))
-        )
+        for
+          iteration <- iterationValue.toIntOption
+          salt <- Try(decode(saltValue)).toOption
+          hash <- Try(decode(hashValue)).toOption
+        yield ParsedHash(iteration, salt, hash)
       case _ =>
         None
 

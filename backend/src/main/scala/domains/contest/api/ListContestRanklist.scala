@@ -29,7 +29,7 @@ object ListContestRanklist extends AuthenticatedApi[(ContestSlug, PageRequest), 
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, PageRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
-      pageRequest = PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
+      pageRequest <- HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
     yield (contestSlug, pageRequest)
 
   /** 校验详情可见性后读取榜单；比赛管理员可看到所有提交详情，普通用户只看自己的提交详情。 */

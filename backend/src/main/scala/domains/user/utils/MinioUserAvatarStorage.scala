@@ -1,12 +1,17 @@
 package domains.user.utils
 
 import cats.effect.IO
+import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import shared.utils.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 
 /** 基于 MinIO 的用户头像对象存储实现，负责桶存在性检查和对象读写。 */
 final class MinioUserAvatarStorage(config: MinioUserAvatarStorageConfig) extends UserAvatarStorage:
+
+  private val logger = Slf4jLogger.getLogger[IO]
 
   private val client =
     MinioClient
@@ -30,7 +35,7 @@ final class MinioUserAvatarStorage(config: MinioUserAvatarStorageConfig) extends
       ()
     }
 
-  /** 确保桶存在后读取头像对象，MinIO 报对象缺失时返回 None。 */
+  /** 确保桶存在后读取头像对象，MinIO 报对象缺失时返回 None，其它存储错误继续暴露。 */
   override def readObject(objectKey: String): IO[Option[Array[Byte]]] =
     ensureBucket() *> IO.blocking {
       try
@@ -44,14 +49,12 @@ final class MinioUserAvatarStorage(config: MinioUserAvatarStorageConfig) extends
         try Some(inputStream.readAllBytes())
         finally inputStream.close()
       catch
-        /** FIXME-CN: 这里把所有 MinIO ErrorResponseException 都当作对象缺失，可能隐藏权限、桶配置或服务端错误。 */
-        case _: io.minio.errors.ErrorResponseException =>
+        case error: ErrorResponseException if MinioErrorHandling.isObjectNotFound(error) =>
           None
     }
 
-  /** 删除头像对象；删除失败被吞掉，避免旧头像清理影响主流程。 */
+  /** 删除头像对象；删除失败会记录日志但不影响主流程。 */
   override def deleteObject(objectKey: String): IO[Unit] =
-    /** FIXME-CN: 删除失败完全吞掉，可能长期保留孤儿头像对象且没有日志可追踪。 */
     ensureBucket() *> IO.blocking {
       client.removeObject(
         RemoveObjectArgs
@@ -61,7 +64,7 @@ final class MinioUserAvatarStorage(config: MinioUserAvatarStorageConfig) extends
           .build()
       )
       ()
-    }.handleError(_ => ())
+    }.handleErrorWith(error => logger.warn(error)(s"Failed to delete user avatar object: $objectKey"))
 
   private def ensureBucket(): IO[Unit] =
     IO.blocking {

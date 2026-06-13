@@ -49,6 +49,7 @@ object SubmissionJudgeRunner:
     task.subtasks.traverse(subtask => judgeSubtask(task, config, subtask, workingDirectory, sandbox, problemDataCache, programs, tools)).map { subtasks =>
       val result = JudgeResultAggregator.aggregateTask(task, subtasks)
       ReportJudgeResultRequest(
+        startedAtEpochMilli = task.startedAtEpochMilli,
         status = if JudgeResultAggregator.containsSystemError(result) then SubmissionStatus.Failed else SubmissionStatus.Completed,
         judgeResult = Some(result)
       )
@@ -109,8 +110,7 @@ object SubmissionJudgeRunner:
                   }
                 }.map(testcases => JudgeResultAggregator.aggregateSubtask(subtask, testcases))
       case _ =>
-        // FIXME-CN: 未知 mode.type 只折叠为 SystemError，backend/judge.yaml 协议扩展时缺少显式兼容性错误。
-        IO.pure(subtaskSystemError(subtask, JudgeFailureReason.SystemError))
+        IO.pure(subtaskSystemError(subtask, JudgeFailureReason.JudgeTaskBuildFailed))
 
   /** 查询某个 role 的可执行命令；不存在或编译失败时返回 None。 */
   private[infra] def programCommand(task: JudgeTask, programs: JudgeToolPreparation.PreparedPrograms, role: String): Option[RuntimeCommand] =

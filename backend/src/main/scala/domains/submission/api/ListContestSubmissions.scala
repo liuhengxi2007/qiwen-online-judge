@@ -27,7 +27,7 @@ object ListContestSubmissions extends AuthenticatedApi[(ContestSlug, SubmissionL
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, SubmissionListRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
-      listRequest = SubmissionListRequestQuery.parse(request.uri.query.params)
+      listRequest <- HttpApiError.fromEitherBadRequest(SubmissionListRequestQuery.parse(request.uri.query.params))
     yield (contestSlug, listRequest)
 
   /** 校验竞赛详情可见性后分页返回竞赛提交列表；不可见竞赛统一返回 contest not found。 */

@@ -7,6 +7,7 @@ import judgeprotocol.objects.response.JudgeResult
 
 /** judger 完成普通提交判题后回报给 backend 的状态和结果树。 */
 final case class ReportJudgeResultRequest(
+  startedAtEpochMilli: Long,
   status: SubmissionStatus,
   judgeResult: Option[JudgeResult]
 )

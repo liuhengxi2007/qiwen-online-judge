@@ -11,6 +11,7 @@ import judger.objects.{RuntimeCommand, SandboxLimits}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
+import java.security.MessageDigest
 
 /** 准备提交程序和题目工具，统一处理源码下载、编译和失败上报。 */
 object JudgeToolPreparation:
@@ -208,37 +209,38 @@ object JudgeToolPreparation:
   ): IO[ToolCompileOutcome] =
     // 注意：task 参数保留给调用方语义和未来错误上下文，当前字节级编译逻辑只需要 config 与工作目录。
     val _ = task
-    resolveCompilerPath(config).flatMap {
-      // FIXME-CN: 编译器不可见属于 judger 环境问题，这里被折叠成工具 CompileFailed，可能把系统故障误报为 checker/strategy 编译失败。
-      case Left(_) => IO.pure(ToolCompileOutcome.CompileFailed)
-      case Right(compilerPath) =>
-        // FIXME-CN: math.abs(Int.MinValue) 仍为负数，极端 hash 碰撞/负值会进入文件名；应使用无符号或 sha256 片段命名。
-        val safeHash = math.abs(sourceNameHint.hashCode)
-        val sourceName = s"tool-$safeHash.cpp"
-        val executableName = s"tool-$safeHash"
-        for
-          _ <- IO.blocking {
-            Files.write(workingDirectory.resolve(sourceName), sourceBytes)
-            Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
-          }
-          compileResult <- runHostProcess(
-            command = compilerPath,
-            args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
-            cwd = workingDirectory,
-            stdin = None,
-            limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
-            stdoutName = s".$executableName.compile.stdout",
-            stderrName = s".$executableName.compile.stderr"
-          )
-          result <-
-            if compileResult.timedOut || compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(ToolCompileOutcome.CompileFailed)
-            else
-              ensureExecutableExists(workingDirectory.resolve(executableName)).attempt.map {
-                case Right(_) => ToolCompileOutcome.Success(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
-                case Left(_) => ToolCompileOutcome.CompileFailed
+    validateSupportedTestlibUsage(sourceBytes) match
+      case Left(_) => IO.pure(ToolCompileOutcome.SystemFailed(JudgeFailureReason.JudgeTaskBuildFailed))
+      case Right(_) =>
+        resolveCompilerPath(config).flatMap {
+          case Left(_) => IO.pure(ToolCompileOutcome.SystemFailed(JudgeFailureReason.JudgerRuntimeFailed))
+          case Right(compilerPath) =>
+            val safeHash = sha256Hex(s"$sourceNameHint\n${new String(sourceBytes, StandardCharsets.UTF_8)}".getBytes(StandardCharsets.UTF_8)).take(16)
+            val sourceName = s"tool-$safeHash.cpp"
+            val executableName = s"tool-$safeHash"
+            for
+              _ <- IO.blocking {
+                Files.write(workingDirectory.resolve(sourceName), sourceBytes)
+                Files.writeString(workingDirectory.resolve("testlib.h"), MinimalTestlibHeader, StandardCharsets.UTF_8)
               }
-        yield result
-    }
+              compileResult <- runHostProcess(
+                command = compilerPath,
+                args = List(sourceName, "-o", executableName, "-O2", "-std=c++17", "-I", "."),
+                cwd = workingDirectory,
+                stdin = None,
+                limits = SandboxLimits.runtime(timeLimitMs = 15000L, memoryLimitMb = 2048),
+                stdoutName = s".$executableName.compile.stdout",
+                stderrName = s".$executableName.compile.stderr"
+              )
+              result <-
+                if compileResult.timedOut || compileResult.exitCode.getOrElse(-1) != 0 then IO.pure(ToolCompileOutcome.CompileFailed)
+                else
+                  ensureExecutableExists(workingDirectory.resolve(executableName)).attempt.map {
+                    case Right(_) => ToolCompileOutcome.Success(RuntimeCommand(s"/box/$executableName", Nil, processLimit = 1))
+                    case Left(_) => ToolCompileOutcome.CompileFailed
+                  }
+            yield result
+        }
 
   /** 解析 C++ 编译器路径，并要求其在 isolate 默认挂载中可见。 */
   private[infra] def resolveCompilerPath(config: AppConfig): IO[Either[String, String]] =
@@ -252,7 +254,18 @@ object JudgeToolPreparation:
   private def uniqueRefs(refs: List[JudgeTaskFileRef]): List[JudgeTaskFileRef] =
     refs.groupBy(_.path).values.map(_.head).toList
 
-  // FIXME-CN: MinimalTestlibHeader 只实现了 testlib 的很小子集，使用高级 API 的 checker/validator 会编译或运行失败。
+  private def validateSupportedTestlibUsage(sourceBytes: Array[Byte]): Either[String, Unit] =
+    val source = new String(sourceBytes, StandardCharsets.UTF_8)
+    val usesTestlib = source.contains("testlib.h")
+    val unsupportedApis = List("rnd", "ensure(", "ensuref(", "readToken(", "readWord(", "readInts(", "readLongs(", "readDoubles(")
+    if usesTestlib && unsupportedApis.exists(source.contains) then
+      Left("This judger supports only the minimal testlib.h API subset.")
+    else Right(())
+
+  private def sha256Hex(bytes: Array[Byte]): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).map("%02x".format(_)).mkString
+
+  /** Minimal testlib compatibility layer; unsupported advanced APIs are rejected before compilation. */
   private val MinimalTestlibHeader: String =
     """#pragma once
       |#include <bits/stdc++.h>

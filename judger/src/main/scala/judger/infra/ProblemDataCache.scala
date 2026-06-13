@@ -37,19 +37,23 @@ final class ProblemDataCache(config: AppConfig, httpClient: ProblemDataDownloade
           bytes <- httpClient.downloadProblemData(problemSlug, fileRef.path.value)
           _ <- verifyHash(fileRef, bytes)
           _ <- IO.blocking {
-            val tempPath = targetPath.resolveSibling(targetPath.getFileName.toString + ".tmp")
-            // FIXME-CN: 同一 sha256 blob 并发下载时共享 .tmp 路径，多个 worker/fiber 可能互相覆盖或移动失败。
-            Files.write(tempPath, bytes)
-            Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            val tempPath = Files.createTempFile(blobsRoot, s"${fileRef.sha256.value}.", ".tmp")
+            try
+              Files.write(tempPath, bytes)
+              Files.move(tempPath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            finally Files.deleteIfExists(tempPath)
           }
         yield targetPath
     }
 
   private def rememberManifest(problemSlug: ProblemSlug, version: String, fileRef: JudgeTaskFileRef): IO[Unit] =
-    // FIXME-CN: manifest 文件名直接拼接 problemSlug 和 problemDataVersion；协议值若未来放宽，可能形成缓存目录路径风险。
-    val manifestPath = config.problemDataCacheRoot.resolve("manifests").resolve(s"${problemSlug.value}-$version.txt")
+    val manifestsRoot = config.problemDataCacheRoot.resolve("manifests").normalize()
+    val manifestName = sha256Hex(s"${problemSlug.value}\n$version".getBytes(StandardCharsets.UTF_8)) + ".txt"
+    val manifestPath = manifestsRoot.resolve(manifestName).normalize()
     IO.blocking {
-      Files.createDirectories(manifestPath.getParent)
+      Files.createDirectories(manifestsRoot)
+      if !manifestPath.startsWith(manifestsRoot) then
+        throw RuntimeException("Invalid problem data manifest cache path.")
       val line = s"${fileRef.path.value}\t${fileRef.sizeBytes.value}\t${fileRef.sha256.value}\n"
       if !Files.exists(manifestPath) then Files.writeString(manifestPath, line, StandardCharsets.UTF_8)
       else Files.writeString(manifestPath, line, StandardCharsets.UTF_8, java.nio.file.StandardOpenOption.APPEND)

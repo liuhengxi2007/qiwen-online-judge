@@ -22,6 +22,8 @@ import java.util.zip.{ZipEntry, ZipOutputStream}
 final case class DownloadProblemDataArchive(problemDataStorage: ProblemDataStorage)
     extends AuthenticatedResponseApi[ProblemManagementContext]:
 
+  private val maxArchiveSourceBytes = 256L * 1024L * 1024L
+
   override val method: Method = Method.GET
   override val path: ApiPath = ApiPath("/api/problems/:problemSlug/data/archive-downloads")
 
@@ -47,9 +49,11 @@ final case class DownloadProblemDataArchive(problemDataStorage: ProblemDataStora
 
   /** 按清单条目读取对象存储并组装 zip；调用方需保证 entries 来自同一题目。 */
   def archiveResponse(problemSlug: ProblemSlug, entries: List[ProblemDataManifestEntry]): IO[Response[IO]] =
-    archiveBytes(problemSlug, entries).map(bytes => binaryResponse(problemSlug, bytes))
+    HttpApiError.ensure(
+      entries.map(_.sizeBytes).sum <= maxArchiveSourceBytes,
+      HttpApiError.badRequest(s"Problem data archive source files must total at most ${maxArchiveSourceBytes / 1024L / 1024L} MB.")
+    ) *> archiveBytes(problemSlug, entries).map(bytes => binaryResponse(problemSlug, bytes))
 
-  // FIXME-CN: 归档下载会把所有题目数据和最终 zip 一次性放入内存；大题面数据可能造成接口内存峰值过高。
   private def archiveBytes(problemSlug: ProblemSlug, entries: List[ProblemDataManifestEntry]): IO[Array[Byte]] =
     entries
       .sortBy(_.path.value)

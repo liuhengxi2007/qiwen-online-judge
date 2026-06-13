@@ -3,7 +3,8 @@ package domains.contest.api
 import cats.effect.IO
 import domains.auth.api.InternalOnlyAuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.contest.objects.{ContestId, ContestSlug, ContestTitle}
+import domains.contest.objects.ContestSlug
+import domains.contest.objects.response.EvaluateContestAccessResult
 import domains.contest.table.contest.ContestTable
 import domains.contest.utils.ContestAccessRules
 import domains.problem.objects.ProblemId
@@ -15,7 +16,7 @@ import java.sql.Connection
 import java.time.Instant
 
 /** 面向内部调用的比赛访问评估 API，集中输出比赛、题目关联、注册和管理权限事实。 */
-object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContestAccess.Input, Option[EvaluateContestAccess.Result]]:
+object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContestAccess.Input, Option[EvaluateContestAccessResult]]:
 
   /** 内部权限评估输入，使用比赛 slug 定位比赛，并可附带题目 id 判断题目是否在赛内。 */
   final case class Input(
@@ -23,28 +24,11 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
     problemId: Option[ProblemId]
   )
 
-  /** 内部权限评估输出，供提交、题目详情等跨 domain 流程复用，不直接产生 HTTP 错误。 */
-  final case class Result(
-    contestId: ContestId,
-    contestSlug: ContestSlug,
-    contestTitle: ContestTitle,
-    contestStarted: Boolean,
-    contestEnded: Boolean,
-    isRegistered: Boolean,
-    containsProblem: Boolean,
-    canViewContest: Boolean,
-    canViewContestDetail: Boolean,
-    canManageContest: Boolean,
-    canViewLinkedContestProblem: Boolean,
-    canManageLinkedContestProblem: Boolean,
-    canSubmitContestProblem: Boolean
-  )
-
   override val method: Method = Method.POST
   override val path: ApiPath = ApiPath("/api/internal/contests/evaluate-access")
 
   /** 读取比赛、注册状态和用户组后计算权限；比赛不存在时返回 None，避免内部调用重复查库。 */
-  override def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Option[Result]] =
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Option[EvaluateContestAccessResult]] =
     ContestTable.findBySlug(connection, input.contestSlug).flatMap {
       case None =>
         IO.pure(None)
@@ -65,7 +49,7 @@ object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContes
           canSubmitContestProblem =
             ContestAccessRules.canSubmitContestProblem(contest, isRegistered, containsProblem, now)
         yield Some(
-          Result(
+          EvaluateContestAccessResult(
             contestId = contest.id,
             contestSlug = contest.slug,
             contestTitle = contest.title,

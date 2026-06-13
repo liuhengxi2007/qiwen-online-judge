@@ -56,8 +56,8 @@ export function useSubmissionListQuery(request: SubmissionListRequest, contestSl
     let cancelled = false
     let intervalId: number | null = null
     let refreshInFlight = false
-    // FIXME-CN: activeRequest 由 requestKey 反序列化并断言为 SubmissionListRequest，绕过了领域解析器和品牌类型校验。
-    const activeRequest = JSON.parse(key) as SubmissionListRequest
+    const activeRequest = request
+    const activeContestSlug = contestSlug
     let currentResponse: SubmissionListResponse = {
       items: [],
       page: activeRequest.pageRequest.page,
@@ -132,7 +132,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest, contestSl
     }
 
     const load = () => {
-      void sendAPI(contestSlug ? new ListContestSubmissions(contestSlug, activeRequest) : new ListSubmissions(activeRequest))
+      void sendAPI(activeContestSlug ? new ListContestSubmissions(activeContestSlug, activeRequest) : new ListSubmissions(activeRequest))
         .then((loadedResponse) => {
           if (cancelled) {
             return
@@ -173,7 +173,7 @@ export function useSubmissionListQuery(request: SubmissionListRequest, contestSl
         window.clearInterval(intervalId)
       }
     }
-  }, [contestSlug, key])
+  }, [contestSlug, key, request])
 
   return {
     response:

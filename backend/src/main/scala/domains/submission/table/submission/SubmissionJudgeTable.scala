@@ -93,19 +93,18 @@ object SubmissionJudgeTable:
       |    judge_priority = ?,
       |    judge_queued_at = ?
       |where public_id = ?
+      |  and status in ('completed', 'failed')
       |""".stripMargin
 
   /** 将单个终态提交重新入队为普通优先级；调用方负责先检查权限和当前状态。 */
-  def queueManualRejudge(connection: Connection, submissionId: SubmissionId): IO[Unit] =
-    // FIXME-CN: 这里的 UPDATE 只按 public_id 命中，终态检查不在 SQL 内；手动重判与 worker 状态回写并发时可能互相覆盖。
+  def queueManualRejudge(connection: Connection, submissionId: SubmissionId): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(queueManualRejudgeSQL)
       try
         statement.setInt(1, OrdinaryPriority)
         statement.setTimestamp(2, nowTimestamp)
         statement.setLong(3, submissionId.value)
-        statement.executeUpdate()
-        ()
+        statement.executeUpdate() > 0
       finally statement.close()
     }
 
@@ -171,6 +170,8 @@ object SubmissionJudgeTable:
       |update submissions
       |set status = ?, judge_result = ?::jsonb, started_at = ?, finished_at = ?
       |where public_id = ?
+      |  and status = 'running'
+      |  and started_at is not distinct from ?
       |""".stripMargin
 
   /** 写入提交判题状态快照；生命周期合法性由 SubmissionJudgeRules 在调用前校验。 */
@@ -178,8 +179,7 @@ object SubmissionJudgeTable:
     connection: Connection,
     submissionId: SubmissionId,
     judgeState: SubmissionJudgeState
-  ): IO[Unit] =
-    // FIXME-CN: UPDATE 只按 submission id 命中，没有校验当前状态或 started_at；旧 worker 可能覆盖已重排或已回收的提交状态。
+  ): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(updateJudgeStateSQL)
       try
@@ -188,7 +188,7 @@ object SubmissionJudgeTable:
         setOptionalTimestamp(statement, 3, judgeState.startedAt)
         setOptionalTimestamp(statement, 4, judgeState.finishedAt)
         statement.setLong(5, submissionId.value)
-        statement.executeUpdate()
-        ()
+        setOptionalTimestamp(statement, 6, judgeState.startedAt)
+        statement.executeUpdate() > 0
       finally statement.close()
     }

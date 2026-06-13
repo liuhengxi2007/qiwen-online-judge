@@ -26,9 +26,10 @@ object ListProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogListResp
   /** 从路径解析题目 slug，并从查询参数解析分页信息。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemBlogsInput] =
     HttpApiError.fromEitherBadRequest {
-      pathParams.require("problemSlug").flatMap(ProblemSlug.parse).map { problemSlug =>
-        ProblemBlogsInput(problemSlug, PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
-      }
+      for
+        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
+        pageRequest <- PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
+      yield ProblemBlogsInput(problemSlug, pageRequest)
     }
 
   /** 读取题目的 accepted 博客关联，私有博客只对作者本人可见。 */

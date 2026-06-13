@@ -15,17 +15,84 @@ import java.util.UUID
 /** hack_attempts 表查询入口；封装 hack 详情和列表的可见性过滤。 */
 object HackQueryTable:
 
-  // FIXME-CN: hack 可见性只覆盖公开题目 detail 级别，未复用提交详情的 viewer grant、用户组或可见题集边界，可能和提交详情权限不一致。
   private val visibilityPredicate: String =
     """
       |(
       |  ? = true
-      |  or ? = true
       |  or h.author_username = ?
       |  or target.submitter_username = ?
       |  or (
+      |    ? = true
+      |    or exists (
+      |      select 1
+      |      from problem_access_grants pag
+      |      where pag.problem_id = p.id
+      |        and pag.grant_role = 'manager'
+      |        and pag.subject_kind = 'user'
+      |        and pag.subject_key = ?
+      |    )
+      |    or exists (
+      |      select 1
+      |      from problem_access_grants pag
+      |      join user_groups ug on ug.slug = pag.subject_key
+      |      join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |      where pag.problem_id = p.id
+      |        and pag.grant_role = 'manager'
+      |        and pag.subject_kind = 'user_group'
+      |        and ugm.username = ?
+      |    )
+      |  )
+      |  or (
       |    p.other_user_submission_access = 'detail'
-      |    and p.base_access = 'public'
+      |    and (
+      |      p.base_access = 'public'
+      |      or exists (
+      |        select 1
+      |        from problem_access_grants pag
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user'
+      |          and pag.subject_key = ?
+      |      )
+      |      or exists (
+      |        select 1
+      |        from problem_access_grants pag
+      |        join user_groups ug on ug.slug = pag.subject_key
+      |        join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |        where pag.problem_id = p.id
+      |          and pag.grant_role = 'viewer'
+      |          and pag.subject_kind = 'user_group'
+      |          and ugm.username = ?
+      |      )
+      |      or exists (
+      |        select 1
+      |        from problem_set_problems psp
+      |        join problem_sets ps on ps.id = psp.problem_set_id
+      |        where psp.problem_id = p.id
+      |          and (
+      |            ? = true
+      |            or ps.base_access = 'public'
+      |            or exists (
+      |              select 1
+      |              from problem_set_access_grants psag
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user'
+      |                and psag.subject_key = ?
+      |            )
+      |            or exists (
+      |              select 1
+      |              from problem_set_access_grants psag
+      |              join user_groups ug on ug.slug = psag.subject_key
+      |              join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |              where psag.problem_set_id = ps.id
+      |                and psag.grant_role = 'viewer'
+      |                and psag.subject_kind = 'user_group'
+      |                and ugm.username = ?
+      |            )
+      |          )
+      |      )
+      |    )
       |  )
       |)
       |""".stripMargin
@@ -137,10 +204,17 @@ object HackQueryTable:
 
   private def bindVisibility(statement: PreparedStatement, startIndex: Int, actor: AuthenticatedUser): Int =
     statement.setBoolean(startIndex, actor.siteManager)
-    statement.setBoolean(startIndex + 1, actor.problemManager)
+    statement.setString(startIndex + 1, actor.username.value)
     statement.setString(startIndex + 2, actor.username.value)
-    statement.setString(startIndex + 3, actor.username.value)
-    startIndex + 4
+    statement.setBoolean(startIndex + 3, actor.problemManager)
+    statement.setString(startIndex + 4, actor.username.value)
+    statement.setString(startIndex + 5, actor.username.value)
+    statement.setString(startIndex + 6, actor.username.value)
+    statement.setString(startIndex + 7, actor.username.value)
+    statement.setBoolean(startIndex + 8, actor.problemManager)
+    statement.setString(startIndex + 9, actor.username.value)
+    statement.setString(startIndex + 10, actor.username.value)
+    startIndex + 11
 
   private def readHackSummary(resultSet: ResultSet): HackSummary =
     HackSummary(

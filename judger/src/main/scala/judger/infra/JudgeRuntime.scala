@@ -161,6 +161,7 @@ object JudgeRuntimeSupport:
       )
     }
     ReportJudgeResultRequest(
+      startedAtEpochMilli = task.startedAtEpochMilli,
       status = status,
       judgeResult = Some(
         JudgeResult(

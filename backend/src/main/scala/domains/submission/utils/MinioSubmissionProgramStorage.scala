@@ -3,7 +3,9 @@ package domains.submission.utils
 import cats.effect.IO
 import domains.submission.objects.SubmissionSourceCode
 import domains.submission.objects.internal.SubmissionProgramManifest
+import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
+import shared.utils.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 
@@ -33,7 +35,7 @@ final class MinioSubmissionProgramStorage(config: MinioSubmissionProgramStorageC
       ()
     }
 
-  /** 读取单个源码对象；对象不存在返回 None，内容非法视为存储损坏。 */
+  /** 读取单个源码对象；对象不存在返回 None，其它存储错误继续暴露，内容非法视为存储损坏。 */
   override def readSource(sourceKey: String): IO[Option[SubmissionSourceCode]] =
     ensureBucket() *> IO.blocking {
       try
@@ -52,8 +54,7 @@ final class MinioSubmissionProgramStorage(config: MinioSubmissionProgramStorageC
           )
         finally inputStream.close()
       catch
-        // FIXME-CN: 这里把所有 MinIO ErrorResponseException 都当成源码不存在；权限、桶状态或服务端错误会被静默映射为 None。
-        case _: io.minio.errors.ErrorResponseException =>
+        case error: ErrorResponseException if MinioErrorHandling.isObjectNotFound(error) =>
           None
     }
 

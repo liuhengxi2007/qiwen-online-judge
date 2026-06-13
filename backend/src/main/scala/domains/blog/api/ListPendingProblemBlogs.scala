@@ -27,9 +27,10 @@ object ListPendingProblemBlogs extends AuthenticatedApi[ProblemBlogsInput, BlogL
   /** 从路径解析题目 slug，并从查询参数解析分页信息。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemBlogsInput] =
     HttpApiError.fromEitherBadRequest {
-      pathParams.require("problemSlug").flatMap(ProblemSlug.parse).map { problemSlug =>
-        ProblemBlogsInput(problemSlug, PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
-      }
+      for
+        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
+        pageRequest <- PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
+      yield ProblemBlogsInput(problemSlug, pageRequest)
     }
 
   /** 管理员读取待审列表；非管理员返回空分页，避免暴露审核队列。 */

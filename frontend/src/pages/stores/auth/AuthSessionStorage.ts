@@ -6,7 +6,7 @@ import { parseUserDisplayMode } from '@/objects/user/UserDisplayMode'
 import { parseUserLocale } from '@/objects/user/UserLocale'
 import { parseUsername } from '@/objects/user/Username'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
-import type { UserAvatarUrl } from '@/objects/user/UserAvatarUrl'
+import { parseUserAvatarUrl } from '@/objects/user/UserAvatarUrl'
 
 const authSessionStorageKey = 'auth_session'
 const legacyAuthSessionStorageKey = 'auth_user'
@@ -88,6 +88,8 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
     const displayModeResult = parseUserDisplayMode(parsed.preferences.displayMode)
     const localeResult = parseUserLocale(parsed.preferences.locale)
     const problemTitleDisplayModeResult = parseProblemTitleDisplayMode(parsed.preferences.problemTitleDisplayMode)
+    const avatarUrlResult =
+      typeof parsed.avatarUrl === 'string' ? parseUserAvatarUrl(parsed.avatarUrl) : { ok: true as const, value: null }
 
     if (
       !displayNameResult.ok ||
@@ -95,7 +97,8 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
       !emailResult.ok ||
       !displayModeResult.ok ||
       !localeResult.ok ||
-      !problemTitleDisplayModeResult.ok
+      !problemTitleDisplayModeResult.ok ||
+      !avatarUrlResult.ok
     ) {
       return null
     }
@@ -103,8 +106,7 @@ function decodeStoredAuthSession(rawSession: string): SessionResponse | null {
     return normalizeAuthPermissionFlags({
       displayName: displayNameResult.value,
       username: usernameResult.value,
-      // FIXME-CN: avatarUrl 只校验为字符串后直接品牌断言，localStorage 被篡改时可能把非法 URL 带入 img src。
-      avatarUrl: typeof parsed.avatarUrl === 'string' ? (parsed.avatarUrl as UserAvatarUrl) : null,
+      avatarUrl: avatarUrlResult.value,
       email: emailResult.value,
       preferences: {
         displayMode: displayModeResult.value,

@@ -6,7 +6,9 @@ import cats.effect.IO
 import domains.problem.utils.ProblemDataStorage.ProblemDataSnapshot
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
+import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
+import shared.utils.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest
@@ -82,7 +84,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
       path
     }
 
-  /** 读取单个题目数据对象；MinIO 缺失对象被映射为 None。 */
+  /** 读取单个题目数据对象；MinIO 对象缺失被映射为 None，其它存储错误继续暴露。 */
   override def readPath(problemSlug: ProblemSlug, path: ProblemDataPath): IO[Option[(ProblemDataPath, Array[Byte])]] =
     ensureBucket() *> IO.blocking {
       try
@@ -96,8 +98,7 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
         try Some((path, inputStream.readAllBytes()))
         finally inputStream.close()
       catch
-        // FIXME-CN: 这里把所有 MinIO ErrorResponseException 都当成对象不存在；权限、桶状态或服务端错误会被静默映射为 None。
-        case _: io.minio.errors.ErrorResponseException =>
+        case error: ErrorResponseException if MinioErrorHandling.isObjectNotFound(error) =>
           None
     }
 
@@ -122,11 +123,15 @@ final class MinioProblemDataStorage(config: MinioProblemDataStorageConfig) exten
   override def deleteAllFiles(problemSlug: ProblemSlug): IO[Unit] =
     listPaths(problemSlug).flatMap(paths => paths.foldLeft(IO.unit)((accIo, path) => accIo *> deletePath(problemSlug, path).void))
 
-  /** 以快照替换题目目录内容；先清空再逐个写回。 */
+  /** 以快照替换题目目录内容；先恢复快照对象，再删除快照外新增对象。 */
   override def restoreDirectory(problemSlug: ProblemSlug, snapshot: ProblemDataSnapshot): IO[Unit] =
-    // FIXME-CN: MinIO 恢复不是事务操作，清空后逐个写回期间失败会留下部分恢复状态，调用方补偿边界需要单独评估。
-    deleteAllFiles(problemSlug) *> snapshot.toList.foldLeft(IO.unit) { case (accIo, (path, bytes)) =>
+    val snapshotPaths = snapshot.keySet
+    snapshot.toList.foldLeft(IO.unit) { case (accIo, (path, bytes)) =>
       accIo *> writePath(problemSlug, path, bytes).void
+    } *> listPaths(problemSlug).flatMap { currentPaths =>
+      currentPaths.filterNot(snapshotPaths.contains).foldLeft(IO.unit) { (accIo, path) =>
+        accIo *> deletePath(problemSlug, path).void
+      }
     }
 
   private def ensureBucket(): IO[Unit] =

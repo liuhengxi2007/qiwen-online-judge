@@ -9,7 +9,7 @@ import domains.problemset.table.problem_set.ProblemSetTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
@@ -25,7 +25,7 @@ object ListProblemSets extends AuthenticatedApi[PageRequest, PageResponse[Proble
   /** 从查询参数解析分页信息，路径参数不参与列表入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
-    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
   /** 按题单基础可见性和授权表读取分页摘要，返回值不包含题目详情。 */
   override def plan(

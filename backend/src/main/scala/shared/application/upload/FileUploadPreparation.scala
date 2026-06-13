@@ -3,6 +3,8 @@ package shared.application.upload
 
 
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.{CharacterCodingException, CodingErrorAction, StandardCharsets}
 import java.util.zip.ZipInputStream
@@ -31,33 +33,64 @@ object FileUploadPreparation:
     targetDirectory: Option[StoredFilePath],
     policy: FileUploadPolicy
   ): Either[String, List[PreparedUploadFile]] =
-    /** FIXME-CN: zip 解包没有总大小、文件数量或单项大小限制，恶意归档可能导致内存或磁盘配额风险。 */
     val zipInputStream = ZipInputStream(ByteArrayInputStream(archiveBytes))
     val preparedFiles = ListBuffer.empty[PreparedUploadFile]
+    var totalBytes = 0L
+    var error: Option[String] = None
     try
-      Iterator
-        .continually(zipInputStream.getNextEntry)
-        .takeWhile(_ != null)
-        .foreach { entry =>
+      var entry = zipInputStream.getNextEntry
+      while entry != null && error.isEmpty do
+        try
           if !entry.isDirectory then
-            val rawEntryPath = StoredFilePath.parse(entry.getName)
-            val resolvedPath = rawEntryPath.flatMap { entryPath =>
-              targetDirectory match
-                case Some(directory) => directory.resolve(entryPath)
-                case None => Right(entryPath)
-            }
-            val entryBytes = zipInputStream.readAllBytes()
-            val prepared = resolvedPath.flatMap(path => prepareFile(path, entryBytes, policy))
-            prepared match
-              /** FIXME-CN: 这里用 IllegalArgumentException 从 foreach 中短路业务校验，校验错误与真实运行时同类异常共用 catch 边界。 */
-              case Left(message) => throw IllegalArgumentException(message)
-              case Right(file) => preparedFiles += file
-          zipInputStream.closeEntry()
-        }
-      Right(preparedFiles.toList)
+            if preparedFiles.size >= policy.maxArchiveFileCount then
+              error = Some(s"Uploaded archive must contain at most ${policy.maxArchiveFileCount} files.")
+            else
+              readEntryBytes(zipInputStream, policy.maxArchiveEntryBytes, policy.maxArchiveTotalBytes - totalBytes) match
+                case Left(message) =>
+                  error = Some(message)
+                case Right(entryBytes) =>
+                  totalBytes += entryBytes.length.toLong
+                  val prepared = for
+                    entryPath <- StoredFilePath.parse(entry.getName)
+                    resolvedPath <- targetDirectory match
+                      case Some(directory) => directory.resolve(entryPath)
+                      case None => Right(entryPath)
+                    file <- prepareFile(resolvedPath, entryBytes, policy)
+                  yield file
+                  prepared match
+                    case Left(message) => error = Some(message)
+                    case Right(file) => preparedFiles += file
+        finally zipInputStream.closeEntry()
+        entry = zipInputStream.getNextEntry
+
+      error match
+        case Some(message) => Left(message)
+        case None => Right(preparedFiles.toList)
     catch
-      case error: IllegalArgumentException => Left(error.getMessage)
+      case _: IOException => Left("Uploaded archive is not a valid zip file.")
     finally zipInputStream.close()
+
+  private def readEntryBytes(
+    zipInputStream: ZipInputStream,
+    maxEntryBytes: Long,
+    remainingTotalBytes: Long
+  ): Either[String, Array[Byte]] =
+    val output = ByteArrayOutputStream()
+    val buffer = Array.ofDim[Byte](8192)
+    var entryBytes = 0L
+    var error: Option[String] = None
+    var read = zipInputStream.read(buffer)
+    while read != -1 && error.isEmpty do
+      entryBytes += read.toLong
+      if entryBytes > maxEntryBytes then
+        error = Some(s"Each uploaded archive file must be at most ${maxEntryBytes / 1024L / 1024L} MB.")
+      else if entryBytes > remainingTotalBytes then
+        error = Some("Uploaded archive extracted content is too large.")
+      else
+        output.write(buffer, 0, read)
+        read = zipInputStream.read(buffer)
+
+    error.toLeft(output.toByteArray)
 
   private def normalizeTextLineEndings(
     path: StoredFilePath,

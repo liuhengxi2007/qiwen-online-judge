@@ -11,7 +11,7 @@ import domains.usergroup.api.ListUserGroupSlugsForMember
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
@@ -28,7 +28,7 @@ object ListContests extends AuthenticatedApi[PageRequest, PageResponse[ContestSu
   /** 从查询参数解析分页信息，路径参数不参与列表入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
-    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
   /** 读取可见比赛列表，并基于当前时间、报名状态和分组权限计算详情可见性。 */
   override def plan(

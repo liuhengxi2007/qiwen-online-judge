@@ -4,6 +4,7 @@ import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.api.EvaluateContestAccess
 import domains.contest.objects.ContestSlug
+import domains.contest.objects.response.EvaluateContestAccessResult
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDetail
 import domains.problem.table.problem.ProblemQueryTable
@@ -96,7 +97,7 @@ object ProblemManagementContext:
     actor: AuthenticatedUser,
     contestSlug: ContestSlug,
     problem: Option[ProblemDetail]
-  ): IO[EvaluateContestAccess.Result] =
+  ): IO[EvaluateContestAccessResult] =
     EvaluateContestAccess.plan(connection, actor, EvaluateContestAccess.Input(contestSlug, problem.map(_.id))).flatMap {
       case Some(contestAccess) => IO.pure(contestAccess)
       case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.contestNotFound))

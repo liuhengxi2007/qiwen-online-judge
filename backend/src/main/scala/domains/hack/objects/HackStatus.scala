@@ -36,3 +36,9 @@ object HackStatus:
       case HackStatus.NoEffect => "no_effect"
       case HackStatus.Invalid => "invalid"
       case HackStatus.Failed => "failed"
+
+  /** 判断状态是否可作为 worker 完成回报写入 finished_at。 */
+  def isTerminal(value: HackStatus): Boolean =
+    value match
+      case HackStatus.Success | HackStatus.NoEffect | HackStatus.Invalid | HackStatus.Failed => true
+      case HackStatus.Queued | HackStatus.Running => false

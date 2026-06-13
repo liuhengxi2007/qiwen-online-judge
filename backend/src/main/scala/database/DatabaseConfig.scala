@@ -31,8 +31,12 @@ object DatabaseConfig:
       port = sys.env.get("DB_PORT").flatMap(_.toIntOption).getOrElse(5432),
       databaseName = defaultDatabaseName,
       user = sys.env.getOrElse("DB_USER", "db"),
-      /** FIXME-CN: 缺失 DB_PASSWORD 时默认使用 root，生产环境误配置时可能以弱默认密码启动。 */
-      password = sys.env.getOrElse("DB_PASSWORD", "root"),
+      password = requiredEnv("DB_PASSWORD"),
       maxPoolSize = sys.env.get("DB_MAX_POOL_SIZE").flatMap(_.toIntOption).getOrElse(10),
       connectionTimeoutMs = sys.env.get("DB_CONNECTION_TIMEOUT_MS").flatMap(_.toLongOption).getOrElse(3000L)
     )
+
+  private def requiredEnv(name: String): String =
+    sys.env.get(name).map(_.trim).filter(_.nonEmpty).getOrElse {
+      throw IllegalStateException(s"$name must be configured.")
+    }

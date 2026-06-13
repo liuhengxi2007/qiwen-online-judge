@@ -31,9 +31,8 @@ type FormFieldContextValue<
 
 /**
  * 当前表单字段名的 React Context；由 FormField 写入，供标签、控件和错误消息读取。
- * FIXME-CN: 默认值通过类型断言伪装成有效上下文，导致 useFormField 里的缺失 Provider 检查无法触发。
  */
-const FormFieldContext = createContext<FormFieldContextValue>({} as FormFieldContextValue)
+const FormFieldContext = createContext<FormFieldContextValue | null>(null)
 
 /**
  * 表单字段控制器包装，向子组件提供字段名并委托 react-hook-form Controller 管理值和校验。
@@ -58,9 +57,8 @@ type FormItemContextValue = {
 
 /**
  * 当前表单项的可访问性 id Context；由 FormItem 写入并贯穿 label/description/message。
- * FIXME-CN: 默认值通过类型断言伪装成有效上下文，FormItem 缺失时会继续生成 undefined 派生 id。
  */
-const FormItemContext = createContext<FormItemContextValue>({} as FormItemContextValue)
+const FormItemContext = createContext<FormItemContextValue | null>(null)
 
 /**
  * 表单项容器，生成稳定 id 并为标签、说明和错误消息建立关联边界。
@@ -82,13 +80,16 @@ function useFormField() {
   const fieldContext = useContext(FormFieldContext)
   const itemContext = useContext(FormItemContext)
   const { getFieldState } = useFormContext()
-  const formState = useFormState({ name: fieldContext.name })
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const formState = useFormState({ name: fieldContext?.name })
 
   if (!fieldContext) {
     throw new Error('useFormField should be used within <FormField>')
   }
+  if (!itemContext) {
+    throw new Error('useFormField should be used within <FormItem>')
+  }
 
+  const fieldState = getFieldState(fieldContext.name, formState)
   const { id } = itemContext
 
   return {

@@ -2,12 +2,9 @@ package domains.hack.api
 
 import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
-import domains.hack.objects.HackId
+import domains.hack.objects.response.ClaimedHackAttempt
 import domains.hack.table.hack.HackJudgeTable
 import domains.submission.objects.SubmissionLanguage
-import domains.submission.objects.internal.ClaimedSubmission
-import domains.user.objects.Username
-import judgeprotocol.objects.response.JudgeResult
 import org.http4s.Method
 import shared.api.ApiPath
 
@@ -18,17 +15,6 @@ import java.time.Instant
 final case class ClaimNextHackAttemptInput(
   languages: List[SubmissionLanguage],
   startedAt: Instant
-)
-
-/** 已领取的 hack attempt；携带目标提交任务、hack 输入和原始判题结果，供 worker 构建 HackTask。 */
-final case class ClaimedHackAttempt(
-  hackId: HackId,
-  targetSubmission: ClaimedSubmission,
-  authorUsername: Username,
-  subtaskIndex: Int,
-  input: String,
-  strategyProviderSource: Option[String],
-  oldResult: JudgeResult
 )
 
 /** 内部 hack claim API；judge worker 没有普通提交时会领取可执行的 hack attempt。 */

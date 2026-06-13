@@ -29,6 +29,5 @@ object GetHack extends AuthenticatedApi[HackId, HackDetail]:
   override def plan(connection: Connection, actor: AuthenticatedUser, hackId: HackId): IO[HackDetail] =
     HackQueryTable.findVisibleById(connection, actor, hackId).flatMap {
       case Some(value) => IO.pure(value)
-      // FIXME-CN: hack 详情缺失时复用 submissionNotFound 文案；如果前端按文案区分资源类型，这里会给出误导性错误。
-      case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
+      case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.hackNotFound))
     }

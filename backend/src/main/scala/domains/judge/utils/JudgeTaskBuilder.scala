@@ -55,9 +55,10 @@ object JudgeTaskBuilder:
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    startedAtEpochMilli: Long = 0L
   ): Either[BuildError, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, startedAtEpochMilli)
 
   private def toProtocolLanguage(language: domains.submission.objects.SubmissionLanguage): SubmissionLanguage =
     language match
@@ -79,16 +80,17 @@ object JudgeTaskBuilder:
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest
   ): Either[String, JudgeTask] =
-    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest).left.map(_.message)
+    parseConfigBytesDetailed(bytes, claimedSubmission, sourceCodes, manifest, startedAtEpochMilli = 0L).left.map(_.message)
 
   private def parseConfigBytesDetailed(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
-    manifest: ProblemDataManifest
+    manifest: ProblemDataManifest,
+    startedAtEpochMilli: Long
   ): Either[BuildError, JudgeTask] =
     parseYaml(bytes).flatMap { root =>
-      buildFromYaml(claimedSubmission, sourceCodes, manifest, root).map(_.task)
+      buildFromYaml(claimedSubmission, sourceCodes, manifest, root, startedAtEpochMilli).map(_.task)
     }
 
   /** 在创建提交前校验提交程序角色/语言是否满足 judge.yaml 的 roles/stubs 约束。 */
@@ -126,33 +128,35 @@ object JudgeTaskBuilder:
         sourceCode
       )
     )
-    parseYaml(bytes).flatMap(root => buildFromYaml(claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, root)).flatMap { built =>
-      val task = built.task
-      val rawPaths =
-        built.roleConfigs.values.toList.flatMap(_.stubs.values.map(_.path.value)) ++
-          task.programs.values.toList.flatMap(_.stub.map(_.path.value)) ++
-          task.programs.values.toList.flatMap(_.headers.map(_.path.value)) ++
-          task.subtasks.flatMap { subtask =>
-            val subtaskPaths =
-              subtask.validator.map(_.source.path.value).toList ++
-                subtask.standard.map(_.source.path.value).toList ++
-                subtask.mode.interactor.map(_.source.path.value).toList
-            val testcasePaths = subtask.testcases.flatMap { testcase =>
-              List(
-                Some(testcase.input.path.value),
-                testcase.answer.map(_.path.value),
-                testcase.checker.source.map(_.path.value),
-                testcase.strategyProvider.map(_.source.path.value)
-              ).flatten
+    parseYaml(bytes)
+      .flatMap(root => buildFromYaml(claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest, root, startedAtEpochMilli = 0L))
+      .flatMap { built =>
+        val task = built.task
+        val rawPaths =
+          built.roleConfigs.values.toList.flatMap(_.stubs.values.map(_.path.value)) ++
+            task.programs.values.toList.flatMap(_.stub.map(_.path.value)) ++
+            task.programs.values.toList.flatMap(_.headers.map(_.path.value)) ++
+            task.subtasks.flatMap { subtask =>
+              val subtaskPaths =
+                subtask.validator.map(_.source.path.value).toList ++
+                  subtask.standard.map(_.source.path.value).toList ++
+                  subtask.mode.interactor.map(_.source.path.value).toList
+              val testcasePaths = subtask.testcases.flatMap { testcase =>
+                List(
+                  Some(testcase.input.path.value),
+                  testcase.answer.map(_.path.value),
+                  testcase.checker.source.map(_.path.value),
+                  testcase.strategyProvider.map(_.source.path.value)
+                ).flatten
+              }
+              subtaskPaths ++ testcasePaths
             }
-            subtaskPaths ++ testcasePaths
-          }
-      rawPaths
-        .traverse(ProblemDataPath.parse)
-        .left
-        .map(buildError)
-        .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml"), resultDisplayModeFor(task)))
-    }.left.map(_.message)
+        rawPaths
+          .traverse(ProblemDataPath.parse)
+          .left
+          .map(buildError)
+          .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml"), resultDisplayModeFor(task)))
+      }.left.map(_.message)
 
   private[utils] def resultDisplayModeFor(task: JudgeTask): SubmissionResultDisplayMode =
     task.subtasks match
@@ -178,7 +182,8 @@ object JudgeTaskBuilder:
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest,
-    root: Map[String, Any]
+    root: Map[String, Any],
+    startedAtEpochMilli: Long
   ): Either[BuildError, BuiltTask] =
     for
       version <- optionalIntAt(root, "version").toBuildError.flatMap {
@@ -224,6 +229,7 @@ object JudgeTaskBuilder:
         task = JudgeTask(
           submissionId = SubmissionId(claimedSubmission.id.value),
           problemSlug = ProblemSlug(claimedSubmission.problemSlug.value),
+          startedAtEpochMilli = startedAtEpochMilli,
           programs = programs,
           problemDataVersion = manifest.version,
           roundingScale = roundingScale,

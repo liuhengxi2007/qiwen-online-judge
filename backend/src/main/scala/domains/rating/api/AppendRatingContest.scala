@@ -9,7 +9,7 @@ import domains.rating.objects.internal.{RatingContestSnapshot, RatingContestSnap
 import domains.rating.objects.request.AppendRatingContestRequest
 import domains.rating.objects.response.RatingManageState
 import domains.rating.table.rating.RatingTable
-import domains.rating.table.rating.RatingTable.AppendContestRecord
+import domains.rating.table.rating.RatingTable.{AppendContestRecord, AppendContestResult}
 import domains.rating.utils.RatingCalculator
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
@@ -32,7 +32,7 @@ object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, Ra
     val _ = pathParams
     request.as[AppendRatingContestRequest]
 
-  /** 校验 m 值、比赛已结束和参与人数后追加快照；重叠或非顺序比赛允许追加但会返回告警。 */
+  /** 校验 m 值、比赛已结束、参与人数和评分序列顺序后追加快照。 */
   override def plan(
     connection: Connection,
     actor: SiteManagerUser,
@@ -50,7 +50,8 @@ object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, Ra
       _ <- HttpApiError.ensure(snapshot.participants.size >= 2, HttpApiError.badRequest(ApiMessages.ratingContestTooFewParticipants))
       lastContestEndAt <- RatingTable.findLastContestEndAt(connection)
       overlapWarning = lastContestEndAt.exists(_.isAfter(snapshot.startAt))
-      _ <- RatingTable.appendContest(
+      _ <- HttpApiError.ensure(!overlapWarning, HttpApiError.badRequest(ApiMessages.ratingContestOutOfOrder))
+      appendResult <- RatingTable.appendContest(
         connection,
         AppendContestRecord(
           contestSlug = snapshot.slug,
@@ -59,7 +60,7 @@ object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, Ra
           contestEndAt = snapshot.endAt,
           m = request.m,
           participantCount = snapshot.participants.size,
-          overlapWarning = overlapWarning,
+          overlapWarning = false,
           snapshot = RatingContestSnapshot(
             participants = snapshot.participants.map(participant =>
               RatingContestSnapshotParticipant(
@@ -74,5 +75,8 @@ object AppendRatingContest extends SiteManagerApi[AppendRatingContestRequest, Ra
           appendedAt = now
         )
       )
+      _ <- appendResult match
+        case AppendContestResult.Appended => IO.unit
+        case AppendContestResult.AlreadyAppended => HttpApiError.raise(HttpApiError.conflict(ApiMessages.ratingContestAlreadyAppended))
       contests <- RatingTable.listManageContests(connection)
     yield RatingManageState(contests)

@@ -31,7 +31,8 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage)
     for
       finishedAt <- IO.realTimeInstant
       status <- IO.fromEither(HackStatus.parse(input.request.status).left.map(IllegalArgumentException(_)))
-      // FIXME-CN: 这里接受任意 HackStatus 并写入 finished_at；queued/running 等非终态如果由 worker 传入，也会被记录成已完成状态。
+      _ <- IO.raiseUnless(HackStatus.isTerminal(status))(IllegalArgumentException("Hack result status must be terminal."))
+      _ <- RecordHackAttemptResult.validateAnswerSize(input.request.answer)
       completed <- HackMutationTable.completeAttempt(
         connection = connection,
         hackId = input.hackId,
@@ -47,7 +48,6 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage)
         case (HackStatus.Success, Some(source)) =>
           for
             inputPath <- RecordHackAttemptResult.problemDataPath(RecordHackAttemptResult.inputPathFor(input.hackId))
-            // FIXME-CN: worker 返回的 answer 文本在写入题目数据前没有大小限制；异常大的答案会直接进入对象存储和 manifest。
             answerPath <- input.request.answer.traverse(_ => RecordHackAttemptResult.problemDataPath(RecordHackAttemptResult.answerPathFor(input.hackId)))
             _ <- MaterializeHackProblemData(problemDataStorage).plan(
               connection,
@@ -70,6 +70,8 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorage)
 
 /** hack 结果记录的构造和路径命名工具。 */
 object RecordHackAttemptResult:
+  private val maxAnswerBytes: Int = 2 * 1024 * 1024
+
   /** 构造内部记录结果输入。 */
   def input(hackId: HackId, request: ReportHackResultRequest): RecordHackAttemptResultInput =
     RecordHackAttemptResultInput(hackId = hackId, request = request)
@@ -82,3 +84,10 @@ object RecordHackAttemptResult:
 
   private def answerPathFor(hackId: HackId): String =
     s"hacks/${hackId.value}.ans"
+
+  private def validateAnswerSize(answer: Option[String]): IO[Unit] =
+    answer match
+      case Some(value) if value.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > maxAnswerBytes =>
+        IO.raiseError(IllegalArgumentException(s"Hack answer must be at most ${maxAnswerBytes / 1024 / 1024} MB."))
+      case _ =>
+        IO.unit

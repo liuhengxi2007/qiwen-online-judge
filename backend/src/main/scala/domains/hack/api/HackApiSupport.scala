@@ -2,6 +2,7 @@ package domains.hack.api
 
 import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.hack.objects.HackMode
 import domains.hack.objects.response.{HackSubtaskAvailability, HackSubtaskInfo, SubmissionHackAvailability}
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.api.GetJudgeProblemDataManifest
@@ -76,20 +77,25 @@ object HackApiSupport:
     yield TargetTaskContext(submission, task)
 
   /** 从可 hack 上下文生成前端展示的子任务信息。 */
-  def subtaskInfo(context: TargetContext): HackSubtaskInfo =
+  def subtaskInfo(context: TargetContext): IO[HackSubtaskInfo] =
     val targetWorstScore = targetSubtaskWorstScore(context.submission, context.subtask.index)
-    HackSubtaskInfo(
-      targetSubmissionId = context.submission.id,
-      problemId = context.submission.problemId,
-      problemSlug = context.submission.problemSlug,
-      problemTitle = context.submission.problemTitle,
-      targetSubmitter = context.submission.submitter,
-      subtaskIndex = context.subtask.index,
-      subtaskLabel = context.subtask.label,
-      oldWorstScore = targetWorstScore,
-      mode = context.subtask.mode.`type`,
-      requiresStrategyProvider = requiresStrategyProvider(context.subtask)
-    )
+    HackMode.parse(context.subtask.mode.`type`) match
+      case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
+      case Right(mode) =>
+        IO.pure(
+          HackSubtaskInfo(
+            targetSubmissionId = context.submission.id,
+            problemId = context.submission.problemId,
+            problemSlug = context.submission.problemSlug,
+            problemTitle = context.submission.problemTitle,
+            targetSubmitter = context.submission.submitter,
+            subtaskIndex = context.subtask.index,
+            subtaskLabel = context.subtask.label,
+            oldWorstScore = targetWorstScore,
+            mode = mode,
+            requiresStrategyProvider = requiresStrategyProvider(context.subtask)
+          )
+        )
 
   /** 计算目标提交每个子任务的 hack 可用性及不可用原因。 */
   def hackAvailability(context: TargetTaskContext): SubmissionHackAvailability =

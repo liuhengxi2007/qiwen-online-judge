@@ -39,4 +39,4 @@ final case class GetSubmissionHackSubtask(
     val (submissionId, subtaskIndex) = input
     HackApiSupport
       .loadTargetContext(connection, actor, submissionId, subtaskIndex, submissionProgramStorage, problemDataStorage)
-      .map(HackApiSupport.subtaskInfo)
+      .flatMap(HackApiSupport.subtaskInfo)

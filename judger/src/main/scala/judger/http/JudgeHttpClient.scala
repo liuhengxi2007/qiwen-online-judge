@@ -16,6 +16,10 @@ import java.time.Duration
 /** backend 表示当前 judger 租约已不存在时在客户端侧使用的控制异常。 */
 final case class LeaseExpiredException(message: String) extends RuntimeException(message)
 
+/** Problem data download failures include status class so cache/load callers can preserve useful diagnostics. */
+final case class ProblemDataDownloadException(statusCode: Int, category: String, responseBody: String)
+    extends RuntimeException(s"Problem data download $category with HTTP $statusCode: $responseBody")
+
 /** 题目数据下载边界，便于缓存层依赖协议而不是具体 HTTP 客户端。 */
 trait ProblemDataDownloader:
   /** 下载某题某个相对路径的数据字节；调用方负责校验 sha256。 */
@@ -121,8 +125,14 @@ final class JudgeHttpClient(httpClient: HttpClient, config: AppConfig) extends P
         .build()
       val response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
       if response.isSuccess then response.body
-      // FIXME-CN: 题目数据下载失败只抛 RuntimeException，未区分 403/404/5xx，排查数据权限或版本漂移时信息不足。
-      else throw RuntimeException(s"Request failed with HTTP ${response.statusCode}: ${new String(response.body, StandardCharsets.UTF_8)}")
+      else
+        val statusCode = response.statusCode
+        val category =
+          if statusCode == 403 then "forbidden"
+          else if statusCode == 404 then "not_found"
+          else if statusCode >= 500 then "backend_error"
+          else "request_error"
+        throw ProblemDataDownloadException(statusCode, category, new String(response.body, StandardCharsets.UTF_8))
     }
 
   private def encode(value: String): String =

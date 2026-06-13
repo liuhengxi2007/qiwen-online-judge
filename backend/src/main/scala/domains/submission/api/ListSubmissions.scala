@@ -11,7 +11,7 @@ import domains.submission.objects.response.SubmissionListResponse
 import domains.submission.table.submission.SubmissionQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
@@ -23,10 +23,10 @@ object ListSubmissions extends AuthenticatedApi[SubmissionListRequest, Submissio
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SubmissionListResponse] = summon[Encoder[SubmissionListResponse]]
 
-  /** 从 query 参数解析筛选、排序和分页；非法筛选值会退回默认值。 */
+  /** 从 query 参数解析筛选、排序和分页；非法筛选值返回 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[SubmissionListRequest] =
     val _ = pathParams
-    IO.pure(SubmissionListRequestQuery.parse(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(SubmissionListRequestQuery.parse(request.uri.query.params))
 
   /** 返回调用者可见的提交摘要页，详情可见性单独标在每条记录上。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: SubmissionListRequest): IO[SubmissionListResponse] =

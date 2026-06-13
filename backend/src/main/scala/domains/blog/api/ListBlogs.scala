@@ -11,7 +11,7 @@ import domains.user.objects.Username
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
@@ -26,10 +26,13 @@ object ListBlogs extends AuthenticatedApi[ListBlogsInput, BlogListResponse]:
   /** 从查询参数解析可选作者用户名和分页信息。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ListBlogsInput] =
     val _ = pathParams
-    IO.pure(
-      ListBlogsInput(
-        authorUsername = request.uri.query.params.get("username").map(Username.canonical),
-        pageRequest = PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
+    val queryParams = request.uri.query.params
+    HttpApiError.fromEitherBadRequest(
+      PageRequestQuerySupport.parsePageRequest(queryParams).map(pageRequest =>
+        ListBlogsInput(
+          authorUsername = queryParams.get("username").map(Username.canonical),
+          pageRequest = pageRequest
+        )
       )
     )
 

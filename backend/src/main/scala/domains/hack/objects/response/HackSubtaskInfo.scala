@@ -1,5 +1,6 @@
 package domains.hack.objects.response
 
+import domains.hack.objects.HackMode
 import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.submission.objects.SubmissionId
 import domains.user.objects.UserIdentity
@@ -16,7 +17,7 @@ final case class HackSubtaskInfo(
   subtaskIndex: Int,
   subtaskLabel: Option[String],
   oldWorstScore: BigDecimal,
-  mode: String,
+  mode: HackMode,
   requiresStrategyProvider: Boolean
 )
 

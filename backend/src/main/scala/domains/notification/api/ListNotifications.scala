@@ -8,7 +8,7 @@ import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.PageRequest
 
 import java.sql.Connection
@@ -24,7 +24,7 @@ object ListNotifications extends AuthenticatedApi[PageRequest, NotificationListR
   /** 从查询参数解析分页信息，路径参数不参与通知列表入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
-    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
   /** 读取当前用户通知列表，严格按收件人用户名过滤。 */
   override def plan(

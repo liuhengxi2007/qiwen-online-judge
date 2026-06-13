@@ -7,7 +7,7 @@ import domains.message.table.message.MessageTableSupport.*
 import domains.user.objects.Username
 import shared.objects.PageRequest
 
-import java.sql.{Connection, Timestamp}
+import java.sql.{Connection, SQLException, Timestamp}
 import java.util.UUID
 
 /** 私信会话表访问对象，负责会话创建、收件箱列表和参与者校验。 */
@@ -40,28 +40,43 @@ object MessageConversationTable:
           throw IllegalStateException("Conversation exists but is not readable by participant.")
         })
       case None =>
-        /** FIXME-CN: findConversationIdForPair 后再 insert，没有捕获唯一索引冲突；同一对用户并发创建会话时可能抛数据库异常而不是重读已有会话。 */
         for
           conversationId <- IO.delay(MessageConversationId(UUID.randomUUID()))
           now <- IO.realTimeInstant
-          _ <- IO.blocking {
-            val statement = connection.prepareStatement(insertConversationSQL)
-            try
-              statement.setObject(1, conversationId.value)
-              statement.setString(2, participantA.value)
-              statement.setString(3, participantB.value)
-              statement.setTimestamp(4, Timestamp.from(now))
-              statement.setTimestamp(5, Timestamp.from(now))
-              statement.setTimestamp(6, Timestamp.from(now))
-              statement.executeUpdate()
-              ()
-            finally statement.close()
+          createdOrExistingId <- insertConversation(connection, conversationId, participantA, participantB, now).handleErrorWith {
+            case error: SQLException if error.getSQLState == "23505" =>
+              findConversationIdForPair(connection, participantA, participantB).flatMap {
+                case Some(existingId) => IO.pure(existingId)
+                case None => IO.raiseError(error)
+              }
+            case error => IO.raiseError(error)
           }
-          summary <- findConversationSummaryForUser(connection, actorUsername, conversationId).map(_.getOrElse {
+          summary <- findConversationSummaryForUser(connection, actorUsername, createdOrExistingId).map(_.getOrElse {
             /** 注意：会话刚按 actor/target 创建；创建后不可读表示写入或读取 SQL 的参与者不变量被破坏。 */
             throw IllegalStateException("Created conversation is not readable by participant.")
           })
         yield summary
+    }
+
+  private def insertConversation(
+    connection: Connection,
+    conversationId: MessageConversationId,
+    participantA: Username,
+    participantB: Username,
+    now: java.time.Instant
+  ): IO[MessageConversationId] =
+    IO.blocking {
+      val statement = connection.prepareStatement(insertConversationSQL)
+      try
+        statement.setObject(1, conversationId.value)
+        statement.setString(2, participantA.value)
+        statement.setString(3, participantB.value)
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setTimestamp(5, Timestamp.from(now))
+        statement.setTimestamp(6, Timestamp.from(now))
+        statement.executeUpdate()
+        conversationId
+      finally statement.close()
     }
 
   private val findConversationSummaryForUserSQL: String =

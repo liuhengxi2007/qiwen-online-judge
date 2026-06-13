@@ -223,9 +223,23 @@ object ProblemSetTable:
       |values (?, ?, ?)
       |""".stripMargin
 
+  private val lockProblemSetProblemsSQL: String =
+    "select pg_advisory_xact_lock(hashtext(?)::bigint)"
+
+  private def lockProblemSetProblems(connection: Connection, problemSetId: ProblemSetId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(lockProblemSetProblemsSQL)
+      try
+        statement.setString(1, s"problem-set-problems:${problemSetId.value.toString}")
+        statement.execute()
+        ()
+      finally statement.close()
+    }
+
   /** 将题目追加到题单末尾。 */
   def addProblem(connection: Connection, problemSetId: ProblemSetId, problemId: ProblemId): IO[AddProblemTableResult] =
     for
+      _ <- lockProblemSetProblems(connection, problemSetId)
       alreadyLinked <- IO.blocking {
         val statement = connection.prepareStatement(relationExistsSQL)
         try
@@ -236,7 +250,6 @@ object ProblemSetTable:
           finally resultSet.close()
         finally statement.close()
       }
-      /** FIXME-CN: 这里先查 relationExists 再用 max(position)+1 插入，没有显式锁或唯一冲突恢复；同一题单并发加题可能撞 position 唯一约束。 */
       result <- if alreadyLinked then
         IO.pure(AddProblemTableResult.AlreadyLinked)
       else

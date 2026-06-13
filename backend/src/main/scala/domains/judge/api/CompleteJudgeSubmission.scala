@@ -45,6 +45,10 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
           judgeState <- maybeJudgeState match
             case Some(judgeState) => IO.pure(judgeState)
             case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.submissionNotFound))
+          _ <- HttpApiError.ensure(
+            judgeState.startedAt.exists(_.toEpochMilli == request.startedAtEpochMilli),
+            HttpApiError.badRequest("Judge result belongs to a stale submission claim.")
+          )
           completedState <- SubmissionJudgeRules
             .completeJudging(
               judgeState,

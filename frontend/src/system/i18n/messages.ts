@@ -12,6 +12,11 @@ export type Locale = 'en' | 'zh-CN'
 export const fallbackLocale: Locale = 'en'
 
 /**
+ * 当前界面语言的持久化 key；读写必须共用同一常量，避免改名时出现漂移。
+ */
+export const localeStorageKey = 'qiwen-online-judge.locale'
+
+/**
  * 按语言聚合的完整消息表；调用方通过翻译键访问，不直接依赖具体文件结构。
  */
 export const messages: Record<Locale, Record<string, string>> = {
@@ -29,8 +34,7 @@ type TranslateValues = Record<string, string | number>
  */
 export function resolveLocale(): Locale {
   if (typeof window !== 'undefined') {
-    // FIXME-CN: localStorage key 与 I18nProvider 内的 localeStorageKey 重复维护，后续改名可能出现读写漂移。
-    const persistedLocale = window.localStorage.getItem('qiwen-online-judge.locale')
+    const persistedLocale = window.localStorage.getItem(localeStorageKey)
     if (persistedLocale === 'en' || persistedLocale === 'zh-CN') {
       return persistedLocale
     }

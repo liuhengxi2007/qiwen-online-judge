@@ -10,7 +10,7 @@ import domains.usergroup.table.user_group.UserGroupTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
@@ -26,7 +26,7 @@ object ListUserGroups extends AuthenticatedApi[PageRequest, PageResponse[UserGro
   /** 从查询参数解析分页请求。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
-    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
   /** 按权限返回可见用户组；如果未来禁用列表权限，则返回空分页而不报错。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, pageRequest: PageRequest): IO[PageResponse[UserGroupSummary]] =

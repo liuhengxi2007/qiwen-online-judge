@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import { ClearProblemData } from '@/apis/problem/ClearProblemData'
 import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
@@ -46,6 +46,7 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
   const problem = detailQuery.problem
   const replaceProblem = detailQuery.replaceProblem
   const [state, dispatch] = useReducer(reduceProblemDataPageState, initialProblemDataPageState)
+  const loadFilesRequestRef = useRef(0)
   const uploadWarningMessage = (() => {
     const selectedFile = state.selectedFile
     if (!selectedFile) {
@@ -67,21 +68,32 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
   })()
 
   const loadFiles = useCallback(async () => {
+    const requestId = loadFilesRequestRef.current + 1
+    loadFilesRequestRef.current = requestId
+    const isCurrentRequest = () => loadFilesRequestRef.current === requestId
     dispatch({ type: 'load_started' })
     try {
       const tree = await sendAPI(new ListProblemDataTree(problemDataScope.problemSlug, problemDataScope.contestSlug))
+      if (!isCurrentRequest()) {
+        return { ok: false as const, message: t('problem.data.loadFailed') }
+      }
       dispatch({ type: 'load_succeeded', tree: tree.items })
       return { ok: true as const }
     } catch (error) {
       const message = isHttpClientError(error) ? error.message : t('problem.data.loadFailed')
+      if (!isCurrentRequest()) {
+        return { ok: false as const, message }
+      }
       dispatch({ type: 'load_failed', message })
       return { ok: false as const, message }
     }
   }, [problemDataScope, t])
 
   useEffect(() => {
-    // FIXME-CN: 数据树加载没有取消或过期响应保护，题目/比赛 scope 变化后旧响应仍可能覆盖新状态。
     void loadFiles()
+    return () => {
+      loadFilesRequestRef.current += 1
+    }
   }, [loadFiles])
 
   const uploadSelectedFile = useCallback(async (): Promise<UploadResult> => {

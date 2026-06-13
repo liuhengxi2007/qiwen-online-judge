@@ -1,9 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { resolveLocale, translateMessage, type Locale } from '@/system/i18n/messages'
+import { localeStorageKey, resolveLocale, translateMessage, type Locale } from '@/system/i18n/messages'
 import { I18nContext, type TranslateValues } from '@/system/i18n/i18n-context'
-
-const localeStorageKey = 'qiwen-online-judge.locale'
 
 /**
  * 解析初始界面语言，优先读取持久化偏好，再回退到浏览器语言和默认语言。

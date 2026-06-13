@@ -53,8 +53,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
 
     let isCancelled = false
 
-    // FIXME-CN: activeUserListRequest 由 requestKey 反序列化并断言为 UserListRequest，搜索词品牌类型未重新解析。
-    const activeUserListRequest = JSON.parse(requestKey) as UserListRequest
+    const activeUserListRequest = userListRequest
 
     void sendAPI(new ListUsers(activeUserListRequest))
       .then((loadedUsers) => {
@@ -151,7 +150,7 @@ export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest:
     return () => {
       isCancelled = true
     }
-  }, [requestKey, siteManagerEnabled])
+  }, [requestKey, siteManagerEnabled, userListRequest])
 
   return {
     users:

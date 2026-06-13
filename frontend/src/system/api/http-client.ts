@@ -7,6 +7,11 @@ import type { ApiMessageParam } from '@/objects/shared/ApiMessageParam'
  */
 export type HttpClientErrorKind = 'unauthorized' | 'forbidden' | 'not-found' | 'http'
 
+/**
+ * API 调用方可提供的响应解码器；输入是未可信 JSON，输出是领域响应类型。
+ */
+export type ResponseDecoder<T> = (value: unknown) => T
+
 const httpClientErrorName = 'HttpClientError'
 
 /**
@@ -63,7 +68,7 @@ function isHttpClientErrorKind(value: unknown): value is HttpClientErrorKind {
 /**
  * 从失败响应中读取用户可见错误文案；会克隆 Response 读取 JSON 和文本，失败时回退到调用方提供的默认文案。
  */
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+export async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const jsonResponse = response.clone()
   const textResponse = response.clone()
   const errorData = decodeApiMessageResponse(await jsonResponse.json().catch(() => null))
@@ -211,7 +216,11 @@ function translateApiMessage(data: ApiMessageResponse): string | null {
 /**
  * 发送带同源凭据的 JSON 请求并统一处理 HTTP 状态；成功时返回业务数据或成功提示，失败时抛出 HttpClientError。
  */
-export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+export async function requestJson<T>(
+  input: RequestInfo,
+  init?: RequestInit,
+  decodeResponse?: ResponseDecoder<T>,
+): Promise<T> {
   const response = await fetch(input, {
     credentials: 'same-origin',
     ...init,
@@ -253,21 +262,35 @@ export async function requestJson<T>(input: RequestInfo, init?: RequestInit): Pr
   }
 
   const value = JSON.parse(text) as unknown
-  // FIXME-CN: 成功业务响应没有运行时 schema 校验，直接断言为 T；后端字段漂移会在页面层才暴露。
-  return (isExactSuccessResponse(value) ? decodeSuccessResponse(value) : value) as T
+  const responseValue = isExactSuccessResponse(value) ? decodeSuccessResponse(value) : value
+
+  if (decodeResponse) {
+    try {
+      return decodeResponse(responseValue)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : translateMessage('common.error.invalidResponsePayload')
+      throw createHttpClientError('http', message)
+    }
+  }
+
+  return responseValue as T
 }
 
 /**
  * 发送 JSON POST 请求；输入体为 undefined 时不写入 body，返回值由调用方指定响应类型。
  */
-export function postJson<TResponse>(input: RequestInfo, body?: unknown): Promise<TResponse> {
+export function postJson<TResponse>(
+  input: RequestInfo,
+  body?: unknown,
+  decodeResponse?: ResponseDecoder<TResponse>,
+): Promise<TResponse> {
   return requestJson<TResponse>(input, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  }, decodeResponse)
 }
 
 /**
@@ -276,9 +299,10 @@ export function postJson<TResponse>(input: RequestInfo, body?: unknown): Promise
 export function postMultipart<TResponse>(
   input: RequestInfo,
   body: FormData,
+  decodeResponse?: ResponseDecoder<TResponse>,
 ): Promise<TResponse> {
   return requestJson<TResponse>(input, {
     method: 'POST',
     body,
-  })
+  }, decodeResponse)
 }

@@ -32,14 +32,14 @@ object AppConfig:
       preferredJudgerPrefix <- JudgerId.parse(
         env.get("JUDGER_ID_PREFIX").map(_.trim).filter(_.nonEmpty).getOrElse("local-judger")
       )
+      judgeToken <- requiredString(env, "JUDGE_TOKEN")
       pollIntervalMs <- parsePositiveLong(
         env.get("POLL_INTERVAL_MS").map(_.trim).filter(_.nonEmpty).getOrElse("2000"),
         "POLL_INTERVAL_MS"
       )
     yield AppConfig(
       backendBaseUrl = env.get("BACKEND_BASE_URL").map(_.trim).filter(_.nonEmpty).getOrElse("http://localhost:8080"),
-      // FIXME-CN: JUDGE_TOKEN 缺失时使用开发默认值，若生产 backend 也保留默认 token，会降低 worker 接口鉴权强度。
-      judgeToken = env.get("JUDGE_TOKEN").map(_.trim).filter(_.nonEmpty).getOrElse("dev-judge-token"),
+      judgeToken = judgeToken,
       preferredJudgerPrefix = preferredJudgerPrefix,
       host = env.get("JUDGER_HOST").map(_.trim).filter(_.nonEmpty).getOrElse(detectHost()),
       processId = env.get("JUDGER_PROCESS_ID").map(_.trim).filter(_.nonEmpty).orElse(detectProcessId()),
@@ -56,6 +56,9 @@ object AppConfig:
         env.get("JUDGER_PROBLEM_DATA_CACHE_ROOT").map(_.trim).filter(_.nonEmpty).getOrElse(defaultProblemDataCacheRoot().toString)
       )
     )
+
+  private def requiredString(env: scala.collection.Map[String, String], name: String): Either[String, String] =
+    env.get(name).map(_.trim).filter(_.nonEmpty).toRight(s"$name must be configured.")
 
   private def parsePositiveLong(raw: String, name: String): Either[String, Long] =
     Try(raw.toLong).toEither.left.map(_ => s"$name must be a valid integer.").flatMap { value =>

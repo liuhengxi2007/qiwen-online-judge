@@ -14,7 +14,8 @@ final case class SessionConfig(
 object SessionConfig:
 
   val default: SessionConfig =
+    val ttlDays = sys.env.get("AUTH_SESSION_TTL_DAYS").flatMap(_.toLongOption).getOrElse(3L)
+    require(ttlDays > 0, "AUTH_SESSION_TTL_DAYS must be greater than 0.")
     SessionConfig(
-      // FIXME-CN: AUTH_SESSION_TTL_DAYS 只做 Long 解析，0 或负数会生成立即过期或异常的会话生命周期。
-      ttl = Duration.ofDays(sys.env.get("AUTH_SESSION_TTL_DAYS").flatMap(_.toLongOption).getOrElse(3L))
+      ttl = Duration.ofDays(ttlDays)
     )

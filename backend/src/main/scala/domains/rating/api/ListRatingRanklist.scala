@@ -8,7 +8,7 @@ import domains.rating.table.rating.RatingTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.{PageRequest, PageResponse}
 
 import java.sql.Connection
@@ -24,7 +24,7 @@ object ListRatingRanklist extends AuthenticatedApi[PageRequest, PageResponse[Rat
   /** 从查询参数解析分页信息，路径参数不参与排行榜入口。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[PageRequest] =
     val _ = pathParams
-    IO.pure(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
+    HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
 
   /** 读取当前评分状态表并返回分页排行榜，调用者身份仅用于认证边界。 */
   override def plan(

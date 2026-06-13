@@ -36,6 +36,10 @@ const allowedExceptions = new Map([
     'frontend-only:submission/JudgeTestcaseResult',
     'Frontend submission detail mirrors judge-protocol JudgeTestcaseResult, which is shared through the judge protocol module rather than backend domain objects.',
   ],
+  [
+    'frontend-only:hack/request/ReportHackResultRequest',
+    'Frontend internal hack result reporting mirrors judge-protocol ReportHackResultRequest, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
   // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
 const usedExceptions = new Set()

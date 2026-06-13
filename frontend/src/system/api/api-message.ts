@@ -1,4 +1,4 @@
-import { requestJson } from '@/system/api/http-client'
+import { requestJson, type ResponseDecoder } from '@/system/api/http-client'
 
 /**
  * 前端 API message 层允许的 HTTP 方法；当前只承载查询和命令两类请求。
@@ -12,6 +12,7 @@ export type APIMessage<Response> = {
   readonly responseType?: Response
   readonly apiPath: string
   readonly method: APIMethod
+  readonly decodeResponse?: ResponseDecoder<Response>
   body(): unknown | undefined
 }
 
@@ -54,7 +55,7 @@ export function apiRequest(message: APIMessage<unknown>): RequestInit {
  * 发送普通 JSON API 消息；网络错误和 HTTP 错误由底层 requestJson 统一转换。
  */
 export function sendAPI<Response>(message: APIMessage<Response>): Promise<Response> {
-  return requestJson(apiPath(message), apiRequest(message))
+  return requestJson(apiPath(message), apiRequest(message), message.decodeResponse)
 }
 
 /**
@@ -68,5 +69,5 @@ export function sendMultipartAPI<Response>(
     method: message.method,
     credentials: 'same-origin',
     body,
-  })
+  }, message.decodeResponse)
 }

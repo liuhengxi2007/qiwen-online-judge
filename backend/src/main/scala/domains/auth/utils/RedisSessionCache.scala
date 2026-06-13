@@ -56,9 +56,9 @@ final class RedisSessionCache private (client: JedisPooled) extends SessionCache
       for
         username <- json.hcursor.get[String]("username").toOption
         expiresAtEpochMilli <- json.hcursor.get[Long]("expiresAtEpochMilli").toOption
+        parsedUsername <- Username.parse(username).toOption
       yield CachedSession(
-        // FIXME-CN: Redis 缓存用户名使用 canonical 而不是 parse，篡改或历史脏数据可绕过用户名格式约束。
-        username = Username.canonical(username),
+        username = parsedUsername,
         expiresAt = Instant.ofEpochMilli(expiresAtEpochMilli)
       )
     }

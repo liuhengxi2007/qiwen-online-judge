@@ -277,6 +277,19 @@ object ContestTable:
       |where contest_id = ? and problem_id = ?
       |""".stripMargin
 
+  private val lockContestProblemsSQL: String =
+    "select pg_advisory_xact_lock(hashtext(?)::bigint)"
+
+  private def lockContestProblems(connection: Connection, contestId: ContestId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(lockContestProblemsSQL)
+      try
+        statement.setString(1, s"contest-problems:${contestId.value.toString}")
+        statement.execute()
+        ()
+      finally statement.close()
+    }
+
   private val nextPositionSQL: String =
     """
       |select coalesce(max(position), 0) as current_max
@@ -293,6 +306,7 @@ object ContestTable:
   /** 将题目追加到比赛末尾，并按位置生成默认别名。 */
   def addProblem(connection: Connection, contestId: ContestId, problemId: ProblemId): IO[AddProblemTableResult] =
     for
+      _ <- lockContestProblems(connection, contestId)
       alreadyLinked <- IO.blocking {
         val statement = connection.prepareStatement(relationExistsSQL)
         try
@@ -303,7 +317,6 @@ object ContestTable:
           finally resultSet.close()
         finally statement.close()
       }
-      /** FIXME-CN: 这里先查 relationExists 再用 max(position)+1 插入，没有显式锁或唯一冲突恢复；同一比赛并发加题可能撞 position/alias 唯一约束。 */
       result <- if alreadyLinked then
         IO.pure(AddProblemTableResult.AlreadyLinked)
       else

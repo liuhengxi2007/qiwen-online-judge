@@ -44,7 +44,19 @@ object JudgerTable:
       |order by judger_id asc
       |""".stripMargin
 
-  // FIXME-CN: 分配 judger_id 是先查已占用再插入；同一 prefix 并发注册时可能选择相同 id，依赖唯一约束报错而非重试。
+  private val lockJudgerPrefixSQL: String =
+    "select pg_advisory_xact_lock(hashtext(?)::bigint)"
+
+  private def lockJudgerPrefix(connection: java.sql.Connection, preferredPrefix: JudgerId): IO[Unit] =
+    IO.blocking {
+      val statement = connection.prepareStatement(lockJudgerPrefixSQL)
+      try
+        statement.setString(1, s"judger-prefix:${preferredPrefix.value}")
+        statement.execute()
+        ()
+      finally statement.close()
+    }
+
   private def allocateJudgerId(connection: java.sql.Connection, preferredPrefix: JudgerId): IO[JudgerId] =
     IO.blocking {
       val statement = connection.prepareStatement(listAllocatedIdsSQL)
@@ -88,6 +100,7 @@ object JudgerTable:
     for
       now <- IO.realTimeInstant
       _ <- deleteExpired(connection, now.minusMillis(heartbeatTimeoutMs))
+      _ <- lockJudgerPrefix(connection, request.preferredPrefix)
       allocatedId <- allocateJudgerId(connection, request.preferredPrefix)
       _ <- IO.blocking {
         val statement = connection.prepareStatement(insertSQL)

@@ -6,7 +6,7 @@ import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionJudgeState
 import domains.submission.table.submission.SubmissionJudgeTable
 import org.http4s.Method
-import shared.api.ApiPath
+import shared.api.{ApiPath, HttpApiError}
 import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
@@ -29,6 +29,7 @@ object UpdateSubmissionJudgeState extends InternalOnlyApi[UpdateSubmissionJudgeS
 
   /** 将给定判题状态写入提交表；调用方负责先完成生命周期合法性校验。 */
   override def plan(connection: Connection, input: UpdateSubmissionJudgeStateInput): IO[SuccessResponse] =
-    SubmissionJudgeTable
-      .updateJudgeState(connection, input.submissionId, input.judgeState)
-      .as(SuccessResponse(code = None, message = None, params = Map.empty))
+    SubmissionJudgeTable.updateJudgeState(connection, input.submissionId, input.judgeState).flatMap { updated =>
+      if updated then IO.pure(SuccessResponse(code = None, message = None, params = Map.empty))
+      else HttpApiError.raise(HttpApiError.badRequest("Submission judge state update did not match an active running claim."))
+    }

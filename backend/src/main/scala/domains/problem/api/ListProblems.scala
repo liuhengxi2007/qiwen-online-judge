@@ -10,7 +10,7 @@ import domains.problem.table.problem.ProblemQueryTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.utils.PageRequestQuerySupport
-import shared.api.{ApiPath, PathParams}
+import shared.api.{ApiPath, HttpApiError, PathParams}
 import shared.objects.PageResponse
 
 import java.sql.Connection
@@ -23,17 +23,16 @@ object ListProblems extends AuthenticatedApi[ProblemListRequest, PageResponse[Pr
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[PageResponse[ProblemSummary]] = summon[Encoder[PageResponse[ProblemSummary]]]
 
-  /** 从 query 参数解析搜索和分页；非法搜索词会被忽略为空过滤。 */
+  /** 从 query 参数解析搜索和分页；非法搜索词返回 400。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[ProblemListRequest] =
     val _ = pathParams
     val queryParams = request.uri.query.params
-    IO.pure(
-      ProblemListRequest(
-        // FIXME-CN: 非法 q 会被静默丢弃为无搜索过滤，用户输入错误和“不过滤”无法区分。
-        query = queryParams.get("q").flatMap(rawQuery => ProblemSearchQuery.parse(rawQuery).toOption),
-        pageRequest = PageRequestQuerySupport.parsePageRequest(queryParams)
-      )
-    )
+    HttpApiError.fromEitherBadRequest {
+      for
+        query <- queryParams.get("q").map(rawQuery => ProblemSearchQuery.parse(rawQuery).map(Some(_))).getOrElse(Right(None))
+        pageRequest <- PageRequestQuerySupport.parsePageRequest(queryParams)
+      yield ProblemListRequest(query = query, pageRequest = pageRequest)
+    }
 
   /** 归一化分页后查询可见题目列表，输出包含总数和当前页。 */
   override def plan(

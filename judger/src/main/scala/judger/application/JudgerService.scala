@@ -38,22 +38,19 @@ final class JudgerService(
         handleTask(task)
     }
 
-  /** 根据 worker task kind 调用对应处理流程；缺失 payload 会记录错误但不回报结果。 */
+  /** 根据 worker task kind 调用对应处理流程；协议解码已保证 kind 和 payload 一致。 */
   private def handleTask(task: JudgeWorkerTask): IO[Unit] =
     task.kind match
       case "judge" =>
         task.judge match
           case Some(judgeTask) => handleJudgeTask(judgeTask)
-          // FIXME-CN: claim 到 kind=judge 但 payload 缺失时只记录日志，backend 任务可能保持 running 而无法自动失败。
-          case None => logger.error("[judger] Claimed judge task payload was missing judge data.")
+          case None => IO.raiseError(RuntimeException("Claimed judge task payload was missing judge data."))
       case "hack" =>
         task.hack match
           case Some(hackTask) => handleHackTask(hackTask)
-          // FIXME-CN: claim 到 kind=hack 但 payload 缺失时只记录日志，backend hack 尝试可能保持 running。
-          case None => logger.error("[judger] Claimed hack task payload was missing hack data.")
+          case None => IO.raiseError(RuntimeException("Claimed hack task payload was missing hack data."))
       case other =>
-        // FIXME-CN: 未知 worker task kind 只记录错误且不回报，协议漂移时任务可能卡在已领取状态。
-        logger.error(s"[judger] Claimed unsupported task kind: $other.")
+        IO.raiseError(RuntimeException(s"Claimed unsupported task kind: $other."))
 
   private def runtimes =
     Map(

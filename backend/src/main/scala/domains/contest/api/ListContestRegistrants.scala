@@ -29,7 +29,7 @@ object ListContestRegistrants extends AuthenticatedApi[(ContestSlug, PageRequest
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ContestSlug, PageRequest)] =
     for
       contestSlug <- HttpApiError.fromEitherBadRequest(pathParams.require("contestSlug").flatMap(ContestSlug.parse))
-      pageRequest = PageRequestQuerySupport.parsePageRequest(request.uri.query.params)
+      pageRequest <- HttpApiError.fromEitherBadRequest(PageRequestQuerySupport.parsePageRequest(request.uri.query.params))
     yield (contestSlug, pageRequest)
 
   /** 校验比赛详情可见性后读取报名列表，未授权时不暴露比赛存在。 */

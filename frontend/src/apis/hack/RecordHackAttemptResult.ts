@@ -1,23 +1,25 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { HackId } from '@/objects/hack/HackId'
+import type { ProblemId } from '@/objects/problem/ProblemId'
+import { parseProblemId } from '@/objects/problem/ProblemId'
+import type { ReportHackResultRequest } from '@/objects/hack/request/ReportHackResultRequest'
 
-/** 内部记录 Hack 判题结果请求体；request 当前透传 worker 原始结果载荷。 */
-/** FIXME-CN: request 实际对应 judge protocol 的 ReportHackResultRequest，使用 unknown 会绕过上报结果结构校验。 */
+/** 内部记录 Hack 判题结果请求体；request 对应 judge protocol 的 ReportHackResultRequest。 */
 type RecordHackAttemptResultBody = {
   hackId: HackId
-  request: unknown
+  request: ReportHackResultRequest
 }
 
-/** 记录 Hack 尝试结果的内部 API；输入 Hack ID 和未建模结果载荷，输出后端响应。 */
-/** FIXME-CN: 后端响应为 Option[ProblemId]，当前 unknown 让成功 hack 后受影响题目 ID 缺少类型约束。 */
-export class RecordHackAttemptResult implements APIMessage<unknown> {
-  declare readonly responseType?: unknown
+/** 记录 Hack 尝试结果的内部 API；成功 hack 时返回受影响题目 ID，否则为空。 */
+export class RecordHackAttemptResult implements APIMessage<ProblemId | null> {
+  declare readonly responseType?: ProblemId | null
   readonly method = 'POST'
   readonly apiPath = 'internal/hacks/judge/result'
+  readonly decodeResponse = decodeRecordHackAttemptResultResponse
   private readonly hackId: HackId
-  private readonly request: unknown
+  private readonly request: ReportHackResultRequest
 
-  constructor(hackId: HackId, request: unknown) {
+  constructor(hackId: HackId, request: ReportHackResultRequest) {
     this.hackId = hackId
     this.request = request
   }
@@ -25,4 +27,20 @@ export class RecordHackAttemptResult implements APIMessage<unknown> {
   body(): RecordHackAttemptResultBody {
     return { hackId: this.hackId, request: this.request }
   }
+}
+
+function decodeRecordHackAttemptResultResponse(value: unknown): ProblemId | null {
+  if (value === null) {
+    return null
+  }
+  if (typeof value !== 'string') {
+    throw new Error('Invalid hack result response payload.')
+  }
+
+  const parsed = parseProblemId(value)
+  if (!parsed.ok) {
+    throw new Error(parsed.error)
+  }
+
+  return parsed.value
 }

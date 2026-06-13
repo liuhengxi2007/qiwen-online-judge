@@ -73,8 +73,7 @@ object CheckerRunner:
                   )
                 yield parseCheckerResult(checkerResult)
           case None => IO.pure(Left(JudgeFailureReason.SystemError))
-      // FIXME-CN: 未知 checker 类型被映射成 SystemError，缺少任务构建错误与 judger 执行错误的明确区分。
-      case _ => IO.pure(Left(JudgeFailureReason.SystemError))
+      case _ => IO.pure(Left(JudgeFailureReason.JudgeTaskBuildFailed))
 
   /** 解释外部 checker 进程结果；非零退出或超时都视为 checker runtime failed。 */
   private[infra] def parseCheckerResult(result: judger.objects.ProcessResult): Either[JudgeFailureReason, CheckerScore] =
