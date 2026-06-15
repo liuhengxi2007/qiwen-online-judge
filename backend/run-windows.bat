@@ -13,6 +13,8 @@ if "%MINIO_SECRET_KEY%"=="" set "MINIO_SECRET_KEY=minioadmin"
 if "%MINIO_BUCKET%"=="" set "MINIO_BUCKET=qiwen-online-judge"
 if "%MINIO_SECURE%"=="" set "MINIO_SECURE=false"
 
+if "%JUDGE_SHARED_TOKEN%"=="" set "JUDGE_SHARED_TOKEN=dev-judge-token"
+
 echo Starting backend with:
 echo   DB_HOST=%DB_HOST%
 echo   DB_PORT=%DB_PORT%
