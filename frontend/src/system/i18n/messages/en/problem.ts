@@ -2,8 +2,8 @@
  * 英文题目消息，覆盖题目列表、详情、创建、编辑和数据管理入口文案。
  */
 export const enProblemMessages: Record<string, string> = {
-  'problem.pageTitle': 'Qiwen Online Judge - Problems',
-  'problem.list.heading': 'Problems',
+  'problem.pageTitle': 'Qiwen Online Judge - Problem List',
+  'problem.list.heading': 'Problem List',
   'problem.list.cardTitle': 'Current Problems',
   'problem.list.cardDescription': 'Browse available problems and open each statement in its full formatted view.',
   'problem.list.create': 'Create problem',
@@ -63,8 +63,8 @@ export const enProblemMessages: Record<string, string> = {
   'problem.message.updateSuccess': 'Problem updated successfully.',
   'problem.message.updateFailed': 'Unable to update problem.',
   'problem.message.managerPermissionRequired': 'Problem manager permission required.',
-  'problem.data.pageTitle': 'Qiwen Online Judge - Manage Problem Data',
-  'problem.data.heading': 'Manage Problem Data',
+  'problem.data.pageTitle': 'Qiwen Online Judge - Problem Data',
+  'problem.data.heading': 'Problem Data',
   'problem.data.loading': 'Loading problem data...',
   'problem.data.latestFile': 'Latest uploaded file',
   'problem.data.noDataUploaded': 'No data uploaded',

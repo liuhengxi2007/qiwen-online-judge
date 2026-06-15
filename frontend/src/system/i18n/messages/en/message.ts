@@ -2,9 +2,9 @@
  * 英文私信消息，覆盖收件箱、会话、发送和实时状态文案。
  */
 export const enMessageMessages: Record<string, string> = {
-  'messages.pageTitle': 'Messages',
-  'messages.conversationPageTitle': 'Conversation',
-  'messages.heading': 'Messages',
+  'messages.pageTitle': 'Message List',
+  'messages.conversationPageTitle': 'Message Detail',
+  'messages.heading': 'Message List',
   'messages.description': 'Keep track of your direct conversations. Unread: {{totalUnreadCount}}.',
   'messages.newConversationTitle': 'Start a conversation',
   'messages.newConversationDescription': 'Search for a user and open a direct message thread.',
@@ -18,9 +18,9 @@ export const enMessageMessages: Record<string, string> = {
   'messages.unreadBadge': '{{count}} unread',
   'messages.noMessagesYet': 'No messages yet.',
   'messages.conversationHeading': 'Chat with {{displayName}}',
-  'messages.conversationFallbackHeading': 'Conversation',
+  'messages.conversationFallbackHeading': 'Message Detail',
   'messages.conversationDescription': 'Messages update automatically when new events arrive.',
-  'messages.conversationTitle': 'Conversation',
+  'messages.conversationTitle': 'Message Detail',
   'messages.conversationTitleDescription': 'Direct messages between two users.',
   'messages.openProfile': 'Open profile',
   'messages.backToInbox': 'Back to inbox',

@@ -3,7 +3,6 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { SiteManageJudgersCard } from './components/SiteManageJudgersCard'
 import { SiteManageUserCard } from './components/SiteManageUserCard'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
 import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSiteManageModel } from './hooks/useSiteManageModel'
@@ -128,7 +127,6 @@ export function SiteManagePage() {
       mainClassName="bg-[linear-gradient(180deg,#fffaf4_0%,#f4efe5_100%)]"
       siteNameClassName="text-stone-500"
       titleClassName="text-stone-950"
-      action={<AncestorNavigation buttonClassName="rounded-full border-stone-300 bg-white" />}
     >
       <SiteManageUserCard
         model={siteManageModel}

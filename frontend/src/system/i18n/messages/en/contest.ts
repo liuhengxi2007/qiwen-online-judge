@@ -2,8 +2,8 @@
  * 英文比赛消息，覆盖比赛列表、详情、报名、榜单、管理和提交入口文案。
  */
 export const enContestMessages: Record<string, string> = {
-  'contest.pageTitle': 'Qiwen Online Judge - Contests',
-  'contest.heading': 'Contests',
+  'contest.pageTitle': 'Qiwen Online Judge - Contest List',
+  'contest.heading': 'Contest List',
   'contest.list.cardTitle': 'Visible Contests',
   'contest.list.cardDescription': 'Browse contests that are public or explicitly shared with you.',
   'contest.list.create': 'Create Contest',
@@ -37,8 +37,8 @@ export const enContestMessages: Record<string, string> = {
   'contest.create.submitting': 'Creating...',
   'contest.create.success': 'Contest created successfully.',
   'contest.create.failed': 'Unable to create contest.',
-  'contest.detail.pageTitle': 'Qiwen Online Judge - Contest',
-  'contest.detail.heading': 'Contest',
+  'contest.detail.pageTitle': 'Qiwen Online Judge - Contest Detail',
+  'contest.detail.heading': 'Contest Detail',
   'contest.detail.loading': 'Loading contest...',
   'contest.detail.loadFailed': 'Unable to load contest.',
   'contest.detail.registrants': 'Registered users',

@@ -2,8 +2,8 @@
  * 简体中文比赛消息，覆盖比赛列表、详情、报名、榜单、管理和提交入口文案。
  */
 export const zhCnContestMessages: Record<string, string> = {
-  'contest.pageTitle': '气温在线评测 - 比赛',
-  'contest.heading': '比赛',
+  'contest.pageTitle': '气温在线评测 - 比赛列表',
+  'contest.heading': '比赛列表',
   'contest.list.cardTitle': '可见比赛',
   'contest.list.cardDescription': '查看公开或明确共享给你的比赛。',
   'contest.list.create': '创建比赛',
@@ -37,8 +37,8 @@ export const zhCnContestMessages: Record<string, string> = {
   'contest.create.submitting': '正在创建...',
   'contest.create.success': '比赛创建成功。',
   'contest.create.failed': '无法创建比赛。',
-  'contest.detail.pageTitle': '气温在线评测 - 比赛',
-  'contest.detail.heading': '比赛',
+  'contest.detail.pageTitle': '气温在线评测 - 比赛详情',
+  'contest.detail.heading': '比赛详情',
   'contest.detail.loading': '正在加载比赛...',
   'contest.detail.loadFailed': '无法加载比赛。',
   'contest.detail.registrants': '报名用户',

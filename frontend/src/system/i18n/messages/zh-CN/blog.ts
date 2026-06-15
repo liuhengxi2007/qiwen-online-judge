@@ -2,8 +2,8 @@
  * 简体中文博客消息，覆盖博客列表、详情、编辑、评论和题解关联文案。
  */
 export const zhCnBlogMessages: Record<string, string> = {
-  'blog.pageTitle': '气温在线评测 - 博客',
-  'blog.heading': '博客',
+  'blog.pageTitle': '气温在线评测 - 博客列表',
+  'blog.heading': '博客列表',
   'blog.list.cardTitle': '最新博客',
   'blog.list.cardDescription': '阅读用户发布的博客，按从新到旧排序。',
   'blog.list.create': '写博客',
@@ -28,8 +28,8 @@ export const zhCnBlogMessages: Record<string, string> = {
   'blog.create.submit': '发布博客',
   'blog.create.submitting': '发布中...',
   'blog.message.createFailed': '当前无法创建博客。',
-  'blog.detail.pageTitle': '气温在线评测 - 博客',
-  'blog.detail.heading': '博客',
+  'blog.detail.pageTitle': '气温在线评测 - 博客详情',
+  'blog.detail.heading': '博客详情',
   'blog.detail.cardTitle': '博客详情',
   'blog.detail.cardDescription': '阅读完整博客内容。',
   'blog.detail.loading': '正在加载博客...',

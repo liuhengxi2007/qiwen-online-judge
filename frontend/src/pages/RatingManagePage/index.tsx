@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AncestorNavigation } from '@/pages/components/AncestorNavigation'
 import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -38,7 +37,6 @@ export function RatingManagePage() {
       title={t('ratingManage.heading')}
       description={t('ratingManage.description')}
       mainClassName="bg-[linear-gradient(180deg,#fffaf4_0%,#eef2f7_100%)]"
-      action={<AncestorNavigation buttonClassName="rounded-full border-slate-300 bg-white" />}
     >
       {model.errorMessage ? (
         <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">

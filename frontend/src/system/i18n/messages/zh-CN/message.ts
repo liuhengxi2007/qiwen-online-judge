@@ -2,9 +2,9 @@
  * 简体中文私信消息，覆盖收件箱、会话、发送和实时状态文案。
  */
 export const zhCnMessageMessages: Record<string, string> = {
-  'messages.pageTitle': '私信',
-  'messages.conversationPageTitle': '会话',
-  'messages.heading': '私信',
+  'messages.pageTitle': '私信列表',
+  'messages.conversationPageTitle': '私信详情',
+  'messages.heading': '私信列表',
   'messages.description': '查看你的私信会话与未读消息。未读：{{totalUnreadCount}}。',
   'messages.newConversationTitle': '发起新会话',
   'messages.newConversationDescription': '搜索用户并打开一条私信会话。',
@@ -18,9 +18,9 @@ export const zhCnMessageMessages: Record<string, string> = {
   'messages.unreadBadge': '{{count}} 条未读',
   'messages.noMessagesYet': '还没有消息。',
   'messages.conversationHeading': '与 {{displayName}} 的会话',
-  'messages.conversationFallbackHeading': '会话',
+  'messages.conversationFallbackHeading': '私信详情',
   'messages.conversationDescription': '有新消息时会自动更新。',
-  'messages.conversationTitle': '会话',
+  'messages.conversationTitle': '私信详情',
   'messages.conversationTitleDescription': '两个用户之间的私信消息。',
   'messages.openProfile': '查看资料',
   'messages.backToInbox': '返回收件箱',

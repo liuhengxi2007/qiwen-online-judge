@@ -2,8 +2,8 @@
  * 简体中文用户资料页消息，描述公开资料、统计和头像相关界面文案。
  */
 export const zhCnUserProfileMessages: Record<string, string> = {
-  'userProfile.pageTitle': '气温在线评测 - 用户资料',
-  'userProfile.heading': '用户资料',
+  'userProfile.pageTitle': '气温在线评测 - 用户详情',
+  'userProfile.heading': '用户详情',
   'userProfile.description': '{{username}} 的公开资料页。',
   'userProfile.viewingOwn': '正在查看 {{displayName}}（{{username}}）的只读资料页。',
   'userProfile.viewingOther': '正在查看 {{displayName}}（{{username}}）的资料页。',

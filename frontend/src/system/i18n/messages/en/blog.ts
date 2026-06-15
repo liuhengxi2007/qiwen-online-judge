@@ -2,8 +2,8 @@
  * 英文博客消息，覆盖博客列表、详情、编辑、评论和题解关联文案。
  */
 export const enBlogMessages: Record<string, string> = {
-  'blog.pageTitle': 'Qiwen Online Judge - Blogs',
-  'blog.heading': 'Blogs',
+  'blog.pageTitle': 'Qiwen Online Judge - Blog List',
+  'blog.heading': 'Blog List',
   'blog.list.cardTitle': 'Latest Blogs',
   'blog.list.cardDescription': 'Read user posts ordered from newest to oldest.',
   'blog.list.create': 'Write blog',
@@ -28,8 +28,8 @@ export const enBlogMessages: Record<string, string> = {
   'blog.create.submit': 'Publish blog',
   'blog.create.submitting': 'Publishing...',
   'blog.message.createFailed': 'Unable to create blog right now.',
-  'blog.detail.pageTitle': 'Qiwen Online Judge - Blog',
-  'blog.detail.heading': 'Blog',
+  'blog.detail.pageTitle': 'Qiwen Online Judge - Blog Detail',
+  'blog.detail.heading': 'Blog Detail',
   'blog.detail.cardTitle': 'Blog Detail',
   'blog.detail.cardDescription': 'Read the full blog post.',
   'blog.detail.loading': 'Loading blog...',

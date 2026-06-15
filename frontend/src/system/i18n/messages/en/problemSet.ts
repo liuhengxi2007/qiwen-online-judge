@@ -2,8 +2,8 @@
  * 英文题单消息，覆盖题单列表、详情、编辑和题目关联流程文案。
  */
 export const enProblemSetMessages: Record<string, string> = {
-  'problemSet.pageTitle': 'Qiwen Online Judge - Problem Sets',
-  'problemSet.heading': 'Problem Sets',
+  'problemSet.pageTitle': 'Qiwen Online Judge - Problem Set List',
+  'problemSet.heading': 'Problem Set List',
   'problemSet.list.cardTitle': 'Current Problem Sets',
   'problemSet.list.cardDescription': 'This page shows problem set summaries only. Detailed linked problems live on the detail page.',
   'problemSet.list.create': 'Create problem set',

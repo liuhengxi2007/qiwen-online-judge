@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import { cn } from '@/components/ui/class-names'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import { AncestorNavigation } from './AncestorNavigation'
 import { AppSectionBar } from './AppSectionBar'
+import { BreadcrumbNavigation } from './BreadcrumbNavigation'
 
 /**
  * 标准页面外壳属性，定义标题、描述、右上操作区和布局 className 扩展点。
@@ -49,7 +49,7 @@ export function PageShell({
             {description ? <p className="text-sm text-slate-600">{description}</p> : null}
           </div>
 
-          {action ?? <AncestorNavigation />}
+          {action ?? <BreadcrumbNavigation />}
         </div>
 
         {showSectionBar ? <AppSectionBar /> : null}

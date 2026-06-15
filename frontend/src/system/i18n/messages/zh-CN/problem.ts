@@ -2,8 +2,8 @@
  * 简体中文题目消息，覆盖题目列表、详情、创建、编辑和数据管理入口文案。
  */
 export const zhCnProblemMessages: Record<string, string> = {
-  'problem.pageTitle': '气温在线评测 - 题目',
-  'problem.list.heading': '题目',
+  'problem.pageTitle': '气温在线评测 - 题目列表',
+  'problem.list.heading': '题目列表',
   'problem.list.cardTitle': '当前题目',
   'problem.list.cardDescription': '浏览可用题目，并进入完整格式化的题面页面。',
   'problem.list.create': '创建题目',
@@ -63,8 +63,8 @@ export const zhCnProblemMessages: Record<string, string> = {
   'problem.message.updateSuccess': '题目更新成功。',
   'problem.message.updateFailed': '无法更新题目。',
   'problem.message.managerPermissionRequired': '需要题目管理员权限。',
-  'problem.data.pageTitle': '气温在线评测 - 管理题目数据',
-  'problem.data.heading': '管理题目数据',
+  'problem.data.pageTitle': '气温在线评测 - 题目数据',
+  'problem.data.heading': '题目数据',
   'problem.data.loading': '正在加载题目数据...',
   'problem.data.latestFile': '最近上传的文件',
   'problem.data.noDataUploaded': '尚未上传数据',
