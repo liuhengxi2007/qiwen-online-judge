@@ -3,20 +3,14 @@ package domains.blog.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-
-
-import domains.blog.objects.BlogId
 import domains.blog.table.blog.BlogProblemLinkMutationTable
-import domains.problem.objects.ProblemSlug
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
-
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
-/** 接受博客关联题目的待审提交，只有题目目录管理员可调用。 */
 object AcceptBlogProblemSubmission extends AuthenticatedApi[BlogProblemLinkInput, SuccessResponse]:
 
   override val method: Method = Method.POST
@@ -24,28 +18,13 @@ object AcceptBlogProblemSubmission extends AuthenticatedApi[BlogProblemLinkInput
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 
-  /** 从路径解析题目 slug 和博客 id，接受操作不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[BlogProblemLinkInput] =
     val _ = request
-    blogProblemLinkInput(pathParams)
+    BlogProblemLinkInput.fromPathParams(pathParams)
 
-  /** 校验目录管理权限后把 pending 关联置为 accepted；不存在待审记录时返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for
-      _ <- HttpApiError.ensure(canManageProblemCatalog(actor), HttpApiError.forbidden(ApiMessages.problemBlogLinkManageForbidden))
+      _ <- ProblemBlogAccess.requireProblemCatalogManager(actor)
       accepted <- BlogProblemLinkMutationTable.acceptProblem(connection, input.problemSlug, input.blogId, actor.username)
       _ <- HttpApiError.ensure(accepted, HttpApiError.notFound(ApiMessages.pendingProblemBlogSubmissionNotFound))
     yield SuccessResponse.fromApiMessage(ApiMessages.problemBlogSubmissionAccepted)
-
-  /** 解析博客-题目关联路径参数，统一复用 problemSlug/blogId 的领域解析规则。 */
-  private def blogProblemLinkInput(pathParams: PathParams): IO[BlogProblemLinkInput] =
-    HttpApiError.fromEitherBadRequest {
-      for
-        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
-        blogId <- pathParams.require("blogId").flatMap(BlogId.parse)
-      yield BlogProblemLinkInput(problemSlug, blogId)
-    }
-
-  /** 判断调用者是否拥有管理题目目录和博客关联审核的权限。 */
-  private def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =
-    actor.problemManager
