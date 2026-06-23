@@ -17,7 +17,6 @@ export const zhCnHackMessages: Record<string, string> = {
   'hack.status.invalid': '无效',
   'hack.status.failed': '失败',
   'hack.oldScore': '原最差分',
-  'hack.newScore': '新最差分',
   'hack.validator': '校验器',
   'hack.standard': '答案生成器',
   'hack.targetRun': '目标运行',

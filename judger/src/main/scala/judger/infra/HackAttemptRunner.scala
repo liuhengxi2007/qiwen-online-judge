@@ -73,8 +73,6 @@ object HackAttemptRunner:
                         ReportHackResultRequest(
                           status = "invalid",
                           answer = None,
-                          oldScore = oldWorstScore,
-                          newScore = None,
                           newResult = None,
                           validatorMessage = Some(message),
                           standardMessage = None,
@@ -94,8 +92,6 @@ object HackAttemptRunner:
                             ReportHackResultRequest(
                               status = status,
                               answer = answerBytes.map(answer => new String(answer, StandardCharsets.UTF_8)),
-                              oldScore = oldWorstScore,
-                              newScore = Some(newSubtask.worstResult.score),
                               newResult = Some(newResult),
                               validatorMessage = Some("accepted"),
                               standardMessage = answerBytes.fold(Some("not_required"))(_ => Some("accepted")),
@@ -306,7 +302,7 @@ object HackAttemptRunner:
   private def hackTemplateSignature(testcase: JudgeTaskTestcase): (JudgeTaskLimits, JudgeTaskChecker, Option[JudgeTaskTool], Boolean) =
     (testcase.limits, testcase.checker, testcase.strategyProvider, testcase.answer.nonEmpty)
 
-  /** 构造 failed 状态的 hack 回报，保留旧分数并填充目标侧错误消息。 */
+  /** 构造 failed 状态的 hack 回报，填充目标侧错误消息。 */
   private def hackFailed(
     task: HackTask,
     targetMessage: String,
@@ -315,8 +311,6 @@ object HackAttemptRunner:
     ReportHackResultRequest(
       status = "failed",
       answer = None,
-      oldScore = targetSubtaskWorstScore(task).getOrElse(BigDecimal(0)),
-      newScore = None,
       newResult = None,
       validatorMessage = None,
       standardMessage = standardMessage,

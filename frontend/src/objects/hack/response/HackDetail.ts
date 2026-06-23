@@ -3,10 +3,11 @@ import type { HackStatus } from '@/objects/hack/HackStatus'
 import type { ProblemId } from '@/objects/problem/ProblemId'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
+import type { JudgeResult } from '@/objects/submission/JudgeResult'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 
-/** Hack 详情响应；包含目标提交、输入、状态、分数变化和各方消息。 */
+/** Hack 详情响应；包含目标提交、输入、状态、结果快照和各方消息。 */
 export type HackDetail = {
   id: HackId
   problemId: ProblemId
@@ -22,7 +23,7 @@ export type HackDetail = {
   strategyProviderSource: string | null
   answer: string | null
   oldScore: number
-  newScore: number | null
+  newResult: JudgeResult | null
   validatorMessage: string | null
   standardMessage: string | null
   targetMessage: string | null

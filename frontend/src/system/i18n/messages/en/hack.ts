@@ -17,7 +17,6 @@ export const enHackMessages: Record<string, string> = {
   'hack.status.invalid': 'Invalid',
   'hack.status.failed': 'Failed',
   'hack.oldScore': 'Old worst score',
-  'hack.newScore': 'New worst score',
   'hack.validator': 'Validator',
   'hack.standard': 'Answer generator',
   'hack.targetRun': 'Target run',

@@ -123,8 +123,6 @@ final case class ClaimJudgeTask(
               val request = judgeprotocol.objects.request.ReportHackResultRequest(
                 status = "failed",
                 answer = None,
-                oldScore = claimedHack.oldResult.subtasks.find(_.index == claimedHack.subtaskIndex).map(_.worstResult.score).getOrElse(BigDecimal(0)),
-                newScore = None,
                 newResult = None,
                 validatorMessage = None,
                 standardMessage = None,

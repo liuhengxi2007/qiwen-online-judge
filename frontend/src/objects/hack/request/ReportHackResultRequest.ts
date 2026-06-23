@@ -5,8 +5,6 @@ import type { JudgeResult } from '@/objects/submission/JudgeResult'
 export type ReportHackResultRequest = {
   status: HackStatus
   answer: string | null
-  oldScore: number
-  newScore: number | null
   newResult: JudgeResult | null
   validatorMessage: string | null
   standardMessage: string | null

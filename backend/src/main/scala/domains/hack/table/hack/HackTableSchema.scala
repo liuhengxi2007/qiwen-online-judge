@@ -27,7 +27,7 @@ object HackTableSchema:
       |  strategy_provider_source text,
       |  answer_text text,
       |  old_score numeric not null,
-      |  new_score numeric,
+      |  judge_result jsonb,
       |  validator_message text,
       |  standard_message text,
       |  target_message text,
@@ -35,6 +35,18 @@ object HackTableSchema:
       |  started_at timestamp,
       |  finished_at timestamp
       |);
+      |""".stripMargin
+
+  val addJudgeResultColumnSql: String =
+    """
+      |alter table hack_attempts
+      |add column if not exists judge_result jsonb
+      |""".stripMargin
+
+  val dropNewScoreColumnSql: String =
+    """
+      |alter table hack_attempts
+      |drop column if exists new_score
       |""".stripMargin
 
   val dropProblemHackTestcaseTableSql: String =
@@ -74,6 +86,8 @@ object HackTableSchema:
         List(
           createPublicIdSequenceSql,
           initAttemptTableSql,
+          addJudgeResultColumnSql,
+          dropNewScoreColumnSql,
           addPublicIdUniqueConstraintSql,
           dropProblemHackTestcaseTableSql,
           createIndexesSql

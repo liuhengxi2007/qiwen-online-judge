@@ -4,12 +4,10 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import judgeprotocol.objects.response.JudgeResult
 
-/** judger 完成 hack 尝试后回报的状态、可选答案、新旧分数和诊断消息。 */
+/** judger 完成 hack 尝试后回报的状态、可选答案、结果快照和诊断消息。 */
 final case class ReportHackResultRequest(
   status: String,
   answer: Option[String],
-  oldScore: BigDecimal,
-  newScore: Option[BigDecimal],
   newResult: Option[JudgeResult],
   validatorMessage: Option[String],
   standardMessage: Option[String],

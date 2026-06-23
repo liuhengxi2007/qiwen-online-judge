@@ -229,7 +229,6 @@ function HackAttemptPanel({ hack }: { hack: HackDetail }) {
       <CardContent className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
         <HackMetric label={t('hack.status')} value={hackStatusLabel(hack.status, t)} />
         <HackMetric label={t('hack.oldScore')} value={formatOptionalScore(hack.oldScore)} />
-        <HackMetric label={t('hack.newScore')} value={formatOptionalScore(hack.newScore)} />
         <HackMetric label={t('hack.validator')} value={hack.validatorMessage ?? '--'} />
         <HackMetric label={t('hack.standard')} value={hack.standardMessage ?? '--'} />
         <HackMetric label={t('hack.targetRun')} value={hack.targetMessage ?? '--'} />

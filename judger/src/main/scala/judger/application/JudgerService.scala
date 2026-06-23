@@ -91,7 +91,7 @@ final class JudgerService(
 
   private def logHackResult(task: HackTask, result: ReportHackResultRequest): IO[Unit] =
     val summary =
-      s"[judger] Hack #${task.hackId} finished with status=${result.status} oldScore=${result.oldScore} newScore=${result.newScore.map(_.toString).getOrElse("n/a")}."
+      s"[judger] Hack #${task.hackId} finished with status=${result.status}."
     result.status match
       case "failed" => logger.error(summary)
       case _ => IO.unit

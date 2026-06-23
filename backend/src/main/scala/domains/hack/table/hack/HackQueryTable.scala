@@ -115,13 +115,18 @@ object HackQueryTable:
       |h.strategy_provider_source,
       |h.answer_text,
       |h.old_score,
-      |h.new_score,
       |h.validator_message,
       |h.standard_message,
       |h.target_message,
       |h.created_at,
       |h.started_at,
       |h.finished_at
+      |""".stripMargin
+
+  private val detailSelectColumns: String =
+    s"""
+      |$selectColumns,
+      |h.judge_result::text as judge_result
       |""".stripMargin
 
   private val fromJoins: String =
@@ -135,7 +140,7 @@ object HackQueryTable:
 
   private val findVisibleByIdSQL: String =
     s"""
-      |select $selectColumns
+      |select $detailSelectColumns
       |$fromJoins
       |where h.public_id = ?
       |  and $visibilityPredicate
@@ -229,7 +234,6 @@ object HackQueryTable:
       subtaskLabel = Option(resultSet.getString("subtask_label")),
       status = decodeHackStatusColumn(resultSet.getString("status")),
       oldScore = BigDecimal(resultSet.getBigDecimal("old_score")),
-      newScore = Option(resultSet.getBigDecimal("new_score")).map(BigDecimal(_)),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
     )
@@ -250,7 +254,7 @@ object HackQueryTable:
       strategyProviderSource = Option(resultSet.getString("strategy_provider_source")),
       answer = Option(resultSet.getString("answer_text")),
       oldScore = BigDecimal(resultSet.getBigDecimal("old_score")),
-      newScore = Option(resultSet.getBigDecimal("new_score")).map(BigDecimal(_)),
+      newResult = readOptionalJudgeResult(resultSet, "judge_result"),
       validatorMessage = Option(resultSet.getString("validator_message")),
       standardMessage = Option(resultSet.getString("standard_message")),
       targetMessage = Option(resultSet.getString("target_message")),

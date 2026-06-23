@@ -9,3 +9,10 @@ class HackTableSchemaSuite extends FunSuite:
     assert(!HackTableSchema.initAttemptTableSql.contains("problem_hack_testcases"))
     assert(!HackTableSchema.createIndexesSql.contains("problem_hack_testcases"))
   }
+
+  test("schema keeps hack judge result snapshot on attempts") {
+    assert(HackTableSchema.initAttemptTableSql.contains("judge_result jsonb"))
+    assert(HackTableSchema.addJudgeResultColumnSql.contains("add column if not exists judge_result jsonb"))
+    assert(!HackTableSchema.initAttemptTableSql.contains("new_score"))
+    assert(HackTableSchema.dropNewScoreColumnSql.contains("drop column if exists new_score"))
+  }

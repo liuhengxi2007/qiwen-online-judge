@@ -6,11 +6,12 @@ import domains.submission.objects.SubmissionId
 import domains.user.objects.UserIdentity
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import judgeprotocol.objects.response.JudgeResult
 
 import java.time.Instant
 import scala.util.Try
 
-/** hack 详情响应；包含输入、可选策略源码、worker 输出和分数变化。 */
+/** hack 详情响应；包含输入、可选策略源码、worker 输出和结果快照。 */
 final case class HackDetail(
   id: HackId,
   problemId: ProblemId,
@@ -26,7 +27,7 @@ final case class HackDetail(
   strategyProviderSource: Option[String],
   answer: Option[String],
   oldScore: BigDecimal,
-  newScore: Option[BigDecimal],
+  newResult: Option[JudgeResult],
   validatorMessage: Option[String],
   standardMessage: Option[String],
   targetMessage: Option[String],

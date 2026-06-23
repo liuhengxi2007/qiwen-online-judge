@@ -8,6 +8,7 @@ import type { HackId } from '@/objects/hack/HackId'
 import { hackIdValue, parseHackId } from '@/objects/hack/HackId'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
+import type { JudgeTestcaseResult } from '@/objects/submission/JudgeTestcaseResult'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { HackCard, HackErrorAlert } from '@/pages/components/HackCard'
 import { HackMetric } from '@/pages/components/HackMetric'
@@ -17,7 +18,15 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { hackStatusLabel } from '@/pages/objects/HackDisplay'
-import { formatOptionalScore } from '@/pages/objects/SubmissionDisplay'
+import {
+  formatOptionalDurationMs,
+  formatOptionalMemoryKb,
+  formatOptionalScore,
+  formatTestcaseDetail,
+  submissionVerdictLabel,
+  submissionVerdictTextStyle,
+} from '@/pages/objects/SubmissionDisplay'
+import { scoreTextStyleForRatio } from '@/pages/objects/ScoreDisplay'
 import { sendAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -125,13 +134,14 @@ function HackDetailPageContent({ hackId }: { hackId: HackId }) {
               <HackMetric label={t('hack.author')} value={<UserProfileLink user={state.hack.author} />} />
               <HackMetric label={t('hack.status')} value={hackStatusLabel(state.hack.status, t)} />
               <HackMetric label={t('hack.oldScore')} value={formatOptionalScore(state.hack.oldScore)} />
-              <HackMetric label={t('hack.newScore')} value={formatOptionalScore(state.hack.newScore)} />
               <HackMetric label={t('hack.validator')} value={state.hack.validatorMessage ?? '--'} />
               <HackMetric label={t('hack.standard')} value={state.hack.standardMessage ?? '--'} />
               <HackMetric label={t('hack.targetRun')} value={state.hack.targetMessage ?? '--'} />
               <HackMetric label={t('common.submittedAt')} value={<DateTimeText value={state.hack.createdAt} />} />
             </CardContent>
           </HackCard>
+
+          <HackResultCard hack={state.hack} />
 
           <HackCard>
             <CardHeader>
@@ -145,4 +155,70 @@ function HackDetailPageContent({ hackId }: { hackId: HackId }) {
       ) : null}
     </PageShell>
   )
+}
+
+/**
+ * Hack 运行结果卡片，只展示本次 hack 新增的测试点，避免把聚合快照误读成整题重跑。
+ */
+function HackResultCard({ hack }: { hack: HackDetail }) {
+  const { t } = useI18n()
+  const testcase = latestHackTestcase(hack)
+
+  if (!testcase) {
+    return null
+  }
+
+  return (
+    <HackCard>
+      <CardHeader>
+        <CardTitle className="text-xl text-slate-950">{t('hack.targetRun')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto rounded-md border border-slate-200">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">{t('submission.detail.testcases')}</th>
+                <th className="px-4 py-2 font-medium">{t('common.verdict')}</th>
+                <th className="px-4 py-2 font-medium">{t('submission.list.score')}</th>
+                <th className="px-4 py-2 font-medium">{t('submission.list.timeUsed')}</th>
+                <th className="px-4 py-2 font-medium">{t('submission.list.spaceUsed')}</th>
+                <th className="px-4 py-2 font-medium">{t('submission.detail.testcaseDetail')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t border-slate-100">
+                <td className="px-4 py-2 font-medium text-slate-900">{hackTestcaseTitle(testcase)}</td>
+                <td className="px-4 py-2 text-slate-700" style={submissionVerdictTextStyle(testcase.verdict)}>
+                  {submissionVerdictLabel(testcase.verdict)}
+                </td>
+                <td className="px-4 py-2 text-slate-700" style={scoreTextStyleForRatio(testcase.score)}>
+                  {formatOptionalScore(testcase.score)}
+                </td>
+                <td className="px-4 py-2 text-slate-700">{formatOptionalDurationMs(testcase.timeUsedMs)}</td>
+                <td className="px-4 py-2 text-slate-700">{formatOptionalMemoryKb(testcase.memoryUsedKb)}</td>
+                <td className="max-w-[320px] whitespace-pre-wrap px-4 py-2 text-slate-700">
+                  {formatTestcaseDetail(testcase.reason, testcase.message)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </HackCard>
+  )
+}
+
+function latestHackTestcase(hack: HackDetail): JudgeTestcaseResult | null {
+  const subtask = hack.newResult?.subtasks.find((current) => current.index === hack.subtaskIndex)
+  const hackTestcases = subtask?.testcases.filter((testcase) => testcase.testcaseType === 'hack') ?? []
+
+  return hackTestcases.reduce<JudgeTestcaseResult | null>(
+    (latest, testcase) => (latest === null || testcase.index > latest.index ? testcase : latest),
+    null
+  )
+}
+
+function hackTestcaseTitle(testcase: JudgeTestcaseResult): string {
+  return testcase.label ? `#${testcase.index} (${testcase.label})` : `#${testcase.index}`
 }

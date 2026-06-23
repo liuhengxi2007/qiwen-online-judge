@@ -6,6 +6,7 @@ import domains.problem.objects.{ProblemId, ProblemSlug}
 import domains.submission.objects.SubmissionId
 import domains.user.objects.Username
 import domains.hack.table.hack.HackTableSupport.*
+import judgeprotocol.objects.response.JudgeResult
 
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
@@ -70,7 +71,7 @@ object HackMutationTable:
       |update hack_attempts h
       |set status = ?,
       |    answer_text = ?,
-      |    new_score = ?,
+      |    judge_result = ?::jsonb,
       |    validator_message = ?,
       |    standard_message = ?,
       |    target_message = ?,
@@ -97,7 +98,7 @@ object HackMutationTable:
     hackId: HackId,
     status: HackStatus,
     answer: Option[String],
-    newScore: Option[BigDecimal],
+    newResult: Option[JudgeResult],
     validatorMessage: Option[String],
     standardMessage: Option[String],
     targetMessage: Option[String],
@@ -110,9 +111,7 @@ object HackMutationTable:
         answer match
           case Some(value) => statement.setString(2, value)
           case None => statement.setNull(2, java.sql.Types.VARCHAR)
-        newScore match
-          case Some(value) => statement.setBigDecimal(3, value.bigDecimal)
-          case None => statement.setNull(3, java.sql.Types.NUMERIC)
+        setOptionalJudgeResult(statement, 3, newResult)
         validatorMessage match
           case Some(value) => statement.setString(4, value)
           case None => statement.setNull(4, java.sql.Types.VARCHAR)

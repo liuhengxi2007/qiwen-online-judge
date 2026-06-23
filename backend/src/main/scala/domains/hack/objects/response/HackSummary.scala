@@ -23,7 +23,6 @@ final case class HackSummary(
   subtaskLabel: Option[String],
   status: HackStatus,
   oldScore: BigDecimal,
-  newScore: Option[BigDecimal],
   createdAt: Instant,
   finishedAt: Option[Instant]
 )

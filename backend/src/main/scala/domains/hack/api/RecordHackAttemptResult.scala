@@ -38,7 +38,7 @@ final case class RecordHackAttemptResult(problemDataStorage: ProblemDataStorageC
         hackId = input.hackId,
         status = status,
         answer = input.request.answer,
-        newScore = input.request.newScore,
+        newResult = input.request.newResult,
         validatorMessage = input.request.validatorMessage,
         standardMessage = input.request.standardMessage,
         targetMessage = input.request.targetMessage,
