@@ -57,8 +57,11 @@ export function useSessionGuard(options: UseSessionGuardOptions = {}) {
           return
         }
 
-        clearSession()
-        setNavigationIntent(toSessionExpiredRedirect())
+        const cachedSession = useAuthStore.getState().session
+        // 后端不可达或临时失败不代表 cookie/session 已失效，保留本地登录态避免开发环境反复登录。
+        if (cachedSession && options.requireSiteManager && !asSiteManagerSession(cachedSession)) {
+          setNavigationIntent(toSiteManageDeniedRedirect())
+        }
       }
     }
 
