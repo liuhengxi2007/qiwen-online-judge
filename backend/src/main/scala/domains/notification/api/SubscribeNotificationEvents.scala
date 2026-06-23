@@ -3,9 +3,12 @@ package domains.notification.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEventSse}
-import fs2.text
-import org.http4s.{Header, Method, Request, Response, Status}
+import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
+import domains.user.objects.Username
+import fs2.{Stream, text}
+import io.circe.Encoder
+import io.circe.syntax.*
+import org.http4s.{Header, Method, Request, Response, ServerSentEvent, Status}
 import org.typelevel.ci.CIString
 import shared.api.{ApiPath, PathParams}
 
@@ -36,6 +39,23 @@ final class SubscribeNotificationEvents(notificationEventHub: NotificationEventH
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          NotificationEventHub.subscribe(notificationEventHub, actor.username).map(NotificationStreamEventSse.render).through(text.utf8.encode)
+          SubscribeNotificationEvents.renderedEventStream(notificationEventHub, actor.username).through(text.utf8.encode)
         )
     )
+
+object SubscribeNotificationEvents:
+
+  private given Encoder[NotificationStreamEvent] = Encoder.instance {
+    case NotificationStreamEvent.NotificationsChanged =>
+      io.circe.Json.obj()
+  }
+
+  /** 生成当前用户通知变更事件的 SSE 文本流，供通知端点和合并实时端点复用。 */
+  def renderedEventStream(notificationEventHub: NotificationEventHubContext, username: Username): Stream[IO, String] =
+    NotificationEventHub.subscribe(notificationEventHub, username).map(render)
+
+  private def toServerSentEvent(event: NotificationStreamEvent): ServerSentEvent =
+    ServerSentEvent(data = Some(event.asJson.noSpaces), eventType = Some("notifications_changed"))
+
+  private def render(event: NotificationStreamEvent): String =
+    toServerSentEvent(event).renderString + "\n"

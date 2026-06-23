@@ -56,9 +56,6 @@ const frontendObjectRoot = 'frontend/src/objects/'
 const frontendObjectFileBasenamePattern = /^[A-Z][A-Za-z0-9]*$/
 const frontendObjectAllowedSubdirectories = new Set(['request', 'response'])
 const frontendObjectAllowedSubdomainPaths = new Set(['shared/access'])
-const backendDomainHttpMapperFilePattern =
-  /^backend\/src\/main\/scala\/domains\/([^/]+)\/http\/mapper\/([^/]+)\.scala$/
-const backendDomainHttpMapperBasenamePattern = /^[A-Za-z0-9_]+Http(?:Request|Response)Mappers$/
 const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
 const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
 const backendDomainUtilsFilePattern =
@@ -436,18 +433,6 @@ function checkBackendObjectFile(filePath, errors) {
   }
 }
 
-function checkBackendHttpMapperFile(filePath, errors) {
-  const match = filePath.match(backendDomainHttpMapperFilePattern)
-  if (!match) {
-    return
-  }
-
-  const [, , basename] = match
-  if (!backendDomainHttpMapperBasenamePattern.test(basename)) {
-    errors.push(`${filePath} must be named *HttpRequestMappers.scala or *HttpResponseMappers.scala`)
-  }
-}
-
 function checkBackendApplicationBoundaryFile(filePath, errors) {
   const source = read(filePath)
   for (const entry of extractScalaImports(source)) {
@@ -652,7 +637,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/response\//.test(filePath)) {
-      errors.push(`${filePath} is in removed backend HTTP response mapper directory; use http/mapper`)
+      errors.push(`${filePath} is in removed backend HTTP response directory; use objects/response or endpoint-local response rendering`)
     }
 
     if (/^backend\/src\/main\/scala\/shared\/http\/response\//.test(filePath)) {
@@ -716,10 +701,6 @@ function run() {
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/.*HttpPlans\.scala$/.test(filePath)) {
       checkBackendHttpPlansFile(filePath, errors)
-    }
-
-    if (/^backend\/src\/main\/scala\/domains\/[^/]+\/http\/mapper\//.test(filePath)) {
-      checkBackendHttpMapperFile(filePath, errors)
     }
 
     if (!/^backend\/src\/main\/scala\/domains\/[^/]+\/(?:table|api|routes)\//.test(filePath)) {

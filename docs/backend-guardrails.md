@@ -160,6 +160,7 @@ The judge worker channel is the frontend API mirroring exception. Worker-only ca
 
 Current explicitly guarded collaboration boundaries:
 
+- message event dispatch and payload typing: `MessageEventHubContext`, `MessageEventHub`, and `MessageStreamEvent`
 - notification event dispatch and payload typing: `NotificationEventHubContext`, `NotificationEventHub`, `NotificationStreamEvent`, `NotificationKind`, and `NotificationPayload`
 - judge registration/execution support: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
 - problem data access through `ProblemDataStorageContext` values and `ProblemDataStorage` functions

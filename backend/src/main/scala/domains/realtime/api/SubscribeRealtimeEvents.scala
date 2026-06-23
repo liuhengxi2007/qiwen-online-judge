@@ -3,8 +3,10 @@ package domains.realtime.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent, MessageStreamEventSse}
-import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent, NotificationStreamEventSse}
+import domains.message.api.SubscribeMessageEvents
+import domains.message.utils.MessageEventHubContext
+import domains.notification.api.SubscribeNotificationEvents
+import domains.notification.utils.NotificationEventHubContext
 import fs2.text
 import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
@@ -33,8 +35,8 @@ final class SubscribeRealtimeEvents(
     input: Unit
   ): IO[Response[IO]] =
     val _ = (connection, input)
-    val messageEvents = MessageEventHub.subscribe(messageEventHub, actor.username).map(RealtimeStreamEvent.Message(_))
-    val notificationEvents = NotificationEventHub.subscribe(notificationEventHub, actor.username).map(RealtimeStreamEvent.Notification(_))
+    val messageEvents = SubscribeMessageEvents.renderedEventStream(messageEventHub, actor.username)
+    val notificationEvents = SubscribeNotificationEvents.renderedEventStream(notificationEventHub, actor.username)
 
     IO.pure(
       Response[IO](status = Status.Ok)
@@ -42,14 +44,5 @@ final class SubscribeRealtimeEvents(
           Header.Raw(CIString("Content-Type"), "text/event-stream"),
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
-        .withBodyStream(messageEvents.merge(notificationEvents).map(renderRealtimeEvent).through(text.utf8.encode))
+        .withBodyStream(messageEvents.merge(notificationEvents).through(text.utf8.encode))
     )
-
-  private enum RealtimeStreamEvent:
-    case Message(event: MessageStreamEvent)
-    case Notification(event: NotificationStreamEvent)
-
-  private def renderRealtimeEvent(event: RealtimeStreamEvent): String =
-    event match
-      case RealtimeStreamEvent.Message(messageEvent) => MessageStreamEventSse.render(messageEvent)
-      case RealtimeStreamEvent.Notification(notificationEvent) => NotificationStreamEventSse.render(notificationEvent)

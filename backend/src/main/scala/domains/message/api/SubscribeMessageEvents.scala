@@ -3,9 +3,12 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEventSse}
-import fs2.text
-import org.http4s.{Header, Method, Request, Response, Status}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
+import domains.user.objects.Username
+import fs2.{Stream, text}
+import io.circe.Encoder
+import io.circe.syntax.*
+import org.http4s.{Header, Method, Request, Response, ServerSentEvent, Status}
 import org.typelevel.ci.CIString
 import shared.api.{ApiPath, PathParams}
 
@@ -36,6 +39,36 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHubContext) exte
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          MessageEventHub.subscribe(messageEventHub, actor.username).map(MessageStreamEventSse.render).through(text.utf8.encode)
+          SubscribeMessageEvents.renderedEventStream(messageEventHub, actor.username).through(text.utf8.encode)
         )
     )
+
+object SubscribeMessageEvents:
+
+  private given Encoder[MessageStreamEvent] = Encoder.instance {
+    case MessageStreamEvent.MessageReceived(message) =>
+      message.asJson
+    case MessageStreamEvent.ConversationRead(conversationId, readUpToMessageId, readerUsername) =>
+      io.circe.Json.obj(
+        "conversationId" -> conversationId.asJson,
+        "readUpToMessageId" -> readUpToMessageId.asJson,
+        "readerUsername" -> readerUsername.asJson
+      )
+    case MessageStreamEvent.InboxChanged =>
+      io.circe.Json.obj()
+  }
+
+  /** 生成当前用户私信事件的 SSE 文本流，供消息端点和合并实时端点复用。 */
+  def renderedEventStream(messageEventHub: MessageEventHubContext, username: Username): Stream[IO, String] =
+    MessageEventHub.subscribe(messageEventHub, username).map(render)
+
+  private def toServerSentEvent(event: MessageStreamEvent): ServerSentEvent =
+    val eventName = event match
+      case _: MessageStreamEvent.MessageReceived => "message_received"
+      case _: MessageStreamEvent.ConversationRead => "conversation_read"
+      case MessageStreamEvent.InboxChanged => "inbox_changed"
+
+    ServerSentEvent(data = Some(event.asJson.noSpaces), eventType = Some(eventName))
+
+  private def render(event: MessageStreamEvent): String =
+    toServerSentEvent(event).renderString + "\n"

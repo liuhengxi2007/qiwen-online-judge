@@ -50,7 +50,7 @@ class SubscribeRealtimeEventsSuite extends CatsEffectSuite:
             .compile
             .lastOrError
             .start
-          _ <- IO.sleep(50.millis)
+          _ <- IO.sleep(250.millis)
           _ <- MessageEventHub.publish(messageHub, actor.username, MessageStreamEvent.InboxChanged)
           _ <- NotificationEventHub.publish(notificationHub, actor.username, NotificationStreamEvent.NotificationsChanged)
           body <- bodyFiber.join.flatMap {
