@@ -6,6 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.response.BlogListResponse
+import domains.blog.objects.request.ProblemBlogsInput
 import domains.blog.table.blog.BlogProblemLinkQueryTable
 import domains.problem.objects.ProblemSlug
 import io.circe.Encoder

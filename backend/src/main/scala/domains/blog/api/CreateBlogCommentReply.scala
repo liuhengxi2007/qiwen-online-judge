@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
-import domains.blog.objects.request.CreateBlogCommentRequest
+import domains.blog.objects.request.{CreateBlogCommentInput, CreateBlogCommentRequest}
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
 import domains.notification.utils.NotificationEventHubContext

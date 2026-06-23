@@ -48,4 +48,4 @@ The object alignment check is intentionally structural:
 
 It does not replace runtime tests, endpoint fixtures, or parser tests.
 
-The API alignment check compares `frontend/src/apis/*/*.ts` with `backend/src/main/scala/domains/*/api/*.scala`, with explicit backend-only domains such as judge integration endpoints recorded as script exceptions. Raw binary resource endpoints, such as avatar image reads consumed through an `<img>` URL, may also be explicit backend-only endpoint exceptions.
+The API alignment check compares every direct `frontend/src/apis/*/*.ts` file basename with every direct `backend/src/main/scala/domains/*/api/*.scala` file basename. It intentionally works at the file layer, not only at the `extends *Api` endpoint-object layer, so stray backend API support or input files must be moved out of `api` or recorded as explicit backend-only file exceptions. Explicit backend-only domains such as judge integration endpoints remain script exceptions. Raw binary resource endpoints, such as avatar image reads consumed through an `<img>` URL, may also be explicit backend-only file exceptions.

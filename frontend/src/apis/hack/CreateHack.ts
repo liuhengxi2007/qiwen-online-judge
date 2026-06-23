@@ -1,7 +1,7 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
+import type { CreateHackMultipartRequest } from '@/objects/hack/request/CreateHackMultipartRequest'
 import type { CreateHackRequest } from '@/objects/hack/request/CreateHackRequest'
 import type { HackDetail } from '@/objects/hack/response/HackDetail'
-import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import { submissionIdValue } from '@/objects/submission/SubmissionId'
 
 /** 创建 Hack；输入目标提交、子任务和攻击输入，输出 Hack 详情。 */
@@ -18,14 +18,6 @@ export class CreateHack implements APIWithSessionMessage<HackDetail> {
   body(): CreateHackRequest {
     return this.request
   }
-}
-
-/** multipart 创建 Hack 请求；input/strategyProviderSource 可用文本或文件传输。 */
-export type CreateHackMultipartRequest = {
-  targetSubmissionId: SubmissionId
-  subtaskIndex: number
-  input: { kind: 'text'; value: string } | { kind: 'file'; value: File }
-  strategyProviderSource?: { kind: 'text'; value: string } | { kind: 'file'; value: File } | null
 }
 
 /** 创建 multipart Hack；formData 根据文本/文件分支组装输入和策略源码。 */

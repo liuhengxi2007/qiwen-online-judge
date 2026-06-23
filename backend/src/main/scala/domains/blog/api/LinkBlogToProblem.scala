@@ -3,6 +3,7 @@ package domains.blog.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.blog.objects.request.BlogProblemLinkInput
 import domains.blog.table.blog.BlogProblemLinkMutationTable
 import domains.problem.api.ResolveProblemReference
 import io.circe.Encoder
@@ -21,7 +22,7 @@ object LinkBlogToProblem extends AuthenticatedApi[BlogProblemLinkInput, SuccessR
 
   override def decode(request: Request[IO], pathParams: PathParams): IO[BlogProblemLinkInput] =
     val _ = request
-    BlogProblemLinkInput.fromPathParams(pathParams)
+    ProblemBlogAccess.decodeProblemBlogLinkInput(pathParams)
 
   override def plan(connection: Connection, actor: AuthenticatedUser, input: BlogProblemLinkInput): IO[SuccessResponse] =
     for

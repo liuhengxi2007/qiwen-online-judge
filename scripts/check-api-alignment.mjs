@@ -7,10 +7,65 @@ const frontendApisRoot = resolve(root, 'frontend/src/apis')
 const backendDomainsRoot = resolve(root, 'backend/src/main/scala/domains')
 
 const allowedBackendOnlyDomains = new Set(['judge', 'judger'])
-const allowedBackendOnlyEndpoints = new Map([
-  ['judger', new Set(['GetActiveJudgerSupportedLanguages', 'RecordJudgerHeartbeat', 'RegisterJudger'])],
-  ['user', new Set(['GetUserAvatar'])],
+const allowedBackendOnlyApiFiles = new Map([
+  [
+    'auth/ApiObject',
+    'Auth-owned API object protocol definitions are backend transport infrastructure, not callable endpoint files.',
+  ],
+  [
+    'auth/ApiObjectRouter',
+    'Auth-owned API object router turns backend API objects into http4s routes and has no frontend endpoint wrapper.',
+  ],
+  [
+    'auth/SessionResolver',
+    'Auth-owned session resolver is backend cookie/session infrastructure, not a callable endpoint file.',
+  ],
+  [
+    'blog/BlogCommentReplyNotifier',
+    'Blog comment reply notification orchestration is backend API support code and is not a frontend endpoint.',
+  ],
+  [
+    'blog/ProblemBlogAccess',
+    'Problem-blog authorization and path decoding support is shared by backend blog endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'hack/HackApiSupport',
+    'Hack API support owns shared backend workflow helpers used by multiple hack endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'judger/GetActiveJudgerSupportedLanguages',
+    'Judger language discovery is called by worker registration flows and does not have a site frontend API wrapper.',
+  ],
+  [
+    'judger/RecordJudgerHeartbeat',
+    'Judger heartbeat is a worker-only endpoint and does not have a site frontend API wrapper.',
+  ],
+  [
+    'judger/RegisterJudger',
+    'Judger registration is a worker-only endpoint and does not have a site frontend API wrapper.',
+  ],
+  [
+    'problem/GetProblemSubmissionResultDisplayMode',
+    'Submission creation uses this backend-only problem query helper through plan-level collaboration; it is not a frontend endpoint.',
+  ],
+  [
+    'problem/ProblemApiSupport',
+    'Problem API support centralizes backend problem loading helpers and is not a frontend endpoint.',
+  ],
+  [
+    'problem/ProblemManagementContext',
+    'Problem management context parses and validates backend path/query context shared by problem endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'user/GetUserAvatar',
+    'User avatar bytes are consumed as a raw image URL instead of through a frontend API message wrapper.',
+  ],
+  [
+    'user/UserAvatarApiHelpers',
+    'User avatar API support centralizes backend permission and refresh helpers and is not a frontend endpoint.',
+  ],
 ])
+const usedBackendOnlyApiFileExceptions = new Set()
 const internalOnlyApiTraits = new Set(['InternalOnlyApi', 'InternalOnlyAuthenticatedApi'])
 
 function listDirectories(path) {
@@ -43,24 +98,22 @@ function frontendEndpointNames(domain) {
     .sort()
 }
 
-function backendEndpointDetails(domain) {
+function backendApiFileDetails(domain) {
   return listFilesIfDirectory(join(backendDomainsRoot, domain, 'api'))
     .map((filePath) => {
       const fileName = pathBasename(filePath)
       if (!fileName.endsWith('.scala')) {
         return null
       }
-      const basename = fileName.replace(/\.scala$/, '')
+
+      const name = fileName.replace(/\.scala$/, '')
       const source = readFileSync(filePath, 'utf8')
       const apiTrait = source.match(
-        new RegExp(`(?:object|final\\s+case\\s+class|final\\s+class)\\s+${basename}\\b[\\s\\S]*?extends\\s+([A-Za-z0-9_]*Api)\\b`),
-      )?.[1]
-      if (!apiTrait) {
-        return null
-      }
+        new RegExp(`(?:object|final\\s+case\\s+class|final\\s+class)\\s+${name}\\b[\\s\\S]*?extends\\s+([A-Za-z0-9_]*Api)\\b`),
+      )?.[1] ?? null
 
       return {
-        name: basename,
+        name,
         filePath,
         apiTrait,
         apiPath: source.match(/override\s+val\s+path\s*:\s*ApiPath\s*=\s*ApiPath\("([^"]+)"\)/)?.[1] ?? null,
@@ -70,10 +123,14 @@ function backendEndpointDetails(domain) {
     .sort((left, right) => left.name.localeCompare(right.name))
 }
 
-function backendEndpointNames(domain) {
-  return backendEndpointDetails(domain)
-    .map((endpoint) => endpoint.name)
+function backendApiFileNames(domain) {
+  return backendApiFileDetails(domain)
+    .map((file) => file.name)
     .sort()
+}
+
+function backendEndpointDetails(domain) {
+  return backendApiFileDetails(domain).filter((file) => file.apiTrait)
 }
 
 function difference(left, right) {
@@ -81,8 +138,34 @@ function difference(left, right) {
   return left.filter((entry) => !rightSet.has(entry))
 }
 
-function allowedBackendOnlyNames(domain) {
-  return allowedBackendOnlyEndpoints.get(domain) ?? new Set()
+function allowedBackendOnlyKey(domain, name) {
+  return `${domain}/${name}`
+}
+
+function validateAllowedBackendOnlyApiFiles(errors) {
+  for (const [key, reason] of allowedBackendOnlyApiFiles) {
+    if (typeof reason !== 'string' || reason.trim().length === 0) {
+      errors.push(`${key}: backend-only API file exception must include a non-empty reason`)
+    }
+  }
+}
+
+function useAllowedBackendOnlyApiFile(domain, name) {
+  const key = allowedBackendOnlyKey(domain, name)
+  if (!allowedBackendOnlyApiFiles.has(key)) {
+    return false
+  }
+
+  usedBackendOnlyApiFileExceptions.add(key)
+  return true
+}
+
+function checkUnusedAllowedBackendOnlyApiFiles(errors) {
+  for (const key of allowedBackendOnlyApiFiles.keys()) {
+    if (!usedBackendOnlyApiFileExceptions.has(key)) {
+      errors.push(`${key}: unused backend-only API file exception`)
+    }
+  }
 }
 
 function formatList(entries) {
@@ -117,8 +200,9 @@ function checkBackendApiPathBoundary(endpoint, errors) {
 
 function run() {
   const errors = []
+  validateAllowedBackendOnlyApiFiles(errors)
   const frontendDomains = listDirectories(frontendApisRoot).filter((domain) => frontendEndpointNames(domain).length > 0)
-  const backendDomains = listDirectories(backendDomainsRoot).filter((domain) => backendEndpointNames(domain).length > 0)
+  const backendDomains = listDirectories(backendDomainsRoot).filter((domain) => backendApiFileNames(domain).length > 0)
 
   const frontendDomainSet = new Set(frontendDomains)
   const backendDomainSet = new Set(backendDomains)
@@ -137,16 +221,15 @@ function run() {
 
   const comparedDomains = frontendDomains.filter((domain) => backendDomainSet.has(domain))
   for (const domain of comparedDomains) {
-    const frontendEndpoints = frontendEndpointNames(domain)
-    const backendEndpoints = backendEndpointNames(domain)
-    const frontendOnly = difference(frontendEndpoints, backendEndpoints)
-    const allowedBackendOnly = allowedBackendOnlyNames(domain)
-    const backendOnly = difference(backendEndpoints, frontendEndpoints).filter((endpoint) => !allowedBackendOnly.has(endpoint))
+    const frontendApiFiles = frontendEndpointNames(domain)
+    const backendApiFiles = backendApiFileNames(domain)
+    const frontendOnly = difference(frontendApiFiles, backendApiFiles)
+    const backendOnly = difference(backendApiFiles, frontendApiFiles).filter((apiFile) => !useAllowedBackendOnlyApiFile(domain, apiFile))
 
     if (frontendOnly.length > 0 || backendOnly.length > 0) {
       errors.push(
         [
-          `${domain} api endpoint mismatch:`,
+          `${domain} api file mismatch:`,
           `  frontend-only: ${formatList(frontendOnly)}`,
           `  backend-only: ${formatList(backendOnly)}`,
         ].join('\n')
@@ -159,6 +242,8 @@ function run() {
       checkBackendApiPathBoundary(endpoint, errors)
     }
   }
+
+  checkUnusedAllowedBackendOnlyApiFiles(errors)
 
   if (errors.length > 0) {
     console.error('API alignment check failed:\n')

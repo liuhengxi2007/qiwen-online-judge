@@ -1,4 +1,4 @@
-import type { CreateSubmissionMultipartRequest } from '@/apis/submission/CreateSubmission'
+import type { CreateSubmissionMultipartRequest } from '@/objects/submission/request/CreateSubmissionMultipartRequest'
 import type { CreateSubmissionRequest } from '@/objects/submission/request/CreateSubmissionRequest'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'

@@ -2,7 +2,10 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
-import shared.api.{ApiMessages, HttpApiError}
+import domains.blog.objects.BlogId
+import domains.blog.objects.request.BlogProblemLinkInput
+import domains.problem.objects.ProblemSlug
+import shared.api.{ApiMessages, HttpApiError, PathParams}
 
 private[api] object ProblemBlogAccess:
 
@@ -14,3 +17,11 @@ private[api] object ProblemBlogAccess:
       canManageProblemCatalog(actor),
       HttpApiError.forbidden(ApiMessages.problemBlogLinkManageForbidden)
     )
+
+  def decodeProblemBlogLinkInput(pathParams: PathParams): IO[BlogProblemLinkInput] =
+    HttpApiError.fromEitherBadRequest {
+      for
+        problemSlug <- pathParams.require("problemSlug").flatMap(ProblemSlug.parse)
+        blogId <- pathParams.require("blogId").flatMap(BlogId.parse)
+      yield BlogProblemLinkInput(problemSlug, blogId)
+    }

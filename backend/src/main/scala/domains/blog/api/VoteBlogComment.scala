@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogCommentId, BlogId}
-import domains.blog.objects.request.VoteBlogCommentRequest
+import domains.blog.objects.request.{VoteBlogCommentInput, VoteBlogCommentRequest}
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentVoteTable
 import io.circe.Encoder

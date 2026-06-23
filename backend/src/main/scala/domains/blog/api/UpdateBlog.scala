@@ -6,7 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogContent, BlogId, BlogTitle}
-import domains.blog.objects.request.UpdateBlogRequest
+import domains.blog.objects.request.{UpdateBlogInput, UpdateBlogRequest}
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogPostMutationTable
 import io.circe.Encoder

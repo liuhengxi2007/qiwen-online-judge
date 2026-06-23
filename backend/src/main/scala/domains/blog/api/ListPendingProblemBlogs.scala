@@ -3,6 +3,7 @@ package domains.blog.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
+import domains.blog.objects.request.ProblemBlogsInput
 import domains.blog.objects.response.{BlogListResponse, BlogSummary}
 import domains.blog.table.blog.BlogProblemLinkQueryTable
 import domains.problem.objects.ProblemSlug

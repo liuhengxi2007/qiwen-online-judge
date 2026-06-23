@@ -40,6 +40,14 @@ const allowedExceptions = new Map([
     'frontend-only:hack/request/ReportHackResultRequest',
     'Frontend internal hack result reporting mirrors judge-protocol ReportHackResultRequest, which is shared through the judge protocol module rather than backend domain objects.',
   ],
+  [
+    'frontend-only:hack/request/CreateHackMultipartRequest',
+    'Browser-side multipart hack request carries File/FormData construction data and is intentionally not a backend JSON payload.',
+  ],
+  [
+    'frontend-only:submission/request/CreateSubmissionMultipartRequest',
+    'Browser-side multipart submission request carries File/FormData construction data and is intentionally not a backend JSON payload.',
+  ],
   // Example: ['field-mismatch:problem/SomeBoundaryType', 'Reason this shape intentionally differs.'],
 ])
 const usedExceptions = new Set()

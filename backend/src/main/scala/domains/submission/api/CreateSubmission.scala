@@ -12,12 +12,11 @@ import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.objects.request.CreateSubmissionRequest
+import domains.submission.objects.request.{CreateSubmissionMultipartProgram, CreateSubmissionRequest}
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
 import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.deriveDecoder
+import io.circe.Encoder
 import io.circe.parser.decode as decodeJson
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.multipart.Multipart
@@ -162,15 +161,6 @@ object CreateSubmission:
   private val ScalarMaxBytes: Long = 64L * 1024L
   private val SourceMaxBytes: Long = SubmissionSourceCode.MaxChars.toLong * 4L
 
-  private final case class MultipartProgram(
-    role: String,
-    language: domains.submission.objects.SubmissionLanguage,
-    sourcePart: String
-  )
-
-  private object MultipartProgram:
-    given Decoder[MultipartProgram] = deriveDecoder[MultipartProgram]
-
   /** 根据请求 Content-Type 解析提交请求；multipart 会按 programs 描述读取多个源码 part。 */
   def decodeRequest(request: Request[IO]): IO[CreateSubmissionRequest] =
     if MultipartTextSupport.isMultipart(request) then decodeMultipart(request)
@@ -183,7 +173,7 @@ object CreateSubmission:
       problemSlug <- HttpApiError.fromEitherBadRequest(domains.problem.objects.ProblemSlug.parse(problemSlugText))
       programsText <- MultipartTextSupport.requireUtf8Text(multipart, "programs", ScalarMaxBytes)
       programSpecs <- HttpApiError.fromEitherBadRequest(
-        decodeJson[List[MultipartProgram]](programsText).left.map(error => s"Multipart programs field is invalid JSON: ${error.getMessage}")
+        decodeJson[List[CreateSubmissionMultipartProgram]](programsText).left.map(error => s"Multipart programs field is invalid JSON: ${error.getMessage}")
       )
       _ <- HttpApiError.ensure(programSpecs.nonEmpty, HttpApiError.badRequest("At least one program is required."))
       _ <- HttpApiError.ensure(

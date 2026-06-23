@@ -4,7 +4,7 @@ import type { CreateSubmissionRequest } from '@/objects/submission/request/Creat
 import type { SubmissionDetail } from '@/objects/submission/response/SubmissionDetail'
 import type { APIWithSessionMessage } from '@/system/api/api-message'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import type { CreateSubmissionMultipartRequest } from './CreateSubmission'
+import type { CreateSubmissionMultipartRequest } from '@/objects/submission/request/CreateSubmissionMultipartRequest'
 
 /** 创建比赛提交；输入比赛 slug 和提交请求，输出提交详情。 */
 export class CreateContestSubmission implements APIWithSessionMessage<SubmissionDetail> {

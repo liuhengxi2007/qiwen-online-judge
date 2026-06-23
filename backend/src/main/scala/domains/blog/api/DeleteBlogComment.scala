@@ -6,6 +6,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 
 
 import domains.blog.objects.{BlogCommentId, BlogId}
+import domains.blog.objects.request.DeleteBlogCommentInput
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
 import io.circe.Encoder
