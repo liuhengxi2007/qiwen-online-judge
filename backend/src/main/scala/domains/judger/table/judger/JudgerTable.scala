@@ -36,14 +36,6 @@ object JudgerTable:
       finally statement.close()
     }
 
-  private val listAllocatedIdsSQL: String =
-    """
-      |select judger_id
-      |from judgers
-      |where requested_prefix = ?
-      |order by judger_id asc
-      |""".stripMargin
-
   private val lockJudgerPrefixSQL: String =
     "select pg_advisory_xact_lock(hashtext(?)::bigint)"
 
@@ -56,6 +48,14 @@ object JudgerTable:
         ()
       finally statement.close()
     }
+
+  private val listAllocatedIdsSQL: String =
+    """
+      |select judger_id
+      |from judgers
+      |where requested_prefix = ?
+      |order by judger_id asc
+      |""".stripMargin
 
   private def allocateJudgerId(connection: java.sql.Connection, preferredPrefix: JudgerId): IO[JudgerId] =
     IO.blocking {

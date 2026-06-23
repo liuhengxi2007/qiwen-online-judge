@@ -1,4 +1,4 @@
-package domains.hack.objects.response
+package domains.hack.objects.internal
 
 import domains.hack.objects.HackId
 import domains.submission.objects.internal.ClaimedSubmission

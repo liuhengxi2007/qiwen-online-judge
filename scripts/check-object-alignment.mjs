@@ -54,6 +54,7 @@ const usedExceptions = new Set()
 
 const scopedObjectSubdirectories = ['request', 'response']
 const backendInternalFrontendPayloadMirrors = new Map([
+  ['hack', new Set(['ClaimedHackAttempt'])],
   ['problem', new Set(['ProblemDataManifest', 'ProblemDataManifestEntry'])],
   ['submission', new Set(['ClaimedSubmission', 'SubmissionJudgeState'])],
 ])

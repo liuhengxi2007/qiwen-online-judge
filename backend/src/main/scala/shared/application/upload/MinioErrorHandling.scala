@@ -1,4 +1,4 @@
-package shared.utils
+package shared.application.upload
 
 import io.minio.errors.ErrorResponseException
 

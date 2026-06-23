@@ -2,7 +2,7 @@ package domains.hack.api
 
 import cats.effect.IO
 import domains.auth.api.InternalOnlyApi
-import domains.hack.objects.response.ClaimedHackAttempt
+import domains.hack.objects.internal.ClaimedHackAttempt
 import domains.hack.table.hack.HackJudgeTable
 import domains.submission.objects.SubmissionLanguage
 import org.http4s.Method

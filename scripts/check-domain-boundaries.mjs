@@ -32,6 +32,8 @@ const publicWiringTypes = new Set([
 ])
 
 const explicitCollaborationBoundaries = new Set([
+  'domains.contest.objects.response.EvaluateContestAccessResult',
+  'domains.hack.objects.internal.ClaimedHackAttempt',
   'domains.judge.utils.JudgeConfig',
   'domains.judge.utils.JudgeTaskBuilder',
   'domains.judge.utils.JudgeTokenAuth',

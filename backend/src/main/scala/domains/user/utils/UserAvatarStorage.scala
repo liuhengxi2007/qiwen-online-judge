@@ -4,7 +4,7 @@ import cats.effect.IO
 import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import shared.utils.MinioErrorHandling
+import shared.application.upload.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 

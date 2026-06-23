@@ -18,7 +18,7 @@ const frontendSrcAllowedEntries = new Set([
 ])
 const frontendComponentAllowedLayers = new Set(['ui'])
 const frontendSystemAllowedLayers = new Set(['api', 'format', 'i18n'])
-const frontendTestAllowedLayers = new Set(['objects', 'system'])
+const frontendTestAllowedLayers = new Set(['fixtures', 'objects', 'system'])
 const frontendTestAllowedRootFiles = new Set(['setup.ts'])
 const frontendSharedPageLayers = new Set(['components', 'hooks', 'objects', 'routing', 'stores'])
 

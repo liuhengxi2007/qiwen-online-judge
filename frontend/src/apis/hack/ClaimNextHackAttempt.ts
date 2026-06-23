@@ -1,6 +1,6 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
-import type { ClaimedHackAttempt } from '@/objects/hack/response/ClaimedHackAttempt'
+import type { ClaimedHackAttempt } from '@/objects/hack/ClaimedHackAttempt'
 import { parseHackId } from '@/objects/hack/HackId'
 import { parseProblemId } from '@/objects/problem/ProblemId'
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'

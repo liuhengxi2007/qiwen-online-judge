@@ -32,17 +32,18 @@ object SubmissionProgramManifestBackfill:
         else IO.unit
     yield ()
 
+  private val columnExistsSql: String =
+    """
+      |select 1
+      |from information_schema.columns
+      |where table_schema = 'public'
+      |  and table_name = 'submissions'
+      |  and column_name = ?
+      |""".stripMargin
+
   private def columnExists(connection: Connection, columnName: String): IO[Boolean] =
     IO.blocking {
-      val statement = connection.prepareStatement(
-        """
-          |select 1
-          |from information_schema.columns
-          |where table_schema = 'public'
-          |  and table_name = 'submissions'
-          |  and column_name = ?
-          |""".stripMargin
-      )
+      val statement = connection.prepareStatement(columnExistsSql)
       try
         statement.setString(1, columnName)
         val resultSet = statement.executeQuery()

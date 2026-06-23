@@ -7,7 +7,7 @@ import domains.judge.utils.JudgeTaskBuilder
 import domains.judge.utils.JudgeTokenAuth
 import domains.judger.api.GetActiveJudgerSupportedLanguages
 import domains.hack.api.{ClaimNextHackAttempt, RecordHackAttemptResult}
-import domains.hack.objects.response.ClaimedHackAttempt
+import domains.hack.objects.internal.ClaimedHackAttempt
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest

@@ -6,7 +6,7 @@ import domains.submission.objects.SubmissionSourceCode
 import domains.submission.objects.internal.SubmissionProgramManifest
 import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
-import shared.utils.MinioErrorHandling
+import shared.application.upload.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets

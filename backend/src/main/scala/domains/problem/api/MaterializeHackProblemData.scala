@@ -5,6 +5,7 @@ import cats.syntax.all.*
 import domains.auth.api.InternalOnlyApi
 import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug}
 import domains.problem.objects.internal.ProblemDataManifestEntry
+import domains.problem.objects.request.MaterializeHackProblemDataInput
 import domains.problem.table.problem.ProblemMutationTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
 import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
@@ -20,19 +21,6 @@ import java.time.Instant
 import java.util.{ArrayList, LinkedHashMap}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-
-/** 成功 hack 物化为题目数据的内部输入；携带目标题目、子任务、生成文件路径和待写入文本。 */
-final case class MaterializeHackProblemDataInput(
-  problemId: ProblemId,
-  problemSlug: ProblemSlug,
-  subtaskIndex: Int,
-  inputPath: ProblemDataPath,
-  answerPath: Option[ProblemDataPath],
-  testcaseLabel: String,
-  inputText: String,
-  answerText: Option[String],
-  createdAt: Instant
-)
 
 /** 内部 hack 数据物化 API；把成功 hack 写入题目数据文件、更新 judge.yaml，并提升题目 hack revision。 */
 final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorageContext) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:

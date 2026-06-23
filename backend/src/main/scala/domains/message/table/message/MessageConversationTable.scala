@@ -13,19 +13,6 @@ import java.util.UUID
 /** 私信会话表访问对象，负责会话创建、收件箱列表和参与者校验。 */
 object MessageConversationTable:
 
-  private val insertConversationSQL: String =
-    """
-      |insert into message_conversations (
-      |  id,
-      |  participant_a_username,
-      |  participant_b_username,
-      |  created_at,
-      |  updated_at,
-      |  last_message_at
-      |)
-      |values (?, ?, ?, ?, ?, ?)
-      |""".stripMargin
-
   /** 获取两名用户之间的会话；不存在时按用户名规范顺序创建并返回当前用户视角摘要。 */
   def getOrCreateConversation(
     connection: Connection,
@@ -57,6 +44,19 @@ object MessageConversationTable:
           })
         yield summary
     }
+
+  private val insertConversationSQL: String =
+    """
+      |insert into message_conversations (
+      |  id,
+      |  participant_a_username,
+      |  participant_b_username,
+      |  created_at,
+      |  updated_at,
+      |  last_message_at
+      |)
+      |values (?, ?, ?, ?, ?, ?)
+      |""".stripMargin
 
   private def insertConversation(
     connection: Connection,

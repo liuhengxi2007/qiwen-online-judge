@@ -6,7 +6,7 @@ import domains.problem.objects.{ProblemDataFilename, ProblemDataPath, ProblemSlu
 import domains.problem.objects.internal.{ProblemDataManifest, ProblemDataManifestEntry}
 import io.minio.errors.ErrorResponseException
 import io.minio.{BucketExistsArgs, GetObjectArgs, MakeBucketArgs, MinioClient, PutObjectArgs, RemoveObjectArgs}
-import shared.utils.MinioErrorHandling
+import shared.application.upload.MinioErrorHandling
 
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest

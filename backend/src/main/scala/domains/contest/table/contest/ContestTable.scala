@@ -270,13 +270,6 @@ object ContestTable:
   private def listProblemsForContest(connection: Connection, contestId: ContestId): IO[List[ContestProblemSummary]] =
     ContestTableSupport.listProblemsForContest(connection, contestId, listProblemsForContestSQL)
 
-  private val relationExistsSQL: String =
-    """
-      |select 1
-      |from contest_problems
-      |where contest_id = ? and problem_id = ?
-      |""".stripMargin
-
   private val lockContestProblemsSQL: String =
     "select pg_advisory_xact_lock(hashtext(?)::bigint)"
 
@@ -289,6 +282,13 @@ object ContestTable:
         ()
       finally statement.close()
     }
+
+  private val relationExistsSQL: String =
+    """
+      |select 1
+      |from contest_problems
+      |where contest_id = ? and problem_id = ?
+      |""".stripMargin
 
   private val nextPositionSQL: String =
     """
