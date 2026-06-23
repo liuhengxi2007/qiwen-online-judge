@@ -10,7 +10,7 @@ import shared.api.{ApiMessages, HttpApiError}
 
 import java.sql.Connection
 
-/** 从请求 cookie 和会话存储中解析当前用户，提供认证和站点管理员权限边界。 */
+/** 从请求 cookie 和会话存储中解析当前用户，提供认证和站点管理员权限边界；API 对齐例外：这是后端会话基础设施，不是可调用端点文件。 */
 object SessionResolver:
 
   /** 从请求 cookie 中读取并解析会话令牌，缺失或格式非法时返回 None。 */

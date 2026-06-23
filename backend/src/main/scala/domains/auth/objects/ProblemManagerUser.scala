@@ -3,7 +3,7 @@ package domains.auth.objects
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 
-/** 已确认具备题目管理权限的认证用户包装，构造入口会归一化权限。 */
+/** 已确认具备题目管理权限的认证用户包装，构造入口会归一化权限；对象对齐例外：这是后端授权证明，不序列化为前端 JSON 载荷。 */
 final case class ProblemManagerUser private (authenticatedUser: AuthenticatedUser):
   def username: Username = authenticatedUser.username
   def siteManager: Boolean = authenticatedUser.siteManager

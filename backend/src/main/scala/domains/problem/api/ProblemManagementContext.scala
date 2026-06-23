@@ -19,7 +19,7 @@ final case class ProblemManagementContext(
   contestSlug: Option[ContestSlug]
 )
 
-/** 题目管理上下文解析与权限校验工具；封装直接管理和竞赛管理两类边界。 */
+/** 题目管理上下文解析与权限校验工具；封装直接管理和竞赛管理两类边界。API 对齐例外：这是多个后端题目端点共享的路径/query 上下文支持代码，不是前端端点。 */
 object ProblemManagementContext:
 
   /** 从请求路径和 query 中解析题目 slug 与可选竞赛 slug。 */

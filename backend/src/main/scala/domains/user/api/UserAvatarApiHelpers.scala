@@ -9,7 +9,7 @@ import shared.api.{ApiMessages, HttpApiError}
 
 import java.sql.Connection
 
-/** 用户头像 API 共享辅助，集中权限校验和设置刷新逻辑。 */
+/** 用户头像 API 共享辅助，集中权限校验和设置刷新逻辑；API 对齐例外：这是后端头像权限/刷新支持代码，不是前端端点。 */
 object UserAvatarApiHelpers:
   /** 校验操作者可管理目标用户头像；仅本人或站点管理员允许。 */
   def ensureCanManageAvatar(actor: AuthenticatedUser, targetUsername: Username): IO[Unit] =

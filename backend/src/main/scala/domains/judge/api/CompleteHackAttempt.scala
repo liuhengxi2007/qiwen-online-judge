@@ -17,7 +17,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
-/** judge worker 完成 hack attempt 的公开 API；记录 hack 结果并在成功时触发题目提交重判。 */
+/** judge worker 完成 hack attempt 的公开 API；记录 hack 结果并在成功时触发题目提交重判。API 对齐例外：worker 通道只供 judger 调用，不提供站点前端 wrapper。 */
 final case class CompleteHackAttempt(
   judgeConfig: JudgeConfig,
   problemDataStorage: ProblemDataStorageContext

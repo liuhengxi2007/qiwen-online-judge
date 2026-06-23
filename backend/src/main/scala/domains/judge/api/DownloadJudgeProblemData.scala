@@ -13,7 +13,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-/** judge worker 下载题目数据单文件的公开响应 API；使用共享 token 认证，不走用户会话权限。 */
+/** judge worker 下载题目数据单文件的公开响应 API；使用共享 token 认证，不走用户会话权限。API 对齐例外：worker 通道只供 judger 调用，不提供站点前端 wrapper。 */
 final case class DownloadJudgeProblemData(
   judgeConfig: JudgeConfig,
   problemDataStorage: ProblemDataStorageContext

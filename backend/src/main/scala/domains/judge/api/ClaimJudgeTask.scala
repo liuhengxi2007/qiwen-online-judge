@@ -28,7 +28,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 import java.sql.Connection
 import java.time.Instant
 
-/** judge worker 领取任务的公开 API；使用共享 token 认证，优先领取普通提交，其次 hack，再领取低优先级提交。 */
+/** judge worker 领取任务的公开 API；使用共享 token 认证，优先领取普通提交，其次 hack，再领取低优先级提交。API 对齐例外：worker 通道只供 judger 调用，不提供站点前端 wrapper。 */
 final case class ClaimJudgeTask(
   judgeConfig: JudgeConfig,
   problemDataStorage: ProblemDataStorageContext,

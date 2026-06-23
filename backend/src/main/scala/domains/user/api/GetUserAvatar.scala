@@ -13,7 +13,7 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-/** 用户头像读取 API，从对象存储读取头像字节并返回原始图片响应。 */
+/** 用户头像读取 API，从对象存储读取头像字节并返回原始图片响应。API 对齐例外：头像由 img URL 消费原始字节，不走前端 API 消息包装。 */
 final case class GetUserAvatar(userAvatarStorage: UserAvatarStorageContext) extends AuthenticatedResponseApi[Username]:
 
   override val method: Method = Method.GET

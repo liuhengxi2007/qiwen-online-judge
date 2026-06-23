@@ -11,6 +11,7 @@ import domains.user.objects.Username
 
 import java.sql.Connection
 
+/** 博客评论回复通知辅助；API 对齐例外：这是后端通知编排支持代码，不是前端端点。 */
 private[api] object BlogCommentReplyNotifier:
 
   private val blogReplyTitleKey = "notifications.blogReply.title"

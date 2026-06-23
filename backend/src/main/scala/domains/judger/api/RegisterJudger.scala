@@ -15,7 +15,7 @@ import shared.api.{ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-/** judger 注册 API；使用 worker token 认证，分配唯一 judger id 并返回心跳参数。 */
+/** judger 注册 API；使用 worker token 认证，分配唯一 judger id 并返回心跳参数。API 对齐例外：这是 worker-only 端点，不提供站点前端 wrapper。 */
 final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[RegisterJudgerRequest, RegisterJudgerResponse]:
 
   override val method: Method = Method.POST

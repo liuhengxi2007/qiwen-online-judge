@@ -5,7 +5,7 @@ import type { JudgeTestcaseResult } from '@/objects/submission/JudgeTestcaseResu
 import type { SubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 import { isSubmissionVerdict } from '@/objects/submission/SubmissionVerdict'
 
-/** 完整判题结果；包含基础结果、最差结果和所有子任务明细。 */
+/** 完整判题结果；包含基础结果、最差结果和所有子任务明细。对象对齐例外：该类型镜像 judge-protocol，不对应后端 submission domain object。 */
 export type JudgeResult = {
   baseResult: JudgeResultSummary
   worstResult: JudgeResultSummary

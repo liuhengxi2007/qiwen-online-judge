@@ -1,4 +1,4 @@
-/** 判题失败原因枚举；只描述系统/构建/运行失败，不表示普通评测 verdict。 */
+/** 判题失败原因枚举；只描述系统/构建/运行失败，不表示普通评测 verdict。对象对齐例外：该类型镜像 judge-protocol，不对应后端 submission domain object。 */
 export type JudgeFailureReason =
   | 'judge_task_build_failed'
   | 'judger_runtime_failed'

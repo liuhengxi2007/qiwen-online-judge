@@ -7,6 +7,7 @@ import domains.blog.objects.request.BlogProblemLinkInput
 import domains.problem.objects.ProblemSlug
 import shared.api.{ApiMessages, HttpApiError, PathParams}
 
+/** 题目博客访问和路径解析辅助；API 对齐例外：这是多个后端博客端点共享的支持代码，不是前端端点。 */
 private[api] object ProblemBlogAccess:
 
   def canManageProblemCatalog(actor: AuthenticatedUser): Boolean =

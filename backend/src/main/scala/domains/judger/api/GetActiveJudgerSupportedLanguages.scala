@@ -15,7 +15,7 @@ final case class ActiveJudgerSupportedLanguagesInput(
   heartbeatTimeoutMs: Long
 )
 
-/** 内部 judger 活动性查询 API；judge claim 前用它确认 worker 注册且心跳未过期。 */
+/** 内部 judger 活动性查询 API；judge claim 前用它确认 worker 注册且心跳未过期。API 对齐例外：由 worker 注册/领取流程在后端直接调用，不提供站点前端 wrapper。 */
 object GetActiveJudgerSupportedLanguages extends InternalOnlyApi[ActiveJudgerSupportedLanguagesInput, Option[List[SubmissionLanguage]]]:
 
   override val method: Method = Method.POST

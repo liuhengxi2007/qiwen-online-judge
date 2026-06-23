@@ -2,7 +2,7 @@ package domains.auth.objects
 
 
 
-/** 会话令牌值对象，用于 cookie、Redis 缓存和数据库会话表。 */
+/** 会话令牌值对象，用于 cookie、Redis 缓存和数据库会话表；对象对齐例外：令牌只经服务端会话管道流转，不镜像为前端对象。 */
 final case class SessionToken(value: String)
 
 /** 提供会话令牌的基本输入解析。 */

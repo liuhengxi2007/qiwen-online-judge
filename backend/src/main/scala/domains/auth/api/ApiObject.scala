@@ -29,7 +29,7 @@ object ApiObjectContext:
   def public(databaseSession: DatabaseSession): ApiObjectContext =
     ApiObjectContext(databaseSession, None)
 
-/** 统一 API 对象抽象，声明 HTTP 方法、路径和路由器调用入口。 */
+/** 统一 API 对象抽象，声明 HTTP 方法、路径和路由器调用入口；API 对齐例外：本文件是后端传输协议基础设施，不是可调用端点文件。 */
 trait ApiObject:
   /** HTTP 方法，用于路由匹配。 */
   def method: Method

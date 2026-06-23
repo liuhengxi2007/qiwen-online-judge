@@ -16,7 +16,7 @@ import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
 
-/** judger 心跳上报 API；使用 worker token 认证并延长指定 judger 的租约。 */
+/** judger 心跳上报 API；使用 worker token 认证并延长指定 judger 的租约。API 对齐例外：这是 worker-only 端点，不提供站点前端 wrapper。 */
 final case class RecordJudgerHeartbeat(judgeConfig: JudgeConfig) extends PublicApi[JudgerId, SuccessResponse]:
 
   override val method: Method = Method.POST

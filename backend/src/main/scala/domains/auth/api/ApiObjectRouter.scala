@@ -7,7 +7,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import shared.api.HttpApiError
 import shared.api.utils.HttpResponseSupport
 
-/** 将声明式 ApiObject 列表转换为 http4s 路由，并统一处理 API 错误。 */
+/** 将声明式 ApiObject 列表转换为 http4s 路由，并统一处理 API 错误；API 对齐例外：这是后端路由基础设施，没有前端端点包装。 */
 object ApiObjectRouter:
 
   private val logger = Slf4jLogger.getLogger[IO]

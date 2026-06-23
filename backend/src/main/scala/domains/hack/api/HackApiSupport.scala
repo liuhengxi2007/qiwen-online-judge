@@ -18,7 +18,7 @@ import shared.api.{ApiMessages, HttpApiError}
 import java.sql.Connection
 import java.util.UUID
 
-/** hack API 共享业务逻辑；负责目标提交加载、任务重建、可 hack 条件和输入文本校验。 */
+/** hack API 共享业务逻辑；负责目标提交加载、任务重建、可 hack 条件和输入文本校验；API 对齐例外：这是多个后端 hack 端点共享的支持代码，不是前端端点。 */
 object HackApiSupport:
 
   val MaxHackInputChars: Int = 10 * 1024 * 1024
