@@ -89,6 +89,20 @@ describe('buildBreadcrumbItems route chains', () => {
     ])
   })
 
+  it('maps hack pages under their owning lists', () => {
+    expect(buildBreadcrumbItems('/hacks/123')).toEqual([
+      dashboard,
+      item('/hacks', 'hack.list.heading'),
+      item('/hacks/123', 'hack.detail.heading', true),
+    ])
+    expect(buildBreadcrumbItems('/submissions/42/hack/1')).toEqual([
+      dashboard,
+      item('/submissions', 'submission.heading'),
+      item('/submissions/42', 'submission.detail.heading'),
+      item('/submissions/42/hack/1', 'hack.submit.heading', true),
+    ])
+  })
+
   it('maps user blogs and settings under user detail', () => {
     expect(buildBreadcrumbItems('/user/alice/blogs')).toEqual([
       dashboard,
@@ -103,7 +117,7 @@ describe('buildBreadcrumbItems route chains', () => {
   })
 
   it('falls back to a dashboard link for unknown paths', () => {
-    expect(buildBreadcrumbItems('/hacks/123')).toEqual([dashboard])
+    expect(buildBreadcrumbItems('/unknown/path')).toEqual([dashboard])
   })
 })
 

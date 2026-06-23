@@ -13,6 +13,7 @@ export const enNavMessages: Record<string, string> = {
   'nav.openProfileMessages': 'Open inbox',
   'nav.openProfileNotifications': 'Open notifications',
   'nav.submissions': 'Submissions',
+  'nav.hacks': 'Hacks',
   'nav.ranklist': 'Ranklist',
   'nav.userGroups': 'User Groups',
   'nav.contests': 'Contests',

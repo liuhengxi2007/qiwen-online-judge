@@ -14,6 +14,9 @@ export const breadcrumbLabelKeys = [
   'problemSet.detail.heading',
   'submission.heading',
   'submission.detail.heading',
+  'hack.submit.heading',
+  'hack.list.heading',
+  'hack.detail.heading',
   'contest.heading',
   'contest.create.heading',
   'contest.detail.heading',
@@ -129,8 +132,17 @@ const breadcrumbRouteMatchers: BreadcrumbRouteMatcher[] = [
   },
   exactRoute('/submissions', 'submission.heading'),
   {
+    pattern: /^\/submissions\/([^/]+)\/hack\/[^/]+$/,
+    build: (match, pathname) => routeNode(pathname, 'hack.submit.heading', `/submissions/${segment(match, 1)}`),
+  },
+  {
     pattern: /^\/submissions\/[^/]+$/,
     build: (_, pathname) => routeNode(pathname, 'submission.detail.heading', '/submissions'),
+  },
+  exactRoute('/hacks', 'hack.list.heading'),
+  {
+    pattern: /^\/hacks\/[^/]+$/,
+    build: (_, pathname) => routeNode(pathname, 'hack.detail.heading', '/hacks'),
   },
   exactRoute('/contests', 'contest.heading'),
   exactRoute('/contests/new', 'contest.create.heading', '/contests'),

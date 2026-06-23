@@ -13,6 +13,7 @@ export const zhCnNavMessages: Record<string, string> = {
   'nav.openProfileMessages': '打开收件箱',
   'nav.openProfileNotifications': '打开通知',
   'nav.submissions': '提交',
+  'nav.hacks': 'Hacks',
   'nav.ranklist': '排行榜',
   'nav.userGroups': '用户组',
   'nav.contests': '比赛',

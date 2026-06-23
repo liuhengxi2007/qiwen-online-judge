@@ -1,27 +1,15 @@
 import { Link, Navigate } from 'react-router-dom'
-import type { LucideIcon } from 'lucide-react'
-import { BookCopy, CalendarDays, FileText, Files, Gauge, NotebookPen, Trophy, Users, UsersRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccountActions } from '@/pages/components/AccountActions'
+import type { AppDashboardEntryGroup, AppEntry } from '@/pages/objects/AppEntryCatalog'
+import { getDashboardEntryGroups } from '@/pages/objects/AppEntryCatalog'
+import { appModuleThemes } from '@/pages/objects/AppModuleTheme'
 import { formatUserDisplayLabel } from '@/pages/objects/UserDisplayLabel'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useI18n } from '@/system/i18n/use-i18n'
-
-/**
- * 仪表盘入口卡片配置，描述目标路由、展示文案和视觉样式。
- */
-type DashboardAction = {
-  title: string
-  description: string
-  openLabel: string
-  to: string
-  icon: LucideIcon
-  iconClassName: string
-  buttonClassName: string
-}
 
 /**
  * 登录后仪表盘页，展示常用业务入口并根据站点管理员会话追加管理入口。
@@ -41,7 +29,7 @@ export function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] px-6 py-12 sm:px-8">
-      <section className="mx-auto max-w-4xl">
+      <section className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{t('common.siteName')}</p>
@@ -61,133 +49,66 @@ export function DashboardPage() {
 }
 
 /**
- * 仪表盘入口网格，根据 showSiteManage 决定是否包含 rating 管理和站点管理卡片。
+ * 仪表盘入口分组列表，根据 showSiteManage 决定是否包含站点管理分组。
  */
 function DashboardActionGrid({
   showSiteManage,
 }: {
   showSiteManage: boolean
 }) {
-  const { t } = useI18n()
-  const actions: DashboardAction[] = [
-    {
-      title: t('dashboard.problems.title'),
-      description: t('dashboard.problems.description'),
-      openLabel: t('dashboard.problems.open'),
-      to: '/problems',
-      icon: FileText,
-      iconClassName: 'bg-emerald-100 text-emerald-700',
-      buttonClassName: 'bg-emerald-300 text-emerald-950 hover:bg-emerald-400',
-    },
-    {
-      title: t('dashboard.problemSets.title'),
-      description: t('dashboard.problemSets.description'),
-      openLabel: t('dashboard.problemSets.open'),
-      to: '/problem-sets',
-      icon: BookCopy,
-      iconClassName: 'bg-rose-100 text-rose-700',
-      buttonClassName: 'bg-rose-300 text-rose-950 hover:bg-rose-400',
-    },
-    {
-      title: t('dashboard.submissions.title'),
-      description: t('dashboard.submissions.description'),
-      openLabel: t('dashboard.submissions.open'),
-      to: '/submissions',
-      icon: Files,
-      iconClassName: 'bg-indigo-100 text-indigo-700',
-      buttonClassName: 'bg-indigo-300 text-indigo-950 hover:bg-indigo-400',
-    },
-    {
-      title: t('dashboard.blogs.title'),
-      description: t('dashboard.blogs.description'),
-      openLabel: t('dashboard.blogs.open'),
-      to: '/blogs',
-      icon: NotebookPen,
-      iconClassName: 'bg-orange-100 text-orange-700',
-      buttonClassName: 'bg-orange-300 text-orange-950 hover:bg-orange-400',
-    },
-    {
-      title: t('dashboard.ranklist.title'),
-      description: t('dashboard.ranklist.description'),
-      openLabel: t('dashboard.ranklist.open'),
-      to: '/ranklist',
-      icon: Trophy,
-      iconClassName: 'bg-amber-100 text-amber-700',
-      buttonClassName: 'bg-amber-300 text-amber-950 hover:bg-amber-400',
-    },
-    {
-      title: t('dashboard.userGroups.title'),
-      description: t('dashboard.userGroups.description'),
-      openLabel: t('dashboard.userGroups.open'),
-      to: '/user-groups',
-      icon: UsersRound,
-      iconClassName: 'bg-sky-100 text-sky-700',
-      buttonClassName: 'bg-sky-300 text-sky-950 hover:bg-sky-400',
-    },
-    {
-      title: t('dashboard.contests.title'),
-      description: t('dashboard.contests.description'),
-      openLabel: t('dashboard.contests.open'),
-      to: '/contests',
-      icon: CalendarDays,
-      iconClassName: 'bg-cyan-100 text-cyan-700',
-      buttonClassName: 'bg-cyan-300 text-cyan-950 hover:bg-cyan-400',
-    },
-  ]
-
-  if (showSiteManage) {
-    actions.push({
-      title: t('dashboard.ratingManage.title'),
-      description: t('dashboard.ratingManage.description'),
-      openLabel: t('dashboard.ratingManage.open'),
-      to: '/ratings/manage',
-      icon: Gauge,
-      iconClassName: 'bg-amber-100 text-amber-700',
-      buttonClassName: 'bg-amber-300 text-amber-950 hover:bg-amber-400',
-    })
-
-    actions.push({
-      title: t('dashboard.siteManage.title'),
-      description: t('dashboard.siteManage.description'),
-      openLabel: t('dashboard.siteManage.open'),
-      to: '/site-manage',
-      icon: Users,
-      iconClassName: 'bg-fuchsia-100 text-fuchsia-700',
-      buttonClassName: 'bg-fuchsia-300 text-fuchsia-950 hover:bg-fuchsia-400',
-    })
-  }
+  const groups = getDashboardEntryGroups(showSiteManage)
 
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {actions.map((action) => (
-        <DashboardActionCard key={action.to} action={action} />
+    <div className="space-y-8">
+      {groups.map((group) => (
+        <DashboardActionGroup key={group.id} group={group} />
       ))}
     </div>
   )
 }
 
 /**
+ * 仪表盘入口分组，渲染分组标题和组内入口卡片。
+ */
+function DashboardActionGroup({ group }: { group: AppDashboardEntryGroup }) {
+  const { t } = useI18n()
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold text-slate-900">{t(group.titleKey)}</h2>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {group.entries.map((entry) => (
+          <DashboardActionCard key={entry.to} entry={entry} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
  * 单个仪表盘入口卡片，按配置渲染图标、说明和跳转按钮。
  */
-function DashboardActionCard({ action }: { action: DashboardAction }) {
-  const Icon = action.icon
+function DashboardActionCard({ entry }: { entry: AppEntry }) {
+  const { t } = useI18n()
+  const Icon = entry.icon
+  const theme = appModuleThemes[entry.tone]
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className={`flex size-12 items-center justify-center rounded-2xl ${action.iconClassName}`}>
+          <div className={`flex size-12 items-center justify-center rounded-2xl ${theme.icon}`}>
             <Icon className="size-5" />
           </div>
           <div>
-            <CardTitle className="text-xl text-slate-950">{action.title}</CardTitle>
-            <CardDescription>{action.description}</CardDescription>
+            <CardTitle className="text-xl text-slate-950">{t(entry.dashboardTitleKey)}</CardTitle>
+            <CardDescription>{t(entry.dashboardDescriptionKey)}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <Button asChild className={`rounded-2xl ${action.buttonClassName}`}>
-          <Link to={action.to}>{action.openLabel}</Link>
+        <Button asChild className={`rounded-2xl ${theme.button}`}>
+          <Link to={entry.to}>{t(entry.dashboardOpenKey)}</Link>
         </Button>
       </CardContent>
     </Card>
