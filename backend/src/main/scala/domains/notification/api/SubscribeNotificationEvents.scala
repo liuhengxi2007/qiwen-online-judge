@@ -3,11 +3,9 @@ package domains.notification.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
+import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEventSse}
 import fs2.text
-import io.circe.Encoder
-import io.circe.syntax.*
-import org.http4s.{Header, Method, Request, Response, ServerSentEvent, Status}
+import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
 import shared.api.{ApiPath, PathParams}
 
@@ -38,19 +36,6 @@ final class SubscribeNotificationEvents(notificationEventHub: NotificationEventH
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          NotificationEventHub.subscribe(notificationEventHub, actor.username).map(toServerSentEventString).through(text.utf8.encode)
+          NotificationEventHub.subscribe(notificationEventHub, actor.username).map(NotificationStreamEventSse.render).through(text.utf8.encode)
         )
     )
-
-  private given Encoder[NotificationStreamEvent] = Encoder.instance {
-    case NotificationStreamEvent.NotificationsChanged =>
-      io.circe.Json.obj()
-  }
-
-  /** 将通知流内部事件映射为前端识别的 SSE 事件名和 JSON 数据。 */
-  private def toServerSentEvent(event: NotificationStreamEvent): ServerSentEvent =
-    ServerSentEvent(data = Some(event.asJson.noSpaces), eventType = Some("notifications_changed"))
-
-  /** 渲染单条 SSE 事件并补充事件分隔换行。 */
-  private def toServerSentEventString(event: NotificationStreamEvent): String =
-    toServerSentEvent(event).renderString + "\n"

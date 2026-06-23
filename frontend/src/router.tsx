@@ -42,8 +42,7 @@ import { UserSettingsPage } from '@/pages/UserSettingsPage'
 import { CreateUserGroupPage } from '@/pages/CreateUserGroupPage'
 import { UserGroupDetailPage } from '@/pages/UserGroupDetailPage'
 import { UserGroupPage } from '@/pages/UserGroupPage'
-import { useMessageRealtimeConnection } from '@/pages/hooks/useMessageRealtimeConnection'
-import { useNotificationRealtimeConnection } from '@/pages/hooks/useNotificationRealtimeConnection'
+import { useRealtimeConnection } from '@/pages/hooks/useRealtimeConnection'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { I18nProvider } from '@/system/i18n/i18n'
 
@@ -81,8 +80,7 @@ function GuestOnlyRoute({ element }: { element: ReactElement }) {
  */
 function AuthenticatedRoute({ element }: { element: ReactElement }) {
   const session = useAuthStore((state) => state.session)
-  useMessageRealtimeConnection()
-  useNotificationRealtimeConnection()
+  useRealtimeConnection()
   return session ? element : <Navigate replace to="/login" />
 }
 

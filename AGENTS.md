@@ -25,6 +25,7 @@
 - Backend uses Scala 3 objects/case classes, explicit `IO[...]` at effect boundaries, and domain-specific ADTs for results.
 - Mirrored cross-stack object types must match exactly in basename and type name, for example `ProblemSummary.scala` and `ProblemSummary.ts`.
 - Avoid raw primitives when a domain type exists (`Username`, `ProblemSlug`, `SubmissionId`).
+- Code comments should be written in Chinese. Keep comments concise and explain intent or non-obvious behavior, not line-by-line mechanics.
 
 ## Testing Guidelines
 

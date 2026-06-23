@@ -3,11 +3,9 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
+import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEventSse}
 import fs2.text
-import io.circe.Encoder
-import io.circe.syntax.*
-import org.http4s.{Header, Method, Request, Response, ServerSentEvent, Status}
+import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString
 import shared.api.{ApiPath, PathParams}
 
@@ -38,32 +36,6 @@ final class SubscribeMessageEvents(messageEventHub: MessageEventHubContext) exte
           Header.Raw(CIString("Cache-Control"), "no-cache")
         )
         .withBodyStream(
-          MessageEventHub.subscribe(messageEventHub, actor.username).map(toServerSentEventString).through(text.utf8.encode)
+          MessageEventHub.subscribe(messageEventHub, actor.username).map(MessageStreamEventSse.render).through(text.utf8.encode)
         )
     )
-
-  private given Encoder[MessageStreamEvent] = Encoder.instance {
-    case MessageStreamEvent.MessageReceived(message) =>
-      message.asJson
-    case MessageStreamEvent.ConversationRead(conversationId, readUpToMessageId, readerUsername) =>
-      io.circe.Json.obj(
-        "conversationId" -> conversationId.asJson,
-        "readUpToMessageId" -> readUpToMessageId.asJson,
-        "readerUsername" -> readerUsername.asJson
-      )
-    case MessageStreamEvent.InboxChanged =>
-      io.circe.Json.obj()
-  }
-
-  /** 将消息流内部事件映射为前端识别的 SSE 事件名和 JSON 数据。 */
-  private def toServerSentEvent(event: MessageStreamEvent): ServerSentEvent =
-    val eventName = event match
-      case _: MessageStreamEvent.MessageReceived => "message_received"
-      case _: MessageStreamEvent.ConversationRead => "conversation_read"
-      case MessageStreamEvent.InboxChanged => "inbox_changed"
-
-    ServerSentEvent(data = Some(event.asJson.noSpaces), eventType = Some(eventName))
-
-  /** 渲染单条 SSE 事件并补充事件分隔换行。 */
-  private def toServerSentEventString(event: MessageStreamEvent): String =
-    toServerSentEvent(event).renderString + "\n"

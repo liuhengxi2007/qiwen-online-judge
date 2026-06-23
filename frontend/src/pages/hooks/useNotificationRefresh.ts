@@ -1,47 +1,25 @@
 import { useCallback } from 'react'
 
-import { GetNotificationUnreadCount } from '@/apis/notification/GetNotificationUnreadCount'
-import { ListNotifications } from '@/apis/notification/ListNotifications'
-import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
-import { sendAPI } from '@/system/api/api-message'
-import { isHttpClientError } from '@/system/api/http-client'
 import type { PageRequest } from '@/objects/shared/PageRequest'
-
-const fallbackNotificationLoadError = 'Unable to load notifications.'
+import { refreshNotificationUnreadCount, refreshNotifications } from '@/pages/hooks/realtimeRefresh'
 
 /**
  * 返回刷新通知列表和未读数的回调集合；请求结果写入通知全局 store。
  */
 export function useNotificationRefresh() {
-  const beginNotificationsLoad = useNotificationStore((state) => state.beginNotificationsLoad)
-  const replaceNotifications = useNotificationStore((state) => state.replaceNotifications)
-  const failNotificationsLoad = useNotificationStore((state) => state.failNotificationsLoad)
-  const replaceUnreadCount = useNotificationStore((state) => state.replaceUnreadCount)
-  const finishUnreadCountLoad = useNotificationStore((state) => state.finishUnreadCountLoad)
-
-  const refreshNotifications = useCallback(
+  const refreshNotificationList = useCallback(
     async (pageRequest?: PageRequest) => {
-      beginNotificationsLoad()
-      try {
-        replaceNotifications(await sendAPI(new ListNotifications(pageRequest)))
-      } catch (error) {
-        failNotificationsLoad(isHttpClientError(error) ? error.message : fallbackNotificationLoadError)
-      }
+      await refreshNotifications(pageRequest)
     },
-    [beginNotificationsLoad, failNotificationsLoad, replaceNotifications],
+    [],
   )
 
   const refreshUnreadCount = useCallback(async () => {
-    try {
-      const response = await sendAPI(new GetNotificationUnreadCount())
-      replaceUnreadCount(response.unreadCount)
-    } catch {
-      finishUnreadCountLoad()
-    }
-  }, [finishUnreadCountLoad, replaceUnreadCount])
+    await refreshNotificationUnreadCount()
+  }, [])
 
   return {
-    refreshNotifications,
+    refreshNotifications: refreshNotificationList,
     refreshUnreadCount,
   }
 }
