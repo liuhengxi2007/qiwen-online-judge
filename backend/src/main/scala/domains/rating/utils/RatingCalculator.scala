@@ -1,6 +1,7 @@
 package domains.rating.utils
 
 import domains.user.objects.Username
+import scala.annotation.tailrec
 
 /** 粒子制评分计算器，按比赛排名替换用户评分分布中的百分位粒子。 */
 object RatingCalculator:
@@ -75,14 +76,16 @@ object RatingCalculator:
 
   /** 通过二分求初始粒子增长基数，使初始粒子均值贴近默认评分。 */
   private def solveInitialGrowthBase(): Double =
-    var low = 1.0
-    var high = 1.02
-    var iteration = 0
-    while iteration < 100 do
-      val mid = (low + high) / 2.0
-      if initialParticleMean(mid) < initialRating then low = mid else high = mid
-      iteration += 1
-    (low + high) / 2.0
+    @tailrec
+    def search(low: Double, high: Double, iteration: Int): Double =
+      if iteration >= 100 then
+        (low + high) / 2.0
+      else
+        val mid = (low + high) / 2.0
+        if initialParticleMean(mid) < initialRating then search(mid, high, iteration + 1)
+        else search(low, mid, iteration + 1)
+
+    search(1.0, 1.02, 0)
 
   /** 计算给定增长基数下初始粒子池的平均评分。 */
   private def initialParticleMean(base: Double): Double =
@@ -98,23 +101,24 @@ object RatingCalculator:
     pool: Vector[Double],
     m: Int
   ): Map[Username, Vector[Double]] =
-    val assignments = Map.newBuilder[Username, Vector[Double]]
-    var offset = 0
-    groupedByRank(participants).foreach { group =>
-      val groupSize = group.size
-      val segment = pool.slice(offset, offset + groupSize * m)
-      val assignedParticles =
-        if groupSize == 1 then
-          segment
-        else
-          (0 until m).map { index =>
-            val sharedParticles = segment.slice(index * groupSize, (index + 1) * groupSize)
-            sharedParticles.sum / groupSize.toDouble
-          }.toVector
-      group.foreach(participant => assignments += participant.username -> assignedParticles)
-      offset += groupSize * m
+    val (_, assignments) = groupedByRank(participants).foldLeft((0, Map.empty[Username, Vector[Double]])) {
+      case ((offset, currentAssignments), group) =>
+        val groupSize = group.size
+        val segment = pool.slice(offset, offset + groupSize * m)
+        val assignedParticles =
+          if groupSize == 1 then
+            segment
+          else
+            (0 until m).map { index =>
+              val sharedParticles = segment.slice(index * groupSize, (index + 1) * groupSize)
+              sharedParticles.sum / groupSize.toDouble
+            }.toVector
+        val updatedAssignments = group.foldLeft(currentAssignments) { (assignments, participant) =>
+          assignments.updated(participant.username, assignedParticles)
+        }
+        (offset + groupSize * m, updatedAssignments)
     }
-    assignments.result()
+    assignments
 
   private def groupedByRank(participants: Vector[RankedParticipant]): Vector[Vector[RankedParticipant]] =
     participants.foldLeft(Vector.empty[Vector[RankedParticipant]]) { (groups, participant) =>

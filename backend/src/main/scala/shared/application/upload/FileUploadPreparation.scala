@@ -8,7 +8,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.{CharacterCodingException, CodingErrorAction, StandardCharsets}
 import java.util.zip.ZipInputStream
-import scala.collection.mutable.ListBuffer
+import scala.annotation.tailrec
 
 /** 已完成路径校验和内容预处理的上传文件。 */
 final case class PreparedUploadFile(
@@ -34,22 +34,25 @@ object FileUploadPreparation:
     policy: FileUploadPolicy
   ): Either[String, List[PreparedUploadFile]] =
     val zipInputStream = ZipInputStream(ByteArrayInputStream(archiveBytes))
-    val preparedFiles = ListBuffer.empty[PreparedUploadFile]
-    var totalBytes = 0L
-    var error: Option[String] = None
-    try
-      var entry = zipInputStream.getNextEntry
-      while entry != null && error.isEmpty do
-        try
-          if !entry.isDirectory then
-            if preparedFiles.size >= policy.maxArchiveFileCount then
-              error = Some(s"Uploaded archive must contain at most ${policy.maxArchiveFileCount} files.")
+
+    @tailrec
+    def readEntries(preparedFiles: List[PreparedUploadFile], totalBytes: Long): Either[String, List[PreparedUploadFile]] =
+      val entry = zipInputStream.getNextEntry
+      if entry == null then
+        Right(preparedFiles.reverse)
+      else
+        val entryResult: Either[String, (List[PreparedUploadFile], Long)] =
+          try
+            if entry.isDirectory then
+              Right((preparedFiles, totalBytes))
+            else if preparedFiles.size >= policy.maxArchiveFileCount then
+              Left(s"Uploaded archive must contain at most ${policy.maxArchiveFileCount} files.")
             else
               readEntryBytes(zipInputStream, policy.maxArchiveEntryBytes, policy.maxArchiveTotalBytes - totalBytes) match
                 case Left(message) =>
-                  error = Some(message)
+                  Left(message)
                 case Right(entryBytes) =>
-                  totalBytes += entryBytes.length.toLong
+                  val nextTotalBytes = totalBytes + entryBytes.length.toLong
                   val prepared = for
                     entryPath <- StoredFilePath.parse(entry.getName)
                     resolvedPath <- targetDirectory match
@@ -57,15 +60,14 @@ object FileUploadPreparation:
                       case None => Right(entryPath)
                     file <- prepareFile(resolvedPath, entryBytes, policy)
                   yield file
-                  prepared match
-                    case Left(message) => error = Some(message)
-                    case Right(file) => preparedFiles += file
-        finally zipInputStream.closeEntry()
-        entry = zipInputStream.getNextEntry
+                  prepared.map(file => (file :: preparedFiles, nextTotalBytes))
+          finally zipInputStream.closeEntry()
+        entryResult match
+          case Left(message) => Left(message)
+          case Right((nextPreparedFiles, nextTotalBytes)) => readEntries(nextPreparedFiles, nextTotalBytes)
 
-      error match
-        case Some(message) => Left(message)
-        case None => Right(preparedFiles.toList)
+    try
+      readEntries(Nil, 0L)
     catch
       case _: IOException => Left("Uploaded archive is not a valid zip file.")
     finally zipInputStream.close()
@@ -77,20 +79,23 @@ object FileUploadPreparation:
   ): Either[String, Array[Byte]] =
     val output = ByteArrayOutputStream()
     val buffer = Array.ofDim[Byte](8192)
-    var entryBytes = 0L
-    var error: Option[String] = None
-    var read = zipInputStream.read(buffer)
-    while read != -1 && error.isEmpty do
-      entryBytes += read.toLong
-      if entryBytes > maxEntryBytes then
-        error = Some(s"Each uploaded archive file must be at most ${maxEntryBytes / 1024L / 1024L} MB.")
-      else if entryBytes > remainingTotalBytes then
-        error = Some("Uploaded archive extracted content is too large.")
-      else
-        output.write(buffer, 0, read)
-        read = zipInputStream.read(buffer)
 
-    error.toLeft(output.toByteArray)
+    @tailrec
+    def readNext(entryBytes: Long): Either[String, Array[Byte]] =
+      val read = zipInputStream.read(buffer)
+      if read == -1 then
+        Right(output.toByteArray)
+      else
+        val nextEntryBytes = entryBytes + read.toLong
+        if nextEntryBytes > maxEntryBytes then
+          Left(s"Each uploaded archive file must be at most ${maxEntryBytes / 1024L / 1024L} MB.")
+        else if nextEntryBytes > remainingTotalBytes then
+          Left("Uploaded archive extracted content is too large.")
+        else
+          output.write(buffer, 0, read)
+          readNext(nextEntryBytes)
+
+    readNext(0L)
 
   private def normalizeTextLineEndings(
     path: StoredFilePath,
