@@ -2,7 +2,7 @@ package domains.problem.objects.internal
 
 import domains.problem.objects.ProblemSlug
 
-/** 判题使用的题目数据清单；包含有序文件条目和基于内容摘要计算出的版本号。 */
+/** 题目数据清单，由 ProblemDataStorage/ProblemDataFileTable 生成，并经 GetJudgeProblemDataManifest 供 JudgeTaskBuilder 使用。 */
 final case class ProblemDataManifest(
   problemSlug: ProblemSlug,
   entries: List[ProblemDataManifestEntry],

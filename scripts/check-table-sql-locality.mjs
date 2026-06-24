@@ -71,7 +71,7 @@ function isSqlMember(member) {
     (
       /(?:SQL|Sql|sql)$/.test(member.name) ||
       /^sql\d*$/i.test(member.name) ||
-      (/:\s*String\b/.test(member.text) && /s?"""/.test(member.text))
+      (member.kind === 'val' && /:\s*String\b/.test(member.text) && /s?"""/.test(member.text))
     )
   )
 }

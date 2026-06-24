@@ -40,6 +40,17 @@ final class CreateBlogCommentReply(notificationEventHub: NotificationEventHubCon
       (blog, createdCommentId) = created
       maybeContext <- BlogCommentTable.findCommentNotificationContext(connection, input.blogId, createdCommentId)
       _ <- maybeContext match
-        case Some(context) => BlogCommentReplyNotifier.createAndPublish(connection, actor, context, notificationEventHub)
+        case Some((blogTitle, blogAuthorUsername, triggerCommentContent, ancestors)) =>
+          BlogCommentReplyNotifier.createAndPublish(
+            connection,
+            actor,
+            input.blogId,
+            createdCommentId,
+            blogTitle,
+            blogAuthorUsername,
+            triggerCommentContent,
+            ancestors,
+            notificationEventHub
+          )
         case None => IO.unit
     yield blog

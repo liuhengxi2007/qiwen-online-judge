@@ -166,7 +166,7 @@ Current explicitly guarded collaboration boundaries:
 - judge registration/execution support: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
 - problem data access through `ProblemDataStorageContext` values and `ProblemDataStorage` functions
 - submission program access through `SubmissionProgramStorageContext` values and `SubmissionProgramStorage` functions
-- submission judge state transitions used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeCompletion`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
+- submission judge state transitions used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
 - cross-domain API-object collaborations explicitly named at the call site; new cross-domain table imports are forbidden
 
 ## Functional Core, Imperative Shell

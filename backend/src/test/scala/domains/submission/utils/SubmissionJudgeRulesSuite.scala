@@ -1,7 +1,7 @@
 package domains.submission.utils
 
 import domains.submission.objects.SubmissionStatus
-import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
+import domains.submission.objects.internal.SubmissionJudgeState
 import io.circe.parser.decode
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionVerdict
@@ -20,10 +20,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Completed,
-        judgeResult = None
-      ),
+      SubmissionStatus.Completed,
+      None,
       finishedAt
     )
 
@@ -35,10 +33,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Completed,
-        judgeResult = Some(judgeResult(SubmissionVerdict.SystemError, reason = Some(JudgeFailureReason.SystemError)))
-      ),
+      SubmissionStatus.Completed,
+      Some(judgeResult(SubmissionVerdict.SystemError, reason = Some(JudgeFailureReason.SystemError))),
       finishedAt
     )
 
@@ -50,10 +46,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Completed,
-        judgeResult = Some(judgeResult(SubmissionVerdict.Accepted, reason = Some(JudgeFailureReason.SystemError)))
-      ),
+      SubmissionStatus.Completed,
+      Some(judgeResult(SubmissionVerdict.Accepted, reason = Some(JudgeFailureReason.SystemError))),
       finishedAt
     )
 
@@ -65,10 +59,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Failed,
-        judgeResult = Some(judgeResult(SubmissionVerdict.SystemError, reason = None))
-      ),
+      SubmissionStatus.Failed,
+      Some(judgeResult(SubmissionVerdict.SystemError, reason = None)),
       finishedAt
     )
 
@@ -104,10 +96,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Completed,
-        judgeResult = Some(resultWithNestedReason)
-      ),
+      SubmissionStatus.Completed,
+      Some(resultWithNestedReason),
       finishedAt
     )
 
@@ -132,10 +122,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Failed,
-        judgeResult = Some(resultWithNestedSystemError)
-      ),
+      SubmissionStatus.Failed,
+      Some(resultWithNestedSystemError),
       finishedAt
     )
 
@@ -147,10 +135,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Failed,
-        judgeResult = Some(judgeResult(SubmissionVerdict.CompileError))
-      ),
+      SubmissionStatus.Failed,
+      Some(judgeResult(SubmissionVerdict.CompileError)),
       finishedAt
     )
 
@@ -163,10 +149,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Failed,
-        judgeResult = Some(failedResult)
-      ),
+      SubmissionStatus.Failed,
+      Some(failedResult),
       finishedAt
     )
 
@@ -182,10 +166,8 @@ class SubmissionJudgeRulesSuite extends FunSuite:
 
     val result = SubmissionJudgeRules.completeJudging(
       running,
-      SubmissionJudgeCompletion(
-        status = SubmissionStatus.Completed,
-        judgeResult = Some(acceptedResult)
-      ),
+      SubmissionStatus.Completed,
+      Some(acceptedResult),
       finishedAt
     )
 

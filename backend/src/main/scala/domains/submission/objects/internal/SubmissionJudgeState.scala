@@ -4,7 +4,7 @@ import domains.submission.objects.SubmissionStatus
 import judgeprotocol.objects.response.JudgeResult
 import java.time.Instant
 
-/** 提交判题状态快照；保存状态、结果以及开始/结束时间。 */
+/** 提交判题状态快照，作为 ClaimNext/Get/UpdateSubmissionJudgeState 内部 API 载荷，并由 SubmissionJudgeRules 校验流转。 */
 final case class SubmissionJudgeState(
   status: SubmissionStatus,
   judgeResult: Option[JudgeResult],

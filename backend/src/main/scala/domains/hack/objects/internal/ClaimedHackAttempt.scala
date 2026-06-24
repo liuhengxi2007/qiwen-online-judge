@@ -5,7 +5,7 @@ import domains.submission.objects.internal.ClaimedSubmission
 import domains.user.objects.Username
 import judgeprotocol.objects.response.JudgeResult
 
-/** 已领取的 hack attempt；携带目标提交任务、hack 输入和原始判题结果，供 worker 构建 HackTask。 */
+/** hack 领取任务载荷，由 ClaimNextHackAttempt 内部 API 返回，ClaimJudgeTask 用它组装 judge-protocol 的 HackTask。 */
 final case class ClaimedHackAttempt(
   hackId: HackId,
   targetSubmission: ClaimedSubmission,

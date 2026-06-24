@@ -32,10 +32,10 @@ final case class GetUserAvatar(userAvatarStorage: UserAvatarStorageContext) exte
     UserProfileTable.findAvatarByUsername(connection, targetUsername).flatMap {
       case None =>
         HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-      case Some(avatar) =>
-        UserAvatarStorage.readObject(userAvatarStorage, avatar.objectKey).flatMap {
+      case Some((objectKey, contentType)) =>
+        UserAvatarStorage.readObject(userAvatarStorage, objectKey).flatMap {
           case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
-          case Some(bytes) => IO.pure(avatarResponse(avatar.contentType, bytes))
+          case Some(bytes) => IO.pure(avatarResponse(contentType, bytes))
         }
     }
 

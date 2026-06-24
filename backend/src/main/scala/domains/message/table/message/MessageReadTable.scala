@@ -2,8 +2,6 @@ package domains.message.table.message
 
 import cats.effect.IO
 import domains.message.objects.{MessageConversationId, MessageId}
-import domains.message.objects.internal.ConversationReadReceipt
-import domains.message.table.message.MessageTableSupport.*
 import domains.user.objects.Username
 
 import java.sql.{Connection, Timestamp}
@@ -145,7 +143,7 @@ object MessageReadTable:
   def listUnreadConversationReadReceipts(
     connection: Connection,
     recipientUsername: Username
-  ): IO[List[ConversationReadReceipt]] =
+  ): IO[List[(MessageConversationId, Username, MessageId)]] =
     IO.blocking {
       val statement = connection.prepareStatement(listUnreadConversationReadReceiptsSQL)
       try
@@ -154,7 +152,18 @@ object MessageReadTable:
         statement.setString(3, recipientUsername.value)
         statement.setString(4, recipientUsername.value)
         val resultSet = statement.executeQuery()
-        try Iterator.continually(resultSet.next()).takeWhile(identity).map(_ => readConversationReadReceipt(resultSet)).toList
+        try
+          Iterator
+            .continually(resultSet.next())
+            .takeWhile(identity)
+            .map(_ =>
+              (
+                MessageConversationId(resultSet.getObject("conversation_id", classOf[java.util.UUID])),
+                Username.canonical(resultSet.getString("other_username")),
+                MessageId(resultSet.getObject("read_up_to_message_id", classOf[java.util.UUID]))
+              )
+            )
+            .toList
         finally resultSet.close()
       finally statement.close()
     }

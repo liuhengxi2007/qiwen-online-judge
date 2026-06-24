@@ -3,7 +3,7 @@ package domains.auth.objects.internal
 import domains.auth.objects.{AuthPermissionFlags, EmailAddress, PasswordHash}
 import domains.user.objects.Username
 
-/** 认证账号内部模型，包含登录凭据和权限标记，不直接暴露给前端。 */
+/** 认证账号内部模型，由 AuthAccountTable 读写，供登录校验、账号管理和 AuthAccountListItem 响应构造使用。 */
 final case class AuthAccount(
   username: Username,
   email: EmailAddress,

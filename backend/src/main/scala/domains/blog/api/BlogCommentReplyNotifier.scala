@@ -2,8 +2,7 @@ package domains.blog.api
 
 import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.blog.objects.BlogCommentId
-import domains.blog.objects.internal.BlogCommentNotificationContext
+import domains.blog.objects.{BlogCommentId, BlogId, BlogTitle}
 import domains.notification.api.CreateNotification
 import domains.notification.objects.{NotificationKind, NotificationPayload}
 import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
@@ -21,11 +20,25 @@ private[api] object BlogCommentReplyNotifier:
   def createAndPublish(
     connection: Connection,
     actor: AuthenticatedUser,
-    context: BlogCommentNotificationContext,
+    blogId: BlogId,
+    triggerCommentId: BlogCommentId,
+    blogTitle: BlogTitle,
+    blogAuthorUsername: Username,
+    triggerCommentContent: String,
+    ancestors: List[(BlogCommentId, Username)],
     notificationEventHub: NotificationEventHubContext
   ): IO[Unit] =
     for
-      recipients <- createNotifications(connection, actor, context)
+      recipients <- createNotifications(
+        connection,
+        actor,
+        blogId,
+        triggerCommentId,
+        blogTitle,
+        blogAuthorUsername,
+        triggerCommentContent,
+        ancestors
+      )
       _ <- recipients.foldLeft(IO.unit)((acc, username) =>
         acc *> NotificationEventHub.publish(notificationEventHub, username, NotificationStreamEvent.NotificationsChanged)
       )
@@ -34,9 +47,14 @@ private[api] object BlogCommentReplyNotifier:
   private def createNotifications(
     connection: Connection,
     actor: AuthenticatedUser,
-    context: BlogCommentNotificationContext
+    blogId: BlogId,
+    triggerCommentId: BlogCommentId,
+    blogTitle: BlogTitle,
+    blogAuthorUsername: Username,
+    triggerCommentContent: String,
+    ancestors: List[(BlogCommentId, Username)]
   ): IO[List[Username]] =
-    deduplicatedRecipients(actor, context).foldLeft(IO.pure(List.empty[Username])) {
+    deduplicatedRecipients(actor, blogAuthorUsername, ancestors).foldLeft(IO.pure(List.empty[Username])) {
       case (accIo, (recipientUsername, recipientCommentId)) =>
         accIo.flatMap { acc =>
           CreateNotification
@@ -48,9 +66,15 @@ private[api] object BlogCommentReplyNotifier:
                 kind = NotificationKind.BlogReply,
                 titleKey = blogReplyTitleKey,
                 bodyKey = blogReplyBodyKey,
-                payload = notificationPayload(context, recipientCommentId),
-                targetPath = s"/blogs/${context.blogId.value}",
-                targetAnchor = Some(s"comment-${context.triggerCommentId.value}")
+                payload = notificationPayload(
+                  blogId,
+                  triggerCommentId,
+                  blogTitle,
+                  triggerCommentContent,
+                  recipientCommentId
+                ),
+                targetPath = s"/blogs/${blogId.value}",
+                targetAnchor = Some(s"comment-${triggerCommentId.value}")
               )
             )
             .as(acc :+ recipientUsername)
@@ -59,11 +83,12 @@ private[api] object BlogCommentReplyNotifier:
 
   private def deduplicatedRecipients(
     actor: AuthenticatedUser,
-    context: BlogCommentNotificationContext
+    blogAuthorUsername: Username,
+    ancestors: List[(BlogCommentId, Username)]
   ): List[(Username, Option[BlogCommentId])] =
     val candidates =
-      context.ancestors.map(ancestor => ancestor.authorUsername -> Some(ancestor.commentId)) :+
-        (context.blogAuthorUsername -> None)
+      ancestors.map { case (commentId, authorUsername) => authorUsername -> Some(commentId) } :+
+        (blogAuthorUsername -> None)
 
     candidates
       .foldLeft((Set.empty[Username], List.empty[(Username, Option[BlogCommentId])])) {
@@ -75,15 +100,18 @@ private[api] object BlogCommentReplyNotifier:
       .filterNot { case (username, _) => username == actor.username }
 
   private def notificationPayload(
-    context: BlogCommentNotificationContext,
+    blogId: BlogId,
+    triggerCommentId: BlogCommentId,
+    blogTitle: BlogTitle,
+    triggerCommentContent: String,
     recipientCommentId: Option[BlogCommentId]
   ): NotificationPayload =
     NotificationPayload.BlogReply(
-      blogId = context.blogId,
-      blogTitle = context.blogTitle,
-      triggerCommentId = context.triggerCommentId,
+      blogId = blogId,
+      blogTitle = blogTitle,
+      triggerCommentId = triggerCommentId,
       recipientCommentId = recipientCommentId,
-      contentPreview = preview(context.triggerCommentContent)
+      contentPreview = preview(triggerCommentContent)
     )
 
   private def preview(content: String): String =

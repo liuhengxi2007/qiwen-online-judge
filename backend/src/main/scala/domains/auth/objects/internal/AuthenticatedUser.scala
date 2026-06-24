@@ -2,7 +2,7 @@ package domains.auth.objects.internal
 
 import domains.user.objects.Username
 
-/** 已通过会话解析的用户身份，作为所有登录态 API 的权限输入。 */
+/** 已通过 SessionResolver 解析的用户身份，供 AuthenticatedApi/SiteManagerApi 的 plan 和各领域 AccessRules 鉴权使用。 */
 final case class AuthenticatedUser(
   username: Username,
   siteManager: Boolean,

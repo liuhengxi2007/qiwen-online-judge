@@ -6,7 +6,6 @@ import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
 import domains.submission.api.{GetSubmissionJudgeState, RequeueStaleHackRevisionSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionId
-import domains.submission.objects.internal.SubmissionJudgeCompletion
 import domains.submission.utils.SubmissionJudgeRules
 import io.circe.Encoder
 import judgeprotocol.objects.request.ReportJudgeResultRequest
@@ -52,10 +51,8 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
           completedState <- SubmissionJudgeRules
             .completeJudging(
               judgeState,
-              SubmissionJudgeCompletion(
-                status = SubmissionJudgeRules.fromProtocolStatus(request.status),
-                judgeResult = request.judgeResult
-              ),
+              SubmissionJudgeRules.fromProtocolStatus(request.status),
+              request.judgeResult,
               completedAt
             ) match
             case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))

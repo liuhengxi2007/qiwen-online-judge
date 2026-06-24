@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.UUID
 
-/** 提交程序 manifest；记录默认程序角色和每个角色在对象存储中的源码位置、大小与摘要。 */
+/** 提交程序持久化 manifest，写入 submissions.program_manifest，供 SubmissionProgramStorage、JudgeTaskBuilder 和 hack 判题读取源码。 */
 final case class SubmissionProgramManifest(
   defaultProgramKey: String,
   programs: Map[String, SubmissionProgramManifest.Program]
@@ -21,13 +21,13 @@ final case class SubmissionProgramManifest(
   def program(key: String): Either[String, SubmissionProgramManifest.Program] =
     programs.get(key).toRight(s"Submission program was not found: $key.")
 
-/** 提交程序 manifest 构造与 JSON 编解码工具；负责角色命名和源码摘要计算。 */
+/** 提交程序 manifest 构造与 JSON 编解码工具；CreateSubmission、backfill 和 hack 物化路径都通过这里生成一致格式。 */
 object SubmissionProgramManifest:
   final val DefaultProgramKey: String = "main"
   private val CodeProgramKeyPattern = "^[A-Za-z0-9_-]+$".r
   private val TextProgramKeyPattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
-  /** 单个提交程序在对象存储中的元信息。 */
+  /** 单个提交程序在对象存储中的元信息，由 SubmissionProgramStorage 按 sourceKey 读写源码。 */
   final case class Program(
     language: SubmissionLanguage,
     sourceKey: String,

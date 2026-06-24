@@ -3,7 +3,6 @@ package domains.blog.table.blog
 import cats.effect.IO
 import database.utils.UserIdentitySql
 import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId, BlogTitle}
-import domains.blog.objects.internal.{BlogCommentNotificationAncestor, BlogCommentNotificationContext}
 import domains.blog.objects.response.{BlogCommentSummary, BlogDetail}
 import domains.blog.table.blog.BlogTableSupport.*
 import domains.user.objects.Username
@@ -79,8 +78,7 @@ object BlogCommentTable:
 
   private val findCommentNotificationBlogContextSQL: String =
     """
-      |select b.public_id as blog_public_id,
-      |       b.title as blog_title,
+      |select b.title as blog_title,
       |       b.author_username as blog_author_username,
       |       c.content as trigger_comment_content
       |from blogs b
@@ -119,7 +117,7 @@ object BlogCommentTable:
     connection: Connection,
     blogId: BlogId,
     triggerCommentId: BlogCommentId
-  ): IO[Option[BlogCommentNotificationContext]] =
+  ): IO[Option[(BlogTitle, Username, String, List[(BlogCommentId, Username)])]] =
     for
       maybeBlogContext <- IO.blocking {
         val statement = connection.prepareStatement(findCommentNotificationBlogContextSQL)
@@ -154,24 +152,15 @@ object BlogCommentTable:
                   .continually(resultSet.next())
                   .takeWhile(identity)
                   .map(_ =>
-                    BlogCommentNotificationAncestor(
-                      commentId = BlogCommentId(resultSet.getLong("public_id")),
-                      authorUsername = Username.canonical(resultSet.getString("author_username"))
-                    )
+                    BlogCommentId(resultSet.getLong("public_id")) ->
+                      Username.canonical(resultSet.getString("author_username"))
                   )
                   .toList
               finally resultSet.close()
             finally statement.close()
           }
     yield maybeBlogContext.map { case (blogTitle, blogAuthorUsername, triggerCommentContent) =>
-      BlogCommentNotificationContext(
-        blogId = blogId,
-        blogTitle = blogTitle,
-        blogAuthorUsername = blogAuthorUsername,
-        triggerCommentId = triggerCommentId,
-        triggerCommentContent = triggerCommentContent,
-        ancestors = ancestors
-      )
+      (blogTitle, blogAuthorUsername, triggerCommentContent, ancestors)
     }
 
   private val updateCommentSQL: String =

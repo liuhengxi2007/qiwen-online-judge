@@ -38,6 +38,6 @@ final case class DeleteUserAvatar(userAvatarStorage: UserAvatarStorageContext)
       _ <- UserProfileTable.clearAvatar(connection, targetUsername).flatMap { cleared =>
         HttpApiError.ensure(cleared, HttpApiError.notFound(ApiMessages.userNotFound))
       }
-      _ <- previousAvatar.traverse(avatar => UserAvatarStorage.deleteObject(userAvatarStorage, avatar.objectKey)).void
+      _ <- previousAvatar.traverse { case (objectKey, _) => UserAvatarStorage.deleteObject(userAvatarStorage, objectKey) }.void
       settings <- UserAvatarApiHelpers.refreshedSettings(connection, targetUsername)
     yield settings

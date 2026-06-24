@@ -4,7 +4,6 @@ package domains.user.table.user_profile
 
 import cats.effect.IO
 import domains.user.objects.{DisplayName, Username}
-import domains.user.objects.internal.UserAvatarRecord
 import domains.problem.objects.ProblemTitleDisplayMode
 import domains.user.objects.UserProfileSettings
 import domains.user.objects.response.UserSettingsResponse
@@ -141,20 +140,20 @@ object UserProfileTable:
 
   private val findAvatarByUsernameSQL: String =
     """
-      |select username, avatar_object_key, avatar_content_type, avatar_updated_at
+      |select avatar_object_key, avatar_content_type, avatar_updated_at
       |from user_profiles
       |where lower(username) = lower(?)
       |""".stripMargin
 
-  /** 读取头像元数据；用户不存在或头像字段不完整时返回 None。 */
-  def findAvatarByUsername(connection: Connection, username: Username): IO[Option[UserAvatarRecord]] =
+  /** 读取头像对象 key 和内容类型；用户不存在或头像字段不完整时返回 None。 */
+  def findAvatarByUsername(connection: Connection, username: Username): IO[Option[(String, String)]] =
     IO.blocking {
       val statement = connection.prepareStatement(findAvatarByUsernameSQL)
       try
         statement.setString(1, username.value.trim)
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then readAvatarRecord(resultSet)
+          if resultSet.next() then readAvatarObject(resultSet)
           else None
         finally resultSet.close()
       finally statement.close()
@@ -165,17 +164,17 @@ object UserProfileTable:
       |update user_profiles
       |set avatar_object_key = ?, avatar_content_type = ?, avatar_updated_at = ?
       |where username = ?
-      |returning username, avatar_object_key, avatar_content_type, avatar_updated_at
+      |returning username
       |""".stripMargin
 
-  /** 更新头像对象 key、内容类型和更新时间，目标用户不存在时返回 None。 */
+  /** 更新头像对象 key、内容类型和更新时间，返回是否匹配到用户记录。 */
   def updateAvatar(
     connection: Connection,
     username: Username,
     objectKey: String,
     contentType: String,
     updatedAt: java.time.Instant
-  ): IO[Option[UserAvatarRecord]] =
+  ): IO[Boolean] =
     IO.blocking {
       val statement = connection.prepareStatement(updateAvatarSQL)
       try
@@ -184,9 +183,7 @@ object UserProfileTable:
         statement.setTimestamp(3, Timestamp.from(updatedAt))
         statement.setString(4, username.value.trim)
         val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then readAvatarRecord(resultSet)
-          else None
+        try resultSet.next()
         finally resultSet.close()
       finally statement.close()
     }

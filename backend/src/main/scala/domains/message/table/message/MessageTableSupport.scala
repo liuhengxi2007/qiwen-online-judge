@@ -4,7 +4,6 @@ package domains.message.table.message
 
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.message.objects.{MessageContent, MessageConversationId, MessageId}
-import domains.message.objects.internal.ConversationReadReceipt
 import domains.message.objects.response.{DirectMessage, MessageBlockEntry, MessageConversationSummary}
 import database.utils.UserIdentitySql
 
@@ -51,12 +50,4 @@ object MessageTableSupport:
     MessageBlockEntry(
       user = readUserIdentity(resultSet, "blocked"),
       createdAt = resultSet.getTimestamp("created_at").toInstant
-    )
-
-  /** 从读回执查询行读取内部读回执对象。 */
-  def readConversationReadReceipt(resultSet: ResultSet): ConversationReadReceipt =
-    ConversationReadReceipt(
-      conversationId = MessageConversationId(resultSet.getObject("conversation_id", classOf[java.util.UUID])),
-      otherParticipant = Username.canonical(resultSet.getString("other_username")),
-      readUpToMessageId = MessageId(resultSet.getObject("read_up_to_message_id", classOf[java.util.UUID]))
     )

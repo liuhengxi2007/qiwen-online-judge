@@ -14,7 +14,7 @@ import domains.problem.objects.internal.ProblemDataManifest
 import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionStatus
-import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeCompletion, SubmissionJudgeState}
+import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeState}
 import domains.submission.utils.SubmissionJudgeRules
 import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.syntax.*
@@ -210,10 +210,8 @@ final case class ClaimJudgeTask(
     SubmissionJudgeRules.beginJudging(SubmissionJudgeState.queued, claimedAt).flatMap { runningState =>
       SubmissionJudgeRules.completeJudging(
         runningState,
-        SubmissionJudgeCompletion(
-          status = SubmissionStatus.Failed,
-          judgeResult = Some(systemErrorJudgeResult(reason))
-        ),
+        SubmissionStatus.Failed,
+        Some(systemErrorJudgeResult(reason)),
         claimedAt
       )
     } match

@@ -3,7 +3,6 @@ package domains.user.table.user_profile
 
 
 import domains.auth.objects.{AuthPermissionFlags, EmailAddress}
-import domains.user.objects.internal.UserAvatarRecord
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.problem.objects.{ProblemSlug, ProblemTitle, ProblemTitleDisplayMode}
 import database.utils.LikePatternSql
@@ -52,21 +51,14 @@ object UserProfileTableSupport:
       avatarUrl = readAvatarUrl(resultSet)
     )
 
-  /** 从当前行读取头像元数据，三项头像字段不完整时视为无头像。 */
-  def readAvatarRecord(resultSet: ResultSet): Option[UserAvatarRecord] =
+  /** 从当前行读取头像对象 key 和内容类型，三项头像字段不完整时视为无头像。 */
+  def readAvatarObject(resultSet: ResultSet): Option[(String, String)] =
     val objectKey = Option(resultSet.getString("avatar_object_key")).map(_.trim).filter(_.nonEmpty)
     val contentType = Option(resultSet.getString("avatar_content_type")).map(_.trim).filter(_.nonEmpty)
     val updatedAt = Option(resultSet.getTimestamp("avatar_updated_at")).map(_.toInstant)
     (objectKey, contentType, updatedAt) match
-      case (Some(key), Some(mediaType), Some(timestamp)) =>
-        Some(
-          UserAvatarRecord(
-            username = Username.canonical(resultSet.getString("username")),
-            objectKey = key,
-            contentType = mediaType,
-            updatedAt = timestamp
-          )
-        )
+      case (Some(key), Some(mediaType), Some(_)) =>
+        Some(key -> mediaType)
       case _ =>
         None
 

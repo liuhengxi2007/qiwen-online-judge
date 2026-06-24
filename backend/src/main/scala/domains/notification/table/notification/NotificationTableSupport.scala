@@ -4,7 +4,6 @@ package domains.notification.table.notification
 
 import domains.user.objects.{DisplayName, UserIdentity, Username}
 import domains.notification.objects.{NotificationKind, NotificationPayload}
-import domains.notification.objects.internal.NotificationStatus
 import domains.notification.objects.response.{NotificationSummary}
 import database.utils.UserIdentitySql
 
@@ -31,7 +30,7 @@ object NotificationTableSupport:
       payload = decodePayload(resultSet.getString("payload_json")),
       targetPath = resultSet.getString("target_path"),
       targetAnchor = Option(resultSet.getString("target_anchor")),
-      isRead = parseColumn("notifications.status", resultSet.getString("status"), NotificationStatus.parse) == NotificationStatus.Read,
+      isRead = readStatusColumnAsIsRead(resultSet.getString("status")),
       createdAt = resultSet.getTimestamp("created_at").toInstant
     )
 
@@ -46,6 +45,13 @@ object NotificationTableSupport:
 
   private def decodePayload(raw: String): NotificationPayload =
     NotificationPayloadJsonCodec.decode(raw)
+
+  /** 将通知状态数据库列转换为响应布尔值；非法状态表示数据库约束外数据。 */
+  private def readStatusColumnAsIsRead(raw: String): Boolean =
+    raw match
+      case "unread" => false
+      case "read" => true
+      case other => throw IllegalStateException(s"Invalid value in notifications.status: Unsupported notification status: $other")
 
   private def readOptionalUsername(resultSet: ResultSet, prefix: String): Option[Username] =
     Option(resultSet.getString(s"${prefix}_username")).map(Username.canonical)

@@ -7,7 +7,7 @@ import judgeprotocol.objects.response.JudgeResult
 
 import java.time.Instant
 
-/** 提交详情的数据库内部记录；包含程序 manifest 但不包含实际源码文本。 */
+/** 提交详情数据库投影，由 SubmissionQueryTable.findById 读取，供 GetSubmission、SubmissionDetail.fromRecord 和 SubmissionJudgeRules 使用。 */
 final case class SubmissionDetailRecord(
   id: SubmissionId,
   problemId: ProblemId,

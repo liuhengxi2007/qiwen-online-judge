@@ -67,18 +67,18 @@ object BlogAccessGrantTable:
       _ <- insertGrants(connection, internalBlogId, grants)
     yield ()
 
-  private val deleteAllForInternalBlogSQL: String =
-    """
-      |delete from blog_access_grants
-      |where blog_id = ?
-      |""".stripMargin
-
   /** 删除某个博客的全部 viewer 授权记录，通常用于博客删除前清理。 */
   def deleteAllForBlog(connection: Connection, blogId: BlogId): IO[Unit] =
     findInternalId(connection, blogId).flatMap {
       case Some(internalBlogId) => deleteAllForInternalBlog(connection, internalBlogId)
       case None => IO.unit
     }
+
+  private val deleteAllForInternalBlogSQL: String =
+    """
+      |delete from blog_access_grants
+      |where blog_id = ?
+      |""".stripMargin
 
   private def deleteAllForInternalBlog(connection: Connection, internalBlogId: UUID): IO[Unit] =
     IO.blocking {

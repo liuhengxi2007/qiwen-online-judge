@@ -1,7 +1,7 @@
 package domains.submission.utils
 
 import domains.submission.objects.{SubmissionStatus, SubmissionVerdict}
-import domains.submission.objects.internal.{SubmissionJudgeCompletion, SubmissionJudgeState}
+import domains.submission.objects.internal.SubmissionJudgeState
 import domains.submission.objects.internal.SubmissionDetailRecord
 import judgeprotocol.objects.response.{JudgeFailureReason, JudgeResult, JudgeResultSummary}
 
@@ -28,20 +28,21 @@ object SubmissionJudgeRules:
   /** 将 running 状态推进为 completed/failed；校验终态结果、系统错误 reason 和状态匹配。 */
   def completeJudging(
     state: SubmissionJudgeState,
-    completion: SubmissionJudgeCompletion,
+    status: SubmissionStatus,
+    judgeResult: Option[JudgeResult],
     finishedAt: Instant
   ): Either[String, SubmissionJudgeState] =
     state.status match
       case SubmissionStatus.Running =>
-        completion.status match
+        status match
           case SubmissionStatus.Completed | SubmissionStatus.Failed =>
             for
-              judgeResult <- completion.judgeResult.toRight("Terminal judge updates must include judgeResult.")
+              judgeResult <- judgeResult.toRight("Terminal judge updates must include judgeResult.")
               _ <- validateReasonMatchesVerdict(judgeResult)
-              _ <- validateStatusMatchesResult(completion.status, judgeResult)
+              _ <- validateStatusMatchesResult(status, judgeResult)
             yield
               state.copy(
-                status = completion.status,
+                status = status,
                 judgeResult = Some(judgeResult),
                 finishedAt = Some(finishedAt)
               )

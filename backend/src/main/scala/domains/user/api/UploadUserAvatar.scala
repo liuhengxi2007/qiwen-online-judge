@@ -60,11 +60,11 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorageContext)
         .updateAvatar(connection, targetUsername, prepared.objectKey, prepared.contentType, now)
         .handleErrorWith(error => UserAvatarStorage.deleteObject(userAvatarStorage, prepared.objectKey) *> IO.raiseError(error))
         .flatMap {
-          case Some(_) => IO.unit
-          case None =>
+          case true => IO.unit
+          case false =>
             UserAvatarStorage.deleteObject(userAvatarStorage, prepared.objectKey) *> HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
         }
-      _ <- previousAvatar.traverse(avatar => UserAvatarStorage.deleteObject(userAvatarStorage, avatar.objectKey)).void
+      _ <- previousAvatar.traverse { case (objectKey, _) => UserAvatarStorage.deleteObject(userAvatarStorage, objectKey) }.void
       settings <- UserAvatarApiHelpers.refreshedSettings(connection, targetUsername)
     yield settings
 

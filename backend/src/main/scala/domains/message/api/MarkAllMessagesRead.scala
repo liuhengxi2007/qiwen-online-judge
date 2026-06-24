@@ -36,13 +36,13 @@ final class MarkAllMessagesRead(messageEventHub: MessageEventHubContext) extends
     for
       receipts <- MessageReadTable.listUnreadConversationReadReceipts(connection, actor.username)
       _ <- MessageReadTable.markAllMessagesRead(connection, actor.username)
-      _ <- receipts.traverse_(receipt =>
+      _ <- receipts.traverse_ { case (conversationId, otherParticipant, readUpToMessageId) =>
         MessageEventHub.publish(
           messageEventHub,
-          receipt.otherParticipant,
-          MessageStreamEvent.ConversationRead(receipt.conversationId, receipt.readUpToMessageId, actor.username)
+          otherParticipant,
+          MessageStreamEvent.ConversationRead(conversationId, readUpToMessageId, actor.username)
         )
-      )
+      }
       _ <- MessageEventHub.publish(messageEventHub, actor.username, MessageStreamEvent.InboxChanged)
     yield SuccessResponse(
       code = Some(ApiMessages.directMessagesMarkedRead.code),

@@ -51,7 +51,6 @@ const explicitCollaborationBoundaries = new Set([
   'domains.submission.objects.SubmissionVerdict',
   'domains.submission.objects.internal.ClaimedSubmission',
   'domains.submission.objects.internal.SubmissionProgramManifest',
-  'domains.submission.objects.internal.SubmissionJudgeCompletion',
   'domains.submission.objects.internal.SubmissionJudgeState',
   'domains.submission.utils.SubmissionProgramCleanup',
   'domains.submission.utils.SubmissionProgramStorage',
@@ -75,8 +74,6 @@ const publicModelTypes = new Map([
     'SiteManagerUser',
   ])],
   ['blog', new Set([
-    // Internal notification context is intentionally consumed by the notification domain.
-    'BlogCommentNotificationContext',
     'BlogCommentId',
     'BlogId',
     'BlogTitle',
