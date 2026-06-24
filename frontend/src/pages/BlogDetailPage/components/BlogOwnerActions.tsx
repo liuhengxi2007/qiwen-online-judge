@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { useBlogDetailPageModel } from '../hooks/useBlogDetailPageModel'
-import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
@@ -13,14 +12,13 @@ type BlogDetailPageModel = ReturnType<typeof useBlogDetailPageModel>
  * 博客作者操作组件属性，包含当前博客和页面模型。
  */
 type BlogOwnerActionsProps = {
-  blog: BlogDetail
   model: BlogDetailPageModel
 }
 
 /**
- * 博客作者操作区，提供编辑、删除以及公开博客提交到题目的入口。
+ * 博客作者操作区，提供编辑、删除以及博客提交到题目的入口。
  */
-export function BlogOwnerActions({ blog, model }: BlogOwnerActionsProps) {
+export function BlogOwnerActions({ model }: BlogOwnerActionsProps) {
   const { t } = useI18n()
 
   return (
@@ -33,31 +31,29 @@ export function BlogOwnerActions({ blog, model }: BlogOwnerActionsProps) {
           {t('common.delete')}
         </Button>
       </div>
-      {blog.visibility === 'public' ? (
-        <div className="rounded-3xl border border-orange-100 bg-orange-50 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="space-y-2 sm:max-w-xs">
-              <label className="text-sm font-medium text-orange-950" htmlFor="submit-blog-problem-slug">
-                {t('blog.problem.submitToProblem')}
-              </label>
-              <Input
-                id="submit-blog-problem-slug"
-                value={model.submitProblemSlug}
-                onChange={(event) => model.setSubmitProblemSlug(event.target.value)}
-              />
-            </div>
-            <Button
-              type="button"
-              disabled={model.isSubmittingToProblem}
-              className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400"
-              onClick={() => void model.submitToProblem()}
-            >
-              {model.isSubmittingToProblem ? t('common.loading') : t('blog.problem.submit')}
-            </Button>
+      <div className="rounded-3xl border border-orange-100 bg-orange-50 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="space-y-2 sm:max-w-xs">
+            <label className="text-sm font-medium text-orange-950" htmlFor="submit-blog-problem-slug">
+              {t('blog.problem.submitToProblem')}
+            </label>
+            <Input
+              id="submit-blog-problem-slug"
+              value={model.submitProblemSlug}
+              onChange={(event) => model.setSubmitProblemSlug(event.target.value)}
+            />
           </div>
-          {model.submitProblemMessage ? <p className="mt-2 text-sm text-orange-800">{model.submitProblemMessage}</p> : null}
+          <Button
+            type="button"
+            disabled={model.isSubmittingToProblem}
+            className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400"
+            onClick={() => void model.submitToProblem()}
+          >
+            {model.isSubmittingToProblem ? t('common.loading') : t('blog.problem.submit')}
+          </Button>
         </div>
-      ) : null}
+        {model.submitProblemMessage ? <p className="mt-2 text-sm text-orange-800">{model.submitProblemMessage}</p> : null}
+      </div>
     </div>
   )
 }

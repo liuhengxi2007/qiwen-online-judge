@@ -18,10 +18,10 @@ object BlogCommentTable:
   private val insertCommentSQL: String =
     s"""
       |insert into blog_comments (id, public_id, blog_id, parent_comment_id, author_username, content, created_at, updated_at)
-      |select ?, nextval('blog_comment_public_id_seq'), id, null, ?, ?, ?, ?
-      |from blogs
-      |where public_id = ?
-      |  and (visibility = 'public' or author_username = ?)
+      |select ?, nextval('blog_comment_public_id_seq'), b.id, null, ?, ?, ?, ?
+      |from blogs b
+      |where b.public_id = ?
+      |  and ${blogVisibleToViewerPredicate("b")}
       |returning public_id
       |""".stripMargin
 
@@ -32,11 +32,11 @@ object BlogCommentTable:
       |from blogs b
       |join blog_comments parent_comment on parent_comment.blog_id = b.id and parent_comment.public_id = ?
       |where b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |returning public_id
       |""".stripMargin
 
-  /** 在公开博客或作者自己的私有博客下创建评论/回复，返回更新后的博客详情和新评论公开 id。 */
+  /** 在当前用户可见博客下创建评论/回复，返回更新后的博客详情和新评论公开 id。 */
   def insertComment(
     connection: Connection,
     blogId: BlogId,
@@ -57,14 +57,14 @@ object BlogCommentTable:
             statement.setTimestamp(5, Timestamp.from(now))
             statement.setLong(6, commentId.value)
             statement.setLong(7, blogId.value)
-            statement.setString(8, authorUsername.value)
+            bindBlogVisibleToViewer(statement, 8, authorUsername)
           case None =>
             statement.setString(2, authorUsername.value)
             statement.setString(3, content.value)
             statement.setTimestamp(4, Timestamp.from(now))
             statement.setTimestamp(5, Timestamp.from(now))
             statement.setLong(6, blogId.value)
-            statement.setString(7, authorUsername.value)
+            bindBlogVisibleToViewer(statement, 7, authorUsername)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then Some(BlogCommentId(resultSet.getLong("public_id")))
@@ -175,14 +175,14 @@ object BlogCommentTable:
     }
 
   private val updateCommentSQL: String =
-    """
+    s"""
       |update blog_comments c
       |set content = ?,
       |    updated_at = ?
       |from blogs b
       |where b.id = c.blog_id
       |  and b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |  and c.public_id = ?
       |  and c.author_username = ?
       |""".stripMargin
@@ -201,9 +201,9 @@ object BlogCommentTable:
         statement.setString(1, content.value)
         statement.setTimestamp(2, Timestamp.from(Instant.now()))
         statement.setLong(3, blogId.value)
-        statement.setString(4, actorUsername.value)
-        statement.setLong(5, commentId.value)
-        statement.setString(6, actorUsername.value)
+        val nextIndex = bindBlogVisibleToViewer(statement, 4, actorUsername)
+        statement.setLong(nextIndex, commentId.value)
+        statement.setString(nextIndex + 1, actorUsername.value)
         statement.executeUpdate() > 0
       finally statement.close()
     }.flatMap {
@@ -212,12 +212,12 @@ object BlogCommentTable:
     }
 
   private val deleteCommentSQL: String =
-    """
+    s"""
       |delete from blog_comments c
       |using blogs b
       |where b.id = c.blog_id
       |  and b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |  and c.public_id = ?
       |  and c.author_username = ?
       |""".stripMargin
@@ -233,9 +233,9 @@ object BlogCommentTable:
       val statement = connection.prepareStatement(deleteCommentSQL)
       try
         statement.setLong(1, blogId.value)
-        statement.setString(2, actorUsername.value)
-        statement.setLong(3, commentId.value)
-        statement.setString(4, actorUsername.value)
+        val nextIndex = bindBlogVisibleToViewer(statement, 2, actorUsername)
+        statement.setLong(nextIndex, commentId.value)
+        statement.setString(nextIndex + 1, actorUsername.value)
         statement.executeUpdate() > 0
       finally statement.close()
     }.flatMap {
@@ -265,7 +265,7 @@ object BlogCommentTable:
       |) cvs on cvs.comment_id = c.id
       |left join blog_comment_votes viewer_vote on viewer_vote.comment_id = c.id and viewer_vote.username = ?
       |where b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |order by c.public_id asc
       |""".stripMargin
 
@@ -276,7 +276,7 @@ object BlogCommentTable:
       try
         statement.setString(1, viewerUsername.value)
         statement.setLong(2, blogId.value)
-        statement.setString(3, viewerUsername.value)
+        bindBlogVisibleToViewer(statement, 3, viewerUsername)
         val resultSet = statement.executeQuery()
         try
           Iterator

@@ -2,6 +2,7 @@ package domains.blog.table.blog
 
 import cats.effect.IO
 import domains.blog.objects.BlogId
+import domains.blog.table.blog.BlogTableSupport.*
 import domains.problem.objects.ProblemSlug
 import domains.user.objects.Username
 
@@ -12,20 +13,20 @@ import java.time.Instant
 object BlogProblemLinkMutationTable:
 
   private val linkProblemSQL: String =
-    """
+    s"""
       |insert into blog_problem_links (blog_id, problem_id, linked_by, linked_at, status)
       |select b.id, p.id, ?, ?, 'accepted'
       |from blogs b
       |join problems p on p.slug = ?
       |where b.public_id = ?
-      |  and b.visibility = 'public'
+      |  and ${blogVisibleToViewerPredicate("b")}
       |on conflict (blog_id, problem_id)
       |do update set status = 'accepted',
       |              linked_by = excluded.linked_by,
       |              linked_at = excluded.linked_at
       |""".stripMargin
 
-  /** 管理员将公开博客直接关联到题目，已存在关联时置为 accepted 并刷新操作者和时间。 */
+  /** 管理员将自己可见的博客直接关联到题目，已存在关联时置为 accepted 并刷新操作者和时间。 */
   def linkProblem(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -39,23 +40,24 @@ object BlogProblemLinkMutationTable:
         statement.setTimestamp(2, Timestamp.from(Instant.now()))
         statement.setString(3, problemSlug.value)
         statement.setLong(4, blogId.value)
+        bindBlogVisibleToViewer(statement, 5, actorUsername)
         statement.executeUpdate() > 0
       finally statement.close()
     }
 
   private val submitProblemLinkSQL: String =
-    """
+    s"""
       |insert into blog_problem_links (blog_id, problem_id, linked_by, linked_at, status)
       |select b.id, p.id, ?, ?, 'pending'
       |from blogs b
       |join problems p on p.slug = ?
       |where b.public_id = ?
-      |  and b.visibility = 'public'
       |  and b.author_username = ?
+      |  and ${blogVisibleToViewerPredicate("b")}
       |on conflict (blog_id, problem_id) do nothing
       |""".stripMargin
 
-  /** 博客作者提交公开博客到题目待审队列；已有关联时不改变状态并返回 false。 */
+  /** 博客作者提交自己可见的博客到题目待审队列；已有关联时不改变状态并返回 false。 */
   def submitProblem(
     connection: Connection,
     problemSlug: ProblemSlug,
@@ -70,6 +72,7 @@ object BlogProblemLinkMutationTable:
         statement.setString(3, problemSlug.value)
         statement.setLong(4, blogId.value)
         statement.setString(5, actorUsername.value)
+        bindBlogVisibleToViewer(statement, 6, actorUsername)
         statement.executeUpdate() > 0
       finally statement.close()
     }

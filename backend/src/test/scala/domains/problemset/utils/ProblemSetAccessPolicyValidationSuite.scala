@@ -1,33 +1,26 @@
 package domains.problemset.utils
 
 import munit.CatsEffectSuite
-import org.http4s.Status
-import shared.api.HttpApiError
-import shared.objects.access.{AccessSubject, AccessUsername, BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, BaseAccess, ResourceVisibilityPolicy}
 
 class ProblemSetAccessPolicyValidationSuite extends CatsEffectSuite:
 
-  test("validateAccessPolicySubjects rejects manager grants") {
-    val policy = ResourceAccessPolicy(
+  test("sanitizePolicy deduplicates viewer grants") {
+    val policy = ResourceVisibilityPolicy(
       BaseAccess.Restricted,
-      viewerGrants = Nil,
-      managerGrants = List(AccessSubject.User(AccessUsername("manager-1")))
+      viewerGrants = List(
+        AccessSubject.UserGroup(AccessUserGroupSlug("reviewers")),
+        AccessSubject.User(AccessUsername("alice")),
+        AccessSubject.User(AccessUsername("alice")),
+        AccessSubject.UserGroup(AccessUserGroupSlug("reviewers"))
+      )
     )
 
-    ProblemSetAccessPolicyValidation.validateAccessPolicySubjects(null, policy).attempt.map { result =>
-      val error = result.left.toOption.collect { case error: HttpApiError => error }
-
-      assertEquals(error.map(_.status), Some(Status.BadRequest))
-      assertEquals(error.flatMap(_.fallbackMessage), Some("Problem set access policies do not support manager grants."))
-    }
-  }
-
-  test("sanitizePolicy omits manager grants") {
-    val policy = ResourceAccessPolicy(
-      BaseAccess.Restricted,
-      viewerGrants = Nil,
-      managerGrants = List(AccessSubject.User(AccessUsername("manager-1")))
+    assertEquals(
+      ProblemSetAccessPolicyValidation.sanitizePolicy(policy).viewerGrants,
+      List(
+        AccessSubject.UserGroup(AccessUserGroupSlug("reviewers")),
+        AccessSubject.User(AccessUsername("alice"))
+      )
     )
-
-    assertEquals(ProblemSetAccessPolicyValidation.sanitizePolicy(policy).managerGrants, Nil)
   }

@@ -5,6 +5,7 @@ import domains.blog.objects.*
 import domains.user.objects.UserIdentity
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import shared.objects.access.ResourceVisibilityPolicy
 
 import java.time.Instant
 import scala.util.Try
@@ -15,7 +16,7 @@ final case class BlogSummary(
   title: BlogTitle,
   content: BlogContent,
   author: UserIdentity,
-  visibility: BlogVisibility,
+  visibilityPolicy: ResourceVisibilityPolicy,
   relatedProblems: List[BlogProblemReference],
   score: Int,
   viewerVote: Option[BlogVote],

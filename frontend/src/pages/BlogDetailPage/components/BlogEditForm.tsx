@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { useBlogDetailPageModel } from '../hooks/useBlogDetailPageModel'
-import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
+import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
@@ -19,7 +18,7 @@ type BlogEditFormProps = {
 }
 
 /**
- * 博客编辑表单，编辑标题、可见性和 Markdown 内容，并由模型负责校验和保存。
+ * 博客编辑表单，编辑标题、可见性策略和 Markdown 内容，并由模型负责校验和保存。
  */
 export function BlogEditForm({ model }: BlogEditFormProps) {
   const { t } = useI18n()
@@ -27,16 +26,14 @@ export function BlogEditForm({ model }: BlogEditFormProps) {
   return (
     <div className="mb-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
       <Input value={model.editBlogTitle} onChange={(event) => model.setEditBlogTitle(event.target.value)} />
-      {/* 注意：SelectItem 只提供 public/private 两个值，Radix 回调类型为 string，故在边界处收窄。 */}
-      <Select value={model.editBlogVisibility} onValueChange={(value) => model.setEditBlogVisibility(value as BlogVisibility)}>
-        <SelectTrigger className="rounded-2xl border-slate-300 bg-white">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="public">{t('blog.visibility.public')}</SelectItem>
-          <SelectItem value="private">{t('blog.visibility.private')}</SelectItem>
-        </SelectContent>
-      </Select>
+      <ResourceAccessEditor
+        accessPolicy={model.editBlogAccessPolicy}
+        grantedUsersInput={model.editBlogGrantedUsersInput}
+        grantedGroupsInput={model.editBlogGrantedGroupsInput}
+        onBaseAccessChange={model.setEditBlogBaseAccess}
+        onGrantedUsersInputChange={model.setEditBlogGrantedUsersInput}
+        onGrantedGroupsInputChange={model.setEditBlogGrantedGroupsInput}
+      />
       <Textarea className="min-h-56" value={model.editBlogContent} onChange={(event) => model.setEditBlogContent(event.target.value)} />
       <div className="flex flex-wrap gap-2">
         <Button type="button" className="rounded-2xl bg-slate-950 text-white" onClick={() => void model.submitBlogEdit()}>

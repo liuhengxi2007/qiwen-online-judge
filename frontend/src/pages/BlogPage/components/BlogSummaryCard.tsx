@@ -6,6 +6,7 @@ import { blogTitleValue } from '@/objects/blog/BlogTitle'
 import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
 import { blogScoreClassName } from '@/pages/objects/BlogDisplay'
 import { formatProblemTitleDisplay } from '@/pages/objects/ProblemTitleDisplay'
+import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 import { DateTimeText } from '@/pages/components/DateTimeText'
@@ -50,7 +51,7 @@ export function BlogSummaryCard({
             </Link>
             {showVisibility ? (
               <span className="ml-3 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                {t(`blog.visibility.${blog.visibility}`)}
+                {resourceAccessBadgeLabel(blog.visibilityPolicy, t)}
               </span>
             ) : null}
             {showRelatedProblems && blog.relatedProblems.length > 0 ? (

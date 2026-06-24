@@ -6,7 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
-/** 博客相关表结构初始化对象，包含博客、题目关联、投票、评论和历史字段迁移。 */
+/** 博客相关表结构初始化对象，包含博客、访问策略、题目关联、投票、评论和历史字段迁移。 */
 object BlogTableSchema:
 
   val initTableSql: String =
@@ -17,13 +17,13 @@ object BlogTableSchema:
       |  author_username varchar(120) not null references auth_accounts(username),
       |  title varchar(160) not null,
       |  content text not null,
-      |  visibility varchar(16) not null default 'public',
+      |  base_access varchar(32) not null default 'public' check (base_access in ('restricted', 'public')),
       |  created_at timestamp not null,
       |  updated_at timestamp not null
       |);
       |""".stripMargin
 
-  val addVisibilityColumnSql: String =
+  val addBaseAccessColumnSql: String =
     """
       |do $$
       |begin
@@ -32,24 +32,65 @@ object BlogTableSchema:
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'blogs'
+      |      and column_name = 'base_access'
+      |  ) then
+      |    alter table blogs add column base_access varchar(32);
+      |  end if;
+      |
+      |  if exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'blogs_base_access_check'
+      |      and conrelid = 'blogs'::regclass
+      |  ) then
+      |    alter table blogs drop constraint blogs_base_access_check;
+      |  end if;
+      |
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'blogs'
       |      and column_name = 'visibility'
       |  ) then
-      |    alter table blogs add column visibility varchar(16) not null default 'public';
+      |    update blogs
+      |    set base_access = case
+      |      when base_access = 'public' then 'public'
+      |      when base_access = 'restricted' then 'restricted'
+      |      when visibility = 'public' then 'public'
+      |      else 'restricted'
+      |    end
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
+      |  else
+      |    update blogs
+      |    set base_access = 'public'
+      |    where base_access is null
+      |      or btrim(base_access) = ''
+      |      or base_access not in ('restricted', 'public');
+      |  end if;
+      |
+      |  alter table blogs alter column base_access set default 'public';
+      |  alter table blogs alter column base_access set not null;
+      |
+      |  if not exists (
+      |    select 1
+      |    from pg_constraint
+      |    where conname = 'blogs_base_access_check'
+      |      and conrelid = 'blogs'::regclass
+      |  ) then
+      |    alter table blogs add constraint blogs_base_access_check check (base_access in ('restricted', 'public'));
       |  end if;
       |end $$;
       |""".stripMargin
 
-  val addVisibilityCheckSql: String =
+  val dropVisibilityColumnSql: String =
     """
       |do $$
       |begin
-      |  if not exists (
-      |    select 1
-      |    from pg_constraint
-      |    where conname = 'blogs_visibility_check'
-      |  ) then
-      |    alter table blogs add constraint blogs_visibility_check check (visibility in ('public', 'private'));
-      |  end if;
+      |  alter table blogs drop constraint if exists blogs_visibility_check;
+      |  alter table blogs drop column if exists visibility;
       |end $$;
       |""".stripMargin
 
@@ -238,8 +279,8 @@ object BlogTableSchema:
       try
         statement.execute(createPublicIdSequenceSql)
         statement.execute(initTableSql)
-        statement.execute(addVisibilityColumnSql)
-        statement.execute(addVisibilityCheckSql)
+        statement.execute(addBaseAccessColumnSql)
+        statement.execute(dropVisibilityColumnSql)
         statement.execute(initProblemLinkTableSql)
         statement.execute(addProblemLinkStatusColumnSql)
         statement.execute(addProblemLinkStatusCheckSql)

@@ -107,6 +107,7 @@ Current domain-owned utility allowlist:
 - `domains/auth/utils/SessionCacheConfig.scala`
 - `domains/auth/utils/SessionConfig.scala`
 - `domains/auth/utils/SessionStore.scala`
+- `domains/blog/utils/BlogAccessPolicyValidation.scala`
 - `domains/problem/utils/ProblemDataStorage.scala`
 - `domains/problem/utils/ProblemDataStorageConfig.scala`
 - `domains/problem/utils/ProblemAccessRules.scala`

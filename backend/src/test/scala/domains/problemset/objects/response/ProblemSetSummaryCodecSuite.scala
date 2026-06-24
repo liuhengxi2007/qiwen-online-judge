@@ -3,7 +3,7 @@ package domains.problemset.objects.response
 import domains.problemset.objects.{ProblemSetDescription, ProblemSetId, ProblemSetSlug, ProblemSetTitle}
 import io.circe.syntax.*
 import munit.FunSuite
-import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{BaseAccess, ResourceVisibilityPolicy}
 
 import java.time.Instant
 import java.util.UUID
@@ -16,7 +16,7 @@ class ProblemSetSummaryCodecSuite extends FunSuite:
       slug = ProblemSetSlug("sample-set"),
       title = ProblemSetTitle("Sample Set"),
       description = ProblemSetDescription("Practice set."),
-      accessPolicy = ResourceAccessPolicy(BaseAccess.Restricted, Nil, Nil),
+      accessPolicy = ResourceVisibilityPolicy(BaseAccess.Restricted, Nil),
       author = None,
       createdAt = Instant.EPOCH,
       updatedAt = Instant.EPOCH

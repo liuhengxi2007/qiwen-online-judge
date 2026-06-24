@@ -1,10 +1,12 @@
 package domains.blog.table.blog
 
 import cats.effect.IO
+import cats.syntax.all.*
 import database.utils.UserIdentitySql
 import domains.blog.objects.{BlogId, BlogProblemReference}
 import domains.blog.objects.response.BlogSummary
 import domains.blog.table.blog.BlogTableSupport.*
+import domains.blog.table.blog_access_grant.BlogAccessGrantTable
 import domains.problem.objects.ProblemSlug
 import domains.user.objects.Username
 import shared.objects.{PageRequest, PageResponse}
@@ -19,7 +21,7 @@ object BlogProblemLinkQueryTable:
       |b.public_id,
       |       b.title,
       |       b.content,
-      |       b.visibility,
+      |       b.base_access,
       |       ${UserIdentitySql.selectColumns("b.author_username", "author", "au")},
       |       coalesce(vs.score, 0) as score,
       |       viewer_vote.vote as viewer_vote,
@@ -48,23 +50,23 @@ object BlogProblemLinkQueryTable:
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where p.slug = ?
       |  and bpl.status = 'accepted'
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |order by b.created_at desc, b.public_id desc
       |limit ? offset ?
       |""".stripMargin
 
   private val countListByProblemSQL: String =
-    """
+    s"""
       |select count(*) as total_items
       |from blogs b
       |join blog_problem_links bpl on bpl.blog_id = b.id
       |join problems p on p.id = bpl.problem_id
       |where p.slug = ?
       |  and bpl.status = 'accepted'
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |""".stripMargin
 
-  /** 分页读取题目 accepted 博客关联，并按当前用户过滤私有博客。 */
+  /** 分页读取题目 accepted 博客关联，并按当前用户共享可见性过滤。 */
   def listByProblem(connection: Connection, problemSlug: ProblemSlug, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -73,9 +75,9 @@ object BlogProblemLinkQueryTable:
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, problemSlug.value)
-        statement.setString(3, viewerUsername.value)
-        statement.setInt(4, normalizedPageRequest.pageSize)
-        statement.setInt(5, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+        val nextIndex = bindBlogVisibleToViewer(statement, 3, viewerUsername)
+        statement.setInt(nextIndex, normalizedPageRequest.pageSize)
+        statement.setInt(nextIndex + 1, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -90,9 +92,10 @@ object BlogProblemLinkQueryTable:
       }
       totalItems <- countBlogs(connection, countListByProblemSQL, statement =>
         statement.setString(1, problemSlug.value)
-        statement.setString(2, viewerUsername.value)
+        bindBlogVisibleToViewer(statement, 2, viewerUsername)
       )
-    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+      summariesWithPolicies <- summaries.traverse(enrichVisibilityPolicy(connection))
+    yield PageResponse(summariesWithPolicies, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
   private val listPendingByProblemSQL: String =
     s"""
@@ -143,7 +146,8 @@ object BlogProblemLinkQueryTable:
       finally statement.close()
       }
       totalItems <- countBlogs(connection, countListPendingByProblemSQL, statement => statement.setString(1, problemSlug.value))
-    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+      summariesWithPolicies <- summaries.traverse(enrichVisibilityPolicy(connection))
+    yield PageResponse(summariesWithPolicies, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
   private def countBlogs(connection: Connection, sql: String, bind: java.sql.PreparedStatement => Unit): IO[Long] =
     IO.blocking {
@@ -163,6 +167,16 @@ object BlogProblemLinkQueryTable:
   /** 为单个博客摘要补充 accepted 关联题目，并显式包裹在 IO.blocking 中。 */
   def enrichSummary(connection: Connection, summary: BlogSummary): IO[BlogSummary] =
     IO.blocking(summary.copy(relatedProblems = listRelatedProblemsBlocking(connection, summary.id)))
+
+  private def enrichVisibilityPolicy(connection: Connection)(summary: BlogSummary): IO[BlogSummary] =
+    BlogAccessGrantTable.findInternalId(connection, summary.id).flatMap {
+      case Some(internalBlogId) =>
+        BlogAccessGrantTable
+          .listForBlog(connection, internalBlogId)
+          .map(grants => summary.copy(visibilityPolicy = summary.visibilityPolicy.copy(viewerGrants = grants)))
+      case None =>
+        IO.pure(summary)
+    }
 
   private val listRelatedProblemsSQL: String =
     """

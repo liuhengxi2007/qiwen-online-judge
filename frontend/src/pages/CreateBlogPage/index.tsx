@@ -7,20 +7,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCreateBlogAction } from './hooks/useCreateBlogAction'
-import { parseBlogContent } from '@/objects/blog/BlogContent'
-import { parseBlogTitle } from '@/objects/blog/BlogTitle'
-import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { buildResourceVisibilityPolicy } from '@/pages/components/ResourceAccessEditorInput'
+import { validateBlogFormDraft } from '@/pages/objects/BlogForm'
 import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { PageShell } from '@/pages/components/PageShell'
+import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
 import { useBeforeUnloadPrompt } from '@/pages/hooks/useBeforeUnloadPrompt'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
- * 创建博客页，维护标题、正文、可见性和 Markdown 预览 tab 草稿。
+ * 创建博客页，维护标题、正文、可见性策略和 Markdown 预览 tab 草稿。
  * 存在未保存内容时注册离页提示，提交前按领域对象规则校验输入。
  */
 export function CreateBlogPage() {
@@ -29,10 +29,19 @@ export function CreateBlogPage() {
   const { session: user, navigationIntent } = useSessionGuard()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [visibility, setVisibility] = useState<BlogVisibility>('public')
+  const [baseAccess, setBaseAccess] = useState<BaseAccess>('public')
+  const [grantedUsersInput, setGrantedUsersInput] = useState('')
+  const [grantedGroupsInput, setGrantedGroupsInput] = useState('')
   const [contentTab, setContentTab] = useState<'write' | 'preview'>('write')
   const createBlogAction = useCreateBlogAction(t('blog.message.createFailed'))
-  const hasUnsavedChanges = title.trim().length > 0 || content.trim().length > 0
+  const accessPolicyResult = buildResourceVisibilityPolicy(baseAccess, grantedUsersInput, grantedGroupsInput)
+  const accessPolicy = accessPolicyResult.ok ? accessPolicyResult.value : { baseAccess, viewerGrants: [] }
+  const hasUnsavedChanges =
+    title.trim().length > 0 ||
+    content.trim().length > 0 ||
+    baseAccess !== 'public' ||
+    grantedUsersInput.trim().length > 0 ||
+    grantedGroupsInput.trim().length > 0
 
   useBeforeUnloadPrompt(hasUnsavedChanges)
 
@@ -45,23 +54,19 @@ export function CreateBlogPage() {
   }
 
   async function submit() {
-    const parsedTitle = parseBlogTitle(title)
-    if (!parsedTitle.ok) {
-      createBlogAction.setErrorMessage(parsedTitle.error)
-      return
-    }
-
-    const parsedContent = parseBlogContent(content)
-    if (!parsedContent.ok) {
-      createBlogAction.setErrorMessage(parsedContent.error)
-      return
-    }
-
-    await createBlogAction.submit({
-      title: parsedTitle.value,
-      content: parsedContent.value,
-      visibility,
+    const validation = validateBlogFormDraft({
+      title,
+      content,
+      baseAccess,
+      grantedUsersInput,
+      grantedGroupsInput,
     })
+    if (!validation.ok) {
+      createBlogAction.setErrorMessage(validation.message)
+      return
+    }
+
+    await createBlogAction.submit(validation.request)
   }
 
   return (
@@ -97,20 +102,14 @@ export function CreateBlogPage() {
             <p className="text-xs text-slate-500">{t('problem.create.markdownHelp')}</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="blog-visibility">{t('blog.create.visibilityLabel')}</Label>
-            {/* 注意：SelectItem 只提供 public/private 两个值，Radix 回调类型为 string，故在边界处收窄。 */}
-            <Select value={visibility} onValueChange={(value) => setVisibility(value as BlogVisibility)}>
-              <SelectTrigger id="blog-visibility" className="rounded-2xl border-slate-300 bg-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">{t('blog.visibility.public')}</SelectItem>
-                <SelectItem value="private">{t('blog.visibility.private')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-slate-500">{t('blog.create.visibilityHelp')}</p>
-          </div>
+          <ResourceAccessEditor
+            accessPolicy={accessPolicy}
+            grantedUsersInput={grantedUsersInput}
+            grantedGroupsInput={grantedGroupsInput}
+            onBaseAccessChange={setBaseAccess}
+            onGrantedUsersInputChange={setGrantedUsersInput}
+            onGrantedGroupsInputChange={setGrantedGroupsInput}
+          />
 
           {createBlogAction.errorMessage ? (
             <Alert variant="destructive">

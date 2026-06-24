@@ -3,11 +3,16 @@ import { useState } from 'react'
 import { DeleteBlog } from '@/apis/blog/DeleteBlog'
 import { UpdateBlog } from '@/apis/blog/UpdateBlog'
 import { VoteBlog } from '@/apis/blog/VoteBlog'
-import { parseBlogContent } from '@/objects/blog/BlogContent'
-import { parseBlogTitle } from '@/objects/blog/BlogTitle'
 import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
-import type { BlogVisibility } from '@/objects/blog/BlogVisibility'
 import type { BlogVote } from '@/objects/blog/BlogVote'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { createRestrictedVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
+import {
+  buildResourceVisibilityPolicy,
+  grantedGroupsInputFromVisibilityPolicy,
+  grantedUsersInputFromVisibilityPolicy,
+} from '@/pages/components/ResourceAccessEditorInput'
+import { validateBlogFormDraft } from '@/pages/objects/BlogForm'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -31,7 +36,17 @@ export function useBlogOwnerActions({ blog, onDeleted, setBlog, setCommentErrorM
   const [isEditingBlog, setIsEditingBlog] = useState(false)
   const [editBlogTitle, setEditBlogTitle] = useState('')
   const [editBlogContent, setEditBlogContent] = useState('')
-  const [editBlogVisibility, setEditBlogVisibility] = useState<BlogVisibility>('public')
+  const [editBlogBaseAccess, setEditBlogBaseAccess] = useState<BaseAccess>('public')
+  const [editBlogGrantedUsersInput, setEditBlogGrantedUsersInput] = useState('')
+  const [editBlogGrantedGroupsInput, setEditBlogGrantedGroupsInput] = useState('')
+  const editBlogAccessPolicyResult = buildResourceVisibilityPolicy(
+    editBlogBaseAccess,
+    editBlogGrantedUsersInput,
+    editBlogGrantedGroupsInput,
+  )
+  const editBlogAccessPolicy = editBlogAccessPolicyResult.ok
+    ? editBlogAccessPolicyResult.value
+    : (blog?.visibilityPolicy ?? createRestrictedVisibilityPolicy())
 
   async function submitVote(vote: BlogVote) {
     if (!blog) {
@@ -53,7 +68,9 @@ export function useBlogOwnerActions({ blog, onDeleted, setBlog, setCommentErrorM
 
     setEditBlogTitle(blog.title)
     setEditBlogContent(blog.content)
-    setEditBlogVisibility(blog.visibility)
+    setEditBlogBaseAccess(blog.visibilityPolicy.baseAccess)
+    setEditBlogGrantedUsersInput(grantedUsersInputFromVisibilityPolicy(blog.visibilityPolicy))
+    setEditBlogGrantedGroupsInput(grantedGroupsInputFromVisibilityPolicy(blog.visibilityPolicy))
     setCommentErrorMessage('')
     setIsEditingBlog(true)
   }
@@ -63,24 +80,21 @@ export function useBlogOwnerActions({ blog, onDeleted, setBlog, setCommentErrorM
       return
     }
 
-    const parsedTitle = parseBlogTitle(editBlogTitle)
-    const parsedContent = parseBlogContent(editBlogContent)
-    if (!parsedTitle.ok) {
-      setCommentErrorMessage(parsedTitle.error)
-      return
-    }
-    if (!parsedContent.ok) {
-      setCommentErrorMessage(parsedContent.error)
+    const validation = validateBlogFormDraft({
+      title: editBlogTitle,
+      content: editBlogContent,
+      baseAccess: editBlogBaseAccess,
+      grantedUsersInput: editBlogGrantedUsersInput,
+      grantedGroupsInput: editBlogGrantedGroupsInput,
+    })
+    if (!validation.ok) {
+      setCommentErrorMessage(validation.message)
       return
     }
 
     setBlog(
       await sendAPI(
-        new UpdateBlog(blog.id, {
-          title: parsedTitle.value,
-          content: parsedContent.value,
-          visibility: editBlogVisibility,
-        }),
+        new UpdateBlog(blog.id, validation.request),
       ),
     )
     setIsEditingBlog(false)
@@ -103,8 +117,13 @@ export function useBlogOwnerActions({ blog, onDeleted, setBlog, setCommentErrorM
     setEditBlogTitle,
     editBlogContent,
     setEditBlogContent,
-    editBlogVisibility,
-    setEditBlogVisibility,
+    editBlogAccessPolicy,
+    editBlogBaseAccess,
+    setEditBlogBaseAccess,
+    editBlogGrantedUsersInput,
+    setEditBlogGrantedUsersInput,
+    editBlogGrantedGroupsInput,
+    setEditBlogGrantedGroupsInput,
     submitVote,
     startEditingBlog,
     submitBlogEdit,

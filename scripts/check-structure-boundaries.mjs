@@ -77,6 +77,7 @@ const backendDomainUtilsAllowlist = new Map([
       'SessionStore.scala',
     ]),
   ],
+  ['blog', new Set(['BlogAccessPolicyValidation.scala'])],
   [
     'problem',
     new Set([

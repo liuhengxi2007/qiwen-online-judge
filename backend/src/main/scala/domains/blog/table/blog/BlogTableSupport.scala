@@ -2,13 +2,14 @@ package domains.blog.table.blog
 
 
 
-import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVisibility, BlogVote}
+import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogContent, BlogId, BlogProblemReference, BlogTitle, BlogVote}
 import domains.blog.objects.response.{BlogCommentSummary, BlogSummary}
 import domains.problem.objects.{ProblemSlug, ProblemTitle}
 import database.utils.UserIdentitySql
 import domains.user.objects.{DisplayName, UserIdentity, Username}
+import shared.objects.access.{BaseAccess, ResourceVisibilityPolicy}
 
-import java.sql.ResultSet
+import java.sql.{PreparedStatement, ResultSet}
 
 /** 博客表读写辅助对象，集中处理数据库列和博客领域对象之间的转换。 */
 object BlogTableSupport:
@@ -28,7 +29,10 @@ object BlogTableSupport:
       title = parseColumn("blogs.title", resultSet.getString("title"), BlogTitle.parse),
       content = parseColumn("blogs.content", resultSet.getString("content"), BlogContent.parse),
       author = readUserIdentity(resultSet, "author"),
-      visibility = parseColumn("blogs.visibility", resultSet.getString("visibility"), BlogVisibility.parse),
+      visibilityPolicy = ResourceVisibilityPolicy(
+        parseOptionalColumn("blogs.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn),
+        Nil
+      ),
       relatedProblems = Nil,
       score = resultSet.getInt("score"),
       viewerVote = Option(resultSet.getString("viewer_vote")).flatMap(decodeBlogVoteColumn),
@@ -56,11 +60,47 @@ object BlogTableSupport:
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
     )
 
-  /** 将博客可见性编码为数据库列值。 */
-  def encodeBlogVisibilityColumn(visibility: BlogVisibility): String =
-    visibility match
-      case BlogVisibility.Public => "public"
-      case BlogVisibility.Private => "private"
+  /** 将基础可见性编码为数据库列值。 */
+  def encodeBaseAccessColumn(baseAccess: BaseAccess): String =
+    baseAccess match
+      case BaseAccess.Restricted => "restricted"
+      case BaseAccess.Public => "public"
+
+  /** 将数据库基础可见性列值解码为领域枚举。 */
+  def decodeBaseAccessColumn(value: String): Option[BaseAccess] =
+    BaseAccess.parse(value).toOption
+
+  /** 生成博客对某个 viewer 可见的 SQL 谓词；调用方需按 bindBlogVisibleToViewer 的顺序绑定 3 个用户名参数。 */
+  def blogVisibleToViewerPredicate(blogAlias: String): String =
+    s"""
+      |(
+      |  $blogAlias.author_username = ?
+      |  or $blogAlias.base_access = 'public'
+      |  or exists (
+      |    select 1
+      |    from blog_access_grants bag
+      |    where bag.blog_id = $blogAlias.id
+      |      and bag.subject_kind = 'user'
+      |      and bag.subject_key = ?
+      |  )
+      |  or exists (
+      |    select 1
+      |    from blog_access_grants bag
+      |    join user_groups ug on ug.slug = bag.subject_key
+      |    join user_group_memberships ugm on ugm.user_group_id = ug.id
+      |    where bag.blog_id = $blogAlias.id
+      |      and bag.subject_kind = 'user_group'
+      |      and ugm.username = ?
+      |  )
+      |)
+      |""".stripMargin
+
+  /** 绑定博客可见性谓词的用户名参数，并返回下一个参数序号。 */
+  def bindBlogVisibleToViewer(statement: PreparedStatement, startIndex: Int, viewerUsername: Username): Int =
+    statement.setString(startIndex, viewerUsername.value)
+    statement.setString(startIndex + 1, viewerUsername.value)
+    statement.setString(startIndex + 2, viewerUsername.value)
+    startIndex + 3
 
   /** 将投票方向编码为数据库列值。 */
   def encodeBlogVoteColumn(vote: BlogVote): String =
@@ -75,6 +115,10 @@ object BlogTableSupport:
   /** 注意：按领域解析函数读取必填列；这里抛异常表示数据库已有非法值，不是可恢复的用户输入错误。 */
   def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
     parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  /** 注意：按 Option 解码必填枚举列；解析失败表示数据库状态异常。 */
+  def parseOptionalColumn[A](columnName: String, rawValue: String, parse: String => Option[A]): A =
+    parse(rawValue).getOrElse(throw IllegalStateException(s"Invalid value in $columnName: $rawValue"))
 
   /** 注意：INSERT RETURNING 没有返回行时抛出内部数据异常，因为正常数据库语义下该分支不可达。 */
   def missingInsertResult(entityName: String): Nothing =

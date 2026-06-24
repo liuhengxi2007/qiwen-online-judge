@@ -10,6 +10,7 @@ import { blogTitleValue } from '@/objects/blog/BlogTitle'
 import { useBlogDetailQuery } from './hooks/useBlogDetailQuery'
 import { useBlogDetailPageModel } from './hooks/useBlogDetailPageModel'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
@@ -87,7 +88,7 @@ export function BlogDetailPage() {
                 {t('blog.detail.cardDescription')}
                 {query.blog ? (
                   <span className="ml-3 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">
-                    {t(`blog.visibility.${query.blog.visibility}`)}
+                    {resourceAccessBadgeLabel(query.blog.visibilityPolicy, t)}
                   </span>
                 ) : null}
               </CardDescription>
@@ -100,7 +101,7 @@ export function BlogDetailPage() {
           ) : query.blog ? (
             <article>
               {usernameValue(query.blog.author.username) === usernameValue(user.username) ? (
-                <BlogOwnerActions blog={query.blog} model={model} />
+                <BlogOwnerActions model={model} />
               ) : null}
 
               {model.isEditingBlog ? <BlogEditForm model={model} /> : null}

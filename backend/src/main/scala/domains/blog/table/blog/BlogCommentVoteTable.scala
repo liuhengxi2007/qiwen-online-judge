@@ -13,13 +13,13 @@ import java.time.Instant
 object BlogCommentVoteTable:
 
   private val upsertCommentVoteSQL: String =
-    """
+    s"""
       |insert into blog_comment_votes (comment_id, username, vote, created_at, updated_at)
       |select c.id, ?, ?, ?, ?
       |from blog_comments c
       |join blogs b on b.id = c.blog_id
       |where b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |  and c.public_id = ?
       |on conflict (comment_id, username)
       |do update set vote = excluded.vote,
@@ -47,8 +47,8 @@ object BlogCommentVoteTable:
             statement.setTimestamp(3, Timestamp.from(now))
             statement.setTimestamp(4, Timestamp.from(now))
             statement.setLong(5, blogId.value)
-            statement.setString(6, username.value)
-            statement.setLong(7, commentId.value)
+            val nextIndex = bindBlogVisibleToViewer(statement, 6, username)
+            statement.setLong(nextIndex, commentId.value)
             statement.executeUpdate() > 0
           finally statement.close()
         }.flatMap {
@@ -58,13 +58,13 @@ object BlogCommentVoteTable:
     }
 
   private val findCommentVoteSQL: String =
-    """
+    s"""
       |select bcv.vote
       |from blog_comment_votes bcv
       |join blog_comments c on c.id = bcv.comment_id
       |join blogs b on b.id = c.blog_id
       |where b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |  and c.public_id = ?
       |  and bcv.username = ?
       |""".stripMargin
@@ -74,9 +74,9 @@ object BlogCommentVoteTable:
       val statement = connection.prepareStatement(findCommentVoteSQL)
       try
         statement.setLong(1, blogId.value)
-        statement.setString(2, username.value)
-        statement.setLong(3, commentId.value)
-        statement.setString(4, username.value)
+        val nextIndex = bindBlogVisibleToViewer(statement, 2, username)
+        statement.setLong(nextIndex, commentId.value)
+        statement.setString(nextIndex + 1, username.value)
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then decodeBlogVoteColumn(resultSet.getString("vote"))
@@ -86,14 +86,14 @@ object BlogCommentVoteTable:
     }
 
   private val deleteCommentVoteSQL: String =
-    """
+    s"""
       |delete from blog_comment_votes
       |where comment_id = (
       |  select c.id
       |  from blog_comments c
       |  join blogs b on b.id = c.blog_id
       |  where b.public_id = ?
-      |    and (b.visibility = 'public' or b.author_username = ?)
+      |    and ${blogVisibleToViewerPredicate("b")}
       |    and c.public_id = ?
       |)
       |and username = ?
@@ -104,9 +104,9 @@ object BlogCommentVoteTable:
       val statement = connection.prepareStatement(deleteCommentVoteSQL)
       try
         statement.setLong(1, blogId.value)
-        statement.setString(2, username.value)
-        statement.setLong(3, commentId.value)
-        statement.setString(4, username.value)
+        val nextIndex = bindBlogVisibleToViewer(statement, 2, username)
+        statement.setLong(nextIndex, commentId.value)
+        statement.setString(nextIndex + 1, username.value)
         statement.executeUpdate()
         ()
       finally statement.close()

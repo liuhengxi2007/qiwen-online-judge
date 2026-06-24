@@ -8,6 +8,7 @@ import domains.blog.objects.{BlogContent, BlogTitle}
 import domains.blog.objects.request.CreateBlogRequest
 import domains.blog.objects.response.BlogSummary
 import domains.blog.table.blog.BlogPostMutationTable
+import domains.blog.utils.BlogAccessPolicyValidation
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
@@ -28,11 +29,19 @@ object CreateBlog extends AuthenticatedApi[CreateBlogRequest, BlogSummary]:
     val _ = pathParams
     request.as[CreateBlogRequest]
 
-  /** 校验标题和正文长度后以当前用户为作者创建博客。 */
+  /** 校验标题、正文和授权主体后以当前用户为作者创建博客。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, request: CreateBlogRequest): IO[BlogSummary] =
     for
       title <- HttpApiError.fromEitherBadRequest(BlogTitle.parse(request.title.value))
       content <- HttpApiError.fromEitherBadRequest(BlogContent.parse(request.content.value))
       validRequest = request.copy(title = title, content = content)
-      blog <- BlogPostMutationTable.insert(connection, actor.username, validRequest.title, validRequest.content, validRequest.visibility)
+      _ <- BlogAccessPolicyValidation.validateVisibilityPolicySubjects(connection, validRequest.visibilityPolicy)
+      sanitizedRequest = BlogAccessPolicyValidation.sanitizePolicy(validRequest)
+      blog <- BlogPostMutationTable.insert(
+        connection,
+        actor.username,
+        sanitizedRequest.title,
+        sanitizedRequest.content,
+        sanitizedRequest.visibilityPolicy
+      )
     yield blog

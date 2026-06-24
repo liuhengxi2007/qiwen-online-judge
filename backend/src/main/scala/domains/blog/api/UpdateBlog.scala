@@ -9,6 +9,7 @@ import domains.blog.objects.{BlogContent, BlogId, BlogTitle}
 import domains.blog.objects.request.{UpdateBlogInput, UpdateBlogRequest}
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogPostMutationTable
+import domains.blog.utils.BlogAccessPolicyValidation
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}
@@ -31,19 +32,21 @@ object UpdateBlog extends AuthenticatedApi[UpdateBlogInput, BlogDetail]:
       body <- request.as[UpdateBlogRequest]
     yield UpdateBlogInput(blogId, body)
 
-  /** 校验标题和正文后更新当前用户博客；不存在或非作者时返回 404。 */
+  /** 校验标题、正文和授权主体后更新当前用户博客；不存在或非作者时返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, input: UpdateBlogInput): IO[BlogDetail] =
     for
       title <- HttpApiError.fromEitherBadRequest(BlogTitle.parse(input.request.title.value))
       content <- HttpApiError.fromEitherBadRequest(BlogContent.parse(input.request.content.value))
       validRequest = input.request.copy(title = title, content = content)
+      _ <- BlogAccessPolicyValidation.validateVisibilityPolicySubjects(connection, validRequest.visibilityPolicy)
+      sanitizedRequest = BlogAccessPolicyValidation.sanitizePolicy(validRequest)
       maybeBlog <- BlogPostMutationTable.update(
         connection,
         input.blogId,
         actor.username,
-        validRequest.title,
-        validRequest.content,
-        validRequest.visibility
+        sanitizedRequest.title,
+        sanitizedRequest.content,
+        sanitizedRequest.visibilityPolicy
       )
       blog <- maybeBlog match
         case Some(blog) => IO.pure(blog)

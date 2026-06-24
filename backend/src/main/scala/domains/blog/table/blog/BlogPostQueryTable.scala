@@ -1,10 +1,12 @@
 package domains.blog.table.blog
 
 import cats.effect.IO
+import cats.syntax.all.*
 import database.utils.UserIdentitySql
 import domains.blog.objects.BlogId
 import domains.blog.objects.response.{BlogDetail, BlogSummary}
 import domains.blog.table.blog.BlogTableSupport.*
+import domains.blog.table.blog_access_grant.BlogAccessGrantTable
 import domains.user.objects.Username
 import shared.objects.{PageRequest, PageResponse}
 
@@ -18,7 +20,7 @@ object BlogPostQueryTable:
       |b.public_id,
       |       b.title,
       |       b.content,
-      |       b.visibility,
+      |       b.base_access,
       |       ${UserIdentitySql.selectColumns("b.author_username", "author", "au")},
       |       coalesce(vs.score, 0) as score,
       |       viewer_vote.vote as viewer_vote,
@@ -43,19 +45,19 @@ object BlogPostQueryTable:
       |${UserIdentitySql.joinUserProfiles("b.author_username", "au")}
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
-      |where b.visibility = 'public' or b.author_username = ?
+      |where ${blogVisibleToViewerPredicate("b")}
       |order by b.created_at desc, b.public_id desc
       |limit ? offset ?
       |""".stripMargin
 
   private val countListSQL: String =
-    """
+    s"""
       |select count(*) as total_items
       |from blogs b
-      |where b.visibility = 'public' or b.author_username = ?
+      |where ${blogVisibleToViewerPredicate("b")}
       |""".stripMargin
 
-  /** 分页读取当前用户可见的博客列表，包含公开博客和自己的私有博客。 */
+  /** 分页读取当前用户可见的博客列表，包含公开博客、自己的博客和显式授权博客。 */
   def listAll(connection: Connection, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -63,9 +65,9 @@ object BlogPostQueryTable:
       val statement = connection.prepareStatement(listSQL)
       try
         statement.setString(1, viewerUsername.value)
-        statement.setString(2, viewerUsername.value)
-        statement.setInt(3, normalizedPageRequest.pageSize)
-        statement.setInt(4, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+        val nextIndex = bindBlogVisibleToViewer(statement, 2, viewerUsername)
+        statement.setInt(nextIndex, normalizedPageRequest.pageSize)
+        statement.setInt(nextIndex + 1, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -78,8 +80,9 @@ object BlogPostQueryTable:
         finally resultSet.close()
       finally statement.close()
       }
-      totalItems <- countBlogs(connection, countListSQL, statement => statement.setString(1, viewerUsername.value))
-    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+      summariesWithPolicies <- summaries.traverse(enrichVisibilityPolicy(connection))
+      totalItems <- countBlogs(connection, countListSQL, statement => bindBlogVisibleToViewer(statement, 1, viewerUsername))
+    yield PageResponse(summariesWithPolicies, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
   private val listByAuthorSQL: String =
     s"""
@@ -89,20 +92,20 @@ object BlogPostQueryTable:
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.author_username = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |order by b.public_id asc
       |limit ? offset ?
       |""".stripMargin
 
   private val countListByAuthorSQL: String =
-    """
+    s"""
       |select count(*) as total_items
       |from blogs b
       |where b.author_username = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |""".stripMargin
 
-  /** 分页读取指定作者博客；私有博客只在查看者就是作者本人时返回。 */
+  /** 分页读取指定作者博客；按当前 viewer 的共享可见性过滤。 */
   def listByAuthor(connection: Connection, authorUsername: Username, viewerUsername: Username, pageRequest: PageRequest): IO[PageResponse[BlogSummary]] =
     val normalizedPageRequest = pageRequest.normalized
     for
@@ -111,9 +114,9 @@ object BlogPostQueryTable:
       try
         statement.setString(1, viewerUsername.value)
         statement.setString(2, authorUsername.value)
-        statement.setString(3, viewerUsername.value)
-        statement.setInt(4, normalizedPageRequest.pageSize)
-        statement.setInt(5, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+        val nextIndex = bindBlogVisibleToViewer(statement, 3, viewerUsername)
+        statement.setInt(nextIndex, normalizedPageRequest.pageSize)
+        statement.setInt(nextIndex + 1, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
         val resultSet = statement.executeQuery()
         try
           val summaries = Iterator
@@ -128,9 +131,10 @@ object BlogPostQueryTable:
       }
       totalItems <- countBlogs(connection, countListByAuthorSQL, statement =>
         statement.setString(1, authorUsername.value)
-        statement.setString(2, viewerUsername.value)
+        bindBlogVisibleToViewer(statement, 2, viewerUsername)
       )
-    yield PageResponse(summaries, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
+      summariesWithPolicies <- summaries.traverse(enrichVisibilityPolicy(connection))
+    yield PageResponse(summariesWithPolicies, normalizedPageRequest.page, normalizedPageRequest.pageSize, totalItems)
 
   private def countBlogs(connection: Connection, sql: String, bind: java.sql.PreparedStatement => Unit): IO[Long] =
     IO.blocking {
@@ -190,7 +194,7 @@ object BlogPostQueryTable:
       |$blogScoreJoinSQL
       |left join blog_votes viewer_vote on viewer_vote.blog_id = b.id and viewer_vote.username = ?
       |where b.public_id = ?
-      |  and (b.visibility = 'public' or b.author_username = ?)
+      |  and ${blogVisibleToViewerPredicate("b")}
       |""".stripMargin
 
   /** 按公开 id 查找当前用户可见的博客摘要，并补充 accepted 关联题目。 */
@@ -200,13 +204,17 @@ object BlogPostQueryTable:
       try
         statement.setString(1, viewerUsername.value)
         statement.setLong(2, blogId.value)
-        statement.setString(3, viewerUsername.value)
+        bindBlogVisibleToViewer(statement, 3, viewerUsername)
         val resultSet = statement.executeQuery()
         try if resultSet.next() then Some(readBlogSummary(resultSet)) else None
         finally resultSet.close()
       finally statement.close()
     }.flatMap {
-      case Some(summary) => BlogProblemLinkQueryTable.enrichSummary(connection, summary).map(Some(_))
+      case Some(summary) =>
+        for
+          withProblems <- BlogProblemLinkQueryTable.enrichSummary(connection, summary)
+          withPolicy <- enrichVisibilityPolicy(connection)(withProblems)
+        yield Some(withPolicy)
       case None => IO.pure(None)
     }
 
@@ -223,7 +231,7 @@ object BlogPostQueryTable:
         title = blog.title,
         content = blog.content,
         author = blog.author,
-        visibility = blog.visibility,
+        visibilityPolicy = blog.visibilityPolicy,
         relatedProblems = blog.relatedProblems,
         score = blog.score,
         viewerVote = blog.viewerVote,
@@ -232,3 +240,13 @@ object BlogPostQueryTable:
         updatedAt = blog.updatedAt
       )
     )
+
+  private def enrichVisibilityPolicy(connection: Connection)(summary: BlogSummary): IO[BlogSummary] =
+    BlogAccessGrantTable.findInternalId(connection, summary.id).flatMap {
+      case Some(internalBlogId) =>
+        BlogAccessGrantTable
+          .listForBlog(connection, internalBlogId)
+          .map(grants => summary.copy(visibilityPolicy = summary.visibilityPolicy.copy(viewerGrants = grants)))
+      case None =>
+        IO.pure(summary)
+    }

@@ -13,8 +13,7 @@ class UpdateProblemSetRequestCodecSuite extends FunSuite:
       |  "description": "Practice set.",
       |  "accessPolicy": {
       |    "baseAccess": "restricted",
-      |    "viewerGrants": [],
-      |    "managerGrants": []
+      |    "viewerGrants": []
       |  },
       |  "authorUsername": null
       |}
