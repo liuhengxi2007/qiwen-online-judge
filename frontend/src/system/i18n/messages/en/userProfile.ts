@@ -32,6 +32,7 @@ export const enUserProfileMessages: Record<string, string> = {
   'userProfile.acceptedProblems': 'Accepted problems',
   'userProfile.showAcceptedProblems': 'Show accepted problems',
   'userProfile.hideAcceptedProblems': 'Hide accepted problems',
+  'userProfile.acceptedProblemsLoadFailed': 'Unable to load accepted problems.',
   'userProfile.acceptedProblemsEmpty': 'No accepted problems yet.',
   'userProfile.acceptedAt': 'Accepted at {{acceptedAt}}',
   'userProfile.acceptedProblemsPageStatus': 'Page {{page}} / {{totalPages}}',

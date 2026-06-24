@@ -21,6 +21,7 @@ object UserRouter:
         ListUsers,
         ListUserSuggestions,
         GetUserProfile,
+        ListUserAcceptedProblems,
         GetUserSettings,
         CreateUserProfileSettings,
         FindUserProfileSettings,

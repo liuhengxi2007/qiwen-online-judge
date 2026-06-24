@@ -1,7 +1,7 @@
 package domains.user.objects.response
 
 import domains.rating.objects.RatingValue
-import domains.user.objects.{DisplayName, UserAcceptedProblem, UserAvatarUrl, UserContribution, Username}
+import domains.user.objects.{DisplayName, UserAvatarUrl, UserContribution, Username}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -12,7 +12,7 @@ final case class UserProfileResponse(
   avatarUrl: Option[UserAvatarUrl],
   contribution: UserContribution,
   rating: RatingValue,
-  acceptedProblems: List[UserAcceptedProblem]
+  acceptedProblemCount: Int
 )
 
 /** 提供用户公开资料响应 JSON 编解码。 */

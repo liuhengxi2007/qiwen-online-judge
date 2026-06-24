@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { UserRound } from 'lucide-react'
 
@@ -10,6 +10,7 @@ import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import { messageConversationPath } from '@/pages/routing/MessagePaths'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
+import { useAcceptedProblemsQuery } from './hooks/useAcceptedProblemsQuery'
 import { useUserProfileQuery } from './hooks/useUserProfileQuery'
 import { resolveUserProfileRoutePolicy } from '@/pages/routing/RoutePolicy'
 import { PageShell } from '@/pages/components/PageShell'
@@ -78,18 +79,25 @@ function UserProfilePageContent({
   })
   const displayedUser = query.profile
   const displayedContribution = displayedUser ? Math.round(userContributionValue(displayedUser.contribution)) : null
-  const acceptedProblems = displayedUser?.acceptedProblems ?? []
+  const acceptedProblemCount = displayedUser?.acceptedProblemCount ?? 0
   const isOwnProfile = viewer.username === routePolicy.targetUsername
-  const acceptedProblemsTotalPages = Math.max(1, Math.ceil(acceptedProblems.length / acceptedProblemsPerPage))
+  const acceptedProblemsTotalPages = Math.max(1, Math.ceil(acceptedProblemCount / acceptedProblemsPerPage))
   const normalizedAcceptedProblemsPage = Math.min(acceptedProblemsPage, acceptedProblemsTotalPages)
-  const acceptedProblemsPageItems = acceptedProblems.slice(
-    (normalizedAcceptedProblemsPage - 1) * acceptedProblemsPerPage,
-    normalizedAcceptedProblemsPage * acceptedProblemsPerPage,
-  )
+  const acceptedProblemsQuery = useAcceptedProblemsQuery({
+    enabled: acceptedProblemsExpanded && Boolean(displayedUser) && acceptedProblemCount > 0,
+    page: normalizedAcceptedProblemsPage,
+    targetUsername: routePolicy.targetUsername,
+  })
+  const acceptedProblemsPageItems = acceptedProblemsQuery.response?.items ?? []
   const targetUsername = usernameValue(routePolicy.targetUsername)
   const profileUnavailable = !query.isLoadingProfile && !displayedUser
   const profileName = displayedUser ? displayNameValue(displayedUser.displayName) : profileUnavailable ? '--' : t('common.loading')
   const profileUsername = displayedUser ? usernameValue(displayedUser.username) : targetUsername
+
+  useEffect(() => {
+    setAcceptedProblemsExpanded(false)
+    setAcceptedProblemsPage(1)
+  }, [routePolicy.targetUsername])
 
   if (routePolicy.navigationIntent) {
     return <Navigate replace={routePolicy.navigationIntent.replace} to={routePolicy.navigationIntent.to} />
@@ -155,11 +163,13 @@ function UserProfilePageContent({
               <RatingPanel displayedRating={displayedUser?.rating ?? null} isLoadingProfile={query.isLoadingProfile} />
 
               <AcceptedProblemsPanel
-                acceptedProblems={acceptedProblems}
+                acceptedProblemCount={acceptedProblemCount}
                 acceptedProblemsExpanded={acceptedProblemsExpanded}
+                acceptedProblemsLoadError={acceptedProblemsQuery.errorMessage}
                 acceptedProblemsPageItems={acceptedProblemsPageItems}
                 acceptedProblemsTotalPages={acceptedProblemsTotalPages}
                 hasProfile={Boolean(displayedUser)}
+                isLoadingAcceptedProblems={acceptedProblemsQuery.isLoading}
                 isLoadingProfile={query.isLoadingProfile}
                 normalizedAcceptedProblemsPage={normalizedAcceptedProblemsPage}
                 onNextPage={() => setAcceptedProblemsPage((page) => Math.min(acceptedProblemsTotalPages, page + 1))}

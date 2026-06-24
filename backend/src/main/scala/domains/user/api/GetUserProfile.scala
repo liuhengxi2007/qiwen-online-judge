@@ -29,7 +29,7 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
       case Right(rawUsername) => IO.pure(Username.canonical(rawUsername))
       case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
 
-  /** 聚合用户资料、博客贡献、rating 和 AC 题目；目标用户不存在返回 404。 */
+  /** 聚合用户资料、博客贡献、rating 和 AC 题目数量；目标用户不存在返回 404。 */
   override def plan(connection: Connection, actor: AuthenticatedUser, targetUsername: Username): IO[UserProfileResponse] =
     val _ = actor
     UserProfileTable.findSettingsByUsername(connection, targetUsername).flatMap {
@@ -39,13 +39,13 @@ object GetUserProfile extends AuthenticatedApi[Username, UserProfileResponse]:
         for
           contribution <- GetBlogContributionForAuthor.plan(connection, targetUsername).map(_.contribution)
           rating <- GetUserRating.plan(connection, targetUsername)
-          acceptedProblems <- UserProfileQueryTable.listAcceptedProblems(connection, targetUsername)
+          acceptedProblemCount <- UserProfileQueryTable.countAcceptedProblems(connection, targetUsername)
         yield UserProfileResponse(
           username = targetProfile.username,
           displayName = targetProfile.displayName,
           avatarUrl = targetProfile.avatarUrl,
           contribution = UserContribution(BigDecimal(contribution)),
           rating = rating,
-          acceptedProblems = acceptedProblems
+          acceptedProblemCount = acceptedProblemCount
         )
     }

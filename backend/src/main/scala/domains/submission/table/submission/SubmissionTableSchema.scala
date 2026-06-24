@@ -512,6 +512,9 @@ object SubmissionTableSchema:
       |  on submissions (code_length);
       |create index if not exists submissions_contest_id_submitted_at_idx
       |  on submissions (contest_id, submitted_at desc, public_id desc);
+      |create index if not exists submissions_accepted_submitter_problem_time_idx
+      |  on submissions (lower(submitter_username), problem_id, (coalesce(finished_at, submitted_at)) desc)
+      |  where verdict = 'accepted';
       |create index if not exists submissions_queued_language_priority_idx
       |  on submissions (language, judge_priority desc, judge_queued_at asc, public_id asc)
       |  where status = 'queued';

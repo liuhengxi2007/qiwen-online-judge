@@ -32,6 +32,7 @@ export const zhCnUserProfileMessages: Record<string, string> = {
   'userProfile.acceptedProblems': '通过的题目',
   'userProfile.showAcceptedProblems': '展开通过题目',
   'userProfile.hideAcceptedProblems': '收起通过题目',
+  'userProfile.acceptedProblemsLoadFailed': '无法加载通过题目。',
   'userProfile.acceptedProblemsEmpty': '还没有通过的题目。',
   'userProfile.acceptedAt': '通过时间：{{acceptedAt}}',
   'userProfile.acceptedProblemsPageStatus': '第 {{page}} / {{totalPages}} 页',

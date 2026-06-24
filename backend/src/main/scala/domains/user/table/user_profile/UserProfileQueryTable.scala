@@ -217,35 +217,74 @@ object UserProfileQueryTable:
       finally statement.close()
     }
 
-  private val listAcceptedProblemsSQL: String =
+  private val countAcceptedProblemsSQL: String =
     """
-      |select p.slug,
-      |       p.title,
-      |       max(coalesce(s.finished_at, s.submitted_at)) as accepted_at
+      |select count(distinct s.problem_id)::int as accepted_count
       |from submissions s
-      |join problems p on p.id = s.problem_id
       |where lower(s.submitter_username) = lower(?)
       |  and s.verdict = 'accepted'
-      |group by p.slug, p.title
-      |order by accepted_at desc, p.slug asc
       |""".stripMargin
 
-  /** 查询指定用户已通过的题目列表，按最近通过时间倒序。 */
-  def listAcceptedProblems(connection: Connection, username: Username): IO[List[UserAcceptedProblem]] =
+  /** 查询指定用户已通过的不同题目数量。 */
+  def countAcceptedProblems(connection: Connection, username: Username): IO[Int] =
     IO.blocking {
-      val statement = connection.prepareStatement(listAcceptedProblemsSQL)
+      val statement = connection.prepareStatement(countAcceptedProblemsSQL)
       try
         statement.setString(1, username.value)
         val resultSet = statement.executeQuery()
         try
-          Iterator
-            .continually(resultSet.next())
-            .takeWhile(identity)
-            .map(_ => readAcceptedProblem(resultSet))
-            .toList
+          if resultSet.next() then resultSet.getInt("accepted_count")
+          else 0
         finally resultSet.close()
       finally statement.close()
     }
+
+  private val listAcceptedProblemsSQL: String =
+    """
+      |with accepted_problem_times as (
+      |  select s.problem_id,
+      |         max(coalesce(s.finished_at, s.submitted_at)) as accepted_at
+      |  from submissions s
+      |  where lower(s.submitter_username) = lower(?)
+      |    and s.verdict = 'accepted'
+      |  group by s.problem_id
+      |)
+      |select p.slug,
+      |       p.title,
+      |       accepted_problem_times.accepted_at
+      |from accepted_problem_times
+      |join problems p on p.id = accepted_problem_times.problem_id
+      |order by accepted_problem_times.accepted_at desc, p.slug asc
+      |limit ? offset ?
+      |""".stripMargin
+
+  /** 查询指定用户已通过的题目分页列表，按最近通过时间倒序。 */
+  def listAcceptedProblems(connection: Connection, username: Username, pageRequest: PageRequest): IO[PageResponse[UserAcceptedProblem]] =
+    val normalizedPageRequest = pageRequest.normalized
+    for
+      totalItems <- countAcceptedProblems(connection, username).map(_.toLong)
+      items <- IO.blocking {
+        val statement = connection.prepareStatement(listAcceptedProblemsSQL)
+        try
+          statement.setString(1, username.value)
+          statement.setInt(2, normalizedPageRequest.pageSize)
+          statement.setInt(3, (normalizedPageRequest.page - 1) * normalizedPageRequest.pageSize)
+          val resultSet = statement.executeQuery()
+          try
+            Iterator
+              .continually(resultSet.next())
+              .takeWhile(identity)
+              .map(_ => readAcceptedProblem(resultSet))
+              .toList
+          finally resultSet.close()
+        finally statement.close()
+      }
+    yield PageResponse(
+      items = items,
+      page = normalizedPageRequest.page,
+      pageSize = normalizedPageRequest.pageSize,
+      totalItems = totalItems
+    )
 
   private val countAllUsersSQL: String =
     """
