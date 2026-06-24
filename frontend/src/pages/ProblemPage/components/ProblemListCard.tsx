@@ -21,7 +21,6 @@ type ProblemListCardProps = {
   onApplyQuery: () => void
   onClearQuery: () => void
   onPageChange: (page: number) => void
-  pageNumbers: number[]
   problems: ProblemSummary[]
   queryInput: string
   setQueryInput: (value: string) => void
@@ -39,7 +38,6 @@ export function ProblemListCard({
   onApplyQuery,
   onClearQuery,
   onPageChange,
-  pageNumbers,
   problems,
   queryInput,
   setQueryInput,
@@ -120,7 +118,6 @@ export function ProblemListCard({
         {!isLoading && problems.length > 0 && totalPages > 1 ? (
           <PaginationControls
             currentPage={currentPage}
-            pageNumbers={pageNumbers}
             totalPages={totalPages}
             previousLabel={t('common.pagination.previous')}
             nextLabel={t('common.pagination.next')}

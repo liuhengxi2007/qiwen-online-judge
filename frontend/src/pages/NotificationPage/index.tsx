@@ -16,7 +16,7 @@ import { formatUserDisplayLabel } from '@/pages/objects/UserDisplayLabel'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { notificationTranslationValues } from './functions/NotificationDisplay'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { useNotificationRefresh } from './hooks/useNotificationRefresh'
 
@@ -48,7 +48,6 @@ export function NotificationPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const totalPages = calculateTotalPages(totalItems, pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
     void refreshNotifications({ page: currentPage, pageSize: notificationsPerPage })
@@ -163,7 +162,6 @@ export function NotificationPage() {
           {!isLoadingList && notifications.length > 0 && totalPages > 1 ? (
             <PaginationControls
               currentPage={currentPage}
-              pageNumbers={pageNumbers}
               totalPages={totalPages}
               previousLabel={t('common.pagination.previous')}
               nextLabel={t('common.pagination.next')}

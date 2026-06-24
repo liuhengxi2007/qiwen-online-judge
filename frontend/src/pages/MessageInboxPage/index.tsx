@@ -12,7 +12,7 @@ import { MessageRecipientSearchCard } from './components/MessageRecipientSearchC
 import { PageShell } from '@/pages/components/PageShell'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
 const conversationsPerPage = 10
@@ -41,7 +41,6 @@ export function MessageInboxPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = parsePositivePage(searchParams.get('page'))
   const totalPages = calculateTotalPages(totalItems, pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
     void refreshInbox({ page: currentPage, pageSize: conversationsPerPage })
@@ -98,7 +97,6 @@ export function MessageInboxPage() {
             void inboxActions.markAllRead({ page: currentPage, pageSize: conversationsPerPage })
           }}
           onPageChange={onPageChange}
-          pageNumbers={pageNumbers}
           totalPages={totalPages}
           totalUnreadCount={totalUnreadCount}
         />

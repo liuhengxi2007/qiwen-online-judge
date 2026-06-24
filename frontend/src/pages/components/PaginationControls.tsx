@@ -1,16 +1,17 @@
 import { cn } from '@/components/ui/class-names'
 import { Button } from '@/components/ui/button'
+import { buildPageNumbers } from '@/pages/objects/Pagination'
 
 /**
- * 通用分页控件属性，调用方负责提供页码窗口和切页回调。
+ * 通用分页控件属性，调用方提供当前页、总页数和切页回调。
  */
 type PaginationControlsProps = {
   currentPage: number
-  pageNumbers: number[]
   totalPages: number
   onPageChange: (page: number) => void
   previousLabel: string
   nextLabel: string
+  pageWindowRadius?: number
   tone?: 'slate' | 'stone'
   className?: string
 }
@@ -20,14 +21,15 @@ type PaginationControlsProps = {
  */
 export function PaginationControls({
   currentPage,
-  pageNumbers,
   totalPages,
   onPageChange,
   previousLabel,
   nextLabel,
+  pageWindowRadius,
   tone = 'slate',
   className,
 }: PaginationControlsProps) {
+  const pageNumbers = buildPageNumbers(currentPage, totalPages, pageWindowRadius)
   const inactiveClassName =
     tone === 'stone' ? 'rounded-2xl border-stone-300 bg-white' : 'rounded-2xl border-slate-300 bg-white'
   const activeClassName = tone === 'stone' ? 'rounded-2xl bg-stone-950 text-white' : 'rounded-2xl bg-slate-950 text-white'

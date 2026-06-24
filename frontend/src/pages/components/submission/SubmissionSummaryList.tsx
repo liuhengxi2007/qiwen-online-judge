@@ -32,7 +32,6 @@ type SubmissionSummaryListProps = {
   isLoading: boolean
   currentPage: number
   totalPages: number
-  pageNumbers: number[]
   onPageChange: (page: number) => void
 }
 
@@ -53,7 +52,6 @@ export function SubmissionSummaryList({
   isLoading,
   currentPage,
   totalPages,
-  pageNumbers,
   onPageChange,
 }: SubmissionSummaryListProps) {
   const { t } = useI18n()
@@ -65,7 +63,6 @@ export function SubmissionSummaryList({
         <div className="mb-6">
           <PaginationControls
             currentPage={currentPage}
-            pageNumbers={pageNumbers}
             totalPages={totalPages}
             previousLabel={t('submission.pagination.previous')}
             nextLabel={t('submission.pagination.next')}
@@ -189,7 +186,6 @@ export function SubmissionSummaryList({
 
           <PaginationControls
             currentPage={currentPage}
-            pageNumbers={pageNumbers}
             totalPages={totalPages}
             previousLabel={t('submission.pagination.previous')}
             nextLabel={t('submission.pagination.next')}

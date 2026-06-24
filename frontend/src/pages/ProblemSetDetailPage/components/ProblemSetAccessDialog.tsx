@@ -4,27 +4,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
-import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
+import type { ProblemSetDetailPageModel } from '../hooks/useProblemSetDetailPageModel'
 
 /**
- * 题单访问控制对话框属性，包含访问策略草稿和保存回调。
+ * 题单访问控制对话框属性，包含打开状态和题单详情页模型。
  */
 type ProblemSetAccessDialogProps = {
   open: boolean
-  accessPolicy: ResourceVisibilityPolicy
-  summaryPolicy: ResourceVisibilityPolicy
-  grantedUsersInput: string
-  grantedGroupsInput: string
-  isSaving: boolean
-  errorMessage: string
-  successMessage: string
   onOpenChange: (open: boolean) => void
-  onBaseAccessChange: (value: ResourceVisibilityPolicy['baseAccess']) => void
-  onGrantedUsersInputChange: (value: string) => void
-  onGrantedGroupsInputChange: (value: string) => void
-  onSave: () => void
+  model: ProblemSetDetailPageModel
 }
 
 /**
@@ -32,20 +22,25 @@ type ProblemSetAccessDialogProps = {
  */
 export function ProblemSetAccessDialog({
   open,
-  accessPolicy,
-  summaryPolicy,
-  grantedUsersInput,
-  grantedGroupsInput,
-  isSaving,
-  errorMessage,
-  successMessage,
   onOpenChange,
-  onBaseAccessChange,
-  onGrantedUsersInputChange,
-  onGrantedGroupsInputChange,
-  onSave,
+  model,
 }: ProblemSetAccessDialogProps) {
   const { t } = useI18n()
+  const {
+    accessPolicy,
+    problemSet,
+    grantedUsersInput,
+    grantedGroupsInput,
+    isSaving,
+    accessErrorMessage,
+    accessSuccessMessage,
+    setBaseAccess,
+    setGrantedUsersInput,
+    setGrantedGroupsInput,
+    saveAccess,
+  } = model
+  const summaryPolicy = problemSet?.accessPolicy ?? accessPolicy
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100vh-2rem)] max-w-3xl overflow-y-auto rounded-[2rem] border-slate-200 bg-white p-0 shadow-[0_28px_90px_rgba(15,23,42,0.22)]">
@@ -65,21 +60,23 @@ export function ProblemSetAccessDialog({
             accessPolicy={accessPolicy}
             grantedUsersInput={grantedUsersInput}
             grantedGroupsInput={grantedGroupsInput}
-            onBaseAccessChange={onBaseAccessChange}
-            onGrantedUsersInputChange={onGrantedUsersInputChange}
-            onGrantedGroupsInputChange={onGrantedGroupsInputChange}
+            onBaseAccessChange={setBaseAccess}
+            onGrantedUsersInputChange={setGrantedUsersInput}
+            onGrantedGroupsInputChange={setGrantedGroupsInput}
           />
-          <Button type="button" disabled={isSaving} onClick={onSave}>
+          <Button type="button" disabled={isSaving} onClick={() => {
+            void saveAccess()
+          }}>
             {isSaving ? t('problemSet.detail.savingAccess') : t('problemSet.detail.saveAccess')}
           </Button>
-          {errorMessage ? (
+          {accessErrorMessage ? (
             <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>{accessErrorMessage}</AlertDescription>
             </Alert>
           ) : null}
-          {successMessage ? (
+          {accessSuccessMessage ? (
             <Alert variant="success">
-              <AlertDescription>{successMessage}</AlertDescription>
+              <AlertDescription>{accessSuccessMessage}</AlertDescription>
             </Alert>
           ) : null}
         </div>

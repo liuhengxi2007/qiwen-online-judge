@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { UserRound } from 'lucide-react'
 
@@ -28,6 +28,12 @@ import { RatingPanel } from './components/RatingPanel'
  * 个人资料页已接受题目列表的客户端分页大小。
  */
 const acceptedProblemsPerPage = 10
+
+type AcceptedProblemsPanelState = {
+  targetUsername: string
+  expanded: boolean
+  page: number
+}
 
 /**
  * 用户资料入口页，负责登录保护和把当前会话传给资料内容组件。
@@ -64,8 +70,6 @@ function UserProfilePageContent({
 }) {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const [acceptedProblemsExpanded, setAcceptedProblemsExpanded] = useState(false)
-  const [acceptedProblemsPage, setAcceptedProblemsPage] = useState(1)
   const parsedRouteUsername = routeUsername ? parseUsername(routeUsername) : null
   const routePolicy = resolveUserProfileRoutePolicy({
     viewerUsername: viewer.username,
@@ -73,6 +77,15 @@ function UserProfilePageContent({
     hasRouteUsername: Boolean(routeUsername),
     siteManagerViewer: viewer.siteManager,
   })
+  const targetUsername = usernameValue(routePolicy.targetUsername)
+  const [acceptedProblemsPanelState, setAcceptedProblemsPanelState] = useState<AcceptedProblemsPanelState>({
+    targetUsername,
+    expanded: false,
+    page: 1,
+  })
+  const isAcceptedProblemsPanelStateCurrent = acceptedProblemsPanelState.targetUsername === targetUsername
+  const acceptedProblemsExpanded = isAcceptedProblemsPanelStateCurrent ? acceptedProblemsPanelState.expanded : false
+  const acceptedProblemsPage = isAcceptedProblemsPanelStateCurrent ? acceptedProblemsPanelState.page : 1
 
   const query = useUserProfileQuery({
     targetUsername: routePolicy.targetUsername,
@@ -89,15 +102,9 @@ function UserProfilePageContent({
     targetUsername: routePolicy.targetUsername,
   })
   const acceptedProblemsPageItems = acceptedProblemsQuery.response?.items ?? []
-  const targetUsername = usernameValue(routePolicy.targetUsername)
   const profileUnavailable = !query.isLoadingProfile && !displayedUser
   const profileName = displayedUser ? displayNameValue(displayedUser.displayName) : profileUnavailable ? '--' : t('common.loading')
   const profileUsername = displayedUser ? usernameValue(displayedUser.username) : targetUsername
-
-  useEffect(() => {
-    setAcceptedProblemsExpanded(false)
-    setAcceptedProblemsPage(1)
-  }, [routePolicy.targetUsername])
 
   if (routePolicy.navigationIntent) {
     return <Navigate replace={routePolicy.navigationIntent.replace} to={routePolicy.navigationIntent.to} />
@@ -172,11 +179,29 @@ function UserProfilePageContent({
                 isLoadingAcceptedProblems={acceptedProblemsQuery.isLoading}
                 isLoadingProfile={query.isLoadingProfile}
                 normalizedAcceptedProblemsPage={normalizedAcceptedProblemsPage}
-                onNextPage={() => setAcceptedProblemsPage((page) => Math.min(acceptedProblemsTotalPages, page + 1))}
-                onPreviousPage={() => setAcceptedProblemsPage((page) => Math.max(1, page - 1))}
+                onNextPage={() => {
+                  setAcceptedProblemsPanelState((current) => ({
+                    targetUsername,
+                    expanded: current.targetUsername === targetUsername ? current.expanded : false,
+                    page: Math.min(
+                      acceptedProblemsTotalPages,
+                      (current.targetUsername === targetUsername ? current.page : 1) + 1,
+                    ),
+                  }))
+                }}
+                onPreviousPage={() => {
+                  setAcceptedProblemsPanelState((current) => ({
+                    targetUsername,
+                    expanded: current.targetUsername === targetUsername ? current.expanded : false,
+                    page: Math.max(1, (current.targetUsername === targetUsername ? current.page : 1) - 1),
+                  }))
+                }}
                 onToggleExpanded={() => {
-                  setAcceptedProblemsExpanded((isExpanded) => !isExpanded)
-                  setAcceptedProblemsPage(1)
+                  setAcceptedProblemsPanelState((current) => ({
+                    targetUsername,
+                    expanded: current.targetUsername === targetUsername ? !current.expanded : true,
+                    page: 1,
+                  }))
                 }}
               />
             </div>

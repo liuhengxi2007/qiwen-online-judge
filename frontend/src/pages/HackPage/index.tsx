@@ -91,8 +91,6 @@ export function HackPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(state.totalItems / state.pageSize))
-  const pageNumbers = Array.from({ length: Math.min(7, totalPages) }, (_, index) => Math.max(1, Math.min(totalPages, state.page - 3 + index)))
-    .filter((value, index, values) => values.indexOf(value) === index)
 
   return (
     <PageShell title={t('hack.list.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
@@ -101,10 +99,10 @@ export function HackPage() {
       <div className="mb-6">
         <PaginationControls
           currentPage={state.page}
-          pageNumbers={pageNumbers}
           totalPages={totalPages}
           previousLabel={t('submission.pagination.previous')}
           nextLabel={t('submission.pagination.next')}
+          pageWindowRadius={3}
           onPageChange={(page) => dispatch({ type: 'page', page })}
         />
       </div>

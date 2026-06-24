@@ -5,31 +5,15 @@ import { ProblemSetContentEditorCard } from './ProblemSetContentEditorCard'
 import { ProblemSetDeleteCard } from './ProblemSetDeleteCard'
 import { ProblemSetLinkProblemCard } from './ProblemSetLinkProblemCard'
 import { useI18n } from '@/system/i18n/use-i18n'
+import type { ProblemSetDetailPageModel } from '../hooks/useProblemSetDetailPageModel'
 
 /**
- * 编辑题单对话框属性，包含打开状态、草稿和保存回调。
+ * 编辑题单对话框属性，包含打开状态和题单详情页模型。
  */
 type EditProblemSetDialogProps = {
   open: boolean
-  title: string
-  description: string
-  authorUsername: string
-  linkProblemSlug: string
-  isSaving: boolean
-  isDeleting: boolean
-  activeLink: boolean
-  contentErrorMessage: string
-  contentSuccessMessage: string
-  linkErrorMessage: string
-  linkSuccessMessage: string
   onOpenChange: (open: boolean) => void
-  onTitleChange: (value: string) => void
-  onDescriptionChange: (value: string) => void
-  onAuthorUsernameChange: (value: string) => void
-  onLinkProblemSlugChange: (value: string) => void
-  onSaveContent: () => void
-  onAttachProblem: () => void
-  onDeleteProblemSet: () => Promise<boolean>
+  model: ProblemSetDetailPageModel
 }
 
 /**
@@ -37,27 +21,30 @@ type EditProblemSetDialogProps = {
  */
 export function EditProblemSetDialog({
   open,
-  title,
-  description,
-  authorUsername,
-  linkProblemSlug,
-  isSaving,
-  isDeleting,
-  activeLink,
-  contentErrorMessage,
-  contentSuccessMessage,
-  linkErrorMessage,
-  linkSuccessMessage,
   onOpenChange,
-  onTitleChange,
-  onDescriptionChange,
-  onAuthorUsernameChange,
-  onLinkProblemSlugChange,
-  onSaveContent,
-  onAttachProblem,
-  onDeleteProblemSet,
+  model,
 }: EditProblemSetDialogProps) {
   const { t } = useI18n()
+  const {
+    title,
+    description,
+    authorUsername,
+    linkProblemSlug,
+    isSaving,
+    isDeleting,
+    activeLink,
+    contentErrorMessage,
+    contentSuccessMessage,
+    linkErrorMessage,
+    linkSuccessMessage,
+    setTitle,
+    setDescription,
+    setAuthorUsername,
+    setLinkProblemSlug,
+    saveContent,
+    attachProblem,
+    deleteCurrentProblemSet,
+  } = model
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,20 +69,24 @@ export function EditProblemSetDialog({
             isSaving={isSaving}
             contentErrorMessage={contentErrorMessage}
             contentSuccessMessage={contentSuccessMessage}
-            onTitleChange={onTitleChange}
-            onDescriptionChange={onDescriptionChange}
-            onAuthorUsernameChange={onAuthorUsernameChange}
-            onSaveContent={onSaveContent}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onAuthorUsernameChange={setAuthorUsername}
+            onSaveContent={() => {
+              void saveContent()
+            }}
           />
           <ProblemSetLinkProblemCard
             linkProblemSlug={linkProblemSlug}
             activeLink={activeLink}
             linkErrorMessage={linkErrorMessage}
             linkSuccessMessage={linkSuccessMessage}
-            onLinkProblemSlugChange={onLinkProblemSlugChange}
-            onAttachProblem={onAttachProblem}
+            onLinkProblemSlugChange={setLinkProblemSlug}
+            onAttachProblem={() => {
+              void attachProblem()
+            }}
           />
-          <ProblemSetDeleteCard isDeleting={isDeleting} onDeleteProblemSet={onDeleteProblemSet} />
+          <ProblemSetDeleteCard isDeleting={isDeleting} onDeleteProblemSet={deleteCurrentProblemSet} />
         </div>
       </DialogContent>
     </Dialog>

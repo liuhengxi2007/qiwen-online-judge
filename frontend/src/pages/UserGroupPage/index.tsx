@@ -13,7 +13,7 @@ import { PageShell } from '@/pages/components/PageShell'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
 /**
@@ -32,7 +32,6 @@ export function UserGroupPage() {
   const currentPage = parsePositivePage(searchParams.get('page'))
   const model = useUserGroupPageModel({ page: currentPage, pageSize: userGroupsPerPage })
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   usePageSearchParamCorrection({
     currentPage,
@@ -113,7 +112,6 @@ export function UserGroupPage() {
           {!model.isLoading && model.groups.length > 0 && totalPages > 1 ? (
             <PaginationControls
               currentPage={currentPage}
-              pageNumbers={pageNumbers}
               totalPages={totalPages}
               previousLabel={t('common.pagination.previous')}
               nextLabel={t('common.pagination.next')}

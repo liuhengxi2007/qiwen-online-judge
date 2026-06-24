@@ -24,7 +24,6 @@ type MessageInboxCardProps = {
   isMarkingAllRead: boolean
   onMarkAllRead: () => void
   onPageChange: (page: number) => void
-  pageNumbers: number[]
   totalPages: number
   totalUnreadCount: number
 }
@@ -41,7 +40,6 @@ export function MessageInboxCard({
   isMarkingAllRead,
   onMarkAllRead,
   onPageChange,
-  pageNumbers,
   totalPages,
   totalUnreadCount,
 }: MessageInboxCardProps) {
@@ -111,7 +109,6 @@ export function MessageInboxCard({
         {!isLoadingInbox && conversations.length > 0 && totalPages > 1 ? (
           <PaginationControls
             currentPage={currentPage}
-            pageNumbers={pageNumbers}
             totalPages={totalPages}
             previousLabel={t('common.pagination.previous')}
             nextLabel={t('common.pagination.next')}

@@ -26,7 +26,6 @@ import {
   submissionPageReducer,
 } from '@/pages/objects/SubmissionPageState'
 import {
-  buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
 } from '@/pages/objects/Pagination'
@@ -80,7 +79,6 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, con
   const submissionQuery = useSubmissionListQuery(request, contestSlug)
   const currentPageSubmissions = submissionQuery.response.items
   const totalPages = calculateTotalPages(submissionQuery.response.totalItems, submissionQuery.response.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
   const showUserSuggestionPanel =
     isUserSuggestionEnabled && isUsernameFilterFocused && shouldShowTypingSuggestions(usernameFilterInput)
   const showProblemSuggestionPanel =
@@ -215,7 +213,6 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, con
     currentPage,
     currentPageSubmissions,
     totalPages,
-    pageNumbers,
     showUserSuggestionPanel,
     showProblemSuggestionPanel,
     submissionQuery,
@@ -252,6 +249,8 @@ export function useSubmissionPageModel(fixedProblemSlugFilter?: ProblemSlug, con
       updateSearchFilter('verdict', value === 'all' ? null : value),
   }
 }
+
+export type SubmissionPageModel = ReturnType<typeof useSubmissionPageModel>
 
 /**
  * 从 URL 查询参数读取提交排序字段，非法值回退为提交时间排序。

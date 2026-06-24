@@ -313,3 +313,5 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     submitDraft,
   }
 }
+
+export type MessageConversationModel = ReturnType<typeof useMessageConversation>

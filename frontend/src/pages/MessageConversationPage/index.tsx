@@ -44,27 +44,8 @@ export function MessageConversationPage() {
       mainClassName="bg-[linear-gradient(180deg,#f7fafc_0%,#edf2f7_100%)]"
     >
       <MessageConversationCard
-        autoMarkMessageRead={conversationModel.autoMarkMessageRead}
-        conversation={conversationModel.conversation}
-        draft={conversationModel.draft}
-        errorMessage={conversationModel.errorMessage}
-        hasUnreadMessages={conversationModel.hasUnreadMessages}
-        history={conversationModel.history}
-        isLoading={conversationModel.isLoading}
-        isLoadingOlderMessages={conversationModel.isLoadingOlderMessages}
-        isMarkingConversationRead={conversationModel.isMarkingConversationRead}
-        isSending={conversationModel.isSending}
-        olderMessagesError={conversationModel.olderMessagesError}
-        pendingReadMessageId={conversationModel.pendingReadMessageId}
-        sendErrorMessage={conversationModel.sendErrorMessage}
-        showManageBlocksShortcut={conversationModel.showManageBlocksShortcut}
+        model={conversationModel}
         viewerUsername={session.username}
-        handleDraftKeyDown={conversationModel.handleDraftKeyDown}
-        loadOlderMessages={conversationModel.loadOlderMessages}
-        markSingleMessageRead={conversationModel.markSingleMessageRead}
-        markWholeConversationRead={conversationModel.markWholeConversationRead}
-        setDraft={conversationModel.setDraft}
-        submitDraft={conversationModel.submitDraft}
       />
     </PageShell>
   )

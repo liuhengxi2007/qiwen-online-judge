@@ -11,7 +11,7 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useContestRegistrantPageModel } from './hooks/useContestRegistrantPageModel'
 
@@ -68,7 +68,6 @@ function ContestRegistrantPageContent({
   const { t } = useI18n()
   const model = useContestRegistrantPageModel(contestSlug, { page: currentPage, pageSize: registrantsPerPage })
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   usePageSearchParamCorrection({
     currentPage,
@@ -114,7 +113,6 @@ function ContestRegistrantPageContent({
           {!model.isLoading && model.registrants.length > 0 && totalPages > 1 ? (
             <PaginationControls
               currentPage={currentPage}
-              pageNumbers={pageNumbers}
               totalPages={totalPages}
               previousLabel={t('common.pagination.previous')}
               nextLabel={t('common.pagination.next')}

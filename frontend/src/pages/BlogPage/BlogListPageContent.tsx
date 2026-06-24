@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import type { Username } from '@/objects/user/Username'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { PageShell } from '@/pages/components/PageShell'
@@ -40,7 +40,6 @@ export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }:
   const currentPage = parsePositivePage(searchParams.get('page'))
   const model = useBlogPageModel({ authorUsernameFilter, problemSlugFilter, canManageProblemLinks, pageRequest: { page: currentPage, pageSize: blogsPerPage } })
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   usePageSearchParamCorrection({
     currentPage,
@@ -146,7 +145,6 @@ export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }:
             {!model.isLoading && model.blogs.length > 0 && totalPages > 1 ? (
               <PaginationControls
                 currentPage={currentPage}
-                pageNumbers={pageNumbers}
                 totalPages={totalPages}
                 previousLabel={t('common.pagination.previous')}
                 nextLabel={t('common.pagination.next')}

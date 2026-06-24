@@ -173,3 +173,5 @@ export function useProblemSetDetailPageModel(problemSetSlug: ProblemSetSlug, can
     attachProblem,
   }
 }
+
+export type ProblemSetDetailPageModel = ReturnType<typeof useProblemSetDetailPageModel>

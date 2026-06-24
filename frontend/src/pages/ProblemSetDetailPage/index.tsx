@@ -115,50 +115,17 @@ function ProblemSetDetailPageContent({
 
       <EditProblemSetDialog
         open={canManageProblems && managementPanel === 'edit'}
-        title={model.title}
-        description={model.description}
-        authorUsername={model.authorUsername}
-        linkProblemSlug={model.linkProblemSlug}
-        isSaving={model.isSaving}
-        isDeleting={model.isDeleting}
-        activeLink={model.activeLink}
-        contentErrorMessage={model.contentErrorMessage}
-        contentSuccessMessage={model.contentSuccessMessage}
-        linkErrorMessage={model.linkErrorMessage}
-        linkSuccessMessage={model.linkSuccessMessage}
         onOpenChange={(open) => {
           setManagementPanel(open ? 'edit' : null)
         }}
-        onTitleChange={model.setTitle}
-        onDescriptionChange={model.setDescription}
-        onAuthorUsernameChange={model.setAuthorUsername}
-        onLinkProblemSlugChange={model.setLinkProblemSlug}
-        onSaveContent={() => {
-          void model.saveContent()
-        }}
-        onAttachProblem={() => {
-          void model.attachProblem()
-        }}
-        onDeleteProblemSet={model.deleteCurrentProblemSet}
+        model={model}
       />
       <ProblemSetAccessDialog
         open={canManageProblems && managementPanel === 'access'}
-        accessPolicy={model.accessPolicy}
-        summaryPolicy={model.problemSet?.accessPolicy ?? model.accessPolicy}
-        grantedUsersInput={model.grantedUsersInput}
-        grantedGroupsInput={model.grantedGroupsInput}
-        isSaving={model.isSaving}
-        errorMessage={model.accessErrorMessage}
-        successMessage={model.accessSuccessMessage}
         onOpenChange={(open) => {
           setManagementPanel(open ? 'access' : null)
         }}
-        onBaseAccessChange={model.setBaseAccess}
-        onGrantedUsersInputChange={model.setGrantedUsersInput}
-        onGrantedGroupsInputChange={model.setGrantedGroupsInput}
-        onSave={() => {
-          void model.saveAccess()
-        }}
+        model={model}
       />
     </>
   )

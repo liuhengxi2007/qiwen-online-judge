@@ -41,14 +41,6 @@ export function useAcceptedProblemsQuery({ enabled, page, targetUsername }: UseA
     requestIdRef.current += 1
     const nextRequestId = requestIdRef.current
 
-    setState({
-      username: targetUsername,
-      page,
-      response: null,
-      errorMessage: '',
-      isLoading: true,
-    })
-
     void sendAPI(new ListUserAcceptedProblems(targetUsername, page))
       .then((response) => {
         if (isCancelled || requestIdRef.current !== nextRequestId) {

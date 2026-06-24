@@ -1,5 +1,3 @@
-import type { KeyboardEvent } from 'react'
-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -7,71 +5,36 @@ import { Label } from '@/components/ui/label'
 import { RowAction } from '@/components/ui/row-action'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
-import { isSubmissionSort, type SubmissionSort } from '@/objects/submission/request/SubmissionSort'
-import type { SubmissionSortDirection } from '@/objects/submission/request/SubmissionSortDirection'
+import { isSubmissionSort } from '@/objects/submission/request/SubmissionSort'
 import {
   isSubmissionVerdictFilter,
-  type SubmissionVerdictFilter,
 } from '@/objects/submission/request/SubmissionVerdictFilter'
-import type { UserIdentity } from '@/objects/user/UserIdentity'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import { displayNameValue } from '@/objects/user/DisplayName'
 import { usernameValue } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
+import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
 
 /**
- * 提交筛选卡片属性，包含筛选草稿、建议列表、排序状态和所有交互回调。
+ * 提交筛选卡片属性，直接接收提交列表页模型。
  */
 type SubmissionFilterCardProps = {
-  hasFixedProblemFilter: boolean
-  usernameFilterInput: string
-  problemFilterInput: string
-  isUsernameFilterFocused: boolean
-  isProblemFilterFocused: boolean
-  isUserSuggestionEnabled: boolean
-  isProblemSuggestionEnabled: boolean
-  isLoadingUserSuggestions: boolean
-  isLoadingProblemSuggestions: boolean
-  showUserSuggestionPanel: boolean
-  showProblemSuggestionPanel: boolean
-  userSuggestions: UserIdentity[]
-  problemSuggestions: ProblemSuggestion[]
-  activeVerdictFilter: SubmissionVerdictFilter
-  activeSort: SubmissionSort
-  activeDirection: SubmissionSortDirection
-  verdictFilterValues: readonly SubmissionVerdictFilter[]
-  submissionSortValues: readonly SubmissionSort[]
-  activeProblemQuery: string
-  usernameQueryParam: string
-  verdictFilterLabel: (verdict: SubmissionVerdictFilter, allVerdictsLabel: string) => string
-  onUsernameFilterInputChange: (value: string) => void
-  onProblemFilterInputChange: (value: string) => void
-  onUsernameFocusChange: (focused: boolean) => void
-  onProblemFocusChange: (focused: boolean) => void
-  onUserSuggestionEnabledChange: (enabled: boolean) => void
-  onProblemSuggestionEnabledChange: (enabled: boolean) => void
-  onUsernameSuggestionSelect: (username: string) => void
-  onProblemSuggestionSelect: (slug: string) => void
-  onVerdictFilterChange: (value: SubmissionVerdictFilter) => void
-  onSortChange: (value: SubmissionSort) => void
-  onToggleDirection: () => void
-  onApplyFilters: () => void
-  onClearFilters: () => void
-  onApplyFiltersOnEnter: (event: KeyboardEvent<HTMLInputElement>) => void
+  model: SubmissionPageModel
 }
 
 /**
  * 提交筛选卡片组件，渲染用户/题目筛选、建议面板、verdict 筛选和排序控制。
  */
-export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
+export function SubmissionFilterCard({ model }: SubmissionFilterCardProps) {
   const { t } = useI18n()
   const {
     hasFixedProblemFilter,
     usernameFilterInput,
     problemFilterInput,
+    isUserSuggestionEnabled,
+    isProblemSuggestionEnabled,
     isLoadingUserSuggestions,
     isLoadingProblemSuggestions,
     showUserSuggestionPanel,
@@ -85,7 +48,22 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
     submissionSortValues,
     activeProblemQuery,
     usernameQueryParam,
-  } = props
+    verdictFilterLabel,
+    updateUsernameFilterInput,
+    updateProblemFilterInput,
+    setIsUsernameFilterFocused,
+    setIsProblemFilterFocused,
+    setIsUserSuggestionEnabled,
+    setIsProblemSuggestionEnabled,
+    selectUsernameSuggestion,
+    selectProblemSuggestion,
+    updateVerdictFilter,
+    changeSort,
+    toggleDirection,
+    applyFilters,
+    clearFilters,
+    applyFiltersOnEnter,
+  } = model
 
   return (
     <Card className="mb-6 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -117,8 +95,8 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                 </Label>
                 <Switch
                   id="submission-user-suggestion-toggle"
-                  checked={props.isUserSuggestionEnabled}
-                  onCheckedChange={props.onUserSuggestionEnabledChange}
+                  checked={isUserSuggestionEnabled}
+                  onCheckedChange={setIsUserSuggestionEnabled}
                 />
               </div>
             </div>
@@ -126,10 +104,10 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
               id="submission-username-filter"
               className="min-w-0"
               value={usernameFilterInput}
-              onChange={(event) => props.onUsernameFilterInputChange(event.target.value)}
-              onFocus={() => props.onUsernameFocusChange(true)}
-              onBlur={() => props.onUsernameFocusChange(false)}
-              onKeyDown={props.onApplyFiltersOnEnter}
+              onChange={(event) => updateUsernameFilterInput(event.target.value)}
+              onFocus={() => setIsUsernameFilterFocused(true)}
+              onBlur={() => setIsUsernameFilterFocused(false)}
+              onKeyDown={applyFiltersOnEnter}
             />
             {showUserSuggestionPanel ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
@@ -143,7 +121,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                       key={usernameValue(suggestion.username)}
                       size="compact"
                       onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => props.onUsernameSuggestionSelect(usernameValue(suggestion.username))}
+                      onClick={() => selectUsernameSuggestion(usernameValue(suggestion.username))}
                     >
                       <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
                       <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
@@ -164,8 +142,8 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                   </Label>
                   <Switch
                     id="submission-problem-suggestion-toggle"
-                    checked={props.isProblemSuggestionEnabled}
-                    onCheckedChange={props.onProblemSuggestionEnabledChange}
+                    checked={isProblemSuggestionEnabled}
+                    onCheckedChange={setIsProblemSuggestionEnabled}
                   />
                 </div>
               </div>
@@ -173,10 +151,10 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                 id="submission-problem-filter"
                 className="min-w-0"
                 value={problemFilterInput}
-                onChange={(event) => props.onProblemFilterInputChange(event.target.value)}
-                onFocus={() => props.onProblemFocusChange(true)}
-                onBlur={() => props.onProblemFocusChange(false)}
-                onKeyDown={props.onApplyFiltersOnEnter}
+                onChange={(event) => updateProblemFilterInput(event.target.value)}
+                onFocus={() => setIsProblemFilterFocused(true)}
+                onBlur={() => setIsProblemFilterFocused(false)}
+                onKeyDown={applyFiltersOnEnter}
               />
               {showProblemSuggestionPanel ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
@@ -190,7 +168,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                         key={problemSlugValue(suggestion.slug)}
                         size="compact"
                         onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => props.onProblemSuggestionSelect(problemSlugValue(suggestion.slug))}
+                        onClick={() => selectProblemSuggestion(problemSlugValue(suggestion.slug))}
                       >
                         <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
                         <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
@@ -208,7 +186,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
               value={activeVerdictFilter}
               onValueChange={(value) => {
                 if (isSubmissionVerdictFilter(value)) {
-                  props.onVerdictFilterChange(value)
+                  updateVerdictFilter(value)
                 }
               }}
             >
@@ -218,7 +196,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
               <SelectContent>
                 {verdictFilterValues.map((verdict) => (
                   <SelectItem key={verdict} value={verdict}>
-                    {props.verdictFilterLabel(verdict, t('submission.filter.allVerdicts'))}
+                    {verdictFilterLabel(verdict, t('submission.filter.allVerdicts'))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -232,7 +210,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                 value={activeSort}
                 onValueChange={(value) => {
                   if (isSubmissionSort(value)) {
-                    props.onSortChange(value)
+                    changeSort(value)
                   }
                 }}
               >
@@ -251,7 +229,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                 type="button"
                 variant="outline"
                 className="shrink-0"
-                onClick={props.onToggleDirection}
+                onClick={toggleDirection}
               >
                 {activeDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
               </Button>
@@ -260,10 +238,10 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="button" onClick={props.onApplyFilters}>
+          <Button type="button" onClick={applyFilters}>
             {t('submission.filter.apply')}
           </Button>
-          <Button type="button" variant="outline" onClick={props.onClearFilters}>
+          <Button type="button" variant="outline" onClick={clearFilters}>
             {t('submission.filter.clear')}
           </Button>
         </div>
@@ -278,7 +256,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
         <p className="text-sm text-slate-600">
           {t('submission.filter.activeSummary', {
             problem: activeProblemQuery || t('submission.filter.anyProblem'),
-            verdict: props.verdictFilterLabel(activeVerdictFilter, t('submission.filter.allVerdicts')),
+            verdict: verdictFilterLabel(activeVerdictFilter, t('submission.filter.allVerdicts')),
           })}
         </p>
       </CardContent>

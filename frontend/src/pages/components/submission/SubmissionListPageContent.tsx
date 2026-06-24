@@ -45,43 +45,7 @@ export function SubmissionListPageContent({ fixedProblemSlugFilter, contestSlug,
         </Alert>
       ) : null}
 
-      <SubmissionFilterCard
-        hasFixedProblemFilter={model.hasFixedProblemFilter}
-        usernameFilterInput={model.usernameFilterInput}
-        problemFilterInput={model.problemFilterInput}
-        isUsernameFilterFocused={model.isUsernameFilterFocused}
-        isProblemFilterFocused={model.isProblemFilterFocused}
-        isUserSuggestionEnabled={model.isUserSuggestionEnabled}
-        isProblemSuggestionEnabled={model.isProblemSuggestionEnabled}
-        isLoadingUserSuggestions={model.isLoadingUserSuggestions}
-        isLoadingProblemSuggestions={model.isLoadingProblemSuggestions}
-        showUserSuggestionPanel={model.showUserSuggestionPanel}
-        showProblemSuggestionPanel={model.showProblemSuggestionPanel}
-        userSuggestions={model.userSuggestions}
-        problemSuggestions={model.problemSuggestions}
-        activeVerdictFilter={model.activeVerdictFilter}
-        activeSort={model.activeSort}
-        activeDirection={model.activeDirection}
-        verdictFilterValues={model.verdictFilterValues}
-        submissionSortValues={model.submissionSortValues}
-        activeProblemQuery={model.activeProblemQuery}
-        usernameQueryParam={model.usernameQueryParam}
-        verdictFilterLabel={model.verdictFilterLabel}
-        onUsernameFilterInputChange={model.updateUsernameFilterInput}
-        onProblemFilterInputChange={model.updateProblemFilterInput}
-        onUsernameFocusChange={model.setIsUsernameFilterFocused}
-        onProblemFocusChange={model.setIsProblemFilterFocused}
-        onUserSuggestionEnabledChange={model.setIsUserSuggestionEnabled}
-        onProblemSuggestionEnabledChange={model.setIsProblemSuggestionEnabled}
-        onUsernameSuggestionSelect={model.selectUsernameSuggestion}
-        onProblemSuggestionSelect={model.selectProblemSuggestion}
-        onVerdictFilterChange={model.updateVerdictFilter}
-        onSortChange={model.changeSort}
-        onToggleDirection={model.toggleDirection}
-        onApplyFilters={model.applyFilters}
-        onClearFilters={model.clearFilters}
-        onApplyFiltersOnEnter={model.applyFiltersOnEnter}
-      />
+      <SubmissionFilterCard model={model} />
 
       <SubmissionSummaryList
         submissions={model.currentPageSubmissions}
@@ -89,7 +53,6 @@ export function SubmissionListPageContent({ fixedProblemSlugFilter, contestSlug,
         isLoading={model.submissionQuery.isLoading}
         currentPage={model.currentPage}
         totalPages={model.totalPages}
-        pageNumbers={model.pageNumbers}
         onPageChange={model.goToPage}
       />
     </PageShell>

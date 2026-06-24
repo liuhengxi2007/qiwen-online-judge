@@ -16,7 +16,7 @@ import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
-import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
+import { calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 
 const problemSetsPerPage = 10
@@ -32,7 +32,6 @@ export function ProblemSetPage() {
   const currentPage = parsePositivePage(searchParams.get('page'))
   const model = useProblemSetPageModel({ page: currentPage, pageSize: problemSetsPerPage })
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   usePageSearchParamCorrection({
     currentPage,
@@ -132,7 +131,6 @@ export function ProblemSetPage() {
             {!model.isLoading && model.problemSets.length > 0 && totalPages > 1 ? (
               <PaginationControls
                 currentPage={currentPage}
-                pageNumbers={pageNumbers}
                 totalPages={totalPages}
                 previousLabel={t('common.pagination.previous')}
                 nextLabel={t('common.pagination.next')}

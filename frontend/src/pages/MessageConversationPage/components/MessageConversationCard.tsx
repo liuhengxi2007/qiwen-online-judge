@@ -1,44 +1,22 @@
 import { Link } from 'react-router-dom'
 import { MessageCircle } from 'lucide-react'
-import type { KeyboardEvent } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageComposer } from './MessageComposer'
 import { MessageList } from './MessageList'
-import type { MessageConversationSummary } from '@/objects/message/response/MessageConversationSummary'
-import type { MessageHistoryResponse } from '@/objects/message/response/MessageHistoryResponse'
-import type { MessageId } from '@/objects/message/MessageId'
 import { usernameValue } from '@/objects/user/Username'
 import type { Username } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
+import type { MessageConversationModel } from '../hooks/useMessageConversation'
 
 /**
- * 私信会话卡片属性，包含会话展示状态、发送草稿、已读状态和所有操作回调。
+ * 私信会话卡片属性，直接接收会话页模型。
  */
 type MessageConversationCardProps = {
-  autoMarkMessageRead: boolean
-  conversation: MessageConversationSummary | null
-  draft: string
-  errorMessage: string
-  hasUnreadMessages: boolean
-  history: MessageHistoryResponse | null
-  isLoading: boolean
-  isLoadingOlderMessages: boolean
-  isMarkingConversationRead: boolean
-  isSending: boolean
-  olderMessagesError: string
-  pendingReadMessageId: string | null
-  sendErrorMessage: string
-  showManageBlocksShortcut: boolean
+  model: MessageConversationModel
   viewerUsername: Username
-  handleDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void
-  loadOlderMessages: () => void
-  markSingleMessageRead: (messageId: MessageId) => Promise<void>
-  markWholeConversationRead: () => Promise<void>
-  setDraft: (value: string) => void
-  submitDraft: () => void
 }
 
 /**
@@ -46,29 +24,32 @@ type MessageConversationCardProps = {
  * 组件不直接调用 API，所有副作用通过传入的模型回调触发。
  */
 export function MessageConversationCard({
-  autoMarkMessageRead,
-  conversation,
-  draft,
-  errorMessage,
-  hasUnreadMessages,
-  history,
-  isLoading,
-  isLoadingOlderMessages,
-  isMarkingConversationRead,
-  isSending,
-  olderMessagesError,
-  pendingReadMessageId,
-  sendErrorMessage,
-  showManageBlocksShortcut,
+  model,
   viewerUsername,
-  handleDraftKeyDown,
-  loadOlderMessages,
-  markSingleMessageRead,
-  markWholeConversationRead,
-  setDraft,
-  submitDraft,
 }: MessageConversationCardProps) {
   const { t } = useI18n()
+  const {
+    autoMarkMessageRead,
+    conversation,
+    draft,
+    errorMessage,
+    hasUnreadMessages,
+    history,
+    isLoading,
+    isLoadingOlderMessages,
+    isMarkingConversationRead,
+    isSending,
+    olderMessagesError,
+    pendingReadMessageId,
+    sendErrorMessage,
+    showManageBlocksShortcut,
+    handleDraftKeyDown,
+    loadOlderMessages,
+    markSingleMessageRead,
+    markWholeConversationRead,
+    setDraft,
+    submitDraft,
+  } = model
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">

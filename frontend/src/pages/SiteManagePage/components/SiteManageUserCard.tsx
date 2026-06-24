@@ -15,7 +15,6 @@ import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserLis
 import { emailAddressValue } from '@/objects/auth/EmailAddress'
 import type { useSiteManageModel } from '../hooks/useSiteManageModel'
 import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
-import { buildPageNumbers } from '@/pages/objects/Pagination'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { buildPermissionUpdate, displayedPermissionFlags } from '../functions/SiteManagePermissions'
@@ -58,7 +57,6 @@ export function SiteManageUserCard({
 }: SiteManageUserCardProps) {
   const { t } = useI18n()
   const isProtectedAdmin = (listedUser: ManagedUserListItem) => usernameValue(listedUser.username) === 'admin'
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
   const statusMessage =
     model.notice?.kind === 'permissions_updated'
       ? t('siteManage.message.updatePermissionsSucceeded', {
@@ -238,7 +236,6 @@ export function SiteManageUserCard({
         {!model.isLoadingUsers && model.users.length > 0 && totalPages > 1 ? (
           <PaginationControls
             currentPage={currentPage}
-            pageNumbers={pageNumbers}
             totalPages={totalPages}
             previousLabel={t('common.pagination.previous')}
             nextLabel={t('common.pagination.next')}

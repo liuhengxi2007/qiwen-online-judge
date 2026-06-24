@@ -8,7 +8,6 @@ import { shouldShowProblemSlugSupplement } from '@/pages/objects/ProblemTitleDis
 import { useProblemPageModel } from './hooks/useProblemPageModel'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 import {
-  buildPageNumbers,
   calculateTotalPages,
   parsePositivePage,
 } from '@/pages/objects/Pagination'
@@ -64,7 +63,6 @@ function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
     },
   })
   const totalPages = calculateTotalPages(model.totalItems, model.pageSize)
-  const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   useEffect(() => {
     setQueryInput(activeQuery)
@@ -118,7 +116,6 @@ function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
           onApplyQuery={applyQuery}
           onClearQuery={clearQuery}
           onPageChange={setPage}
-          pageNumbers={pageNumbers}
           problems={model.problems}
           queryInput={queryInput}
           setQueryInput={setQueryInput}
