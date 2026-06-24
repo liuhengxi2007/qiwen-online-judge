@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RowAction } from '@/components/ui/row-action'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useNotificationActions } from './hooks/useNotificationActions'
-import { useNotificationRefresh } from '@/pages/hooks/useNotificationRefresh'
 import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { PaginationControls } from '@/pages/components/PaginationControls'
@@ -19,6 +18,7 @@ import { useI18n } from '@/system/i18n/use-i18n'
 import { notificationTranslationValues } from './functions/NotificationDisplay'
 import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/pages/objects/Pagination'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
+import { useNotificationRefresh } from './hooks/useNotificationRefresh'
 
 const notificationsPerPage = 10
 

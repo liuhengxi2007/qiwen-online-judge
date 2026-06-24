@@ -33,6 +33,7 @@ domain-owned `src/apis/<domain>` clients and are expected to reach the backend s
   Route-level page components.
 - `src/pages/components`, `src/pages/hooks`, `src/pages/objects`
   Reusable page-layer UI, hooks, stores, route policies, URL/search-param state, and display-only state.
+  See `page-shared-consumers.md` for the current page consumer inventory.
 - `src/system`
   Runtime helpers such as HTTP client support and i18n.
 - `src/components/ui`

@@ -14,7 +14,7 @@ import { messageIdValue } from '@/objects/message/MessageId'
 import {
   messageStreamEventName,
   type MessageStreamEventDetail,
-} from '@/pages/hooks/useMessageRealtimeConnection'
+} from '@/pages/hooks/messageRealtimeEvents'
 import { useMessageInboxRefresh } from '@/pages/hooks/useMessageInboxRefresh'
 import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
 import type { Username } from '@/objects/user/Username'
@@ -149,7 +149,7 @@ export function useMessageConversation({ session, targetUsername }: UseMessageCo
     const activeConversationId = conversationId
 
     function handleRealtimeEvent(event: Event) {
-      // 注意：监听的事件名只由 useMessageRealtimeConnection 分发，detail 类型在分发前已完成解码校验。
+      // 注意：监听的事件名只由应用实时连接分发，detail 类型在分发前已完成解码校验。
       const detail = (event as CustomEvent<MessageStreamEventDetail>).detail
       if (!detail || detail.type === 'inbox_changed') {
         return

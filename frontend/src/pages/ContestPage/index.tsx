@@ -12,7 +12,6 @@ import { DateTimeText } from '@/pages/components/DateTimeText'
 import { PageShell } from '@/pages/components/PageShell'
 import { PaginationControls } from '@/pages/components/PaginationControls'
 import { UserProfileLink } from '@/pages/components/UserProfileLink'
-import { useNow } from '@/pages/hooks/useNow'
 import { usePageSearchParamCorrection } from '@/pages/hooks/usePageSearchParamCorrection'
 import { usePageTitle } from '@/pages/hooks/usePageTitle'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
@@ -20,6 +19,7 @@ import { buildPageNumbers, calculateTotalPages, parsePositivePage } from '@/page
 import { resourceAccessBadgeLabel } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useContestPageModel } from './hooks/useContestPageModel'
+import { useNow } from './hooks/useNow'
 
 const contestsPerPage = 10
 
