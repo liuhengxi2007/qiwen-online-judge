@@ -118,11 +118,149 @@ function isCountableFile(pathname) {
 function countLines(relativePath) {
   const source = readFileSync(resolve(root, relativePath), 'utf8')
 
-  if (source.length === 0) {
-    return 0
+  return countCodeLines(source, {
+    supportsLineComment: extname(relativePath) !== '.css',
+  })
+}
+
+function countCodeLines(source, { supportsLineComment }) {
+  let total = 0
+  let lineHasCode = false
+  let state = 'code'
+  let quote = ''
+  let escaped = false
+
+  const finishLine = () => {
+    if (lineHasCode) {
+      total += 1
+    }
+
+    lineHasCode = false
   }
 
-  return source.split('\n').length
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]
+    const next = source[index + 1]
+
+    if (character === '\r') {
+      continue
+    }
+
+    if (state === 'lineComment') {
+      if (character === '\n') {
+        finishLine()
+        state = 'code'
+      }
+
+      continue
+    }
+
+    if (state === 'blockComment') {
+      if (character === '\n') {
+        finishLine()
+        continue
+      }
+
+      if (character === '*' && next === '/') {
+        index += 1
+        state = 'code'
+      }
+
+      continue
+    }
+
+    if (state === 'string') {
+      if (character === '\n') {
+        finishLine()
+        escaped = false
+
+        if (quote !== '`') {
+          state = 'code'
+          quote = ''
+        }
+
+        continue
+      }
+
+      if (!/\s/.test(character)) {
+        lineHasCode = true
+      }
+
+      if (escaped) {
+        escaped = false
+        continue
+      }
+
+      if (character === '\\') {
+        escaped = true
+        continue
+      }
+
+      if (character === quote) {
+        state = 'code'
+        quote = ''
+      }
+
+      continue
+    }
+
+    if (state === 'tripleString') {
+      if (character === '\n') {
+        finishLine()
+        continue
+      }
+
+      if (!/\s/.test(character)) {
+        lineHasCode = true
+      }
+
+      if (character === '"' && next === '"' && source[index + 2] === '"') {
+        index += 2
+        state = 'code'
+      }
+
+      continue
+    }
+
+    if (character === '\n') {
+      finishLine()
+      continue
+    }
+
+    if (supportsLineComment && character === '/' && next === '/') {
+      index += 1
+      state = 'lineComment'
+      continue
+    }
+
+    if (character === '/' && next === '*') {
+      index += 1
+      state = 'blockComment'
+      continue
+    }
+
+    if (character === '"' && next === '"' && source[index + 2] === '"') {
+      lineHasCode = true
+      index += 2
+      state = 'tripleString'
+      continue
+    }
+
+    if (character === '"' || character === "'" || character === '`') {
+      lineHasCode = true
+      state = 'string'
+      quote = character
+      escaped = false
+      continue
+    }
+
+    if (!/\s/.test(character)) {
+      lineHasCode = true
+    }
+  }
+
+  finishLine()
+  return total
 }
 
 function summarizeProfile(profile) {
