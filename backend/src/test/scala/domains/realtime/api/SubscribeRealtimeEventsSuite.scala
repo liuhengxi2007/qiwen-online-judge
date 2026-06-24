@@ -50,14 +50,16 @@ class SubscribeRealtimeEventsSuite extends CatsEffectSuite:
             .compile
             .lastOrError
             .start
-          _ <- IO.sleep(250.millis)
-          _ <- MessageEventHub.publish(messageHub, actor.username, MessageStreamEvent.InboxChanged)
-          _ <- NotificationEventHub.publish(notificationHub, actor.username, NotificationStreamEvent.NotificationsChanged)
+          publisherFiber <- (
+            MessageEventHub.publish(messageHub, actor.username, MessageStreamEvent.InboxChanged) *>
+              NotificationEventHub.publish(notificationHub, actor.username, NotificationStreamEvent.NotificationsChanged) *>
+              IO.sleep(50.millis)
+          ).foreverM.start
           body <- bodyFiber.join.flatMap {
             case Outcome.Succeeded(result) => result
             case Outcome.Errored(error) => IO.raiseError(error)
             case Outcome.Canceled() => IO.raiseError(new RuntimeException("Realtime stream read was canceled."))
-          }.timeout(2.seconds)
+          }.timeout(2.seconds).guarantee(publisherFiber.cancel)
         yield
           assert(body.contains("inbox_changed"))
           assert(body.contains("notifications_changed"))

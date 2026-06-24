@@ -1,19 +1,20 @@
 package domains.submission.utils
 
 import domains.submission.objects.request.*
-import shared.api.utils.PageRequestQuerySupport
+import shared.objects.PageRequest
 
-/** 提交列表 query 参数解析器；缺失参数使用默认排序、方向或过滤器，非法参数返回错误。 */
+/** 提交列表 query 参数解析器；展示筛选参数尽量回退默认值，文本筛选仍按领域规则校验。 */
 object SubmissionListRequestQuery:
-  /** 从 HTTP query 参数构造提交列表请求；分页解析委托给共享分页工具。 */
+  /** 从 HTTP query 参数构造提交列表请求；分页、排序、方向和判题过滤器非法时回退默认值。 */
   def parse(queryParams: Map[String, String]): Either[String, SubmissionListRequest] =
+    val sort = parseOrDefault(queryParams, "sort", SubmissionSort.parse, SubmissionSort.Submitted)
+    val direction = parseOrDefault(queryParams, "direction", SubmissionSortDirection.parse, SubmissionSort.defaultDirection(sort))
+    val verdict = parseOrDefault(queryParams, "verdict", SubmissionVerdictFilter.parse, SubmissionVerdictFilter.All)
+    val pageRequest = parsePageRequest(queryParams)
+
     for
-      sort <- parseOptional(queryParams, "sort", SubmissionSort.parse).map(_.getOrElse(SubmissionSort.Submitted))
-      direction <- parseOptional(queryParams, "direction", SubmissionSortDirection.parse).map(_.getOrElse(SubmissionSort.defaultDirection(sort)))
-      verdict <- parseOptional(queryParams, "verdict", SubmissionVerdictFilter.parse).map(_.getOrElse(SubmissionVerdictFilter.All))
       userQuery <- parseOptional(queryParams, "username", SubmissionUserQuery.parse)
       problemQuery <- parseOptional(queryParams, "problem", SubmissionProblemQuery.parse)
-      pageRequest <- PageRequestQuerySupport.parsePageRequest(queryParams)
     yield SubmissionListRequest(
       userQuery = userQuery,
       problemQuery = problemQuery,
@@ -22,6 +23,23 @@ object SubmissionListRequestQuery:
       direction = direction,
       pageRequest = pageRequest
     )
+
+  private def parseOrDefault[A](
+    queryParams: Map[String, String],
+    key: String,
+    parse: String => Either[String, A],
+    defaultValue: A
+  ): A =
+    queryParams.get(key).flatMap(rawValue => parse(rawValue).toOption).getOrElse(defaultValue)
+
+  private def parsePageRequest(queryParams: Map[String, String]): PageRequest =
+    PageRequest(
+      page = parsePositiveInt(queryParams.get("page"), defaultValue = 1),
+      pageSize = parsePositiveInt(queryParams.get("pageSize"), defaultValue = 10)
+    )
+
+  private def parsePositiveInt(rawValue: Option[String], defaultValue: Int): Int =
+    rawValue.flatMap(_.trim.toIntOption).filter(_ > 0).getOrElse(defaultValue)
 
   private def parseOptional[A](
     queryParams: Map[String, String],
