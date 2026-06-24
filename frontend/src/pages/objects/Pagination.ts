@@ -19,7 +19,7 @@ export const DEFAULT_PAGE_SIZE = 20
 /**
  * 当前页前后展示的页码窗口半径。
  */
-export const DEFAULT_PAGE_WINDOW_RADIUS = 2
+export const DEFAULT_PAGE_WINDOW_RADIUS = 3
 
 /**
  * URL 页码修正结果，描述无需修正、删除 page 参数或设置到指定页。

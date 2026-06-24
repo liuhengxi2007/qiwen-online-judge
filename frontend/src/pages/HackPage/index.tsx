@@ -102,7 +102,6 @@ export function HackPage() {
           totalPages={totalPages}
           previousLabel={t('submission.pagination.previous')}
           nextLabel={t('submission.pagination.next')}
-          pageWindowRadius={3}
           onPageChange={(page) => dispatch({ type: 'page', page })}
         />
       </div>

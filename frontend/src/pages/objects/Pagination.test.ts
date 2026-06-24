@@ -25,9 +25,9 @@ describe('pagination', () => {
   })
 
   it('builds a bounded page number window around the current page', () => {
-    expect(buildPageNumbers(1, 10)).toEqual([1, 2, 3])
-    expect(buildPageNumbers(5, 10)).toEqual([3, 4, 5, 6, 7])
-    expect(buildPageNumbers(10, 10)).toEqual([8, 9, 10])
+    expect(buildPageNumbers(1, 10)).toEqual([1, 2, 3, 4])
+    expect(buildPageNumbers(5, 10)).toEqual([2, 3, 4, 5, 6, 7, 8])
+    expect(buildPageNumbers(10, 10)).toEqual([7, 8, 9, 10])
   })
 
   it('decides how to correct out-of-range pages', () => {
