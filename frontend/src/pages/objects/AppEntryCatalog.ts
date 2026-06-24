@@ -6,7 +6,7 @@ import type { AppModuleTone } from '@/pages/objects/AppModuleTheme'
 /**
  * 仪表盘入口分组 ID，按功能域组织所有业务入口。
  */
-export type AppDashboardGroupId = 'problem' | 'judge' | 'contest' | 'community' | 'admin'
+export type AppDashboardGroupId = 'problemCore' | 'contentAndContest' | 'userAndRank' | 'admin'
 
 /**
  * 应用入口定义，统一驱动顶部导航和仪表盘卡片。
@@ -41,10 +41,9 @@ export type AppDashboardEntryGroup = AppDashboardGroup & {
 }
 
 export const appDashboardGroups: AppDashboardGroup[] = [
-  { id: 'problem', titleKey: 'dashboard.group.problem' },
-  { id: 'judge', titleKey: 'dashboard.group.judge' },
-  { id: 'contest', titleKey: 'dashboard.group.contest' },
-  { id: 'community', titleKey: 'dashboard.group.community' },
+  { id: 'problemCore', titleKey: 'dashboard.group.problemCore' },
+  { id: 'contentAndContest', titleKey: 'dashboard.group.contentAndContest' },
+  { id: 'userAndRank', titleKey: 'dashboard.group.userAndRank' },
   { id: 'admin', titleKey: 'dashboard.group.admin' },
 ]
 
@@ -58,19 +57,7 @@ export const appEntries: AppEntry[] = [
     dashboardOpenKey: 'dashboard.problems.open',
     icon: FileText,
     tone: 'emerald',
-    dashboardGroup: 'problem',
-    showInNav: true,
-  },
-  {
-    id: 'problemSets',
-    to: '/problem-sets',
-    navLabelKey: 'nav.problemSets',
-    dashboardTitleKey: 'dashboard.problemSets.title',
-    dashboardDescriptionKey: 'dashboard.problemSets.description',
-    dashboardOpenKey: 'dashboard.problemSets.open',
-    icon: BookCopy,
-    tone: 'rose',
-    dashboardGroup: 'problem',
+    dashboardGroup: 'problemCore',
     showInNav: true,
   },
   {
@@ -82,7 +69,7 @@ export const appEntries: AppEntry[] = [
     dashboardOpenKey: 'dashboard.submissions.open',
     icon: Files,
     tone: 'indigo',
-    dashboardGroup: 'judge',
+    dashboardGroup: 'problemCore',
     showInNav: true,
   },
   {
@@ -94,31 +81,19 @@ export const appEntries: AppEntry[] = [
     dashboardOpenKey: 'dashboard.hacks.open',
     icon: Target,
     tone: 'red',
-    dashboardGroup: 'judge',
+    dashboardGroup: 'problemCore',
     showInNav: true,
   },
   {
-    id: 'contests',
-    to: '/contests',
-    navLabelKey: 'nav.contests',
-    dashboardTitleKey: 'dashboard.contests.title',
-    dashboardDescriptionKey: 'dashboard.contests.description',
-    dashboardOpenKey: 'dashboard.contests.open',
-    icon: CalendarDays,
-    tone: 'cyan',
-    dashboardGroup: 'contest',
-    showInNav: true,
-  },
-  {
-    id: 'ranklist',
-    to: '/ranklist',
-    navLabelKey: 'nav.ranklist',
-    dashboardTitleKey: 'dashboard.ranklist.title',
-    dashboardDescriptionKey: 'dashboard.ranklist.description',
-    dashboardOpenKey: 'dashboard.ranklist.open',
-    icon: Trophy,
-    tone: 'amber',
-    dashboardGroup: 'contest',
+    id: 'problemSets',
+    to: '/problem-sets',
+    navLabelKey: 'nav.problemSets',
+    dashboardTitleKey: 'dashboard.problemSets.title',
+    dashboardDescriptionKey: 'dashboard.problemSets.description',
+    dashboardOpenKey: 'dashboard.problemSets.open',
+    icon: BookCopy,
+    tone: 'rose',
+    dashboardGroup: 'contentAndContest',
     showInNav: true,
   },
   {
@@ -130,7 +105,19 @@ export const appEntries: AppEntry[] = [
     dashboardOpenKey: 'dashboard.blogs.open',
     icon: NotebookPen,
     tone: 'orange',
-    dashboardGroup: 'community',
+    dashboardGroup: 'contentAndContest',
+    showInNav: true,
+  },
+  {
+    id: 'contests',
+    to: '/contests',
+    navLabelKey: 'nav.contests',
+    dashboardTitleKey: 'dashboard.contests.title',
+    dashboardDescriptionKey: 'dashboard.contests.description',
+    dashboardOpenKey: 'dashboard.contests.open',
+    icon: CalendarDays,
+    tone: 'cyan',
+    dashboardGroup: 'contentAndContest',
     showInNav: true,
   },
   {
@@ -142,8 +129,20 @@ export const appEntries: AppEntry[] = [
     dashboardOpenKey: 'dashboard.userGroups.open',
     icon: UsersRound,
     tone: 'sky',
-    dashboardGroup: 'community',
-    showInNav: true,
+    dashboardGroup: 'userAndRank',
+    showInNav: false,
+  },
+  {
+    id: 'ranklist',
+    to: '/ranklist',
+    navLabelKey: 'nav.ranklist',
+    dashboardTitleKey: 'dashboard.ranklist.title',
+    dashboardDescriptionKey: 'dashboard.ranklist.description',
+    dashboardOpenKey: 'dashboard.ranklist.open',
+    icon: Trophy,
+    tone: 'amber',
+    dashboardGroup: 'userAndRank',
+    showInNav: false,
   },
   {
     id: 'ratingManage',
