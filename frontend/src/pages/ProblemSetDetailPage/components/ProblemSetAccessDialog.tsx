@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
-import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -13,15 +13,15 @@ import { useI18n } from '@/system/i18n/use-i18n'
  */
 type ProblemSetAccessDialogProps = {
   open: boolean
-  accessPolicy: ResourceAccessPolicy
-  summaryPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceVisibilityPolicy
+  summaryPolicy: ResourceVisibilityPolicy
   grantedUsersInput: string
   grantedGroupsInput: string
   isSaving: boolean
   errorMessage: string
   successMessage: string
   onOpenChange: (open: boolean) => void
-  onBaseAccessChange: (value: ResourceAccessPolicy['baseAccess']) => void
+  onBaseAccessChange: (value: ResourceVisibilityPolicy['baseAccess']) => void
   onGrantedUsersInputChange: (value: string) => void
   onGrantedGroupsInputChange: (value: string) => void
   onSave: () => void

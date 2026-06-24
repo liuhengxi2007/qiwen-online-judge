@@ -17,7 +17,7 @@ import java.sql.Connection
 final class RemoveMessageBlock(messageEventHub: MessageEventHubContext) extends AuthenticatedApi[Username, SuccessResponse]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/messages/blocks/:targetUsername/remove")
+  override val path: ApiPath = ApiPath("/api/messages/blocks/:targetUsername/unlink")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[SuccessResponse] = summon[Encoder[SuccessResponse]]
 

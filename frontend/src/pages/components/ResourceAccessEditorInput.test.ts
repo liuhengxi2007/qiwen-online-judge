@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildResourceAccessPolicy } from './ResourceAccessEditorInput'
+import { buildResourceAccessPolicy, buildResourceVisibilityPolicy } from './ResourceAccessEditorInput'
 
 describe('resource-access-editor-input', () => {
   it('builds branded access subjects from user input', () => {
@@ -34,5 +34,23 @@ describe('resource-access-editor-input', () => {
       ok: false,
       message: 'User group slug may contain only lowercase letters, numbers, and hyphens.',
     })
+  })
+
+  it('builds viewer-only visibility policies', () => {
+    const result = buildResourceVisibilityPolicy('public', 'Alice_01', 'sample-group')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toEqual({
+      baseAccess: 'public',
+      viewerGrants: [
+        { kind: 'user_group', slug: 'sample-group' },
+        { kind: 'user', username: 'alice_01' },
+      ],
+    })
+    expect('managerGrants' in result.value).toBe(false)
   })
 })

@@ -12,7 +12,7 @@ import domains.problemset.objects.request.{CreateProblemSetRequest, UpdateProble
 import domains.problemset.objects.{ProblemSet, ProblemSetId, ProblemSetSlug}
 import domains.problemset.objects.response.ProblemSetSummary
 import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTable
-import shared.objects.access.{GrantRole, ResourceAccessPolicy}
+import shared.objects.access.{GrantRole, ResourceVisibilityPolicy}
 import shared.objects.PageResponse
 import domains.problemset.table.problem_set.ProblemSetTableSupport.*
 
@@ -127,7 +127,7 @@ object ProblemSetTable:
       itemsWithPolicies <- items.traverse { item =>
         for
           viewerGrants <- ProblemSetAccessGrantTable.listForProblemSet(connection, item.id, GrantRole.Viewer)
-        yield item.copy(accessPolicy = item.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = Nil))
+        yield item.copy(accessPolicy = item.accessPolicy.copy(viewerGrants = viewerGrants))
       }
     yield PageResponse(items = itemsWithPolicies, page = page, pageSize = pageSize, totalItems = totalItems)
 
@@ -163,7 +163,7 @@ object ProblemSetTable:
         for
           problems <- listProblemsForSet(connection, problemSet.id, listProblemsForSetSQL)
           viewerGrants <- ProblemSetAccessGrantTable.listForProblemSet(connection, problemSet.id, GrantRole.Viewer)
-        yield Some(problemSet.copy(problems = problems, accessPolicy = problemSet.accessPolicy.copy(viewerGrants = viewerGrants, managerGrants = Nil)))
+        yield Some(problemSet.copy(problems = problems, accessPolicy = problemSet.accessPolicy.copy(viewerGrants = viewerGrants)))
       case None =>
         IO.pure(None)
     }
@@ -374,8 +374,7 @@ object ProblemSetTable:
       finally positionStatement.close()
     }
 
-  private def sanitizePolicy(policy: ResourceAccessPolicy): ResourceAccessPolicy =
+  private def sanitizePolicy(policy: ResourceVisibilityPolicy): ResourceVisibilityPolicy =
     policy.copy(
-      viewerGrants = policy.viewerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject)),
-      managerGrants = Nil
+      viewerGrants = policy.viewerGrants.distinctBy(subject => AccessGrantSql.subjectIdentity(subject))
     )

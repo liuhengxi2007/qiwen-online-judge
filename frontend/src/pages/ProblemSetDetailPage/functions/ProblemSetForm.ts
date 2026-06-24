@@ -5,9 +5,9 @@ import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetD
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import { parseUsername, usernameValue } from '@/objects/user/Username'
 import {
-  buildResourceAccessPolicy,
-  grantedGroupsInputFromAccessPolicy,
-  grantedUsersInputFromAccessPolicy,
+  buildResourceVisibilityPolicy,
+  grantedGroupsInputFromVisibilityPolicy,
+  grantedUsersInputFromVisibilityPolicy,
 } from '@/pages/components/ResourceAccessEditorInput'
 
 /**
@@ -40,8 +40,8 @@ export function buildProblemSetContentUpdateDraft(
     description: editor.description,
     authorUsername: editor.authorUsername,
     baseAccess: problemSet.accessPolicy.baseAccess,
-    grantedUsersInput: grantedUsersInputFromAccessPolicy(problemSet.accessPolicy),
-    grantedGroupsInput: grantedGroupsInputFromAccessPolicy(problemSet.accessPolicy),
+    grantedUsersInput: grantedUsersInputFromVisibilityPolicy(problemSet.accessPolicy),
+    grantedGroupsInput: grantedGroupsInputFromVisibilityPolicy(problemSet.accessPolicy),
   }
 }
 
@@ -66,7 +66,7 @@ export function buildProblemSetAccessUpdateDraft(
  * 从题单访问控制编辑状态构造结构化访问策略。
  */
 export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditorState) {
-  const accessPolicyResult = buildResourceAccessPolicy(
+  const accessPolicyResult = buildResourceVisibilityPolicy(
     editor.baseAccess,
     editor.grantedUsersInput,
     editor.grantedGroupsInput,
@@ -74,7 +74,7 @@ export function buildProblemSetDetailAccessPolicy(editor: ProblemSetAccessEditor
 
   return accessPolicyResult.ok
     ? accessPolicyResult.value
-    : { baseAccess: editor.baseAccess, viewerGrants: [], managerGrants: [] }
+    : { baseAccess: editor.baseAccess, viewerGrants: [] }
 }
 
 /**
@@ -111,7 +111,7 @@ export function validateProblemSetUpdateDraft(
     return { ok: false, message: authorUsernameResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(
+  const accessPolicyResult = buildResourceVisibilityPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,

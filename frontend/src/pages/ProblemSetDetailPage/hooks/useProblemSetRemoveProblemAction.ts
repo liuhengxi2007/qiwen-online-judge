@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { RemoveProblemFromProblemSet } from '@/apis/problemset/RemoveProblemFromProblemSet'
+import { UnlinkProblemFromProblemSet } from '@/apis/problemset/UnlinkProblemFromProblemSet'
 import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
@@ -19,7 +19,7 @@ export function useProblemSetRemoveProblemAction(problemSetSlug: ProblemSetSlug)
     async (problemSlug: ProblemSlug): Promise<{ ok: true; problemSet: ProblemSetDetail; message: string } | { ok: false; message: string }> => {
       setActiveRemovingProblemSlug(problemSlug)
       try {
-        const updatedProblemSet = await sendAPI(new RemoveProblemFromProblemSet(problemSetSlug, problemSlug))
+        const updatedProblemSet = await sendAPI(new UnlinkProblemFromProblemSet(problemSetSlug, problemSlug))
         return { ok: true, problemSet: updatedProblemSet, message: t('problemSet.message.removeSuccess') }
       } catch (error) {
         const message = isHttpClientError(error) ? error.message : t('problemSet.message.removeFailed')

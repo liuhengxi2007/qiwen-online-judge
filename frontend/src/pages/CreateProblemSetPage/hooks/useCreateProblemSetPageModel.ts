@@ -4,9 +4,9 @@ import { CreateProblemSet } from '@/apis/problemset/CreateProblemSet'
 import { isHttpClientError } from '@/system/api/http-client'
 import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
 import { validateProblemSetDraft } from '../functions/ProblemSetForm'
-import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
+import { buildResourceVisibilityPolicy } from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
-import { createRestrictedAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import { createRestrictedVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 import { sendAPI } from '@/system/api/api-message'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -100,7 +100,7 @@ function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageA
 export function useCreateProblemSetPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
-  const accessPolicyResult = buildResourceAccessPolicy(
+  const accessPolicyResult = buildResourceVisibilityPolicy(
     state.draft.baseAccess,
     state.draft.grantedUsersInput,
     state.draft.grantedGroupsInput,
@@ -136,7 +136,7 @@ export function useCreateProblemSetPageModel(canCreate: boolean) {
     isSubmitting: state.isSubmitting,
     errorMessage: state.errorMessage,
     successMessage: state.successMessage ? t('problemSet.message.createSuccess') : '',
-    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedAccessPolicy(),
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedVisibilityPolicy(),
     setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
     setTitle: (value: string) => dispatch({ type: 'set_title', value }),
     setDescription: (value: string) => dispatch({ type: 'set_description', value }),

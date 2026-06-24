@@ -8,7 +8,7 @@ import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
 import domains.problemset.objects.{ProblemSet, ProblemSetDescription, ProblemSetId, ProblemSetProblemSummary, ProblemSetSlug, ProblemSetTitle}
 import domains.problemset.objects.response.ProblemSetSummary
 import domains.user.objects.{DisplayName, UserIdentity, Username}
-import shared.objects.access.{BaseAccess, ResourceAccessPolicy}
+import shared.objects.access.{BaseAccess, ResourceVisibilityPolicy}
 import database.utils.{UserIdentityRow, UserIdentitySql}
 
 import java.sql.{PreparedStatement, ResultSet}
@@ -59,7 +59,7 @@ object ProblemSetTableSupport:
       title = parseColumn("problem_sets.title", resultSet.getString("title"), ProblemSetTitle.parse),
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
+        ResourceVisibilityPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil),
       author = readOptionalUserIdentity(resultSet, "author"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant
@@ -74,7 +74,7 @@ object ProblemSetTableSupport:
       description = parseColumn("problem_sets.description", resultSet.getString("description"), ProblemSetDescription.parse),
       problems = Nil,
       accessPolicy =
-        ResourceAccessPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil, Nil),
+        ResourceVisibilityPolicy(parseOptionalColumn("problem_sets.base_access", resultSet.getString("base_access"), decodeBaseAccessColumn), Nil),
       author = readOptionalUserIdentity(resultSet, "author"),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       updatedAt = resultSet.getTimestamp("updated_at").toInstant

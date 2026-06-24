@@ -12,7 +12,7 @@ export class RemoveUserGroupMember implements APIWithSessionMessage<UserGroupDet
   readonly apiPath: string
 
   constructor(userGroupSlug: UserGroupSlug, targetUsername: Username) {
-    this.apiPath = `user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/remove`
+    this.apiPath = `user-groups/${userGroupSlugValue(userGroupSlug)}/members/${usernameValue(targetUsername)}/unlink`
   }
 
   body(): undefined {

@@ -2,7 +2,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
-import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
@@ -10,7 +10,7 @@ import { useI18n } from '@/system/i18n/use-i18n'
  * 资源访问编辑器属性，包含当前策略、四类授权输入和对应变更回调。
  */
 type ResourceAccessEditorProps = {
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceVisibilityPolicy
   grantedUsersInput: string
   grantedGroupsInput: string
   grantedManagerUsersInput?: string

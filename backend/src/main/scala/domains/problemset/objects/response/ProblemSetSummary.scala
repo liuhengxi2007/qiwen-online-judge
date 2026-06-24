@@ -5,7 +5,7 @@ import domains.problemset.objects.*
 import domains.user.objects.UserIdentity
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import shared.objects.access.ResourceAccessPolicy
+import shared.objects.access.ResourceVisibilityPolicy
 
 import java.time.Instant
 import scala.util.Try
@@ -16,7 +16,7 @@ final case class ProblemSetSummary(
   slug: ProblemSetSlug,
   title: ProblemSetTitle,
   description: ProblemSetDescription,
-  accessPolicy: ResourceAccessPolicy,
+  accessPolicy: ResourceVisibilityPolicy,
   author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant

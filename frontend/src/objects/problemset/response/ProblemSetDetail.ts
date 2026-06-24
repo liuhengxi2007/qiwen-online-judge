@@ -4,7 +4,7 @@ import type { ProblemSetId } from '@/objects/problemset/ProblemSetId'
 import type { ProblemSetProblemSummary } from '@/objects/problemset/ProblemSetProblemSummary'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import type { ProblemSetTitle } from '@/objects/problemset/ProblemSetTitle'
-import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 import type { AuditFields } from '@/objects/shared/AuditFields'
 
 /** 题集详情响应；包含题目顺序、访问策略和作者信息。 */
@@ -14,6 +14,6 @@ export type ProblemSetDetail = AuditFields & {
   title: ProblemSetTitle
   description: ProblemSetDescription
   problems: ProblemSetProblemSummary[]
-  accessPolicy: ResourceAccessPolicy
+  accessPolicy: ResourceVisibilityPolicy
   author: UserIdentity | null
 }

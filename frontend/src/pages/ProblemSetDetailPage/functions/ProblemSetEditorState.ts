@@ -1,6 +1,9 @@
 import type { ProblemSetDetail } from '@/objects/problemset/response/ProblemSetDetail'
 import { usernameValue } from '@/objects/user/Username'
-import { grantedGroupsInputFromAccessPolicy, grantedUsersInputFromAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
+import {
+  grantedGroupsInputFromVisibilityPolicy,
+  grantedUsersInputFromVisibilityPolicy,
+} from '@/pages/components/ResourceAccessEditorInput'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 
 /**
@@ -59,8 +62,8 @@ export function reduceProblemSetEditorState(
             description: action.problemSet.description,
             authorUsername: action.problemSet.author ? usernameValue(action.problemSet.author.username) : '',
             baseAccess: action.problemSet.accessPolicy.baseAccess,
-            grantedUsersInput: grantedUsersInputFromAccessPolicy(action.problemSet.accessPolicy),
-            grantedGroupsInput: grantedGroupsInputFromAccessPolicy(action.problemSet.accessPolicy),
+            grantedUsersInput: grantedUsersInputFromVisibilityPolicy(action.problemSet.accessPolicy),
+            grantedGroupsInput: grantedGroupsInputFromVisibilityPolicy(action.problemSet.accessPolicy),
           }
         : initialProblemSetEditorState
     case 'set_title':

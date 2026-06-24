@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { validateProblemSetDraft } from './ProblemSetForm'
 
 describe('problem-set-form', () => {
-  it('builds problem set access policies without manager grants', () => {
+  it('builds viewer-only problem set visibility policies', () => {
     const result = validateProblemSetDraft({
       slug: 'sample-set',
       title: 'Sample Set',
@@ -20,7 +20,11 @@ describe('problem-set-form', () => {
 
     expect(result.request.accessPolicy).toMatchObject({
       baseAccess: 'restricted',
-      managerGrants: [],
+      viewerGrants: [
+        { kind: 'user_group', slug: 'reviewers' },
+        { kind: 'user', username: 'alice' },
+      ],
     })
+    expect('managerGrants' in result.request.accessPolicy).toBe(false)
   })
 })

@@ -16,15 +16,15 @@ import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
 
 import java.sql.Connection
 
-/** 从题单移除题目的认证 API，仅题目管理员可调用。 */
-object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, ProblemSlug), ProblemSetDetail]:
+/** 从题单解除题目关联的认证 API，仅题目管理员可调用。 */
+object UnlinkProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, ProblemSlug), ProblemSetDetail]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/problem-sets/:problemSetSlug/problems/:problemSlug/remove")
+  override val path: ApiPath = ApiPath("/api/problem-sets/:problemSetSlug/problems/:problemSlug/unlink")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[ProblemSetDetail] = summon[Encoder[ProblemSetDetail]]
 
-  /** 从路径解析题单 slug 和题目 slug，移除入口不读取请求体。 */
+  /** 从路径解析题单 slug 和题目 slug，解除关联入口不读取请求体。 */
   override def decode(request: Request[IO], pathParams: PathParams): IO[(ProblemSetSlug, ProblemSlug)] =
     val _ = request
     HttpApiError.fromEitherBadRequest(
@@ -34,7 +34,7 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
       yield (problemSetSlug, problemSlug)
     )
 
-  /** 校验全局题目管理权限和关联存在性后删除题单题目关联。 */
+  /** 校验全局题目管理权限和关联存在性后解除题单题目关联。 */
   override def plan(
     connection: Connection,
     actor: AuthenticatedUser,
@@ -63,6 +63,6 @@ object RemoveProblemFromProblemSet extends AuthenticatedApi[(ProblemSetSlug, Pro
       }
       updatedProblemSet <- ProblemSetTable.findBySlug(connection, problemSet.slug).flatMap {
         case Some(problemSet) => IO.pure(problemSet)
-        case None => HttpApiError.raise(HttpApiError.internal("Problem set disappeared after problem removal."))
+        case None => HttpApiError.raise(HttpApiError.internal("Problem set disappeared after problem unlink."))
       }
     yield ProblemSetDetail.fromProblemSet(updatedProblemSet)

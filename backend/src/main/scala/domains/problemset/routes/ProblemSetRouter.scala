@@ -10,7 +10,7 @@ import domains.problemset.api.CreateProblemSet
 import domains.problemset.api.AddProblemToProblemSet
 import domains.problemset.api.UpdateProblemSet
 import domains.problemset.api.DeleteProblemSet
-import domains.problemset.api.RemoveProblemFromProblemSet
+import domains.problemset.api.UnlinkProblemFromProblemSet
 import domains.problemset.api.ResolveProblemSetSlug
 import domains.auth.utils.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
@@ -31,7 +31,7 @@ object ProblemSetRouter:
         ListProblemSets,
         CreateProblemSet,
         AddProblemToProblemSet,
-        RemoveProblemFromProblemSet,
+        UnlinkProblemFromProblemSet,
         GetProblemSet,
         UpdateProblemSet,
         DeleteProblemSet,

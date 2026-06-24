@@ -20,7 +20,7 @@ import java.sql.Connection
 object RemoveUserGroupMember extends AuthenticatedApi[(UserGroupSlug, Username), UserGroupDetail]:
 
   override val method: Method = Method.POST
-  override val path: ApiPath = ApiPath("/api/user-groups/:groupSlug/members/:memberUsername/remove")
+  override val path: ApiPath = ApiPath("/api/user-groups/:groupSlug/members/:memberUsername/unlink")
   override val successStatus: Status = Status.Ok
   override protected val outputEncoder: Encoder[UserGroupDetail] = summon[Encoder[UserGroupDetail]]
 

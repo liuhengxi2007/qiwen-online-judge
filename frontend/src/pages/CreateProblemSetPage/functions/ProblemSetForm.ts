@@ -3,7 +3,7 @@ import { parseProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { parseProblemSetTitle } from '@/objects/problemset/ProblemSetTitle'
 import type { CreateProblemSetRequest } from '@/objects/problemset/request/CreateProblemSetRequest'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
-import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
+import { buildResourceVisibilityPolicy } from '@/pages/components/ResourceAccessEditorInput'
 
 /**
  * 创建题单表单草稿，保存 slug、标题、描述、访问策略和授权输入。
@@ -38,7 +38,7 @@ export function validateProblemSetDraft(
     return { ok: false, message: descriptionResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(
+  const accessPolicyResult = buildResourceVisibilityPolicy(
     draft.baseAccess,
     draft.grantedUsersInput,
     draft.grantedGroupsInput,

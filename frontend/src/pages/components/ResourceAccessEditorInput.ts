@@ -3,12 +3,17 @@ import { parseAccessUserGroupSlug } from '@/objects/shared/access/AccessUserGrou
 import { parseAccessUsername } from '@/objects/shared/access/AccessUsername'
 import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
 
 /**
  * 访问策略构造结果，成功时返回结构化策略，失败时返回首个校验错误。
  */
 type AccessPolicyBuildResult =
   | { ok: true; value: ResourceAccessPolicy }
+  | { ok: false; message: string }
+
+type VisibilityPolicyBuildResult =
+  | { ok: true; value: ResourceVisibilityPolicy }
   | { ok: false; message: string }
 
 /**
@@ -68,9 +73,51 @@ export function buildResourceAccessPolicy(
 }
 
 /**
+ * 从文本框输入构造 viewer-only 资源可见性策略；不包含资源级管理授权。
+ */
+export function buildResourceVisibilityPolicy(
+  baseAccess: BaseAccess,
+  grantedUsersInput: string,
+  grantedGroupsInput: string,
+): VisibilityPolicyBuildResult {
+  const parsedUsers = parseSubjects(
+    parseAccessSubjectInput(grantedUsersInput),
+    parseAccessUsername,
+    (username) => ({ kind: 'user' as const, username }),
+  )
+  if (!parsedUsers.ok) {
+    return parsedUsers
+  }
+
+  const parsedGroups = parseSubjects(
+    parseAccessSubjectInput(grantedGroupsInput),
+    parseAccessUserGroupSlug,
+    (slug) => ({ kind: 'user_group' as const, slug }),
+  )
+  if (!parsedGroups.ok) {
+    return parsedGroups
+  }
+
+  return {
+    ok: true,
+    value: {
+      baseAccess,
+      viewerGrants: dedupeAccessSubjects([...parsedGroups.value, ...parsedUsers.value]),
+    },
+  }
+}
+
+/**
  * 从访问策略提取 viewer 用户授权，输出适合文本框展示的逐行用户名。
  */
 export function grantedUsersInputFromAccessPolicy(accessPolicy: ResourceAccessPolicy): string {
+  return grantedUsersInputFromVisibilityPolicy(accessPolicy)
+}
+
+/**
+ * 从可见性策略提取 viewer 用户授权，输出适合文本框展示的逐行用户名。
+ */
+export function grantedUsersInputFromVisibilityPolicy(accessPolicy: ResourceVisibilityPolicy): string {
   return accessPolicy.viewerGrants
     .filter((grant): grant is Extract<AccessSubject, { kind: 'user' }> => grant.kind === 'user')
     .map((grant) => grant.username)
@@ -81,6 +128,13 @@ export function grantedUsersInputFromAccessPolicy(accessPolicy: ResourceAccessPo
  * 从访问策略提取 viewer 用户组授权，输出适合文本框展示的逐行用户组 slug。
  */
 export function grantedGroupsInputFromAccessPolicy(accessPolicy: ResourceAccessPolicy): string {
+  return grantedGroupsInputFromVisibilityPolicy(accessPolicy)
+}
+
+/**
+ * 从可见性策略提取 viewer 用户组授权，输出适合文本框展示的逐行用户组 slug。
+ */
+export function grantedGroupsInputFromVisibilityPolicy(accessPolicy: ResourceVisibilityPolicy): string {
   return accessPolicy.viewerGrants
     .filter((grant): grant is Extract<AccessSubject, { kind: 'user_group' }> => grant.kind === 'user_group')
     .map((grant) => grant.slug)

@@ -12,8 +12,8 @@ import { problemSetTitleValue } from '@/objects/problemset/ProblemSetTitle'
 import type { ProblemSetSlug } from '@/objects/problemset/ProblemSetSlug'
 import { useProblemSetDetailPageModel } from './hooks/useProblemSetDetailPageModel'
 import {
-  grantedGroupsInputFromAccessPolicy,
-  grantedUsersInputFromAccessPolicy,
+  grantedGroupsInputFromVisibilityPolicy,
+  grantedUsersInputFromVisibilityPolicy,
   normalizeAccessSubjectInput,
 } from '@/pages/components/ResourceAccessEditorInput'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
@@ -68,9 +68,9 @@ function ProblemSetDetailPageContent({
       model.authorUsername.trim() !== (model.problemSet.author ? usernameValue(model.problemSet.author.username) : '') ||
       model.baseAccess !== model.problemSet.accessPolicy.baseAccess ||
       normalizeAccessSubjectInput(model.grantedUsersInput) !==
-        grantedUsersInputFromAccessPolicy(model.problemSet.accessPolicy) ||
+        grantedUsersInputFromVisibilityPolicy(model.problemSet.accessPolicy) ||
       normalizeAccessSubjectInput(model.grantedGroupsInput) !==
-        grantedGroupsInputFromAccessPolicy(model.problemSet.accessPolicy) ||
+        grantedGroupsInputFromVisibilityPolicy(model.problemSet.accessPolicy) ||
       model.linkProblemSlug.trim().length > 0)
 
   useBeforeUnloadPrompt(hasUnsavedChanges)

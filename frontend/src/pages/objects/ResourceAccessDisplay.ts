@@ -1,5 +1,8 @@
 import type { AccessSubject } from '@/objects/shared/access/AccessSubject'
 import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+import type { ResourceVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
+
+type ResourceAccessDisplayPolicy = ResourceAccessPolicy | ResourceVisibilityPolicy
 
 /**
  * 访问控制展示层使用的翻译函数形态，允许在组件外 fallback 到英文文案。
@@ -9,7 +12,7 @@ type Translate = (key: string, values?: Record<string, string | number>) => stri
 /**
  * 生成资源访问徽标文案，区分公开、授权共享和受限三种业务状态。
  */
-export function resourceAccessBadgeLabel(accessPolicy: ResourceAccessPolicy, t?: Translate): string {
+export function resourceAccessBadgeLabel(accessPolicy: ResourceAccessDisplayPolicy, t?: Translate): string {
   if (accessPolicy.baseAccess === 'public') {
     return t ? t('resourceAccess.badge.public') : 'Public'
   }
@@ -22,11 +25,12 @@ export function resourceAccessBadgeLabel(accessPolicy: ResourceAccessPolicy, t?:
 /**
  * 生成人类可读的资源访问摘要，概括查看者授权和管理者授权边界。
  */
-export function resourceAccessSummary(accessPolicy: ResourceAccessPolicy, t?: Translate): string {
+export function resourceAccessSummary(accessPolicy: ResourceAccessDisplayPolicy, t?: Translate): string {
   const directUsers = accessPolicy.viewerGrants.filter((grant: AccessSubject) => grant.kind === 'user').length
   const userGroups = accessPolicy.viewerGrants.filter((grant: AccessSubject) => grant.kind === 'user_group').length
-  const managerUsers = accessPolicy.managerGrants.filter((grant: AccessSubject) => grant.kind === 'user').length
-  const managerGroups = accessPolicy.managerGrants.filter((grant: AccessSubject) => grant.kind === 'user_group').length
+  const managerGrants = 'managerGrants' in accessPolicy ? accessPolicy.managerGrants : []
+  const managerUsers = managerGrants.filter((grant: AccessSubject) => grant.kind === 'user').length
+  const managerGroups = managerGrants.filter((grant: AccessSubject) => grant.kind === 'user_group').length
 
   const visibilitySummary =
     accessPolicy.baseAccess === 'public'

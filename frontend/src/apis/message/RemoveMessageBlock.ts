@@ -10,7 +10,7 @@ export class RemoveMessageBlock implements APIWithSessionMessage<SuccessResponse
   readonly apiPath: string
 
   constructor(targetUsername: Username) {
-    this.apiPath = `messages/blocks/${encodeURIComponent(usernameValue(targetUsername))}/remove`
+    this.apiPath = `messages/blocks/${encodeURIComponent(usernameValue(targetUsername))}/unlink`
   }
 
   body(): undefined {

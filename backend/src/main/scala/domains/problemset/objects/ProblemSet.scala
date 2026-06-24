@@ -3,7 +3,7 @@ package domains.problemset.objects
 
 
 import domains.user.objects.UserIdentity
-import shared.objects.access.ResourceAccessPolicy
+import shared.objects.access.ResourceVisibilityPolicy
 
 import java.time.Instant
 
@@ -14,7 +14,7 @@ final case class ProblemSet(
   title: ProblemSetTitle,
   description: ProblemSetDescription,
   problems: List[ProblemSetProblemSummary],
-  accessPolicy: ResourceAccessPolicy,
+  accessPolicy: ResourceVisibilityPolicy,
   author: Option[UserIdentity],
   createdAt: Instant,
   updatedAt: Instant
