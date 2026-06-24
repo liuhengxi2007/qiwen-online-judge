@@ -84,7 +84,7 @@ function collectFiles(relativePath) {
   const stats = statSync(absolutePath)
 
   if (stats.isFile()) {
-    return isCountableFile(absolutePath) ? [relativePath] : []
+    return isCountableFile(relativePath) ? [relativePath] : []
   }
 
   return walkDirectory(relativePath)
@@ -112,7 +112,17 @@ function walkDirectory(relativeDirectory) {
 }
 
 function isCountableFile(pathname) {
-  return textExtensions.has(extname(pathname))
+  return textExtensions.has(extname(pathname)) && !isTestFile(pathname)
+}
+
+function isTestFile(pathname) {
+  const normalizedPath = pathname.split('\\').join('/')
+  const filename = normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1)
+
+  return (
+    /(^|\/)(test|tests|__tests__)\//.test(normalizedPath) ||
+    /\.(test|spec)\.[^.]+$/.test(filename)
+  )
 }
 
 function countLines(relativePath) {
