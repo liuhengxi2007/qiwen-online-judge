@@ -63,8 +63,8 @@ export function ProblemSetPage() {
     >
       <div className="space-y-6">
         {model.errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -81,7 +81,7 @@ export function ProblemSetPage() {
                 </div>
               </div>
               {canCreate ? (
-                <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
+                <Button asChild variant="create">
                   <Link to="/problem-sets/new">
                     <BookPlus className="size-4" />
                     {t('problemSet.list.create')}

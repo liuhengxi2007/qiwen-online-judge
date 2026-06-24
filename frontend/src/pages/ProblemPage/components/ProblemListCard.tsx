@@ -64,7 +64,7 @@ export function ProblemListCard({
             </div>
           </div>
           {canCreate ? (
-            <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
+            <Button asChild variant="create">
               <Link to="/problems/new">
                 <FilePlus2 className="size-4" />
                 {t('problem.list.create')}
@@ -93,15 +93,10 @@ export function ProblemListCard({
             />
           </div>
           <div className="flex gap-3">
-            <Button type="button" className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800" onClick={onApplyQuery}>
+            <Button type="button" onClick={onApplyQuery}>
               {t('problem.list.searchApply')}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-2xl border-slate-300 bg-white"
-              onClick={onClearQuery}
-            >
+            <Button type="button" variant="outline" onClick={onClearQuery}>
               {t('problem.list.searchClear')}
             </Button>
           </div>

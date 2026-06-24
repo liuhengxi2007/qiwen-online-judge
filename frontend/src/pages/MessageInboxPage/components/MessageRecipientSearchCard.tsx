@@ -3,6 +3,7 @@ import { MessageSquareMore, Search } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { RowAction } from '@/components/ui/row-action'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
@@ -48,8 +49,8 @@ export function MessageRecipientSearchCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {searchError ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{searchError}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{searchError}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
@@ -66,10 +67,9 @@ export function MessageRecipientSearchCard({
             {suggestions
               .filter((suggestion) => suggestion.username !== currentUsername)
               .map((suggestion) => (
-                <button
+                <RowAction
                   key={usernameValue(suggestion.username)}
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-cyan-300 hover:bg-cyan-50"
+                  variant="accent"
                   onClick={() => onSuggestionSelect(suggestion.username)}
                 >
                   <div>
@@ -77,7 +77,7 @@ export function MessageRecipientSearchCard({
                     <p className="text-sm text-slate-600">@{usernameValue(suggestion.username)}</p>
                   </div>
                   <span className="text-sm font-medium text-cyan-700">{t('messages.openConversation')}</span>
-                </button>
+                </RowAction>
               ))}
           </div>
         </div>

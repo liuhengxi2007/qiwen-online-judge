@@ -64,7 +64,6 @@ export function MessageInboxCard({
             type="button"
             variant="outline"
             disabled={totalUnreadCount === 0 || isMarkingAllRead}
-            className="rounded-2xl border-slate-300 bg-white"
             onClick={onMarkAllRead}
           >
             {isMarkingAllRead ? t('messages.markingRead') : t('messages.markAllRead')}
@@ -73,13 +72,13 @@ export function MessageInboxCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {inboxActionError ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{inboxActionError}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{inboxActionError}</AlertDescription>
           </Alert>
         ) : null}
         {inboxError ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{inboxError}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{inboxError}</AlertDescription>
           </Alert>
         ) : null}
         {isLoadingInbox && conversations.length === 0 ? <p className="text-sm text-slate-500">{t('common.loading')}</p> : null}

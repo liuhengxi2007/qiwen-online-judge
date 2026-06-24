@@ -82,8 +82,8 @@ function ProblemSetDetailPageContent({
         mainClassName="bg-[linear-gradient(180deg,#fdf8fb_0%,#f4edf7_48%,#ecf3fb_100%)]"
       >
         {!model.isLoading && !model.problemSet && model.loadErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.loadErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
 

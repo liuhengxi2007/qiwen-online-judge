@@ -69,17 +69,17 @@ export function ProblemSetAccessDialog({
             onGrantedUsersInputChange={onGrantedUsersInputChange}
             onGrantedGroupsInputChange={onGrantedGroupsInputChange}
           />
-          <Button type="button" className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800" disabled={isSaving} onClick={onSave}>
+          <Button type="button" disabled={isSaving} onClick={onSave}>
             {isSaving ? t('problemSet.detail.savingAccess') : t('problemSet.detail.saveAccess')}
           </Button>
           {errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           ) : null}
           {successMessage ? (
-            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-              <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
+            <Alert variant="success">
+              <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           ) : null}
         </div>

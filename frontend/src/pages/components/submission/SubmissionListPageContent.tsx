@@ -40,8 +40,8 @@ export function SubmissionListPageContent({ fixedProblemSlugFilter, contestSlug,
   return (
     <PageShell title={t(titleKey)} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf4fb_100%)]">
       {model.submissionQuery.errorMessage ? (
-        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{model.submissionQuery.errorMessage}</AlertDescription>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{model.submissionQuery.errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 

@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { RowAction } from '@/components/ui/row-action'
 import type { MessageBlockEntry } from '@/objects/message/response/MessageBlockEntry'
 import { usernameValue } from '@/objects/user/Username'
 import type { UserIdentity } from '@/objects/user/UserIdentity'
@@ -54,8 +55,8 @@ export function MessageBlockListCard({
       </CardHeader>
       <CardContent className="space-y-5">
         {blockErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{blockErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{blockErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
@@ -70,10 +71,9 @@ export function MessageBlockListCard({
           </div>
           <div className="space-y-2">
             {visibleBlockSuggestions.map((suggestion) => (
-              <button
+              <RowAction
                 key={usernameValue(suggestion.username)}
-                type="button"
-                className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-rose-300 hover:bg-rose-50"
+                variant="destructive"
                 disabled={isUpdatingBlocks}
                 onClick={() => {
                   void addBlock(suggestion.username)
@@ -84,7 +84,7 @@ export function MessageBlockListCard({
                   <p className="text-sm text-slate-600">@{usernameValue(suggestion.username)}</p>
                 </div>
                 <span className="text-sm font-medium text-rose-700">{t('messages.blockAdd')}</span>
-              </button>
+              </RowAction>
             ))}
           </div>
         </div>
@@ -102,8 +102,7 @@ export function MessageBlockListCard({
               </div>
               <Button
                 type="button"
-                variant="outline"
-                className="rounded-2xl border-rose-300 bg-white text-rose-950"
+                variant="destructiveOutline"
                 disabled={isUpdatingBlocks}
                 onClick={() => {
                   void removeBlock(entry.user.username)

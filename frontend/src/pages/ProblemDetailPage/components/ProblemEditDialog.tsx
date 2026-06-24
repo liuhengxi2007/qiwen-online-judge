@@ -88,7 +88,6 @@ export function ProblemEditDialog({
           </div>
           <Button
             type="button"
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
             disabled={model.isSaving}
             onClick={() => {
               void model.saveContent()
@@ -97,13 +96,13 @@ export function ProblemEditDialog({
             {model.isSaving ? t('problem.detail.savingContent') : t('problem.detail.saveContent')}
           </Button>
           {model.contentErrorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.contentErrorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{model.contentErrorMessage}</AlertDescription>
             </Alert>
           ) : null}
           {model.contentSuccessMessage ? (
-            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-              <AlertDescription className="text-emerald-700">{model.contentSuccessMessage}</AlertDescription>
+            <Alert variant="success">
+              <AlertDescription>{model.contentSuccessMessage}</AlertDescription>
             </Alert>
           ) : null}
 
@@ -133,8 +132,7 @@ export function ProblemEditDialog({
                 trigger={
                   <Button
                     type="button"
-                    variant="outline"
-                    className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                    variant="destructiveOutline"
                     disabled={model.isDeleting}
                   >
                     {model.isDeleting ? t('problem.detail.deletingAction') : t('problem.detail.deleteAction')}

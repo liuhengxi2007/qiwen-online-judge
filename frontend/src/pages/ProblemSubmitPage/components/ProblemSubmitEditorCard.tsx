@@ -74,23 +74,22 @@ export function ProblemSubmitEditorCard({
         </div>
 
         {errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
         {statusMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{statusMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{statusMessage}</AlertDescription>
           </Alert>
         ) : null}
 
         <div className="flex flex-wrap gap-3">
           <Button
             type="button"
-            variant="outline"
+            variant="create"
             disabled={isSubmitting}
-            className="rounded-2xl border-slate-300 bg-white"
             onClick={onAddProgram}
           >
             <Plus className="size-4" />
@@ -99,7 +98,6 @@ export function ProblemSubmitEditorCard({
           <Button
             type="button"
             disabled={isSubmitting || !canSubmit}
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
             onClick={onSubmit}
           >
             <Send className="size-4" />
@@ -177,9 +175,9 @@ function ProblemSubmitProgramEditor({
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="destructiveOutline"
           disabled={isSubmitting || isOnlyProgram}
-          className="h-11 rounded-2xl border-slate-300 bg-white"
+          className="h-11"
           onClick={() => {
             onRemoveProgram(program.id)
           }}

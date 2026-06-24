@@ -47,8 +47,7 @@ export function ProblemSetDeleteCard({ isDeleting, onDeleteProblemSet }: Problem
           trigger={
             <Button
               type="button"
-              variant="outline"
-              className="rounded-2xl border-rose-300 bg-white text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+              variant="destructiveOutline"
               disabled={isDeleting}
             >
               {isDeleting ? t('problemSet.detail.deletingAction') : t('problemSet.detail.deleteAction')}

@@ -61,8 +61,7 @@ export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageMo
         </div>
         <Button
           type="button"
-          variant="outline"
-          className="rounded-2xl border-slate-300 bg-white"
+          variant="create"
           disabled={model.isAddingMember}
           onClick={() => {
             void model.addMember()
@@ -71,13 +70,13 @@ export function UserGroupAddMemberCard({ model }: { model: UserGroupDetailPageMo
           {model.isAddingMember ? t('userGroup.detail.addingMember') : t('userGroup.detail.addMember')}
         </Button>
         {model.addMemberErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.addMemberErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.addMemberErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {model.addMemberSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.addMemberSuccessMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{model.addMemberSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
       </CardContent>

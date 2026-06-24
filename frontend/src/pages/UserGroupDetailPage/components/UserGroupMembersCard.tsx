@@ -104,9 +104,9 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
                     {removeDisabled ? (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="destructiveOutline"
                         size="sm"
-                        className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                        className="size-8 rounded-full p-0"
                         aria-label={`Remove ${displayNameValue(member.displayName)} from the group`}
                         disabled
                       >
@@ -124,9 +124,9 @@ export function UserGroupMembersCard({ model, setOwnershipTargetUsername }: User
                         trigger={
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="destructiveOutline"
                             size="sm"
-                            className="size-8 rounded-full border-rose-300 bg-white p-0 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                            className="size-8 rounded-full p-0"
                             aria-label={`Remove ${displayNameValue(member.displayName)} from the group`}
                           >
                             <Trash2 className="size-4" />

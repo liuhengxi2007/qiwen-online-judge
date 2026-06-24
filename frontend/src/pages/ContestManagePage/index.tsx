@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RowAction } from '@/components/ui/row-action'
 import { contestProblemAliasValue } from '@/objects/contest/ContestProblemAlias'
 import { contestSlugValue, parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
@@ -61,8 +62,8 @@ function ContestManagePageContent({ contestSlug }: { contestSlug: ContestSlug })
       {model.isLoading ? (
         <PageLoadingCard message={t('contest.manage.loading')} />
       ) : model.loadErrorMessage ? (
-        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{model.loadErrorMessage}</AlertDescription>
+        <Alert variant="destructive">
+          <AlertDescription>{model.loadErrorMessage}</AlertDescription>
         </Alert>
       ) : model.contest && model.draft ? (
         model.contest.canManage ? (
@@ -71,8 +72,8 @@ function ContestManagePageContent({ contestSlug }: { contestSlug: ContestSlug })
             <ContestManageProblemCard model={model} contest={model.contest} />
           </div>
         ) : (
-          <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
-            <AlertDescription className="text-amber-900">{t('contest.manage.permissionRequired')}</AlertDescription>
+          <Alert variant="warning">
+            <AlertDescription>{t('contest.manage.permissionRequired')}</AlertDescription>
           </Alert>
         )
       ) : null}
@@ -143,13 +144,13 @@ function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestM
         />
 
         {model.saveErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.saveErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.saveErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {model.saveSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.saveSuccessMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{model.saveSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -157,7 +158,6 @@ function ContestManageFormCard({ model }: { model: ReturnType<typeof useContestM
           <Button
             type="button"
             disabled={model.isSaving}
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
             onClick={() => {
               void model.save()
             }}
@@ -194,13 +194,13 @@ function ContestManageProblemCard({
       </CardHeader>
       <CardContent className="space-y-5">
         {model.problemErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.problemErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.problemErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {model.problemSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.problemSuccessMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{model.problemSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -254,9 +254,8 @@ function ContestManageProblemCard({
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="destructiveOutline"
                     disabled={model.removingProblemSlug === problemSlugValue(problem.slug)}
-                    className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
                     onClick={() => {
                       void model.removeProblem(problemSlugValue(problem.slug))
                     }}
@@ -312,21 +311,20 @@ function ProblemAttachInput({
             <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
           ) : (
             suggestions.map((suggestion) => (
-              <button
+              <RowAction
                 key={problemSlugValue(suggestion.slug)}
-                type="button"
-                className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                size="compact"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => onSuggestionSelect(suggestion)}
               >
                 <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
                 <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
-              </button>
+              </RowAction>
             ))
           )}
         </div>
       ) : null}
-      <Button type="button" disabled={isAttaching} className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400" onClick={onAttach}>
+      <Button type="button" variant="create" disabled={isAttaching} onClick={onAttach}>
         {isAttaching ? t('contest.detail.attachingProblem') : t('contest.detail.attachProblem')}
       </Button>
     </div>

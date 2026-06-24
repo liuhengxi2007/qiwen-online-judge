@@ -44,13 +44,13 @@ export function ProblemSetLinkProblemCard({
       </div>
       <div className="mt-5 space-y-3">
         {linkErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{linkErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{linkErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {linkSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{linkSuccessMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{linkSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
@@ -65,8 +65,7 @@ export function ProblemSetLinkProblemCard({
         </div>
         <Button
           type="button"
-          variant="outline"
-          className="rounded-2xl border-slate-300 bg-white"
+          variant="create"
           disabled={activeLink}
           onClick={onAttachProblem}
         >

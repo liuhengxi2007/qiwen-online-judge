@@ -90,7 +90,6 @@ export function ProblemAccessDialog({
           </div>
           <Button
             type="button"
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
             disabled={model.isSaving}
             onClick={() => {
               void model.saveAccess()
@@ -99,13 +98,13 @@ export function ProblemAccessDialog({
             {model.isSaving ? t('problem.detail.savingAccess') : t('problem.detail.saveAccess')}
           </Button>
           {model.accessErrorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.accessErrorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{model.accessErrorMessage}</AlertDescription>
             </Alert>
           ) : null}
           {model.accessSuccessMessage ? (
-            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-              <AlertDescription className="text-emerald-700">{model.accessSuccessMessage}</AlertDescription>
+            <Alert variant="success">
+              <AlertDescription>{model.accessSuccessMessage}</AlertDescription>
             </Alert>
           ) : null}
         </div>

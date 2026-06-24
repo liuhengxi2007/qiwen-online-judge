@@ -83,8 +83,8 @@ function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
         </CardHeader>
         <CardContent className="space-y-5">
           {!canCreate ? (
-            <Alert className="rounded-2xl border-amber-200 bg-amber-50/95">
-              <AlertDescription className="text-amber-900">{t('problem.create.permissionRequired')}</AlertDescription>
+            <Alert variant="warning">
+              <AlertDescription>{t('problem.create.permissionRequired')}</AlertDescription>
             </Alert>
           ) : null}
           <div className="space-y-2">
@@ -147,19 +147,19 @@ function CreateProblemPageContent({ canCreate }: { canCreate: boolean }) {
           </div>
 
           {model.errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{model.errorMessage}</AlertDescription>
             </Alert>
           ) : null}
           {model.successMessage ? (
-            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-              <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+            <Alert variant="success">
+              <AlertDescription>{model.successMessage}</AlertDescription>
             </Alert>
           ) : null}
           <Button
             type="button"
             disabled={model.isSubmitting || !canCreate}
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+            variant="create"
             onClick={() => {
               void model.submit().then((createdProblem) => {
                 if (createdProblem) {

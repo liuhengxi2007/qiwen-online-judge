@@ -77,8 +77,8 @@ function ProblemDataPageContent({ contestSlug, problemSlug }: { contestSlug?: Co
           <ProblemDataFilesCard model={model} />
         </div>
       ) : (
-        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">
+        <Alert variant="destructive">
+          <AlertDescription>
             {model.problemErrorMessage || t('problem.data.loadFailed')}
           </AlertDescription>
         </Alert>

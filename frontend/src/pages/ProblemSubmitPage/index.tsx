@@ -84,8 +84,8 @@ function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: 
   return (
     <PageShell title={t('problem.submit.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)]">
       {detailQuery.errorMessage ? (
-        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{detailQuery.errorMessage}</AlertDescription>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{detailQuery.errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 

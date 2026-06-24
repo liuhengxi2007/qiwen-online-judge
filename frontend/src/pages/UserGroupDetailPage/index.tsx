@@ -81,8 +81,8 @@ function UserGroupDetailPageContent({
         mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#eff4fb_100%)]"
       >
         {!model.isLoading && !model.userGroup && model.errorMessage ? (
-          <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 

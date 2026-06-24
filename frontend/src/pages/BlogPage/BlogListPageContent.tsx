@@ -68,8 +68,8 @@ export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }:
     <PageShell title={t('blog.heading')} mainClassName="bg-[linear-gradient(180deg,#fff7ed_0%,#eef6ff_100%)]">
       <div className="space-y-6">
         {model.errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -86,7 +86,7 @@ export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }:
                 </div>
               </div>
               {canCreateBlog ? (
-                <Button asChild className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400">
+                <Button asChild variant="create">
                   <Link to="/blogs/new">
                     <PenLine className="size-4" />
                     {t('blog.list.create')}
@@ -133,8 +133,7 @@ export function BlogListPageContent({ authorUsernameFilter, problemSlugFilter }:
                     canManageProblemLinks ? (
                       <Button
                         type="button"
-                        variant="outline"
-                        className="rounded-2xl border-rose-200 bg-white text-rose-700"
+                        variant="destructiveOutline"
                         onClick={() => void model.removeProblemLink(blog.id)}
                       >
                         {t('blog.problem.unlink')}

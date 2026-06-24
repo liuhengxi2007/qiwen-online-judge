@@ -79,19 +79,19 @@ export function CreateUserGroupPage() {
           </div>
 
           {model.errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{model.errorMessage}</AlertDescription>
             </Alert>
           ) : null}
           {model.successMessage ? (
-            <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-              <AlertDescription className="text-emerald-700">{model.successMessage}</AlertDescription>
+            <Alert variant="success">
+              <AlertDescription>{model.successMessage}</AlertDescription>
             </Alert>
           ) : null}
           <Button
             type="button"
             disabled={model.isSubmitting}
-            className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
+            variant="create"
             onClick={() => {
               void model.submit().then((createdGroup) => {
                 if (createdGroup) {

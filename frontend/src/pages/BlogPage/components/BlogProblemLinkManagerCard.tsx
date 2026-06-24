@@ -37,7 +37,7 @@ export function BlogProblemLinkManagerCard({
         <Button
           type="button"
           disabled={isLinking}
-          className="rounded-2xl bg-orange-300 text-orange-950 hover:bg-orange-400"
+          variant="create"
           onClick={onSubmit}
         >
           {isLinking ? t('common.loading') : t('blog.problem.linkSubmit')}

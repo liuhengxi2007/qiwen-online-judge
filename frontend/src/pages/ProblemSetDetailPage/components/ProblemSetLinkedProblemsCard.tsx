@@ -54,13 +54,13 @@ export function ProblemSetLinkedProblemsCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {successMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{successMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         ) : null}
         {problems.length === 0 ? (
@@ -116,8 +116,7 @@ function LinkedProblemItem({
         {canManageProblems ? (
           <Button
             type="button"
-            variant="outline"
-            className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+            variant="destructiveOutline"
             disabled={activeRemovingProblemSlug === problem.slug}
             onClick={() => {
               onRemoveProblem(problem.slug)

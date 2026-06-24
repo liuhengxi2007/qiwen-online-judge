@@ -58,8 +58,8 @@ export function UserGroupPage() {
   return (
     <PageShell title={t('userGroup.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f8_100%)]">
       {model.errorMessage ? (
-        <Alert variant="destructive" className="mb-6 rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{model.errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -75,7 +75,7 @@ export function UserGroupPage() {
                 <CardDescription>{t('userGroup.list.cardDescription')}</CardDescription>
               </div>
             </div>
-            <Button asChild className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400">
+            <Button asChild variant="create">
               <Link to="/user-groups/new">
                 <Users className="size-4" />
                 {t('userGroup.list.create')}

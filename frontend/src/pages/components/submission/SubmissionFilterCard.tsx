@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RowAction } from '@/components/ui/row-action'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import type { ProblemSuggestion } from '@/objects/problem/response/ProblemSuggestion'
@@ -138,16 +139,15 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                   <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
                 ) : (
                   userSuggestions.map((suggestion) => (
-                    <button
+                    <RowAction
                       key={usernameValue(suggestion.username)}
-                      type="button"
-                      className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                      size="compact"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => props.onUsernameSuggestionSelect(usernameValue(suggestion.username))}
                     >
                       <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
                       <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
-                    </button>
+                    </RowAction>
                   ))
                 )}
               </div>
@@ -186,16 +186,15 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
                     <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
                   ) : (
                     problemSuggestions.map((suggestion) => (
-                      <button
+                      <RowAction
                         key={problemSlugValue(suggestion.slug)}
-                        type="button"
-                        className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm hover:bg-white"
+                        size="compact"
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => props.onProblemSuggestionSelect(problemSlugValue(suggestion.slug))}
                       >
                         <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
                         <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
-                      </button>
+                      </RowAction>
                     ))
                   )}
                 </div>
@@ -251,7 +250,7 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="shrink-0 rounded-2xl border-slate-300 bg-white"
+                className="shrink-0"
                 onClick={props.onToggleDirection}
               >
                 {activeDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
@@ -261,10 +260,10 @@ export function SubmissionFilterCard(props: SubmissionFilterCardProps) {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="button" className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800" onClick={props.onApplyFilters}>
+          <Button type="button" onClick={props.onApplyFilters}>
             {t('submission.filter.apply')}
           </Button>
-          <Button type="button" variant="outline" className="rounded-2xl border-slate-300 bg-white" onClick={props.onClearFilters}>
+          <Button type="button" variant="outline" onClick={props.onClearFilters}>
             {t('submission.filter.clear')}
           </Button>
         </div>

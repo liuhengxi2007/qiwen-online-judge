@@ -64,20 +64,20 @@ export function ContestPage() {
     <PageShell title={t('contest.heading')} mainClassName="bg-[linear-gradient(180deg,#f0fdfa_0%,#ecfeff_48%,#f8fafc_100%)]">
       <div className="space-y-6">
         {model.errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
         {searchParams.get('created') ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{t('contest.list.created')}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{t('contest.list.created')}</AlertDescription>
           </Alert>
         ) : null}
 
         {model.registrationMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.registrationMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{model.registrationMessage}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -94,7 +94,7 @@ export function ContestPage() {
                 </div>
               </div>
               {canCreate ? (
-                <Button asChild className="rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400">
+                <Button asChild variant="create">
                   <Link to="/contests/new">
                     <CalendarPlus className="size-4" />
                     {t('contest.list.create')}
@@ -135,15 +135,13 @@ export function ContestPage() {
                       <Button
                         type="button"
                         disabled={isUpdating || isLocked}
-                        variant={isRegistered || hasStarted ? 'outline' : 'default'}
+                        variant={isRegistered && !hasStarted ? 'destructiveOutline' : isRegistered || hasStarted ? 'outline' : 'default'}
                         className={
                           isRegistered && hasStarted
                             ? 'rounded-2xl border-emerald-200 bg-white text-emerald-700 hover:bg-white hover:text-emerald-700'
-                            : isRegistered
-                              ? 'rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800'
                             : hasStarted
                               ? 'rounded-2xl border-slate-200 bg-white text-slate-500 hover:bg-white hover:text-slate-500'
-                              : 'rounded-2xl bg-cyan-300 text-cyan-950 hover:bg-cyan-400'
+                              : undefined
                         }
                         onClick={() => {
                           if (!isLocked) {

@@ -77,20 +77,19 @@ export function ProblemSetContentEditorCard({
       </div>
       <Button
         type="button"
-        className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
         disabled={isSaving}
         onClick={onSaveContent}
       >
         {isSaving ? t('problemSet.detail.savingContent') : t('problemSet.detail.saveContent')}
       </Button>
       {contentErrorMessage ? (
-        <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-          <AlertDescription className="text-rose-700">{contentErrorMessage}</AlertDescription>
+        <Alert variant="destructive">
+          <AlertDescription>{contentErrorMessage}</AlertDescription>
         </Alert>
       ) : null}
       {contentSuccessMessage ? (
-        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-          <AlertDescription className="text-emerald-700">{contentSuccessMessage}</AlertDescription>
+        <Alert variant="success">
+          <AlertDescription>{contentSuccessMessage}</AlertDescription>
         </Alert>
       ) : null}
     </>

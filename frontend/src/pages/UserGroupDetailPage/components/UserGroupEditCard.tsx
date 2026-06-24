@@ -52,7 +52,6 @@ export function UserGroupEditCard({ model }: { model: UserGroupDetailPageModel }
         </div>
         <Button
           type="button"
-          className="rounded-2xl bg-sky-300 text-sky-950 hover:bg-sky-400"
           disabled={model.isSaving}
           onClick={() => {
             void model.save()
@@ -61,13 +60,13 @@ export function UserGroupEditCard({ model }: { model: UserGroupDetailPageModel }
           {model.isSaving ? t('userGroup.detail.saving') : t('userGroup.detail.save')}
         </Button>
         {model.saveErrorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.saveErrorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.saveErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
         {model.saveSuccessMessage ? (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{model.saveSuccessMessage}</AlertDescription>
+          <Alert variant="success">
+            <AlertDescription>{model.saveSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
       </CardContent>

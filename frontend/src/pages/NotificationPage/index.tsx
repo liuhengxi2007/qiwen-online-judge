@@ -5,6 +5,7 @@ import { Bell, ChevronRight } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { RowAction } from '@/components/ui/row-action'
 import { useSessionGuard } from '@/pages/hooks/useSessionGuard'
 import { useNotificationActions } from './hooks/useNotificationActions'
 import { useNotificationRefresh } from '@/pages/hooks/useNotificationRefresh'
@@ -107,13 +108,13 @@ export function NotificationPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {notificationActions.actionError ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{notificationActions.actionError}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{notificationActions.actionError}</AlertDescription>
             </Alert>
           ) : null}
           {listError ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{listError}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{listError}</AlertDescription>
             </Alert>
           ) : null}
           {isLoadingList && notifications.length === 0 ? <p className="text-sm text-slate-500">{t('common.loading')}</p> : null}
@@ -128,14 +129,10 @@ export function NotificationPage() {
                 ? formatUserDisplayLabel(notification.actor, session.preferences.displayMode)
                 : t('notifications.systemActor')
               return (
-                <button
+                <RowAction
                   key={notification.id}
-                  type="button"
-                  className={`flex w-full items-start justify-between gap-4 rounded-3xl border px-5 py-4 text-left transition ${
-                    notification.isRead
-                      ? 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                      : 'border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100/60'
-                  }`}
+                  size="spacious"
+                  variant={notification.isRead ? 'default' : 'warning'}
                   onClick={() => {
                     void notificationActions.markReadIfNeeded(notification.id, notification.isRead).then(() => {
                       navigate(notification.targetAnchor ? `${notification.targetPath}#${notification.targetAnchor}` : notification.targetPath)
@@ -159,7 +156,7 @@ export function NotificationPage() {
                     </p>
                   </div>
                   <ChevronRight className="mt-1 size-4 shrink-0 text-slate-400" />
-                </button>
+                </RowAction>
               )
             })}
           </div>

@@ -106,8 +106,8 @@ function ProblemPageContent({ canCreate }: { canCreate: boolean }) {
     <PageShell title={t('problem.list.heading')} mainClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#edf5f1_100%)]">
       <div className="space-y-6">
         {model.errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 

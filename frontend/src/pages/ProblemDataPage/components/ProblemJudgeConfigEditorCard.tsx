@@ -50,7 +50,6 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
               type="button"
               variant="outline"
               disabled={editor.isLoading || editor.isSaving}
-              className="rounded-2xl border-slate-300 bg-white"
               onClick={() => {
                 void editor.loadConfig()
               }}
@@ -62,7 +61,6 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
               type="button"
               variant="outline"
               disabled={editor.isSaving}
-              className="rounded-2xl border-slate-300 bg-white"
               onClick={editor.resetTemplate}
             >
               <RotateCcw className="size-4" />
@@ -71,7 +69,6 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
             <Button
               type="button"
               disabled={editor.isSaving || editor.isLoading || !editor.isDirty}
-              className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
               onClick={() => {
                 void editor.saveConfig()
               }}
@@ -96,7 +93,7 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
               <Button
                 type="button"
                 disabled={model.isSavingReady || editor.isLoading || editor.isDirty || !editor.validation.ok}
-                className="rounded-2xl bg-emerald-700 text-white hover:bg-emerald-800"
+                variant="success"
                 onClick={() => {
                   void model.setReady(true)
                 }}
@@ -128,8 +125,8 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
         </div>
 
         {!editor.validation.ok ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="space-y-1 text-rose-700">
+          <Alert variant="destructive">
+            <AlertDescription className="space-y-1">
               {editor.validation.errors.slice(0, 8).map((error) => (
                 <p key={error}>{error}</p>
               ))}
@@ -137,8 +134,8 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
             </AlertDescription>
           </Alert>
         ) : (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="flex items-center gap-2 text-emerald-700">
+          <Alert variant="success">
+            <AlertDescription className="flex items-center gap-2">
               <CheckCircle2 className="size-4" />
               {t('problem.data.judgeConfig.valid')}
             </AlertDescription>
@@ -146,8 +143,8 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
         )}
 
         {editor.errorMessage ? (
-          <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{editor.errorMessage}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{editor.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 

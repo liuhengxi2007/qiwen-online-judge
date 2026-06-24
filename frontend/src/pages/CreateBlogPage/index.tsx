@@ -113,15 +113,15 @@ export function CreateBlogPage() {
           </div>
 
           {createBlogAction.errorMessage ? (
-            <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-              <AlertDescription className="text-rose-700">{createBlogAction.errorMessage}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{createBlogAction.errorMessage}</AlertDescription>
             </Alert>
           ) : null}
 
           <Button
             type="button"
             disabled={createBlogAction.isSubmitting}
-            className="rounded-2xl bg-slate-950 text-white hover:bg-slate-800"
+            variant="create"
             onClick={() => {
               void submit()
             }}

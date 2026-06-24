@@ -56,16 +56,15 @@ export function PendingProblemBlogsCard({
                   <Button
                     type="button"
                     disabled={activeReviewBlogId === blog.id}
-                    className="rounded-2xl bg-emerald-300 text-emerald-950 hover:bg-emerald-400"
+                    variant="create"
                     onClick={() => onAccept(blog)}
                   >
                     {t('blog.problem.accept')}
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="destructiveOutline"
                     disabled={activeReviewBlogId === blog.id}
-                    className="rounded-2xl border-rose-200 bg-white text-rose-700"
                     onClick={() => onReject(blog)}
                   >
                     {t('blog.problem.reject')}

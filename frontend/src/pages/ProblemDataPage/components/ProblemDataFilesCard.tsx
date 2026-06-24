@@ -63,9 +63,8 @@ export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
                   trigger={
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="destructiveOutline"
                       disabled={model.isClearingAll}
-                      className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                     >
                       <Eraser className="size-4" />
                       {model.isClearingAll ? t('problem.data.clearing') : t('problem.data.clearAll')}
@@ -102,9 +101,8 @@ export function ProblemDataFilesCard({ model }: ProblemDataFilesCardProps) {
                         </Button>
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="destructiveOutline"
                           disabled={model.deletingPath === node.path}
-                          className="rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
                           onClick={() => {
                             void model.deleteDataPath(node.path)
                           }}
