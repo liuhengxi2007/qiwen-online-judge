@@ -18,7 +18,7 @@ Worker processes are separate applications, not submodules of the backend runtim
 Rules:
 
 - workers must not depend directly on the backend application project
-- workers must not import backend `application`, `http`, `table`, or database code
+- workers must not import backend `api`, `routes`, `table`, or database code
 - workers may call backend HTTP endpoints or other stable service boundaries
 - if backend and a worker need shared Scala types, extract a small dedicated shared protocol module
 - shared protocol modules may contain typed values, parsing, and codecs

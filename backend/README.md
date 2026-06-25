@@ -19,28 +19,29 @@ The service listens on `http://0.0.0.0:8080` by default.
   Shared database configuration, connection/session management, and
   cross-domain persistence primitives.
 - `src/main/scala/domains/<domain>`
-  Domain-first backend code. Most business domains are split into `objects`,
-  `http`, and `table`, with optional `rules` and guarded `utils`.
+  Domain-first backend code. Most business domains are split into `api`,
+  `routes`, `objects`, and `table`, with optional allowlisted `utils`.
 - `src/main/scala/shared`
   Cross-domain primitives such as pagination, access control, shared HTTP
   execution support, and generic response objects.
 
-Current domains are `auth`, `blog`, `judge`, `judger`, `message`, `notification`,
-`problem`, `problemset`, `submission`, `system`, `user`, and `usergroup`.
+Current domains are `auth`, `blog`, `contest`, `hack`, `judge`, `judger`,
+`message`, `notification`, `problem`, `problemset`, `rating`, `submission`,
+`user`, and `usergroup`.
 
 ## Layer Rules
 
 - `objects`
   Durable domain entities, value objects, enums, lifecycle types, slugs, ids, and
-  titles. Object files must not import `utils`, `http`, or `table`.
+  titles. Object files must not import `utils`, `routes`, or `table`.
 - `objects/request`
-  Typed command/query inputs decoded at HTTP boundaries and consumed by API plans, rules, or table code.
+  Typed command/query inputs decoded at HTTP boundaries and consumed by API plans, pure decisions, or table code.
 - `objects/response`
   Read/output shapes returned by endpoint workflows.
-- `rules`
-  Optional pure validation, permission, lifecycle, and draft-building helpers.
-- `http`
-  Endpoint routing, request decoding, plan execution, and response mapping.
+- `api`
+  Endpoint API objects, request decoding, plan orchestration, and typed outputs.
+- `routes`
+  Thin router aggregators that register API objects through the auth-owned API object router.
 - `table`
   PostgreSQL persistence APIs, SQL, schema setup, and row mapping.
 - `utils`
@@ -65,7 +66,7 @@ Optional overrides:
 - `DB_MAX_POOL_SIZE`
 - `DB_CONNECTION_TIMEOUT_MS`
 
-`DatabaseSession` owns transaction connection lifecycle. Application commands
+`DatabaseSession` owns transaction connection lifecycle. Endpoint plans
 should use `DatabaseSession.withTransactionConnection` rather than managing
 connections directly.
 
@@ -83,5 +84,5 @@ sbt compile
 ```
 
 Run the object alignment check when mirrored object/request/response types change. Run the API
-alignment check when endpoint files under `http/api` change. Run the structure
+alignment check when endpoint files under `api` change. Run the structure
 boundary check after moving files across backend layers.

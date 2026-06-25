@@ -28,11 +28,11 @@ The project is organized by business domain rather than by technical layer. Cros
 
 ## Architecture Principles
 
-- Keep ownership domain-first: `auth`, `problem`, `problemset`, `submission`, `blog`, `usergroup`, `judge`, and `judger` own their own backend objects/api/routes/table code or frontend objects/apis/pages code.
+- Keep ownership domain-first: each business domain owns its backend objects/api/routes/table code or frontend objects/apis/pages code.
 - Keep mirrored object files type-only and name-aligned across frontend and backend.
 - Parse raw JSON, route params, and form input at the boundary, then use named domain types such as `Username`, `ProblemSlug`, `SubmissionId`, and `BlogId`.
-- Keep business decisions in pure domain/application code when possible; push database, HTTP, file, clock, and process effects to the edges.
-- Keep workers independent from backend internals. Workers use HTTP/protocol boundaries, not backend application/table imports.
+- Keep business decisions in pure domain code when possible; push database, HTTP, file, clock, and process effects to API plans or other explicit edges.
+- Keep workers independent from backend internals. Workers use HTTP/protocol boundaries, not backend domain implementation imports.
 
 Start with [docs/architecture-guardrails.md](docs/architecture-guardrails.md) before making structural changes.
 
@@ -102,7 +102,7 @@ Run it whenever mirrored frontend/backend request, response, object, or shared t
 
 The stable direction is to keep extending features by domain:
 
-- New backend domains should use `objects`, `application`, `http`, and `table`.
+- New backend domains should use `api`, `routes`, `objects`, and `table`, with optional allowlisted `utils`.
 - New frontend domains should use `objects`, `apis`, and `pages`, with runtime helpers in `system` only when ownership is not page or domain-specific.
 - New cross-process judge behavior should go through `judge-protocol` or stable HTTP protocol types, not backend internals.
 - New durable resources should be added to [docs/resource-lifecycle-matrix.md](docs/resource-lifecycle-matrix.md).

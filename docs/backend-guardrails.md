@@ -276,7 +276,8 @@ Future OJ modules should follow the same layout:
 
 Each domain should own its:
 
-- `http`
+- `api`
+- `routes`
 - `objects`
 - `table`
 - optional allowlisted `utils` modules when pure rules or owner-domain support code needs a clearer home than `objects`, `api`, or `table`
@@ -284,4 +285,4 @@ Each domain should own its:
 Exception:
 
 - the internal `judge` domain may omit `objects` or `table` when it intentionally reuses protocol or persistence types owned elsewhere
-- this exception must still keep endpoint orchestration in API object `plan(...)` bodies and its transport boundary in `http`
+- this exception must still keep endpoint orchestration in API object `plan(...)` bodies and its transport boundary in `api`/`routes`

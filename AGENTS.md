@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 
 - `frontend/`: Vite + React 19 app. Business objects live in `src/objects/<domain>`, endpoint clients in `src/apis/<domain>`, route/page code in `src/pages`, runtime helpers in `src/system`, and generic UI in `src/components/ui`.
-- `backend/`: Scala 3 + Cats Effect + http4s service. Each domain is split into `objects`, `application`, `http`, and `table` under `src/main/scala/domains/<domain>`.
+- `backend/`: Scala 3 + Cats Effect + http4s service. Most domains are split into `api`, `routes`, `objects`, and `table` under `src/main/scala/domains/<domain>`, with optional allowlisted `utils`.
 - `judger/` and `judge-protocol/`: judge worker and shared protocol code.
 - `docs/architecture-guardrails.md`: source of truth for layering, type mirroring, and shared-code rules.
 - `scripts/`: maintenance scripts such as `check-object-alignment.mjs` and `calc-loc.mjs`.

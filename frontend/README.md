@@ -18,7 +18,7 @@ domain-owned `src/apis/<domain>` clients and are expected to reach the backend s
 ## Structure
 
 - `src/apis/<domain>`
-  One endpoint client per file, with basenames aligned to backend `http/api`.
+  One endpoint client per file, with basenames aligned to backend domain `api`.
 - `src/apis/<domain>/codecs`
   HTTP boundary codecs for endpoint payloads and domain object wire values.
 - `src/objects/<domain>`
