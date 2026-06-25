@@ -47,7 +47,7 @@ class CreateSubmissionMultipartDecodeSuite extends CatsEffectSuite:
         "main" -> CreateSubmissionRequest.Program(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() {}\n"))
       )
     )
-    val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString("/api/submissions")).withEntity(body)
+    val request = Request[IO](method = Method.POST, uri = uri("/api/submissions")).withEntity(body)
 
     CreateSubmission(null, null).decode(request, PathParams(Map.empty)).map { decoded =>
       assertEquals(decoded, body)
@@ -89,3 +89,6 @@ class CreateSubmissionMultipartDecodeSuite extends CatsEffectSuite:
         fail(s"Expected bad request, got $other")
     }
   }
+
+  private def uri(value: String): Uri =
+    Uri.fromString(value).fold(error => fail(error.toString), identity)

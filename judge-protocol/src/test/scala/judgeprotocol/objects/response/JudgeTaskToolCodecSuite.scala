@@ -8,7 +8,7 @@ import munit.FunSuite
 class JudgeTaskToolCodecSuite extends FunSuite:
 
   private val sha256 = "a" * 64
-  private val source = JudgeTaskFileRef.unsafe("tools/interactor.cpp", 42L, sha256)
+  private val source = fileRef("tools/interactor.cpp", 42L, sha256)
   private val limits = JudgeTaskToolLimits(TestcaseTimeLimitMs(1000), TestcaseMemoryLimitMb(256))
 
   test("encodes tool source and limits") {
@@ -55,3 +55,6 @@ class JudgeTaskToolCodecSuite extends FunSuite:
 
     assertEquals(decoded.map(_.limits), Right(None))
   }
+
+  private def fileRef(path: String, sizeBytes: Long, sha256: String): JudgeTaskFileRef =
+    JudgeTaskFileRef.from(path, sizeBytes, sha256).fold(message => fail(message), identity)

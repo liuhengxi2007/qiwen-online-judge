@@ -43,7 +43,7 @@ class HackApiSupportSuite extends CatsEffectSuite:
 
   test("decodes JSON create hack requests unchanged") {
     val body = CreateHackRequest(SubmissionId(7), subtaskIndex = 2, input = "1  \r\n", strategyProviderSource = Some("int main() {}\n"))
-    val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString("/api/hacks")).withEntity(body)
+    val request = Request[IO](method = Method.POST, uri = uri("/api/hacks")).withEntity(body)
 
     CreateHack(null, null).decode(request, PathParams(Map.empty)).map { decoded =>
       assertEquals(decoded, body)
@@ -86,3 +86,6 @@ class HackApiSupportSuite extends CatsEffectSuite:
         fail(s"Expected bad request, got $other")
     }
   }
+
+  private def uri(value: String): Uri =
+    Uri.fromString(value).fold(error => fail(error.toString), identity)

@@ -36,7 +36,7 @@ class JudgeTaskBuilderSuite extends FunSuite:
   private val textSourceCode = SubmissionSourceCode("42\n")
 
   private val claimedSubmissionWithText = claimedSubmission.copy(
-    programManifest = SubmissionProgramManifest.unsafeFromPrograms(
+    programManifest = programManifest(
       UUID.fromString("33333333-3333-4333-8333-333333333333"),
       Map(
         "chain.txt" -> (SubmissionLanguage.Text -> textSourceCode),
@@ -44,6 +44,12 @@ class JudgeTaskBuilderSuite extends FunSuite:
       )
     )
   )
+
+  private def programManifest(
+    submissionUuid: UUID,
+    rawPrograms: Map[String, (SubmissionLanguage, SubmissionSourceCode)]
+  ): SubmissionProgramManifest =
+    SubmissionProgramManifest.fromPrograms(submissionUuid, rawPrograms).fold(message => fail(message), identity)
 
   private val claimedSubmissionPython = claimedSubmission.copy(
     programManifest = SubmissionProgramManifest.singleDefault(

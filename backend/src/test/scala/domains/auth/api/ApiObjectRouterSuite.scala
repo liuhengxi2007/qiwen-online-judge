@@ -6,7 +6,7 @@ import munit.CatsEffectSuite
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{InvalidMessageBodyFailure, Method, Request, Response, Status, Uri}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
-import shared.objects.response.ErrorResponse
+import shared.objects.transport.ErrorResponse
 
 class ApiObjectRouterSuite extends CatsEffectSuite:
 
@@ -14,7 +14,7 @@ class ApiObjectRouterSuite extends CatsEffectSuite:
 
   test("routes matching method and path to the registered API object") {
     val routes = ApiObjectRouter.routes(context, List(EchoPathParamApi)).orNotFound
-    val request = Request[IO](method = Method.GET, uri = Uri.unsafeFromString("/api/items/abc"))
+    val request = Request[IO](method = Method.GET, uri = uri("/api/items/abc"))
 
     routes.run(request).flatMap { response =>
       response.as[String].map { body =>
@@ -26,21 +26,21 @@ class ApiObjectRouterSuite extends CatsEffectSuite:
 
   test("returns 404 when method does not match") {
     val routes = ApiObjectRouter.routes(context, List(EchoPathParamApi)).orNotFound
-    val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString("/api/items/abc"))
+    val request = Request[IO](method = Method.POST, uri = uri("/api/items/abc"))
 
     routes.run(request).map(response => assertEquals(response.status, Status.NotFound))
   }
 
   test("maps request decode failures to bad request responses") {
     val routes = ApiObjectRouter.routes(context, List(DecodeFailureApi)).orNotFound
-    val request = Request[IO](method = Method.GET, uri = Uri.unsafeFromString("/api/decode-failure"))
+    val request = Request[IO](method = Method.GET, uri = uri("/api/decode-failure"))
 
     routes.run(request).map(response => assertEquals(response.status, Status.BadRequest))
   }
 
   test("maps HttpApiError to code-only error responses") {
     val routes = ApiObjectRouter.routes(context, List(KnownErrorApi)).orNotFound
-    val request = Request[IO](method = Method.GET, uri = Uri.unsafeFromString("/api/known-error"))
+    val request = Request[IO](method = Method.GET, uri = uri("/api/known-error"))
 
     routes.run(request).flatMap { response =>
       response.as[ErrorResponse].map { body =>
@@ -86,3 +86,6 @@ class ApiObjectRouterSuite extends CatsEffectSuite:
     ): IO[Response[IO]] =
       val _ = (context, request, pathParams)
       HttpApiError.raise(HttpApiError.forbidden(ApiMessages.siteManagerRequired))
+
+  private def uri(value: String): Uri =
+    Uri.fromString(value).fold(error => fail(error.toString), identity)

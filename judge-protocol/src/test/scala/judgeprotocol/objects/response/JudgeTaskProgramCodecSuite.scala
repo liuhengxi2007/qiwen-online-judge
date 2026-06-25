@@ -8,8 +8,8 @@ import munit.FunSuite
 class JudgeTaskProgramCodecSuite extends FunSuite:
 
   private val sha256 = "a" * 64
-  private val stub = JudgeTaskFileRef.unsafe("stubs/main.cpp", 42L, sha256)
-  private val header = JudgeTaskFileRef.unsafe("headers/xxx.h", 24L, "b" * 64)
+  private val stub = fileRef("stubs/main.cpp", 42L, sha256)
+  private val header = fileRef("headers/xxx.h", 24L, "b" * 64)
 
   test("encodes optional stub file ref") {
     val json = JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int solve() { return 0; }"), Some(stub)).asJson
@@ -41,3 +41,6 @@ class JudgeTaskProgramCodecSuite extends FunSuite:
 
     assertEquals(decoded.map(_.headers), Right(Nil))
   }
+
+  private def fileRef(path: String, sizeBytes: Long, sha256: String): JudgeTaskFileRef =
+    JudgeTaskFileRef.from(path, sizeBytes, sha256).fold(message => fail(message), identity)

@@ -30,6 +30,7 @@ class JudgeRuntimeSupportSuite extends FunSuite:
     JudgeTask(
       submissionId = SubmissionId(1),
       problemSlug = ProblemSlug("two-sum"),
+      startedAtEpochMilli = 0L,
       programs = Map("main" -> JudgeTaskProgram(SubmissionLanguage.Cpp17, SubmissionSourceCode("int main() { return 0; }"))),
       problemDataVersion = "v1",
       roundingScale = 2,

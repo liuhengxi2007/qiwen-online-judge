@@ -36,6 +36,9 @@ object MultipartRequestSupport:
       boundary
     )
 
-    Request[IO](method = Method.POST, uri = Uri.unsafeFromString(uri))
+    Request[IO](method = Method.POST, uri = parsedUri(uri))
       .withEntity(multipart)
       .putHeaders(Header.Raw(CIString("Content-Type"), s"multipart/form-data; boundary=${boundary.value}"))
+
+  private def parsedUri(value: String): Uri =
+    Uri.fromString(value).fold(error => throw IllegalArgumentException(error.toString), identity)

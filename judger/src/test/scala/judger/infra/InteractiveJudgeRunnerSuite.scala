@@ -189,7 +189,7 @@ class InteractiveJudgeRunnerSuite extends FunSuite:
     )
 
   private def fileRef(path: String): JudgeTaskFileRef =
-    JudgeTaskFileRef.unsafe(path, 1L, "a" * 64)
+    JudgeTaskFileRef.from(path, 1L, "a" * 64).fold(message => fail(message), identity)
 
   private def okResult(exitCode: Option[Int] = Some(0)): ProcessResult =
     processResult(exitCode = exitCode, timedOut = false, timeUsedMs = Some(10L), wallTimeUsedMs = Some(10L))

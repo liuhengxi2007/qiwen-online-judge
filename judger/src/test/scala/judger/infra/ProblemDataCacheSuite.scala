@@ -1,19 +1,19 @@
 package judger.infra
 
 import cats.effect.IO
-import cats.effect.unsafe.implicits.global
+import cats.syntax.all.*
 import judgeprotocol.objects.{JudgerId, ProblemSlug, SubmissionLanguage}
 import judgeprotocol.objects.response.JudgeTaskFileRef
 import judger.config.AppConfig
 import judger.http.ProblemDataDownloader
-import munit.FunSuite
+import munit.CatsEffectSuite
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
-class ProblemDataCacheSuite extends FunSuite:
+class ProblemDataCacheSuite extends CatsEffectSuite:
 
   private val problemSlug = ProblemSlug("sample")
 
@@ -26,9 +26,10 @@ class ProblemDataCacheSuite extends FunSuite:
       Files.write(blobsRoot.resolve(fileRef.sha256.value), "tampered".getBytes(java.nio.charset.StandardCharsets.UTF_8))
 
       val cache = ProblemDataCache(config(root), RecordingDownloader(expectedBytes))
-      val result = cache.loadBytes(problemSlug, "v1", fileRef).attempt.unsafeRunSync()
 
-      assert(result.isLeft)
+      cache.loadBytes(problemSlug, "v1", fileRef).attempt.map { result =>
+        assert(result.isLeft)
+      }
     }
   }
 
@@ -38,10 +39,10 @@ class ProblemDataCacheSuite extends FunSuite:
       val fileRef = refFor("cases/1.in", expectedBytes)
       val cache = ProblemDataCache(config(root), RecordingDownloader("actual".getBytes(java.nio.charset.StandardCharsets.UTF_8)))
 
-      val result = cache.loadBytes(problemSlug, "v1", fileRef).attempt.unsafeRunSync()
-
-      assert(result.isLeft)
-      assert(!Files.exists(root.resolve("blobs").resolve(fileRef.sha256.value)))
+      cache.loadBytes(problemSlug, "v1", fileRef).attempt.map { result =>
+        assert(result.isLeft)
+        assert(!Files.exists(root.resolve("blobs").resolve(fileRef.sha256.value)))
+      }
     }
   }
 
@@ -52,9 +53,11 @@ class ProblemDataCacheSuite extends FunSuite:
       val downloader = RecordingDownloader(bytes)
       val cache = ProblemDataCache(config(root), downloader)
 
-      assertEquals(cache.loadBytes(problemSlug, "v1", fileRef).unsafeRunSync().toSeq, bytes.toSeq)
-      assertEquals(downloader.requests.toList, List((problemSlug, "cases/1.in")))
-      assert(Files.exists(root.resolve("blobs").resolve(fileRef.sha256.value)))
+      cache.loadBytes(problemSlug, "v1", fileRef).map { loaded =>
+        assertEquals(loaded.toSeq, bytes.toSeq)
+        assertEquals(downloader.requests.toList, List((problemSlug, "cases/1.in")))
+        assert(Files.exists(root.resolve("blobs").resolve(fileRef.sha256.value)))
+      }
     }
   }
 
@@ -73,7 +76,7 @@ class ProblemDataCacheSuite extends FunSuite:
       }
 
   private def refFor(path: String, bytes: Array[Byte]): JudgeTaskFileRef =
-    JudgeTaskFileRef.unsafe(path, bytes.length.toLong, sha256Hex(bytes))
+    JudgeTaskFileRef.from(path, bytes.length.toLong, sha256Hex(bytes)).fold(message => fail(message), identity)
 
   private def sha256Hex(bytes: Array[Byte]): String =
     MessageDigest
@@ -100,10 +103,10 @@ class ProblemDataCacheSuite extends FunSuite:
       problemDataCacheRoot = root
     )
 
-  private def withTempRoot(test: Path => Unit): Unit =
-    val root = Files.createTempDirectory("problem-data-cache-suite")
-    try test(root)
-    finally deleteRecursively(root)
+  private def withTempRoot[A](test: Path => IO[A]): IO[A] =
+    IO(Files.createTempDirectory("problem-data-cache-suite")).bracket(test) { root =>
+      IO.blocking(deleteRecursively(root)).void
+    }
 
   private def deleteRecursively(root: Path): Unit =
     if Files.exists(root) then

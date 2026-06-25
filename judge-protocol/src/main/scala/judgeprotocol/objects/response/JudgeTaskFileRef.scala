@@ -69,10 +69,5 @@ object JudgeTaskFileRef:
       parsedSha256 <- JudgeTaskFileSha256.parse(sha256)
     yield JudgeTaskFileRef(parsedPath, parsedSize, parsedSha256)
 
-  /** 在已由上游保证合法的场景构造引用；失败会抛异常，应避免用于处理用户输入。 */
-  def unsafe(path: String, sizeBytes: Long, sha256: String): JudgeTaskFileRef =
-    // 注意：backend 任务构建器会先用 unsafe 携带占位引用，再通过 manifest 解析成真实 ref；judger 收到的任务应是已解析后的引用。
-    from(path, sizeBytes, sha256).fold(message => throw IllegalArgumentException(message), identity)
-
   given Encoder[JudgeTaskFileRef] = deriveEncoder[JudgeTaskFileRef]
   given Decoder[JudgeTaskFileRef] = deriveDecoder[JudgeTaskFileRef]

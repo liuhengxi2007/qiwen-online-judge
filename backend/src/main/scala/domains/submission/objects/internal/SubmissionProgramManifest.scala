@@ -53,7 +53,8 @@ object SubmissionProgramManifest:
     language: SubmissionLanguage,
     sourceCode: SubmissionSourceCode
   ): SubmissionProgramManifest =
-    unsafeFromPrograms(submissionUuid, Map(DefaultProgramKey -> (language -> sourceCode)))
+    fromPrograms(submissionUuid, Map(DefaultProgramKey -> (language -> sourceCode)))
+      .fold(message => throw IllegalArgumentException(message), identity)
 
   /** 从角色到语言/源码的映射构造 manifest；校验角色命名、文本角色后缀和重复角色。 */
   def fromPrograms(
@@ -91,13 +92,6 @@ object SubmissionProgramManifest:
                 )
               }.toMap
               Right(SubmissionProgramManifest(defaultProgramKey, programs))
-
-  /** 构造 manifest，非法输入直接抛异常；只应在输入已由同一规则校验后使用。 */
-  def unsafeFromPrograms(
-    submissionUuid: UUID,
-    rawPrograms: Map[String, (SubmissionLanguage, SubmissionSourceCode)]
-  ): SubmissionProgramManifest =
-    fromPrograms(submissionUuid, rawPrograms).fold(message => throw IllegalArgumentException(message), identity)
 
   /** 将源码编码为 UTF-8 字节，用于对象存储和 sha256 计算。 */
   def sourceBytes(sourceCode: SubmissionSourceCode): Array[Byte] =

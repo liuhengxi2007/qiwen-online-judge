@@ -45,6 +45,12 @@ object JudgeTaskBuilder:
         case generator @ Generator(_, _) => Some(generator)
         case _ => None
 
+  private enum CheckerConfig:
+    case Builtin(name: String)
+    case Cpp17(path: String)
+
+  private final case class ToolConfig(path: String, limits: Option[JudgeTaskToolLimits])
+
   private final case class RoleConfig(stubs: Map[SubmissionLanguage, JudgeTaskFileRef]):
     def restrictsLanguages: Boolean = stubs.nonEmpty
 
@@ -289,12 +295,12 @@ object JudgeTaskBuilder:
     index: Int,
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
-    parentChecker: Option[JudgeTaskChecker],
-    parentValidator: Option[JudgeTaskTool],
+    parentChecker: Option[CheckerConfig],
+    parentValidator: Option[ToolConfig],
     parentStandard: StandardConfig,
     parentHack: Boolean,
     parentMode: JudgeTaskMode,
-    parentStrategyProvider: Option[JudgeTaskTool],
+    parentStrategyProvider: Option[ToolConfig],
     parentAggregation: AggregationConfig
   ): Either[BuildError, JudgeTaskSubtask] =
     for
@@ -361,8 +367,8 @@ object JudgeTaskBuilder:
     index: Int,
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
-    parentChecker: Option[JudgeTaskChecker],
-    parentStrategyProvider: Option[JudgeTaskTool],
+    parentChecker: Option[CheckerConfig],
+    parentStrategyProvider: Option[ToolConfig],
     subtaskMode: JudgeTaskMode,
     subtaskIndex: Int,
     subtaskLabel: Option[String]
@@ -429,7 +435,7 @@ object JudgeTaskBuilder:
   private def validateHackConfig(
     label: String,
     enabled: Boolean,
-    validator: Option[JudgeTaskTool],
+    validator: Option[ToolConfig],
     standard: StandardConfig
   ): Either[BuildError, Unit] =
     if !enabled then Right(())
@@ -560,43 +566,43 @@ object JudgeTaskBuilder:
         }
       case Some(_) => Left("mode must be a string or an object.")
 
-  private def checkerAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskChecker]] =
+  private def checkerAt(raw: Map[String, Any]): Either[String, Option[CheckerConfig]] =
     optionalMapAt(raw, "checker").flatMap {
       case None => Right(None)
       case Some(checker) =>
         stringAt(checker, "type").flatMap {
           case "builtin" =>
             stringAt(checker, "name").flatMap {
-              case "exact" => Right(Some(JudgeTaskChecker("builtin", Some("exact"), None)))
-              case "echo" => Right(Some(JudgeTaskChecker("builtin", Some("echo"), None)))
+              case "exact" => Right(Some(CheckerConfig.Builtin("exact")))
+              case "echo" => Right(Some(CheckerConfig.Builtin("echo")))
               case other => Left(s"Unsupported builtin checker: $other.")
             }
           case "cpp17" | "cpp" =>
             stringAt(checker, "path").flatMap(path =>
               ProblemDataPath.parse(path)
                 .left.map(message => s"Invalid checker path: $message")
-                .map(_ => Some(JudgeTaskChecker("cpp17", None, Some(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64)))))
+                .map(_ => Some(CheckerConfig.Cpp17(path)))
             )
           case other => Left(s"Unsupported checker type: $other.")
         }
     }
 
-  private def toolAt(raw: Map[String, Any], key: String): Either[String, Option[JudgeTaskTool]] =
+  private def toolAt(raw: Map[String, Any], key: String): Either[String, Option[ToolConfig]] =
     raw.get(key) match
       case None => Right(None)
       case Some(value) => toolFrom(value, key).map(Some(_))
 
-  private def limitedToolAt(raw: Map[String, Any], key: String): Either[String, Option[JudgeTaskTool]] =
+  private def limitedToolAt(raw: Map[String, Any], key: String): Either[String, Option[ToolConfig]] =
     raw.get(key) match
       case None => Right(None)
       case Some(value) => limitedToolFrom(value, key).map(Some(_))
 
-  private def requiredLimitedToolFrom(value: Option[Any], label: String): Either[String, JudgeTaskTool] =
+  private def requiredLimitedToolFrom(value: Option[Any], label: String): Either[String, ToolConfig] =
     value match
       case Some(currentValue) => limitedToolFrom(currentValue, label)
       case None => Left(s"$label is required.")
 
-  private def toolFrom(value: Any, label: String): Either[String, JudgeTaskTool] =
+  private def toolFrom(value: Any, label: String): Either[String, ToolConfig] =
     value match
       case path: String =>
         toolFromPath(path, label)
@@ -605,14 +611,14 @@ object JudgeTaskBuilder:
       case _ =>
         Left(s"$label must be a path string or an object with a path.")
 
-  private def limitedToolFrom(value: Any, label: String): Either[String, JudgeTaskTool] =
+  private def limitedToolFrom(value: Any, label: String): Either[String, ToolConfig] =
     value match
       case map: Map[?, ?] =>
         toolFromObject(map.asInstanceOf[Map[String, Any]], label, requireLimits = true)
       case _ =>
         Left(s"$label must be an object with path and limits.")
 
-  private def toolFromObject(raw: Map[String, Any], label: String, requireLimits: Boolean): Either[String, JudgeTaskTool] =
+  private def toolFromObject(raw: Map[String, Any], label: String, requireLimits: Boolean): Either[String, ToolConfig] =
     for
       path <- stringAt(raw, "path")
       tool <- toolFromPath(path, label)
@@ -620,10 +626,10 @@ object JudgeTaskBuilder:
       _ <- Either.cond(!requireLimits || limits.nonEmpty, (), s"$label.limits is required.")
     yield tool.copy(limits = limits)
 
-  private def toolFromPath(path: String, label: String): Either[String, JudgeTaskTool] =
+  private def toolFromPath(path: String, label: String): Either[String, ToolConfig] =
     ProblemDataPath.parse(path)
       .left.map(message => s"Invalid $label path: $message")
-      .map(_ => JudgeTaskTool(JudgeTaskFileRef.unsafe(path, 0L, "0" * 64), None))
+      .map(_ => ToolConfig(path, None))
 
   private def limitsAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskLimits]] =
     optionalMapAt(raw, "limits").flatMap {
@@ -682,16 +688,13 @@ object JudgeTaskBuilder:
       ref <- fileRef(entry).left.map(message => s"$label has invalid file reference: $message")
     yield ref
 
-  private def resolveChecker(manifest: ProblemDataManifest, checker: JudgeTaskChecker): Either[String, JudgeTaskChecker] =
-    checker.`type` match
-      case "cpp17" | "cpp" =>
-        checker.source match
-          case Some(source) => findFile(manifest, source.path.value, "Checker source file").map(ref => checker.copy(`type` = "cpp17", source = Some(ref)))
-          case None => Left("C++17 checker source path is required.")
-      case _ => Right(checker)
+  private def resolveChecker(manifest: ProblemDataManifest, checker: CheckerConfig): Either[String, JudgeTaskChecker] =
+    checker match
+      case CheckerConfig.Builtin(name) => Right(JudgeTaskChecker("builtin", Some(name), None))
+      case CheckerConfig.Cpp17(path) => findFile(manifest, path, "Checker source file").map(ref => JudgeTaskChecker("cpp17", None, Some(ref)))
 
-  private def resolveTool(manifest: ProblemDataManifest, tool: JudgeTaskTool, label: String): Either[String, JudgeTaskTool] =
-    findFile(manifest, tool.source.path.value, label).map(ref => tool.copy(source = ref))
+  private def resolveTool(manifest: ProblemDataManifest, tool: ToolConfig, label: String): Either[String, JudgeTaskTool] =
+    findFile(manifest, tool.path, label).map(ref => JudgeTaskTool(ref, tool.limits))
 
   private def resolveStandard(manifest: ProblemDataManifest, standard: StandardConfig.Generator): Either[String, JudgeTaskStandard] =
     findFile(manifest, standard.path, "Answer generator source file").map(ref => JudgeTaskStandard(standard.language, ref))

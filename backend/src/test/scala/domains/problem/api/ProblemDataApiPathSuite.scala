@@ -73,7 +73,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
     )
 
     legacyRequests.traverse_ { case (method, path) =>
-      val request = Request[IO](method = method, uri = Uri.unsafeFromString(path))
+      val request = Request[IO](method = method, uri = uri(path))
       routes.run(request).map(response => assertEquals(response.status, Status.NotFound, s"$method $path"))
     }
   }
@@ -103,7 +103,10 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
     )
 
     removedRequests.traverse_ { case (method, path) =>
-      val request = Request[IO](method = method, uri = Uri.unsafeFromString(path))
+      val request = Request[IO](method = method, uri = uri(path))
       routes.run(request).map(response => assertEquals(response.status, Status.NotFound, s"$method $path"))
     }
   }
+
+  private def uri(value: String): Uri =
+    Uri.fromString(value).fold(error => fail(error.toString), identity)

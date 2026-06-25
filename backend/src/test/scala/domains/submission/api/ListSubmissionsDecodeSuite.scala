@@ -74,4 +74,7 @@ class ListSubmissionsDecodeSuite extends CatsEffectSuite:
   }
 
   private def decode(uri: String): IO[SubmissionListRequest] =
-    ListSubmissions.decode(Request[IO](uri = Uri.unsafeFromString(uri)), PathParams(Map.empty))
+    ListSubmissions.decode(Request[IO](uri = parsedUri(uri)), PathParams(Map.empty))
+
+  private def parsedUri(value: String): Uri =
+    Uri.fromString(value).fold(error => fail(error.toString), identity)

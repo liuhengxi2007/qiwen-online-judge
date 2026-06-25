@@ -24,7 +24,3 @@ object HackMode:
     value match
       case HackMode.Traditional => "traditional"
       case HackMode.Interactive => "interactive"
-
-  /** 构造已由 JudgeTaskBuilder 校验过的模式；未知值表示内部任务构建违规。 */
-  def unsafeFromJudgeTaskMode(value: String): HackMode =
-    parse(value).fold(message => throw IllegalArgumentException(message), identity)

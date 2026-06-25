@@ -120,6 +120,7 @@ class JudgeResultAggregatorSuite extends FunSuite:
     JudgeTask(
       submissionId = SubmissionId(1),
       problemSlug = ProblemSlug("two-sum"),
+      startedAtEpochMilli = 0L,
       programs = Map.empty,
       problemDataVersion = "v1",
       roundingScale = 2,
@@ -152,10 +153,13 @@ class JudgeResultAggregatorSuite extends FunSuite:
       scoreRatio = scoreRatio,
       limits = JudgeTaskLimits(TestcaseTimeLimitMs(1000), TestcaseMemoryLimitMb(256)),
       checker = JudgeTaskChecker("builtin", Some("exact"), None),
-      input = JudgeTaskFileRef.unsafe(s"$index.in", 1L, "a" * 64),
-      answer = Some(JudgeTaskFileRef.unsafe(s"$index.ans", 1L, "b" * 64)),
+      input = fileRef(s"$index.in", "a" * 64),
+      answer = Some(fileRef(s"$index.ans", "b" * 64)),
       strategyProvider = None
     )
+
+  private def fileRef(path: String, sha256: String): JudgeTaskFileRef =
+    JudgeTaskFileRef.from(path, 1L, sha256).fold(message => fail(message), identity)
 
   private def testcaseResult(
     index: Int,

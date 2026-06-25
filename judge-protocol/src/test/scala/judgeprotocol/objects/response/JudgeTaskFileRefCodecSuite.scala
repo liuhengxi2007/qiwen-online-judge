@@ -9,7 +9,7 @@ class JudgeTaskFileRefCodecSuite extends FunSuite:
   private val sha256 = "a" * 64
 
   test("encodes as the existing wire field shape") {
-    val json = JudgeTaskFileRef.unsafe("cases/1.in", 42L, sha256).asJson
+    val json = fileRef("cases/1.in", 42L, sha256).asJson
     val cursor = json.hcursor
 
     assertEquals(cursor.get[String]("path"), Right("cases/1.in"))
@@ -30,6 +30,9 @@ class JudgeTaskFileRefCodecSuite extends FunSuite:
 
     assert(decoded.isLeft)
   }
+
+  private def fileRef(path: String, sizeBytes: Long, sha256: String): JudgeTaskFileRef =
+    JudgeTaskFileRef.from(path, sizeBytes, sha256).fold(message => fail(message), identity)
 
   test("rejects negative size") {
     val decoded = decode[JudgeTaskFileRef](s"""{"path":"cases/1.in","sizeBytes":-1,"sha256":"$sha256"}""")

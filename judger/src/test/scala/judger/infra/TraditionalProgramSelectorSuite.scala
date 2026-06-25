@@ -98,6 +98,7 @@ class TraditionalProgramSelectorSuite extends FunSuite:
     JudgeTask(
       submissionId = SubmissionId(1),
       problemSlug = ProblemSlug("sample"),
+      startedAtEpochMilli = 0L,
       programs = programs.toMap,
       problemDataVersion = "v1",
       roundingScale = 6,
@@ -125,8 +126,11 @@ class TraditionalProgramSelectorSuite extends FunSuite:
       scoreRatio = BigDecimal(1),
       limits = JudgeTaskLimits(TestcaseTimeLimitMs(1000), TestcaseMemoryLimitMb(256)),
       checker = JudgeTaskChecker("builtin", Some("exact"), None),
-      input = JudgeTaskFileRef.unsafe("tests/1.in", 1L, "a" * 64),
-      answer = Some(JudgeTaskFileRef.unsafe("tests/1.ans", 1L, "b" * 64)),
+      input = fileRef("tests/1.in", "a" * 64),
+      answer = Some(fileRef("tests/1.ans", "b" * 64)),
       strategyProvider = None,
       roles = roles
     )
+
+  private def fileRef(path: String, sha256: String): JudgeTaskFileRef =
+    JudgeTaskFileRef.from(path, 1L, sha256).fold(message => fail(message), identity)
