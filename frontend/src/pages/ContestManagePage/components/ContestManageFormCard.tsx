@@ -11,7 +11,7 @@ import { MarkdownEditorTabs } from '@/pages/components/MarkdownEditorTabs'
 import { ResourceAccessEditor } from '@/pages/components/ResourceAccessEditor'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import type { ContestManagePageModel } from './types'
+import type { ContestManagePageModel } from '../hooks/useContestManagePageModel'
 
 type ContestManageFormCardProps = {
   model: ContestManagePageModel

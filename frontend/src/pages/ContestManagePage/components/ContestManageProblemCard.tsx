@@ -6,7 +6,7 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { ContestProblemList } from './ContestProblemList'
 import { ProblemAttachInput } from './ProblemAttachInput'
-import type { ContestManagePageModel } from './types'
+import type { ContestManagePageModel } from '../hooks/useContestManagePageModel'
 
 type ContestManageProblemCardProps = {
   model: ContestManagePageModel

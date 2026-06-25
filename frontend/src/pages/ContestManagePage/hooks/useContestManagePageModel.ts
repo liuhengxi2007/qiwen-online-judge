@@ -217,3 +217,5 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
     save,
   }
 }
+
+export type ContestManagePageModel = ReturnType<typeof useContestManagePageModel>

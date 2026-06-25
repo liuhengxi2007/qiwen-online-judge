@@ -15,5 +15,6 @@ export function ProblemSubmissionPage() {
     return <Navigate replace to="/problems" />
   }
 
+  // 保留共享提交列表内容组件：这里和 SubmissionPage、ContestSubmissionPage 共用筛选、分页和列表逻辑。
   return <SubmissionListPageContent fixedProblemSlugFilter={slugResult.value} />
 }

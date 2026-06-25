@@ -10,7 +10,7 @@ import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import type { ContestManagePageModel } from './types'
+import type { ContestManagePageModel } from '../hooks/useContestManagePageModel'
 
 type ContestProblemListProps = {
   contest: ContestDetail

@@ -14,5 +14,6 @@ export function ContestSubmissionPage() {
     return <Navigate replace to="/contests" />
   }
 
+  // 保留共享提交列表内容组件：这里和 SubmissionPage、ProblemSubmissionPage 共用筛选、分页和列表逻辑。
   return <SubmissionListPageContent contestSlug={slugResult.value} titleKey="contest.submissions.heading" />
 }
