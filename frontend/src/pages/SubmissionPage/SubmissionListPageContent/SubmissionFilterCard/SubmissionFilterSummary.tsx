@@ -1,4 +1,4 @@
-import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+import type { SubmissionPageModel } from '../hooks/useSubmissionPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type SubmissionFilterSummaryProps = {

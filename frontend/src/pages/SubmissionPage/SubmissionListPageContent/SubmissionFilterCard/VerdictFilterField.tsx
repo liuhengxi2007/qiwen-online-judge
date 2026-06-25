@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { isSubmissionVerdictFilter } from '@/objects/submission/request/SubmissionVerdictFilter'
-import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+import type { SubmissionPageModel } from '../hooks/useSubmissionPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 type VerdictFilterFieldProps = {

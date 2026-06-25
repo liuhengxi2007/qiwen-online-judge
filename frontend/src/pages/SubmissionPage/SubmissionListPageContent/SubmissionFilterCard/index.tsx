@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+import type { SubmissionPageModel } from '../hooks/useSubmissionPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
 

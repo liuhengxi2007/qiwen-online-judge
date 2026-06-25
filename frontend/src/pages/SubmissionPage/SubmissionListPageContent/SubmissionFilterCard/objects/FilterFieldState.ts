@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react'
 
-import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+import type { SubmissionPageModel } from '../../hooks/useSubmissionPageModel'
 
 export type TextFilterInputState = {
   value: string
