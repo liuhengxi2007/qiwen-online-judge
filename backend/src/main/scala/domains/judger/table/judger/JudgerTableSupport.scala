@@ -2,10 +2,9 @@ package domains.judger.table.judger
 
 
 
-import domains.judger.objects.JudgerId as DomainJudgerId
 import domains.judger.objects.response.RegisteredJudgerListItem
 import domains.submission.objects.SubmissionLanguage as DomainSubmissionLanguage
-import judgeprotocol.objects.SubmissionLanguage as ProtocolSubmissionLanguage
+import judgeprotocol.objects.{JudgerId, SubmissionLanguage as ProtocolSubmissionLanguage}
 
 /** judger 表读取辅助；负责 ResultSet 映射和支持语言列解析。 */
 object JudgerTableSupport:
@@ -23,8 +22,8 @@ object JudgerTableSupport:
     )
 
   /** 从数据库列读取 judger id；失败表示表数据已损坏，直接暴露为非法状态。 */
-  private def readJudgerId(raw: String, column: String): DomainJudgerId =
-    DomainJudgerId.parse(raw).fold(
+  private def readJudgerId(raw: String, column: String): JudgerId =
+    JudgerId.parse(raw).fold(
       error => throw IllegalStateException(s"Invalid $column in judgers table: $error"),
       identity
     )

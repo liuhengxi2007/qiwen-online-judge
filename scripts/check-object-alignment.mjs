@@ -41,6 +41,10 @@ const allowedExceptions = new Map([
     'Frontend internal hack result reporting mirrors judge-protocol ReportHackResultRequest, which is shared through the judge protocol module rather than backend domain objects.',
   ],
   [
+    'frontend-only:judger/JudgerId',
+    'Frontend judger management mirrors judge-protocol JudgerId, which is shared through the judge protocol module rather than backend domain objects.',
+  ],
+  [
     'frontend-only:hack/request/CreateHackMultipartRequest',
     'Browser-side multipart hack request carries File/FormData construction data and is intentionally not a backend JSON payload.',
   ],

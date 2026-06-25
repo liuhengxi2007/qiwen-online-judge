@@ -1,9 +1,9 @@
 package domains.judger.objects.response
 
-import domains.judger.objects.JudgerId
 import domains.submission.objects.SubmissionLanguage
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import judgeprotocol.objects.JudgerId
 
 import java.time.Instant
 import scala.util.Try

@@ -1,4 +1,4 @@
-/** judger 租约标识；管理端 API 用于展示已注册 worker。 */
+/** judger 租约标识；管理端镜像 judge-protocol 的 JudgerId，后端不再保留同名 domain object。 */
 export type JudgerId = string & { readonly __brand: 'JudgerId' }
 
 /** 解析 helper 的返回结果；成功携带品牌值，失败携带可展示错误，不抛异常。 */
