@@ -1,6 +1,6 @@
 import type { APIMessage } from '@/system/api/api-message'
 import type { CreateNotificationRequest } from '@/objects/notification/request/CreateNotificationRequest'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 
 /** 内部创建通知 API；输入完整通知请求体，输出通用成功响应。 */
 export class CreateNotification implements APIMessage<SuccessResponse> {

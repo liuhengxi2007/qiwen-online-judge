@@ -18,18 +18,18 @@ Current checks cover a narrow object-file surface:
 - frontend domain `objects/request/*.ts` files against backend domain `objects/request/*.scala` files
 - frontend domain `objects/response/*.ts` files against backend domain `objects/response/*.scala` files
 - explicitly mirrored backend `objects/internal/*.scala` plan payloads against direct frontend domain `objects/*.ts` files
-- the same direct, `request`, and `response` pattern for `frontend/src/objects/shared` and `backend/src/main/scala/shared/objects`
+- direct shared object files, plus `shared/transport` files for common HTTP success/error bodies
 
-The object alignment check first compares object file keys one-to-one. Keys include the domain or `shared` scope, the optional `request` or `response` segment, and the basename without extension, for example:
+The object alignment check first compares object file keys one-to-one. Keys include the domain or `shared` scope, the optional boundary segment such as `request`, `response`, or `transport`, and the basename without extension, for example:
 
 - `problem/ProblemSlug`
 - `problem/request/CreateProblemRequest`
 - `shared/PageResponse`
-- `shared/response/ErrorResponse`
+- `shared/transport/ErrorResponse`
 
-Scoped files that exist on only one side fail as `frontend-only object file` or `backend-only object file` drift. Frontend object directories are reserved for PascalCase object files, request/response payloads, real object subdomains, and same-object parse/value helpers. Parser helper files, form helpers, display helpers, tests, and barrels belong outside `frontend/src/objects`.
+Scoped files that exist on only one side fail as `frontend-only object file` or `backend-only object file` drift. Frontend object directories are reserved for PascalCase object files, request/response payloads, shared transport payloads, real object subdomains, and same-object parse/value helpers. Parser helper files, form helpers, display helpers, tests, and barrels belong outside `frontend/src/objects`.
 
-The file-level object check is intentionally not recursive beyond the scoped directories above. Structure boundaries separately reject arbitrary frontend object helper subdirectories and allow only request/response directories plus real object subdomains such as shared access objects.
+The file-level object check is intentionally not recursive beyond the scoped directories above. Structure boundaries separately reject arbitrary frontend object helper subdirectories and allow only request/response directories plus real object subdomains such as shared access and transport objects.
 
 When a new backend-only object appears in this check, resolve it in this order:
 

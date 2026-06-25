@@ -1,5 +1,5 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 import type { UserGroupSlug } from '@/objects/usergroup/UserGroupSlug'
 import { userGroupSlugValue } from '@/objects/usergroup/UserGroupSlug'
 

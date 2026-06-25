@@ -1,5 +1,5 @@
 import type { APIWithSessionMessage } from '@/system/api/api-message'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 import type { Username } from '@/objects/user/Username'
 import { usernameValue } from '@/objects/user/Username'
 

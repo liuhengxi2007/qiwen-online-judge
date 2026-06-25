@@ -3,7 +3,7 @@ import type { BlogId } from '@/objects/blog/BlogId'
 import { blogIdValue } from '@/objects/blog/BlogId'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 
 /** 提交博客作为题目关联候选；输入题目 slug 和博客 ID，输出通用成功响应。 */
 export class SubmitBlogToProblem implements APIWithSessionMessage<SuccessResponse> {

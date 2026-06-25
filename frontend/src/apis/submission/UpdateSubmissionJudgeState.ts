@@ -1,5 +1,5 @@
 import type { APIMessage } from '@/system/api/api-message'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 import type { SubmissionId } from '@/objects/submission/SubmissionId'
 import type { SubmissionJudgeState } from '@/objects/submission/SubmissionJudgeState'
 

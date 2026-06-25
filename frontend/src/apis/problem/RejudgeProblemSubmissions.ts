@@ -3,7 +3,7 @@ import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { contestSlugValue } from '@/objects/contest/ContestSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 
 /** 手动整题重判；输入题目 slug 和可选比赛上下文，输出通用成功响应。 */
 export class RejudgeProblemSubmissions implements APIWithSessionMessage<SuccessResponse> {

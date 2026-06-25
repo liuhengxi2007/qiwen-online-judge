@@ -8,7 +8,7 @@ import domains.notification.table.notification.NotificationTable
 import domains.user.objects.Username
 import org.http4s.Method
 import shared.api.ApiPath
-import shared.objects.response.SuccessResponse
+import shared.objects.transport.SuccessResponse
 
 import java.sql.Connection
 

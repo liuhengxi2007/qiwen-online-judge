@@ -1,5 +1,5 @@
 import { messages, fallbackLocale, resolveLocale, translateMessage } from '@/system/i18n/messages'
-import type { SuccessResponse } from '@/objects/shared/response/SuccessResponse'
+import type { SuccessResponse } from '@/objects/shared/transport/SuccessResponse'
 import type { ApiMessageParam } from '@/objects/shared/ApiMessageParam'
 
 /**

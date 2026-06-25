@@ -65,7 +65,7 @@ On the frontend, keep object-specific parsing and value extraction in the matchi
 
 These surfaces are checked by `node scripts/check-object-alignment.mjs`:
 
-- shared response objects such as `ErrorResponse`, `SuccessResponse`, and pagination shapes
+- shared transport objects such as `ErrorResponse` and `SuccessResponse`, plus shared pagination shapes
 - shared access and lifecycle values that are part of frontend/backend payloads
 - domain `objects/request` files against backend `objects/request`
 - domain `objects/response` files against backend `objects/response`

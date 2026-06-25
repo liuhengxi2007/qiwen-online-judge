@@ -71,7 +71,7 @@ const frontendApiCodecPathPattern = /^frontend\/src\/apis\/[^/]+\/codecs\//
 const frontendObjectRoot = 'frontend/src/objects/'
 const frontendObjectFileBasenamePattern = /^[A-Z][A-Za-z0-9]*$/
 const frontendObjectAllowedSubdirectories = new Set(['request', 'response'])
-const frontendObjectAllowedSubdomainPaths = new Set(['shared/access'])
+const frontendObjectAllowedSubdomainPaths = new Set(['shared/access', 'shared/transport'])
 const backendDomainTableImportPattern = /^domains\.[^.]+\.table(?:\.|$|\{)/
 const backendDomainTableReferencePattern = /\b[A-Z][A-Za-z0-9]*Table\b/g
 const backendDomainUtilsFilePattern =
@@ -480,7 +480,7 @@ function extractScalaImports(source) {
 function checkBackendObjectFile(filePath, errors) {
   const source = read(filePath)
   const isBareDomainObject = /^backend\/src\/main\/scala\/domains\/[^/]+\/objects\/(?!request\/|response\/)/.test(filePath)
-  const isBareSharedObject = /^backend\/src\/main\/scala\/shared\/objects\/(?!request\/|response\/)/.test(filePath)
+  const isBareSharedObject = /^backend\/src\/main\/scala\/shared\/objects\/(?!request\/|response\/|transport\/)/.test(filePath)
   for (const entry of extractScalaImports(source)) {
     const importedPath = entry.line.replace(/^import\s+/, '')
     if (hasBlockedSegment(importedPath.replace(/[{}]/g, '.').replace(/,/g, '.'), backendBlockedObjectSegments)) {
@@ -488,7 +488,7 @@ function checkBackendObjectFile(filePath, errors) {
     }
     if (
       (isBareDomainObject || isBareSharedObject) &&
-      /\.objects\.(?:request|response)(?:\.|$|\{)/.test(importedPath) &&
+      /\.objects\.(?:request|response|transport)(?:\.|$|\{)/.test(importedPath) &&
       !/^judgeprotocol\.objects\.response(?:\.|$|\{)/.test(importedPath)
     ) {
       errors.push(`${filePath}:${entry.lineNumber} imports forbidden backend boundary object "${importedPath}"`)
@@ -701,7 +701,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (filePath.startsWith(removedFrontendSharedRoot) && /\/http\/response\//.test(filePath)) {
-      errors.push(`${filePath} is in removed shared frontend HTTP response directory; use objects/shared/response`)
+      errors.push(`${filePath} is in removed shared frontend HTTP response directory; use objects/shared/transport`)
     }
 
     if (/^backend\/src\/main\/scala\/domains\/[^/]+\/application\/(?:input|output)\//.test(filePath)) {
@@ -713,7 +713,7 @@ function checkTrackedResidues(errors) {
     }
 
     if (/^backend\/src\/main\/scala\/shared\/http\/response\//.test(filePath)) {
-      errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/objects/response`)
+      errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/objects/transport`)
     }
 
     const domain = backendDomain(filePath)

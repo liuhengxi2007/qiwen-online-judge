@@ -8,7 +8,7 @@ import domains.notification.table.notification.NotificationTable
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, PathParams}
-import shared.objects.response.SuccessResponse
+import shared.objects.transport.SuccessResponse
 
 import java.sql.Connection
 

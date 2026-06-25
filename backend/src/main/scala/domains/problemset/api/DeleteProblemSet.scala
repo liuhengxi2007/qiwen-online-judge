@@ -11,7 +11,7 @@ import domains.problemset.table.problem_set_access_grant.ProblemSetAccessGrantTa
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}
-import shared.objects.response.SuccessResponse
+import shared.objects.transport.SuccessResponse
 
 import java.sql.Connection
 

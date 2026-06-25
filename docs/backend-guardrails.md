@@ -14,6 +14,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
 - `src/main/scala/shared`
   - Dependency-pure shared payloads and platform helpers used across domains
   - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
+  - `shared/objects/transport`: shared HTTP transport payloads such as common success/error response bodies
   - `shared/objects/access`: shared access-control payload types only
   - `shared/application`: pure shared application helpers, such as generic access decisions and upload preparation
   - `shared/api`: shared API path/error helpers and small response helpers

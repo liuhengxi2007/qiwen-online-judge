@@ -87,7 +87,7 @@ Use `src/objects/<domain>` for durable frontend business concepts:
 Use `src/objects/shared` only after there is a real shared owner. Good examples:
 
 - pagination request/response types
-- shared response payloads
+- shared transport payloads, such as common success/error API bodies
 - access-control object types
 
 Do not put domain-specific policies, forms, display mappers, status mappers,

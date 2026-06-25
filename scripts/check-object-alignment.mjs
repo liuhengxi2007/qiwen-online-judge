@@ -53,6 +53,9 @@ const allowedExceptions = new Map([
 const usedExceptions = new Set()
 
 const scopedObjectSubdirectories = ['request', 'response']
+const scopedObjectSubdirectoriesByScope = new Map([
+  ['shared', ['transport']],
+])
 const backendInternalFrontendPayloadMirrors = new Map([
   ['hack', new Set(['ClaimedHackAttempt'])],
   ['problem', new Set(['ProblemDataManifest', 'ProblemDataManifestEntry'])],
@@ -110,7 +113,12 @@ function collectScopedObjectFiles(side, scope, objectRoot, extension) {
     required: false,
   }))
 
-  for (const subdirectory of scopedObjectSubdirectories) {
+  const scopedSubdirectories = [
+    ...scopedObjectSubdirectories,
+    ...(scopedObjectSubdirectoriesByScope.get(scope) ?? []),
+  ]
+
+  for (const subdirectory of scopedSubdirectories) {
     files.push(
       ...directFiles(join(objectRoot, subdirectory), extension).map((path) => ({
         side,

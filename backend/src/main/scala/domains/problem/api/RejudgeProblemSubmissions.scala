@@ -7,7 +7,7 @@ import domains.submission.api.QueueManualProblemRejudgeForProblem
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
-import shared.objects.response.SuccessResponse
+import shared.objects.transport.SuccessResponse
 
 import java.sql.Connection
 

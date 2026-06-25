@@ -1,4 +1,4 @@
-package shared.objects.response
+package shared.objects.transport
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
