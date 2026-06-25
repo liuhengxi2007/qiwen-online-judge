@@ -14,7 +14,7 @@ import shared.objects.access.{GrantRole, ResourceAccessPolicy}
 import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
-/** problems 表的写入入口；负责题目创建、更新、删除、行锁和 hack revision 推进。 */
+/** problems 表的写入入口；负责题目创建、更新、删除、行锁和重判 revision 推进。 */
 object ProblemMutationTable:
 
   private val insertSQL: String =
@@ -134,17 +134,17 @@ object ProblemMutationTable:
       finally statement.close()
     }
 
-  private val incrementHackRevisionSQL: String =
+  private val incrementRejudgeRevisionSQL: String =
     """
       |update problems
-      |set hack_revision = hack_revision + 1
+      |set rejudge_revision = rejudge_revision + 1
       |where id = ?
       |""".stripMargin
 
-  /** 增加题目 hack revision；成功 hack 物化后用于触发旧提交低优先级重判。 */
-  def incrementHackRevision(connection: Connection, problemId: ProblemId): IO[Unit] =
+  /** 增加题目重判 revision；成功 hack 物化后用于触发旧提交低优先级重判。 */
+  def incrementRejudgeRevision(connection: Connection, problemId: ProblemId): IO[Unit] =
     IO.blocking {
-      val statement = connection.prepareStatement(incrementHackRevisionSQL)
+      val statement = connection.prepareStatement(incrementRejudgeRevisionSQL)
       try
         statement.setObject(1, problemId.value)
         statement.executeUpdate()

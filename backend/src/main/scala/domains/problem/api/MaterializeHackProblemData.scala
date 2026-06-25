@@ -22,7 +22,7 @@ import java.util.{ArrayList, LinkedHashMap}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-/** 内部 hack 数据物化 API；把成功 hack 写入题目数据文件、更新 judge.yaml，并提升题目 hack revision。 */
+/** 内部 hack 数据物化 API；把成功 hack 写入题目数据文件、更新 judge.yaml，并提升题目重判 revision。 */
 final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStorageContext) extends InternalOnlyApi[MaterializeHackProblemDataInput, Unit]:
 
   override val method: Method = Method.POST
@@ -92,7 +92,7 @@ object MaterializeHackProblemData:
           }
           _ <- ProblemDataStorage.writePath(problemDataStorage, input.problemSlug, JudgeYamlPath, updatedJudgeYaml)
           _ <- ProblemDataFileTable.upsertForProblem(connection, input.problemId, entries, input.createdAt)
-          _ <- ProblemMutationTable.incrementHackRevision(connection, input.problemId)
+          _ <- ProblemMutationTable.incrementRejudgeRevision(connection, input.problemId)
         yield ()
       _ <- action.handleErrorWith(error => ProblemDataStorage.restoreDirectory(problemDataStorage, input.problemSlug, snapshot) *> IO.raiseError(error))
     yield ()

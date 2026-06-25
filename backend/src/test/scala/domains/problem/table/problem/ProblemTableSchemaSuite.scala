@@ -15,6 +15,16 @@ class ProblemTableSchemaSuite extends FunSuite:
     assert(ProblemTableSchema.initTableSql.contains("check (result_display_mode in ('verdict', 'score'))"))
   }
 
+  test("problem schema uses rejudge revision and migrates legacy hack revision") {
+    assert(ProblemTableSchema.initTableSql.contains("rejudge_revision bigint not null default 0"))
+    assert(!ProblemTableSchema.initTableSql.contains("hack_revision"))
+    assert(ProblemTableSchema.addRejudgeRevisionColumnSql.contains("rename column hack_revision to rejudge_revision"))
+    assert(ProblemTableSchema.addRejudgeRevisionColumnSql.contains("greatest(coalesce(rejudge_revision, 0), coalesce(hack_revision, 0))"))
+    assert(ProblemTableSchema.addRejudgeRevisionColumnSql.contains("drop column hack_revision"))
+    assert(ProblemTableSchema.setRejudgeRevisionDefaultSql.contains("alter column rejudge_revision set default 0"))
+    assert(ProblemTableSchema.setRejudgeRevisionNotNullSql.contains("alter column rejudge_revision set not null"))
+  }
+
   test("problem author migration handles creator and owner columns") {
     assert(ProblemTableSchema.migrateAuthorUsernameColumnSql.contains("creator_username"))
     assert(ProblemTableSchema.migrateAuthorUsernameColumnSql.contains("owner_username"))

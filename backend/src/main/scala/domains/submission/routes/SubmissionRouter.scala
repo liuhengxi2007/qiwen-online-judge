@@ -33,6 +33,6 @@ object SubmissionRouter:
         GetSubmissionJudgeState,
         UpdateSubmissionJudgeState,
         QueueHackRejudgeForProblem,
-        RequeueStaleHackRevisionSubmission
+        RequeueStaleRejudgeRevisionSubmission
       )
     )

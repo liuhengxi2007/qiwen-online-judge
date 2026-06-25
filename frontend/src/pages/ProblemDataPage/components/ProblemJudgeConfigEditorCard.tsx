@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { useProblemJudgeConfigEditorModel } from '../hooks/useProblemJudgeConfigEditorModel'
 import { judgeConfigPath } from '../functions/ProblemJudgeConfig'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
@@ -80,7 +81,7 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
               <Button
                 type="button"
                 variant="outline"
-                disabled={model.isSavingReady}
+                disabled={model.isSavingReady || model.isRejudgingProblem}
                 className="rounded-2xl border-amber-300 bg-white text-amber-800"
                 onClick={() => {
                   void model.setReady(false)
@@ -102,6 +103,25 @@ export function ProblemJudgeConfigEditorCard({ contestSlug, model, problemSlug }
                 {model.isSavingReady ? t('problem.data.ready.saving') : t('problem.data.ready.setReady')}
               </Button>
             )}
+            <ConfirmActionDialog
+              title={t('problem.data.rejudgeAll.title')}
+              description={t('problem.data.rejudgeAll.description')}
+              confirmLabel={model.isRejudgingProblem ? t('problem.data.rejudgeAll.running') : t('problem.data.rejudgeAll.confirm')}
+              onConfirm={() => {
+                void model.rejudgeProblemSubmissions()
+              }}
+              trigger={
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={model.isRejudgingProblem || model.isSavingReady || !model.problem?.ready}
+                  className="rounded-2xl border-slate-300 bg-white"
+                >
+                  <RefreshCw className="size-4" />
+                  {model.isRejudgingProblem ? t('problem.data.rejudgeAll.running') : t('problem.data.rejudgeAll.action')}
+                </Button>
+              }
+            />
           </div>
         </div>
 

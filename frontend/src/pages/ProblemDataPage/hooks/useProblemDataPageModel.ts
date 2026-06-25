@@ -5,6 +5,7 @@ import { DeleteProblemDataPath } from '@/apis/problem/DeleteProblemDataPath'
 import { DownloadProblemDataArchive } from '@/apis/problem/DownloadProblemDataArchive'
 import { DownloadProblemDataPath } from '@/apis/problem/DownloadProblemDataPath'
 import { ListProblemDataTree } from '@/apis/problem/ListProblemDataTree'
+import { RejudgeProblemSubmissions } from '@/apis/problem/RejudgeProblemSubmissions'
 import { SetProblemDataReady } from '@/apis/problem/SetProblemDataReady'
 import { UploadProblemDataArchive } from '@/apis/problem/UploadProblemDataArchive'
 import { UploadProblemDataFile } from '@/apis/problem/UploadProblemDataFile'
@@ -34,6 +35,10 @@ type DeleteResult = { ok: true } | { ok: false; message: string }
  * 测试数据 ready 状态保存结果；失败时保留服务端或本地错误消息。
  */
 type ReadyResult = { ok: true } | { ok: false; message: string }
+/**
+ * 整题重判操作结果；失败时 message 可直接展示给页面。
+ */
+type RejudgeResult = { ok: true } | { ok: false; message: string }
 
 /**
  * 题目测试数据页模型 hook，组合题目详情、文件树加载、上传下载、删除清空和 ready 状态保存。
@@ -195,11 +200,25 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
     }
   }, [loadFiles, problemDataScope, replaceProblem, t])
 
+  const rejudgeProblemSubmissions = useCallback(async (): Promise<RejudgeResult> => {
+    dispatch({ type: 'problem_rejudge_started' })
+    try {
+      await sendAPI(new RejudgeProblemSubmissions(problemDataScope.problemSlug, problemDataScope.contestSlug))
+      dispatch({ type: 'problem_rejudge_succeeded', message: t('problem.data.rejudgeAll.succeeded') })
+      return { ok: true }
+    } catch (error) {
+      const message = isHttpClientError(error) ? error.message : t('problem.data.rejudgeAll.failed')
+      dispatch({ type: 'problem_rejudge_failed', message })
+      return { ok: false, message }
+    }
+  }, [problemDataScope, t])
+
   return {
     problem,
     isProblemLoading: detailQuery.isLoading,
     problemErrorMessage: detailQuery.errorMessage,
     isSavingReady: state.isSavingReady,
+    isRejudgingProblem: state.isRejudgingProblem,
     selectedFile: state.selectedFile,
     isUploading: state.isUploading,
     isLoadingFiles: state.isLoadingFiles,
@@ -224,5 +243,6 @@ export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: 
       new DownloadProblemDataArchive(problemDataScope.problemSlug, problemDataScope.contestSlug).downloadUrl(),
     clearAllDataFiles,
     setReady,
+    rejudgeProblemSubmissions,
   }
 }

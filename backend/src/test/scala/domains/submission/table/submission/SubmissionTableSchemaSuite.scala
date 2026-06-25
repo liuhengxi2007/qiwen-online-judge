@@ -26,3 +26,13 @@ class SubmissionTableSchemaSuite extends FunSuite:
     assert(SubmissionTableSchema.backfillJudgeResultSummaryVerdictsSql.contains("'{baseResult,verdict}'"))
     assert(SubmissionTableSchema.backfillJudgeResultSummaryVerdictsSql.contains("'{worstResult,verdict}'"))
   }
+
+  test("submission schema uses rejudge revision and migrates legacy hack revision") {
+    assert(SubmissionTableSchema.initTableSql.contains("rejudge_revision bigint not null default 0"))
+    assert(!SubmissionTableSchema.initTableSql.contains("hack_revision"))
+    assert(SubmissionTableSchema.addLifecycleColumnsSql.contains("rename column hack_revision to rejudge_revision"))
+    assert(SubmissionTableSchema.addLifecycleColumnsSql.contains("greatest(coalesce(rejudge_revision, 0), coalesce(hack_revision, 0))"))
+    assert(SubmissionTableSchema.addLifecycleColumnsSql.contains("drop column hack_revision"))
+    assert(SubmissionTableSchema.setRejudgeRevisionDefaultSql.contains("alter column rejudge_revision set default 0"))
+    assert(SubmissionTableSchema.setRejudgeRevisionNotNullSql.contains("alter column rejudge_revision set not null"))
+  }

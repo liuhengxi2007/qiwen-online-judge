@@ -13,6 +13,7 @@ import java.time.Instant
 object SubmissionJudgeTable:
 
   val OrdinaryPriority: Int = 0
+  val ManualProblemRejudgePriority: Int = -50
   val LowPriority: Int = -100
 
   private def claimNextForLanguagesSQL(languageCount: Int): String =
@@ -41,7 +42,7 @@ object SubmissionJudgeTable:
       |set status = ?,
       |    started_at = ?,
       |    finished_at = ?,
-      |    hack_revision = p.hack_revision,
+      |    rejudge_revision = p.rejudge_revision,
       |    judge_result = null
       |from next_submission ns, problems p
       |where s.id = ns.id
@@ -134,7 +135,36 @@ object SubmissionJudgeTable:
       finally statement.close()
     }
 
-  private val requeueIfHackRevisionStaleSQL: String =
+  private val queueManualRejudgeForProblemSQL: String =
+    """
+      |update submissions
+      |set status = 'queued',
+      |    judge_result = null,
+      |    started_at = null,
+      |    finished_at = null,
+      |    judge_priority = ?,
+      |    judge_queued_at = ?
+      |where problem_id = ?
+      |  and (
+      |    status in ('completed', 'failed')
+      |    or (status = 'queued' and judge_priority < ?)
+      |  )
+      |""".stripMargin
+
+  /** 将题目下已终态提交入队，并提升优先级低于手动整题重判的已排队提交。 */
+  def queueManualRejudgeForProblem(connection: Connection, problemId: ProblemId): IO[Int] =
+    IO.blocking {
+      val statement = connection.prepareStatement(queueManualRejudgeForProblemSQL)
+      try
+        statement.setInt(1, ManualProblemRejudgePriority)
+        statement.setTimestamp(2, nowTimestamp)
+        statement.setObject(3, problemId.value)
+        statement.setInt(4, ManualProblemRejudgePriority)
+        statement.executeUpdate()
+      finally statement.close()
+    }
+
+  private val requeueIfRejudgeRevisionStaleSQL: String =
     """
       |update submissions s
       |set status = 'queued',
@@ -147,13 +177,13 @@ object SubmissionJudgeTable:
       |where s.public_id = ?
       |  and p.id = s.problem_id
       |  and s.status in ('completed', 'failed')
-      |  and s.hack_revision < p.hack_revision
+      |  and s.rejudge_revision < p.rejudge_revision
       |""".stripMargin
 
-  /** 若提交的 hack_revision 落后于题目则低优先级重新入队，返回是否更新。 */
-  def requeueIfHackRevisionStale(connection: Connection, submissionId: SubmissionId): IO[Boolean] =
+  /** 若提交的重判 revision 落后于题目则低优先级重新入队，返回是否更新。 */
+  def requeueIfRejudgeRevisionStale(connection: Connection, submissionId: SubmissionId): IO[Boolean] =
     IO.blocking {
-      val statement = connection.prepareStatement(requeueIfHackRevisionStaleSQL)
+      val statement = connection.prepareStatement(requeueIfRejudgeRevisionStaleSQL)
       try
         statement.setInt(1, LowPriority)
         statement.setTimestamp(2, nowTimestamp)

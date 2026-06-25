@@ -6,7 +6,7 @@ import cats.effect.IO
 
 import java.sql.Connection
 
-/** problems 表结构与迁移片段；维护题目元信息、访问策略基础字段、ready 状态和 hack revision。 */
+/** problems 表结构与迁移片段；维护题目元信息、访问策略基础字段、ready 状态和重判 revision。 */
 object ProblemTableSchema:
 
   val initTableSql: String =
@@ -19,7 +19,7 @@ object ProblemTableSchema:
       |  data_name varchar(255),
       |  data_bytes bytea,
       |  ready boolean not null default false,
-      |  hack_revision bigint not null default 0,
+      |  rejudge_revision bigint not null default 0,
       |  result_display_mode varchar(32) not null default 'score' check (result_display_mode in ('verdict', 'score')),
       |  base_access varchar(32) not null default 'restricted' check (base_access in ('restricted', 'public')),
       |  other_user_submission_access varchar(32) not null default 'none' check (other_user_submission_access in ('none', 'summary', 'detail')),
@@ -255,36 +255,63 @@ object ProblemTableSchema:
       |alter column ready set default false
       |""".stripMargin
 
-  val addHackRevisionColumnSql: String =
+  val addRejudgeRevisionColumnSql: String =
     """
       |do $$
       |begin
+      |  if exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'hack_revision'
+      |  ) and not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'rejudge_revision'
+      |  ) then
+      |    alter table problems rename column hack_revision to rejudge_revision;
+      |  end if;
+      |
       |  if not exists (
+      |    select 1
+      |    from information_schema.columns
+      |    where table_schema = 'public'
+      |      and table_name = 'problems'
+      |      and column_name = 'rejudge_revision'
+      |  ) then
+      |    alter table problems add column rejudge_revision bigint;
+      |  end if;
+      |
+      |  if exists (
       |    select 1
       |    from information_schema.columns
       |    where table_schema = 'public'
       |      and table_name = 'problems'
       |      and column_name = 'hack_revision'
       |  ) then
-      |    alter table problems add column hack_revision bigint;
+      |    execute 'update problems set rejudge_revision = greatest(coalesce(rejudge_revision, 0), coalesce(hack_revision, 0))';
+      |    alter table problems drop column hack_revision;
       |  end if;
       |
       |  update problems
-      |  set hack_revision = 0
-      |  where hack_revision is null;
+      |  set rejudge_revision = 0
+      |  where rejudge_revision is null;
       |end $$;
       |""".stripMargin
 
-  val setHackRevisionDefaultSql: String =
+  val setRejudgeRevisionDefaultSql: String =
     """
       |alter table problems
-      |alter column hack_revision set default 0
+      |alter column rejudge_revision set default 0
       |""".stripMargin
 
-  val setHackRevisionNotNullSql: String =
+  val setRejudgeRevisionNotNullSql: String =
     """
       |alter table problems
-      |alter column hack_revision set not null
+      |alter column rejudge_revision set not null
       |""".stripMargin
 
   val addResultDisplayModeColumnSql: String =
@@ -421,13 +448,13 @@ object ProblemTableSchema:
         statement.execute(addBaseAccessColumnSql)
         statement.execute(dropVisibilityColumnSql)
         statement.execute(addDataColumnsSql)
-        statement.execute(addHackRevisionColumnSql)
+        statement.execute(addRejudgeRevisionColumnSql)
         statement.execute(dropTimeLimitColumnSql)
         statement.execute(dropSpaceLimitColumnSql)
         statement.execute(setReadyDefaultSql)
         statement.execute(setReadyNotNullSql)
-        statement.execute(setHackRevisionDefaultSql)
-        statement.execute(setHackRevisionNotNullSql)
+        statement.execute(setRejudgeRevisionDefaultSql)
+        statement.execute(setRejudgeRevisionNotNullSql)
         statement.execute(addResultDisplayModeColumnSql)
         statement.execute(setResultDisplayModeDefaultSql)
         statement.execute(setResultDisplayModeNotNullSql)

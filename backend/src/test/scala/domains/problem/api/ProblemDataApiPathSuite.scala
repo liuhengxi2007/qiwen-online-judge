@@ -29,6 +29,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
       "UploadProblemDataArchive" -> UploadProblemDataArchive(problemDataStorage).path,
       "ClearProblemData" -> ClearProblemData(problemDataStorage).path,
       "SetProblemDataReady" -> SetProblemDataReady(problemDataStorage).path,
+      "RejudgeProblemSubmissions" -> RejudgeProblemSubmissions.path,
     )
 
     assertEquals(
@@ -44,6 +45,7 @@ class ProblemDataApiPathSuite extends CatsEffectSuite:
         "UploadProblemDataArchive" -> ApiPath("/api/problems/:problemSlug/data/archive-imports"),
         "ClearProblemData" -> ApiPath("/api/problems/:problemSlug/data/files/delete-all"),
         "SetProblemDataReady" -> ApiPath("/api/problems/:problemSlug/data/ready-state"),
+        "RejudgeProblemSubmissions" -> ApiPath("/api/problems/:problemSlug/submissions/rejudge"),
       )
     )
   }

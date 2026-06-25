@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.api.PublicApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
-import domains.submission.api.{GetSubmissionJudgeState, RequeueStaleHackRevisionSubmission, UpdateSubmissionJudgeState}
+import domains.submission.api.{GetSubmissionJudgeState, RequeueStaleRejudgeRevisionSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionId
 import domains.submission.utils.SubmissionJudgeRules
 import io.circe.Encoder
@@ -33,7 +33,7 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
       resultRequest <- request.as[ReportJudgeResultRequest]
     yield (submissionId, resultRequest)
 
-  /** 将 running 提交推进到终态并写入 JudgeResult；随后检查 hack revision 是否需要再次入队。 */
+  /** 将 running 提交推进到终态并写入 JudgeResult；随后检查重判 revision 是否需要再次入队。 */
   override def plan(connection: Connection, input: (SubmissionId, ReportJudgeResultRequest)): IO[SuccessResponse] =
     val (submissionId, request) = input
     request.status match
@@ -58,7 +58,7 @@ final case class CompleteJudgeSubmission(judgeConfig: JudgeConfig) extends Publi
             case Left(message) => HttpApiError.raise(HttpApiError.badRequest(message))
             case Right(completedState) => IO.pure(completedState)
           _ <- UpdateSubmissionJudgeState.plan(connection, UpdateSubmissionJudgeState.input(submissionId, completedState))
-          _ <- RequeueStaleHackRevisionSubmission.plan(connection, submissionId)
+          _ <- RequeueStaleRejudgeRevisionSubmission.plan(connection, submissionId)
         yield SuccessResponse(code = Some(ApiMessages.judgeResultRecorded.code), message = None, params = ApiMessages.judgeResultRecorded.params)
       case _ =>
         HttpApiError.raise(HttpApiError.badRequest("Judge results may only set status to completed or failed."))

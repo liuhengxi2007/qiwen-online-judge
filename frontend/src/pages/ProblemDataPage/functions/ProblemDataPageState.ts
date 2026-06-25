@@ -6,6 +6,7 @@ import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemData
  */
 export type ProblemDataPageState = {
   isSavingReady: boolean
+  isRejudgingProblem: boolean
   selectedFile: File | null
   isUploading: boolean
   isLoadingFiles: boolean
@@ -23,6 +24,9 @@ export type ProblemDataPageAction =
   | { type: 'ready_save_started' }
   | { type: 'ready_save_succeeded'; message: string }
   | { type: 'ready_save_failed'; message: string }
+  | { type: 'problem_rejudge_started' }
+  | { type: 'problem_rejudge_succeeded'; message: string }
+  | { type: 'problem_rejudge_failed'; message: string }
   | { type: 'selected_file_set'; file: File | null }
   | { type: 'load_started' }
   | { type: 'load_succeeded'; tree: ProblemDataTreeNode[] }
@@ -44,6 +48,7 @@ export type ProblemDataPageAction =
  */
 export const initialProblemDataPageState: ProblemDataPageState = {
   isSavingReady: false,
+  isRejudgingProblem: false,
   selectedFile: null,
   isUploading: false,
   isLoadingFiles: true,
@@ -68,6 +73,12 @@ export function reduceProblemDataPageState(
       return { ...state, isSavingReady: false, errorMessage: '', successMessage: action.message }
     case 'ready_save_failed':
       return { ...state, isSavingReady: false, errorMessage: action.message, successMessage: '' }
+    case 'problem_rejudge_started':
+      return { ...state, isRejudgingProblem: true, errorMessage: '', successMessage: '' }
+    case 'problem_rejudge_succeeded':
+      return { ...state, isRejudgingProblem: false, errorMessage: '', successMessage: action.message }
+    case 'problem_rejudge_failed':
+      return { ...state, isRejudgingProblem: false, errorMessage: action.message, successMessage: '' }
     case 'selected_file_set':
       return { ...state, selectedFile: action.file }
     case 'load_started':
