@@ -1,6 +1,15 @@
 import { aggregations, testcaseTypes } from './constants'
-import type { AggregationConfig, DecimalUnits, IndexedValue, ValidationContext } from './types'
-import { isRecord } from './utils'
+import type { AggregationConfig } from './objects/JudgeConfigAggregation'
+import type { IndexedValue, ValidationContext } from './objects/JudgeConfigValidation'
+import { isRecord } from './scalarValidators'
+
+/**
+ * 十进制数字的整数化表示，用于无浮点误差地累加 scoreRatio。
+ */
+type DecimalUnits = {
+  units: bigint
+  scale: number
+}
 
 /**
  * 校验 aggregation 对象，分别读取 testcase 和 subtask 聚合策略。

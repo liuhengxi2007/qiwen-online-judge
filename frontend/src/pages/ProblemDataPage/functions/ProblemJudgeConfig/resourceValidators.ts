@@ -1,12 +1,12 @@
 import type {
   CheckerConfig,
-  LimitsConfig,
   StandardConfig,
   ToolConfig,
-  ToolLimitsConfig,
-  ValidationContext,
-} from './types'
-import { isRecord, validateIntegerRange, validatePathValue } from './utils'
+} from './objects/JudgeConfigTool'
+import type { LimitsConfig, ToolLimitsConfig } from './objects/JudgeConfigLimits'
+import type { ValidationContext } from './objects/JudgeConfigValidation'
+import { isRecord, validateIntegerRange } from './scalarValidators'
+import { validatePathValue } from './pathValidators'
 
 /**
  * 校验 limits 对象；未声明返回 null，声明时要求 timeMs 和 memoryMb 都在允许范围内。

@@ -1,6 +1,8 @@
 import { codeRolePattern, textRolePattern } from './constants'
-import type { ModeConfig, ValidationContext } from './types'
-import { isRecord, validatePathValue } from './utils'
+import type { ModeConfig } from './objects/JudgeConfigMode'
+import type { ValidationContext } from './objects/JudgeConfigValidation'
+import { isRecord } from './scalarValidators'
+import { validatePathValue } from './pathValidators'
 import { validateLimitedTool } from './resourceValidators'
 
 /**

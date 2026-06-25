@@ -4,9 +4,9 @@ import { problemDataPathValue } from '@/objects/problem/ProblemDataPath'
 import type { ProblemDataTreeNode } from '@/objects/problem/response/ProblemDataTreeNode'
 
 export { judgeConfigPath, judgeConfigTemplate } from './ProblemJudgeConfig/constants'
-export type { JudgeConfigValidationResult } from './ProblemJudgeConfig/types'
+export type { JudgeConfigValidationResult } from './ProblemJudgeConfig/objects/JudgeConfigValidation'
 
-import type { IndexedValue, JudgeConfigValidationResult, ValidationContext } from './ProblemJudgeConfig/types'
+import type { IndexedValue, JudgeConfigValidationResult, ValidationContext } from './ProblemJudgeConfig/objects/JudgeConfigValidation'
 import {
   mergeAggregation,
   validateAggregation,
@@ -31,17 +31,16 @@ import {
 } from './ProblemJudgeConfig/roleValidators'
 import {
   isRecord,
-  judgeNodeLabel,
   rejectLegacyName,
   requireExactNumber,
-  toResult,
   validateList,
   validateOptionalBoolean,
-  validateOptionalFileRef,
   validateOptionalInteger,
   validateOptionalLabel,
-  validateRequiredFileRef,
-} from './ProblemJudgeConfig/utils'
+} from './ProblemJudgeConfig/scalarValidators'
+import { judgeNodeLabel } from './ProblemJudgeConfig/nodeLabels'
+import { toResult } from './ProblemJudgeConfig/validationResult'
+import { validateOptionalFileRef, validateRequiredFileRef } from './ProblemJudgeConfig/pathValidators'
 
 /**
  * 校验 judge.yaml 内容和题目数据文件树；解析 YAML、验证 schema、继承默认配置并返回错误集合。
