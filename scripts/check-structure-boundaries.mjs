@@ -53,15 +53,19 @@ const frontendTopLevelPageFunctionsPathPattern = /^frontend\/src\/pages\/functio
 const frontendAllowedCanonicalPageVariantImports = [
   {
     importerRoot: 'frontend/src/pages/UserBlogPage/',
-    importedPath: 'frontend/src/pages/BlogPage/BlogListPageContent',
+    importedPath: 'frontend/src/pages/BlogPage/components/BlogListPageContent',
   },
   {
     importerRoot: 'frontend/src/pages/ProblemBlogPage/',
-    importedPath: 'frontend/src/pages/BlogPage/BlogListPageContent',
+    importedPath: 'frontend/src/pages/BlogPage/components/BlogListPageContent',
   },
   {
     importerRoot: 'frontend/src/pages/ProblemSubmissionPage/',
-    importedPath: 'frontend/src/pages/SubmissionPage/SubmissionListPageContent',
+    importedPath: 'frontend/src/pages/SubmissionPage/components/SubmissionListPageContent',
+  },
+  {
+    importerRoot: 'frontend/src/pages/ContestSubmissionPage/',
+    importedPath: 'frontend/src/pages/SubmissionPage/components/SubmissionListPageContent',
   },
 ]
 const backendBlockedObjectSegments = new Set(['application', 'routes', 'table'])

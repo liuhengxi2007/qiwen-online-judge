@@ -1,4 +1,4 @@
-import { BlogListPageContent } from './BlogListPageContent'
+import { BlogListPageContent } from './components/BlogListPageContent'
 
 /**
  * 全站博客列表页，复用博客列表内容组件。

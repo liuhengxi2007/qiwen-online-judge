@@ -1,4 +1,4 @@
-import { SubmissionListPageContent } from './SubmissionListPageContent'
+import { SubmissionListPageContent } from './components/SubmissionListPageContent'
 
 /**
  * 全站提交列表页，直接复用通用提交列表内容组件，不预设题目过滤条件。

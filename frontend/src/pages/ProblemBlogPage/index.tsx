@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
-import { BlogListPageContent } from '@/pages/BlogPage/BlogListPageContent'
+import { BlogListPageContent } from '@/pages/BlogPage/components/BlogListPageContent'
 
 /**
  * 题目关联博客列表路由页，解析题目 slug 并复用通用博客列表的题目过滤能力。

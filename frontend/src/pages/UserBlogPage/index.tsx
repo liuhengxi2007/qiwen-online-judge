@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 
 import { parseUsername } from '@/objects/user/Username'
-import { BlogListPageContent } from '@/pages/BlogPage/BlogListPageContent'
+import { BlogListPageContent } from '@/pages/BlogPage/components/BlogListPageContent'
 
 /**
  * 用户博客列表路由页，解析 URL 中的用户名并把合法用户名作为作者过滤条件传给通用博客列表。
