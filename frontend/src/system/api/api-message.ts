@@ -22,11 +22,18 @@ export type APIMessage<Response> = {
 export type APIWithSessionMessage<Response> = APIMessage<Response>
 
 /**
- * 规范化 API 路径，接受带或不带 /api 前缀的消息路径，输出可直接交给 fetch 的绝对路径。
+ * 规范化 API 路径，接受带或不带 /api 前缀的路径，输出可直接交给 fetch 的绝对路径。
+ */
+export function apiRoutePath(path: string): string {
+  const normalizedPath = path.replace(/^\/+/, '')
+  return normalizedPath.startsWith('api/') ? `/${normalizedPath}` : `/api/${normalizedPath}`
+}
+
+/**
+ * 规范化 API 消息路径，输出可直接交给 fetch 的绝对路径。
  */
 export function apiPath(message: APIMessage<unknown>): string {
-  const normalizedPath = message.apiPath.replace(/^\/+/, '')
-  return normalizedPath.startsWith('api/') ? `/${normalizedPath}` : `/api/${normalizedPath}`
+  return apiRoutePath(message.apiPath)
 }
 
 /**

@@ -1,4 +1,4 @@
-package domains.realtime.api
+package routes
 
 import cats.effect.IO
 import cats.effect.kernel.Outcome

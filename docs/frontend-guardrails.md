@@ -71,7 +71,8 @@ Rules:
 - frontend API codec files are forbidden; endpoint files should declare method,
   path, request body, and response type only
 - do not add compatibility barrels; import endpoint files directly
-- non-JSON helpers such as download URL builders or realtime event URL helpers live in the matched endpoint file
+- non-JSON helpers such as download URL builders live in the matched endpoint file
+- realtime event URLs are app-shell transport URLs, not domain API files; build them from `system/api` path helpers in the page-layer hook that owns the connection
 - run `node scripts/check-api-alignment.mjs` when endpoint files change
 
 ## Objects

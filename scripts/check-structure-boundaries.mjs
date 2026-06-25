@@ -31,6 +31,22 @@ const frontendUiForbiddenPrefixes = [
 ]
 const frontendPagesRoot = 'frontend/src/pages/'
 const frontendSharedPageRootNames = new Set(['components', 'hooks', 'objects', 'routing', 'stores'])
+const frontendApiRoot = 'frontend/src/apis/'
+const frontendAllowedApiDomains = new Set([
+  'auth',
+  'blog',
+  'contest',
+  'hack',
+  'judger',
+  'message',
+  'notification',
+  'problem',
+  'problemset',
+  'rating',
+  'submission',
+  'user',
+  'usergroup',
+])
 const frontendNestedPageObjectPathPattern = /^frontend\/src\/pages\/objects\/[^/]+\//
 const frontendPageObjectWorkflowPathPattern = /^frontend\/src\/pages\/objects\/[^/]+-(?:form|input)\.ts$/
 const frontendTopLevelPageFunctionsPathPattern = /^frontend\/src\/pages\/functions(?:\/|$)/
@@ -63,6 +79,26 @@ const backendDomainUtilsFilePattern =
 const backendEffectPattern =
   /(?:\.prepareStatement\s*\(|\bFiles\.|\bInstant\.now\s*\(|\bLocalDateTime\.now\s*\(|\bSystem\.currentTimeMillis\s*\(|\bUUID\.randomUUID\s*\(|\bSecureRandom\s*\(|\.nextBytes\s*\(|\.publish1\s*\(|\.publish\s*\(|\bclient\.(?:get|set|setex|del|listObjects|putObject|getObject|removeObject|bucketExists|makeBucket)\s*\(|\b(?:ProblemDataStorage|SubmissionProgramStorage|UserAvatarStorage|SessionCache|SessionStore|MessageEventHub|NotificationEventHub)\.(?:create|resource|list|read|write|delete|snapshot|restore|publish|subscribe|put|get|lookup)\w*\s*\()/
 const backendEffectfulReturnPattern = /:\s*(?:IO|Resource)\s*\[|:\s*Stream\s*\[\s*IO\b/
+const backendDomainRoots = [
+  'backend/src/main/scala/domains/',
+  'backend/src/test/scala/domains/',
+]
+const backendAllowedDomains = new Set([
+  'auth',
+  'blog',
+  'contest',
+  'hack',
+  'judge',
+  'judger',
+  'message',
+  'notification',
+  'problem',
+  'problemset',
+  'rating',
+  'submission',
+  'user',
+  'usergroup',
+])
 
 const backendDomainUtilsAllowlist = new Map([
   [
@@ -186,6 +222,29 @@ function hasPrefix(path, prefixes) {
 
 function stripTsExtension(path) {
   return path.replace(/\.(?:ts|tsx)$/, '')
+}
+
+function pathSegmentAfterPrefix(filePath, prefix) {
+  if (!filePath.startsWith(prefix)) {
+    return null
+  }
+
+  return filePath.slice(prefix.length).split('/')[0] ?? null
+}
+
+function frontendApiDomain(filePath) {
+  return pathSegmentAfterPrefix(filePath, frontendApiRoot)
+}
+
+function backendDomain(filePath) {
+  for (const rootPath of backendDomainRoots) {
+    const domain = pathSegmentAfterPrefix(filePath, rootPath)
+    if (domain !== null) {
+      return domain
+    }
+  }
+
+  return null
 }
 
 function frontendRoutePageRoot(path) {
@@ -386,6 +445,13 @@ function checkRemovedFrontendResidueImport(filePath, errors) {
     if (resolved.startsWith(removedFrontendFeatureRoot) || resolved.startsWith(removedFrontendSharedRoot)) {
       errors.push(
         `${filePath}:${lineNumber(source, match.index)} imports removed frontend layer "${match.specifier}"`,
+      )
+    }
+
+    const apiDomain = frontendApiDomain(resolved)
+    if (apiDomain !== null && !frontendAllowedApiDomains.has(apiDomain)) {
+      errors.push(
+        `${filePath}:${lineNumber(source, match.index)} imports unknown frontend API domain "${apiDomain}" through "${match.specifier}"`,
       )
     }
   }
@@ -621,6 +687,11 @@ function checkTrackedResidues(errors) {
       errors.push(`${filePath} is in removed frontend stores layer; use frontend/src/pages/stores`)
     }
 
+    const apiDomain = frontendApiDomain(filePath)
+    if (apiDomain !== null && !frontendAllowedApiDomains.has(apiDomain)) {
+      errors.push(`${filePath} is under unknown frontend API domain "${apiDomain}"`)
+    }
+
     if (filePath.startsWith(removedFrontendFeatureRoot) && /\/domain\//.test(filePath)) {
       errors.push(`${filePath} is in removed frontend feature domain layer`)
     }
@@ -643,6 +714,11 @@ function checkTrackedResidues(errors) {
 
     if (/^backend\/src\/main\/scala\/shared\/http\/response\//.test(filePath)) {
       errors.push(`${filePath} is in removed shared backend HTTP response directory; use shared/objects/response`)
+    }
+
+    const domain = backendDomain(filePath)
+    if (domain !== null && !backendAllowedDomains.has(domain)) {
+      errors.push(`${filePath} is under unknown backend domain "${domain}"`)
     }
 
     if (segments.includes('dist')) {

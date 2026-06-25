@@ -10,6 +10,7 @@ Back to [Architecture Guardrails](./architecture-guardrails.md).
   - User profile, ranklist, settings, permission-management routes, and user-owned persistence/objects
 - `src/main/scala/routes`
   - Top-level HTTP app/router composition that wires domain routers together
+  - App-shell transport routes with no business-domain owner, such as the combined realtime SSE stream
 - `src/main/scala/shared`
   - Dependency-pure shared payloads and platform helpers used across domains
   - `shared/objects`: shared transport/domain primitives such as pagination and lifecycle values
@@ -41,6 +42,7 @@ For `routes`:
 
 - `*Router.scala`
   thin aggregator that registers endpoint API objects in a list through the auth-owned API object router
+- top-level `routes/*.scala` may host app-shell transport routes only when the route has no business-domain owner; realtime SSE belongs here, not under `domains/realtime`
 
 For `api`:
 

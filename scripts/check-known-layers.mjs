@@ -32,7 +32,7 @@ const backendMainScalaAllowedEntries = new Set([
 const backendMainDatabaseAllowedLayers = new Set(['table', 'utils'])
 const backendMainDomainAllowedLayers = new Set(['api', 'objects', 'routes', 'table', 'utils'])
 const backendMainSharedAllowedLayers = new Set(['api', 'application', 'objects'])
-const backendTestScalaAllowedEntries = new Set(['domains', 'shared'])
+const backendTestScalaAllowedEntries = new Set(['domains', 'routes', 'shared'])
 const backendTestDomainAllowedLayers = new Set(['api', 'objects', 'table', 'utils'])
 const backendTestSharedAllowedLayers = new Set(['api', 'application', 'objects'])
 
@@ -169,6 +169,13 @@ function checkBackendTestFile(filePath, errors) {
     const layer = segments[6]
     if (!domain || !layer || !backendTestDomainAllowedLayers.has(layer)) {
       errors.push(`${filePath} is in unknown backend test domain layer "${layer ?? '<root>'}"`)
+    }
+    return
+  }
+
+  if (entry === 'routes') {
+    if (segments.length > 6) {
+      errors.push(`${filePath} is in unknown backend test routes layer "${segments[5]}"`)
     }
     return
   }

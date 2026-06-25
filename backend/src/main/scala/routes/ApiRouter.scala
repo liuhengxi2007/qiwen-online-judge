@@ -40,7 +40,7 @@ object ApiRouter:
         domains.hack.routes.HackRouter.routes(databaseSession, sessionStore, submissionProgramStorage, problemDataStorage) <+>
         domains.blog.routes.BlogRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.usergroup.routes.UserGroupRouter.routes(databaseSession, sessionStore) <+>
-        domains.realtime.routes.RealtimeRouter.routes(databaseSession, sessionStore, messageEventHub, notificationEventHub) <+>
+        RealtimeRoutes.routes(databaseSession, sessionStore, messageEventHub, notificationEventHub) <+>
         domains.message.routes.MessageRouter.routes(databaseSession, sessionStore, messageEventHub) <+>
         domains.notification.routes.NotificationRouter.routes(databaseSession, sessionStore, notificationEventHub) <+>
         domains.rating.routes.RatingRouter.routes(databaseSession, sessionStore)

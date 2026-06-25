@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 
-import { SubscribeRealtimeEvents } from '@/apis/realtime/SubscribeRealtimeEvents'
 import {
   handleMessageRealtimeEvent,
   type MessageRealtimeEventName,
@@ -15,6 +14,7 @@ import { useRealtimeLeader } from '@/pages/hooks/useRealtimeLeader'
 import { useAuthStore } from '@/pages/stores/auth/UseAuthStore'
 import { useMessageStore } from '@/pages/stores/message/UseMessageStore'
 import { useNotificationStore } from '@/pages/stores/notification/UseNotificationStore'
+import { apiRoutePath } from '@/system/api/api-message'
 
 const realtimeBroadcastChannelName = 'qiwen:realtime-events'
 
@@ -133,7 +133,7 @@ function ensureRealtimeEventSource() {
     return
   }
 
-  const eventSource = new EventSource(new SubscribeRealtimeEvents().eventUrl(), { withCredentials: true })
+  const eventSource = new EventSource(apiRoutePath('realtime/events'), { withCredentials: true })
   realtimeEventSource = eventSource
   addRealtimeEventListener(eventSource, 'message_received')
   addRealtimeEventListener(eventSource, 'conversation_read')

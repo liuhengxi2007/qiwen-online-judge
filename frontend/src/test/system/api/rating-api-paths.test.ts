@@ -5,7 +5,7 @@ import { AppendRatingContest } from '@/apis/rating/AppendRatingContest'
 import { GetRatingManageState } from '@/apis/rating/GetRatingManageState'
 import { ListRatingRanklist } from '@/apis/rating/ListRatingRanklist'
 import { PopRatingContest } from '@/apis/rating/PopRatingContest'
-import { apiPath } from '@/system/api/api-message'
+import { apiPath, apiRoutePath } from '@/system/api/api-message'
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
 
 function contestSlug(raw: string) {
@@ -17,6 +17,11 @@ function contestSlug(raw: string) {
 }
 
 describe('rating API paths', () => {
+  it('normalizes raw API route paths', () => {
+    expect(apiRoutePath('realtime/events')).toBe('/api/realtime/events')
+    expect(apiRoutePath('/api/realtime/events')).toBe('/api/realtime/events')
+  })
+
   it('builds rating ranklist and management paths', () => {
     expect(apiPath(new ListRatingRanklist({ page: 2, pageSize: 10 }))).toBe('/api/ratings/ranklist?page=2&pageSize=10')
     expect(apiPath(new GetRatingManageState())).toBe('/api/ratings/manage')

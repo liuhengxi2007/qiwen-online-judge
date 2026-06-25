@@ -49,3 +49,5 @@ The object alignment check is intentionally structural:
 It does not replace runtime tests, endpoint fixtures, or parser tests.
 
 The API alignment check compares every direct `frontend/src/apis/*/*.ts` file basename with every direct `backend/src/main/scala/domains/*/api/*.scala` file basename. It intentionally works at the file layer, not only at the `extends *Api` endpoint-object layer, so stray backend API support or input files must be moved out of `api` or recorded as explicit backend-only file exceptions. Explicit backend-only domains such as judge integration endpoints remain script exceptions. Raw binary resource endpoints, such as avatar image reads consumed through an `<img>` URL, may also be explicit backend-only file exceptions.
+
+Realtime is not an API alignment exception because it is not a business domain. The combined `/api/realtime/events` SSE route belongs to the top-level app-shell routing layer and must not be reintroduced under `domains/realtime` or `frontend/src/apis/realtime`.

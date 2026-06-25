@@ -3,11 +3,10 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.submission.table.submission.SubmissionJudgeTable
+import domains.submission.api.QueueManualProblemRejudgeForProblem
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}
-import shared.objects.ApiMessageParam
 import shared.objects.response.SuccessResponse
 
 import java.sql.Connection
@@ -29,5 +28,5 @@ object RejudgeProblemSubmissions extends AuthenticatedApi[ProblemManagementConte
     for
       problem <- ProblemManagementContext.requireManagedProblem(connection, actor, context)
       _ <- HttpApiError.ensure(problem.ready, HttpApiError.badRequest("Problem data must be ready before rejudging all submissions."))
-      queuedCount <- SubmissionJudgeTable.queueManualRejudgeForProblem(connection, problem.id)
-    yield SuccessResponse(code = None, message = None, params = Map("queuedCount" -> ApiMessageParam.IntValue(queuedCount)))
+      response <- QueueManualProblemRejudgeForProblem.plan(connection, problem.id)
+    yield response
