@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 
 import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
-import { SubmissionListPageContent } from '@/pages/components/submission/SubmissionListPageContent'
+import { SubmissionListPageContent } from '@/pages/components/SubmissionListPageContent'
 
 /**
  * 题目提交列表页，解析题目 slug 后用固定题目过滤条件展示提交列表。
