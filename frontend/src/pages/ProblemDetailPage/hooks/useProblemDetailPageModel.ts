@@ -12,7 +12,7 @@ import {
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
 import { useProblemDeleteAction } from './useProblemDeleteAction'
-import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
+import { useProblemDetailQuery } from './useProblemDetailQuery'
 import { useProblemEditorState } from './useProblemEditorState'
 import { useProblemUpdateAction } from './useProblemUpdateAction'
 

@@ -1,21 +1,16 @@
 import { Code2 } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
+import type { ProblemSubmitDetailQuery } from '../hooks/useProblemSubmitDetailQuery'
 import { formatProblemTitleDisplay, shouldShowProblemSlugSupplement } from '@/pages/objects/ProblemTitleDisplay'
 import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { useProblemTitleDisplayMode } from '@/pages/hooks/useProblemTitleDisplay'
 
 /**
- * 题目详情查询模型类型别名，供提交页头部读取加载和错误状态。
- */
-type ProblemDetailQuery = ReturnType<typeof useProblemDetailQuery>
-
-/**
  * 题目提交页头部卡片，展示题目标题、slug 和加载/错误状态。
  */
-export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemDetailQuery }) {
+export function ProblemSubmitHeaderCard({ detailQuery }: { detailQuery: ProblemSubmitDetailQuery }) {
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
 

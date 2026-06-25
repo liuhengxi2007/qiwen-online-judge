@@ -15,7 +15,7 @@ import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
 import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
 import { parseContestSlug } from '@/objects/contest/ContestSlug'
 import type { ContestSlug } from '@/objects/contest/ContestSlug'
-import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
+import { useProblemSubmitDetailQuery } from './hooks/useProblemSubmitDetailQuery'
 import type { SubmissionLanguage } from '@/objects/submission/SubmissionLanguage'
 import { useCreateSubmissionAction } from './hooks/useCreateSubmissionAction'
 import { PageLoadingCard } from '@/pages/components/PageLoadingCard'
@@ -67,7 +67,7 @@ export function ProblemSubmitPage() {
  */
 function ProblemSubmitPageContent({ contestSlug, problemSlug }: { contestSlug?: ContestSlug; problemSlug: ProblemSlug }) {
   const { t } = useI18n()
-  const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
+  const detailQuery = useProblemSubmitDetailQuery(problemSlug, contestSlug)
   const [programs, setPrograms] = useState<SubmitProgramDraft[]>([
     { id: 'main', role: 'main', language: 'cpp17', sourceMode: 'paste', sourceCode: '', sourceFile: null },
   ])

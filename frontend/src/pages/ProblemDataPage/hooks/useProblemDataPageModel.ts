@@ -18,7 +18,7 @@ import {
   initialProblemDataPageState,
   reduceProblemDataPageState,
 } from '../functions/ProblemDataPageState'
-import { useProblemDetailQuery } from '@/pages/hooks/useProblemDetailQuery'
+import { useProblemDataDetailQuery } from './useProblemDataDetailQuery'
 import { sendAPI, sendMultipartAPI } from '@/system/api/api-message'
 import { isHttpClientError } from '@/system/api/http-client'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -46,7 +46,7 @@ type RejudgeResult = { ok: true } | { ok: false; message: string }
  */
 export function useProblemDataPageModel(problemSlug: ProblemSlug, contestSlug?: ContestSlug) {
   const { t } = useI18n()
-  const detailQuery = useProblemDetailQuery(problemSlug, contestSlug)
+  const detailQuery = useProblemDataDetailQuery(problemSlug, contestSlug)
   const problemDataScope = useMemo(() => ({ problemSlug, contestSlug }), [contestSlug, problemSlug])
   const problem = detailQuery.problem
   const replaceProblem = detailQuery.replaceProblem
