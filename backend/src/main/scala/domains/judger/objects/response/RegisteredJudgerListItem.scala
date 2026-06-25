@@ -1,5 +1,7 @@
 package domains.judger.objects.response
 
+import domains.judger.objects.JudgerId
+import domains.submission.objects.SubmissionLanguage
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -8,11 +10,11 @@ import scala.util.Try
 
 /** 管理端 judger 列表项；展示注册前缀、实际 id、主机、进程和心跳时间。 */
 final case class RegisteredJudgerListItem(
-  judgerId: String,
-  requestedPrefix: String,
+  judgerId: JudgerId,
+  requestedPrefix: JudgerId,
   host: String,
   processId: Option[String],
-  supportedLanguages: List[String],
+  supportedLanguages: List[SubmissionLanguage],
   registeredAt: Instant,
   lastHeartbeatAt: Instant
 )

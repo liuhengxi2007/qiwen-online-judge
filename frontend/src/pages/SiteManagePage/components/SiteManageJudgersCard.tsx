@@ -3,6 +3,7 @@ import { Cpu } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { judgerIdValue } from '@/objects/judger/JudgerId'
 import type { useSiteManageModel } from '../hooks/useSiteManageModel'
 import { DateTimeText } from '@/pages/components/DateTimeText'
 import { useI18n } from '@/system/i18n/use-i18n'
@@ -59,9 +60,9 @@ export function SiteManageJudgersCard({ model }: { model: SiteManageModel }) {
             </TableHeader>
             <TableBody>
               {model.judgers.map((judger) => (
-                <TableRow key={judger.judgerId}>
-                  <TableCell className="font-medium text-stone-900">{judger.judgerId}</TableCell>
-                  <TableCell>{judger.requestedPrefix}</TableCell>
+                <TableRow key={judgerIdValue(judger.judgerId)}>
+                  <TableCell className="font-medium text-stone-900">{judgerIdValue(judger.judgerId)}</TableCell>
+                  <TableCell>{judgerIdValue(judger.requestedPrefix)}</TableCell>
                   <TableCell>{judger.host}</TableCell>
                   <TableCell>{judger.processId ?? t('siteManage.notAvailable')}</TableCell>
                   <TableCell>{judger.supportedLanguages.join(', ') || t('siteManage.notAvailable')}</TableCell>
