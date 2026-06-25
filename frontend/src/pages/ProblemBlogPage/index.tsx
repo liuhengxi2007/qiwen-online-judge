@@ -15,5 +15,6 @@ export function ProblemBlogPage() {
     return <Navigate replace to="/blogs" />
   }
 
+  // 保留共享博客列表内容组件：这里和 BlogPage、UserBlogPage 共用筛选、分页和列表逻辑。
   return <BlogListPageContent problemSlugFilter={slugResult.value} />
 }
