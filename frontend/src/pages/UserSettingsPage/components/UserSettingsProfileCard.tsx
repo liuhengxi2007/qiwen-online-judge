@@ -30,6 +30,7 @@ export function UserSettingsProfileCard({
   setDisplayName,
   submit,
 }: UserSettingsProfileCardProps) {
+  // 保留扁平 props：显示名表单只有一个字段和提交状态，拆分对象会增加无意义层级。
   const { t } = useI18n()
 
   return (

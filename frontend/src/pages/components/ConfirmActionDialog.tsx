@@ -30,6 +30,7 @@ type ConfirmActionDialogProps = {
 
 /**
  * 通用确认对话框，执行提交、删除等不可逆操作前要求用户显式确认。
+ * 保留扁平 props 是为了让触发器、文案和确认动作在调用端保持显式命名。
  */
 export function ConfirmActionDialog({
   open,

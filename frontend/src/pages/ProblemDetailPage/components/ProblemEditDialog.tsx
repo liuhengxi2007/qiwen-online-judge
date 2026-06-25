@@ -38,6 +38,7 @@ export function ProblemEditDialog({
   statementTab,
   setStatementTab,
 }: ProblemEditDialogProps) {
+  // 保留扁平 props：对话框状态和题目模型是不同来源，分开传入比塞回单个配置对象更明确。
   const { t } = useI18n()
   const navigate = useNavigate()
 

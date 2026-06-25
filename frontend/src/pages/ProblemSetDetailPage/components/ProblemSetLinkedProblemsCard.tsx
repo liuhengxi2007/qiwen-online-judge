@@ -37,6 +37,7 @@ export function ProblemSetLinkedProblemsCard({
   successMessage,
   onRemoveProblem,
 }: ProblemSetLinkedProblemsCardProps) {
+  // 保留扁平 props：列表数据、权限、操作状态和移除动作组成一个小型列表卡片，调用端具名更直接。
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
   return (
@@ -98,6 +99,7 @@ function LinkedProblemItem({
   showSlugSupplement: boolean
   onRemoveProblem: (problemSlug: ProblemSetProblemSummary['slug']) => void
 }) {
+  // 保留扁平 props：这是单行列表项，字段全部来自父列表上下文，继续封装不会减少职责。
   const { t } = useI18n()
   const titleText = useProblemTitleDisplay(problem.title, problem.slug)
 

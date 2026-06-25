@@ -16,18 +16,24 @@ type VisibilityPolicyBuildResult =
   | { ok: true; value: ResourceVisibilityPolicy }
   | { ok: false; message: string }
 
+type ResourceGrantInput = {
+  usersInput: string
+  groupsInput: string
+}
+
+type ResourceAccessPolicyInput = {
+  baseAccess: BaseAccess
+  viewer: ResourceGrantInput
+  manager?: ResourceGrantInput
+}
+
 /**
  * 从文本框输入构造资源访问策略；支持换行或逗号分隔主体，并去重 viewer/manager 授权。
  */
-export function buildResourceAccessPolicy(
-  baseAccess: BaseAccess,
-  grantedUsersInput: string,
-  grantedGroupsInput: string,
-  grantedManagerUsersInput = '',
-  grantedManagerGroupsInput = '',
-): AccessPolicyBuildResult {
+export function buildResourceAccessPolicy(input: ResourceAccessPolicyInput): AccessPolicyBuildResult {
+  const manager = input.manager ?? { usersInput: '', groupsInput: '' }
   const parsedUsers = parseSubjects(
-    parseAccessSubjectInput(grantedUsersInput),
+    parseAccessSubjectInput(input.viewer.usersInput),
     parseAccessUsername,
     (username) => ({ kind: 'user' as const, username }),
   )
@@ -36,7 +42,7 @@ export function buildResourceAccessPolicy(
   }
 
   const parsedGroups = parseSubjects(
-    parseAccessSubjectInput(grantedGroupsInput),
+    parseAccessSubjectInput(input.viewer.groupsInput),
     parseAccessUserGroupSlug,
     (slug) => ({ kind: 'user_group' as const, slug }),
   )
@@ -45,7 +51,7 @@ export function buildResourceAccessPolicy(
   }
 
   const parsedManagerUsers = parseSubjects(
-    parseAccessSubjectInput(grantedManagerUsersInput),
+    parseAccessSubjectInput(manager.usersInput),
     parseAccessUsername,
     (username) => ({ kind: 'user' as const, username }),
   )
@@ -54,7 +60,7 @@ export function buildResourceAccessPolicy(
   }
 
   const parsedManagerGroups = parseSubjects(
-    parseAccessSubjectInput(grantedManagerGroupsInput),
+    parseAccessSubjectInput(manager.groupsInput),
     parseAccessUserGroupSlug,
     (slug) => ({ kind: 'user_group' as const, slug }),
   )
@@ -65,7 +71,7 @@ export function buildResourceAccessPolicy(
   return {
     ok: true,
     value: {
-      baseAccess,
+      baseAccess: input.baseAccess,
       viewerGrants: dedupeAccessSubjects([...parsedGroups.value, ...parsedUsers.value]),
       managerGrants: dedupeAccessSubjects([...parsedManagerGroups.value, ...parsedManagerUsers.value]),
     },

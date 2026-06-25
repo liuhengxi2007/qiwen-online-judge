@@ -19,30 +19,15 @@ const inputClassName = 'h-12 rounded-2xl border-slate-200 bg-white pl-10 text-sl
 export function RegisterPage() {
   const { t } = useI18n()
   usePageTitle(t('auth.register.pageTitle'))
-  const {
-    username,
-    displayName,
-    email,
-    password,
-    confirmPassword,
-    errorMessage,
-    isSubmitting,
-    navigationIntent,
-    setUsername,
-    setDisplayName,
-    setEmail,
-    setPassword,
-    setConfirmPassword,
-    submit,
-  } = useRegisterModel()
+  const registerModel = useRegisterModel()
 
-  if (navigationIntent) {
-    return <Navigate replace={navigationIntent.replace} to={navigationIntent.to} />
+  if (registerModel.navigationIntent) {
+    return <Navigate replace={registerModel.navigationIntent.replace} to={registerModel.navigationIntent.to} />
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    await submit()
+    await registerModel.submit()
   }
 
   return (
@@ -68,70 +53,70 @@ export function RegisterPage() {
             <AuthTextField
               id="register-username"
               label={t('auth.register.username')}
-              value={username}
+              value={registerModel.username}
               icon={UserRound}
               autoComplete="username"
               labelClassName="text-slate-700"
               iconClassName="text-slate-400"
               inputClassName={inputClassName}
-              onValueChange={(value) => setUsername(value.toLowerCase())}
+              onValueChange={(value) => registerModel.setUsername(value.toLowerCase())}
             />
 
             <AuthTextField
               id="register-display-name"
               label={t('auth.register.displayName')}
-              value={displayName}
+              value={registerModel.displayName}
               icon={IdCard}
               labelClassName="text-slate-700"
               iconClassName="text-slate-400"
               inputClassName={inputClassName}
-              onValueChange={setDisplayName}
+              onValueChange={registerModel.setDisplayName}
             />
 
             <AuthTextField
               id="register-email"
               label={t('auth.register.email')}
-              value={email}
+              value={registerModel.email}
               icon={AtSign}
               autoComplete="email"
               labelClassName="text-slate-700"
               iconClassName="text-slate-400"
               inputClassName={inputClassName}
-              onValueChange={setEmail}
+              onValueChange={registerModel.setEmail}
             />
 
             <div className="grid gap-5 sm:grid-cols-2">
               <AuthTextField
                 id="register-password"
                 label={t('auth.register.password')}
-                value={password}
+                value={registerModel.password}
                 icon={LockKeyhole}
                 type="password"
                 autoComplete="new-password"
                 labelClassName="text-slate-700"
                 iconClassName="text-slate-400"
                 inputClassName={inputClassName}
-                onValueChange={setPassword}
+                onValueChange={registerModel.setPassword}
               />
 
               <AuthTextField
                 id="register-password-repeat"
                 label={t('auth.register.confirmPassword')}
-                value={confirmPassword}
+                value={registerModel.confirmPassword}
                 icon={LockKeyhole}
                 type="password"
                 autoComplete="new-password"
                 labelClassName="text-slate-700"
                 iconClassName="text-slate-400"
                 inputClassName={inputClassName}
-                onValueChange={setConfirmPassword}
+                onValueChange={registerModel.setConfirmPassword}
               />
             </div>
 
             <div className="min-h-14">
-              {errorMessage ? (
+              {registerModel.errorMessage ? (
                 <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-                  <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+                  <AlertDescription className="text-rose-700">{registerModel.errorMessage}</AlertDescription>
                 </Alert>
               ) : null}
             </div>
@@ -139,10 +124,10 @@ export function RegisterPage() {
             <Button
               type="submit"
               size="lg"
-              disabled={isSubmitting}
+              disabled={registerModel.isSubmitting}
               className="h-12 w-full rounded-2xl bg-slate-950 text-base text-white hover:bg-slate-800"
             >
-              {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
+              {registerModel.isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
             </Button>
 
             <p className="text-center text-sm text-slate-500">

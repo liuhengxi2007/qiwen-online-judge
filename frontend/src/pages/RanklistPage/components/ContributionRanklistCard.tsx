@@ -36,6 +36,7 @@ export function ContributionRanklistCard({
   ratingPage,
   totalPages,
 }: ContributionRanklistCardProps) {
+  // 保留扁平 props：榜单卡片需要同时保留其它榜单页码，避免切换分页时丢失当前视图状态。
   const { t } = useI18n()
 
   return (

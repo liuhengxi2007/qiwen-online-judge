@@ -155,6 +155,7 @@ function HackSourceTabs({
   text,
   textAreaId,
 }: HackSourceTabsProps) {
+  // 保留扁平 props：粘贴/文件两种输入共享同一组控件状态，调用端具名字段避免模式切换含义被隐藏。
   const { t } = useI18n()
 
   return (

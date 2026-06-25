@@ -25,6 +25,7 @@ type MarkdownEditorTabsProps = {
 
 /**
  * Markdown 编辑/预览复合组件，使用延迟值降低预览渲染对输入的影响。
+ * 保留扁平 props 是因为它作为表单控件使用，textarea、tab 和变更回调需要在调用端并列可见。
  */
 export function MarkdownEditorTabs({
   textareaId,

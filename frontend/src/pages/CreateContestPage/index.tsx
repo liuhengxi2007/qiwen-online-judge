@@ -113,11 +113,13 @@ function CreateContestPageContent({ canCreate }: { canCreate: boolean }) {
 
           <ResourceAccessEditor
             accessPolicy={model.accessPolicy}
-            grantedUsersInput={model.grantedUsersInput}
-            grantedGroupsInput={model.grantedGroupsInput}
             onBaseAccessChange={model.setBaseAccess}
-            onGrantedUsersInputChange={model.setGrantedUsersInput}
-            onGrantedGroupsInputChange={model.setGrantedGroupsInput}
+            viewer={{
+              usersInput: model.grantedUsersInput,
+              groupsInput: model.grantedGroupsInput,
+              onGrantedUsersInputChange: model.setGrantedUsersInput,
+              onGrantedGroupsInputChange: model.setGrantedGroupsInput,
+            }}
           />
 
           {model.errorMessage ? (

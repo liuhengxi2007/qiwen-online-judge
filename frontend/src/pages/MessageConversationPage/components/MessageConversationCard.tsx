@@ -28,28 +28,6 @@ export function MessageConversationCard({
   viewerUsername,
 }: MessageConversationCardProps) {
   const { t } = useI18n()
-  const {
-    autoMarkMessageRead,
-    conversation,
-    draft,
-    errorMessage,
-    hasUnreadMessages,
-    history,
-    isLoading,
-    isLoadingOlderMessages,
-    isMarkingConversationRead,
-    isSending,
-    olderMessagesError,
-    pendingReadMessageId,
-    sendErrorMessage,
-    showManageBlocksShortcut,
-    handleDraftKeyDown,
-    loadOlderMessages,
-    markSingleMessageRead,
-    markWholeConversationRead,
-    setDraft,
-    submitDraft,
-  } = model
 
   return (
     <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -61,70 +39,80 @@ export function MessageConversationCard({
             </div>
             <div>
               <CardTitle className="text-xl text-slate-950">
-                {conversation ? (
+                {model.conversation ? (
                   <Link
                     className="transition hover:text-cyan-800 hover:underline"
-                    to={`/user/${usernameValue(conversation.otherUser.username)}`}
+                    to={`/user/${usernameValue(model.conversation.otherUser.username)}`}
                   >
-                    {conversation.otherUser.displayName}
+                    {model.conversation.otherUser.displayName}
                   </Link>
                 ) : (
                   t('messages.conversationTitle')
                 )}
               </CardTitle>
               <CardDescription>
-                {conversation
-                  ? `@${usernameValue(conversation.otherUser.username)}`
+                {model.conversation
+                  ? `@${usernameValue(model.conversation.otherUser.username)}`
                   : t('messages.conversationTitleDescription')}
               </CardDescription>
             </div>
           </div>
-          {conversation && !autoMarkMessageRead ? (
+          {model.conversation && !model.autoMarkMessageRead ? (
             <Button
               type="button"
               variant="outline"
-              disabled={!hasUnreadMessages || isMarkingConversationRead || isSending}
+              disabled={!model.hasUnreadMessages || model.isMarkingConversationRead || model.isSending}
               className="rounded-2xl border-slate-300 bg-white"
               onClick={() => {
-                void markWholeConversationRead()
+                void model.markWholeConversationRead()
               }}
             >
-              {isMarkingConversationRead ? t('messages.markingRead') : t('messages.markConversationRead')}
+              {model.isMarkingConversationRead ? t('messages.markingRead') : t('messages.markConversationRead')}
             </Button>
           ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {errorMessage ? (
+        {model.errorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{model.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
         <MessageList
-          autoMarkMessageRead={autoMarkMessageRead}
-          history={history}
-          isLoading={isLoading}
-          isLoadingOlderMessages={isLoadingOlderMessages}
-          isMarkingConversationRead={isMarkingConversationRead}
-          isSending={isSending}
-          olderMessagesError={olderMessagesError}
-          pendingReadMessageId={pendingReadMessageId}
+          history={model.history}
           viewerUsername={viewerUsername}
-          loadOlderMessages={loadOlderMessages}
-          markSingleMessageRead={markSingleMessageRead}
+          isSending={model.isSending}
+          loadingState={{
+            isLoading: model.isLoading,
+            isLoadingOlderMessages: model.isLoadingOlderMessages,
+            olderMessagesError: model.olderMessagesError,
+          }}
+          readControls={{
+            autoMarkMessageRead: model.autoMarkMessageRead,
+            isMarkingConversationRead: model.isMarkingConversationRead,
+            pendingReadMessageId: model.pendingReadMessageId,
+            markSingleMessageRead: model.markSingleMessageRead,
+          }}
+          onLoadOlderMessages={model.loadOlderMessages}
         />
 
         <MessageComposer
-          conversation={conversation}
-          draft={draft}
-          isSending={isSending}
-          sendErrorMessage={sendErrorMessage}
-          showManageBlocksShortcut={showManageBlocksShortcut}
-          viewerUsername={viewerUsername}
-          setDraft={setDraft}
-          submitDraft={submitDraft}
-          handleDraftKeyDown={handleDraftKeyDown}
+          context={{
+            conversation: model.conversation,
+            viewerUsername,
+          }}
+          draft={model.draft}
+          state={{
+            isSending: model.isSending,
+            sendErrorMessage: model.sendErrorMessage,
+            showManageBlocksShortcut: model.showManageBlocksShortcut,
+          }}
+          actions={{
+            setDraft: model.setDraft,
+            submitDraft: model.submitDraft,
+            handleDraftKeyDown: model.handleDraftKeyDown,
+          }}
         />
       </CardContent>
     </Card>

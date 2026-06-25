@@ -36,6 +36,7 @@ export function UserProfileOverviewCard({
   loadingMessage,
   children,
 }: UserProfileOverviewCardProps) {
+  // 保留扁平 props：这是展示外壳组件，图标、标题、文案和插槽在调用端直接声明最清楚。
   const { t } = useI18n()
 
   return (

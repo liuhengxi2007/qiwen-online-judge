@@ -25,26 +25,6 @@ export function EditProblemSetDialog({
   model,
 }: EditProblemSetDialogProps) {
   const { t } = useI18n()
-  const {
-    title,
-    description,
-    authorUsername,
-    linkProblemSlug,
-    isSaving,
-    isDeleting,
-    activeLink,
-    contentErrorMessage,
-    contentSuccessMessage,
-    linkErrorMessage,
-    linkSuccessMessage,
-    setTitle,
-    setDescription,
-    setAuthorUsername,
-    setLinkProblemSlug,
-    saveContent,
-    attachProblem,
-    deleteCurrentProblemSet,
-  } = model
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,30 +43,40 @@ export function EditProblemSetDialog({
 
         <div className="space-y-6 px-7 py-7 sm:px-8">
           <ProblemSetContentEditorCard
-            title={title}
-            description={description}
-            authorUsername={authorUsername}
-            isSaving={isSaving}
-            contentErrorMessage={contentErrorMessage}
-            contentSuccessMessage={contentSuccessMessage}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onAuthorUsernameChange={setAuthorUsername}
-            onSaveContent={() => {
-              void saveContent()
+            draft={{
+              title: model.title,
+              description: model.description,
+              authorUsername: model.authorUsername,
+            }}
+            status={{
+              isSaving: model.isSaving,
+              contentErrorMessage: model.contentErrorMessage,
+              contentSuccessMessage: model.contentSuccessMessage,
+            }}
+            actions={{
+              onTitleChange: model.setTitle,
+              onDescriptionChange: model.setDescription,
+              onAuthorUsernameChange: model.setAuthorUsername,
+              onSaveContent: () => {
+                void model.saveContent()
+              },
             }}
           />
           <ProblemSetLinkProblemCard
-            linkProblemSlug={linkProblemSlug}
-            activeLink={activeLink}
-            linkErrorMessage={linkErrorMessage}
-            linkSuccessMessage={linkSuccessMessage}
-            onLinkProblemSlugChange={setLinkProblemSlug}
-            onAttachProblem={() => {
-              void attachProblem()
+            draft={{ linkProblemSlug: model.linkProblemSlug }}
+            status={{
+              activeLink: model.activeLink,
+              linkErrorMessage: model.linkErrorMessage,
+              linkSuccessMessage: model.linkSuccessMessage,
+            }}
+            actions={{
+              onLinkProblemSlugChange: model.setLinkProblemSlug,
+              onAttachProblem: () => {
+                void model.attachProblem()
+              },
             }}
           />
-          <ProblemSetDeleteCard isDeleting={isDeleting} onDeleteProblemSet={deleteCurrentProblemSet} />
+          <ProblemSetDeleteCard isDeleting={model.isDeleting} onDeleteProblemSet={model.deleteCurrentProblemSet} />
         </div>
       </DialogContent>
     </Dialog>

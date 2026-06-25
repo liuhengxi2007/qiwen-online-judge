@@ -38,6 +38,7 @@ export function MessageBlockListCard({
   addBlock,
   removeBlock,
 }: MessageBlockListCardProps) {
+  // 保留扁平 props：屏蔽列表卡片只有搜索、建议、列表和增删动作，字段并列展示更符合表单控件用法。
   const { t } = useI18n()
 
   return (

@@ -29,6 +29,7 @@ export function BlogCommentItem({
   actions,
   renderChild,
 }: BlogCommentItemProps) {
+  // 保留扁平 props：评论数据、递归渲染入口和状态/动作已经按职责分组，继续拆会增加调用层级。
   const { t } = useI18n()
   const isEditing =
     state.editingCommentId !== null && blogCommentIdValue(state.editingCommentId) === blogCommentIdValue(comment.id)

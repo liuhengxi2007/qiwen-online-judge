@@ -10,16 +10,22 @@ import type { UserSettingsSectionState } from '../functions/UserSettingsState'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
- * 用户账户设置卡片属性，包含账户草稿、保存状态和字段变更回调。
+ * 用户账户设置卡片状态，包含展示目标、编辑权限和保存结果。
  */
-type UserSettingsAccountCardProps = {
+type UserSettingsAccountState = {
+  displayedUser: SessionResponse | null
+  isEditingOwnSettings: boolean
+  section: UserSettingsSectionState
+}
+
+type UserSettingsAccountDraft = {
   confirmNewPassword: string
   currentPassword: string
-  displayedUser: SessionResponse | null
   email: string
-  isEditingOwnSettings: boolean
   newPassword: string
-  section: UserSettingsSectionState
+}
+
+type UserSettingsAccountActions = {
   setConfirmNewPassword: (value: string) => void
   setCurrentPassword: (value: string) => void
   setEmail: (value: string) => void
@@ -27,22 +33,19 @@ type UserSettingsAccountCardProps = {
   submit: () => void
 }
 
+type UserSettingsAccountCardProps = {
+  state: UserSettingsAccountState
+  draft: UserSettingsAccountDraft
+  actions: UserSettingsAccountActions
+}
+
 /**
  * 用户账户设置卡片，渲染邮箱和密码变更表单。
  */
 export function UserSettingsAccountCard({
-  confirmNewPassword,
-  currentPassword,
-  displayedUser,
-  email,
-  isEditingOwnSettings,
-  newPassword,
-  section,
-  setConfirmNewPassword,
-  setCurrentPassword,
-  setEmail,
-  setNewPassword,
-  submit,
+  state,
+  draft,
+  actions,
 }: UserSettingsAccountCardProps) {
   const { t } = useI18n()
 
@@ -60,22 +63,22 @@ export function UserSettingsAccountCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {section.errorMessage ? (
+        {state.section.errorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{section.errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{state.section.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
-        {section.successMessage ? (
+        {state.section.successMessage ? (
           <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{section.successMessage}</AlertDescription>
+            <AlertDescription className="text-emerald-700">{state.section.successMessage}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="settings-email">{t('common.email')}</Label>
           <Input
             id="settings-email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            value={draft.email}
+            onChange={(event) => actions.setEmail(event.target.value)}
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -84,8 +87,8 @@ export function UserSettingsAccountCard({
             <Input
               id="settings-new-password"
               type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
+              value={draft.newPassword}
+              onChange={(event) => actions.setNewPassword(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -93,13 +96,13 @@ export function UserSettingsAccountCard({
             <Input
               id="settings-confirm-password"
               type="password"
-              value={confirmNewPassword}
-              onChange={(event) => setConfirmNewPassword(event.target.value)}
+              value={draft.confirmNewPassword}
+              onChange={(event) => actions.setConfirmNewPassword(event.target.value)}
             />
           </div>
         </div>
 
-        {isEditingOwnSettings ? (
+        {state.isEditingOwnSettings ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
             <div className="mb-3 flex items-center gap-2 text-slate-800">
               <LockKeyhole className="size-4" />
@@ -110,8 +113,8 @@ export function UserSettingsAccountCard({
               <Input
                 id="settings-current-password"
                 type="password"
-                value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
+                value={draft.currentPassword}
+                onChange={(event) => actions.setCurrentPassword(event.target.value)}
               />
             </div>
           </div>
@@ -123,11 +126,11 @@ export function UserSettingsAccountCard({
 
         <Button
           type="button"
-          disabled={section.isSubmitting || !displayedUser}
+          disabled={state.section.isSubmitting || !state.displayedUser}
           className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
-          onClick={submit}
+          onClick={actions.submit}
         >
-          {section.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+          {state.section.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
         </Button>
       </CardContent>
     </Card>

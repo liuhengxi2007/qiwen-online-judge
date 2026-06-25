@@ -7,19 +7,23 @@ import { resourceAccessSummary } from '@/pages/objects/ResourceAccessDisplay'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
- * 资源访问编辑器属性，包含当前策略、四类授权输入和对应变更回调。
+ * 单类授权文本框状态和变更回调。
+ */
+type ResourceGrantEditorProps = {
+  usersInput: string
+  groupsInput: string
+  onGrantedUsersInputChange: (value: string) => void
+  onGrantedGroupsInputChange: (value: string) => void
+}
+
+/**
+ * 资源访问编辑器属性；viewer/manager 分组避免四类授权输入按顺序平铺。
  */
 type ResourceAccessEditorProps = {
   accessPolicy: ResourceVisibilityPolicy
-  grantedUsersInput: string
-  grantedGroupsInput: string
-  grantedManagerUsersInput?: string
-  grantedManagerGroupsInput?: string
+  viewer: ResourceGrantEditorProps
+  manager?: ResourceGrantEditorProps
   onBaseAccessChange: (value: BaseAccess) => void
-  onGrantedUsersInputChange: (value: string) => void
-  onGrantedGroupsInputChange: (value: string) => void
-  onGrantedManagerUsersInputChange?: (value: string) => void
-  onGrantedManagerGroupsInputChange?: (value: string) => void
 }
 
 /**
@@ -27,15 +31,9 @@ type ResourceAccessEditorProps = {
  */
 export function ResourceAccessEditor({
   accessPolicy,
-  grantedUsersInput,
-  grantedGroupsInput,
-  grantedManagerUsersInput,
-  grantedManagerGroupsInput,
+  viewer,
+  manager,
   onBaseAccessChange,
-  onGrantedUsersInputChange,
-  onGrantedGroupsInputChange,
-  onGrantedManagerUsersInputChange,
-  onGrantedManagerGroupsInputChange,
 }: ResourceAccessEditorProps) {
   const { t } = useI18n()
 
@@ -57,10 +55,10 @@ export function ResourceAccessEditor({
         <Label htmlFor="resource-granted-groups">{t('resourceAccess.groups')}</Label>
         <Textarea
           id="resource-granted-groups"
-          value={grantedGroupsInput}
+          value={viewer.groupsInput}
           className="min-h-24"
           spellCheck={false}
-          onChange={(event) => onGrantedGroupsInputChange(event.target.value.toLowerCase())}
+          onChange={(event) => viewer.onGrantedGroupsInputChange(event.target.value.toLowerCase())}
         />
         <p className="text-xs text-slate-500">{t('resourceAccess.groupsHint')}</p>
       </div>
@@ -69,37 +67,37 @@ export function ResourceAccessEditor({
         <Label htmlFor="resource-granted-users">{t('resourceAccess.users')}</Label>
         <Textarea
           id="resource-granted-users"
-          value={grantedUsersInput}
+          value={viewer.usersInput}
           className="min-h-24"
           spellCheck={false}
-          onChange={(event) => onGrantedUsersInputChange(event.target.value.toLowerCase())}
+          onChange={(event) => viewer.onGrantedUsersInputChange(event.target.value.toLowerCase())}
         />
         <p className="text-xs text-slate-500">{t('resourceAccess.usersHint')}</p>
       </div>
 
-      {grantedManagerGroupsInput !== undefined && onGrantedManagerGroupsInputChange ? (
+      {manager ? (
         <div className="space-y-2">
           <Label htmlFor="resource-manager-groups">{t('resourceAccess.managerGroups')}</Label>
           <Textarea
             id="resource-manager-groups"
-            value={grantedManagerGroupsInput}
+            value={manager.groupsInput}
             className="min-h-24"
             spellCheck={false}
-            onChange={(event) => onGrantedManagerGroupsInputChange(event.target.value.toLowerCase())}
+            onChange={(event) => manager.onGrantedGroupsInputChange(event.target.value.toLowerCase())}
           />
           <p className="text-xs text-slate-500">{t('resourceAccess.managerGroupsHint')}</p>
         </div>
       ) : null}
 
-      {grantedManagerUsersInput !== undefined && onGrantedManagerUsersInputChange ? (
+      {manager ? (
         <div className="space-y-2">
           <Label htmlFor="resource-manager-users">{t('resourceAccess.managerUsers')}</Label>
           <Textarea
             id="resource-manager-users"
-            value={grantedManagerUsersInput}
+            value={manager.usersInput}
             className="min-h-24"
             spellCheck={false}
-            onChange={(event) => onGrantedManagerUsersInputChange(event.target.value.toLowerCase())}
+            onChange={(event) => manager.onGrantedUsersInputChange(event.target.value.toLowerCase())}
           />
           <p className="text-xs text-slate-500">{t('resourceAccess.managerUsersHint')}</p>
         </div>

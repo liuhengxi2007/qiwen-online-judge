@@ -164,13 +164,17 @@ export function useContestManagePageModel(contestSlug: ContestSlug) {
   }, [contestSlug, t])
 
   const accessPolicyResult = state.draft
-    ? buildResourceAccessPolicy(
-      state.draft.baseAccess,
-      state.draft.grantedUsersInput,
-      state.draft.grantedGroupsInput,
-      state.draft.grantedManagerUsersInput,
-      state.draft.grantedManagerGroupsInput,
-    )
+    ? buildResourceAccessPolicy({
+      baseAccess: state.draft.baseAccess,
+      viewer: {
+        usersInput: state.draft.grantedUsersInput,
+        groupsInput: state.draft.grantedGroupsInput,
+      },
+      manager: {
+        usersInput: state.draft.grantedManagerUsersInput,
+        groupsInput: state.draft.grantedManagerGroupsInput,
+      },
+    })
     : { ok: true as const, value: createRestrictedAccessPolicy() }
 
   const save = useCallback(async () => {

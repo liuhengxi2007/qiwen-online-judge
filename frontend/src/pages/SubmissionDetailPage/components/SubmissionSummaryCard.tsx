@@ -47,6 +47,7 @@ export function SubmissionSummaryCard({
   rejudge,
   submission,
 }: SubmissionSummaryCardProps) {
+  // 保留扁平 props：提交数据和两个管理动作是摘要卡片的完整公开接口，拆对象不会降低职责。
   const { t } = useI18n()
 
   return (

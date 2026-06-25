@@ -21,13 +21,17 @@ import { sendAPI } from '@/system/api/api-message'
 export function useCreateProblemPageModel(canCreate: boolean) {
   const [state, dispatch] = useReducer(reduceCreateProblemPageState, initialCreateProblemPageState)
   const { t } = useI18n()
-  const accessPolicyResult = buildResourceAccessPolicy(
-    state.draft.baseAccess,
-    state.draft.grantedUsersInput,
-    state.draft.grantedGroupsInput,
-    state.draft.managerUsersInput,
-    state.draft.managerGroupsInput,
-  )
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: state.draft.baseAccess,
+    viewer: {
+      usersInput: state.draft.grantedUsersInput,
+      groupsInput: state.draft.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: state.draft.managerUsersInput,
+      groupsInput: state.draft.managerGroupsInput,
+    },
+  })
 
   const submit = useCallback(async (): Promise<ProblemDetail | null> => {
     if (!canCreate) {

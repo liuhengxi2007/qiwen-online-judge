@@ -34,6 +34,7 @@ export function AcceptedRanklistCard({
   ratingPage,
   totalPages,
 }: AcceptedRanklistCardProps) {
+  // 保留扁平 props：榜单卡片需要同时知道三类榜单页码以生成互相保持状态的分页链接。
   const { t } = useI18n()
 
   return (

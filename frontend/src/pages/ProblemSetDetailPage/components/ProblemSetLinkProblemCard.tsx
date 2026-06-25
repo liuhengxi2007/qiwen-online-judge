@@ -9,25 +9,34 @@ import { useI18n } from '@/system/i18n/use-i18n'
 /**
  * 题单关联题目卡片属性，包含模型状态和关联提交回调。
  */
-type ProblemSetLinkProblemCardProps = {
+type ProblemSetLinkDraft = {
   linkProblemSlug: string
+}
+
+type ProblemSetLinkStatus = {
   activeLink: boolean
   linkErrorMessage: string
   linkSuccessMessage: string
+}
+
+type ProblemSetLinkActions = {
   onLinkProblemSlugChange: (value: string) => void
   onAttachProblem: () => void
+}
+
+type ProblemSetLinkProblemCardProps = {
+  draft: ProblemSetLinkDraft
+  status: ProblemSetLinkStatus
+  actions: ProblemSetLinkActions
 }
 
 /**
  * 题单关联题目卡片，渲染题目 slug 输入和关联操作反馈。
  */
 export function ProblemSetLinkProblemCard({
-  linkProblemSlug,
-  activeLink,
-  linkErrorMessage,
-  linkSuccessMessage,
-  onLinkProblemSlugChange,
-  onAttachProblem,
+  draft,
+  status,
+  actions,
 }: ProblemSetLinkProblemCardProps) {
   const { t } = useI18n()
 
@@ -43,33 +52,33 @@ export function ProblemSetLinkProblemCard({
         </div>
       </div>
       <div className="mt-5 space-y-3">
-        {linkErrorMessage ? (
+        {status.linkErrorMessage ? (
           <Alert variant="destructive">
-            <AlertDescription>{linkErrorMessage}</AlertDescription>
+            <AlertDescription>{status.linkErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
-        {linkSuccessMessage ? (
+        {status.linkSuccessMessage ? (
           <Alert variant="success">
-            <AlertDescription>{linkSuccessMessage}</AlertDescription>
+            <AlertDescription>{status.linkSuccessMessage}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="link-problem-slug">{t('problemSet.detail.linkProblemSlug')}</Label>
           <Input
             id="link-problem-slug"
-            value={linkProblemSlug}
+            value={draft.linkProblemSlug}
             onChange={(event) => {
-              onLinkProblemSlugChange(event.target.value)
+              actions.onLinkProblemSlugChange(event.target.value)
             }}
           />
         </div>
         <Button
           type="button"
           variant="create"
-          disabled={activeLink}
-          onClick={onAttachProblem}
+          disabled={status.activeLink}
+          onClick={actions.onAttachProblem}
         >
-          {activeLink ? t('problemSet.detail.linkingProblem') : t('problemSet.detail.linkProblem')}
+          {status.activeLink ? t('problemSet.detail.linkingProblem') : t('problemSet.detail.linkProblem')}
         </Button>
       </div>
     </div>

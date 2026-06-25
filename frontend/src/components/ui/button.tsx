@@ -52,6 +52,7 @@ type ButtonProps = ComponentProps<'button'> &
 
 /**
  * 基础按钮组件；根据 asChild 决定渲染原生 button 或把样式透传给子元素。
+ * 保留 props 解构是为了同时取出样式变体字段，并把原生 button 属性完整透传。
  */
 function Button({
   className,

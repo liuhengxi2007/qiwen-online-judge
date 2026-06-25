@@ -50,13 +50,17 @@ export function validateProblemUpdateDraft(
     return { ok: false, message: authorUsernameResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(
-    draft.baseAccess,
-    draft.grantedUsersInput,
-    draft.grantedGroupsInput,
-    draft.managerUsersInput,
-    draft.managerGroupsInput,
-  )
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: draft.baseAccess,
+    viewer: {
+      usersInput: draft.grantedUsersInput,
+      groupsInput: draft.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: draft.managerUsersInput,
+      groupsInput: draft.managerGroupsInput,
+    },
+  })
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }
@@ -138,13 +142,17 @@ export function buildProblemAccessUpdateDraft(
  * 从题目访问控制编辑状态构造结构化访问策略。
  */
 export function buildProblemDetailAccessPolicy(editor: ProblemEditorAccessState) {
-  const accessPolicyResult = buildResourceAccessPolicy(
-    editor.baseAccess,
-    editor.grantedUsersInput,
-    editor.grantedGroupsInput,
-    editor.managerUsersInput,
-    editor.managerGroupsInput,
-  )
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: editor.baseAccess,
+    viewer: {
+      usersInput: editor.grantedUsersInput,
+      groupsInput: editor.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: editor.managerUsersInput,
+      groupsInput: editor.managerGroupsInput,
+    },
+  })
 
   return accessPolicyResult.ok
     ? accessPolicyResult.value

@@ -35,6 +35,7 @@ export function RatingRanklistCard({
   ratingPage,
   totalPages,
 }: RatingRanklistCardProps) {
+  // 保留扁平 props：榜单数据、加载状态和跨榜单分页页码是同一张卡片的公开边界。
   const { t } = useI18n()
 
   return (

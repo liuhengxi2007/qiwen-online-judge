@@ -54,6 +54,7 @@ export function SubmissionSummaryList({
   totalPages,
   onPageChange,
 }: SubmissionSummaryListProps) {
+  // 保留扁平 props：摘要表格、查看者和分页状态是列表组件的固定边界，调用端具名字段更清楚。
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
 

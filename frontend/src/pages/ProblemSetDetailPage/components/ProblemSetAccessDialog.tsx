@@ -26,20 +26,7 @@ export function ProblemSetAccessDialog({
   model,
 }: ProblemSetAccessDialogProps) {
   const { t } = useI18n()
-  const {
-    accessPolicy,
-    problemSet,
-    grantedUsersInput,
-    grantedGroupsInput,
-    isSaving,
-    accessErrorMessage,
-    accessSuccessMessage,
-    setBaseAccess,
-    setGrantedUsersInput,
-    setGrantedGroupsInput,
-    saveAccess,
-  } = model
-  const summaryPolicy = problemSet?.accessPolicy ?? accessPolicy
+  const summaryPolicy = model.problemSet?.accessPolicy ?? model.accessPolicy
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,26 +44,28 @@ export function ProblemSetAccessDialog({
         <div className="space-y-5 px-7 py-7 sm:px-8">
           <p className="text-sm text-slate-600">{resourceAccessSummary(summaryPolicy, t)}</p>
           <ResourceAccessEditor
-            accessPolicy={accessPolicy}
-            grantedUsersInput={grantedUsersInput}
-            grantedGroupsInput={grantedGroupsInput}
-            onBaseAccessChange={setBaseAccess}
-            onGrantedUsersInputChange={setGrantedUsersInput}
-            onGrantedGroupsInputChange={setGrantedGroupsInput}
+            accessPolicy={model.accessPolicy}
+            onBaseAccessChange={model.setBaseAccess}
+            viewer={{
+              usersInput: model.grantedUsersInput,
+              groupsInput: model.grantedGroupsInput,
+              onGrantedUsersInputChange: model.setGrantedUsersInput,
+              onGrantedGroupsInputChange: model.setGrantedGroupsInput,
+            }}
           />
-          <Button type="button" disabled={isSaving} onClick={() => {
-            void saveAccess()
+          <Button type="button" disabled={model.isSaving} onClick={() => {
+            void model.saveAccess()
           }}>
-            {isSaving ? t('problemSet.detail.savingAccess') : t('problemSet.detail.saveAccess')}
+            {model.isSaving ? t('problemSet.detail.savingAccess') : t('problemSet.detail.saveAccess')}
           </Button>
-          {accessErrorMessage ? (
+          {model.accessErrorMessage ? (
             <Alert variant="destructive">
-              <AlertDescription>{accessErrorMessage}</AlertDescription>
+              <AlertDescription>{model.accessErrorMessage}</AlertDescription>
             </Alert>
           ) : null}
-          {accessSuccessMessage ? (
+          {model.accessSuccessMessage ? (
             <Alert variant="success">
-              <AlertDescription>{accessSuccessMessage}</AlertDescription>
+              <AlertDescription>{model.accessSuccessMessage}</AlertDescription>
             </Alert>
           ) : null}
         </div>

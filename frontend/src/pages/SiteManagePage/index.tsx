@@ -24,23 +24,7 @@ export function SiteManagePage() {
   const currentPage = parsePositivePage(searchParams.get('page'))
   const { session: user, siteManagerSession, navigationIntent: guardNavigationIntent } =
     useSessionGuard({ requireSiteManager: true })
-  const {
-    users,
-    judgers,
-    userListError,
-    judgerListError,
-    notice,
-    isLoadingUsers,
-    isLoadingJudgers,
-    userPage,
-    userPageSize,
-    totalUsers,
-    updatingUsername,
-    deletingUsername,
-    navigationIntent: modelNavigationIntent,
-    savePermissions,
-    deleteUser,
-  } = useSiteManageModel(Boolean(siteManagerSession), {
+  const siteManageModel = useSiteManageModel(Boolean(siteManagerSession), {
     query: (() => {
       if (!activeQuery) {
         return null
@@ -53,7 +37,7 @@ export function SiteManagePage() {
       pageSize: 10,
     },
   })
-  const totalPages = calculateTotalPages(totalUsers, userPageSize)
+  const totalPages = calculateTotalPages(siteManageModel.totalUsers, siteManageModel.userPageSize)
 
   useEffect(() => {
     setQueryInput(activeQuery)
@@ -62,7 +46,7 @@ export function SiteManagePage() {
   usePageSearchParamCorrection({
     currentPage,
     totalPages,
-    isLoading: isLoadingUsers,
+    isLoading: siteManageModel.isLoadingUsers,
     setSearchParams,
   })
 
@@ -70,30 +54,12 @@ export function SiteManagePage() {
     return <Navigate replace={guardNavigationIntent.replace} to={guardNavigationIntent.to} />
   }
 
-  if (modelNavigationIntent) {
-    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
+  if (siteManageModel.navigationIntent) {
+    return <Navigate replace={siteManageModel.navigationIntent.replace} to={siteManageModel.navigationIntent.to} />
   }
 
   if (!user) {
     return <Navigate replace to="/login" />
-  }
-
-  const siteManageModel = {
-    users,
-    judgers,
-    userListError,
-    judgerListError,
-    notice,
-    isLoadingUsers,
-    isLoadingJudgers,
-    userPage,
-    userPageSize,
-    totalUsers,
-    updatingUsername,
-    deletingUsername,
-    navigationIntent: modelNavigationIntent,
-    savePermissions,
-    deleteUser,
   }
 
   const applyQuery = () => {

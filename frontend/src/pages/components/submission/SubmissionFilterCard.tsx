@@ -1,21 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RowAction } from '@/components/ui/row-action'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { isSubmissionSort } from '@/objects/submission/request/SubmissionSort'
-import {
-  isSubmissionVerdictFilter,
-} from '@/objects/submission/request/SubmissionVerdictFilter'
-import { problemSlugValue } from '@/objects/problem/ProblemSlug'
-import { problemTitleValue } from '@/objects/problem/ProblemTitle'
-import { displayNameValue } from '@/objects/user/DisplayName'
-import { usernameValue } from '@/objects/user/Username'
+import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
-import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmissionPageModel'
+
+import { ProblemFilterField } from './SubmissionFilterCard/ProblemFilterField'
+import { SortFilterField } from './SubmissionFilterCard/SortFilterField'
+import { SubmissionFilterSummary } from './SubmissionFilterCard/SubmissionFilterSummary'
+import { UserFilterField } from './SubmissionFilterCard/UserFilterField'
+import { VerdictFilterField } from './SubmissionFilterCard/VerdictFilterField'
 
 /**
  * 提交筛选卡片属性，直接接收提交列表页模型。
@@ -25,45 +18,38 @@ type SubmissionFilterCardProps = {
 }
 
 /**
- * 提交筛选卡片组件，渲染用户/题目筛选、建议面板、verdict 筛选和排序控制。
+ * 保留组件入口 props 解构：这里是路由页模型进入筛选卡片的唯一边界。
  */
 export function SubmissionFilterCard({ model }: SubmissionFilterCardProps) {
   const { t } = useI18n()
-  const {
-    hasFixedProblemFilter,
-    usernameFilterInput,
-    problemFilterInput,
-    isUserSuggestionEnabled,
-    isProblemSuggestionEnabled,
-    isLoadingUserSuggestions,
-    isLoadingProblemSuggestions,
-    showUserSuggestionPanel,
-    showProblemSuggestionPanel,
-    userSuggestions,
-    problemSuggestions,
-    activeVerdictFilter,
-    activeSort,
-    activeDirection,
-    verdictFilterValues,
-    submissionSortValues,
-    activeProblemQuery,
-    usernameQueryParam,
-    verdictFilterLabel,
-    updateUsernameFilterInput,
-    updateProblemFilterInput,
-    setIsUsernameFilterFocused,
-    setIsProblemFilterFocused,
-    setIsUserSuggestionEnabled,
-    setIsProblemSuggestionEnabled,
-    selectUsernameSuggestion,
-    selectProblemSuggestion,
-    updateVerdictFilter,
-    changeSort,
-    toggleDirection,
-    applyFilters,
-    clearFilters,
-    applyFiltersOnEnter,
-  } = model
+  const userFilterInput = {
+    value: model.usernameFilterInput,
+    onValueChange: model.updateUsernameFilterInput,
+    onFocusChange: model.setIsUsernameFilterFocused,
+    onEnter: model.applyFiltersOnEnter,
+  }
+  const userSuggestions = {
+    enabled: model.isUserSuggestionEnabled,
+    isLoading: model.isLoadingUserSuggestions,
+    isOpen: model.showUserSuggestionPanel,
+    items: model.userSuggestions,
+    onEnabledChange: model.setIsUserSuggestionEnabled,
+    onSelect: model.selectUsernameSuggestion,
+  }
+  const problemFilterInput = {
+    value: model.problemFilterInput,
+    onValueChange: model.updateProblemFilterInput,
+    onFocusChange: model.setIsProblemFilterFocused,
+    onEnter: model.applyFiltersOnEnter,
+  }
+  const problemSuggestions = {
+    enabled: model.isProblemSuggestionEnabled,
+    isLoading: model.isLoadingProblemSuggestions,
+    isOpen: model.showProblemSuggestionPanel,
+    items: model.problemSuggestions,
+    onEnabledChange: model.setIsProblemSuggestionEnabled,
+    onSelect: model.selectProblemSuggestion,
+  }
 
   return (
     <Card className="mb-6 border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -81,184 +67,50 @@ export function SubmissionFilterCard({ model }: SubmissionFilterCardProps) {
       <CardContent className="space-y-4">
         <div
           className={`grid gap-4 ${
-            hasFixedProblemFilter
+            model.hasFixedProblemFilter
               ? 'lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,5fr)]'
               : 'lg:grid-cols-[minmax(0,5fr)_minmax(0,5fr)_minmax(0,4fr)_minmax(0,5fr)]'
           }`}
         >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="submission-username-filter">{t('common.username')}</Label>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="submission-user-suggestion-toggle" className="text-xs text-slate-500">
-                  {t('submission.filter.toggleUserSearch')}
-                </Label>
-                <Switch
-                  id="submission-user-suggestion-toggle"
-                  checked={isUserSuggestionEnabled}
-                  onCheckedChange={setIsUserSuggestionEnabled}
-                />
-              </div>
-            </div>
-            <Input
-              id="submission-username-filter"
-              className="min-w-0"
-              value={usernameFilterInput}
-              onChange={(event) => updateUsernameFilterInput(event.target.value)}
-              onFocus={() => setIsUsernameFilterFocused(true)}
-              onBlur={() => setIsUsernameFilterFocused(false)}
-              onKeyDown={applyFiltersOnEnter}
-            />
-            {showUserSuggestionPanel ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                {isLoadingUserSuggestions ? (
-                  <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
-                ) : userSuggestions.length === 0 ? (
-                  <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
-                ) : (
-                  userSuggestions.map((suggestion) => (
-                    <RowAction
-                      key={usernameValue(suggestion.username)}
-                      size="compact"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectUsernameSuggestion(usernameValue(suggestion.username))}
-                    >
-                      <span className="font-medium text-slate-900">{displayNameValue(suggestion.displayName)}</span>
-                      <span className="text-slate-500">{usernameValue(suggestion.username)}</span>
-                    </RowAction>
-                  ))
-                )}
-              </div>
-            ) : null}
-          </div>
+          <UserFilterField input={userFilterInput} suggestions={userSuggestions} />
 
-          {hasFixedProblemFilter ? null : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <Label htmlFor="submission-problem-filter">{t('submission.filter.problemSlug')}</Label>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="submission-problem-suggestion-toggle" className="text-xs text-slate-500">
-                    {t('submission.filter.toggleProblemSearch')}
-                  </Label>
-                  <Switch
-                    id="submission-problem-suggestion-toggle"
-                    checked={isProblemSuggestionEnabled}
-                    onCheckedChange={setIsProblemSuggestionEnabled}
-                  />
-                </div>
-              </div>
-              <Input
-                id="submission-problem-filter"
-                className="min-w-0"
-                value={problemFilterInput}
-                onChange={(event) => updateProblemFilterInput(event.target.value)}
-                onFocus={() => setIsProblemFilterFocused(true)}
-                onBlur={() => setIsProblemFilterFocused(false)}
-                onKeyDown={applyFiltersOnEnter}
-              />
-              {showProblemSuggestionPanel ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                  {isLoadingProblemSuggestions ? (
-                    <p className="px-3 py-2 text-sm text-slate-500">{t('common.loading')}</p>
-                  ) : problemSuggestions.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-slate-500">{t('common.emptyData')}</p>
-                  ) : (
-                    problemSuggestions.map((suggestion) => (
-                      <RowAction
-                        key={problemSlugValue(suggestion.slug)}
-                        size="compact"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => selectProblemSuggestion(problemSlugValue(suggestion.slug))}
-                      >
-                        <span className="font-medium text-slate-900">{problemTitleValue(suggestion.title)}</span>
-                        <span className="text-slate-500">{problemSlugValue(suggestion.slug)}</span>
-                      </RowAction>
-                    ))
-                  )}
-                </div>
-              ) : null}
-            </div>
-          )}
+          {model.hasFixedProblemFilter ? null : <ProblemFilterField input={problemFilterInput} suggestions={problemSuggestions} />}
 
-          <div className="space-y-2">
-            <Label htmlFor="submission-verdict-filter">{t('submission.filter.verdict')}</Label>
-            <Select
-              value={activeVerdictFilter}
-              onValueChange={(value) => {
-                if (isSubmissionVerdictFilter(value)) {
-                  updateVerdictFilter(value)
-                }
-              }}
-            >
-              <SelectTrigger id="submission-verdict-filter" className="min-w-32 rounded-2xl border-slate-300 bg-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {verdictFilterValues.map((verdict) => (
-                  <SelectItem key={verdict} value={verdict}>
-                    {verdictFilterLabel(verdict, t('submission.filter.allVerdicts'))}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <VerdictFilterField
+            value={model.activeVerdictFilter}
+            values={model.verdictFilterValues}
+            label={model.verdictFilterLabel}
+            onChange={model.updateVerdictFilter}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="submission-sort">{t('submission.filter.sort')}</Label>
-            <div className="flex flex-wrap gap-2">
-              <Select
-                value={activeSort}
-                onValueChange={(value) => {
-                  if (isSubmissionSort(value)) {
-                    changeSort(value)
-                  }
-                }}
-              >
-                <SelectTrigger id="submission-sort" className="min-w-40 flex-1 rounded-2xl border-slate-300 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {submissionSortValues.map((sort) => (
-                    <SelectItem key={sort} value={sort}>
-                      {t(`submission.sort.${sort}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0"
-                onClick={toggleDirection}
-              >
-                {activeDirection === 'asc' ? t('submission.sort.ascending') : t('submission.sort.descending')}
-              </Button>
-            </div>
-          </div>
+          <SortFilterField
+            state={{
+              value: model.activeSort,
+              values: model.submissionSortValues,
+              direction: model.activeDirection,
+            }}
+            actions={{
+              onChange: model.changeSort,
+              onToggleDirection: model.toggleDirection,
+            }}
+          />
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="button" onClick={applyFilters}>
+          <Button type="button" onClick={model.applyFilters}>
             {t('submission.filter.apply')}
           </Button>
-          <Button type="button" variant="outline" onClick={clearFilters}>
+          <Button type="button" variant="outline" onClick={model.clearFilters}>
             {t('submission.filter.clear')}
           </Button>
         </div>
 
-        {usernameQueryParam ? (
-          <p className="text-sm text-slate-600">
-            {t('submission.filter.showingUser', { query: usernameQueryParam })}
-          </p>
-        ) : (
-          <p className="text-sm text-slate-600">{t('submission.filter.showingAll')}</p>
-        )}
-        <p className="text-sm text-slate-600">
-          {t('submission.filter.activeSummary', {
-            problem: activeProblemQuery || t('submission.filter.anyProblem'),
-            verdict: verdictFilterLabel(activeVerdictFilter, t('submission.filter.allVerdicts')),
-          })}
-        </p>
+        <SubmissionFilterSummary
+          usernameQueryParam={model.usernameQueryParam}
+          activeProblemQuery={model.activeProblemQuery}
+          activeVerdictFilter={model.activeVerdictFilter}
+          verdictFilterLabel={model.verdictFilterLabel}
+        />
       </CardContent>
     </Card>
   )

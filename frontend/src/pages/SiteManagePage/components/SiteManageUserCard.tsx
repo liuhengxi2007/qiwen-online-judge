@@ -55,6 +55,7 @@ export function SiteManageUserCard({
   totalPages,
   onPageChange,
 }: SiteManageUserCardProps) {
+  // 保留扁平 props：用户管理模型与 URL 查询/分页控制来自不同层，调用端分开传入能体现所有权边界。
   const { t } = useI18n()
   const isProtectedAdmin = (listedUser: ManagedUserListItem) => usernameValue(listedUser.username) === 'admin'
   const statusMessage =

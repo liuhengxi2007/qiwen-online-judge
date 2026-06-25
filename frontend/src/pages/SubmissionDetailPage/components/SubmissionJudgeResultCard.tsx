@@ -213,6 +213,7 @@ function ResultSummaryGroup({
   memoryLabel: string
   reasonLabel: string
 }) {
+  // 保留扁平 props：这是同一组摘要行的展示文案，字段数量固定且调用端全部具名。
   return (
     <div className="rounded-md border border-slate-200 px-3 py-2">
       <p className="text-xs uppercase tracking-normal text-slate-500">{label}</p>

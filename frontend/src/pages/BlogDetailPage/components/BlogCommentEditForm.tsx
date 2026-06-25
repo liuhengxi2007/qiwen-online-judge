@@ -18,6 +18,7 @@ export function BlogCommentEditForm({
   onCancel,
   onSubmit,
 }: BlogCommentEditFormProps) {
+  // 保留扁平 props：这是单条评论编辑小表单，字段和动作在调用端具名比再包对象更清楚。
   const { t } = useI18n()
 
   return (

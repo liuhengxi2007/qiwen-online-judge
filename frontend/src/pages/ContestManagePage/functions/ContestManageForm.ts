@@ -78,13 +78,17 @@ export function validateContestManageDraft(draft: ContestManageDraft): ValidateC
     return { ok: false, message: 'Contest end time must be after start time.' }
   }
 
-  const accessPolicy = buildResourceAccessPolicy(
-    draft.baseAccess,
-    draft.grantedUsersInput,
-    draft.grantedGroupsInput,
-    draft.grantedManagerUsersInput,
-    draft.grantedManagerGroupsInput,
-  )
+  const accessPolicy = buildResourceAccessPolicy({
+    baseAccess: draft.baseAccess,
+    viewer: {
+      usersInput: draft.grantedUsersInput,
+      groupsInput: draft.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: draft.grantedManagerUsersInput,
+      groupsInput: draft.grantedManagerGroupsInput,
+    },
+  })
   if (!accessPolicy.ok) {
     return { ok: false, message: accessPolicy.message }
   }

@@ -24,6 +24,7 @@ type PageShellProps = {
 
 /**
  * 标准页面外壳组件，统一顶部站点名、标题、祖先导航和主导航栏布局。
+ * 保留扁平 props 是为了让页面标题、主操作和样式插槽在页面入口处直接可读。
  */
 export function PageShell({
   children,

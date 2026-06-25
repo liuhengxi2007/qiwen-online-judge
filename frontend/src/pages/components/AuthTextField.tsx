@@ -22,6 +22,7 @@ type AuthTextFieldProps = {
 
 /**
  * 认证页带图标文本输入组件，统一标签、图标定位和输入值回调。
+ * 保留扁平 props 是为了贴近单个输入控件的 JSX 使用方式，调用端能直接看到 id、label、value 和图标。
  */
 export function AuthTextField({
   id,

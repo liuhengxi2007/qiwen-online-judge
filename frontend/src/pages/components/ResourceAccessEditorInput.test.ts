@@ -4,13 +4,11 @@ import { buildResourceAccessPolicy, buildResourceVisibilityPolicy } from './Reso
 
 describe('resource-access-editor-input', () => {
   it('builds branded access subjects from user input', () => {
-    const result = buildResourceAccessPolicy(
-      'restricted',
-      'Alice_01, bob',
-      'sample-group',
-      'manager-1',
-      '',
-    )
+    const result = buildResourceAccessPolicy({
+      baseAccess: 'restricted',
+      viewer: { usersInput: 'Alice_01, bob', groupsInput: 'sample-group' },
+      manager: { usersInput: 'manager-1', groupsInput: '' },
+    })
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -26,11 +24,17 @@ describe('resource-access-editor-input', () => {
   })
 
   it('rejects invalid user and group input before building policies', () => {
-    expect(buildResourceAccessPolicy('restricted', 'ab', '')).toEqual({
+    expect(buildResourceAccessPolicy({
+      baseAccess: 'restricted',
+      viewer: { usersInput: 'ab', groupsInput: '' },
+    })).toEqual({
       ok: false,
       message: 'Username must be between 3 and 32 characters.',
     })
-    expect(buildResourceAccessPolicy('restricted', '', 'bad group')).toEqual({
+    expect(buildResourceAccessPolicy({
+      baseAccess: 'restricted',
+      viewer: { usersInput: '', groupsInput: 'bad group' },
+    })).toEqual({
       ok: false,
       message: 'User group slug may contain only lowercase letters, numbers, and hyphens.',
     })

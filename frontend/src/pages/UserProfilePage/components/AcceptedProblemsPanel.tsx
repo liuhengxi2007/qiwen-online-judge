@@ -43,6 +43,7 @@ export function AcceptedProblemsPanel({
   onPreviousPage,
   onToggleExpanded,
 }: AcceptedProblemsPanelProps) {
+  // 保留扁平 props：该面板同时展示总数、展开状态和当前页数据，调用端具名传入比多层配置对象更易追踪。
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
 

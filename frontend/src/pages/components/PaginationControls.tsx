@@ -18,6 +18,7 @@ type PaginationControlsProps = {
 
 /**
  * 渲染上一页、页码窗口和下一页按钮；点击时通过回调请求目标页。
+ * 保留扁平 props 是因为分页控件参数规模小且调用端全部具名，拆对象不会减少职责。
  */
 export function PaginationControls({
   currentPage,

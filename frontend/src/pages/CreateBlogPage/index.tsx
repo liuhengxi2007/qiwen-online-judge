@@ -104,11 +104,13 @@ export function CreateBlogPage() {
 
           <ResourceAccessEditor
             accessPolicy={accessPolicy}
-            grantedUsersInput={grantedUsersInput}
-            grantedGroupsInput={grantedGroupsInput}
             onBaseAccessChange={setBaseAccess}
-            onGrantedUsersInputChange={setGrantedUsersInput}
-            onGrantedGroupsInputChange={setGrantedGroupsInput}
+            viewer={{
+              usersInput: grantedUsersInput,
+              groupsInput: grantedGroupsInput,
+              onGrantedUsersInputChange: setGrantedUsersInput,
+              onGrantedGroupsInputChange: setGrantedGroupsInput,
+            }}
           />
 
           {createBlogAction.errorMessage ? (

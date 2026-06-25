@@ -28,11 +28,13 @@ export function BlogEditForm({ model }: BlogEditFormProps) {
       <Input value={model.editBlogTitle} onChange={(event) => model.setEditBlogTitle(event.target.value)} />
       <ResourceAccessEditor
         accessPolicy={model.editBlogAccessPolicy}
-        grantedUsersInput={model.editBlogGrantedUsersInput}
-        grantedGroupsInput={model.editBlogGrantedGroupsInput}
         onBaseAccessChange={model.setEditBlogBaseAccess}
-        onGrantedUsersInputChange={model.setEditBlogGrantedUsersInput}
-        onGrantedGroupsInputChange={model.setEditBlogGrantedGroupsInput}
+        viewer={{
+          usersInput: model.editBlogGrantedUsersInput,
+          groupsInput: model.editBlogGrantedGroupsInput,
+          onGrantedUsersInputChange: model.setEditBlogGrantedUsersInput,
+          onGrantedGroupsInputChange: model.setEditBlogGrantedGroupsInput,
+        }}
       />
       <Textarea className="min-h-56" value={model.editBlogContent} onChange={(event) => model.setEditBlogContent(event.target.value)} />
       <div className="flex flex-wrap gap-2">

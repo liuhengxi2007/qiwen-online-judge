@@ -68,6 +68,7 @@ export function buildSubmissionListRequest({
   activeDirection: SubmissionSortDirection
   currentPage: number
 }): SubmissionListRequest {
+  // 保留对象参数解构：这是纯构造函数入口，调用端用具名字段传入筛选状态，避免位置参数顺序风险。
   return {
     userQuery: (() => {
       if (!usernameQueryParam) {

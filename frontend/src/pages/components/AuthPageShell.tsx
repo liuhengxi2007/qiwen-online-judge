@@ -20,6 +20,7 @@ type AuthPageShellProps = {
 
 /**
  * 登录/注册页外壳组件，提供全屏背景、hero 文案区和表单插槽。
+ * 保留扁平 props 是为了让调用端直接声明各层样式插槽，避免再包一层样式对象降低 JSX 可读性。
  */
 export function AuthPageShell({
   children,

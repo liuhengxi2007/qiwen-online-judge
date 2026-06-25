@@ -6,33 +6,34 @@ import { DateTimeText } from '@/pages/components/DateTimeText'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
- * 单条私信气泡属性，包含消息数据、当前用户方向和单条已读操作状态。
+ * 单条私信气泡已读控制状态。
  */
-type MessageBubbleProps = {
+export type MessageReadControls = {
   autoMarkMessageRead: boolean
   isMarkingConversationRead: boolean
-  isOwn: boolean
-  isSending: boolean
-  message: DirectMessage
   pendingReadMessageId: string | null
   markSingleMessageRead: (messageId: MessageId) => Promise<void>
+}
+
+type MessageBubbleProps = {
+  message: DirectMessage
+  isOwn: boolean
+  isSending: boolean
+  readControls: MessageReadControls
 }
 
 /**
  * 单条私信气泡，区分自己/对方消息样式，并在允许手动已读时展示单条标记按钮。
  */
 export function MessageBubble({
-  autoMarkMessageRead,
-  isMarkingConversationRead,
+  message,
   isOwn,
   isSending,
-  message,
-  pendingReadMessageId,
-  markSingleMessageRead,
+  readControls,
 }: MessageBubbleProps) {
   const { t } = useI18n()
   const isUnreadIncoming = !isOwn && message.readAt === null
-  const isPendingRead = pendingReadMessageId === messageIdValue(message.id)
+  const isPendingRead = readControls.pendingReadMessageId === messageIdValue(message.id)
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -45,15 +46,15 @@ export function MessageBubble({
         <div className={`mt-2 flex items-center gap-2 text-xs ${isOwn ? 'text-cyan-900' : 'text-slate-500'}`}>
           <DateTimeText value={message.createdAt} />
           {isOwn ? <span>{message.readAt ? t('messages.readStatus.read') : t('messages.readStatus.unread')}</span> : null}
-          {isUnreadIncoming && !autoMarkMessageRead ? (
+          {isUnreadIncoming && !readControls.autoMarkMessageRead ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              disabled={isPendingRead || isMarkingConversationRead || isSending}
+              disabled={isPendingRead || readControls.isMarkingConversationRead || isSending}
               className="h-auto px-2 py-1 text-xs text-sky-700 hover:text-sky-900"
               onClick={() => {
-                void markSingleMessageRead(message.id)
+                void readControls.markSingleMessageRead(message.id)
               }}
             >
               {isPendingRead ? t('messages.markingRead') : t('messages.markRead')}

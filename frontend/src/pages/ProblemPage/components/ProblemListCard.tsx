@@ -44,6 +44,7 @@ export function ProblemListCard({
   showSlugSupplement,
   totalPages,
 }: ProblemListCardProps) {
+  // 保留扁平 props：题目列表、查询框和分页控件共享同一张列表卡片，调用端具名字段比嵌套对象更易扫读。
   const { t } = useI18n()
 
   return (

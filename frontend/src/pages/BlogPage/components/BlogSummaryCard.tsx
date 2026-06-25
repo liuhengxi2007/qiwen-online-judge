@@ -38,6 +38,7 @@ export function BlogSummaryCard({
   showScore = true,
   showDate = true,
 }: BlogSummaryCardProps) {
+  // 保留扁平 props：核心数据和可选展示开关是卡片公开 API，调用端用具名开关比配置对象更易读。
   const { t } = useI18n()
   const problemTitleDisplayMode = useProblemTitleDisplayMode()
 

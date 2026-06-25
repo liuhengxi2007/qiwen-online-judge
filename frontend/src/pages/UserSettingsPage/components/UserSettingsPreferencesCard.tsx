@@ -14,15 +14,21 @@ import type { UserSettingsSectionState } from '../functions/UserSettingsState'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 /**
- * 用户偏好设置卡片属性，包含偏好草稿、保存状态和所有偏好变更回调。
+ * 用户偏好设置卡片状态，包含展示目标和保存结果。
  */
-type UserSettingsPreferencesCardProps = {
-  autoMarkMessageRead: boolean
+type UserSettingsPreferencesState = {
   displayedUser: SessionResponse | null
+  section: UserSettingsSectionState
+}
+
+type UserSettingsPreferencesDraft = {
+  autoMarkMessageRead: boolean
   displayMode: UserDisplayMode
   locale: UserLocale
   problemTitleDisplayMode: ProblemTitleDisplayMode
-  section: UserSettingsSectionState
+}
+
+type UserSettingsPreferencesActions = {
   setAutoMarkMessageRead: (value: boolean) => void
   setDisplayMode: (value: UserDisplayMode) => void
   setLocale: (value: UserLocale) => void
@@ -30,21 +36,19 @@ type UserSettingsPreferencesCardProps = {
   submit: () => void
 }
 
+type UserSettingsPreferencesCardProps = {
+  state: UserSettingsPreferencesState
+  draft: UserSettingsPreferencesDraft
+  actions: UserSettingsPreferencesActions
+}
+
 /**
  * 用户偏好设置卡片，渲染显示模式、语言、题名模式和消息自动已读选项。
  */
 export function UserSettingsPreferencesCard({
-  autoMarkMessageRead,
-  displayedUser,
-  displayMode,
-  locale,
-  problemTitleDisplayMode,
-  section,
-  setAutoMarkMessageRead,
-  setDisplayMode,
-  setLocale,
-  setProblemTitleDisplayMode,
-  submit,
+  state,
+  draft,
+  actions,
 }: UserSettingsPreferencesCardProps) {
   const { t } = useI18n()
 
@@ -62,20 +66,20 @@ export function UserSettingsPreferencesCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {section.errorMessage ? (
+        {state.section.errorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{section.errorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{state.section.errorMessage}</AlertDescription>
           </Alert>
         ) : null}
-        {section.successMessage ? (
+        {state.section.successMessage ? (
           <Alert className="rounded-2xl border-emerald-200 bg-emerald-50/95">
-            <AlertDescription className="text-emerald-700">{section.successMessage}</AlertDescription>
+            <AlertDescription className="text-emerald-700">{state.section.successMessage}</AlertDescription>
           </Alert>
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="settings-display-mode">{t('userSettings.displayMode')}</Label>
           {/* 注意：以下偏好 Select 的选项值均由本组件内 SelectItem 字面值限定，Radix 回调统一为 string。 */}
-          <Select value={displayMode} onValueChange={(value) => setDisplayMode(value as UserDisplayMode)}>
+          <Select value={draft.displayMode} onValueChange={(value) => actions.setDisplayMode(value as UserDisplayMode)}>
             <SelectTrigger id="settings-display-mode" className="rounded-2xl border-slate-300 bg-white">
               <SelectValue />
             </SelectTrigger>
@@ -92,7 +96,7 @@ export function UserSettingsPreferencesCard({
 
         <div className="space-y-2">
           <Label htmlFor="settings-locale">{t('userSettings.locale')}</Label>
-          <Select value={locale} onValueChange={(value) => setLocale(value as UserLocale)}>
+          <Select value={draft.locale} onValueChange={(value) => actions.setLocale(value as UserLocale)}>
             <SelectTrigger id="settings-locale" className="rounded-2xl border-slate-300 bg-white">
               <SelectValue />
             </SelectTrigger>
@@ -107,8 +111,8 @@ export function UserSettingsPreferencesCard({
         <div className="space-y-2">
           <Label htmlFor="settings-problem-title-display-mode">{t('userSettings.problemTitleDisplayMode')}</Label>
           <Select
-            value={problemTitleDisplayMode}
-            onValueChange={(value) => setProblemTitleDisplayMode(value as ProblemTitleDisplayMode)}
+            value={draft.problemTitleDisplayMode}
+            onValueChange={(value) => actions.setProblemTitleDisplayMode(value as ProblemTitleDisplayMode)}
           >
             <SelectTrigger
               id="settings-problem-title-display-mode"
@@ -133,17 +137,17 @@ export function UserSettingsPreferencesCard({
           </div>
           <Switch
             id="settings-auto-mark-message-read"
-            checked={autoMarkMessageRead}
-            onCheckedChange={setAutoMarkMessageRead}
+            checked={draft.autoMarkMessageRead}
+            onCheckedChange={actions.setAutoMarkMessageRead}
           />
         </div>
         <Button
           type="button"
-          disabled={section.isSubmitting || !displayedUser}
+          disabled={state.section.isSubmitting || !state.displayedUser}
           className="rounded-2xl bg-violet-300 text-violet-950 hover:bg-violet-400"
-          onClick={submit}
+          onClick={actions.submit}
         >
-          {section.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
+          {state.section.isSubmitting ? t('userSettings.saving') : t('userSettings.save')}
         </Button>
       </CardContent>
     </Card>

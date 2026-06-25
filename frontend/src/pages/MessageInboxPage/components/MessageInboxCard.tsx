@@ -43,6 +43,7 @@ export function MessageInboxCard({
   totalPages,
   totalUnreadCount,
 }: MessageInboxCardProps) {
+  // 保留扁平 props：收件箱卡片同时展示列表、分页和全部已读操作，调用端具名传入比包装对象更直观。
   const { t } = useI18n()
 
   return (

@@ -91,11 +91,13 @@ function reducer(state: CreateContestPageState, action: CreateContestPageAction)
 export function useCreateContestPageModel(canCreate: boolean) {
   const { t } = useI18n()
   const [state, dispatch] = useReducer(reducer, initialState)
-  const accessPolicyResult = buildResourceAccessPolicy(
-    state.draft.baseAccess,
-    state.draft.grantedUsersInput,
-    state.draft.grantedGroupsInput,
-  )
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: state.draft.baseAccess,
+    viewer: {
+      usersInput: state.draft.grantedUsersInput,
+      groupsInput: state.draft.grantedGroupsInput,
+    },
+  })
 
   const submit = useCallback(async (): Promise<ContestDetail | null> => {
     if (!canCreate) {

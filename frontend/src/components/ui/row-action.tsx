@@ -35,6 +35,7 @@ const rowActionVariants = cva(
 
 /**
  * 原生 button 语义的整行操作组件，统一键盘焦点、禁用和 hover 反馈。
+ * 保留 props 解构是为了取出本地样式变体，同时继续支持所有原生 button 属性。
  */
 function RowAction({
   className,

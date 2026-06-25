@@ -60,15 +60,19 @@ export function ProblemAccessDialog({
           <p className="text-sm text-slate-600">{resourceAccessSummary(model.problem?.accessPolicy ?? model.accessPolicy, t)}</p>
           <ResourceAccessEditor
             accessPolicy={model.accessPolicy}
-            grantedUsersInput={model.grantedUsersInput}
-            grantedGroupsInput={model.grantedGroupsInput}
-            grantedManagerUsersInput={model.managerUsersInput}
-            grantedManagerGroupsInput={model.managerGroupsInput}
             onBaseAccessChange={model.setBaseAccess}
-            onGrantedUsersInputChange={model.setGrantedUsersInput}
-            onGrantedGroupsInputChange={model.setGrantedGroupsInput}
-            onGrantedManagerUsersInputChange={model.setManagerUsersInput}
-            onGrantedManagerGroupsInputChange={model.setManagerGroupsInput}
+            viewer={{
+              usersInput: model.grantedUsersInput,
+              groupsInput: model.grantedGroupsInput,
+              onGrantedUsersInputChange: model.setGrantedUsersInput,
+              onGrantedGroupsInputChange: model.setGrantedGroupsInput,
+            }}
+            manager={{
+              usersInput: model.managerUsersInput,
+              groupsInput: model.managerGroupsInput,
+              onGrantedUsersInputChange: model.setManagerUsersInput,
+              onGrantedGroupsInputChange: model.setManagerGroupsInput,
+            }}
           />
           <div className="space-y-2">
             <Label htmlFor="problem-other-user-submission-access">{t('problem.create.otherUserSubmissionAccess')}</Label>

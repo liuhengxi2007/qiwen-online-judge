@@ -23,6 +23,7 @@ export function BlogCommentReplyForm({
   onCancel,
   onSubmit,
 }: BlogCommentReplyFormProps) {
+  // 保留扁平 props：回复表单只有一个输入域和提交状态，调用端具名字段足够明确。
   const { t } = useI18n()
 
   return (

@@ -47,13 +47,17 @@ export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidatio
     return { ok: false, message: statementResult.error }
   }
 
-  const accessPolicyResult = buildResourceAccessPolicy(
-    draft.baseAccess,
-    draft.grantedUsersInput,
-    draft.grantedGroupsInput,
-    draft.managerUsersInput,
-    draft.managerGroupsInput,
-  )
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: draft.baseAccess,
+    viewer: {
+      usersInput: draft.grantedUsersInput,
+      groupsInput: draft.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: draft.managerUsersInput,
+      groupsInput: draft.managerGroupsInput,
+    },
+  })
   if (!accessPolicyResult.ok) {
     return { ok: false, message: accessPolicyResult.message }
   }

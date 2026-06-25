@@ -55,59 +55,32 @@ function UserSettingsPageContent({
   viewer: SessionResponse
 }) {
   const { t } = useI18n()
-  const {
-    displayedUser,
-    displayName,
-    email,
-    displayMode,
-    locale,
-    problemTitleDisplayMode,
-    autoMarkMessageRead,
-    currentPassword,
-    newPassword,
-    confirmNewPassword,
-    loadErrorMessage,
-    sections,
-    isEditingOwnSettings,
-    targetUsername,
-    navigationIntent: modelNavigationIntent,
-    setDisplayName,
-    setEmail,
-    setDisplayMode,
-    setLocale,
-    setProblemTitleDisplayMode,
-    setAutoMarkMessageRead,
-    setCurrentPassword,
-    setNewPassword,
-    setConfirmNewPassword,
-    replaceDisplayedUser,
-    submit,
-  } = useUserSettingsModel({
+  const settingsModel = useUserSettingsModel({
     viewer,
     routeUsername,
     setViewer,
   })
   const blockList = useUserSettingsBlockList({
     hash,
-    isEnabled: isEditingOwnSettings,
+    isEnabled: settingsModel.isEditingOwnSettings,
     viewerUsername: viewer.username,
   })
 
-  if (modelNavigationIntent) {
-    return <Navigate replace={modelNavigationIntent.replace} to={modelNavigationIntent.to} />
+  if (settingsModel.navigationIntent) {
+    return <Navigate replace={settingsModel.navigationIntent.replace} to={settingsModel.navigationIntent.to} />
   }
 
   return (
     <PageShell
       title={t('userSettings.heading')}
       description={
-        displayedUser
-          ? isEditingOwnSettings
+        settingsModel.displayedUser
+          ? settingsModel.isEditingOwnSettings
             ? t('userSettings.managingOwn', {
-                displayName: displayNameValue(displayedUser.displayName),
+                displayName: displayNameValue(settingsModel.displayedUser.displayName),
               })
             : t('userSettings.managingOther', {
-                displayName: displayNameValue(displayedUser.displayName),
+                displayName: displayNameValue(settingsModel.displayedUser.displayName),
               })
           : t('userSettings.loadingFor', { username: t('common.loading') })
       }
@@ -116,75 +89,87 @@ function UserSettingsPageContent({
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <UserProfileOverviewCard
           description={t('userSettings.profileDescription')}
-          fallbackUsername={targetUsername}
+          fallbackUsername={settingsModel.targetUsername}
           icon={<Settings className="size-5" />}
           loadingMessage={t('userSettings.loadingSelected')}
           title={t('userSettings.profileTitle')}
-          user={displayedUser}
+          user={settingsModel.displayedUser}
         />
 
-        {loadErrorMessage ? (
+        {settingsModel.loadErrorMessage ? (
           <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/95">
-            <AlertDescription className="text-rose-700">{loadErrorMessage}</AlertDescription>
+            <AlertDescription className="text-rose-700">{settingsModel.loadErrorMessage}</AlertDescription>
           </Alert>
         ) : null}
 
         <UserSettingsProfileCard
-          displayedUser={displayedUser}
-          displayName={displayName}
-          section={sections.profile}
-          setDisplayName={setDisplayName}
+          displayedUser={settingsModel.displayedUser}
+          displayName={settingsModel.displayName}
+          section={settingsModel.sections.profile}
+          setDisplayName={settingsModel.setDisplayName}
           submit={() => {
-            void submit('profile')
+            void settingsModel.submit('profile')
           }}
         />
 
         <UserAvatarSettingsCard
-          displayedUser={displayedUser}
-          onUserUpdated={replaceDisplayedUser}
-          targetUsername={targetUsername}
+          displayedUser={settingsModel.displayedUser}
+          onUserUpdated={settingsModel.replaceDisplayedUser}
+          targetUsername={settingsModel.targetUsername}
         />
 
         <UserSettingsPreferencesCard
-          autoMarkMessageRead={autoMarkMessageRead}
-          displayedUser={displayedUser}
-          displayMode={displayMode}
-          locale={locale}
-          problemTitleDisplayMode={problemTitleDisplayMode}
-          section={sections.preferences}
-          setAutoMarkMessageRead={setAutoMarkMessageRead}
-          setDisplayMode={setDisplayMode}
-          setLocale={setLocale}
-          setProblemTitleDisplayMode={setProblemTitleDisplayMode}
-          submit={() => {
-            void submit('preferences')
+          state={{
+            displayedUser: settingsModel.displayedUser,
+            section: settingsModel.sections.preferences,
+          }}
+          draft={{
+            autoMarkMessageRead: settingsModel.autoMarkMessageRead,
+            displayMode: settingsModel.displayMode,
+            locale: settingsModel.locale,
+            problemTitleDisplayMode: settingsModel.problemTitleDisplayMode,
+          }}
+          actions={{
+            setAutoMarkMessageRead: settingsModel.setAutoMarkMessageRead,
+            setDisplayMode: settingsModel.setDisplayMode,
+            setLocale: settingsModel.setLocale,
+            setProblemTitleDisplayMode: settingsModel.setProblemTitleDisplayMode,
+            submit: () => {
+              void settingsModel.submit('preferences')
+            },
           }}
         />
 
         <UserSettingsAccountCard
-          confirmNewPassword={confirmNewPassword}
-          currentPassword={currentPassword}
-          displayedUser={displayedUser}
-          email={email}
-          isEditingOwnSettings={isEditingOwnSettings}
-          newPassword={newPassword}
-          section={sections.account}
-          setConfirmNewPassword={setConfirmNewPassword}
-          setCurrentPassword={setCurrentPassword}
-          setEmail={setEmail}
-          setNewPassword={setNewPassword}
-          submit={() => {
-            void submit('account')
+          state={{
+            displayedUser: settingsModel.displayedUser,
+            isEditingOwnSettings: settingsModel.isEditingOwnSettings,
+            section: settingsModel.sections.account,
+          }}
+          draft={{
+            confirmNewPassword: settingsModel.confirmNewPassword,
+            currentPassword: settingsModel.currentPassword,
+            email: settingsModel.email,
+            newPassword: settingsModel.newPassword,
+          }}
+          actions={{
+            setConfirmNewPassword: settingsModel.setConfirmNewPassword,
+            setCurrentPassword: settingsModel.setCurrentPassword,
+            setEmail: settingsModel.setEmail,
+            setNewPassword: settingsModel.setNewPassword,
+            submit: () => {
+              void settingsModel.submit('account')
+            },
           }}
         />
 
         <UserPermissionsCard
           description={t('userSettings.permissionsDescription')}
           title={t('userSettings.permissionsTitle')}
-          user={displayedUser}
+          user={settingsModel.displayedUser}
         />
 
-        {isEditingOwnSettings ? <MessageBlockListCard {...blockList} /> : null}
+        {settingsModel.isEditingOwnSettings ? <MessageBlockListCard {...blockList} /> : null}
       </div>
     </PageShell>
   )

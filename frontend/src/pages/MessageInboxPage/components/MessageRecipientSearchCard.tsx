@@ -32,6 +32,7 @@ export function MessageRecipientSearchCard({
   searchQuery,
   suggestions,
 }: MessageRecipientSearchCardProps) {
+  // 保留扁平 props：这是单一收件人搜索控件，查询、建议和选择动作并列传入最清楚。
   const { t } = useI18n()
 
   return (

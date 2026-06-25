@@ -28,6 +28,7 @@ export function RanklistPagination({
   totalPages,
   target,
 }: RanklistPaginationProps) {
+  // 保留扁平 props：分页链接必须显式携带三类榜单页码，调用端具名传入可以避免目标页混淆。
   const { t } = useI18n()
   const canGoPrevious = currentPage > 1
   const canGoNext = currentPage < totalPages

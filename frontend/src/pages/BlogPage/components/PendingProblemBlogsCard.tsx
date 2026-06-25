@@ -27,6 +27,7 @@ export function PendingProblemBlogsCard({
   onAccept,
   onReject,
 }: PendingProblemBlogsCardProps) {
+  // 保留扁平 props：列表数据、加载状态和审核动作是该卡片的完整边界，继续拆对象收益很低。
   const { t } = useI18n()
 
   return (

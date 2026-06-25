@@ -50,6 +50,7 @@ export function ProblemSubmitEditorCard({
   statusMessage,
   supportedLanguages,
 }: ProblemSubmitEditorCardProps) {
+  // 保留扁平 props：提交编辑器是完整表单边界，程序列表、提交状态和操作回调在调用端并列可读。
   const { t } = useI18n()
 
   return (
@@ -132,6 +133,7 @@ function ProblemSubmitProgramEditor({
   program,
   supportedLanguages,
 }: ProblemSubmitProgramEditorProps) {
+  // 保留扁平 props：单个程序编辑器字段数量有限，数据和动作都直接作用于同一个 program。
   const { t } = useI18n()
   const isTextRole = isTextSubmissionRole(program.role.trim())
   const selectableLanguages = supportedLanguages.filter((language) => (isTextRole ? language.value === 'text' : language.value !== 'text'))

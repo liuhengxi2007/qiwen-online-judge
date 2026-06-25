@@ -23,6 +23,7 @@ export function BlogProblemLinkManagerCard({
   onLinkBlogIdChange,
   onSubmit,
 }: BlogProblemLinkManagerCardProps) {
+  // 保留扁平 props：这是单一关联操作卡片，输入值、状态和提交动作并列展示更直观。
   const { t } = useI18n()
 
   return (
