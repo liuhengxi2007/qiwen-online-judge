@@ -4,11 +4,11 @@ import type { SubmissionPageModel } from '@/pages/hooks/submission/useSubmission
 import { useI18n } from '@/system/i18n/use-i18n'
 import { Files } from 'lucide-react'
 
-import { ProblemFilterField } from './SubmissionFilterCard/ProblemFilterField'
-import { SortFilterField } from './SubmissionFilterCard/SortFilterField'
-import { SubmissionFilterSummary } from './SubmissionFilterCard/SubmissionFilterSummary'
-import { UserFilterField } from './SubmissionFilterCard/UserFilterField'
-import { VerdictFilterField } from './SubmissionFilterCard/VerdictFilterField'
+import { ProblemFilterField } from './ProblemFilterField'
+import { SortFilterField } from './SortFilterField'
+import { SubmissionFilterSummary } from './SubmissionFilterSummary'
+import { UserFilterField } from './UserFilterField'
+import { VerdictFilterField } from './VerdictFilterField'
 
 /**
  * 提交筛选卡片属性，直接接收提交列表页模型。

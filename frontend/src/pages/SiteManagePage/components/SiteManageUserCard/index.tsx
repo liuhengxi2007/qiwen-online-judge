@@ -7,7 +7,7 @@ import { useI18n } from '@/system/i18n/use-i18n'
 
 import { SiteManageUserSearchToolbar } from './SiteManageUserSearchToolbar'
 import { SiteManageUserTable } from './SiteManageUserTable'
-import type { SiteManageUserCardProps } from './types'
+import type { SiteManageUserCardProps } from './objects/SiteManageUserCardProps'
 
 /**
  * 站点管理用户卡片，展示用户搜索、状态消息、用户表格和分页控件。

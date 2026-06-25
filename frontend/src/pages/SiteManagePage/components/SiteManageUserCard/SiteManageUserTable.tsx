@@ -4,7 +4,7 @@ import { PaginationControls } from '@/pages/components/PaginationControls'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import { SiteManageUserRow } from './SiteManageUserRow'
-import type { SiteManageModel } from './types'
+import type { SiteManageModel } from './objects/SiteManageModel'
 
 type SiteManageUserTableProps = {
   model: SiteManageModel

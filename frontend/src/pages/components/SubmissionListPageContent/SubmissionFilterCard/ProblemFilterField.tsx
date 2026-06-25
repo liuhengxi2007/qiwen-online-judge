@@ -6,7 +6,7 @@ import { problemSlugValue } from '@/objects/problem/ProblemSlug'
 import { problemTitleValue } from '@/objects/problem/ProblemTitle'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import type { ProblemSuggestionState, TextFilterInputState } from './types'
+import type { ProblemSuggestionState, TextFilterInputState } from './objects/FilterFieldState'
 
 type ProblemFilterFieldProps = {
   input: TextFilterInputState

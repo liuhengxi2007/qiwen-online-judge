@@ -5,7 +5,7 @@ import { blogCommentIdValue } from '@/objects/blog/BlogCommentId'
 import type { BlogCommentSummary } from '@/objects/blog/response/BlogCommentSummary'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { BlogCommentItem } from './BlogCommentItem'
-import type { BlogCommentThreadActions, BlogCommentThreadState } from './BlogCommentThreadTypes'
+import type { BlogCommentThreadActions, BlogCommentThreadState } from './objects/BlogCommentThreadState'
 
 type BlogCommentThreadProps = BlogCommentThreadState & BlogCommentThreadActions & {
   comments: BlogCommentSummary[]

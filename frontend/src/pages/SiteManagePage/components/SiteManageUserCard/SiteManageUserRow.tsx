@@ -12,7 +12,7 @@ import { ConfirmActionDialog } from '@/pages/components/ConfirmActionDialog'
 import { useI18n } from '@/system/i18n/use-i18n'
 
 import { buildPermissionUpdate, displayedPermissionFlags } from '../../functions/SiteManagePermissions'
-import type { SiteManageModel } from './types'
+import type { SiteManageModel } from './objects/SiteManageModel'
 
 type SiteManageUserRowProps = {
   model: SiteManageModel

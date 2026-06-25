@@ -9,7 +9,7 @@ import { UserProfileLink } from '@/pages/components/UserProfileLink'
 import { useI18n } from '@/system/i18n/use-i18n'
 import { BlogCommentEditForm } from './BlogCommentEditForm'
 import { BlogCommentReplyForm } from './BlogCommentReplyForm'
-import type { BlogCommentThreadActions, BlogCommentThreadState } from './BlogCommentThreadTypes'
+import type { BlogCommentThreadActions, BlogCommentThreadState } from './objects/BlogCommentThreadState'
 import { BlogCommentVoteActions } from './BlogCommentVoteActions'
 
 type BlogCommentItemProps = {

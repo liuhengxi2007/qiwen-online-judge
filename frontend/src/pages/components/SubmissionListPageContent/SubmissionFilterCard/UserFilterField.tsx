@@ -6,7 +6,7 @@ import { displayNameValue } from '@/objects/user/DisplayName'
 import { usernameValue } from '@/objects/user/Username'
 import { useI18n } from '@/system/i18n/use-i18n'
 
-import type { TextFilterInputState, UserSuggestionState } from './types'
+import type { TextFilterInputState, UserSuggestionState } from './objects/FilterFieldState'
 
 type UserFilterFieldProps = {
   input: TextFilterInputState
