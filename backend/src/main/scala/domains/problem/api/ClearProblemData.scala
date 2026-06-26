@@ -4,7 +4,6 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
-import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.response.ProblemDetail

@@ -4,7 +4,6 @@ import cats.effect.IO
 import domains.auth.api.PublicApi
 import domains.judge.utils.JudgeConfig
 import domains.judge.utils.JudgeTokenAuth
-import domains.judger.utils.JudgerRegistryValidation
 import domains.judger.table.judger.JudgerTable
 import io.circe.Encoder
 import judgeprotocol.objects.request.RegisterJudgerRequest
@@ -31,6 +30,19 @@ final case class RegisterJudger(judgeConfig: JudgeConfig) extends PublicApi[Regi
   /** 校验注册字段并写入 judger 表；会清理过期记录再分配 id。 */
   override def plan(connection: Connection, request: RegisterJudgerRequest): IO[RegisterJudgerResponse] =
     for
-      validRequest <- HttpApiError.fromEitherBadRequest(JudgerRegistryValidation.validateRegisterRequest(request))
+      validRequest <- HttpApiError.fromEitherBadRequest(validateRegisterRequest(request))
       response <- JudgerTable.register(connection, validRequest, judgeConfig.heartbeatIntervalMs, judgeConfig.heartbeatTimeoutMs)
     yield response
+
+  /** 校验并规范化注册请求；不访问数据库。 */
+  private def validateRegisterRequest(request: RegisterJudgerRequest): Either[String, RegisterJudgerRequest] =
+    val host = request.host.trim
+    if host.isEmpty then Left("Judger host is required.")
+    else if request.supportedLanguages.isEmpty then Left("Judger supported languages are required.")
+    else
+      Right(
+        request.copy(
+          host = host,
+          processId = request.processId.map(_.trim).filter(_.nonEmpty)
+        )
+      )

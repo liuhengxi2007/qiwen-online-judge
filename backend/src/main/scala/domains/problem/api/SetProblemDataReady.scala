@@ -6,7 +6,6 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.judge.utils.JudgeTaskBuilder
 import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
-import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import domains.problem.objects.internal.ProblemDataManifestEntry

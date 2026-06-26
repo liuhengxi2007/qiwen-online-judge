@@ -4,7 +4,6 @@ import cats.effect.IO
 import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
-import domains.usergroup.utils.UserGroupMutationValidation
 
 import domains.usergroup.objects.request.CreateUserGroupRequest
 import domains.usergroup.objects.response.UserGroupDetail

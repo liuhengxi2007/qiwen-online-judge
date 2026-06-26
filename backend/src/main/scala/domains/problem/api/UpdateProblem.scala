@@ -3,7 +3,6 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.{AuthenticatedApi, ResolveAccountUsername}
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemAccessPolicyValidation
 
 import domains.problem.objects.*
 import domains.problem.objects.request.UpdateProblemRequest

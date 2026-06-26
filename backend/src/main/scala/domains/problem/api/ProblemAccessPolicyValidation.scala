@@ -1,4 +1,4 @@
-package domains.problem.utils
+package domains.problem.api
 
 import cats.effect.IO
 import cats.syntax.all.*

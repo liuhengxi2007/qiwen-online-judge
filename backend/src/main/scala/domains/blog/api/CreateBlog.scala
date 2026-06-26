@@ -8,7 +8,6 @@ import domains.blog.objects.{BlogContent, BlogTitle}
 import domains.blog.objects.request.CreateBlogRequest
 import domains.blog.objects.response.BlogSummary
 import domains.blog.table.blog.BlogPostMutationTable
-import domains.blog.utils.BlogAccessPolicyValidation
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}

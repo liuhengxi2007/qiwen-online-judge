@@ -1,4 +1,4 @@
-package domains.contest.utils
+package domains.contest.api
 
 import domains.contest.objects.{ContestDescription, ContestSlug, ContestTitle}
 import domains.contest.objects.request.{CreateContestRequest, UpdateContestRequest}

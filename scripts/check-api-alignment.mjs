@@ -25,8 +25,16 @@ const allowedBackendOnlyApiFiles = new Map([
     'Blog comment reply notification orchestration is backend API support code and is not a frontend endpoint.',
   ],
   [
+    'blog/BlogAccessPolicyValidation',
+    'Blog access-policy validation is backend API support shared by blog create/update endpoints and is not a frontend endpoint.',
+  ],
+  [
     'blog/ProblemBlogAccess',
     'Problem-blog authorization and path decoding support is shared by backend blog endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'contest/ContestAccessPolicyValidation',
+    'Contest access-policy validation is backend API support shared by contest create/update endpoints and is not a frontend endpoint.',
   ],
   [
     'hack/HackApiSupport',
@@ -53,8 +61,20 @@ const allowedBackendOnlyApiFiles = new Map([
     'Problem API support centralizes backend problem loading helpers and is not a frontend endpoint.',
   ],
   [
+    'problem/ProblemAccessPolicyValidation',
+    'Problem access-policy validation is backend API support shared by problem create/update endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'problem/ProblemDataApiHelpers',
+    'Problem data API helpers centralize backend storage workflow helpers used by problem data endpoints and are not a frontend endpoint.',
+  ],
+  [
     'problem/ProblemManagementContext',
     'Problem management context parses and validates backend path/query context shared by problem endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'problemset/ProblemSetAccessPolicyValidation',
+    'Problem-set access-policy validation is backend API support shared by problem-set create/update endpoints and is not a frontend endpoint.',
   ],
   [
     'user/GetUserAvatar',
@@ -63,6 +83,10 @@ const allowedBackendOnlyApiFiles = new Map([
   [
     'user/UserAvatarApiHelpers',
     'User avatar API support centralizes backend permission and refresh helpers and is not a frontend endpoint.',
+  ],
+  [
+    'usergroup/UserGroupMutationValidation',
+    'User-group mutation validation is backend API support shared by user-group mutation endpoints and is not a frontend endpoint.',
   ],
 ])
 const usedBackendOnlyApiFileExceptions = new Set()

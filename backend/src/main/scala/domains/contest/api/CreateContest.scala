@@ -7,7 +7,7 @@ import domains.contest.objects.*
 import domains.contest.objects.request.CreateContestRequest
 import domains.contest.objects.response.{ContestDetail, ContestRegistrationStatus}
 import domains.contest.table.contest.ContestTable
-import domains.contest.utils.{ContestAccessPolicyValidation, ContestAccessRules}
+import domains.contest.utils.ContestAccessRules
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}

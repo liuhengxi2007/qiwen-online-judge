@@ -1,4 +1,4 @@
-package domains.problemset.utils
+package domains.problemset.api
 
 import munit.CatsEffectSuite
 import shared.objects.access.{AccessSubject, AccessUserGroupSlug, AccessUsername, BaseAccess, ResourceVisibilityPolicy}

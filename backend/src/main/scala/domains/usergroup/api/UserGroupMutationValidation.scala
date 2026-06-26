@@ -1,4 +1,4 @@
-package domains.usergroup.utils
+package domains.usergroup.api
 
 import cats.effect.IO
 import domains.user.objects.Username

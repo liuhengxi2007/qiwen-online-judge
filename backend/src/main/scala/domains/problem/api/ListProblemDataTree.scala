@@ -3,7 +3,6 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.ProblemDataApiHelpers
 
 import domains.problem.objects.response.ProblemDataTreeResponse
 import domains.problem.table.problem_data_file.ProblemDataFileTable

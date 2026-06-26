@@ -1,4 +1,4 @@
-package domains.contest.utils
+package domains.contest.api
 
 import cats.effect.IO
 import cats.syntax.all.*

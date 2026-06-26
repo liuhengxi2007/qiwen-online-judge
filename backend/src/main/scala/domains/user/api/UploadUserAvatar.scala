@@ -7,7 +7,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.user.objects.Username
 import domains.user.objects.response.UserSettingsResponse
 import domains.user.table.user_profile.UserProfileTable
-import domains.user.utils.{UserAvatarStorage, UserAvatarStorageContext, UserAvatarUploadValidation}
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageContext}
 import io.circe.Encoder
 import org.http4s.multipart.Multipart
 import org.http4s.{Method, Request, Status}
@@ -34,7 +34,7 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorageContext)
       filePart <- multipart.parts.find(_.name.contains("file")) match
         case Some(part) => IO.pure(part)
         case None => HttpApiError.raise(HttpApiError.badRequest("Multipart file field 'file' is required."))
-      bytes <- readPartBytes(filePart, UserAvatarUploadValidation.maxAvatarBytes, "Avatar file")
+      bytes <- readPartBytes(filePart, UserAvatarApiHelpers.maxAvatarBytes, "Avatar file")
       contentType = filePart.headers.headers.find(_.name == CIString("Content-Type")).map(_.value.takeWhile(_ != ';').trim)
     yield (targetUsername, bytes, contentType)
 
@@ -52,7 +52,7 @@ final case class UploadUserAvatar(userAvatarStorage: UserAvatarStorageContext)
         case None => HttpApiError.raise(HttpApiError.notFound(ApiMessages.userNotFound))
       }
       uploadId <- IO.randomUUID
-      prepared <- HttpApiError.fromEitherBadRequest(UserAvatarUploadValidation.prepare(targetUsername, bytes, contentType, uploadId))
+      prepared <- HttpApiError.fromEitherBadRequest(UserAvatarApiHelpers.prepareUpload(targetUsername, bytes, contentType, uploadId))
       previousAvatar <- UserProfileTable.findAvatarByUsername(connection, targetUsername)
       now <- IO.realTimeInstant
       _ <- UserAvatarStorage.writeObject(userAvatarStorage, prepared.objectKey, prepared.bytes, prepared.contentType)

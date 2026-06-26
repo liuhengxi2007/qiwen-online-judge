@@ -3,7 +3,6 @@ package domains.usergroup.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.usergroup.utils.UserGroupMutationValidation
 
 import domains.usergroup.objects.UserGroupSlug
 import domains.usergroup.objects.request.UpdateUserGroupRequest

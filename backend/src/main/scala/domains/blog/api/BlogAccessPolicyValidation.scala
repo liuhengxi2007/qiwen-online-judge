@@ -1,4 +1,4 @@
-package domains.blog.utils
+package domains.blog.api
 
 import cats.effect.IO
 import cats.syntax.all.*
