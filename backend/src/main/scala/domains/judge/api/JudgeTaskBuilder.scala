@@ -30,10 +30,21 @@ object JudgeTaskBuilder:
   private val CodeRolePattern = "^[A-Za-z0-9_-]+$".r
   private val TextRolePattern = "^[A-Za-z0-9_-]+\\.txt$".r
 
+  private type YamlObject = Map[String, YamlValue]
+
+  private enum YamlValue:
+    case Obj(value: YamlObject)
+    case Arr(values: List[YamlValue])
+    case Str(value: String)
+    case Bool(value: Boolean)
+    case Integral(value: BigInt)
+    case Decimal(value: BigDecimal)
+    case NullValue
+
   private enum StandardConfig:
     case Unspecified
     case NoAnswer
-    case Generator(language: SubmissionLanguage, path: String)
+    case Generator(language: SubmissionLanguage, path: ProblemDataPath)
 
     def inherit(parent: StandardConfig): StandardConfig =
       this match
@@ -47,9 +58,9 @@ object JudgeTaskBuilder:
 
   private enum CheckerConfig:
     case Builtin(name: String)
-    case Cpp17(path: String)
+    case Cpp17(path: ProblemDataPath)
 
-  private final case class ToolConfig(path: String, limits: Option[JudgeTaskToolLimits])
+  private final case class ToolConfig(path: ProblemDataPath, limits: Option[JudgeTaskToolLimits])
 
   private final case class RoleConfig(stubs: Map[SubmissionLanguage, JudgeTaskFileRef]):
     def restrictsLanguages: Boolean = stubs.nonEmpty
@@ -174,21 +185,21 @@ object JudgeTaskBuilder:
       case _ =>
         SubmissionResultDisplayMode.Score
 
-  private def parseYaml(bytes: Array[Byte]): Either[BuildError, Map[String, Any]] =
+  private def parseYaml(bytes: Array[Byte]): Either[BuildError, YamlObject] =
     Try {
         val settings = LoadSettings.builder().setLabel("judge.yaml").build()
-        val loaded = Load(settings).loadFromString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
-        toScalaMap(loaded)
+        Load(settings).loadFromString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
       }
       .toEither
       .left
       .map(error => BuildError(s"Invalid judge.yaml: ${error.getMessage}", JudgeFailureReason.JudgeTaskBuildFailed))
+      .flatMap(loaded => toYamlObject(loaded, "judge.yaml").left.map(message => BuildError(message, JudgeFailureReason.JudgeTaskBuildFailed)))
 
   private def buildFromYaml(
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
     manifest: ProblemDataManifest,
-    root: Map[String, Any],
+    root: YamlObject,
     startedAtEpochMilli: Long
   ): Either[BuildError, BuiltTask] =
     for
@@ -291,7 +302,7 @@ object JudgeTaskBuilder:
 
   private def buildSubtask(
     manifest: ProblemDataManifest,
-    raw: Map[String, Any],
+    raw: YamlObject,
     index: Int,
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
@@ -363,7 +374,7 @@ object JudgeTaskBuilder:
 
   private def buildTestcase(
     manifest: ProblemDataManifest,
-    raw: Map[String, Any],
+    raw: YamlObject,
     index: Int,
     scoreRatio: BigDecimal,
     parentLimits: Option[JudgeTaskLimits],
@@ -415,14 +426,14 @@ object JudgeTaskBuilder:
         roles = roles.getOrElse(Nil)
       )
 
-  private def testcaseTypeAt(raw: Map[String, Any]): Either[String, JudgeTestcaseType] =
+  private def testcaseTypeAt(raw: YamlObject): Either[String, JudgeTestcaseType] =
     optionalStringAt(raw, "type").flatMap {
       case None => Right(JudgeTestcaseType.Main)
       case Some(value) => JudgeTestcaseType.parse(value)
     }
 
   private def rejectNonMainTestcaseScoreRatio(
-    raw: Map[String, Any],
+    raw: YamlObject,
     testcaseType: JudgeTestcaseType,
     label: String
   ): Either[BuildError, Unit] =
@@ -456,16 +467,15 @@ object JudgeTaskBuilder:
         case StandardConfig.NoAnswer => JudgeTaskHackConfig.WithoutAnswerGenerator
         case StandardConfig.Unspecified => JudgeTaskHackConfig.Disabled
 
-  private def standardAt(raw: Map[String, Any]): Either[String, StandardConfig] =
+  private def standardAt(raw: YamlObject): Either[String, StandardConfig] =
     raw.get("standard") match
       case None => Right(StandardConfig.Unspecified)
-      case Some(value: java.lang.Boolean) if !value.booleanValue => Right(StandardConfig.NoAnswer)
-      case Some(standard: Map[?, ?]) =>
-        val standardMap = standard.asInstanceOf[Map[String, Any]]
+      case Some(YamlValue.Bool(false)) => Right(StandardConfig.NoAnswer)
+      case Some(YamlValue.Obj(standardMap)) =>
         for
           language <- stringAt(standardMap, "language").flatMap(parseStandardLanguage)
-          path <- stringAt(standardMap, "path")
-          _ <- ProblemDataPath.parse(path).left.map(message => s"Invalid standard path: $message")
+          rawPath <- stringAt(standardMap, "path")
+          path <- ProblemDataPath.parse(rawPath).left.map(message => s"Invalid standard path: $message")
         yield StandardConfig.Generator(language, path)
       case Some(_) => Left("standard must be an object or false.")
 
@@ -475,7 +485,7 @@ object JudgeTaskBuilder:
       case "python3" => Right(SubmissionLanguage.Python3)
       case other => Left(s"Unsupported answer generator language: $other.")
 
-  private def roleConfigsAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Map[String, RoleConfig]] =
+  private def roleConfigsAt(raw: YamlObject, manifest: ProblemDataManifest): Either[String, Map[String, RoleConfig]] =
     optionalMapAt(raw, "roles").flatMap {
       case None => Right(Map.empty)
       case Some(roles) =>
@@ -483,14 +493,14 @@ object JudgeTaskBuilder:
           for
             validRole <- role.validateCodeRole.left.map(message => s"roles.$role $message")
             roleMap <- value match
-              case map: Map[?, ?] => Right(map.asInstanceOf[Map[String, Any]])
+              case YamlValue.Obj(map) => Right(map)
               case _ => Left(s"roles.$role must be an object.")
             roleConfig <- roleConfigAt(validRole, roleMap, manifest)
           yield validRole -> roleConfig
         }).map(_.toMap)
     }
 
-  private def roleConfigAt(role: String, raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, RoleConfig] =
+  private def roleConfigAt(role: String, raw: YamlObject, manifest: ProblemDataManifest): Either[String, RoleConfig] =
     optionalMapAt(raw, "stubs").left.map(message => s"roles.$role.$message").flatMap {
       case None => Right(RoleConfig(Map.empty))
       case Some(stubs) =>
@@ -498,15 +508,15 @@ object JudgeTaskBuilder:
           for
             language <- parseStubLanguage(languageKey).left.map(message => s"roles.$role.stubs.$languageKey $message")
             path <- value match
-              case rawPath: String if rawPath.trim.nonEmpty => Right(rawPath.trim)
-              case _: String => Left(s"roles.$role.stubs.$languageKey must not be empty.")
+              case YamlValue.Str(rawPath) if rawPath.trim.nonEmpty => Right(rawPath.trim)
+              case YamlValue.Str(_) => Left(s"roles.$role.stubs.$languageKey must not be empty.")
               case _ => Left(s"roles.$role.stubs.$languageKey must be a string.")
             ref <- findFile(manifest, path, s"Stub source file for role $role language $languageKey")
           yield language -> ref
         }).map(items => RoleConfig(items.toMap))
     }
 
-  private def headerRefsAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, List[JudgeTaskFileRef]] =
+  private def headerRefsAt(raw: YamlObject, manifest: ProblemDataManifest): Either[String, List[JudgeTaskFileRef]] =
     optionalListOfStringsAt(raw, "headers").flatMap {
       case None => Right(Nil)
       case Some(paths) =>
@@ -540,15 +550,14 @@ object JudgeTaskBuilder:
       case "cpp17" => Right(SubmissionLanguage.Cpp17)
       case _ => Left("is not supported. Only cpp17 stubs are supported.")
 
-  private def modeAt(raw: Map[String, Any], manifest: ProblemDataManifest): Either[String, Option[JudgeTaskMode]] =
+  private def modeAt(raw: YamlObject, manifest: ProblemDataManifest): Either[String, Option[JudgeTaskMode]] =
     raw.get("mode") match
       case None => Right(None)
-      case Some(value: String) if value.trim == "traditional" =>
+      case Some(YamlValue.Str(value)) if value.trim == "traditional" =>
         Right(Some(JudgeTaskMode.traditional(SubmissionProgramManifest.DefaultProgramKey)))
-      case Some(value: String) if value.trim == "interactive" =>
+      case Some(YamlValue.Str(value)) if value.trim == "interactive" =>
         Left("mode must be an object when interactive mode is selected.")
-      case Some(mode: Map[?, ?]) =>
-        val modeMap = mode.asInstanceOf[Map[String, Any]]
+      case Some(YamlValue.Obj(modeMap)) =>
         stringAt(modeMap, "type").flatMap {
           case "traditional" =>
             optionalStringAt(modeMap, "role").flatMap(_.getOrElse(SubmissionProgramManifest.DefaultProgramKey).validateTraditionalRole).map(role =>
@@ -566,7 +575,7 @@ object JudgeTaskBuilder:
         }
       case Some(_) => Left("mode must be a string or an object.")
 
-  private def checkerAt(raw: Map[String, Any]): Either[String, Option[CheckerConfig]] =
+  private def checkerAt(raw: YamlObject): Either[String, Option[CheckerConfig]] =
     optionalMapAt(raw, "checker").flatMap {
       case None => Right(None)
       case Some(checker) =>
@@ -578,47 +587,47 @@ object JudgeTaskBuilder:
               case other => Left(s"Unsupported builtin checker: $other.")
             }
           case "cpp17" | "cpp" =>
-            stringAt(checker, "path").flatMap(path =>
-              ProblemDataPath.parse(path)
+            stringAt(checker, "path").flatMap(rawPath =>
+              ProblemDataPath.parse(rawPath)
                 .left.map(message => s"Invalid checker path: $message")
-                .map(_ => Some(CheckerConfig.Cpp17(path)))
+                .map(path => Some(CheckerConfig.Cpp17(path)))
             )
           case other => Left(s"Unsupported checker type: $other.")
         }
     }
 
-  private def toolAt(raw: Map[String, Any], key: String): Either[String, Option[ToolConfig]] =
+  private def toolAt(raw: YamlObject, key: String): Either[String, Option[ToolConfig]] =
     raw.get(key) match
       case None => Right(None)
       case Some(value) => toolFrom(value, key).map(Some(_))
 
-  private def limitedToolAt(raw: Map[String, Any], key: String): Either[String, Option[ToolConfig]] =
+  private def limitedToolAt(raw: YamlObject, key: String): Either[String, Option[ToolConfig]] =
     raw.get(key) match
       case None => Right(None)
       case Some(value) => limitedToolFrom(value, key).map(Some(_))
 
-  private def requiredLimitedToolFrom(value: Option[Any], label: String): Either[String, ToolConfig] =
+  private def requiredLimitedToolFrom(value: Option[YamlValue], label: String): Either[String, ToolConfig] =
     value match
       case Some(currentValue) => limitedToolFrom(currentValue, label)
       case None => Left(s"$label is required.")
 
-  private def toolFrom(value: Any, label: String): Either[String, ToolConfig] =
+  private def toolFrom(value: YamlValue, label: String): Either[String, ToolConfig] =
     value match
-      case path: String =>
+      case YamlValue.Str(path) =>
         toolFromPath(path, label)
-      case map: Map[?, ?] =>
-        toolFromObject(map.asInstanceOf[Map[String, Any]], label, requireLimits = false)
+      case YamlValue.Obj(map) =>
+        toolFromObject(map, label, requireLimits = false)
       case _ =>
         Left(s"$label must be a path string or an object with a path.")
 
-  private def limitedToolFrom(value: Any, label: String): Either[String, ToolConfig] =
+  private def limitedToolFrom(value: YamlValue, label: String): Either[String, ToolConfig] =
     value match
-      case map: Map[?, ?] =>
-        toolFromObject(map.asInstanceOf[Map[String, Any]], label, requireLimits = true)
+      case YamlValue.Obj(map) =>
+        toolFromObject(map, label, requireLimits = true)
       case _ =>
         Left(s"$label must be an object with path and limits.")
 
-  private def toolFromObject(raw: Map[String, Any], label: String, requireLimits: Boolean): Either[String, ToolConfig] =
+  private def toolFromObject(raw: YamlObject, label: String, requireLimits: Boolean): Either[String, ToolConfig] =
     for
       path <- stringAt(raw, "path")
       tool <- toolFromPath(path, label)
@@ -629,9 +638,9 @@ object JudgeTaskBuilder:
   private def toolFromPath(path: String, label: String): Either[String, ToolConfig] =
     ProblemDataPath.parse(path)
       .left.map(message => s"Invalid $label path: $message")
-      .map(_ => ToolConfig(path, None))
+      .map(parsedPath => ToolConfig(parsedPath, None))
 
-  private def limitsAt(raw: Map[String, Any]): Either[String, Option[JudgeTaskLimits]] =
+  private def limitsAt(raw: YamlObject): Either[String, Option[JudgeTaskLimits]] =
     optionalMapAt(raw, "limits").flatMap {
       case None => Right(None)
       case Some(limits) =>
@@ -641,7 +650,7 @@ object JudgeTaskBuilder:
         yield Some(JudgeTaskLimits(timeMs, memoryMb))
     }
 
-  private def toolLimitsAt(raw: Map[String, Any], label: String): Either[String, Option[JudgeTaskToolLimits]] =
+  private def toolLimitsAt(raw: YamlObject, label: String): Either[String, Option[JudgeTaskToolLimits]] =
     optionalMapAt(raw, "limits").left.map(message => s"$label.$message").flatMap {
       case None => Right(None)
       case Some(limits) =>
@@ -659,7 +668,7 @@ object JudgeTaskBuilder:
     def merge(child: AggregationConfig): AggregationConfig =
       AggregationConfig(testcases = child.testcases.orElse(testcases), subtasks = child.subtasks.orElse(subtasks))
 
-  private def aggregationAt(raw: Map[String, Any]): Either[String, AggregationConfig] =
+  private def aggregationAt(raw: YamlObject): Either[String, AggregationConfig] =
     optionalMapAt(raw, "aggregation").flatMap {
       case None => Right(AggregationConfig(None, None))
       case Some(aggregation) =>
@@ -682,9 +691,14 @@ object JudgeTaskBuilder:
     allowedAggregationByName.get(raw.trim).toRight(s"Unsupported aggregation: $raw. Expected one of: ${allowedAggregations.map(_._1).mkString(", ")}.")
 
   private def findFile(manifest: ProblemDataManifest, rawPath: String, label: String): Either[String, JudgeTaskFileRef] =
+    ProblemDataPath.parse(rawPath)
+      .left
+      .map(message => s"$label has invalid path: $message")
+      .flatMap(findFile(manifest, _, label))
+
+  private def findFile(manifest: ProblemDataManifest, path: ProblemDataPath, label: String): Either[String, JudgeTaskFileRef] =
     for
-      path <- ProblemDataPath.parse(rawPath).left.map(message => s"$label has invalid path: $message")
-      entry <- manifest.entries.find(_.path == path).toRight(s"$label does not exist: $rawPath.")
+      entry <- manifest.entries.find(_.path == path).toRight(s"$label does not exist: ${path.value}.")
       ref <- fileRef(entry).left.map(message => s"$label has invalid file reference: $message")
     yield ref
 
@@ -702,7 +716,7 @@ object JudgeTaskBuilder:
   private def fileRef(entry: ProblemDataManifestEntry): Either[String, JudgeTaskFileRef] =
     JudgeTaskFileRef.from(entry.path.value, entry.sizeBytes, entry.sha256)
 
-  private def ratiosFor(items: List[Map[String, Any]]): Either[String, List[BigDecimal]] =
+  private def ratiosFor(items: List[YamlObject]): Either[String, List[BigDecimal]] =
     val explicit = items.map(optionalDecimalAt(_, "scoreRatio"))
     sequence(explicit).flatMap { ratios =>
       val missingCount = ratios.count(_.isEmpty)
@@ -713,7 +727,7 @@ object JudgeTaskBuilder:
         Right(ratios.map(_.getOrElse(fallback)))
     }
 
-  private def rejectLegacyName(raw: Map[String, Any], label: String): Either[BuildError, Unit] =
+  private def rejectLegacyName(raw: YamlObject, label: String): Either[BuildError, Unit] =
     Either.cond(!raw.contains("name"), (), buildError(s"$label must use label instead of name."))
 
   private def judgeNodeLabel(kind: String, index: Int, label: Option[String]): String =
@@ -721,109 +735,125 @@ object JudgeTaskBuilder:
       case Some(value) => s"$kind $index ($value)"
       case None => s"$kind $index"
 
-  private def toScalaMap(value: Any): Map[String, Any] =
+  private def toYamlObject(value: Any, label: String): Either[String, YamlObject] =
     value match
       case map: java.util.Map[?, ?] =>
-        map.asScala.toMap.collect { case (key: String, value) => key -> toScalaValue(value) }
-      case _ => Map.empty
+        map.asScala.toList.traverse {
+          case (key: String, value) => toYamlValue(value, s"$label.$key").map(key -> _)
+          case (key, _) => Left(s"$label contains non-string key: $key.")
+        }.map(_.toMap)
+      case _ => Left(s"$label must be an object.")
 
-  private def toScalaValue(value: Any): Any =
+  private def toYamlValue(value: Any, label: String): Either[String, YamlValue] =
     value match
-      case map: java.util.Map[?, ?] => toScalaMap(map)
-      case list: java.util.List[?] => list.asScala.toList.map(toScalaValue)
-      case other => other
+      case map: java.util.Map[?, ?] => toYamlObject(map, label).map(YamlValue.Obj.apply)
+      case list: java.util.List[?] =>
+        list.asScala.toList.zipWithIndex.traverse { case (item, index) => toYamlValue(item, s"$label[$index]") }.map(YamlValue.Arr.apply)
+      case value: String => Right(YamlValue.Str(value))
+      case value: java.lang.Boolean => Right(YamlValue.Bool(value.booleanValue))
+      case value: java.lang.Integer => Right(YamlValue.Integral(BigInt(value.intValue)))
+      case value: java.lang.Long => Right(YamlValue.Integral(BigInt(value.longValue)))
+      case value: java.math.BigInteger => Right(YamlValue.Integral(BigInt(value)))
+      case value: java.math.BigDecimal => Right(YamlValue.Decimal(BigDecimal(value)))
+      case value: java.lang.Double if !value.isNaN && !value.isInfinite => Right(YamlValue.Decimal(BigDecimal(value.doubleValue)))
+      case null => Right(YamlValue.NullValue)
+      case other => Left(s"$label has unsupported YAML value type: ${other.getClass.getSimpleName}.")
 
-  private def optionalMapAt(raw: Map[String, Any], key: String): Either[String, Option[Map[String, Any]]] =
+  private def optionalMapAt(raw: YamlObject, key: String): Either[String, Option[YamlObject]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(map: Map[?, ?]) => Right(Some(map.asInstanceOf[Map[String, Any]]))
+      case Some(YamlValue.Obj(map)) => Right(Some(map))
       case Some(_) => Left(s"$key must be an object.")
 
-  private def listOfMapsAt(raw: Map[String, Any], key: String): Either[String, List[Map[String, Any]]] =
+  private def listOfMapsAt(raw: YamlObject, key: String): Either[String, List[YamlObject]] =
     raw.get(key) match
-      case Some(items: List[?]) =>
+      case Some(YamlValue.Arr(items)) =>
         sequence(items.zipWithIndex.map {
-          case (map: Map[?, ?], _) => Right(map.asInstanceOf[Map[String, Any]])
+          case (YamlValue.Obj(map), _) => Right(map)
           case (_, index) => Left(s"$key[$index] must be an object.")
         })
       case Some(_) => Left(s"$key must be a list.")
       case None => Left(s"$key is required.")
 
-  private def listOfStringsAt(raw: Map[String, Any], key: String): Either[String, List[String]] =
+  private def listOfStringsAt(raw: YamlObject, key: String): Either[String, List[String]] =
     raw.get(key) match
-      case Some(items: List[?]) =>
+      case Some(YamlValue.Arr(items)) =>
         sequence(items.zipWithIndex.map {
-          case (value: String, _) if value.trim.nonEmpty => Right(value.trim)
-          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (YamlValue.Str(value), _) if value.trim.nonEmpty => Right(value.trim)
+          case (YamlValue.Str(_), index) => Left(s"$key[$index] must not be empty.")
           case (_, index) => Left(s"$key[$index] must be a string.")
         })
       case Some(_) => Left(s"$key must be a list.")
       case None => Left(s"$key is required.")
 
-  private def optionalListOfStringsAt(raw: Map[String, Any], key: String): Either[String, Option[List[String]]] =
+  private def optionalListOfStringsAt(raw: YamlObject, key: String): Either[String, Option[List[String]]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(items: List[?]) =>
+      case Some(YamlValue.Arr(items)) =>
         sequence(items.zipWithIndex.map {
-          case (value: String, _) if value.trim.nonEmpty => Right(value.trim)
-          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (YamlValue.Str(value), _) if value.trim.nonEmpty => Right(value.trim)
+          case (YamlValue.Str(_), index) => Left(s"$key[$index] must not be empty.")
           case (_, index) => Left(s"$key[$index] must be a string.")
         }).map(Some(_))
       case Some(_) => Left(s"$key must be a list.")
 
-  private def optionalRoleListAt(raw: Map[String, Any], key: String, allowTextRoles: Boolean): Either[String, Option[List[String]]] =
+  private def optionalRoleListAt(raw: YamlObject, key: String, allowTextRoles: Boolean): Either[String, Option[List[String]]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(items: List[?]) =>
+      case Some(YamlValue.Arr(items)) =>
         sequence(items.zipWithIndex.map {
-          case (value: String, index) if value.trim.nonEmpty =>
+          case (YamlValue.Str(value), index) if value.trim.nonEmpty =>
             val label = s"$key[$index]"
             val role = value.trim
             if allowTextRoles then role.validateTraditionalRole.left.map(message => s"$label $message")
             else role.validateCodeRole.left.map(message => s"$label $message")
-          case (_: String, index) => Left(s"$key[$index] must not be empty.")
+          case (YamlValue.Str(_), index) => Left(s"$key[$index] must not be empty.")
           case (_, index) => Left(s"$key[$index] must be a string.")
         }).flatMap { roles =>
           Either.cond(roles.nonEmpty, Some(roles), s"$key must contain at least one role.")
         }
       case Some(_) => Left(s"$key must be a list.")
 
-  private def stringAt(raw: Map[String, Any], key: String): Either[String, String] =
+  private def stringAt(raw: YamlObject, key: String): Either[String, String] =
     optionalStringAt(raw, key).flatMap(_.toRight(s"$key is required."))
 
-  private def optionalStringAt(raw: Map[String, Any], key: String): Either[String, Option[String]] =
+  private def optionalStringAt(raw: YamlObject, key: String): Either[String, Option[String]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(value: String) if value.trim.nonEmpty => Right(Some(value.trim))
-      case Some(_: String) => Left(s"$key must not be empty.")
+      case Some(YamlValue.Str(value)) if value.trim.nonEmpty => Right(Some(value.trim))
+      case Some(YamlValue.Str(_)) => Left(s"$key must not be empty.")
       case Some(_) => Left(s"$key must be a string.")
 
-  private def intAt(raw: Map[String, Any], key: String): Either[String, Int] =
+  private def intAt(raw: YamlObject, key: String): Either[String, Int] =
     optionalIntAt(raw, key).flatMap(_.toRight(s"$key is required."))
 
-  private def optionalIntAt(raw: Map[String, Any], key: String): Either[String, Option[Int]] =
+  private def optionalIntAt(raw: YamlObject, key: String): Either[String, Option[Int]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(value: Integer) => Right(Some(value.intValue))
-      case Some(value: java.lang.Long) if value >= Int.MinValue && value <= Int.MaxValue => Right(Some(value.intValue))
-      case Some(value: java.math.BigInteger) if value.bitLength < 31 => Right(Some(value.intValue))
-      case Some(value) => Left(s"$key must be an integer, found ${value.getClass.getSimpleName}.")
+      case Some(YamlValue.Integral(value)) if value.isValidInt => Right(Some(value.toInt))
+      case Some(value) => Left(s"$key must be an integer, found ${yamlTypeName(value)}.")
 
-  private def optionalBooleanAt(raw: Map[String, Any], key: String): Either[String, Option[Boolean]] =
+  private def optionalBooleanAt(raw: YamlObject, key: String): Either[String, Option[Boolean]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(value: java.lang.Boolean) => Right(Some(value.booleanValue))
+      case Some(YamlValue.Bool(value)) => Right(Some(value))
       case Some(_) => Left(s"$key must be a boolean.")
 
-  private def optionalDecimalAt(raw: Map[String, Any], key: String): Either[String, Option[BigDecimal]] =
+  private def optionalDecimalAt(raw: YamlObject, key: String): Either[String, Option[BigDecimal]] =
     raw.get(key) match
       case None => Right(None)
-      case Some(value: java.lang.Integer) => validateRatio(BigDecimal(value.intValue), key).map(Some(_))
-      case Some(value: java.lang.Long) => validateRatio(BigDecimal(value.longValue), key).map(Some(_))
-      case Some(value: java.math.BigInteger) => validateRatio(BigDecimal(value), key).map(Some(_))
-      case Some(value: java.math.BigDecimal) => validateRatio(BigDecimal(value), key).map(Some(_))
-      case Some(value: java.lang.Double) => validateRatio(BigDecimal(value.doubleValue), key).map(Some(_))
-      case Some(value) => Left(s"$key must be a number, found ${value.getClass.getSimpleName}.")
+      case Some(YamlValue.Integral(value)) => validateRatio(BigDecimal(value), key).map(Some(_))
+      case Some(YamlValue.Decimal(value)) => validateRatio(value, key).map(Some(_))
+      case Some(value) => Left(s"$key must be a number, found ${yamlTypeName(value)}.")
+
+  private def yamlTypeName(value: YamlValue): String =
+    value match
+      case YamlValue.Obj(_) => "object"
+      case YamlValue.Arr(_) => "list"
+      case YamlValue.Str(_) => "string"
+      case YamlValue.Bool(_) => "boolean"
+      case YamlValue.Integral(_) | YamlValue.Decimal(_) => "number"
+      case YamlValue.NullValue => "null"
 
   private def validateRatio(value: BigDecimal, key: String): Either[String, BigDecimal] =
     Either.cond(value >= 0 && value <= 1, value, s"$key must be between 0 and 1.")

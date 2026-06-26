@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.sql.Connection
 import java.time.Instant
-import java.util.{ArrayList, LinkedHashMap}
+import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
@@ -35,6 +35,24 @@ final case class MaterializeHackProblemData(problemDataStorage: ProblemDataStora
 object MaterializeHackProblemData:
 
   private val JudgeYamlPath = ProblemDataPath("judge.yaml")
+
+  private enum YamlValue:
+    case Obj(value: YamlObject)
+    case Arr(values: Vector[YamlValue])
+    case Str(value: String)
+    case Bool(value: Boolean)
+    case Integral(value: BigInt)
+    case Decimal(value: BigDecimal)
+    case NullValue
+
+  private final case class YamlObject(fields: Vector[(String, YamlValue)]):
+    def valueAt(key: String): Option[YamlValue] =
+      fields.find(_._1 == key).map(_._2)
+
+    def updated(key: String, value: YamlValue): YamlObject =
+      val (before, after) = fields.span(_._1 != key)
+      if after.isEmpty then YamlObject(fields :+ (key -> value))
+      else YamlObject(before ++ Vector(key -> value) ++ after.drop(1))
 
   /** 构造物化请求输入；调用方负责保证路径来自受控命名空间且文本已通过 hack 校验。 */
   def input(
@@ -103,17 +121,9 @@ object MaterializeHackProblemData:
     inputPath: ProblemDataPath,
     answerPath: Option[ProblemDataPath]
   ): Array[Byte] =
-    val root = parseJudgeYaml(judgeYamlBytes)
-    val subtask = subtaskAt(root, subtaskIndex)
-    val existingTestcases = subtask.get("testcases") match
-      case testcases: java.util.List[?] =>
-        val copy = new ArrayList[Any]()
-        copy.addAll(testcases.asScala.toList.asJava)
-        copy
-      case null => throw IllegalArgumentException(s"subtask $subtaskIndex must define testcases before hack materialization.")
-      case _ => throw IllegalArgumentException(s"subtask $subtaskIndex testcases must be a list before hack materialization.")
-    existingTestcases.add(hackTestcaseMap(testcaseLabel, inputPath, answerPath))
-    subtask.put("testcases", existingTestcases)
+    val root = parseJudgeYaml(judgeYamlBytes).flatMap(appendHackTestcase(_, subtaskIndex, testcaseLabel, inputPath, answerPath)) match
+      case Right(updatedRoot) => updatedRoot
+      case Left(message) => throw IllegalArgumentException(message)
 
     val settings =
       DumpSettings
@@ -121,7 +131,7 @@ object MaterializeHackProblemData:
         .setDefaultFlowStyle(FlowStyle.BLOCK)
         .setSplitLines(false)
         .build()
-    val rendered = Dump(settings).dumpToString(root)
+    val rendered = Dump(settings).dumpToString(toJavaYamlObject(root))
     val normalized = if rendered.endsWith("\n") then rendered else s"$rendered\n"
     normalized.getBytes(StandardCharsets.UTF_8)
 
@@ -143,44 +153,88 @@ object MaterializeHackProblemData:
       else IO.raiseError(IllegalStateException("Problem disappeared before hack materialization."))
     }
 
-  private def parseJudgeYaml(bytes: Array[Byte]): LinkedHashMap[String, Any] =
+  private def parseJudgeYaml(bytes: Array[Byte]): Either[String, YamlObject] =
     Try {
       val settings = LoadSettings.builder().setLabel("judge.yaml").build()
       Load(settings).loadFromString(new String(bytes, StandardCharsets.UTF_8))
     }.toEither match
       case Right(map: java.util.Map[?, ?]) =>
-        val root = new LinkedHashMap[String, Any]()
-        map.asScala.foreach {
-          case (key: String, value) => root.put(key, value)
-          case (key, _) => throw IllegalArgumentException(s"judge.yaml root contains non-string key: $key.")
-        }
-        root
-      case Right(_) => throw IllegalArgumentException("judge.yaml must be an object before hack materialization.")
-      case Left(error) => throw IllegalArgumentException(s"Invalid judge.yaml: ${error.getMessage}", error)
+        yamlObjectFrom(map, "judge.yaml")
+      case Right(_) => Left("judge.yaml must be an object before hack materialization.")
+      case Left(error) => Left(s"Invalid judge.yaml: ${error.getMessage}")
 
-  private def subtaskAt(root: LinkedHashMap[String, Any], subtaskIndex: Int): java.util.Map[String, Any] =
-    if subtaskIndex <= 0 then throw IllegalArgumentException(s"Invalid hack subtask index: $subtaskIndex.")
-    val subtasks = root.get("subtasks") match
-      case list: java.util.List[?] => list.asScala.toList
-      case null => throw IllegalArgumentException("judge.yaml must define subtasks before hack materialization.")
-      case _ => throw IllegalArgumentException("judge.yaml subtasks must be a list before hack materialization.")
-    subtasks.lift(subtaskIndex - 1) match
-      case Some(map: java.util.Map[?, ?]) =>
-        map.asInstanceOf[java.util.Map[String, Any]]
-      case Some(_) => throw IllegalArgumentException(s"subtask $subtaskIndex must be an object before hack materialization.")
-      case None => throw IllegalArgumentException(s"subtask $subtaskIndex does not exist before hack materialization.")
+  private def yamlObjectFrom(map: java.util.Map[?, ?], label: String): Either[String, YamlObject] =
+    map.asScala.toVector.traverse {
+      case (key: String, value) => yamlValueFrom(value, s"$label.$key").map(key -> _)
+      case (key, _) => Left(s"$label contains non-string key: $key.")
+    }.map(YamlObject(_))
 
-  private def hackTestcaseMap(
+  private def yamlValueFrom(value: Any, label: String): Either[String, YamlValue] =
+    value match
+      case map: java.util.Map[?, ?] => yamlObjectFrom(map, label).map(YamlValue.Obj.apply)
+      case list: java.util.List[?] => list.asScala.toVector.zipWithIndex.traverse { case (item, index) => yamlValueFrom(item, s"$label[$index]") }.map(YamlValue.Arr.apply)
+      case scalar: String => Right(YamlValue.Str(scalar))
+      case scalar: java.lang.Boolean => Right(YamlValue.Bool(scalar.booleanValue))
+      case scalar: java.lang.Integer => Right(YamlValue.Integral(BigInt(scalar.intValue)))
+      case scalar: java.lang.Long => Right(YamlValue.Integral(BigInt(scalar.longValue)))
+      case scalar: java.math.BigInteger => Right(YamlValue.Integral(BigInt(scalar)))
+      case scalar: java.math.BigDecimal => Right(YamlValue.Decimal(BigDecimal(scalar)))
+      case scalar: java.lang.Double if !scalar.isNaN && !scalar.isInfinite => Right(YamlValue.Decimal(BigDecimal(scalar.doubleValue)))
+      case null => Right(YamlValue.NullValue)
+      case scalar => Left(s"$label has unsupported YAML value type: ${scalar.getClass.getSimpleName}.")
+
+  private def appendHackTestcase(
+    root: YamlObject,
+    subtaskIndex: Int,
     testcaseLabel: String,
     inputPath: ProblemDataPath,
     answerPath: Option[ProblemDataPath]
-  ): LinkedHashMap[String, Any] =
-    val testcase = new LinkedHashMap[String, Any]()
-    testcase.put("label", testcaseLabel)
-    testcase.put("type", "hack")
-    testcase.put("input", inputPath.value)
-    answerPath.foreach(path => testcase.put("answer", path.value))
-    testcase
+  ): Either[String, YamlObject] =
+    if subtaskIndex <= 0 then Left(s"Invalid hack subtask index: $subtaskIndex.")
+    else
+      root.valueAt("subtasks") match
+        case Some(YamlValue.Arr(subtasks)) =>
+          subtasks.lift(subtaskIndex - 1) match
+            case Some(YamlValue.Obj(subtask)) =>
+              subtask.valueAt("testcases") match
+                case Some(YamlValue.Arr(testcases)) =>
+                  val updatedSubtask = subtask.updated("testcases", YamlValue.Arr(testcases :+ hackTestcaseValue(testcaseLabel, inputPath, answerPath)))
+                  val updatedSubtasks = subtasks.updated(subtaskIndex - 1, YamlValue.Obj(updatedSubtask))
+                  Right(root.updated("subtasks", YamlValue.Arr(updatedSubtasks)))
+                case None => Left(s"subtask $subtaskIndex must define testcases before hack materialization.")
+                case Some(_) => Left(s"subtask $subtaskIndex testcases must be a list before hack materialization.")
+            case Some(_) => Left(s"subtask $subtaskIndex must be an object before hack materialization.")
+            case None => Left(s"subtask $subtaskIndex does not exist before hack materialization.")
+        case None => Left("judge.yaml must define subtasks before hack materialization.")
+        case Some(_) => Left("judge.yaml subtasks must be a list before hack materialization.")
+
+  private def hackTestcaseValue(
+    testcaseLabel: String,
+    inputPath: ProblemDataPath,
+    answerPath: Option[ProblemDataPath]
+  ): YamlValue =
+    YamlValue.Obj(
+      YamlObject(
+        Vector(
+          "label" -> YamlValue.Str(testcaseLabel),
+          "type" -> YamlValue.Str("hack"),
+          "input" -> YamlValue.Str(inputPath.value)
+        ) ++ answerPath.map(path => "answer" -> YamlValue.Str(path.value)).toVector
+      )
+    )
+
+  private def toJavaYamlObject(value: YamlObject): java.util.Map[String, Object] =
+    ListMap.from(value.fields.map { case (key, fieldValue) => key -> toJavaYamlValue(fieldValue) }).asJava
+
+  private def toJavaYamlValue(value: YamlValue): Object =
+    value match
+      case YamlValue.Obj(obj) => toJavaYamlObject(obj)
+      case YamlValue.Arr(values) => values.map(toJavaYamlValue).asJava
+      case YamlValue.Str(scalar) => scalar
+      case YamlValue.Bool(scalar) => java.lang.Boolean.valueOf(scalar)
+      case YamlValue.Integral(scalar) => scalar.bigInteger
+      case YamlValue.Decimal(scalar) => scalar.bigDecimal
+      case YamlValue.NullValue => null
 
   private def manifestEntry(path: ProblemDataPath, bytes: Array[Byte]): ProblemDataManifestEntry =
     ProblemDataManifestEntry(path = path, sizeBytes = bytes.length.toLong, sha256 = sha256Hex(bytes))

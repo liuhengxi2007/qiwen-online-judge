@@ -1,6 +1,6 @@
 package judger.infra
 
-import judgeprotocol.objects.response.JudgeTaskTool
+import judgeprotocol.objects.response.{JudgeTaskTool, JudgeTaskToolLimits}
 import judger.objects.{ProcessResult, RuntimeCommand}
 
 import java.nio.file.Path
@@ -8,6 +8,7 @@ import java.nio.file.Path
 /** 已编译的策略 provider 运行时信息，包含原工具配置和 sandbox 命令。 */
 private[infra] final case class StrategyProviderRuntime(
   tool: JudgeTaskTool,
+  limits: JudgeTaskToolLimits,
   command: RuntimeCommand
 )
 

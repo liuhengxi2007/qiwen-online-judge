@@ -138,14 +138,14 @@ object InteractiveTestcaseRunner:
   ): Either[Unit, Option[StrategyProviderRuntime]] =
     testcase.strategyProvider match
       case None => Right(None)
-      case Some(provider) if provider.limits.isEmpty =>
-        Left(())
-      case Some(provider) if tools.failedStrategyProviders.contains(provider.source.path) =>
-        Left(())
       case Some(provider) =>
-        tools.strategyProviders.get(provider.source.path) match
+        provider.limits match
           case None => Left(())
-          case Some(command) => Right(Some(StrategyProviderRuntime(provider, command)))
+          case Some(_) if tools.failedStrategyProviders.contains(provider.source.path) => Left(())
+          case Some(limits) =>
+            tools.strategyProviders.get(provider.source.path) match
+              case None => Left(())
+              case Some(command) => Right(Some(StrategyProviderRuntime(provider, limits, command)))
 
   private def interactiveProcessesForTimeout(
     testcase: JudgeTaskTestcase,
@@ -159,9 +159,7 @@ object InteractiveTestcaseRunner:
       interactor.limits.toList.map(limits => runResult.interactor -> limits.timeMs.value.toLong)
     val strategyProcess =
       strategyProvider.toList.flatMap(provider =>
-        provider.tool.limits.toList.zip(runResult.strategyProvider.toList).map { case (limits, result) =>
-          result -> limits.timeMs.value.toLong
-        }
+        runResult.strategyProvider.toList.map(result => result -> provider.limits.timeMs.value.toLong)
       )
     participantProcesses ++ interactorProcess ++ strategyProcess
 

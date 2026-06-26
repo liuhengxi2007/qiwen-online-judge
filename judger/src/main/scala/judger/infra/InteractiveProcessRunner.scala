@@ -17,6 +17,13 @@ import scala.util.Try
 object InteractiveProcessRunner:
 
   private val logger = Slf4jLogger.getLogger[IO]
+
+  private final case class StrategyProviderRunContext(
+    runtime: StrategyProviderRuntime,
+    toStrategy: Path,
+    fromStrategy: Path
+  )
+
   /** 执行一次交互测试点；输出 either 中的失败代表 judger/工具系统错误。 */
   private[infra] def run(
     config: AppConfig,
@@ -39,19 +46,18 @@ object InteractiveProcessRunner:
         val outputPath = interactiveDir.resolve("output")
         val statusPath = interactiveDir.resolve("status")
         val participants = InteractiveJudgeRunner.interactiveParticipants(subtask.mode.roles, roleCommands, interactiveDir)
-        val strategyFifos = strategyProvider.map(_ => interactiveDir.resolve("to-strategy") -> interactiveDir.resolve("from-strategy"))
+        val strategyRunContext =
+          strategyProvider.map(provider => StrategyProviderRunContext(provider, interactiveDir.resolve("to-strategy"), interactiveDir.resolve("from-strategy")))
         val strategyReadMonitorPaths =
-          strategyProvider.flatMap { provider =>
-            strategyFifos.map { case (_, fromStrategy) =>
-              (
-                fromStrategy,
-                interactiveDir.resolve("strategy-provider-read-monitor.log"),
-                provider.tool.limits.map(_.timeMs.value.toLong).getOrElse(0L)
-              )
-            }
-          }
+          strategyRunContext.map(context =>
+            (
+              context.fromStrategy,
+              interactiveDir.resolve("strategy-provider-read-monitor.log"),
+              context.runtime.limits.timeMs.value.toLong
+            )
+          )
         val fifoPaths = participants.flatMap(participant => List(participant.toParticipant, participant.fromParticipant)) ++
-          strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) => List(toStrategy, fromStrategy) }
+          strategyRunContext.toList.flatMap(context => List(context.toStrategy, context.fromStrategy))
         val sharedWallTimeLimitMs =
           InteractiveJudgeRunner.interactiveWallTimeLimitMs(
             testcase = testcase,
@@ -74,10 +80,9 @@ object InteractiveProcessRunner:
                 relativeSandboxPath(workingDirectory, participant.toParticipant),
                 relativeSandboxPath(workingDirectory, participant.fromParticipant)
               )
-            } ++
-            strategyFifos.toList.flatMap { case (toStrategy, fromStrategy) =>
-              List("strategy", relativeSandboxPath(workingDirectory, toStrategy), relativeSandboxPath(workingDirectory, fromStrategy))
-            }
+            } ++ strategyRunContext.toList.flatMap(context =>
+              List("strategy", relativeSandboxPath(workingDirectory, context.toStrategy), relativeSandboxPath(workingDirectory, context.fromStrategy))
+            )
 
         val run =
           for
@@ -119,10 +124,8 @@ object InteractiveProcessRunner:
                 .map(participant.role -> _)
                 .start
             }
-            strategyFiber <- strategyProvider.traverse { provider =>
-              // 注意：strategyProviderRuntime 已保证存在 limits，并且 strategyFifos 与 provider 同源构造。
-              val (toStrategy, fromStrategy) = strategyFifos.get
-              val limits = provider.tool.limits.get
+            strategyFiber <- strategyRunContext.traverse { context =>
+              val provider = context.runtime
               sandbox
                 .run(
                   SandboxRunSpec(
@@ -130,8 +133,8 @@ object InteractiveProcessRunner:
                     command = RuntimeCommand(
                       fifoRedirectLauncher.command,
                       fifoRedirectLauncher.args ++ List(
-                        relativeSandboxPath(workingDirectory, toStrategy),
-                        relativeSandboxPath(workingDirectory, fromStrategy),
+                        relativeSandboxPath(workingDirectory, context.toStrategy),
+                        relativeSandboxPath(workingDirectory, context.fromStrategy),
                         provider.command.command
                       ) ++ provider.command.args,
                       provider.command.processLimit
@@ -139,9 +142,9 @@ object InteractiveProcessRunner:
                     stdin = SandboxStdin.Empty,
                     stdout = SandboxStdout.Discard,
                     limits = SandboxLimits.runtimeWithWall(
-                      timeLimitMs = limits.timeMs.value.toLong,
+                      timeLimitMs = provider.limits.timeMs.value.toLong,
                       wallTimeLimitMs = sharedWallTimeLimitMs,
-                      memoryLimitMb = limits.memoryMb.value
+                      memoryLimitMb = provider.limits.memoryMb.value
                     ),
                     boxOffset = participants.size + 1
                   ),

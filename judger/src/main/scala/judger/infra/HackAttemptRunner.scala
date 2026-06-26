@@ -272,21 +272,22 @@ object HackAttemptRunner:
   ): IO[Either[Unit, Option[StrategyProviderRuntime]]] =
     testcase.strategyProvider match
       case None => IO.pure(Right(None))
-      case Some(provider) if provider.limits.isEmpty => IO.pure(Left(()))
       case Some(provider) =>
-        hackTask.strategyProviderSource match
-          case None => IO.pure(Left(()))
-          case Some(source) =>
-            JudgeToolPreparation.compileCppToolBytes(
-              task = hackTask.targetTask,
-              config = config,
-              workingDirectory = workingDirectory,
-              sourceNameHint = s"hack-strategy-${hackTask.hackId}",
-              sourceBytes = source.getBytes(StandardCharsets.UTF_8)
-            ).map {
-              case JudgeToolPreparation.ToolCompileOutcome.Success(command) => Right(Some(StrategyProviderRuntime(provider, command)))
-              case _ => Left(())
-            }
+        (provider.limits, hackTask.strategyProviderSource) match
+          case (Some(limits), Some(source)) =>
+            JudgeToolPreparation
+              .compileCppToolBytes(
+                task = hackTask.targetTask,
+                config = config,
+                workingDirectory = workingDirectory,
+                sourceNameHint = s"hack-strategy-${hackTask.hackId}",
+                sourceBytes = source.getBytes(StandardCharsets.UTF_8)
+              )
+              .map {
+                case JudgeToolPreparation.ToolCompileOutcome.Success(command) => Right(Some(StrategyProviderRuntime(provider, limits, command)))
+                case _ => Left(())
+              }
+          case _ => IO.pure(Left(()))
 
   /** 从原子任务中复制一个明确的非 hack 测试点模板，并分配新的测试点索引。 */
   private def templateHackTestcase(subtask: JudgeTaskSubtask): Either[String, JudgeTaskTestcase] =
