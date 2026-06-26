@@ -5,8 +5,7 @@ import cats.syntax.all.*
 import domains.auth.api.PublicApi
 import domains.hack.api.RecordHackAttemptResult
 import domains.hack.objects.HackId
-import domains.judge.utils.{JudgeConfig, JudgeTokenAuth}
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.api.QueueHackRejudgeForProblem
 import io.circe.Encoder
 import judgeprotocol.objects.request.ReportHackResultRequest

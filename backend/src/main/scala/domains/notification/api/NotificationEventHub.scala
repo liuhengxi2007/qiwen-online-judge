@@ -1,6 +1,4 @@
-package domains.notification.utils
-
-
+package domains.notification.api
 
 import cats.effect.{IO, Resource}
 import domains.user.objects.Username

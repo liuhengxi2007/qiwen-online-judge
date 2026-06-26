@@ -6,7 +6,6 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.SubmissionId
 import domains.submission.table.submission.{SubmissionMutationTable, SubmissionQueryTable}
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 

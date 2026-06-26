@@ -2,7 +2,7 @@ package domains.usergroup.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
 import domains.usergroup.api.*
 import org.http4s.HttpRoutes

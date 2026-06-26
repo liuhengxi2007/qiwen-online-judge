@@ -2,7 +2,7 @@ package domains.auth.api
 
 import cats.effect.IO
 import domains.auth.objects.SessionToken
-import domains.auth.utils.{AuthSessionCookies, SessionStore, SessionStoreContext}
+import domains.auth.utils.AuthSessionCookies
 import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.{Method, Request, Response, Status}
 import shared.api.{ApiMessages, ApiPath, PathParams}

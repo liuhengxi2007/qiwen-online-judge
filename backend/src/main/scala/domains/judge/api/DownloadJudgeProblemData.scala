@@ -2,9 +2,7 @@ package domains.judge.api
 
 import cats.effect.IO
 import domains.auth.api.PublicResponseApi
-import domains.judge.utils.JudgeConfig
-import domains.judge.utils.JudgeTokenAuth
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}

@@ -3,8 +3,8 @@ package routes
 import cats.effect.IO
 import cats.effect.kernel.Outcome
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageStreamEvent}
-import domains.notification.utils.{NotificationEventHub, NotificationStreamEvent}
+import domains.message.api.{MessageEventHub, MessageStreamEvent}
+import domains.notification.api.{NotificationEventHub, NotificationStreamEvent}
 import domains.user.objects.Username
 import fs2.text
 import munit.CatsEffectSuite

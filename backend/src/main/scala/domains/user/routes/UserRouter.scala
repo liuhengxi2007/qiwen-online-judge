@@ -2,7 +2,7 @@ package domains.user.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
 import domains.user.api.*
 import domains.user.utils.UserAvatarStorageContext

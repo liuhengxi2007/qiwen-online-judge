@@ -4,9 +4,9 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.message.api.SubscribeMessageEvents
-import domains.message.utils.MessageEventHubContext
+import domains.message.api.MessageEventHubContext
 import domains.notification.api.SubscribeNotificationEvents
-import domains.notification.utils.NotificationEventHubContext
+import domains.notification.api.NotificationEventHubContext
 import fs2.text
 import org.http4s.{Header, Method, Request, Response, Status}
 import org.typelevel.ci.CIString

@@ -1,4 +1,4 @@
-package domains.judge.utils
+package domains.judge.api
 
 import cats.syntax.all.*
 import domains.problem.objects.ProblemDataPath
@@ -72,7 +72,7 @@ object JudgeTaskBuilder:
       case domains.submission.objects.SubmissionLanguage.Python3 => SubmissionLanguage.Python3
       case domains.submission.objects.SubmissionLanguage.Text => SubmissionLanguage.Text
 
-  private[utils] def parseConfigBytes(
+  private[api] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCode: domains.submission.objects.SubmissionSourceCode,
@@ -80,7 +80,7 @@ object JudgeTaskBuilder:
   ): Either[String, JudgeTask] =
     parseConfigBytes(bytes, claimedSubmission, Map(SubmissionProgramManifest.DefaultProgramKey -> sourceCode), manifest)
 
-  private[utils] def parseConfigBytes(
+  private[api] def parseConfigBytes(
     bytes: Array[Byte],
     claimedSubmission: ClaimedSubmission,
     sourceCodes: Map[String, domains.submission.objects.SubmissionSourceCode],
@@ -164,7 +164,7 @@ object JudgeTaskBuilder:
           .map(paths => ReadyValidation(paths.toSet + ProblemDataPath("judge.yaml"), resultDisplayModeFor(task)))
       }.left.map(_.message)
 
-  private[utils] def resultDisplayModeFor(task: JudgeTask): SubmissionResultDisplayMode =
+  private[api] def resultDisplayModeFor(task: JudgeTask): SubmissionResultDisplayMode =
     task.subtasks match
       case singleSubtask :: Nil
           if singleSubtask.aggregation.score == "min" &&

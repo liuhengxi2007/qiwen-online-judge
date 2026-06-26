@@ -114,15 +114,12 @@ const backendDomainUtilsAllowlist = new Map([
       'SessionCache.scala',
       'SessionCacheConfig.scala',
       'SessionConfig.scala',
-      'SessionStore.scala',
     ]),
   ],
   ['blog', new Set([])],
   [
     'problem',
     new Set([
-      'ProblemDataStorage.scala',
-      'ProblemDataStorageConfig.scala',
       'ProblemAccessRules.scala',
       'ProblemDataUploadPreparation.scala',
     ]),
@@ -133,10 +130,6 @@ const backendDomainUtilsAllowlist = new Map([
     'submission',
     new Set([
       'SubmissionAccessRules.scala',
-      'SubmissionJudgeRules.scala',
-      'SubmissionProgramStorage.scala',
-      'SubmissionProgramStorageConfig.scala',
-      'SubmissionProgramCleanup.scala',
     ]),
   ],
   ['user', new Set([
@@ -146,9 +139,9 @@ const backendDomainUtilsAllowlist = new Map([
   ])],
   ['usergroup', new Set(['UserGroupAccessRules.scala'])],
   ['judger', new Set([])],
-  ['message', new Set(['MessageEventHub.scala'])],
-  ['notification', new Set(['NotificationEventHub.scala', 'NotificationStreamEvent.scala'])],
-  ['judge', new Set(['JudgeConfig.scala', 'JudgeTaskBuilder.scala', 'JudgeTokenAuth.scala'])],
+  ['message', new Set([])],
+  ['notification', new Set([])],
+  ['judge', new Set([])],
   ['rating', new Set(['RatingCalculator.scala'])],
 ])
 

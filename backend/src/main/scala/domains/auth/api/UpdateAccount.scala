@@ -5,7 +5,7 @@ import domains.auth.objects.internal.{AuthAccount, AuthenticatedUser}
 import domains.auth.objects.request.{UpdateManagedUserAccountRequest, UpdateOwnAccountRequest}
 import domains.auth.objects.response.SessionResponse
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher}
 import domains.user.api.FindUserProfileSettings
 import domains.user.objects.Username
 import io.circe.Json

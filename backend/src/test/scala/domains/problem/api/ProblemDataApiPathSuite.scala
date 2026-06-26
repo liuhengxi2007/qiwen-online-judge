@@ -3,11 +3,10 @@ package domains.problem.api
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.contest.routes.ContestRouter
 import domains.problem.routes.ProblemRouter
-import domains.problem.utils.ProblemDataStorageContext
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import munit.CatsEffectSuite
 import org.http4s.{Method, Request, Status, Uri}
 import shared.api.ApiPath

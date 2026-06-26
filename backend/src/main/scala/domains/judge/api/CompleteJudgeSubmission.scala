@@ -2,11 +2,9 @@ package domains.judge.api
 
 import cats.effect.IO
 import domains.auth.api.PublicApi
-import domains.judge.utils.JudgeConfig
-import domains.judge.utils.JudgeTokenAuth
 import domains.submission.api.{GetSubmissionJudgeState, RequeueStaleRejudgeRevisionSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionJudgeRules
+import domains.submission.api.SubmissionJudgeRules
 import io.circe.Encoder
 import judgeprotocol.objects.request.ReportJudgeResultRequest
 import org.http4s.circe.CirceEntityCodec.*

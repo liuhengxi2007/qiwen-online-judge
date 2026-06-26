@@ -10,7 +10,6 @@ import domains.submission.objects.SubmissionId
 import domains.submission.objects.internal.SubmissionDetailRecord
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionQueryTable
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}

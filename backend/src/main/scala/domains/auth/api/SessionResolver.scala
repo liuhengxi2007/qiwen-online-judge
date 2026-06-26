@@ -4,7 +4,7 @@ import cats.effect.IO
 import domains.auth.objects.{SessionToken, SiteManagerUser}
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.auth.utils.{AuthSessionCookies, SessionStore, SessionStoreContext}
+import domains.auth.utils.AuthSessionCookies
 import org.http4s.Request
 import shared.api.{ApiMessages, HttpApiError}
 

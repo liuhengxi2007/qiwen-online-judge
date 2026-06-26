@@ -7,11 +7,10 @@ import domains.contest.api.EvaluateContestAccess
 import domains.contest.objects.ContestSlug
 import domains.problem.api.EvaluateProblemAccess
 import domains.problem.objects.ProblemSlug
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.objects.SubmissionSource
 import domains.submission.objects.request.CreateSubmissionRequest
 import domains.submission.objects.response.SubmissionDetail
-import domains.submission.utils.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}

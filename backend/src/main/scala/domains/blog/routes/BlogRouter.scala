@@ -2,10 +2,10 @@ package domains.blog.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
 import domains.blog.api.*
-import domains.notification.utils.NotificationEventHubContext
+import domains.notification.api.NotificationEventHubContext
 import org.http4s.HttpRoutes
 
 /** 汇总博客 domain 的 http4s 路由，负责把数据库会话、登录会话和通知事件中心注入 API 对象。 */

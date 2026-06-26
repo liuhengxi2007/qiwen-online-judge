@@ -27,40 +27,20 @@ const publicAuthApiObjectProtocol = new Set([
   'domains.auth.api.SiteManagerApi',
 ])
 
-const publicWiringTypes = new Set([
-  'domains.auth.utils.SessionStoreContext',
-])
-
 const explicitCollaborationBoundaries = new Set([
   'domains.contest.objects.response.EvaluateContestAccessResult',
   'domains.hack.objects.internal.ClaimedHackAttempt',
-  'domains.judge.utils.JudgeConfig',
-  'domains.judge.utils.JudgeTaskBuilder',
-  'domains.judge.utils.JudgeTokenAuth',
-  'domains.message.utils.MessageEventHub',
-  'domains.message.utils.MessageEventHubContext',
-  'domains.message.utils.MessageStreamEvent',
   'domains.notification.objects.NotificationKind',
   'domains.notification.objects.NotificationPayload',
-  'domains.notification.utils.NotificationEventHub',
-  'domains.notification.utils.NotificationEventHubContext',
-  'domains.notification.utils.NotificationStreamEvent',
-  'domains.problem.utils.ProblemDataStorage',
-  'domains.problem.utils.ProblemDataStorageContext',
   'domains.submission.objects.SubmissionStatus',
   'domains.submission.objects.SubmissionVerdict',
   'domains.submission.objects.internal.ClaimedSubmission',
   'domains.submission.objects.internal.SubmissionProgramManifest',
   'domains.submission.objects.internal.SubmissionJudgeState',
-  'domains.submission.utils.SubmissionProgramCleanup',
-  'domains.submission.utils.SubmissionProgramStorage',
-  'domains.submission.utils.SubmissionProgramStorageContext',
-  'domains.submission.utils.SubmissionJudgeRules',
 ])
 
 const publicWiringBoundaries = new Set([
   ...publicAuthApiObjectProtocol,
-  ...publicWiringTypes,
 ])
 
 const publicModelTypes = new Map([

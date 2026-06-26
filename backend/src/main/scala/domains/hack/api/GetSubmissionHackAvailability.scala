@@ -4,9 +4,9 @@ import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.response.SubmissionHackAvailability
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiPath, HttpApiError, PathParams}

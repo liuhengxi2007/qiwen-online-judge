@@ -7,7 +7,7 @@ import domains.hack.objects.{HackId, HackStatus}
 import domains.hack.table.hack.HackMutationTable
 import domains.problem.api.MaterializeHackProblemData
 import domains.problem.objects.{ProblemDataPath, ProblemId}
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import judgeprotocol.objects.request.ReportHackResultRequest
 import org.http4s.Method
 import shared.api.ApiPath

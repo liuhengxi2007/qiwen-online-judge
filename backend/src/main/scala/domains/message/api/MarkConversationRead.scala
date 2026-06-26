@@ -3,7 +3,6 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.objects.MessageConversationId
 import domains.message.objects.request.{MarkConversationReadMode, MarkConversationReadRequest}
 import domains.message.objects.response.MessageConversationSummary

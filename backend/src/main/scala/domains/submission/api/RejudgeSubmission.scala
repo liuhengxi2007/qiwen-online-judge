@@ -8,7 +8,6 @@ import domains.problem.api.EvaluateProblemAccess
 import domains.submission.objects.{SubmissionId, SubmissionStatus}
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.{SubmissionJudgeTable, SubmissionQueryTable}
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 import shared.api.{ApiMessages, ApiPath, HttpApiError, PathParams}

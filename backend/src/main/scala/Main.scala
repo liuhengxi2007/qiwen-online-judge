@@ -1,25 +1,26 @@
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{host, port}
 import database.DatabaseSession
+import domains.auth.api.SessionStore
 import domains.auth.table.auth_account.{AuthAccountTable, AuthAccountTableSupport}
 import domains.auth.table.session.SessionTable
-import domains.auth.utils.{PasswordHasher, SessionCache, SessionCacheConfig, SessionCacheContext, SessionConfig, SessionStore}
+import domains.auth.utils.{PasswordHasher, SessionCache, SessionCacheConfig, SessionCacheContext, SessionConfig}
 import domains.blog.table.blog.BlogTable
 import domains.contest.table.contest.ContestTable
 import domains.hack.table.hack.HackTable
-import domains.judge.utils.JudgeConfig
+import domains.judge.api.JudgeConfig
 import domains.judger.table.judger.JudgerTable
 import domains.message.table.message.MessageTable
-import domains.message.utils.MessageEventHub
+import domains.message.api.MessageEventHub
 import domains.notification.table.notification.NotificationTable
-import domains.notification.utils.NotificationEventHub
+import domains.notification.api.NotificationEventHub
 import domains.problem.table.problem.ProblemTable
 import domains.problem.table.problem_data_file.ProblemDataFileTable
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageConfig}
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageConfig}
 import domains.problemset.table.problem_set.ProblemSetTable
 import domains.rating.table.rating.RatingTable
 import domains.submission.table.submission.SubmissionTable
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageConfig}
+import domains.submission.api.{SubmissionProgramStorage, SubmissionProgramStorageConfig}
 import domains.user.table.user_profile.UserProfileTable
 import domains.user.utils.{UserAvatarStorage, UserAvatarStorageConfig}
 import domains.usergroup.table.user_group.UserGroupTable

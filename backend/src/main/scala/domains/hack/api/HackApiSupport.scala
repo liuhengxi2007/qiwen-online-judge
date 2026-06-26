@@ -4,14 +4,14 @@ import cats.effect.IO
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.HackMode
 import domains.hack.objects.response.{HackSubtaskAvailability, HackSubtaskInfo, SubmissionHackAvailability}
-import domains.judge.utils.JudgeTaskBuilder
+import domains.judge.api.JudgeTaskBuilder
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.submission.api.GetSubmission
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionProgramManifest}
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import judgeprotocol.objects.response.{JudgeTask, JudgeTaskHackConfig, JudgeTaskSubtask}
 import shared.api.{ApiMessages, HttpApiError}
 

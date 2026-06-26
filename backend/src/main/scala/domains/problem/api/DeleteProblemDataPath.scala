@@ -4,7 +4,6 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 
 import domains.problem.objects.ProblemSlug
 import domains.problem.objects.request.DeleteProblemDataPathRequest

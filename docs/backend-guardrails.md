@@ -109,28 +109,15 @@ Current domain-owned utility allowlist:
 - `domains/auth/utils/SessionCache.scala`
 - `domains/auth/utils/SessionCacheConfig.scala`
 - `domains/auth/utils/SessionConfig.scala`
-- `domains/auth/utils/SessionStore.scala`
-- `domains/problem/utils/ProblemDataStorage.scala`
-- `domains/problem/utils/ProblemDataStorageConfig.scala`
 - `domains/problem/utils/ProblemAccessRules.scala`
 - `domains/problem/utils/ProblemDataUploadPreparation.scala`
 - `domains/problemset/utils/ProblemSetAccessRules.scala`
 - `domains/contest/utils/ContestAccessRules.scala`
 - `domains/submission/utils/SubmissionAccessRules.scala`
-- `domains/submission/utils/SubmissionJudgeRules.scala`
-- `domains/submission/utils/SubmissionProgramStorage.scala`
-- `domains/submission/utils/SubmissionProgramStorageConfig.scala`
-- `domains/submission/utils/SubmissionProgramCleanup.scala`
 - `domains/user/utils/UserApiRules.scala`
 - `domains/user/utils/UserAvatarStorage.scala`
 - `domains/user/utils/UserAvatarStorageConfig.scala`
 - `domains/usergroup/utils/UserGroupAccessRules.scala`
-- `domains/message/utils/MessageEventHub.scala`
-- `domains/notification/utils/NotificationEventHub.scala`
-- `domains/notification/utils/NotificationStreamEvent.scala`
-- `domains/judge/utils/JudgeConfig.scala`
-- `domains/judge/utils/JudgeTaskBuilder.scala`
-- `domains/judge/utils/JudgeTokenAuth.scala`
 - `domains/rating/utils/RatingCalculator.scala`
 
 These files are domain-owned support code, not endpoint orchestration. Do not use `utils` as a replacement for API-object `plan(...)` bodies. Adding to this list is an explicit architecture decision, not the default place for miscellaneous helpers.
@@ -142,10 +129,10 @@ These files are domain-owned support code, not endpoint orchestration. Do not us
 Allowed public domain boundaries:
 
 - allowlisted durable/public object types under `domains/<domain>/objects`
-- explicitly imported owner-domain API objects under `domains.<target>.api.<Name>` for cross-domain `plan(...)` calls
+- explicitly imported owner-domain API objects or backend-only API support files under `domains.<target>.api.<Name>` for cross-domain collaboration
 - domain routers, such as `domains.problem.routes.ProblemRouter`
 - auth-owned API-object protocol types in `domains.auth.api`: `AuthenticatedApi`, `AuthenticatedResponseApi`, `InternalOnlyApi`, `InternalOnlyAuthenticatedApi`, `PublicApi`, `PublicResponseApi`, `SiteManagerApi`, `ApiObjectContext`, `ApiObjectRouter`, and the `SessionResolver` object
-- router/session wiring through `domains.auth.utils.SessionStoreContext` values and `SessionStore` functions
+- router/session wiring through `domains.auth.api.SessionStoreContext` values and `SessionStore` functions
 
 Cross-domain application code should call the target domain's API object `plan(...)` instead of importing the target domain's `table` package. Wildcard imports such as `domains.problem.api.*` are intentionally forbidden across domains; name the API object being used.
 
@@ -153,15 +140,22 @@ Use `InternalOnlyApi` or `InternalOnlyAuthenticatedApi` for API-object plans tha
 
 The judge worker channel is the frontend API mirroring exception. Worker-only callable API objects in `domains.judge.api` and judge-registry worker endpoints in `domains.judger.api` do not need site frontend wrappers; plan-only owner-domain helpers still keep frontend payload mirrors even though they are not runtime-callable. Site management APIs such as judger listing still need frontend mirrors.
 
-Current explicitly guarded collaboration boundaries:
+Current named API support surfaces:
 
-- message event dispatch and payload typing: `MessageEventHubContext`, `MessageEventHub`, and `MessageStreamEvent`
-- notification event dispatch and payload typing: `NotificationEventHubContext`, `NotificationEventHub`, `NotificationStreamEvent`, `NotificationKind`, and `NotificationPayload`
-- judge registration/execution support: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
-- problem data access through `ProblemDataStorageContext` values and `ProblemDataStorage` functions
-- submission program access through `SubmissionProgramStorageContext` values and `SubmissionProgramStorage` functions
-- submission judge state transitions used by the judge workflow: `SubmissionJudgeRules`, `ClaimedSubmission`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
+- message event dispatch and payload typing through `domains.message.api`: `MessageEventHubContext`, `MessageEventHub`, and `MessageStreamEvent`
+- notification event dispatch and payload typing through `domains.notification.api`: `NotificationEventHubContext`, `NotificationEventHub`, and `NotificationStreamEvent`
+- judge registration/execution support through `domains.judge.api`: `JudgeConfig`, `JudgeTokenAuth`, and `JudgeTaskBuilder`
+- problem data access through `domains.problem.api`: `ProblemDataStorageContext` values and `ProblemDataStorage` functions
+- submission program access through `domains.submission.api`: `SubmissionProgramStorageContext` values and `SubmissionProgramStorage` functions
+- submission judge state transitions used by the judge workflow through `domains.submission.api.SubmissionJudgeRules`
 - cross-domain API-object collaborations explicitly named at the call site; new cross-domain table imports are forbidden
+
+Current explicitly guarded non-API collaboration boundaries:
+
+- contest access result payload: `EvaluateContestAccessResult`
+- hack claimed-attempt payload: `ClaimedHackAttempt`
+- notification persisted event payload typing: `NotificationKind` and `NotificationPayload`
+- submission judge workflow model values: `ClaimedSubmission`, `SubmissionProgramManifest`, `SubmissionJudgeState`, `SubmissionStatus`, and `SubmissionVerdict`
 
 ## Functional Core, Imperative Shell
 

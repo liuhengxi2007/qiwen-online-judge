@@ -1,4 +1,4 @@
-package domains.submission.utils
+package domains.submission.api
 
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.SubmissionJudgeState

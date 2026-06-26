@@ -21,6 +21,10 @@ const allowedBackendOnlyApiFiles = new Map([
     'Auth-owned session resolver is backend cookie/session infrastructure, not a callable endpoint file.',
   ],
   [
+    'auth/SessionStore',
+    'Auth-owned session store is backend session infrastructure shared by routers and auth endpoints, not a callable endpoint file.',
+  ],
+  [
     'blog/BlogCommentReplyNotifier',
     'Blog comment reply notification orchestration is backend API support code and is not a frontend endpoint.',
   ],
@@ -39,6 +43,18 @@ const allowedBackendOnlyApiFiles = new Map([
   [
     'hack/HackApiSupport',
     'Hack API support owns shared backend workflow helpers used by multiple hack endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'message/MessageEventHub',
+    'Message event hub is backend realtime support code and is not a frontend endpoint.',
+  ],
+  [
+    'notification/NotificationEventHub',
+    'Notification event hub is backend realtime support code and is not a frontend endpoint.',
+  ],
+  [
+    'notification/NotificationStreamEvent',
+    'Notification stream event typing is backend realtime support code and is not a frontend endpoint.',
   ],
   [
     'judger/GetActiveJudgerSupportedLanguages',
@@ -69,12 +85,36 @@ const allowedBackendOnlyApiFiles = new Map([
     'Problem data API helpers centralize backend storage workflow helpers used by problem data endpoints and are not a frontend endpoint.',
   ],
   [
+    'problem/ProblemDataStorage',
+    'Problem data storage is backend storage support shared by judge and problem workflows, not a frontend endpoint.',
+  ],
+  [
+    'problem/ProblemDataStorageConfig',
+    'Problem data storage configuration is backend runtime support and is not a frontend endpoint.',
+  ],
+  [
     'problem/ProblemManagementContext',
     'Problem management context parses and validates backend path/query context shared by problem endpoints and is not a frontend endpoint.',
   ],
   [
     'problemset/ProblemSetAccessPolicyValidation',
     'Problem-set access-policy validation is backend API support shared by problem-set create/update endpoints and is not a frontend endpoint.',
+  ],
+  [
+    'submission/SubmissionJudgeRules',
+    'Submission judge rules are backend lifecycle support shared by judge workflows and are not a frontend endpoint.',
+  ],
+  [
+    'submission/SubmissionProgramCleanup',
+    'Submission program cleanup is backend storage support used by problem deletion and is not a frontend endpoint.',
+  ],
+  [
+    'submission/SubmissionProgramStorage',
+    'Submission program storage is backend storage support shared by submission and judge workflows, not a frontend endpoint.',
+  ],
+  [
+    'submission/SubmissionProgramStorageConfig',
+    'Submission program storage configuration is backend runtime support and is not a frontend endpoint.',
   ],
   [
     'user/GetUserAvatar',

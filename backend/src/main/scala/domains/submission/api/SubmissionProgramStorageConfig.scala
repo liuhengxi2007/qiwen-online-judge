@@ -1,4 +1,4 @@
-package domains.submission.utils
+package domains.submission.api
 
 /** 提交程序存储总配置；当前只包含 MinIO 后端配置。 */
 final case class SubmissionProgramStorageConfig(

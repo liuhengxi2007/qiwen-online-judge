@@ -5,7 +5,7 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.blog.objects.{BlogCommentId, BlogId, BlogTitle}
 import domains.notification.api.CreateNotification
 import domains.notification.objects.{NotificationKind, NotificationPayload}
-import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
+import domains.notification.api.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
 import domains.user.objects.Username
 
 import java.sql.Connection

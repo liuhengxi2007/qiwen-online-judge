@@ -3,11 +3,11 @@ package domains.contest.routes
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.contest.api.*
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.api.{CreateContestSubmission, ListContestSubmissions}
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

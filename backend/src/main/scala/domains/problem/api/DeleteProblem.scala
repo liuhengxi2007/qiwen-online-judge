@@ -5,8 +5,8 @@ import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.problem.table.problem.ProblemMutationTable
 import domains.problem.table.problem_access_grant.ProblemAccessGrantTable
-import domains.submission.utils.SubmissionProgramCleanup
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramCleanup
+import domains.submission.api.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.{Method, Request, Status}
 

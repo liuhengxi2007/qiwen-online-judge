@@ -3,7 +3,6 @@ package domains.message.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.message.utils.{MessageEventHub, MessageEventHubContext, MessageStreamEvent}
 import domains.message.table.message.MessageBlockTable
 import domains.user.objects.Username
 import io.circe.Encoder

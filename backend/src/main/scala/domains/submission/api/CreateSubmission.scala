@@ -5,17 +5,16 @@ import cats.syntax.all.*
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
 import domains.contest.objects.ContestId
-import domains.judge.utils.JudgeTaskBuilder
+import domains.judge.api.JudgeTaskBuilder
 import domains.problem.api.{EvaluateProblemAccess, GetJudgeProblemDataManifest, GetProblemSubmissionResultDisplayMode}
 import domains.problem.objects.{ProblemDataPath, ProblemId, ProblemSlug, ProblemTitle}
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageContext}
 
 import domains.submission.objects.{SubmissionSource, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
 import domains.submission.objects.request.{CreateSubmissionMultipartProgram, CreateSubmissionRequest}
 import domains.submission.objects.response.SubmissionDetail
 import domains.submission.table.submission.SubmissionMutationTable
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.Encoder
 import io.circe.parser.decode as decodeJson
 import org.http4s.circe.CirceEntityCodec.*

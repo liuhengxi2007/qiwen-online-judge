@@ -7,7 +7,7 @@ import domains.blog.objects.{BlogCommentContent, BlogCommentId, BlogId}
 import domains.blog.objects.request.{CreateBlogCommentInput, CreateBlogCommentRequest}
 import domains.blog.objects.response.BlogDetail
 import domains.blog.table.blog.BlogCommentTable
-import domains.notification.utils.NotificationEventHubContext
+import domains.notification.api.NotificationEventHubContext
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.{Method, Request, Status}

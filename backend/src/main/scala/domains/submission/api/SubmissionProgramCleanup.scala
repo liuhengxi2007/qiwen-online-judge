@@ -1,4 +1,4 @@
-package domains.submission.utils
+package domains.submission.api
 
 import cats.effect.IO
 import cats.syntax.all.*

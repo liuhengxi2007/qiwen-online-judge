@@ -3,7 +3,7 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext, ProblemDataUploadPreparation}
+import domains.problem.utils.ProblemDataUploadPreparation
 
 import domains.problem.objects.{ProblemDataPath, ProblemSlug}
 import domains.problem.objects.response.ProblemDataUploadResult

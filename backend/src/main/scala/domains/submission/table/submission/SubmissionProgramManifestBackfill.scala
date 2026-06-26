@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.syntax.all.*
 import domains.submission.objects.{SubmissionLanguage, SubmissionSourceCode}
 import domains.submission.objects.internal.SubmissionProgramManifest
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
+import domains.submission.api.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.syntax.*
 
 import java.sql.Connection

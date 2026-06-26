@@ -1,10 +1,11 @@
-package domains.auth.utils
+package domains.auth.api
 
 import cats.effect.IO
 import cats.syntax.all.*
 import database.DatabaseSession
 import domains.auth.objects.SessionToken
 import domains.auth.table.session.SessionTable
+import domains.auth.utils.{CachedSession, SessionCache, SessionCacheContext, SessionConfig}
 import domains.user.objects.Username
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

@@ -2,21 +2,18 @@ package domains.judge.api
 
 import cats.effect.IO
 import domains.auth.api.PublicResponseApi
-import domains.judge.utils.JudgeConfig
-import domains.judge.utils.JudgeTaskBuilder
-import domains.judge.utils.JudgeTokenAuth
 import domains.judger.api.GetActiveJudgerSupportedLanguages
 import domains.hack.api.{ClaimNextHackAttempt, RecordHackAttemptResult}
 import domains.hack.objects.internal.ClaimedHackAttempt
 import domains.problem.api.GetJudgeProblemDataManifest
 import domains.problem.objects.ProblemDataPath
 import domains.problem.objects.internal.ProblemDataManifest
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.submission.api.{ClaimNextJudgeSubmission, UpdateSubmissionJudgeState}
 import domains.submission.objects.SubmissionStatus
 import domains.submission.objects.internal.{ClaimedSubmission, SubmissionJudgeState}
-import domains.submission.utils.SubmissionJudgeRules
-import domains.submission.utils.{SubmissionProgramStorage, SubmissionProgramStorageContext}
+import domains.submission.api.SubmissionJudgeRules
+import domains.submission.api.{SubmissionProgramStorage, SubmissionProgramStorageContext}
 import io.circe.syntax.*
 import judgeprotocol.objects.SubmissionLanguage
 import judgeprotocol.objects.request.ClaimJudgeTaskRequest

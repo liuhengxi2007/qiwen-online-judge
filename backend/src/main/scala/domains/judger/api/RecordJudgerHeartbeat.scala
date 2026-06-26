@@ -2,8 +2,8 @@ package domains.judger.api
 
 import cats.effect.IO
 import domains.auth.api.PublicApi
-import domains.judge.utils.JudgeConfig
-import domains.judge.utils.JudgeTokenAuth
+import domains.judge.api.JudgeConfig
+import domains.judge.api.JudgeTokenAuth
 import domains.judger.table.judger.JudgerTable
 import io.circe.Encoder
 import judgeprotocol.objects.JudgerId

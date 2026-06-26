@@ -2,11 +2,11 @@ package domains.submission.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.api.*
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import org.http4s.HttpRoutes
 
 /** 提交域路由装配器；注册提交查询、创建、删除、重判和内部判题状态 API。 */

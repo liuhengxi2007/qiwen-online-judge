@@ -1,4 +1,4 @@
-package domains.problem.utils
+package domains.problem.api
 
 /** 题目数据存储总配置；当前实现只包含 MinIO 后端配置。 */
 final case class ProblemDataStorageConfig(

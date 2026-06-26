@@ -3,9 +3,9 @@ package routes
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
-import domains.auth.utils.SessionStoreContext
-import domains.message.utils.MessageEventHubContext
-import domains.notification.utils.NotificationEventHubContext
+import domains.auth.api.SessionStoreContext
+import domains.message.api.MessageEventHubContext
+import domains.notification.api.NotificationEventHubContext
 import org.http4s.HttpRoutes
 
 /** 合并实时事件传输的路由集合。 */

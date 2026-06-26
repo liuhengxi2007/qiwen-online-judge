@@ -2,9 +2,9 @@ package domains.notification.routes
 
 import cats.effect.IO
 import database.DatabaseSession
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
-import domains.notification.utils.NotificationEventHubContext
+import domains.notification.api.NotificationEventHubContext
 import domains.notification.api.*
 import org.http4s.HttpRoutes
 

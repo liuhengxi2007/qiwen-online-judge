@@ -1,7 +1,7 @@
 package domains.submission.table.submission
 
 import cats.effect.IO
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 
 import java.sql.Connection
 

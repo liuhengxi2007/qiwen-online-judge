@@ -3,7 +3,6 @@ package domains.notification.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.notification.utils.{NotificationEventHub, NotificationEventHubContext, NotificationStreamEvent}
 import domains.user.objects.Username
 import fs2.{Stream, text}
 import io.circe.Encoder

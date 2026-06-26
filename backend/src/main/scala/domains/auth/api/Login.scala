@@ -2,7 +2,7 @@ package domains.auth.api
 
 import cats.effect.IO
 import domains.auth.objects.response.LoginResponse
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher}
 import domains.auth.objects.request.LoginRequest
 import domains.auth.table.auth_account.AuthAccountTable
 import domains.user.api.FindUserProfileSettings

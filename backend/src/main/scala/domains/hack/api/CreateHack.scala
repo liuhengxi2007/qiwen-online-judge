@@ -7,9 +7,9 @@ import domains.auth.objects.internal.AuthenticatedUser
 import domains.hack.objects.request.CreateHackRequest
 import domains.hack.objects.response.HackDetail
 import domains.hack.table.hack.{HackMutationTable, HackQueryTable}
-import domains.problem.utils.ProblemDataStorageContext
+import domains.problem.api.ProblemDataStorageContext
 import domains.submission.objects.SubmissionId
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import io.circe.Encoder
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.multipart.{Multipart, Part}

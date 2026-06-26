@@ -4,7 +4,6 @@ import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.objects.SiteManagerUser
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.auth.utils.SessionStoreContext
 import io.circe.Encoder
 import io.circe.syntax.*
 import org.http4s.circe.CirceEntityEncoder.*

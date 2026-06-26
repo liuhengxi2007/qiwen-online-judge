@@ -1,8 +1,8 @@
-package domains.problem.utils
+package domains.submission.api
 
 import munit.FunSuite
 
-class ProblemDataStorageConfigSuite extends FunSuite:
+class SubmissionProgramStorageConfigSuite extends FunSuite:
 
   private val completeEnv = Map(
     "MINIO_ENDPOINT" -> "http://localhost:9000",
@@ -12,11 +12,11 @@ class ProblemDataStorageConfigSuite extends FunSuite:
   )
 
   test("fromEnvironment loads complete MinIO configuration") {
-    val config = ProblemDataStorageConfig.fromEnvironment(completeEnv)
+    val config = SubmissionProgramStorageConfig.fromEnvironment(completeEnv)
 
     assertEquals(
       config.minio,
-      MinioProblemDataStorageConfig(
+      MinioSubmissionProgramStorageConfig(
         endpoint = "http://localhost:9000",
         accessKey = "access",
         secretKey = "secret",
@@ -27,7 +27,7 @@ class ProblemDataStorageConfigSuite extends FunSuite:
   }
 
   test("fromEnvironment honors MINIO_SECURE=false") {
-    val config = ProblemDataStorageConfig.fromEnvironment(completeEnv.updated("MINIO_SECURE", "false"))
+    val config = SubmissionProgramStorageConfig.fromEnvironment(completeEnv.updated("MINIO_SECURE", "false"))
 
     assertEquals(config.minio.secure, false)
   }
@@ -35,7 +35,7 @@ class ProblemDataStorageConfigSuite extends FunSuite:
   test("fromEnvironment rejects each missing required MinIO value") {
     List("MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY", "MINIO_BUCKET").foreach { missingName =>
       val error = intercept[IllegalStateException] {
-        ProblemDataStorageConfig.fromEnvironment(completeEnv - missingName)
+        SubmissionProgramStorageConfig.fromEnvironment(completeEnv - missingName)
       }
 
       assert(error.getMessage.contains(missingName), s"Expected message to name $missingName, got: ${error.getMessage}")
@@ -44,16 +44,18 @@ class ProblemDataStorageConfigSuite extends FunSuite:
 
   test("fromEnvironment rejects blank required MinIO values") {
     val error = intercept[IllegalStateException] {
-      ProblemDataStorageConfig.fromEnvironment(completeEnv.updated("MINIO_ENDPOINT", "  "))
+      SubmissionProgramStorageConfig.fromEnvironment(completeEnv.updated("MINIO_ENDPOINT", "  "))
     }
 
     assert(error.getMessage.contains("MINIO_ENDPOINT"))
   }
 
   test("fromEnvironment ignores obsolete local storage variables") {
-    val config = ProblemDataStorageConfig.fromEnvironment(
+    val config = SubmissionProgramStorageConfig.fromEnvironment(
       completeEnv ++ Map(
+        "SUBMISSION_PROGRAM_STORAGE_BACKEND" -> "local",
         "PROBLEM_DATA_STORAGE_BACKEND" -> "local",
+        "SUBMISSION_PROGRAM_LOCAL_ROOT" -> "/tmp/submission-programs",
         "PROBLEM_DATA_LOCAL_ROOT" -> "/tmp/problems"
       )
     )

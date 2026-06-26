@@ -5,7 +5,7 @@ import domains.auth.objects.EmailAddress
 import domains.auth.objects.request.RegisterRequest
 import domains.auth.objects.response.RegisterResponse
 import domains.auth.table.auth_account.AuthAccountTable
-import domains.auth.utils.{AuthSessionCookies, PasswordHasher, SessionStore, SessionStoreContext}
+import domains.auth.utils.{AuthSessionCookies, PasswordHasher}
 import domains.problem.objects.ProblemTitleDisplayMode
 import domains.user.api.CreateUserProfileSettings
 import domains.user.objects.{DisplayName, UserDisplayMode, UserLocale, Username}

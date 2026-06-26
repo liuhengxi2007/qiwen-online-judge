@@ -3,10 +3,10 @@ package domains.hack.routes
 import cats.effect.IO
 import database.DatabaseSession
 import domains.auth.api.{ApiObjectContext, ApiObjectRouter}
-import domains.auth.utils.SessionStoreContext
+import domains.auth.api.SessionStoreContext
 import domains.hack.api.*
-import domains.problem.utils.ProblemDataStorageContext
-import domains.submission.utils.SubmissionProgramStorageContext
+import domains.problem.api.ProblemDataStorageContext
+import domains.submission.api.SubmissionProgramStorageContext
 import org.http4s.HttpRoutes
 
 /** hack 域路由装配器；注册 hack 查询、创建、worker claim 和结果记录 API。 */

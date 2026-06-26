@@ -3,7 +3,6 @@ package domains.problem.api
 import cats.effect.IO
 import domains.auth.api.AuthenticatedResponseApi
 import domains.auth.objects.internal.AuthenticatedUser
-import domains.problem.utils.{ProblemDataStorage, ProblemDataStorageContext}
 import domains.problem.objects.ProblemDataPath
 import fs2.Stream
 import org.http4s.{Header, Method, Request, Response, Status}
