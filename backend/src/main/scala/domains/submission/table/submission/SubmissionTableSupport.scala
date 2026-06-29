@@ -1,0 +1,201 @@
+package domains.submission.table.submission
+
+
+
+import domains.contest.objects.{ContestSlug, ContestTitle}
+import domains.problem.objects.{ProblemId, ProblemSlug, ProblemTitle}
+import domains.submission.objects.response.SubmissionSummary
+import domains.submission.objects.{SubmissionId, SubmissionLanguage, SubmissionResultDisplayMode, SubmissionSource, SubmissionStatus, SubmissionVerdict}
+import database.utils.UserIdentitySql
+import domains.submission.objects.internal.{SubmissionDetailRecord, SubmissionProgramManifest}
+import domains.user.objects.{DisplayName, UserIdentity, Username}
+import io.circe.parser.decode
+import io.circe.syntax.*
+import judgeprotocol.objects.response.JudgeResult
+
+import java.sql.{PreparedStatement, ResultSet, Timestamp}
+import java.time.Instant
+
+/** 提交表读写辅助；集中处理 ResultSet 映射、枚举列编解码、可空列和 JSON manifest/result 解析。 */
+object SubmissionTableSupport:
+
+  /** 从用户资料连接列读取提交者身份。 */
+  def readUserIdentity(resultSet: ResultSet, prefix: String): UserIdentity =
+    val row = UserIdentitySql.readUserIdentityRow(resultSet, prefix)
+    UserIdentity(
+      username = Username.canonical(row.username),
+      displayName = DisplayName(row.displayName)
+    )
+
+  /** 从当前 ResultSet 行读取提交列表摘要。 */
+  def readSubmissionSummary(resultSet: ResultSet): SubmissionSummary =
+    SubmissionSummary(
+      id = SubmissionId(resultSet.getLong("public_id")),
+      problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
+      problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
+      problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      resultDisplayMode = parseColumn(
+        "problems.result_display_mode",
+        resultSet.getString("result_display_mode"),
+        SubmissionResultDisplayMode.parse
+      ),
+      source = readSubmissionSource(resultSet),
+      canViewDetail = resultSet.getBoolean("can_view_detail"),
+      submitter = readUserIdentity(resultSet, "submitter"),
+      language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
+      status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
+      verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
+      timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
+      memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+      score = readOptionalBigDecimal(resultSet, "score"),
+      codeLength = resultSet.getInt("code_length"),
+      submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
+      startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
+      finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
+    )
+
+  /** 从当前 ResultSet 行读取提交详情内部记录。 */
+  def readSubmissionDetailRecord(resultSet: ResultSet): SubmissionDetailRecord =
+    SubmissionDetailRecord(
+      id = SubmissionId(resultSet.getLong("public_id")),
+      problemId = ProblemId(resultSet.getObject("problem_id", classOf[java.util.UUID])),
+      problemSlug = parseColumn("submissions.problem_slug", resultSet.getString("problem_slug"), ProblemSlug.parse),
+      problemTitle = parseColumn("submissions.problem_title", resultSet.getString("problem_title"), ProblemTitle.parse),
+      resultDisplayMode = parseColumn(
+        "problems.result_display_mode",
+        resultSet.getString("result_display_mode"),
+        SubmissionResultDisplayMode.parse
+      ),
+      source = readSubmissionSource(resultSet),
+      submitter = readUserIdentity(resultSet, "submitter"),
+      language = parseColumn("submissions.language", resultSet.getString("language"), SubmissionLanguage.parse),
+      status = parseColumn("submissions.status", resultSet.getString("status"), SubmissionStatus.parse),
+      verdict = Option(resultSet.getString("verdict")).flatMap(decodeSubmissionVerdictColumn),
+      timeUsedMs = readOptionalLong(resultSet, "time_used_ms"),
+      memoryUsedKb = readOptionalLong(resultSet, "memory_used_kb"),
+      score = readOptionalBigDecimal(resultSet, "score"),
+      judgeResult = readOptionalJudgeResult(resultSet, "judge_result"),
+      codeLength = resultSet.getInt("code_length"),
+      programManifest = readProgramManifest(resultSet, "program_manifest"),
+      submittedAt = resultSet.getTimestamp("submitted_at").toInstant,
+      startedAt = Option(resultSet.getTimestamp("started_at")).map(_.toInstant),
+      finishedAt = Option(resultSet.getTimestamp("finished_at")).map(_.toInstant)
+    )
+
+  private def readSubmissionSource(resultSet: ResultSet): SubmissionSource =
+    Option(resultSet.getString("source_contest_slug")) match
+      case Some(rawSlug) =>
+        val slug = parseColumn("submissions.source_contest_slug", rawSlug, ContestSlug.parse)
+        val title = parseColumn("submissions.source_contest_title", resultSet.getString("source_contest_title"), ContestTitle.parse)
+        SubmissionSource.fromContest(slug, title)
+      case None =>
+        SubmissionSource.FromProblemSet
+
+  /** 绑定可空提交结论列。 */
+  def setOptionalVerdict(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    verdict: Option[SubmissionVerdict]
+  ): Unit =
+    verdict match
+      case Some(value) => statement.setString(parameterIndex, encodeSubmissionVerdictColumn(value))
+      case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
+
+  /** 将提交语言编码为数据库列值。 */
+  def encodeSubmissionLanguageColumn(value: SubmissionLanguage): String =
+    value match
+      case SubmissionLanguage.Cpp17 => "cpp17"
+      case SubmissionLanguage.Python3 => "python3"
+      case SubmissionLanguage.Text => "text"
+
+  /** 将提交状态编码为数据库列值。 */
+  def encodeSubmissionStatusColumn(value: SubmissionStatus): String =
+    value match
+      case SubmissionStatus.Queued => "queued"
+      case SubmissionStatus.Running => "running"
+      case SubmissionStatus.Completed => "completed"
+      case SubmissionStatus.Failed => "failed"
+
+  /** 将提交结论编码为数据库列值。 */
+  def encodeSubmissionVerdictColumn(value: SubmissionVerdict): String =
+    value match
+      case SubmissionVerdict.Accepted => "accepted"
+      case SubmissionVerdict.AcceptedByProtocol => "accepted_by_protocol"
+      case SubmissionVerdict.WrongAnswer => "wrong_answer"
+      case SubmissionVerdict.CompileError => "compile_error"
+      case SubmissionVerdict.RuntimeError => "runtime_error"
+      case SubmissionVerdict.TimeLimitExceeded => "time_limit_exceeded"
+      case SubmissionVerdict.IdlenessLimitExceeded => "idleness_limit_exceeded"
+      case SubmissionVerdict.SystemError => "system_error"
+
+  /** 从数据库列值解析提交结论；未知值返回 None 以兼容可空派生列读取。 */
+  def decodeSubmissionVerdictColumn(value: String): Option[SubmissionVerdict] =
+    SubmissionVerdict.parse(value).toOption
+
+  /** 绑定可空 Long 参数。 */
+  def setOptionalLong(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    value: Option[Long]
+  ): Unit =
+    value match
+      case Some(currentValue) => statement.setLong(parameterIndex, currentValue)
+      case None => statement.setNull(parameterIndex, java.sql.Types.BIGINT)
+
+  /** 绑定可空 BigDecimal 参数。 */
+  def setOptionalBigDecimal(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    value: Option[BigDecimal]
+  ): Unit =
+    value match
+      case Some(currentValue) => statement.setBigDecimal(parameterIndex, currentValue.bigDecimal)
+      case None => statement.setNull(parameterIndex, java.sql.Types.NUMERIC)
+
+  /** 绑定可空 judge_result JSON；Some 会序列化为 jsonb 文本。 */
+  def setOptionalJudgeResult(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    value: Option[JudgeResult]
+  ): Unit =
+    value match
+      case Some(currentValue) => statement.setString(parameterIndex, currentValue.asJson.noSpaces)
+      case None => statement.setNull(parameterIndex, java.sql.Types.VARCHAR)
+
+  /** 绑定可空时间戳参数。 */
+  def setOptionalTimestamp(
+    statement: PreparedStatement,
+    parameterIndex: Int,
+    timestamp: Option[Instant]
+  ): Unit =
+    timestamp match
+      case Some(value) => statement.setTimestamp(parameterIndex, Timestamp.from(value))
+      case None => statement.setNull(parameterIndex, java.sql.Types.TIMESTAMP)
+
+  /** 解析必填领域列；数据库中非法值视为不可恢复的数据错误。 */
+  def parseColumn[A](columnName: String, rawValue: String, parse: String => Either[String, A]): A =
+    parse(rawValue).fold(message => throw IllegalStateException(s"Invalid value in $columnName: $message"), identity)
+
+  /** 处理 insert returning 没有返回行的异常分支。 */
+  def missingInsertResult(entityName: String): Nothing =
+    throw new IllegalStateException(s"Insert succeeded but returned no $entityName")
+
+  /** 从可空 bigint 列读取 Long。 */
+  def readOptionalLong(resultSet: ResultSet, columnName: String): Option[Long] =
+    val value = resultSet.getLong(columnName)
+    if resultSet.wasNull() then None else Some(value)
+
+  /** 从可空 numeric 列读取 BigDecimal。 */
+  def readOptionalBigDecimal(resultSet: ResultSet, columnName: String): Option[BigDecimal] =
+    Option(resultSet.getBigDecimal(columnName)).map(BigDecimal(_))
+
+  /** 从 JSON 文本列读取可空 JudgeResult；非法 JSON 视为数据损坏。 */
+  def readOptionalJudgeResult(resultSet: ResultSet, columnName: String): Option[JudgeResult] =
+    Option(resultSet.getString(columnName)).map { raw =>
+      decode[JudgeResult](raw).fold(error => throw IllegalStateException(s"Invalid judge result JSON: ${error.getMessage}"), identity)
+    }
+
+  /** 从 JSON 文本列读取提交程序 manifest；非法 JSON 视为数据损坏。 */
+  def readProgramManifest(resultSet: ResultSet, columnName: String): SubmissionProgramManifest =
+    decode[SubmissionProgramManifest](resultSet.getString(columnName))
+      .fold(error => throw IllegalStateException(s"Invalid submission program manifest JSON: ${error.getMessage}"), identity)

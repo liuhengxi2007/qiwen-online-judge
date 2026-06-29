@@ -1,0 +1,68 @@
+package domains.contest.api
+
+import cats.effect.IO
+import domains.auth.api.InternalOnlyAuthenticatedApi
+import domains.auth.objects.internal.AuthenticatedUser
+import domains.contest.objects.ContestSlug
+import domains.contest.objects.response.EvaluateContestAccessResult
+import domains.contest.table.contest.ContestTable
+import domains.contest.utils.ContestAccessRules
+import domains.problem.objects.ProblemId
+import domains.usergroup.api.ListUserGroupSlugsForMember
+import org.http4s.Method
+import shared.api.ApiPath
+
+import java.sql.Connection
+import java.time.Instant
+
+/** 面向内部调用的比赛访问评估 API，集中输出比赛、题目关联、注册和管理权限事实。 */
+object EvaluateContestAccess extends InternalOnlyAuthenticatedApi[EvaluateContestAccess.Input, Option[EvaluateContestAccessResult]]:
+
+  /** 内部权限评估输入，使用比赛 slug 定位比赛，并可附带题目 id 判断题目是否在赛内。 */
+  final case class Input(
+    contestSlug: ContestSlug,
+    problemId: Option[ProblemId]
+  )
+
+  override val method: Method = Method.POST
+  override val path: ApiPath = ApiPath("/api/internal/contests/evaluate-access")
+
+  /** 读取比赛、注册状态和用户组后计算权限；比赛不存在时返回 None，避免内部调用重复查库。 */
+  override def plan(connection: Connection, actor: AuthenticatedUser, input: Input): IO[Option[EvaluateContestAccessResult]] =
+    ContestTable.findBySlug(connection, input.contestSlug).flatMap {
+      case None =>
+        IO.pure(None)
+      case Some(contest) =>
+        for
+          actorGroupSlugs <- ListUserGroupSlugsForMember.plan(connection, actor.username)
+          isRegistered <- ContestTable.isRegistered(connection, contest.id, actor.username)
+          now = Instant.now()
+          actorGroupSlugSet = actorGroupSlugs.slugs.toSet
+          containsProblem = input.problemId.exists(problemId => contest.problems.exists(_.id.value == problemId.value))
+          canViewContest = ContestAccessRules.canViewContest(actor, contest, actorGroupSlugSet)
+          canViewContestDetail = ContestAccessRules.canViewContestDetail(actor, contest, actorGroupSlugSet, isRegistered, now)
+          canManageContest = ContestAccessRules.canManageContest(actor, contest, actorGroupSlugSet)
+          canViewLinkedContestProblem =
+            ContestAccessRules.canViewLinkedContestProblem(actor, contest, actorGroupSlugSet, isRegistered, containsProblem, now)
+          canManageLinkedContestProblem =
+            ContestAccessRules.canManageLinkedContestProblem(actor, contest, actorGroupSlugSet, containsProblem)
+          canSubmitContestProblem =
+            ContestAccessRules.canSubmitContestProblem(contest, isRegistered, containsProblem, now)
+        yield Some(
+          EvaluateContestAccessResult(
+            contestId = contest.id,
+            contestSlug = contest.slug,
+            contestTitle = contest.title,
+            contestStarted = !now.isBefore(contest.startAt),
+            contestEnded = now.isAfter(contest.endAt),
+            isRegistered = isRegistered,
+            containsProblem = containsProblem,
+            canViewContest = canViewContest,
+            canViewContestDetail = canViewContestDetail,
+            canManageContest = canManageContest,
+            canViewLinkedContestProblem = canViewLinkedContestProblem,
+            canManageLinkedContestProblem = canManageLinkedContestProblem,
+            canSubmitContestProblem = canSubmitContestProblem
+          )
+        )
+    }

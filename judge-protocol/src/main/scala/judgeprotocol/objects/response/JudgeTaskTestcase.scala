@@ -1,0 +1,36 @@
+package judgeprotocol.objects.response
+
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.deriveEncoder
+
+/** 子任务中的单个测试点配置，绑定输入、答案、checker、资源限制和可选策略 provider。 */
+final case class JudgeTaskTestcase(
+  index: Int,
+  label: Option[String],
+  testcaseType: JudgeTestcaseType,
+  scoreRatio: BigDecimal,
+  limits: JudgeTaskLimits,
+  checker: JudgeTaskChecker,
+  input: JudgeTaskFileRef,
+  answer: Option[JudgeTaskFileRef],
+  strategyProvider: Option[JudgeTaskTool],
+  roles: List[String] = Nil
+)
+
+/** 负责测试点协议编解码，并为旧 payload 补齐 main 类型和空角色列表。 */
+object JudgeTaskTestcase:
+  given Encoder[JudgeTaskTestcase] = deriveEncoder[JudgeTaskTestcase]
+  given Decoder[JudgeTaskTestcase] = Decoder.instance { cursor =>
+    for
+      index <- cursor.downField("index").as[Int]
+      label <- cursor.downField("label").as[Option[String]]
+      testcaseType <- cursor.downField("testcaseType").as[Option[JudgeTestcaseType]].map(_.getOrElse(JudgeTestcaseType.Main))
+      scoreRatio <- cursor.downField("scoreRatio").as[BigDecimal]
+      limits <- cursor.downField("limits").as[JudgeTaskLimits]
+      checker <- cursor.downField("checker").as[JudgeTaskChecker]
+      input <- cursor.downField("input").as[JudgeTaskFileRef]
+      answer <- cursor.downField("answer").as[Option[JudgeTaskFileRef]]
+      strategyProvider <- cursor.downField("strategyProvider").as[Option[JudgeTaskTool]]
+      roles <- cursor.downField("roles").as[Option[List[String]]].map(_.getOrElse(Nil))
+    yield JudgeTaskTestcase(index, label, testcaseType, scoreRatio, limits, checker, input, answer, strategyProvider, roles)
+  }

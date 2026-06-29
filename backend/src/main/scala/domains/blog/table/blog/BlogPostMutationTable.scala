@@ -1,0 +1,131 @@
+package domains.blog.table.blog
+
+import cats.effect.IO
+import database.utils.UserIdentitySql
+import domains.blog.objects.{BlogContent, BlogId, BlogTitle}
+import domains.blog.objects.response.BlogSummary
+import domains.blog.table.blog.BlogTableSupport.*
+import domains.blog.table.blog_access_grant.BlogAccessGrantTable
+import domains.user.objects.Username
+import shared.objects.access.ResourceVisibilityPolicy
+
+import java.sql.{Connection, Timestamp}
+import java.time.Instant
+import java.util.UUID
+
+/** 博客写操作表访问对象，负责创建、更新和删除博客主体。 */
+object BlogPostMutationTable:
+
+  private val insertSQL: String =
+    s"""
+      |insert into blogs (id, public_id, author_username, title, content, base_access, created_at, updated_at)
+      |values (?, nextval('blog_public_id_seq'), ?, ?, ?, ?, ?, ?)
+      |returning id, public_id, title, content, base_access, ${UserIdentitySql.returningColumns("author_username", "author")}, created_at, updated_at
+      |""".stripMargin
+
+  /** 创建博客和初始 viewer 授权并返回摘要，初始分数和关联题目为空。 */
+  def insert(
+    connection: Connection,
+    authorUsername: Username,
+    title: BlogTitle,
+    content: BlogContent,
+    visibilityPolicy: ResourceVisibilityPolicy
+  ): IO[BlogSummary] =
+    IO.blocking {
+      val now = Instant.now()
+      val blogUuid = UUID.randomUUID()
+      val statement = connection.prepareStatement(insertSQL)
+      try
+        statement.setObject(1, blogUuid)
+        statement.setString(2, authorUsername.value)
+        statement.setString(3, title.value)
+        statement.setString(4, content.value)
+        statement.setString(5, encodeBaseAccessColumn(visibilityPolicy.baseAccess))
+        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setTimestamp(7, Timestamp.from(now))
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then
+            (
+              resultSet.getObject("id", classOf[UUID]),
+              BlogSummary(
+                id = BlogId(resultSet.getLong("public_id")),
+                title = title,
+                content = content,
+                author = readUserIdentity(resultSet, "author"),
+                visibilityPolicy = visibilityPolicy.copy(viewerGrants = Nil),
+                relatedProblems = Nil,
+                score = 0,
+                viewerVote = None,
+                createdAt = resultSet.getTimestamp("created_at").toInstant,
+                updatedAt = resultSet.getTimestamp("updated_at").toInstant
+              )
+            )
+          else missingInsertResult("blog")
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap { case (internalBlogId, blog) =>
+      BlogAccessGrantTable
+        .replaceForBlog(connection, internalBlogId, visibilityPolicy.viewerGrants)
+        .as(blog.copy(visibilityPolicy = visibilityPolicy))
+    }
+
+  private val updateBlogSQL: String =
+    """
+      |update blogs
+      |set title = ?,
+      |    content = ?,
+      |    base_access = ?,
+      |    updated_at = ?
+      |where public_id = ?
+      |  and author_username = ?
+      |returning id
+      |""".stripMargin
+
+  /** 仅允许博客作者更新标题、正文和可见性策略，成功后返回更新后的博客详情。 */
+  def update(
+    connection: Connection,
+    blogId: BlogId,
+    actorUsername: Username,
+    title: BlogTitle,
+    content: BlogContent,
+    visibilityPolicy: ResourceVisibilityPolicy
+  ): IO[Option[domains.blog.objects.response.BlogDetail]] =
+    IO.blocking {
+      val statement = connection.prepareStatement(updateBlogSQL)
+      try
+        statement.setString(1, title.value)
+        statement.setString(2, content.value)
+        statement.setString(3, encodeBaseAccessColumn(visibilityPolicy.baseAccess))
+        statement.setTimestamp(4, Timestamp.from(Instant.now()))
+        statement.setLong(5, blogId.value)
+        statement.setString(6, actorUsername.value)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then Some(resultSet.getObject("id", classOf[UUID])) else None
+        finally resultSet.close()
+      finally statement.close()
+    }.flatMap {
+      case Some(internalBlogId) =>
+        BlogAccessGrantTable
+          .replaceForBlog(connection, internalBlogId, visibilityPolicy.viewerGrants)
+          .flatMap(_ => BlogPostQueryTable.findById(connection, blogId, actorUsername))
+      case None => IO.pure(None)
+    }
+
+  private val deleteBlogSQL: String =
+    """
+      |delete from blogs
+      |where public_id = ?
+      |  and author_username = ?
+      |""".stripMargin
+
+  /** 仅允许博客作者删除博客，返回是否实际删除记录。 */
+  def delete(connection: Connection, blogId: BlogId, actorUsername: Username): IO[Boolean] =
+    IO.blocking {
+      val statement = connection.prepareStatement(deleteBlogSQL)
+      try
+        statement.setLong(1, blogId.value)
+        statement.setString(2, actorUsername.value)
+        statement.executeUpdate() > 0
+      finally statement.close()
+    }

@@ -1,0 +1,99 @@
+import cats.effect.{IO, IOApp, Resource}
+import com.comcast.ip4s.{host, port}
+import database.DatabaseSession
+import domains.auth.api.SessionStore
+import domains.auth.table.auth_account.{AuthAccountTable, AuthAccountTableSupport}
+import domains.auth.table.session.SessionTable
+import domains.auth.utils.{PasswordHasher, SessionCache, SessionCacheConfig, SessionCacheContext, SessionConfig}
+import domains.blog.table.blog.BlogTable
+import domains.contest.table.contest.ContestTable
+import domains.hack.table.hack.HackTable
+import domains.judge.api.JudgeConfig
+import domains.judger.table.judger.JudgerTable
+import domains.message.table.message.MessageTable
+import domains.message.api.MessageEventHub
+import domains.notification.table.notification.NotificationTable
+import domains.notification.api.NotificationEventHub
+import domains.problem.table.problem.ProblemTable
+import domains.problem.table.problem_data_file.ProblemDataFileTable
+import domains.problem.api.{ProblemDataStorage, ProblemDataStorageConfig}
+import domains.problemset.table.problem_set.ProblemSetTable
+import domains.rating.table.rating.RatingTable
+import domains.submission.table.submission.SubmissionTable
+import domains.submission.api.{SubmissionProgramStorage, SubmissionProgramStorageConfig}
+import domains.user.table.user_profile.UserProfileTable
+import domains.user.utils.{UserAvatarStorage, UserAvatarStorageConfig}
+import domains.usergroup.table.user_group.UserGroupTable
+import org.http4s.HttpApp
+import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.server.Server
+import org.http4s.server.middleware.CORS
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import routes.ApiRouter
+
+object Main extends IOApp.Simple:
+
+  private val logger = Slf4jLogger.getLogger[IO]
+
+  private def serverResource(httpApp: HttpApp[IO]): Resource[IO, Server] =
+    EmberServerBuilder
+      .default[IO]
+      .withHost(host"0.0.0.0")
+      .withPort(port"8080")
+      .withHttpApp(httpApp)
+      .build
+
+  private val resource: Resource[IO, Server] =
+    for
+      databaseSession <- DatabaseSession.resource
+      sessionCache <- SessionCacheConfig
+        .fromEnvironment(sys.env)
+        .map(SessionCache.resource)
+        .getOrElse(Resource.pure[IO, SessionCacheContext](SessionCache.noop))
+      sessionStore <- Resource.eval(SessionStore.create(databaseSession, sessionCache))
+      messageEventHub <- MessageEventHub.resource
+      notificationEventHub <- NotificationEventHub.resource
+      seedAdminPasswordHash <- Resource.eval(
+        PasswordHasher.hashPassword(AuthAccountTableSupport.seedAdminPlaintextPassword)
+      )
+      judgeConfig = JudgeConfig.loadFromEnvironment()
+      problemDataStorageConfig = ProblemDataStorageConfig.loadFromEnvironment()
+      submissionProgramStorageConfig = SubmissionProgramStorageConfig.loadFromEnvironment()
+      userAvatarStorageConfig = UserAvatarStorageConfig.loadFromEnvironment()
+      problemDataStorage = ProblemDataStorage.create(problemDataStorageConfig.minio)
+      submissionProgramStorage = SubmissionProgramStorage.create(submissionProgramStorageConfig.minio)
+      userAvatarStorage = UserAvatarStorage.create(userAvatarStorageConfig.minio)
+      _ <- Resource.eval {
+        databaseSession.withTransactionConnection { connection =>
+          for
+            _ <- logger.info("Initializing database schema")
+            _ <- AuthAccountTable.initialize(connection, seedAdminPasswordHash)
+            _ <- UserProfileTable.initialize(connection)
+            _ <- SessionTable.initialize(connection, SessionConfig.default.ttl)
+            _ <- ProblemTable.initialize(connection)
+            _ <- ProblemDataFileTable.initialize(connection)
+            _ <- ProblemSetTable.initialize(connection)
+            _ <- ContestTable.initialize(connection)
+            _ <- SubmissionTable.initialize(connection, submissionProgramStorage)
+            _ <- HackTable.initialize(connection)
+            _ <- BlogTable.initialize(connection)
+            _ <- JudgerTable.initialize(connection)
+            _ <- UserGroupTable.initialize(connection)
+            _ <- MessageTable.initialize(connection)
+            _ <- NotificationTable.initialize(connection)
+            _ <- RatingTable.initialize(connection)
+          yield ()
+        }
+      }
+      httpApp =
+        CORS.policy.withAllowOriginAll(
+          ApiRouter.httpApp(databaseSession, sessionStore, judgeConfig, problemDataStorage, submissionProgramStorage, userAvatarStorage, messageEventHub, notificationEventHub)
+        )
+      server <- serverResource(httpApp)
+    yield server
+
+  override def run: IO[Unit] =
+    for
+      _ <- logger.info("Starting qiwen-online-judge backend on http://0.0.0.0:8080")
+      _ <- resource.useForever
+    yield ()

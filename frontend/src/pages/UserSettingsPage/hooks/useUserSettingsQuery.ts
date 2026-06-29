@@ -1,0 +1,123 @@
+import { useEffect, useRef, useState } from 'react'
+
+import type { SessionResponse } from '@/objects/auth/response/SessionResponse'
+import type { Username } from '@/objects/user/Username'
+import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
+import { toForbiddenRedirect } from '@/pages/routing/RoutePolicy'
+import { GetUserSettings } from '@/apis/user/GetUserSettings'
+import { sendAPI } from '@/system/api/api-message'
+import { isHttpClientError } from '@/system/api/http-client'
+import { translateMessage } from '@/system/i18n/messages'
+
+/**
+ * 用户设置查询 hook 输入，包含是否允许加载目标用户和目标用户名。
+ */
+type UseUserSettingsQueryArgs = {
+  canLoadTarget: boolean
+  targetUsername: Username
+}
+
+/**
+ * 用户设置查询 hook；在权限允许时加载目标用户资料和权限信息。
+ */
+export function useUserSettingsQuery({ canLoadTarget, targetUsername }: UseUserSettingsQueryArgs) {
+  const [settingsState, setSettingsState] = useState<{
+    username: Username | null
+    editedUser: SessionResponse | null
+    settingsLoadError: string
+    navigationIntent: NavigationIntent | null
+  }>({
+    username: null,
+    editedUser: null,
+    settingsLoadError: '',
+    navigationIntent: null,
+  })
+  const requestIdRef = useRef(0)
+
+  useEffect(() => {
+    if (!canLoadTarget) {
+      return
+    }
+
+    let isCancelled = false
+    requestIdRef.current += 1
+    const nextRequestId = requestIdRef.current
+
+    void sendAPI(new GetUserSettings(targetUsername))
+      .then((loadedUser) => {
+        if (isCancelled) {
+          return
+        }
+
+        if (requestIdRef.current != nextRequestId) {
+          return
+        }
+
+        setSettingsState({
+          username: targetUsername,
+          editedUser: loadedUser,
+          settingsLoadError: '',
+          navigationIntent: null,
+        })
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) {
+          return
+        }
+
+        if (requestIdRef.current != nextRequestId) {
+          return
+        }
+
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
+          setSettingsState({
+            username: targetUsername,
+            editedUser: null,
+            settingsLoadError: '',
+            navigationIntent: toForbiddenRedirect(),
+          })
+          return
+        }
+
+        if (isHttpClientError(error) && error.kind === 'not-found') {
+          setSettingsState({
+            username: targetUsername,
+            editedUser: null,
+            settingsLoadError: translateMessage('api.error.user.not_found'),
+            navigationIntent: null,
+          })
+          return
+        }
+
+        setSettingsState({
+          username: targetUsername,
+          editedUser: null,
+          settingsLoadError: translateMessage('userSettings.loadFailed'),
+          navigationIntent: null,
+        })
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [canLoadTarget, targetUsername])
+
+  return {
+    editedUser: settingsState.username === targetUsername ? settingsState.editedUser : null,
+    isLoadingSettings: canLoadTarget && settingsState.username !== targetUsername,
+    settingsLoadError: settingsState.username === targetUsername ? settingsState.settingsLoadError : '',
+    navigationIntent: settingsState.username === targetUsername ? settingsState.navigationIntent : null,
+    replaceEditedUser(username: Username, nextUser: SessionResponse) {
+      if (settingsState.username !== username) {
+        return
+      }
+
+      setSettingsState({
+        username,
+        editedUser: nextUser,
+        settingsLoadError: '',
+        navigationIntent: null,
+      })
+    },
+  }
+}

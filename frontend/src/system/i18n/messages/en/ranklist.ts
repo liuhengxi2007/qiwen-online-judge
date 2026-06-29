@@ -1,0 +1,20 @@
+/**
+ * 英文排行榜消息，覆盖排名类型、筛选、分页和空状态文案。
+ */
+export const enRanklistMessages: Record<string, string> = {
+  'ranklist.pageTitle': 'Qiwen Online Judge - Ranklist',
+  'ranklist.heading': 'Ranklist',
+  'ranklist.loading': 'Loading ranklist...',
+  'ranklist.empty': 'No ranklist entries are available yet.',
+  'ranklist.unavailable': 'This ranklist is currently unavailable.',
+  'ranklist.contributionLoadFailed': 'Unable to load contribution ranklist.',
+  'ranklist.acceptedLoadFailed': 'Unable to load accepted problem ranklist.',
+  'ranklist.ratingLoadFailed': 'Unable to load rating ranklist.',
+  'ranklist.ratingTitle': 'Rating ranking',
+  'ranklist.rating': 'Rating',
+  'ranklist.contributionTitle': 'Contribution ranking',
+  'ranklist.contribution': 'Contribution',
+  'ranklist.acceptedTitle': 'Accepted problems ranking',
+  'ranklist.acceptedCount': 'Accepted',
+  'ranklist.pageStatus': 'Page {{page}} / {{totalPages}}',
+}

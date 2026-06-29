@@ -1,0 +1,233 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans:
+    "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--ui-muted);
+  --color-muted-foreground: var(--ui-muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  font-family:
+    'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: oklch(0.3 0.01 260);
+  background-color: oklch(0.985 0.002 106);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --radius: 0.75rem;
+  --background: oklch(0.985 0.002 106);
+  --foreground: oklch(0.3 0.01 260);
+  --text-strong: var(--foreground);
+  --muted: oklch(0.5 0.01 260);
+  --accent-strong: var(--primary);
+  --card: oklch(0.995 0.002 106);
+  --card-foreground: oklch(0.3 0.01 260);
+  --popover: oklch(0.995 0.002 106);
+  --popover-foreground: oklch(0.3 0.01 260);
+  --primary: oklch(0.35 0.01 260);
+  --primary-foreground: oklch(0.985 0.002 106);
+  --secondary: oklch(0.96 0.002 106);
+  --secondary-foreground: oklch(0.34 0.01 260);
+  --ui-muted: oklch(0.965 0.002 106);
+  --ui-muted-foreground: oklch(0.5 0.01 260);
+  --accent: oklch(0.96 0.002 106);
+  --accent-foreground: oklch(0.32 0.01 260);
+  --destructive: oklch(0.61 0.18 28);
+  --border: oklch(0.9 0.002 106);
+  --input: oklch(0.9 0.002 106);
+  --ring: oklch(0.55 0.01 260);
+}
+
+.dark {
+  --background: oklch(0.19 0.01 56);
+  --foreground: oklch(0.95 0.01 84);
+  --card: oklch(0.24 0.015 56);
+  --card-foreground: oklch(0.95 0.01 84);
+  --popover: oklch(0.24 0.015 56);
+  --popover-foreground: oklch(0.95 0.01 84);
+  --primary: oklch(0.74 0.06 67);
+  --primary-foreground: oklch(0.24 0.015 56);
+  --secondary: oklch(0.31 0.015 56);
+  --secondary-foreground: oklch(0.95 0.01 84);
+  --ui-muted: oklch(0.3 0.01 56);
+  --ui-muted-foreground: oklch(0.78 0.01 75);
+  --accent: oklch(0.31 0.015 56);
+  --accent-foreground: oklch(0.95 0.01 84);
+  --destructive: oklch(0.68 0.17 24);
+  --border: oklch(0.34 0.012 57);
+  --input: oklch(0.34 0.012 57);
+  --ring: oklch(0.69 0.04 67);
+}
+
+* {
+  border-color: var(--border);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@layer base {
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.page-title-font {
+  font-family: Georgia, serif;
+}
+
+a {
+  color: inherit;
+}
+
+.markdown-document {
+  color: oklch(0.34 0.01 260);
+  font-family: 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.85;
+}
+
+.markdown-document > :first-child {
+  margin-top: 0;
+}
+
+.markdown-document > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-document h1,
+.markdown-document h2,
+.markdown-document h3 {
+  margin: 1.5rem 0 0.75rem;
+  color: oklch(0.24 0.01 260);
+  font-family: 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.markdown-document code,
+.markdown-document pre {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas',
+    'Liberation Mono', monospace;
+}
+
+.markdown-document h1 {
+  font-size: 1.85rem;
+}
+
+.markdown-document h2 {
+  font-size: 1.45rem;
+}
+
+.markdown-document h3 {
+  font-size: 1.15rem;
+}
+
+.markdown-document p,
+.markdown-document ul,
+.markdown-document ol,
+.markdown-document blockquote,
+.markdown-document pre,
+.markdown-document table,
+.markdown-document hr {
+  margin: 0.9rem 0;
+}
+
+.markdown-document ul,
+.markdown-document ol {
+  padding-left: 1.5rem;
+}
+
+.markdown-document ul {
+  list-style: disc;
+}
+
+.markdown-document ol {
+  list-style: decimal;
+}
+
+.markdown-document li + li {
+  margin-top: 0.3rem;
+}
+
+.markdown-document blockquote {
+  border-left: 4px solid oklch(0.86 0.03 160);
+  padding-left: 1rem;
+  color: oklch(0.44 0.01 260);
+}
+
+.markdown-document hr {
+  border: 0;
+  border-top: 1px solid oklch(0.9 0.002 106);
+}
+
+.markdown-document table th,
+.markdown-document table td {
+  border: 1px solid oklch(0.88 0.003 106);
+  padding: 0.65rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-document table th {
+  background: oklch(0.975 0.002 106);
+  font-weight: 600;
+}
+
+.markdown-document .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}

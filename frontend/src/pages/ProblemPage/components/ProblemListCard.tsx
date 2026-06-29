@@ -1,0 +1,131 @@
+import { Link } from 'react-router-dom'
+import { FilePlus2, LibraryBig } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import type { ProblemSummary } from '@/objects/problem/response/ProblemSummary'
+import { PaginationControls } from '@/pages/components/PaginationControls'
+import { useI18n } from '@/system/i18n/use-i18n'
+
+import { ProblemListItem } from './ProblemListItem'
+
+/**
+ * 题目列表卡片属性，包含题目分页、权限入口和切页回调。
+ */
+type ProblemListCardProps = {
+  canCreate: boolean
+  currentPage: number
+  isLoading: boolean
+  onApplyQuery: () => void
+  onClearQuery: () => void
+  onPageChange: (page: number) => void
+  problems: ProblemSummary[]
+  queryInput: string
+  setQueryInput: (value: string) => void
+  showSlugSupplement: boolean
+  totalPages: number
+}
+
+/**
+ * 题目列表卡片，展示题目摘要列表、加载/空状态和分页控件。
+ */
+export function ProblemListCard({
+  canCreate,
+  currentPage,
+  isLoading,
+  onApplyQuery,
+  onClearQuery,
+  onPageChange,
+  problems,
+  queryInput,
+  setQueryInput,
+  showSlugSupplement,
+  totalPages,
+}: ProblemListCardProps) {
+  // 保留扁平 props：题目列表、查询框和分页控件共享同一张列表卡片，调用端具名字段比嵌套对象更易扫读。
+  const { t } = useI18n()
+
+  return (
+    <Card className="border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <LibraryBig className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-slate-950">{t('problem.list.cardTitle')}</CardTitle>
+              <CardDescription>
+                {t('problem.list.cardDescription')}
+              </CardDescription>
+            </div>
+          </div>
+          {canCreate ? (
+            <Button asChild variant="create">
+              <Link to="/problems/new">
+                <FilePlus2 className="size-4" />
+                {t('problem.list.create')}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="problem-search">{t('problem.list.searchLabel')}</Label>
+            <Input
+              id="problem-search"
+              value={queryInput}
+              placeholder={t('problem.list.searchPlaceholder')}
+              onChange={(event) => {
+                setQueryInput(event.target.value)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  onApplyQuery()
+                }
+              }}
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button type="button" onClick={onApplyQuery}>
+              {t('problem.list.searchApply')}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClearQuery}>
+              {t('problem.list.searchClear')}
+            </Button>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="text-sm text-slate-500">{t('problem.list.loading')}</p>
+        ) : problems.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+            <p className="text-base font-medium text-slate-900">{t('problem.list.emptyTitle')}</p>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              {t('problem.list.emptyDescription')}
+            </p>
+          </div>
+        ) : (
+          problems.map((problem) => (
+            <ProblemListItem key={problem.id} problem={problem} showSlugSupplement={showSlugSupplement} />
+          ))
+        )}
+
+        {!isLoading && problems.length > 0 && totalPages > 1 ? (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            previousLabel={t('common.pagination.previous')}
+            nextLabel={t('common.pagination.next')}
+            onPageChange={onPageChange}
+          />
+        ) : null}
+      </CardContent>
+    </Card>
+  )
+}

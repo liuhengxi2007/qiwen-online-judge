@@ -1,0 +1,14 @@
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
+import type { ProblemSlug } from '@/objects/problem/ProblemSlug'
+import type { ProblemStatementText } from '@/objects/problem/ProblemStatementText'
+import type { ProblemTitle } from '@/objects/problem/ProblemTitle'
+import type { ResourceAccessPolicy } from '@/objects/shared/access/ResourceAccessPolicy'
+
+/** 创建题目请求体；权限策略和他人提交可见级别由调用方显式传入。 */
+export type CreateProblemRequest = {
+  slug: ProblemSlug
+  title: ProblemTitle
+  statement: ProblemStatementText
+  accessPolicy: ResourceAccessPolicy
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
+}

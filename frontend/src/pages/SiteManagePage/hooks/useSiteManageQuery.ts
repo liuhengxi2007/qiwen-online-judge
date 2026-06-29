@@ -1,0 +1,200 @@
+import { useEffect, useState } from 'react'
+
+import { ListRegisteredJudgers } from '@/apis/judger/ListRegisteredJudgers'
+import { ListUsers } from '@/apis/user/ListUsers'
+import { isHttpClientError } from '@/system/api/http-client'
+import type { ManagedUserListItem } from '@/objects/user/response/ManagedUserListItem'
+import type { UserListRequest } from '@/objects/user/request/UserListRequest'
+import type { RegisteredJudgerListItem } from '@/objects/judger/response/RegisteredJudgerListItem'
+import type { NavigationIntent } from '@/pages/routing/NavigationIntent'
+import { toSiteManageDeniedRedirect } from '@/pages/routing/RoutePolicy'
+import { sendAPI } from '@/system/api/api-message'
+import { translateMessage } from '@/system/i18n/messages'
+
+/**
+ * 站点管理查询 hook；按权限开关加载托管用户列表和判题机列表。
+ */
+export function useSiteManageQuery(siteManagerEnabled: boolean, userListRequest: UserListRequest) {
+  const requestKey = JSON.stringify(userListRequest)
+  const fallbackUserPage = userListRequest.pageRequest.page
+  const fallbackUserPageSize = userListRequest.pageRequest.pageSize
+  const [queryState, setQueryState] = useState<{
+    enabled: boolean | null
+    requestKey: string
+    users: ManagedUserListItem[]
+    userPage: number
+    userPageSize: number
+    totalUsers: number
+    judgers: RegisteredJudgerListItem[]
+    userListError: string
+    judgerListError: string
+    navigationIntent: NavigationIntent | null
+    usersLoaded: boolean
+    judgersLoaded: boolean
+  }>({
+    enabled: null,
+    requestKey: '',
+    users: [],
+    userPage: userListRequest.pageRequest.page,
+    userPageSize: userListRequest.pageRequest.pageSize,
+    totalUsers: 0,
+    judgers: [],
+    userListError: '',
+    judgerListError: '',
+    navigationIntent: null,
+    usersLoaded: false,
+    judgersLoaded: false,
+  })
+
+  useEffect(() => {
+    if (!siteManagerEnabled) {
+      return
+    }
+
+    let isCancelled = false
+
+    const activeUserListRequest = userListRequest
+
+    void sendAPI(new ListUsers(activeUserListRequest))
+      .then((loadedUsers) => {
+        if (isCancelled) {
+          return
+        }
+
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          requestKey,
+          users: loadedUsers.items,
+          userPage: loadedUsers.page,
+          userPageSize: loadedUsers.pageSize,
+          totalUsers: loadedUsers.totalItems,
+          userListError: '',
+          usersLoaded: true,
+        }))
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) {
+          return
+        }
+
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
+          setQueryState((currentState) => ({
+            ...currentState,
+            enabled: siteManagerEnabled,
+            requestKey,
+            users: [],
+            userPage: activeUserListRequest.pageRequest.page,
+            userPageSize: activeUserListRequest.pageRequest.pageSize,
+            totalUsers: 0,
+            userListError: '',
+            navigationIntent: toSiteManageDeniedRedirect(),
+            usersLoaded: true,
+          }))
+          return
+        }
+
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          requestKey,
+          users: [],
+          userPage: activeUserListRequest.pageRequest.page,
+          userPageSize: activeUserListRequest.pageRequest.pageSize,
+          totalUsers: 0,
+          userListError: translateMessage('siteManage.usersLoadFailed'),
+          usersLoaded: true,
+        }))
+      })
+
+    void sendAPI(new ListRegisteredJudgers())
+      .then((loadedJudgers) => {
+        if (isCancelled) {
+          return
+        }
+
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          judgers: loadedJudgers,
+          judgerListError: '',
+          judgersLoaded: true,
+        }))
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) {
+          return
+        }
+
+        if (isHttpClientError(error) && error.kind === 'forbidden') {
+          setQueryState((currentState) => ({
+            ...currentState,
+            enabled: siteManagerEnabled,
+            judgers: [],
+            judgerListError: '',
+            navigationIntent: toSiteManageDeniedRedirect(),
+            judgersLoaded: true,
+          }))
+          return
+        }
+
+        setQueryState((currentState) => ({
+          ...currentState,
+          enabled: siteManagerEnabled,
+          judgers: [],
+          judgerListError: translateMessage('siteManage.judgersLoadFailed'),
+          judgersLoaded: true,
+        }))
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [requestKey, siteManagerEnabled, userListRequest])
+
+  return {
+    users:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
+        ? queryState.users
+        : [],
+    userPage:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
+        ? queryState.userPage
+        : fallbackUserPage,
+    userPageSize:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
+        ? queryState.userPageSize
+        : fallbackUserPageSize,
+    totalUsers:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
+        ? queryState.totalUsers
+        : 0,
+    judgers: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.judgers : [],
+    isLoadingUsers:
+      siteManagerEnabled &&
+      (!queryState.usersLoaded || queryState.enabled !== siteManagerEnabled || queryState.requestKey !== requestKey),
+    isLoadingJudgers: siteManagerEnabled && (!queryState.judgersLoaded || queryState.enabled !== siteManagerEnabled),
+    userListError:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled && queryState.requestKey === requestKey
+        ? queryState.userListError
+        : '',
+    judgerListError: siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.judgerListError : '',
+    navigationIntent:
+      siteManagerEnabled && queryState.enabled === siteManagerEnabled ? queryState.navigationIntent : null,
+    replaceUser(updatedUser: ManagedUserListItem) {
+      setQueryState((currentState) => ({
+        ...currentState,
+        users: currentState.users.map((currentUser) =>
+          currentUser.username === updatedUser.username ? updatedUser : currentUser,
+        ),
+      }))
+    },
+    removeUser(targetUsername: ManagedUserListItem['username']) {
+      setQueryState((currentState) => ({
+        ...currentState,
+        users: currentState.users.filter((currentUser) => currentUser.username !== targetUsername),
+        totalUsers: Math.max(0, currentState.totalUsers - 1),
+      }))
+    },
+  }
+}

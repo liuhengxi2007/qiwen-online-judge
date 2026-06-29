@@ -1,0 +1,20 @@
+/**
+ * 简体中文排行榜消息，覆盖排名类型、筛选、分页和空状态文案。
+ */
+export const zhCnRanklistMessages: Record<string, string> = {
+  'ranklist.pageTitle': '气温在线评测 - 排行榜',
+  'ranklist.heading': '排行榜',
+  'ranklist.loading': '正在加载排行榜...',
+  'ranklist.empty': '当前还没有排行数据。',
+  'ranklist.unavailable': '排行榜当前不可用。',
+  'ranklist.contributionLoadFailed': '无法加载贡献排行榜。',
+  'ranklist.acceptedLoadFailed': '无法加载过题数排行榜。',
+  'ranklist.ratingLoadFailed': '无法加载 rating 排行榜。',
+  'ranklist.ratingTitle': 'Rating 排名',
+  'ranklist.rating': 'Rating',
+  'ranklist.contributionTitle': '贡献排名',
+  'ranklist.contribution': '贡献',
+  'ranklist.acceptedTitle': '过题数排名',
+  'ranklist.acceptedCount': '过题数',
+  'ranklist.pageStatus': '第 {{page}} / {{totalPages}} 页',
+}

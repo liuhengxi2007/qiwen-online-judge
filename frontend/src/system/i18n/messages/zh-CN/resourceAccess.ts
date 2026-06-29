@@ -1,0 +1,28 @@
+/**
+ * 简体中文资源访问控制消息，覆盖公开、授权用户/用户组和管理权限编辑文案。
+ */
+export const zhCnResourceAccessMessages: Record<string, string> = {
+  'resourceAccess.public': '公开访问',
+  'resourceAccess.publicDescription': '开启后，所有已登录用户都可以查看该资源。',
+  'resourceAccess.groups': '授权用户组',
+  'resourceAccess.groupsHint': '使用逗号或换行分隔。用户组标识必须已存在。',
+  'resourceAccess.users': '授权用户',
+  'resourceAccess.usersHint': '使用逗号或换行分隔。用户名必须已存在。',
+  'resourceAccess.managerGroups': '题目管理用户组',
+  'resourceAccess.managerGroupsHint': '这些用户组的成员可以管理该资源。',
+  'resourceAccess.managerUsers': '题目管理员',
+  'resourceAccess.managerUsersHint': '这些用户可以编辑、删除并管理该资源数据。',
+  'resourceAccess.badge.public': '公开',
+  'resourceAccess.badge.shared': '共享',
+  'resourceAccess.badge.restricted': '受限',
+  'resourceAccess.summary.visibleAll': '所有已登录用户可见。',
+  'resourceAccess.summary.visibleGrantedOnly': '仅显式授权的查看者和全局管理员可见。',
+  'resourceAccess.summary.sharedWith': '已共享给 {{summary}}。',
+  'resourceAccess.summary.managedGlobalOnly': '仅全局管理员可管理。',
+  'resourceAccess.summary.managedBy': '由 {{summary}} 和全局管理员管理。',
+  'resourceAccess.summary.group.one': '{{count}} 个用户组',
+  'resourceAccess.summary.group.other': '{{count}} 个用户组',
+  'resourceAccess.summary.user.one': '{{count}} 个用户',
+  'resourceAccess.summary.user.other': '{{count}} 个用户',
+  'resourceAccess.summary.join': '{{left}} 和 {{right}}',
+}

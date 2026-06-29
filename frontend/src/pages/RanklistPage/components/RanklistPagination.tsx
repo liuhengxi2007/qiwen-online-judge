@@ -1,0 +1,65 @@
+import { Link } from 'react-router-dom'
+
+import { Button } from '@/components/ui/button'
+import { useI18n } from '@/system/i18n/use-i18n'
+
+import { pagePath } from '../functions/PageQuery'
+
+/**
+ * 榜单分页组件属性，携带三个榜单当前页和本组件要翻页的目标榜单。
+ */
+type RanklistPaginationProps = {
+  acceptedPage: number
+  contributionPage: number
+  currentPage: number
+  ratingPage: number
+  totalPages: number
+  target: 'accepted' | 'contribution' | 'rating'
+}
+
+/**
+ * 榜单分页组件，只修改目标榜单页码，并在链接中保留另外两个榜单页码。
+ */
+export function RanklistPagination({
+  acceptedPage,
+  contributionPage,
+  currentPage,
+  ratingPage,
+  totalPages,
+  target,
+}: RanklistPaginationProps) {
+  // 保留扁平 props：分页链接必须显式携带三类榜单页码，调用端具名传入可以避免目标页混淆。
+  const { t } = useI18n()
+  const canGoPrevious = currentPage > 1
+  const canGoNext = currentPage < totalPages
+  const previousContributionPage = target === 'contribution' ? currentPage - 1 : contributionPage
+  const previousAcceptedPage = target === 'accepted' ? currentPage - 1 : acceptedPage
+  const previousRatingPage = target === 'rating' ? currentPage - 1 : ratingPage
+  const nextContributionPage = target === 'contribution' ? currentPage + 1 : contributionPage
+  const nextAcceptedPage = target === 'accepted' ? currentPage + 1 : acceptedPage
+  const nextRatingPage = target === 'rating' ? currentPage + 1 : ratingPage
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+      <p className="text-sm text-slate-500">
+        {t('ranklist.pageStatus', { page: String(currentPage), totalPages: String(totalPages) })}
+      </p>
+      <div className="flex gap-2">
+        <Button asChild={canGoPrevious} disabled={!canGoPrevious} variant="outline" className="rounded-2xl">
+          {canGoPrevious ? (
+            <Link to={pagePath(previousContributionPage, previousAcceptedPage, previousRatingPage)}>{t('submission.pagination.previous')}</Link>
+          ) : (
+            <span>{t('submission.pagination.previous')}</span>
+          )}
+        </Button>
+        <Button asChild={canGoNext} disabled={!canGoNext} variant="outline" className="rounded-2xl">
+          {canGoNext ? (
+            <Link to={pagePath(nextContributionPage, nextAcceptedPage, nextRatingPage)}>{t('submission.pagination.next')}</Link>
+          ) : (
+            <span>{t('submission.pagination.next')}</span>
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}

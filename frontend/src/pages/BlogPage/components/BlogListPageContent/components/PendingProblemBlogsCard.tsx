@@ -1,0 +1,81 @@
+import { Button } from '@/components/ui/button'
+import type { BlogSummary } from '@/objects/blog/response/BlogSummary'
+import { BlogSummaryCard } from './BlogSummaryCard'
+import type { BlogId } from '@/objects/blog/BlogId'
+import { useI18n } from '@/system/i18n/use-i18n'
+
+/**
+ * 待关联题解卡片属性，包含待处理列表和打开博客的回调。
+ */
+type PendingProblemBlogsCardProps = {
+  pendingBlogs: BlogSummary[]
+  isLoadingPending: boolean
+  pendingMessage: string
+  activeReviewBlogId: BlogId | null
+  onAccept: (blog: BlogSummary) => void
+  onReject: (blog: BlogSummary) => void
+}
+
+/**
+ * 待关联题解卡片，展示当前用户可继续处理的题解草稿。
+ */
+export function PendingProblemBlogsCard({
+  pendingBlogs,
+  isLoadingPending,
+  pendingMessage,
+  activeReviewBlogId,
+  onAccept,
+  onReject,
+}: PendingProblemBlogsCardProps) {
+  // 保留扁平 props：列表数据、加载状态和审核动作是该卡片的完整边界，继续拆对象收益很低。
+  const { t } = useI18n()
+
+  return (
+    <div className="rounded-3xl border border-amber-100 bg-amber-50 p-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold text-amber-950">{t('blog.problem.pendingTitle')}</h2>
+        <p className="text-sm text-amber-800">{t('blog.problem.pendingDescription')}</p>
+      </div>
+      {pendingMessage ? <p className="mt-2 text-sm text-amber-800">{pendingMessage}</p> : null}
+      {isLoadingPending ? (
+        <p className="mt-3 text-sm text-amber-800">{t('blog.list.loading')}</p>
+      ) : pendingBlogs.length === 0 ? (
+        <p className="mt-3 text-sm text-amber-800">{t('blog.problem.pendingEmpty')}</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {pendingBlogs.map((blog) => (
+            <BlogSummaryCard
+              key={blog.id}
+              blog={blog}
+              className="rounded-2xl border border-amber-100 bg-white p-4"
+              showVisibility={false}
+              showRelatedProblems={false}
+              showScore={false}
+              showDate={false}
+              actions={
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    disabled={activeReviewBlogId === blog.id}
+                    variant="create"
+                    onClick={() => onAccept(blog)}
+                  >
+                    {t('blog.problem.accept')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructiveOutline"
+                    disabled={activeReviewBlogId === blog.id}
+                    onClick={() => onReject(blog)}
+                  >
+                    {t('blog.problem.reject')}
+                  </Button>
+                </div>
+              }
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

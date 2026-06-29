@@ -1,0 +1,75 @@
+import type { OtherUserSubmissionAccess } from '@/objects/problem/OtherUserSubmissionAccess'
+import { parseProblemSlug } from '@/objects/problem/ProblemSlug'
+import { parseProblemStatementText } from '@/objects/problem/ProblemStatementText'
+import { parseProblemTitle } from '@/objects/problem/ProblemTitle'
+import type { CreateProblemRequest } from '@/objects/problem/request/CreateProblemRequest'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { buildResourceAccessPolicy } from '@/pages/components/ResourceAccessEditorInput'
+
+/**
+ * 创建题目表单草稿，包含 slug、标题和访问策略。
+ */
+export type ProblemDraft = {
+  slug: string
+  title: string
+  statement: string
+  baseAccess: BaseAccess
+  grantedUsersInput: string
+  grantedGroupsInput: string
+  managerUsersInput: string
+  managerGroupsInput: string
+  otherUserSubmissionAccess: OtherUserSubmissionAccess
+}
+
+/**
+ * 创建题目草稿校验结果，成功时携带创建请求体。
+ */
+type ProblemDraftValidation =
+  | { ok: true; request: CreateProblemRequest }
+  | { ok: false; message: string }
+
+/**
+ * 校验创建题目草稿，解析 slug、标题并附带访问策略。
+ */
+export function validateProblemDraft(draft: ProblemDraft): ProblemDraftValidation {
+  const slugResult = parseProblemSlug(draft.slug)
+  if (!slugResult.ok) {
+    return { ok: false, message: slugResult.error }
+  }
+
+  const titleResult = parseProblemTitle(draft.title)
+  if (!titleResult.ok) {
+    return { ok: false, message: titleResult.error }
+  }
+
+  const statementResult = parseProblemStatementText(draft.statement)
+  if (!statementResult.ok) {
+    return { ok: false, message: statementResult.error }
+  }
+
+  const accessPolicyResult = buildResourceAccessPolicy({
+    baseAccess: draft.baseAccess,
+    viewer: {
+      usersInput: draft.grantedUsersInput,
+      groupsInput: draft.grantedGroupsInput,
+    },
+    manager: {
+      usersInput: draft.managerUsersInput,
+      groupsInput: draft.managerGroupsInput,
+    },
+  })
+  if (!accessPolicyResult.ok) {
+    return { ok: false, message: accessPolicyResult.message }
+  }
+
+  return {
+    ok: true,
+    request: {
+      slug: slugResult.value,
+      title: titleResult.value,
+      statement: statementResult.value,
+      accessPolicy: accessPolicyResult.value,
+      otherUserSubmissionAccess: draft.otherUserSubmissionAccess,
+    },
+  }
+}

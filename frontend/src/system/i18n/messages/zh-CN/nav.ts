@@ -1,0 +1,20 @@
+/**
+ * 简体中文导航消息，定义主导航、用户菜单和路由入口的显示文案。
+ */
+export const zhCnNavMessages: Record<string, string> = {
+  'nav.backTo': '返回{{label}}',
+  'nav.dashboard': '控制台',
+  'nav.blogs': '博客',
+  'nav.notifications': '通知',
+  'nav.problems': '题目',
+  'nav.problem': '题目详情',
+  'nav.problemSets': '题单',
+  'nav.messages': '私信',
+  'nav.openProfileMessages': '打开收件箱',
+  'nav.openProfileNotifications': '打开通知',
+  'nav.submissions': '提交',
+  'nav.hacks': 'Hacks',
+  'nav.ranklist': '排行榜',
+  'nav.userGroups': '用户组',
+  'nav.contests': '比赛',
+}

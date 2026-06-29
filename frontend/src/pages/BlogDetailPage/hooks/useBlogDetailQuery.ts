@@ -1,0 +1,70 @@
+import { useEffect, useState } from 'react'
+
+import { GetBlog } from '@/apis/blog/GetBlog'
+import type { BlogDetail } from '@/objects/blog/response/BlogDetail'
+import type { BlogId } from '@/objects/blog/BlogId'
+import { sendAPI } from '@/system/api/api-message'
+
+/**
+ * 博客详情查询 hook，根据博客 id 拉取详情并暴露 setBlog 供评论、投票和编辑操作替换整篇详情。
+ * blogId 为 null 时不会请求后端，而是返回 invalid 错误供页面展示非法 URL。
+ */
+export function useBlogDetailQuery(blogId: BlogId | null) {
+  const [queryState, setQueryState] = useState<{
+    blogId: BlogId | null
+    blog: BlogDetail | null
+    errorMessage: string
+  }>({
+    blogId: null,
+    blog: null,
+    errorMessage: '',
+  })
+
+  useEffect(() => {
+    if (!blogId) {
+      return
+    }
+
+    let cancelled = false
+
+    void sendAPI(new GetBlog(blogId))
+      .then((loadedBlog) => {
+        if (cancelled) {
+          return
+        }
+
+        setQueryState({
+          blogId,
+          blog: loadedBlog,
+          errorMessage: '',
+        })
+      })
+      .catch(() => {
+        if (cancelled) {
+          return
+        }
+
+        setQueryState({
+          blogId,
+          blog: null,
+          errorMessage: 'loadFailed',
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [blogId])
+
+  return {
+    blog: queryState.blogId === blogId ? queryState.blog : null,
+    setBlog: (blog: BlogDetail | null) =>
+      setQueryState((currentState) => ({
+        ...currentState,
+        blogId,
+        blog,
+      })),
+    isLoading: blogId !== null && queryState.blogId !== blogId,
+    errorMessage: blogId === null ? 'invalid' : queryState.blogId === blogId ? queryState.errorMessage : '',
+  }
+}

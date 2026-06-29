@@ -1,0 +1,148 @@
+import { useCallback, useReducer } from 'react'
+
+import { CreateProblemSet } from '@/apis/problemset/CreateProblemSet'
+import { isHttpClientError } from '@/system/api/http-client'
+import type { ProblemSetSummary } from '@/objects/problemset/response/ProblemSetSummary'
+import { validateProblemSetDraft } from '../functions/ProblemSetForm'
+import { buildResourceVisibilityPolicy } from '@/pages/components/ResourceAccessEditorInput'
+import type { BaseAccess } from '@/objects/shared/access/BaseAccess'
+import { createRestrictedVisibilityPolicy } from '@/objects/shared/access/ResourceVisibilityPolicy'
+import { sendAPI } from '@/system/api/api-message'
+import { useI18n } from '@/system/i18n/use-i18n'
+
+/**
+ * 创建题单页状态，保存草稿、提交状态和反馈消息。
+ */
+type CreateProblemSetPageState = {
+  isSubmitting: boolean
+  draft: CreateProblemSetDraft
+  errorMessage: string
+  successMessage: string
+}
+
+/**
+ * 创建题单页内部草稿，包含内容字段和访问控制输入。
+ */
+type CreateProblemSetDraft = {
+  slug: string
+  title: string
+  description: string
+  baseAccess: BaseAccess
+  grantedUsersInput: string
+  grantedGroupsInput: string
+}
+
+/**
+ * 创建题单页 reducer 动作，覆盖字段编辑、访问控制编辑和提交状态。
+ */
+type CreateProblemSetPageAction =
+  | { type: 'set_slug'; value: string }
+  | { type: 'set_title'; value: string }
+  | { type: 'set_description'; value: string }
+  | { type: 'set_base_access'; value: BaseAccess }
+  | { type: 'set_granted_users_input'; value: string }
+  | { type: 'set_granted_groups_input'; value: string }
+  | { type: 'submit_started' }
+  | { type: 'submit_succeeded' }
+  | { type: 'submit_failed'; message: string }
+
+const initialDraft: CreateProblemSetDraft = {
+  slug: '',
+  title: '',
+  description: '',
+  baseAccess: 'restricted',
+  grantedUsersInput: '',
+  grantedGroupsInput: '',
+}
+
+const initialState: CreateProblemSetPageState = {
+  isSubmitting: false,
+  draft: initialDraft,
+  errorMessage: '',
+  successMessage: '',
+}
+
+/**
+ * 创建题单页 reducer；纯函数维护草稿、访问策略输入和提交反馈。
+ */
+function reducer(state: CreateProblemSetPageState, action: CreateProblemSetPageAction): CreateProblemSetPageState {
+  switch (action.type) {
+    case 'set_slug':
+      return { ...state, draft: { ...state.draft, slug: action.value } }
+    case 'set_title':
+      return { ...state, draft: { ...state.draft, title: action.value } }
+    case 'set_description':
+      return { ...state, draft: { ...state.draft, description: action.value } }
+    case 'set_base_access':
+      return { ...state, draft: { ...state.draft, baseAccess: action.value } }
+    case 'set_granted_users_input':
+      return { ...state, draft: { ...state.draft, grantedUsersInput: action.value } }
+    case 'set_granted_groups_input':
+      return { ...state, draft: { ...state.draft, grantedGroupsInput: action.value } }
+    case 'submit_started':
+      return { ...state, isSubmitting: true, errorMessage: '', successMessage: '' }
+    case 'submit_succeeded':
+      return {
+        ...state,
+        isSubmitting: false,
+        draft: initialDraft,
+        errorMessage: '',
+        successMessage: 'Problem set created successfully.',
+      }
+    case 'submit_failed':
+      return { ...state, isSubmitting: false, errorMessage: action.message, successMessage: '' }
+  }
+}
+
+/**
+ * 创建题单页模型 hook；维护表单草稿并在权限允许时提交创建请求。
+ */
+export function useCreateProblemSetPageModel(canCreate: boolean) {
+  const { t } = useI18n()
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const accessPolicyResult = buildResourceVisibilityPolicy(
+    state.draft.baseAccess,
+    state.draft.grantedUsersInput,
+    state.draft.grantedGroupsInput,
+  )
+
+  const submit = useCallback(async (): Promise<ProblemSetSummary | null> => {
+    if (!canCreate) {
+      dispatch({ type: 'submit_failed', message: t('problemSet.message.managerPermissionRequired') })
+      return null
+    }
+
+    const validation = validateProblemSetDraft(state.draft)
+    if (!validation.ok) {
+      dispatch({ type: 'submit_failed', message: validation.message })
+      return null
+    }
+
+    dispatch({ type: 'submit_started' })
+
+    try {
+      const createdProblemSet = await sendAPI(new CreateProblemSet(validation.request))
+      dispatch({ type: 'submit_succeeded' })
+      return createdProblemSet
+    } catch (error) {
+      const message = isHttpClientError(error) ? error.message : t('problemSet.message.createFailed')
+      dispatch({ type: 'submit_failed', message })
+      return null
+    }
+  }, [canCreate, state.draft, t])
+
+  return {
+    ...state.draft,
+    isSubmitting: state.isSubmitting,
+    errorMessage: state.errorMessage,
+    successMessage: state.successMessage ? t('problemSet.message.createSuccess') : '',
+    accessPolicy: accessPolicyResult.ok ? accessPolicyResult.value : createRestrictedVisibilityPolicy(),
+    setSlug: (value: string) => dispatch({ type: 'set_slug', value }),
+    setTitle: (value: string) => dispatch({ type: 'set_title', value }),
+    setDescription: (value: string) => dispatch({ type: 'set_description', value }),
+    setBaseAccess: (value: BaseAccess) => dispatch({ type: 'set_base_access', value }),
+    setGrantedUsersInput: (value: string) => dispatch({ type: 'set_granted_users_input', value }),
+    setGrantedGroupsInput: (value: string) => dispatch({ type: 'set_granted_groups_input', value }),
+    submit,
+  }
+}
