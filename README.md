@@ -4,6 +4,10 @@ Qiwen Online Judge is a type-safe online judge project with a React frontend, a 
 
 The project is organized by business domain rather than by technical layer. Cross-stack transport shapes are maintained by mirrored frontend/backend files and checked by scripts. Worker processes communicate with the backend through stable network protocols instead of importing backend internals.
 
+## Status
+
+This project is currently in development. Before June 2026, it was the course project for Tsinghua University's course "类型安全的前后端系统实践".
+
 ## Features
 
 - Account registration, login, logout, profile pages, and user settings.
